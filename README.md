@@ -12,7 +12,7 @@ Stroke display and grading are done by [Hanzi Writer](https://hanziwriter.org/).
   - **Pinyin** and **Meaning:** you are shown the word, recall its reading or meaning, and reveal the answer.
 
   After each card you grade yourself; where the app can check your answer it suggests a grade.
-- **Free practice:** type any character or word and write it. Nothing is recorded.
+- **Free practice:** try any kind of card for a word, or write any characters at all. Nothing is recorded.
 - Traditional or simplified, chosen with a switch. Traditional uses Taiwan-standard forms and stroke order; where the mainland stroke order uses the same strokes, that is accepted too.
 - Two strokes written without lifting the pen (such as the hook of 子) are accepted where one runs into the next.
 - A built-in list of about 100 common words to start from.

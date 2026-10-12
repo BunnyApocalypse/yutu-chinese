@@ -18,6 +18,8 @@ const practiceTab = byId('practice-tab');
 const reviewHeader = byId('review-header');
 const wordForm = byId('word-form');
 const wordInput = byId('word-input');
+const practiceType = byId('practice-type');
+const noteElement = byId('note');
 const exportButton = byId('export-button');
 const importButton = byId('import-button');
 const importFile = byId('import-file');
@@ -88,15 +90,42 @@ async function addOrUpdateBuiltInWords() {
 
 let mode = 'review';
 
-// Free practice: write whatever is in the text box. Nothing is saved.
+// The words in the database, for Free practice to look up what was typed.
+let wordList = [];
+
+// Free practice: any kind of card for what is in the text box. Nothing is
+// saved and the schedule is not touched.
 function startFreePractice() {
-  const text = wordInput.value;
-  return flow.start(text, {
-    script: settings.script,
-    continueLabel: 'Again',
-    onContinue: startFreePractice,
-  });
+  const text = wordInput.value.trim();
+  const type = practiceType.value;
+  // Puts the page back to the writing parts and stops any card being shown.
+  review.deactivate();
+
+  if (type === 'writing') {
+    // Writing works for any characters, in the word list or not.
+    return flow.start(text, {
+      script: settings.script,
+      continueLabel: 'Again',
+      onContinue: startFreePractice,
+    });
+  }
+
+  // The other kinds need the word's reading and meaning, so it has to be in
+  // the word list. Either script may be typed.
+  const word = wordList.find((entry) => entry.traditional === text || entry.simplified === text);
+  if (!word) {
+    noteElement.textContent = `"${text}" is not in the word list, so only Writing can be practiced with it.`;
+    return undefined;
+  }
+  if (!review.practice(word, type)) {
+    noteElement.textContent = `"${text}" can't have a tone card: its pinyin doesn't have one syllable per character.`;
+    return undefined;
+  }
+  noteElement.textContent = '';
+  return undefined;
 }
+
+practiceType.addEventListener('change', startFreePractice);
 
 function setMode(newMode) {
   mode = newMode;
@@ -248,6 +277,16 @@ async function startUp() {
   );
 
   await review.load();
+
+  wordList = await getAll('words');
+  // Offer the list's words as suggestions under the text box.
+  const suggestions = byId('word-suggestions');
+  for (const word of wordList) {
+    const option = document.createElement('option');
+    option.value = word.traditional;
+    suggestions.appendChild(option);
+  }
+
   await setMode('review');
 }
 

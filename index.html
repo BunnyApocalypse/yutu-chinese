@@ -24,7 +24,7 @@
         <button id="pinyin-button" class="small" type="button" hidden>Show pinyin</button>
       </section>
 
-      <!-- Free practice mode: type any character or word -->
+      <!-- Free practice mode: type a character or word and choose a kind of card -->
       <form id="word-form" class="word-form" hidden>
         <input
           id="word-input"
@@ -34,7 +34,16 @@
           aria-label="Character or word to practice"
           autocomplete="off"
           autocapitalize="off"
+          list="word-suggestions"
         />
+        <!-- Suggestions for the text box: the words in the word list. Filled in by main.js. -->
+        <datalist id="word-suggestions"></datalist>
+        <select id="practice-type" aria-label="Kind of card">
+          <option value="writing">Writing</option>
+          <option value="tone">Tone</option>
+          <option value="pinyin">Pinyin</option>
+          <option value="meaning">Meaning</option>
+        </select>
         <button type="submit">Practice</button>
       </form>
       <p id="note" class="note"></p>

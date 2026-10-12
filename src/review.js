@@ -33,7 +33,7 @@ const RECHECK_MS = 15 * 1000;
 // flows:    { writing, tone, recall }: the three pieces of code named above
 // settings: the current settings (see settings.js)
 //
-// Returns { load, activate, deactivate, refresh }.
+// Returns { load, activate, deactivate, practice, refresh }.
 export function createReview(elements, flows, settings) {
   const {
     countsElement,
@@ -67,6 +67,9 @@ export function createReview(elements, flows, settings) {
 
   // True while Review is the mode on screen.
   let active = false;
+  // True while a card is being shown for Free practice: it is not scheduled,
+  // gets no grade buttons, and nothing is saved.
+  let practicing = false;
   let recheckTimer = null;
 
   // The card on screen: { word, type, card }, with card null if never studied.
@@ -129,6 +132,11 @@ export function createReview(elements, flows, settings) {
 
   // Saves the review with the chosen grade and moves on.
   async function grade(value) {
+    if (practicing) {
+      // In Free practice, "continue" just shows the same card again.
+      practice(current.word, current.type);
+      return;
+    }
     if (!options) {
       return; // already graded, e.g. a double tap
     }
@@ -185,6 +193,9 @@ export function createReview(elements, flows, settings) {
   // The card has been answered: work out what each grade would do and offer
   // the grade buttons.
   function offerGrades(suggestedGrade, details) {
+    if (practicing) {
+      return;
+    }
     finishedAt = new Date();
     options = gradeOptions(current.card ? current.card.fsrsState : null, finishedAt);
     suggested = suggestedGrade;
@@ -272,6 +283,26 @@ export function createReview(elements, flows, settings) {
     });
   }
 
+  // Shows a tone, pinyin or meaning card for Free practice. Returns false if
+  // the word can't have that kind of card. (Writing practice is handled by
+  // main.js, since it works for any characters, not only words in the list.)
+  function practice(word, type) {
+    stopFlows();
+    hideGrades();
+    if (type === 'tone' && toneAnswersOf(word) === null) {
+      return false;
+    }
+    practicing = true;
+    current = { word, type, card: null };
+    showPartsFor(type);
+    if (type === 'tone') {
+      showToneCard();
+    } else {
+      showRecallCard(type);
+    }
+    return true;
+  }
+
   // ---- Choosing the next card ----
 
   function hasCardType(word, type) {
@@ -307,6 +338,7 @@ export function createReview(elements, flows, settings) {
     if (!active) {
       return;
     }
+    practicing = false;
     stopFlows();
     const now = Date.now();
     const plan = planSession(words, cards, now, {
@@ -377,6 +409,7 @@ export function createReview(elements, flows, settings) {
     // Leaves the page ready for Free practice, which uses the writing parts.
     deactivate() {
       active = false;
+      practicing = false;
       clearTimeout(recheckTimer);
       stopFlows();
       donePanel.hidden = true;
@@ -384,6 +417,9 @@ export function createReview(elements, flows, settings) {
       showPartsFor('writing');
       hideGrades();
     },
+
+    // Free practice of a tone, pinyin or meaning card. Call deactivate() first.
+    practice,
 
     // Works out the next card afresh, e.g. after a setting changed.
     refresh() {

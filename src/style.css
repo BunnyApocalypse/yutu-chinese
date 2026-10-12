@@ -104,7 +104,11 @@ select {
   display: flex;
   gap: 8px;
   width: 100%;
-  max-width: 420px;
+  max-width: 480px;
+}
+
+.word-form select {
+  min-height: 48px;
 }
 
 .word-form input {
