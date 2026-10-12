@@ -1,14 +1,12 @@
-// Handwriting shortcuts: two neighbouring strokes written as a single stroke,
+// Handwriting shortcuts: two neighboring strokes written as a single stroke,
 // e.g. the ㇇ and 亅 of 子 joined, so 子 takes 2 strokes instead of 3.
 //
 // Hanzi Writer only grades one drawn stroke against one textbook stroke, so it
-// cannot recognise these. This file adds the missing check: "does this drawn
+// cannot recognize these. This file adds the missing check: "does this drawn
 // stroke look like textbook strokes N and N+1 written in one go?". The textbook
 // form keeps working as before, because Hanzi Writer still grades that.
 //
 // All coordinates here are in the character data's own units (see charData.js).
-
-import { getCharData } from './charData.js';
 
 // For each character, the stroke numbers (counting from 0) where a shortcut
 // may begin. 13 means "strokes 13 and 14 may be written as one".
@@ -50,22 +48,22 @@ function lineLength(points) {
 function resample(points, count) {
   const step = lineLength(points) / (count - 1);
   const result = [points[0]];
-  let travelled = 0; // distance covered since the last point we emitted
+  let traveled = 0; // distance covered since the last point we emitted
   for (let i = 1; i < points.length; i++) {
     let from = points[i - 1];
     const to = points[i];
     let segment = distance(from, to);
-    while (travelled + segment >= step && result.length < count - 1) {
-      const fraction = (step - travelled) / segment;
+    while (traveled + segment >= step && result.length < count - 1) {
+      const fraction = (step - traveled) / segment;
       from = {
         x: from.x + (to.x - from.x) * fraction,
         y: from.y + (to.y - from.y) * fraction,
       };
       result.push(from);
       segment = distance(from, to);
-      travelled = 0;
+      traveled = 0;
     }
-    travelled += segment;
+    traveled += segment;
   }
   result.push(points[points.length - 1]);
   return result;
@@ -91,14 +89,14 @@ function joinedMedian(charData, first) {
 
 // True if `drawnPoints` (a list of { x, y }) looks like strokes `strokeNum`
 // and `strokeNum + 1` of `char` written as one stroke, and that pair is a
-// known shortcut.
-export function isShortcutStroke(char, strokeNum, drawnPoints, leniency) {
+// known shortcut. `charData` is the character's stroke data.
+export function isShortcutStroke(char, charData, strokeNum, drawnPoints, leniency) {
   const starts = shortcutStarts[char] || [];
   if (!starts.includes(strokeNum) || drawnPoints.length < 2) {
     return false;
   }
 
-  const reference = joinedMedian(getCharData(char), strokeNum);
+  const reference = joinedMedian(charData, strokeNum);
 
   const lengthRatio = lineLength(drawnPoints) / lineLength(reference);
   if (lengthRatio < MIN_LENGTH_RATIO || lengthRatio > MAX_LENGTH_RATIO) {

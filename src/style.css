@@ -13,8 +13,64 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   padding: 16px;
+}
+
+.word-form {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.word-form input {
+  /* Takes the width left over next to the button; min-width lets it shrink on narrow phones */
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 12px;
+  /* Below 16px, mobile browsers zoom the whole page in when the field is tapped */
+  font: inherit;
+  font-size: 1.25rem;
+  border: 1px solid #b9b2a3;
+  border-radius: 8px;
+  background: #fff;
+  color: inherit;
+}
+
+.note {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #8a5a00;
+}
+
+.note:empty {
+  display: none;
+}
+
+.word-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+}
+
+.slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  font-size: 1.6rem;
+  border: 1px solid #d8d3c7;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.slot.current {
+  border: 2px solid #3b6fb6;
 }
 
 .status {
@@ -54,4 +110,20 @@ button {
 
 button:active {
   background: #e9e4d8;
+}
+
+button.primary {
+  border-color: #3b6fb6;
+  background: #3b6fb6;
+  color: #fff;
+}
+
+button.primary:active {
+  background: #315d99;
+}
+
+/* Browsers hide elements with the "hidden" attribute, but any "display" rule
+   overrides that. This makes sure hidden always wins. */
+[hidden] {
+  display: none !important;
 }

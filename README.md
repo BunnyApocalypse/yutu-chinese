@@ -6,7 +6,7 @@ Stroke display and grading are done by [Hanzi Writer](https://hanziwriter.org/).
 
 ## Status
 
-Milestone 1: a single page that quizzes one character (學) stroke by stroke.
+Type any character or word and write it stroke by stroke. Your own handwriting stays on screen, and the printed character appears underneath when you finish so you can compare.
 
 ## Running it
 
@@ -23,3 +23,7 @@ Then open:
 - on a phone on the same Wi-Fi: the "Network" address Vite prints, e.g. `http://192.168.10.200:5173`
 
 Stop the server with Ctrl+C.
+
+## Stroke data
+
+Stroke data comes from [hanzi-writer-data](https://github.com/chanind/hanzi-writer-data), which is derived from [Make Me a Hanzi](https://github.com/skishore/makemeahanzi) and licensed under the Arphic Public License. It is copied into `public/char-data/` automatically the first time you run `npm run dev` or `npm run build`.

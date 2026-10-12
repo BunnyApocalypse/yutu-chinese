@@ -9,6 +9,23 @@
   </head>
   <body>
     <main>
+      <form id="word-form" class="word-form">
+        <input
+          id="word-input"
+          type="text"
+          value="學"
+          placeholder="Character or word"
+          aria-label="Character or word to practice"
+          autocomplete="off"
+          autocapitalize="off"
+        />
+        <button type="submit">Practice</button>
+      </form>
+      <p id="note" class="note"></p>
+
+      <!-- One slot per character of the word. Filled in by main.js. -->
+      <div id="word-row" class="word-row"></div>
+
       <p id="status" class="status"></p>
 
       <!-- Hanzi Writer draws the character into this SVG. main.js sets its size and adds the guide grid. -->
@@ -18,6 +35,7 @@
         <button id="restart-button" type="button">Restart</button>
         <button id="outline-button" type="button">Show outline</button>
         <button id="animate-button" type="button">Animate</button>
+        <button id="next-button" class="primary" type="button" hidden>Next</button>
       </div>
     </main>
 
