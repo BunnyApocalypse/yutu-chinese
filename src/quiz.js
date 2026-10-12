@@ -97,7 +97,7 @@ export function createQuiz(target, size, handlers) {
   }
 
   function drewShortcut(stroke) {
-    return isShortcutStroke(char, charData, stroke.strokeNum, stroke.drawnPath.points, LENIENCY);
+    return isShortcutStroke(charData, stroke.strokeNum, stroke.drawnPath.points, LENIENCY);
   }
 
   // Starts (or restarts) the quiz for the current character.
