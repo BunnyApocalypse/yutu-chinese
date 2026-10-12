@@ -54,10 +54,13 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `src/seed-words.tsv`: the built-in list of 109 common words, loaded into the database on first run. Hand-written, not from a frequency corpus.
 - `src/charData.js`: the only place stroke data is loaded from. `loadCharData(char, script)` returns `null` when a character has no data. For `'traditional'` it uses the Taiwan set where that has the character and the big set otherwise; for `'simplified'` only the big set.
 - `src/shortcuts.js`: recognizes handwriting shortcuts (two textbook strokes written as one). Plain calculation, no page or Hanzi Writer.
+- `src/strokeMatch.js`: judges whether a drawn stroke fits a given textbook stroke, and keeps track of two stroke orders. Plain calculation.
+- `src/lines.js`: shared helpers for lines of points (length, resampling, shape, distance).
 - `src/style.css`: styles, phone-first.
-- `scripts/copy-char-data.js`: fills the two git-ignored stroke data folders, naming files by Unicode number (`學.json` becomes `5b78.json`): `public/char-data/` from `node_modules/hanzi-writer-data/` (about 9,500 characters) and `public/char-data-tw/` from `data/animcjk/graphicsZhHant.txt` (1,013 characters, plus an `index.json` listing them).
+- `scripts/copy-char-data.js`: fills the two git-ignored stroke data folders, naming files by Unicode number (`學.json` becomes `5b78.json`): `public/char-data/` from `node_modules/hanzi-writer-data/` (about 9,500 characters) and `public/char-data-tw/` from `data/animcjk/graphicsZhHant.txt` (1,013 characters, plus an `index.json` listing them and recording `TAIWAN_SET_VERSION`; raise that number whenever the script changes what it writes, or existing copies will not be regenerated).
+- `scripts/strokeOrder.js`: finds a character's second stroke order by comparing the two data sets. Used by the copy script.
 - `data/animcjk/`: the animCJK traditional stroke data, copied unchanged from that project at a pinned commit. Its README records the source, license and how to update. This is vendored data, not an npm dependency.
-- `tests/logic.test.js`, `tests/shortcuts.test.js`: tests for the plain-calculation code.
+- `tests/logic.test.js`, `tests/shortcuts.test.js`, `tests/strokeOrder.test.js`: tests for the plain-calculation code.
 
 ## Cards, scheduling and storage
 
@@ -79,13 +82,28 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 
 - **Raw squigs:** Hanzi Writer's printed strokes are kept invisible during a quiz (`strokeColor` fully transparent). Each accepted stroke's `drawnPath` is drawn into our own SVG layer (`g.squigs`) in `src/quiz.js`. A rejected stroke fades away and counts as a mistake. On completion the printed character appears underneath in a light color for comparison.
 - **Shortcuts:** Hanzi Writer always gets the unmodified textbook data, so display, animation and textbook-form grading are untouched. Both forms must be accepted: the shortcut is an option, never a requirement. `src/shortcuts.js` works out from the stroke data which pairs of consecutive strokes may be joined, and checks whether a drawn stroke is such a joined pair. `src/quiz.js` runs that check on every stroke Hanzi Writer reports and, on a match, keeps the stroke and advances past both textbook strokes with `writer.skipQuizStroke()`. Because Hanzi Writer has already counted such a stroke as a mistake, `quiz.js` keeps its own mistake count. Do not implement shortcuts by editing the stroke data handed to Hanzi Writer: that was tried, and it forces the shortcut form on everyone.
-  - **Joinable pair** (`isJoinable`): the first stroke ends where the second begins, the rest of the second is long enough to matter, and the joined shape differs visibly from the first stroke alone. There are no per-character lists.
-  - **The error that matters is a misfire:** taking the first stroke on its own for the joined pair makes the app skip a stroke that was never written. A missed joined stroke only costs a mistake. `isShortcutStroke` therefore compares shapes with size taken away (a first stroke drawn too big reaches as far as the joined pair would), and requires the joined reading to be clearly closer.
-  - `tests/shortcuts.test.js` simulates shifted, resized and shaky strokes over the built-in list and requires zero misfires. Run it after touching any constant in `src/shortcuts.js`.
+  - **Joinable pair** (`isJoinable`): the first stroke ends where the second begins (after at most a short lead-in), both parts are long enough to matter, and the joined shape differs visibly from either stroke alone. There are no per-character lists.
+  - **The error that matters is a misfire:** taking a single stroke for the joined pair. If it is the first stroke, the app skips a stroke that was never written; if it is the second, a forgotten first stroke passes unnoticed. A missed joined stroke only costs a mistake. `isShortcutStroke` therefore compares shapes with size taken away (a first stroke drawn too big reaches as far as the joined pair would), requires the joined reading to be clearly closer than either single stroke, and checks where the stroke starts.
+  - `tests/shortcuts.test.js` simulates shifted, resized and shaky strokes over the built-in list and requires zero misfires of both kinds. Run it after touching any constant in `src/shortcuts.js`.
   - **Out of scope so far:** three or more strokes in one go, and shortcuts that reorder or drop strokes (口 in 2, 艹 in 3, 糸's lower part).
 - **Leniency:** the `LENIENCY` constant in `src/quiz.js`.
 
+## Two accepted stroke orders
+
+- **MOE order is the standard the app teaches.** The Taiwan set's strokes are in the order of Taiwan's Ministry of Education, which differs from the mainland order for 83 of its characters (學 starts with 爻; 我, 忙, 馬, 國, 錢 and others differ too). The owner is used to the mainland order for some of these, so **both are accepted** in Traditional mode, with no penalty.
+- **Finding the second order:** `scripts/strokeOrder.js` compares each Taiwan-set character with the big set when the data is prepared. If both have the same strokes (matched strictly, both ways) in a different sequence, the mainland sequence is stored in the character's file as `altOrder`. When in doubt nothing is stored and only the MOE order applies.
+- **Following it during a quiz** (`src/quiz.js`, section "Two accepted stroke orders"): Hanzi Writer holds one order and grades strictly in sequence. When it rejects a stroke that fits what the other order expects next (`src/strokeMatch.js`), the stroke is accepted, Hanzi Writer is handed the same strokes rearranged via `setCharacter()`, and the quiz resumes with `quizStartStrokeNum`. Raw squigs make the swap invisible.
+- **No mixing inside a differing stretch:** changing order is only offered where the strokes written so far are a complete beginning of both orders (`remainingInOtherOrder`). A character with two separate differing stretches (錢) may use a different order in each.
+- **Restart and Animate always return to the MOE order.**
+- **The note:** when a character was written in the mainland order, a line under the buttons says so and links "MOE order" to Wikipedia's Stroke order article. A link the user taps is fine under the offline rule.
+- Reviews store `orderPerChar`: `'moe'`, `'mainland'`, or `null` for characters with only one order.
+- **Limits:** characters whose shapes differ between the sets (為) accept only the MOE order. Traditional characters outside the Taiwan set come from the big set and so follow the mainland order, with no MOE alternative.
+
 ## Things that are easy to get wrong
+
+- **Hanzi Writer remembers quiz options from one quiz to the next.** `quizStartStrokeNum` must be passed on every `quiz()` call (0 for a normal start), or a later quiz silently starts partway through.
+- **Don't replace Hanzi Writer's character from inside one of its own callbacks.** `switchOrder` in `src/quiz.js` waits a tick first.
+- **`charData` in `src/quiz.js` is what Hanzi Writer holds, which may be rearranged; `baseData` is the data as loaded.** Stroke numbers reported by Hanzi Writer refer to `charData`; `altOrder` and `sequence` refer to `baseData`.
 
 - **Only 1,013 traditional characters have Taiwan-standard stroke data.** The big set (`hanzi-writer-data`, from Make Me a Hanzi) draws traditional characters in mainland-style forms: 為 as 爲 (12 strokes), 說 as 説, 辶 and 艹 with 3 strokes. The animCJK overlay fixes the characters it covers; the rest (for example 吃, 真, 骨) still come from the big set and may differ from the Taiwan standard. Taiwan's MOE data would be complete but is CC BY-NC-ND, so it cannot be converted and redistributed.
 - **The script decides the form even for characters both scripts share** (花, 起, 道). Always pass the script to `loadCharData`; never cache stroke data by character alone.
@@ -117,7 +135,7 @@ The owner wants to bring their Skritter data across eventually rather than start
 2. **Done:** raw squigs, lenient grading, optional 2-stroke 子.
 3. **Done:** practice any typed character or multi-character word; stroke data loaded on demand.
 4. **Done:** FSRS scheduling of writing cards on a built-in word list, IndexedDB storage, backup export/import.
-5. **Done:** Taiwan-standard stroke data for the 1,013 traditional characters animCJK covers. Still open: the traditional characters it does not cover.
+5. **Done:** Taiwan-standard stroke data for the 1,013 traditional characters animCJK covers, with the mainland stroke order also accepted where the strokes are the same. Still open: the traditional characters it does not cover.
 6. The other card types: tone, pinyin (with zhuyin as an alternative), meaning.
 7. **Done:** two consecutive strokes joined, for every character. Still open: longer runs, and shortcuts that reorder or drop strokes.
 8. PWA: manifest, service worker, GitHub Pages deploy, installable and offline on the phone.

@@ -11,6 +11,12 @@
 import HanziWriter from 'hanzi-writer';
 import { loadCharData } from './charData.js';
 import { isShortcutStroke } from './shortcuts.js';
+import {
+  fitsStroke,
+  distanceFromStroke,
+  remainingInOtherOrder,
+  isStandardOrder,
+} from './strokeMatch.js';
 
 // After this many wrong attempts at one stroke, the correct stroke flashes as a hint.
 const HINT_AFTER_MISSES = 3;
@@ -33,7 +39,9 @@ const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 // handlers: functions called as the quiz progresses
 //   onStart({ totalStrokes })
 //   onProgress({ strokesDone, totalStrokes, totalMistakes })
-//   onComplete({ totalMistakes, hintShown })
+//   onComplete({ totalMistakes, hintShown, order })
+//       order is 'moe' or 'mainland' for a character with two accepted
+//       stroke orders, saying which was written, and null for any other
 //       may return false to say the character was missed, which turns the
 //       printed character red instead of green
 //   onAnimateStart()
@@ -49,9 +57,16 @@ export function createQuiz(target, size, handlers) {
   // would pile them up.
   let writer = null;
 
-  // The character being quizzed and its stroke data.
+  // The character being quizzed.
   let char = null;
+  // Its stroke data as loaded, with the strokes in the standard order.
+  let baseData = null;
+  // The stroke data Hanzi Writer currently holds. Usually the same as
+  // baseData; for a character being written in its second accepted order it
+  // is a copy with the strokes rearranged (see switchOrder below).
   let charData = null;
+  // All stroke numbers of baseData, in the order currently expected.
+  let sequence = [];
 
   // We count mistakes ourselves rather than using Hanzi Writer's count, because
   // Hanzi Writer counts a shortcut stroke as a mistake before we recognize it.
@@ -100,24 +115,95 @@ export function createQuiz(target, size, handlers) {
     return isShortcutStroke(charData, stroke.strokeNum, stroke.drawnPath.points, LENIENCY);
   }
 
-  // Starts (or restarts) the quiz for the current character.
-  async function start() {
-    const totalStrokes = charData.strokes.length;
-    squigLayer.replaceChildren();
-    mistakes = 0;
-    hintShown = false;
-    handlers.onStart({ totalStrokes });
-    await setPrintedColor(INVISIBLE);
-    // Later elements in an SVG are drawn on top. Hanzi Writer adds its own
-    // layers each time a character is set, so (re)adding ours here puts your
-    // strokes above the printed character.
+  // Hands Hanzi Writer a set of stroke data for the current character. It
+  // fetches data through charDataLoader (see showCharacter), which returns
+  // whatever charData is at that moment.
+  async function giveWriter(data) {
+    charData = data;
+    await writer.setCharacter(char);
+    // Setting a character rebuilds Hanzi Writer's layers. Later elements in an
+    // SVG are drawn on top, so (re)adding ours puts your strokes above the
+    // printed character. It also resets the outline to hidden.
     target.appendChild(squigLayer);
-    // Switching character resets the outline to hidden, so apply the setting again.
     if (outlineVisible) {
       writer.showOutline({ duration: 0 });
     }
+  }
+
+  // Goes back to the standard stroke order if the second one was in use.
+  async function useStandardOrder() {
+    if (!isStandardOrder(sequence)) {
+      sequence = baseData.strokes.map((stroke, index) => index);
+      await giveWriter(baseData);
+    }
+  }
+
+  // ---- Two accepted stroke orders ----
+  //
+  // Some characters may be written in either of two orders (baseData.altOrder).
+  // Hanzi Writer only knows one order at a time and grades strictly in
+  // sequence. So when a stroke it rejects turns out to be the stroke the other
+  // order expects at this point, we accept the stroke ourselves, hand Hanzi
+  // Writer the same strokes rearranged into the other order, and resume the
+  // quiz after the strokes already written. None of this is visible: your own
+  // strokes stay on screen and the printed strokes are invisible until the end.
+
+  // If the rejected stroke belongs to the other accepted order, returns the
+  // strokes still to be written in that order. Otherwise returns null.
+  function otherOrderFor(stroke) {
+    const other = remainingInOtherOrder(sequence, stroke.strokeNum, baseData.altOrder);
+    if (!other) {
+      return null;
+    }
+    const points = stroke.drawnPath.points;
+    const expectedMedian = baseData.medians[sequence[stroke.strokeNum]];
+    const otherMedian = baseData.medians[other[0]];
+    const fitsOther =
+      fitsStroke(points, otherMedian, LENIENCY) &&
+      distanceFromStroke(points, otherMedian) < distanceFromStroke(points, expectedMedian);
+    return fitsOther ? other : null;
+  }
+
+  // Continues the quiz in the other order. `written` strokes are on the page.
+  async function switchOrder(written, remainingInNewOrder) {
+    const startedOn = char;
+    sequence = [...sequence.slice(0, written - 1), ...remainingInNewOrder];
+    const rearranged = {
+      strokes: sequence.map((strokeNum) => baseData.strokes[strokeNum]),
+      medians: sequence.map((strokeNum) => baseData.medians[strokeNum]),
+    };
+    // We are inside one of Hanzi Writer's own callbacks here. Waiting a moment
+    // lets it finish what it was doing before its character is replaced.
+    await Promise.resolve();
+    await giveWriter(rearranged);
+    if (char === startedOn) {
+      runQuiz(written);
+    }
+  }
+
+  // Starts (or restarts) the quiz for the current character, from a clean slate.
+  async function start() {
+    squigLayer.replaceChildren();
+    mistakes = 0;
+    hintShown = false;
+    handlers.onStart({ totalStrokes: baseData.strokes.length });
+    await useStandardOrder();
+    await setPrintedColor(INVISIBLE);
+    target.appendChild(squigLayer);
+    if (outlineVisible) {
+      writer.showOutline({ duration: 0 });
+    }
+    runQuiz(0);
+  }
+
+  // Runs Hanzi Writer's quiz on charData, beginning at stroke `startAt`.
+  function runQuiz(startAt) {
+    const totalStrokes = charData.strokes.length;
     // quiz() also cancels any quiz in progress.
     writer.quiz({
+      // Hanzi Writer remembers quiz options from one quiz to the next, so this
+      // must be given every time, not only when resuming partway.
+      quizStartStrokeNum: startAt,
       showHintAfterMisses: HINT_AFTER_MISSES,
       leniency: LENIENCY,
       // Hanzi Writer would otherwise flash the printed character when you finish.
@@ -134,7 +220,8 @@ export function createQuiz(target, size, handlers) {
         }
         handlers.onProgress({ strokesDone, totalStrokes, totalMistakes: mistakes });
       },
-      // Hanzi Writer rejected the stroke. It may still be a shortcut.
+      // Hanzi Writer rejected the stroke. It may still be a shortcut, or the
+      // next stroke of the character's other accepted order.
       onMistake: (stroke) => {
         if (drewShortcut(stroke)) {
           keepSquig(stroke.drawnPath.pathString);
@@ -146,6 +233,14 @@ export function createQuiz(target, size, handlers) {
           // One drawn stroke covered two textbook strokes.
           writer.skipQuizStroke();
           writer.skipQuizStroke();
+          return;
+        }
+        const otherOrder = otherOrderFor(stroke);
+        if (otherOrder) {
+          keepSquig(stroke.drawnPath.pathString);
+          const written = stroke.strokeNum + 1;
+          handlers.onProgress({ strokesDone: written, totalStrokes, totalMistakes: mistakes });
+          switchOrder(written, otherOrder);
           return;
         }
         mistakes += 1;
@@ -160,7 +255,11 @@ export function createQuiz(target, size, handlers) {
         });
       },
       onComplete: () => {
-        const passed = handlers.onComplete({ totalMistakes: mistakes, hintShown });
+        let order = null;
+        if (baseData.altOrder) {
+          order = isStandardOrder(sequence) ? 'moe' : 'mainland';
+        }
+        const passed = handlers.onComplete({ totalMistakes: mistakes, hintShown, order });
         setPrintedColor(referenceColor(passed));
       },
     });
@@ -176,7 +275,9 @@ export function createQuiz(target, size, handlers) {
         return false;
       }
       char = newChar;
+      baseData = data;
       charData = data;
+      sequence = data.strokes.map((stroke, index) => index);
 
       if (!writer) {
         writer = HanziWriter.create(target, char, {
@@ -198,7 +299,7 @@ export function createQuiz(target, size, handlers) {
           charDataLoader: (requestedChar, onLoad) => onLoad(charData),
         });
       } else {
-        await writer.setCharacter(char);
+        await giveWriter(data);
       }
 
       await start();
@@ -225,11 +326,13 @@ export function createQuiz(target, size, handlers) {
       setPrintedColor(referenceColor(passed));
     },
 
-    // Plays the correct stroke order, then starts the quiz again.
+    // Plays the stroke order, then starts the quiz again. For a character
+    // with two accepted orders this always shows the standard one.
     async animate() {
       writer.cancelQuiz();
       squigLayer.replaceChildren();
       handlers.onAnimateStart();
+      await useStandardOrder();
       await writer.hideCharacter({ duration: 0 });
       await setPrintedColor(INK_COLOR);
       writer.animateCharacter({

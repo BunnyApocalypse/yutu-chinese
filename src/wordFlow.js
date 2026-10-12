@@ -18,7 +18,7 @@ const TAP_TO_CONTINUE_DELAY_MS = 600;
 // As big as fits on the screen, leaving room for everything above and below.
 function chooseSize() {
   const fitsWidth = window.innerWidth - 32;
-  const fitsHeight = window.innerHeight - 460;
+  const fitsHeight = window.innerHeight - 500;
   return Math.max(200, Math.min(fitsWidth, fitsHeight, 640));
 }
 
@@ -56,7 +56,7 @@ function sum(numbers) {
 // elements: the page elements the flow controls:
 //   writingArea, wordRow, statusElement, noteElement,
 //   nextButton, restartButton, outlineButton, animateButton,
-//   verdictRow, missedButton, gotItButton
+//   verdictRow, missedButton, gotItButton, orderNote
 //
 // Returns { start, rebuild }.
 export function createWordFlow(elements) {
@@ -72,6 +72,7 @@ export function createWordFlow(elements) {
     verdictRow,
     missedButton,
     gotItButton,
+    orderNote,
   } = elements;
 
   // The word being written, as a list of characters, and where we are in it.
@@ -88,6 +89,8 @@ export function createWordFlow(elements) {
   //                         started over after the answer had been seen
   let suggestedPerChar = []; // the verdict the app proposed (true = passed)
   let passedPerChar = []; // the verdict that stands (true = passed)
+  let orderPerChar = []; // 'moe' or 'mainland' where a character has two
+  //                        accepted stroke orders, otherwise null
 
   // Mistakes on the current character so far in this attempt, and mistakes
   // from earlier attempts at it (before Restart or Animate was pressed).
@@ -146,6 +149,7 @@ export function createWordFlow(elements) {
       mistakesPerChar: [...mistakesPerChar],
       passedPerChar: [...passedPerChar],
       suggestedPerChar: [...suggestedPerChar],
+      orderPerChar: [...orderPerChar],
     };
   }
 
@@ -163,6 +167,7 @@ export function createWordFlow(elements) {
       }
       nextButton.hidden = true;
       verdictRow.hidden = true;
+      orderNote.hidden = true;
       renderWordRow();
       showProgress(1, totalStrokes);
       options.onCharStart?.();
@@ -172,8 +177,12 @@ export function createWordFlow(elements) {
       // While the last stroke's completion is being reported, onComplete takes over.
       showProgress(Math.min(strokesDone + 1, totalStrokes), totalStrokes);
     },
-    onComplete({ totalMistakes, hintShown }) {
+    onComplete({ totalMistakes, hintShown, order }) {
       charDone = true;
+      orderPerChar[position] = order;
+      // Writing the mainland order is accepted; the note only points out that
+      // the standard order is different.
+      orderNote.hidden = order !== 'mainland';
       tapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
       mistakesPerChar[position] = carriedMistakes + totalMistakes;
       hintPerChar[position] = hintPerChar[position] || hintShown;
@@ -213,6 +222,7 @@ export function createWordFlow(elements) {
     onAnimateStart() {
       nextButton.hidden = true;
       verdictRow.hidden = true;
+      orderNote.hidden = true;
       statusElement.textContent = 'Watch the stroke order…';
     },
   };
@@ -322,7 +332,8 @@ export function createWordFlow(elements) {
     //                  it out for no verdicts at all (Free practice).
     //   onCharStart(): a character starts (or starts over)
     //   onWordDone(result): the last character was finished. `result` has
-    //                  mistakes, mistakesPerChar, passedPerChar, suggestedPerChar
+    //                  mistakes, mistakesPerChar, passedPerChar,
+    //                  suggestedPerChar, orderPerChar
     //   onVerdictChange(result): the last character's verdict was overruled
     //   onContinue():  Next was pressed, or the writing area tapped, after the
     //                  word was finished
@@ -354,6 +365,7 @@ export function createWordFlow(elements) {
       peekedPerChar = [];
       suggestedPerChar = [];
       passedPerChar = [];
+      orderPerChar = [];
       if (options.hideOutline) {
         setOutlineVisible(false);
       }

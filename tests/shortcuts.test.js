@@ -142,6 +142,29 @@ test('the first stroke alone is never taken as the joined pair', () => {
   }
 });
 
+test('the second stroke alone is never taken as the joined pair', () => {
+  // Otherwise forgetting the first stroke of a pair would go unnoticed.
+  const random = makeRandom(4);
+  for (const { char, script, data, strokeNum } of joinablePairsInWordList()) {
+    const secondAlone = toPoints(data.medians[strokeNum + 1]);
+    for (const variation of VARIATIONS) {
+      const drawn = vary(secondAlone, variation, random);
+      assert.equal(
+        isShortcutStroke(data, strokeNum, drawn, LENIENCY),
+        false,
+        `${char} (${script}) stroke ${strokeNum + 1}, variation ${JSON.stringify(variation)}`,
+      );
+    }
+  }
+});
+
+test('a dot followed by a long stroke is not a joinable pair', () => {
+  // The last two strokes of 錢 in the Taiwan set: a short dot, then a long
+  // stroke starting right next to it.
+  const qian = charData('錢', 'traditional');
+  assert.equal(isJoinable(qian, 14), false);
+});
+
 test('a joined stroke is nearly always recognized', () => {
   const random = makeRandom(2);
   let trials = 0;

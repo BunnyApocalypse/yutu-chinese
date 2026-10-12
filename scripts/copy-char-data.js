@@ -6,7 +6,9 @@
 //   data/animcjk/graphicsZhHant.txt    →  public/char-data-tw/
 //
 // The second set holds Taiwan-standard forms of traditional characters; see
-// src/charData.js for how the two are used.
+// src/charData.js for how the two are used. Where a character has the same
+// strokes in both sets but in a different order, the second order is stored
+// with it (see strokeOrder.js).
 //
 // Runs automatically before `npm run dev` and `npm run build` (see the
 // "predev" and "prebuild" lines in package.json).
@@ -17,6 +19,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { findAlternativeOrder } from './strokeOrder.js';
 
 function fileNameFor(char) {
   return `${char.codePointAt(0).toString(16)}.json`;
@@ -64,17 +67,52 @@ const taiwanEntries = fs
 
 fs.mkdirSync(taiwanTarget, { recursive: true });
 
-// +1 for index.json written below.
-if (fs.readdirSync(taiwanTarget).length === taiwanEntries.length + 1) {
+// Raise this number whenever this script changes what it writes into the
+// Taiwan set's files. Copies made by an older version are then replaced.
+const TAIWAN_SET_VERSION = 2;
+
+// index.json lists the characters in the set (so the app knows which ones to
+// look for here without asking for files that don't exist) and records which
+// version of this script wrote the files.
+const indexFile = path.join(taiwanTarget, 'index.json');
+
+function taiwanSetIsUpToDate() {
+  try {
+    const index = JSON.parse(fs.readFileSync(indexFile, 'utf8'));
+    // +1 for index.json itself.
+    return (
+      index.version === TAIWAN_SET_VERSION &&
+      fs.readdirSync(taiwanTarget).length === taiwanEntries.length + 1
+    );
+  } catch {
+    return false; // no index.json yet, or it can't be read
+  }
+}
+
+if (taiwanSetIsUpToDate()) {
   console.log(`Stroke data already in ${taiwanTarget}, nothing to copy.`);
 } else {
+  let withSecondOrder = 0;
   for (const entry of taiwanEntries) {
     const data = { strokes: entry.strokes, medians: entry.medians };
+
+    // If the big set has the same strokes in another order, keep that order
+    // too, so the app can accept both.
+    const bigSetFile = path.join(packageFolder, `${entry.character}.json`);
+    if (fs.existsSync(bigSetFile)) {
+      const bigSetEntry = JSON.parse(fs.readFileSync(bigSetFile, 'utf8'));
+      const altOrder = findAlternativeOrder(entry, bigSetEntry);
+      if (altOrder) {
+        data.altOrder = altOrder;
+        withSecondOrder += 1;
+      }
+    }
     fs.writeFileSync(path.join(taiwanTarget, fileNameFor(entry.character)), JSON.stringify(data));
   }
-  // A list of the characters in this set, so the app knows which ones to look
-  // for here without asking for files that don't exist.
   const characters = taiwanEntries.map((entry) => entry.character).join('');
-  fs.writeFileSync(path.join(taiwanTarget, 'index.json'), JSON.stringify({ characters }));
-  console.log(`Copied stroke data for ${taiwanEntries.length} characters to ${taiwanTarget}.`);
+  fs.writeFileSync(indexFile, JSON.stringify({ version: TAIWAN_SET_VERSION, characters }));
+  console.log(
+    `Copied stroke data for ${taiwanEntries.length} characters to ${taiwanTarget} ` +
+      `(${withSecondOrder} with a second stroke order).`,
+  );
 }

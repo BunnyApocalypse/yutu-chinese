@@ -20,21 +20,38 @@
 // All coordinates here are in the character data's own units, a grid 1024
 // wide (see charData.js).
 
+import {
+  SAMPLE_COUNT,
+  toPoints,
+  distance,
+  lineLength,
+  resample,
+  averageDistance,
+  shapeOf,
+} from './lines.js';
+
 // ---- Which pairs are joinable ----
 
 // The first stroke must end within this distance of the start of the second.
 const MAX_GAP = 80;
 
-// What is left of the second stroke after the meeting point must be at least
-// this long. Joining a stroke to a dot or a tick changes its shape so little
-// that "joined" could not be told apart from "just the first stroke".
-const MIN_REST_LENGTH = 150;
+// A stroke often begins with a small lead-in before the point where the
+// previous stroke would run into it. Nobody draws that part when joining, so
+// it is left out of the joined shape. If more than this would be left out, the
+// second stroke really starts somewhere else and the pair is not joinable.
+const MAX_LEAD_IN = 80;
 
-// Joining must change the shape noticeably (see shapeOf below; the number is
-// an average distance between two shapes of length 1). Two strokes that
-// continue in a straight line, like the two halves of the horizontal in a
-// Taiwan-style 艹, look the same joined as the first one does alone, so they
-// cannot be told apart and are left out.
+// The first stroke, and what is left of the second after the meeting point,
+// must each be at least this long. Joining a stroke to a dot or a tick changes
+// its shape so little that "joined" could not be told apart from "just the
+// longer of the two", and a forgotten dot would pass unnoticed.
+const MIN_PART_LENGTH = 150;
+
+// Joining must change the shape noticeably compared with either stroke on its
+// own (see shapeOf in lines.js; the number is an average distance between two
+// shapes of length 1). Two strokes that continue in a straight line, like the
+// two halves of the horizontal in a Taiwan-style 艹, look the same joined as
+// one of them does alone, so they cannot be told apart and are left out.
 const MIN_SHAPE_DIFFERENCE = 0.08;
 
 // ---- Whether a drawn stroke is the joined pair ----
@@ -49,72 +66,9 @@ const MIN_LENGTH_RATIO = 0.6;
 const MAX_LENGTH_RATIO = 1.7;
 
 // The drawn stroke's shape must be this many times closer to the joined pair
-// than to the first stroke alone. Above 1 means "clearly closer", so a doubtful
+// than to either of the two strokes alone. Above 1 means "clearly closer", so a doubtful
 // stroke is not treated as joined.
 const SHAPE_MARGIN = 1.3;
-
-// Number of evenly spaced points both lines are reduced to before comparing.
-const SAMPLE_COUNT = 32;
-
-function distance(a, b) {
-  return Math.hypot(a.x - b.x, a.y - b.y);
-}
-
-function lineLength(points) {
-  let total = 0;
-  for (let i = 1; i < points.length; i++) {
-    total += distance(points[i - 1], points[i]);
-  }
-  return total;
-}
-
-// Returns `count` points spaced evenly along the line. A finger produces many
-// points where it moves slowly and few where it moves fast; this evens that
-// out so two lines can be compared point by point.
-function resample(points, count) {
-  const step = lineLength(points) / (count - 1);
-  const result = [points[0]];
-  let traveled = 0; // distance covered since the last point we emitted
-  for (let i = 1; i < points.length; i++) {
-    let from = points[i - 1];
-    const to = points[i];
-    let segment = distance(from, to);
-    while (segment > 0 && traveled + segment >= step && result.length < count - 1) {
-      const fraction = (step - traveled) / segment;
-      from = {
-        x: from.x + (to.x - from.x) * fraction,
-        y: from.y + (to.y - from.y) * fraction,
-      };
-      result.push(from);
-      segment = distance(from, to);
-      traveled = 0;
-    }
-    traveled += segment;
-  }
-  result.push(points[points.length - 1]);
-  return result;
-}
-
-// The average distance between two lines, point by point. Both must have the
-// same number of points.
-function averageDistance(lineA, lineB) {
-  let total = 0;
-  for (let i = 0; i < lineA.length; i++) {
-    total += distance(lineA[i], lineB[i]);
-  }
-  return total / lineA.length;
-}
-
-// The shape of a line with its position and size taken away: moved so it
-// starts at (0, 0) and scaled so its length is 1.
-function shapeOf(points) {
-  const start = points[0];
-  const length = lineLength(points) || 1;
-  return points.map((point) => ({
-    x: (point.x - start.x) / length,
-    y: (point.y - start.y) / length,
-  }));
-}
 
 // Describes how textbook strokes `strokeNum` and `strokeNum + 1` fit together.
 // Returns null if there is no following stroke; otherwise:
@@ -123,13 +77,13 @@ function shapeOf(points) {
 //           meet. A stroke often begins with a small lead-in that nobody draws
 //           when joining; that part is left out.
 //   gap:    how far apart the two are at the meeting point
+//   leadIn: the length of the part of the second stroke that was left out
 function describePair(charData, strokeNum) {
   if (strokeNum + 1 >= charData.medians.length) {
     return null;
   }
-  const toPoint = ([x, y]) => ({ x, y });
-  const first = charData.medians[strokeNum].map(toPoint);
-  const second = charData.medians[strokeNum + 1].map(toPoint);
+  const first = toPoints(charData.medians[strokeNum]);
+  const second = toPoints(charData.medians[strokeNum + 1]);
   const endOfFirst = first[first.length - 1];
 
   // The meeting point is looked for only near the start of the second stroke
@@ -145,6 +99,7 @@ function describePair(charData, strokeNum) {
     first,
     rest: second.slice(nearest),
     gap: distance(second[nearest], endOfFirst),
+    leadIn: lineLength(second.slice(0, nearest + 1)),
   };
 }
 
@@ -152,12 +107,17 @@ function describePair(charData, strokeNum) {
 // may be written as one stroke.
 export function isJoinable(charData, strokeNum) {
   const pair = describePair(charData, strokeNum);
-  if (pair === null || pair.gap > MAX_GAP || lineLength(pair.rest) < MIN_REST_LENGTH) {
+  if (pair === null || pair.gap > MAX_GAP || pair.leadIn > MAX_LEAD_IN) {
     return false;
   }
-  const joinedShape = shapeOf(resample([...pair.first, ...pair.rest], SAMPLE_COUNT));
-  const firstShape = shapeOf(resample(pair.first, SAMPLE_COUNT));
-  return averageDistance(joinedShape, firstShape) >= MIN_SHAPE_DIFFERENCE;
+  if (lineLength(pair.first) < MIN_PART_LENGTH || lineLength(pair.rest) < MIN_PART_LENGTH) {
+    return false;
+  }
+  const joinedShape = shapeOf(resample([...pair.first, ...pair.rest]));
+  return (
+    averageDistance(joinedShape, shapeOf(resample(pair.first))) >= MIN_SHAPE_DIFFERENCE &&
+    averageDistance(joinedShape, shapeOf(resample(pair.rest))) >= MIN_SHAPE_DIFFERENCE
+  );
 }
 
 // True if `drawnPoints` (a list of { x, y }) looks like textbook strokes
@@ -176,18 +136,25 @@ export function isShortcutStroke(charData, strokeNum, drawnPoints, leniency) {
     return false;
   }
 
-  const drawn = resample(drawnPoints, SAMPLE_COUNT);
-  const target = resample(reference, SAMPLE_COUNT);
+  const drawn = resample(drawnPoints);
+  const target = resample(reference);
 
-  // Is the shape more like the joined pair, or like the first stroke alone?
-  // This is what stops the first stroke on its own from being taken as the
-  // joined pair, which would make the app skip a stroke that was never
-  // written. It compares shapes only, ignoring size, because a first stroke
-  // drawn too big reaches about as far as the joined pair would.
+  // Is the shape more like the joined pair, or like one of the two strokes
+  // alone? This is what stops a single stroke from being taken as the joined
+  // pair, which would make the app skip a stroke that was never written. It
+  // compares shapes only, ignoring size, because a first stroke drawn too big
+  // reaches about as far as the joined pair would.
   const drawnShape = shapeOf(drawn);
   const likeJoined = averageDistance(drawnShape, shapeOf(target));
-  const likeFirstAlone = averageDistance(drawnShape, shapeOf(resample(first, SAMPLE_COUNT)));
-  if (likeJoined * SHAPE_MARGIN >= likeFirstAlone) {
+  const likeFirstAlone = averageDistance(drawnShape, shapeOf(resample(first)));
+  const likeSecondAlone = averageDistance(drawnShape, shapeOf(resample(rest)));
+  if (likeJoined * SHAPE_MARGIN >= Math.min(likeFirstAlone, likeSecondAlone)) {
+    return false;
+  }
+
+  // A joined stroke begins where the first stroke begins. One that begins
+  // nearer to where the second stroke takes over is the second stroke alone.
+  if (distance(drawn[0], first[0]) >= distance(drawn[0], rest[0])) {
     return false;
   }
 

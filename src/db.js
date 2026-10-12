@@ -12,8 +12,8 @@
 //                          now; 'tone', 'pinyin' and 'meaning' will follow.
 //                          The id is "<wordId>#<type>".
 //   reviews   key: id      { id, cardId, wordId, type, time, grade,
-//                            suggestedGrade, mistakesPerChar, hintShown,
-//                            peeked, script, log }
+//                            suggestedGrade, mistakesPerChar, passedPerChar,
+//                            suggestedPerChar, orderPerChar, script, log }
 //                          One per review, never deleted.
 //   settings  key: key     { key, value }
 //

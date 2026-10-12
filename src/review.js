@@ -96,6 +96,9 @@ export function createReview(elements, flow, getScript) {
       // proposed before any overruling.
       passedPerChar: result.passedPerChar,
       suggestedPerChar: result.suggestedPerChar,
+      // For characters with two accepted stroke orders, which one was
+      // written: 'moe' or 'mainland'. null for all other characters.
+      orderPerChar: result.orderPerChar,
       script: getScript(),
       log: chosen.log,
     };

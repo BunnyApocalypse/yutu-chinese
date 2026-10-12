@@ -23,6 +23,10 @@
 //   medians:    one list of [x, y] points per stroke, running down its middle.
 //               This is what a drawn stroke is graded against.
 //   radStrokes: which stroke numbers belong to the radical (big set only)
+//   altOrder:   Taiwan set only, and only for some characters: a second
+//               accepted stroke order, as a list of stroke numbers. The
+//               strokes themselves are listed in the order of Taiwan's
+//               Ministry of Education; altOrder is the mainland order.
 // Strokes are numbered from 0, in writing order. Coordinates run from 0 to
 // 1024 across, and from about -124 (bottom) to 900 (top) upwards.
 

@@ -32,6 +32,7 @@ const flow = createWordFlow({
   verdictRow: byId('verdict-row'),
   missedButton: byId('missed-button'),
   gotItButton: byId('got-it-button'),
+  orderNote: byId('order-note'),
 });
 
 const review = createReview(
