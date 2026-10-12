@@ -17,6 +17,81 @@ main {
   padding: 16px;
 }
 
+.tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.tabs button.selected {
+  border-color: #222;
+  background: #222;
+  color: #fff;
+}
+
+.review-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  max-width: 520px;
+  text-align: center;
+}
+
+.review-header p {
+  margin: 0;
+}
+
+.counts {
+  font-size: 0.9rem;
+  color: #6b6557;
+}
+
+.meaning {
+  font-size: 1.25rem;
+}
+
+.pinyin {
+  font-size: 1.1rem;
+  color: #3b6fb6;
+}
+
+.done-panel {
+  padding: 32px 16px;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+/* The same column layout as the page, for the part that is hidden when
+   there is nothing to review. */
+.study-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 0.9rem;
+  color: #6b6557;
+}
+
+select {
+  font: inherit;
+  min-height: 40px;
+  padding: 0 8px;
+  border: 1px solid #b9b2a3;
+  border-radius: 8px;
+  background: #fff;
+  color: #222;
+}
+
 .word-form {
   display: flex;
   gap: 8px;
@@ -73,11 +148,47 @@ main {
   border: 2px solid #3b6fb6;
 }
 
+.slot.passed {
+  border-color: #3b9c5a;
+  background: #dff1e4;
+}
+
+.slot.missed {
+  border-color: #c2452d;
+  background: #f9dfd9;
+}
+
+.status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 12px;
+  /* As tall as the verdict buttons, so the page doesn't jump when they appear */
+  min-height: 40px;
+}
+
 .status {
   margin: 0;
-  min-height: 1.5em;
   font-size: 1.1rem;
   text-align: center;
+}
+
+.verdict-row {
+  display: flex;
+  gap: 6px;
+}
+
+button.verdict.selected.passed {
+  border-color: #3b9c5a;
+  background: #3b9c5a;
+  color: #fff;
+}
+
+button.verdict.selected.missed {
+  border-color: #c2452d;
+  background: #c2452d;
+  color: #fff;
 }
 
 .writing-area {
@@ -110,6 +221,36 @@ button {
 
 button:active {
   background: #e9e4d8;
+}
+
+button.small {
+  min-height: 40px;
+  padding: 0 12px;
+  font-size: 0.9rem;
+}
+
+/* The four grade buttons share the row equally, so they always fit side by
+   side on a phone. Each shows the grade with the waiting time underneath. */
+.grade-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  width: 100%;
+  max-width: 420px;
+}
+
+button.grade {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 2px;
+  font-size: 0.95rem;
+}
+
+button.grade .wait {
+  font-size: 0.8rem;
+  opacity: 0.75;
 }
 
 button.primary {

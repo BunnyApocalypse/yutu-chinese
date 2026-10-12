@@ -1,208 +1,176 @@
-// Entry point: sets up the page and runs the flow of a word, one character
-// after another.
+// Entry point: sets up the page, the two modes (Review and Free practice),
+// the script setting and backups.
 
-import { createQuiz } from './quiz.js';
-import { loadCharData } from './charData.js';
+import seedText from './seed-words.tsv?raw'; // "?raw" makes Vite hand us the file's text
+import { getAll, putAll, getSetting, setSetting } from './db.js';
+import { parseWordList, wordId } from './wordList.js';
+import { createWordFlow } from './wordFlow.js';
+import { createReview } from './review.js';
+import { buildBackup, checkBackup, describeBackup, restoreBackup } from './backup.js';
 
-const wordForm = document.getElementById('word-form');
-const wordInput = document.getElementById('word-input');
-const noteElement = document.getElementById('note');
-const wordRow = document.getElementById('word-row');
-const statusElement = document.getElementById('status');
-const writingArea = document.getElementById('writing-area');
-const nextButton = document.getElementById('next-button');
-const restartButton = document.getElementById('restart-button');
-const outlineButton = document.getElementById('outline-button');
-const animateButton = document.getElementById('animate-button');
+const byId = (id) => document.getElementById(id);
 
-// The word being practiced, as a list of characters, and where we are in it.
-let chars = [];
-let position = 0;
-// Mistakes made on each character of the word, filled in as each is finished.
-let mistakesPerChar = [];
-// True once the current character has been completed.
-let charDone = false;
+const reviewTab = byId('review-tab');
+const practiceTab = byId('practice-tab');
+const reviewHeader = byId('review-header');
+const wordForm = byId('word-form');
+const wordInput = byId('word-input');
+const scriptSelect = byId('script-select');
+const exportButton = byId('export-button');
+const importButton = byId('import-button');
+const importFile = byId('import-file');
 
-// After a character is finished, tapping the writing area moves on, like the
-// Next button. Taps are ignored for this long first, so that a stray touch
-// right after the last stroke doesn't skip the comparison.
-const TAP_TO_CONTINUE_DELAY_MS = 600;
-// The time (in milliseconds, as given by Date.now()) from which a tap counts.
-let tapAllowedFrom = 0;
+const flow = createWordFlow({
+  writingArea: byId('writing-area'),
+  wordRow: byId('word-row'),
+  statusElement: byId('status'),
+  noteElement: byId('note'),
+  nextButton: byId('next-button'),
+  restartButton: byId('restart-button'),
+  outlineButton: byId('outline-button'),
+  animateButton: byId('animate-button'),
+  verdictRow: byId('verdict-row'),
+  missedButton: byId('missed-button'),
+  gotItButton: byId('got-it-button'),
+});
 
-let outlineVisible = false;
-let quiz = null;
+const review = createReview(
+  {
+    countsElement: byId('review-counts'),
+    meaningElement: byId('prompt-meaning'),
+    pinyinElement: byId('prompt-pinyin'),
+    pinyinButton: byId('pinyin-button'),
+    gradeRow: byId('grade-row'),
+    donePanel: byId('done-panel'),
+    doneMessage: byId('done-message'),
+    studyArea: byId('study-area'),
+  },
+  flow,
+  () => scriptSelect.value,
+);
 
-// As big as fits on the screen, leaving room for everything above and below.
-function chooseSize() {
-  const fitsWidth = window.innerWidth - 32;
-  const fitsHeight = window.innerHeight - 300;
-  return Math.max(200, Math.min(fitsWidth, fitsHeight, 640));
-}
-
-// Draws the 米字格 guide lines (two diagonals, one vertical, one horizontal).
-function drawGrid(svg, size) {
-  const half = size / 2;
-  const lines = [
-    [0, 0, size, size],
-    [size, 0, 0, size],
-    [half, 0, half, size],
-    [0, half, size, half],
-  ];
-  for (const [x1, y1, x2, y2] of lines) {
-    // SVG elements must be created with this namespace or the browser ignores them.
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', x1);
-    line.setAttribute('y1', y1);
-    line.setAttribute('x2', x2);
-    line.setAttribute('y2', y2);
-    line.setAttribute('stroke', '#e3ded2');
-    line.setAttribute('stroke-dasharray', '6 6');
-    svg.appendChild(line);
+// The first time the app runs, fill the database with the built-in word list.
+async function addBuiltInWordsIfEmpty() {
+  const existing = await getAll('words');
+  if (existing.length > 0) {
+    return;
   }
+  const now = Date.now();
+  const words = parseWordList(seedText).map((word, index) => ({
+    id: wordId(word),
+    ...word,
+    // `order` is the position in the list; new words are introduced in this order.
+    order: index,
+    addedAt: now,
+  }));
+  await putAll('words', words);
 }
 
-function pluralMistakes(count) {
-  return count === 1 ? '1 mistake' : `${count} mistakes`;
-}
+// ---- Modes ----
 
-function doneMessage(prefix, mistakes) {
-  return mistakes === 0 ? `${prefix}, no mistakes!` : `${prefix} with ${pluralMistakes(mistakes)}`;
-}
+let mode = 'review';
 
-// Shows the word's progress: finished characters are revealed, the current one
-// is marked, and the ones still to come are placeholders.
-function renderWordRow() {
-  wordRow.replaceChildren();
-  chars.forEach((char, index) => {
-    const slot = document.createElement('span');
-    const revealed = index < position || (index === position && charDone);
-    slot.textContent = revealed ? char : '·';
-    slot.className = index === position ? 'slot current' : 'slot';
-    wordRow.appendChild(slot);
+// Free practice: write whatever is in the text box. Nothing is saved.
+function startFreePractice() {
+  const text = wordInput.value;
+  return flow.start(text, {
+    continueLabel: 'Again',
+    onContinue: startFreePractice,
   });
 }
 
-const quizHandlers = {
-  onStart({ totalStrokes }) {
-    charDone = false;
-    nextButton.hidden = true;
-    renderWordRow();
-    statusElement.textContent = `Stroke 1 of ${totalStrokes} · 0 mistakes`;
-  },
-  onProgress({ strokesDone, totalStrokes, totalMistakes }) {
-    // While the last stroke's completion is being reported, onComplete takes over.
-    const current = Math.min(strokesDone + 1, totalStrokes);
-    statusElement.textContent =
-      `Stroke ${current} of ${totalStrokes} · ${pluralMistakes(totalMistakes)}`;
-  },
-  onComplete({ totalMistakes }) {
-    charDone = true;
-    tapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
-    mistakesPerChar[position] = totalMistakes;
-    renderWordRow();
-
-    const isLastChar = position === chars.length - 1;
-    if (isLastChar && chars.length > 1) {
-      const wordMistakes = mistakesPerChar.reduce((sum, count) => sum + count, 0);
-      statusElement.textContent = doneMessage('Word done', wordMistakes);
-    } else {
-      statusElement.textContent = doneMessage('Done', totalMistakes);
-    }
-    nextButton.textContent = isLastChar ? 'Again' : 'Next';
-    nextButton.hidden = false;
-  },
-  onAnimateStart() {
-    charDone = false;
-    nextButton.hidden = true;
-    statusElement.textContent = 'Watch the stroke order…';
-  },
-};
-
-// Sets up the writing area at a size that fits the screen. Also used to
-// rebuild it after the screen is rotated.
-function buildWritingArea() {
-  if (quiz) {
-    quiz.destroy();
+function setMode(newMode) {
+  mode = newMode;
+  const reviewing = mode === 'review';
+  reviewTab.classList.toggle('selected', reviewing);
+  practiceTab.classList.toggle('selected', !reviewing);
+  reviewHeader.hidden = !reviewing;
+  wordForm.hidden = reviewing;
+  if (reviewing) {
+    return review.activate();
   }
-  writingArea.replaceChildren();
-  const size = chooseSize();
-  writingArea.setAttribute('width', size);
-  writingArea.setAttribute('height', size);
-  drawGrid(writingArea, size);
-  quiz = createQuiz(writingArea, size, quizHandlers);
-  quiz.setOutlineVisible(outlineVisible);
+  review.deactivate();
+  return startFreePractice();
 }
 
-function showCurrentCharacter() {
-  return quiz.showCharacter(chars[position]);
-}
-
-// Begins practicing the typed text.
-async function startWord(text) {
-  // Array.from splits text into whole characters. (Plain text.split('') would
-  // cut some rare characters in half.) Spaces are dropped.
-  const typed = Array.from(text).filter((char) => char.trim() !== '');
-  if (typed.length === 0) {
-    return;
-  }
-
-  // Find out which characters have stroke data, loading it at the same time.
-  const data = await Promise.all(typed.map(loadCharData));
-  const usable = typed.filter((char, index) => data[index] !== null);
-  const skipped = typed.filter((char, index) => data[index] === null);
-
-  noteElement.textContent =
-    skipped.length > 0 ? `No stroke data for ${skipped.join(' ')}, so skipped.` : '';
-  if (usable.length === 0) {
-    return; // keep whatever was being practiced
-  }
-
-  chars = usable;
-  position = 0;
-  mistakesPerChar = [];
-  await showCurrentCharacter();
-}
+reviewTab.addEventListener('click', () => setMode('review'));
+practiceTab.addEventListener('click', () => setMode('practice'));
 
 wordForm.addEventListener('submit', (event) => {
   // Without this the browser would reload the page, as forms do by default.
   event.preventDefault();
-  startWord(wordInput.value);
+  startFreePractice();
   // Puts the on-screen keyboard away.
   wordInput.blur();
 });
 
-// Moves to the next character, or back to the start of the word after the last one.
-function goToNext() {
-  if (position < chars.length - 1) {
-    position += 1;
-  } else {
-    position = 0;
-    mistakesPerChar = [];
-  }
-  showCurrentCharacter();
-}
+// ---- Script setting ----
 
-nextButton.addEventListener('click', goToNext);
-
-// "pointerup" fires when a finger, stylus or mouse button is lifted. A plain
-// "click" listener would not work here: Hanzi Writer blocks the click that
-// browsers normally produce from a touch on the writing area.
-writingArea.addEventListener('pointerup', () => {
-  if (charDone && Date.now() >= tapAllowedFrom) {
-    goToNext();
+scriptSelect.addEventListener('change', async () => {
+  await setSetting('script', scriptSelect.value);
+  if (mode === 'review') {
+    review.refresh();
   }
 });
 
-restartButton.addEventListener('click', () => quiz.restart());
+// ---- Backups ----
 
-outlineButton.addEventListener('click', () => {
-  outlineVisible = !outlineVisible;
-  quiz.setOutlineVisible(outlineVisible);
-  outlineButton.textContent = outlineVisible ? 'Hide outline' : 'Show outline';
+exportButton.addEventListener('click', async () => {
+  const backup = await buildBackup();
+  // A Blob is a file held in memory. Pointing a link at it and "clicking" the
+  // link is how a web page saves a file to the device's Downloads folder.
+  const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  // Named with the local date and time, e.g. hanzi-trainer-backup-2026-10-12-1704.json
+  const now = new Date();
+  const twoDigits = (number) => String(number).padStart(2, '0');
+  const stamp =
+    `${now.getFullYear()}-${twoDigits(now.getMonth() + 1)}-${twoDigits(now.getDate())}` +
+    `-${twoDigits(now.getHours())}${twoDigits(now.getMinutes())}`;
+  link.download = `hanzi-trainer-backup-${stamp}.json`;
+  link.click();
+  URL.revokeObjectURL(link.href);
 });
 
-animateButton.addEventListener('click', () => quiz.animate());
+// The real file chooser is a hidden <input type="file">; the visible button opens it.
+importButton.addEventListener('click', () => importFile.click());
+
+importFile.addEventListener('change', async () => {
+  const file = importFile.files[0];
+  // Clear the chooser so picking the same file again still counts as a change.
+  importFile.value = '';
+  if (!file) {
+    return;
+  }
+
+  let backup;
+  try {
+    backup = JSON.parse(await file.text());
+    checkBackup(backup);
+  } catch (error) {
+    // JSON.parse fails with a technical message; checkBackup with a readable one.
+    const reason = error instanceof SyntaxError ? 'This file is not a Hanzi Trainer backup.' : error.message;
+    window.alert(`Nothing was changed.\n\n${reason}`);
+    return;
+  }
+
+  const onDevice = await buildBackup();
+  const confirmed = window.confirm(
+    'Replace everything on this device with the backup?\n\n' +
+      `In the backup: ${describeBackup(backup)}\n\n` +
+      `On this device now: ${describeBackup(onDevice)}\n\n` +
+      'This cannot be undone.',
+  );
+  if (!confirmed) {
+    return;
+  }
+  await restoreBackup(backup);
+  // Start afresh from the restored data.
+  window.location.reload();
+});
+
+// ---- Screen rotation ----
 
 // Rebuild the writing area when the screen is rotated. Only the width is
 // watched: on Android the on-screen keyboard changes the height every time it
@@ -213,11 +181,16 @@ window.addEventListener('resize', () => {
     return;
   }
   lastWidth = window.innerWidth;
-  buildWritingArea();
-  if (chars.length > 0) {
-    showCurrentCharacter();
-  }
+  flow.rebuild();
 });
 
-buildWritingArea();
-startWord(wordInput.value);
+// ---- Startup ----
+
+async function startUp() {
+  await addBuiltInWordsIfEmpty();
+  scriptSelect.value = await getSetting('script', 'traditional');
+  await review.load();
+  await setMode('review');
+}
+
+startUp();

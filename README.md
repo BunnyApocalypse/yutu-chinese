@@ -6,7 +6,16 @@ Stroke display and grading are done by [Hanzi Writer](https://hanziwriter.org/).
 
 ## Status
 
-Type any character or word and write it stroke by stroke. Your own handwriting stays on screen, and the printed character appears underneath when you finish so you can compare.
+- **Review:** you are shown a meaning and write the word stroke by stroke. Your own handwriting stays on screen, and the printed character appears underneath when you finish so you can compare. You then grade yourself (the app suggests a grade from your mistakes), and the [FSRS](https://github.com/open-spaced-repetition/ts-fsrs) scheduler decides when the word comes back.
+- **Free practice:** type any character or word and write it. Nothing is recorded.
+- Traditional or simplified, chosen with a switch.
+- A built-in list of about 100 common words to start from.
+
+## Your data
+
+Everything is stored in your browser on your device (IndexedDB). There is no account and no sync: each device, and each address you open the app from, has its own separate progress.
+
+Use **Export backup** to save everything as one file, and **Import backup** to load such a file on another device. Importing replaces what is on that device.
 
 ## Running it
 
@@ -15,6 +24,7 @@ You need [Node.js](https://nodejs.org/) 20.19 or newer.
 ```
 npm install      # once, downloads the dependencies
 npm run dev      # starts the dev server
+npm test         # runs the tests
 ```
 
 Then open:

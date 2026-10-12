@@ -26,7 +26,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - Use US English spelling everywhere: UI text, comments, identifiers, docs ("practice", "color", "recognize").
 - Keep code simple and direct. Prefer a few small, plainly named files over abstractions.
 - Comment anything non-obvious, and explain new concepts (browser APIs, tooling, PWA mechanics) in plain language when they first come up.
-- Ask before adding any dependency. The bar is high.
+- Ask before adding any dependency. The bar is high. Approved so far: `hanzi-writer`, `hanzi-writer-data`, `ts-fsrs`, and `vite` for development.
 - Work one milestone at a time. Propose a plan before writing code for a new milestone, and don't build ahead.
 
 ## Commands
@@ -36,17 +36,42 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - Both of these first run `scripts/copy-char-data.js` automatically (npm's `predev`/`prebuild` hooks), which copies the stroke data into `public/char-data/` if it isn't there yet.
 - `npm run preview`: serve the built `dist/` to check the production build.
 
-There are no tests yet.
+- `npm test`: run the tests in `tests/` with Node's built-in test runner (no extra dependency). They cover the plain-calculation code: scheduling, session planning, grade suggestion, pinyin formatting, word list parsing, backup checking. Anything touching the page or IndexedDB is not covered; verify that in a browser.
 
 ## Layout
 
 - `index.html`: the single page.
-- `src/main.js`: entry point; page setup, button wiring, and the flow of a word (one character after another).
-- `src/quiz.js`: the only file that imports Hanzi Writer. It reports plain results (strokes done, mistakes) through handler functions, so other code stays independent of the library. One Hanzi Writer instance is reused for all characters via `setCharacter()`.
+- `src/main.js`: entry point; the two modes (Review, Free practice), the script setting, backup buttons, first-run seeding.
+- `src/review.js`: Review mode. Shows the due word's meaning, runs the word flow, shows grade buttons, saves the result.
+- `src/wordFlow.js`: writing a word one character after another (slot row, status line, Restart / Outline / Animate / Next, tap to continue). Shared by both modes; tracks mistakes, hints and peeking per character, and in Review shows each character's verdict.
+- `src/quiz.js`: the only file that imports Hanzi Writer. It reports plain results (strokes done, mistakes, hint shown) through handler functions. One Hanzi Writer instance is reused for all characters via `setCharacter()`.
+- `src/scheduler.js`: the only file that imports `ts-fsrs`. `gradeOptions(fsrsState, now)` returns what each of the four grades would do to a card.
+- `src/session.js`: plain calculation, no page or database: which word is next (`planSession`), the suggested grade (`suggestGrade`), the 4:00 day boundary, the daily new-word limit.
+- `src/db.js`: small promise wrapper around IndexedDB. The store layout is documented at the top of the file.
+- `src/backup.js`: build, check and restore a backup file.
+- `src/wordList.js`: parses the four-column TSV word list format (same as Skritter's export) and converts numbered pinyin to tone marks.
+- `src/seed-words.tsv`: the built-in list of 109 common words, loaded into the database on first run. Hand-written, not from a frequency corpus.
 - `src/charData.js`: the only place stroke data is loaded from. `loadCharData(char)` fetches `char-data/<unicode number in hex>.json` and returns `null` when a character has no data.
 - `src/shortcuts.js`: recognizes handwriting shortcuts (two textbook strokes written as one).
 - `src/style.css`: styles, phone-first.
 - `scripts/copy-char-data.js`: copies stroke data from `node_modules/hanzi-writer-data/` to `public/char-data/` (git-ignored), renaming `學.json` to `5b78.json`.
+- `tests/logic.test.js`: tests for the plain-calculation code.
+
+## Cards, scheduling and storage
+
+- **Four card types per word, as in Skritter:** `writing` (shown the meaning, write the characters), `tone`, `pinyin` and `meaning` (each shown the characters). Only `writing` is built. Each card has its own schedule; the `cards` store is keyed `<wordId>#<type>` so the others can be added without changing storage.
+- **Writing prompts show the meaning only.** The owner decided pinyin must not be given. A "Show pinyin" button reveals it for near-synonyms and does not affect the grade; the pinyin is shown once the word is finished. Glosses in word lists must therefore be distinguishable from each other.
+- **One writing card per word.** A setting chooses the script written (traditional or simplified); the schedule is shared.
+- **FSRS** with default parameters (90% target retention, learning steps of 1 and 10 minutes, fuzz on).
+- **Each character gets a pass/fail verdict, and one missed character fails the word.** After a character is written, its slot turns green or red and two buttons (Missed / Got it) let the owner overrule the proposal. `judgeChar` (`src/session.js`) proposes "missed" if a hint flashed, the outline or animation was used, a finished character was restarted, or mistakes exceed a quarter of the character's strokes (one slip is always forgiven).
+- **Word grade:** `suggestGrade` proposes Again if any character is missed, Hard if there were any mistakes, otherwise Good. Easy is never suggested. The owner can pick any of the four; tapping the writing area accepts the suggestion. Overruling the last character's verdict updates the suggestion live.
+- Reviews store both the final verdicts (`passedPerChar`) and the proposed ones (`suggestedPerChar`), plus `mistakesPerChar`.
+- **Session order:** due cards first (longest overdue first), then new words in list order, 10 new per day, day starting at 4:00.
+- **Every review is logged** in the `reviews` store and never deleted. This is what a future FSRS parameter fit, and merging between devices, will work from.
+- **IDs must be the same on every device.** A word's ID is `<traditional>|<pinyin>`; review IDs are random. Never use auto-incrementing keys: two devices would hand out the same numbers, making a later merge impossible.
+- **Dates are stored as numbers** (milliseconds, like `Date.now()`), and FSRS state as plain JSON with ISO date strings, so records go into a backup file unchanged.
+- **No sync.** IndexedDB belongs to one browser on one device at one address, so the phone and tablet have separate progress, and moving to GitHub Pages starts empty. Export/Import backup moves the whole database as one JSON file; import replaces everything (no merge yet). The backup has a `version` number: raise it and keep reading old versions if the shape changes.
+- **Changing the store layout** means raising `DATABASE_VERSION` in `src/db.js` and handling existing databases in `onupgradeneeded`, and usually raising the backup version too.
 
 ## How the must-haves are implemented
 
@@ -55,6 +80,12 @@ There are no tests yet.
 - **Leniency:** the `LENIENCY` constant in `src/quiz.js`.
 
 ## Things that are easy to get wrong
+
+- **The stroke data's traditional characters are not Taiwan-standard forms.** `hanzi-writer-data` (from Make Me a Hanzi) draws 為 as 爲 (12 strokes), 說 as 説, 辶 with 3 strokes and 艹 with 3 strokes. The owner wants Taiwan forms. The animCJK project's `graphicsZhHant.txt` has Taiwan-style data in the same format for 1,013 characters (Arphic Public License); the MOE's own data is CC BY-NC-ND and cannot be converted and redistributed. Not yet resolved; see the roadmap.
+
+- `crypto.randomUUID()` only exists on HTTPS or localhost, so it fails on the LAN dev address. `randomId()` in `src/db.js` uses `crypto.getRandomValues()`, which works everywhere.
+- The four grade buttons must fit side by side at phone width, and the whole review screen should fit without scrolling. The writing area's size is worked out in `chooseSize` (`src/wordFlow.js`) by reserving a fixed height for everything else; adjust that number when adding rows to the screen.
+- In Review, the outline is switched off at the start of every word. Left on, it would count as peeking and make every suggestion "Again".
 
 - Vite's dev server answers a request for a missing file with the app's HTML page and status 200, not a 404. `loadCharData` therefore treats "not valid JSON" as "no stroke data".
 - Never create a new Hanzi Writer per character: each instance adds touch listeners to the writing area and never removes them. Use `setCharacter()`. The one exception is rebuilding the writing area after a screen rotation, which is rare.
@@ -77,8 +108,10 @@ The owner wants to bring their Skritter data across eventually rather than start
 1. **Done:** one hardcoded character, stroke-by-stroke quiz with grading, reachable from a phone over the LAN.
 2. **Done:** raw squigs, lenient grading, optional 2-stroke 子 (in 學 only).
 3. **Done:** practice any typed character or multi-character word; stroke data loaded on demand.
-4. Import the Skritter word list (TSV: simplified, traditional, pinyin, definition) into IndexedDB; quiz from it with pinyin and definition as the prompt.
-5. Shortcuts for every character, not just 學 (candidate: allow joining any two consecutive strokes that meet end to start; or explicit rules per component).
-6. Spaced-repetition scheduling.
-7. PWA: manifest, service worker, GitHub Pages deploy, installable and offline on the phone.
-8. Skritter scheduling data, if the GDPR request (sent 2026-10-12) yields it.
+4. **Done:** FSRS scheduling of writing cards on a built-in word list, IndexedDB storage, backup export/import.
+5. Taiwan-standard stroke data for traditional characters (overlay animCJK zh-Hant where available; depends on the script setting because characters shared by both scripts differ too).
+6. The other card types: tone, pinyin (with zhuyin as an alternative), meaning.
+7. Shortcuts for every character, not just 學 (candidate: allow joining any two consecutive strokes that meet end to start; or explicit rules per component).
+8. PWA: manifest, service worker, GitHub Pages deploy, installable and offline on the phone.
+9. Import the Skritter word list (TSV) and, if the GDPR request (sent 2026-10-12) yields it, its scheduling data. The owner does not want the word list imported without scheduling data.
+10. Merge backups between devices instead of replacing; a settings screen (new words per day, target retention).

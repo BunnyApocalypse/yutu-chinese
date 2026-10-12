@@ -31,7 +31,7 @@ const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 // handlers: functions called as the quiz progresses
 //   onStart({ totalStrokes })
 //   onProgress({ strokesDone, totalStrokes, totalMistakes })
-//   onComplete({ totalMistakes })
+//   onComplete({ totalMistakes, hintShown })
 //   onAnimateStart()
 //
 // Returns an object with functions to control the quiz. Call showCharacter()
@@ -52,6 +52,8 @@ export function createQuiz(target, size, handlers) {
   // We count mistakes ourselves rather than using Hanzi Writer's count, because
   // Hanzi Writer counts a shortcut stroke as a mistake before we recognize it.
   let mistakes = 0;
+  // True once a correct stroke has been flashed as a hint for this character.
+  let hintShown = false;
 
   let outlineVisible = false;
 
@@ -88,6 +90,7 @@ export function createQuiz(target, size, handlers) {
     const totalStrokes = charData.strokes.length;
     squigLayer.replaceChildren();
     mistakes = 0;
+    hintShown = false;
     handlers.onStart({ totalStrokes });
     await setPrintedColor(INVISIBLE);
     // Later elements in an SVG are drawn on top. Hanzi Writer adds its own
@@ -131,6 +134,10 @@ export function createQuiz(target, size, handlers) {
           return;
         }
         mistakes += 1;
+        // mistakesOnStroke counts the misses on this one stroke, including this one.
+        if (stroke.mistakesOnStroke >= HINT_AFTER_MISSES) {
+          hintShown = true;
+        }
         handlers.onProgress({
           strokesDone: stroke.strokeNum,
           totalStrokes,
@@ -139,7 +146,7 @@ export function createQuiz(target, size, handlers) {
       },
       onComplete: () => {
         setPrintedColor(REFERENCE_COLOR);
-        handlers.onComplete({ totalMistakes: mistakes });
+        handlers.onComplete({ totalMistakes: mistakes, hintShown });
       },
     });
   }
