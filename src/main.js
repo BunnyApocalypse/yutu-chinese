@@ -2,7 +2,7 @@
 // settings and backups.
 
 import seedText from './seed-words.tsv?raw'; // "?raw" makes Vite hand us the file's text
-import { getAll, putAll } from './db.js';
+import { getAll, putAll, getSetting, setSetting } from './db.js';
 import { parseWordList, wordId } from './wordList.js';
 import { createWordFlow } from './wordFlow.js';
 import { createToneFlow } from './toneFlow.js';
@@ -51,21 +51,37 @@ const recallCard = createRecallCard(byId('card-face'));
 let settings = null;
 let review = null;
 
-// The first time the app runs, fill the database with the built-in word list.
-async function addBuiltInWordsIfEmpty() {
+// Raise this number whenever seed-words.tsv changes, so that devices which
+// already have the built-in words pick up the changes.
+const BUILT_IN_LIST_VERSION = 2;
+
+// The first time the app runs, fills the database with the built-in word
+// list. Later, when the list has changed, brings the stored copies of those
+// words up to date without touching their cards or anything else.
+async function addOrUpdateBuiltInWords() {
   const existing = await getAll('words');
-  if (existing.length > 0) {
-    return;
+  const builtIn = parseWordList(seedText);
+
+  if (existing.length === 0) {
+    const now = Date.now();
+    const words = builtIn.map((word, index) => ({
+      id: wordId(word),
+      ...word,
+      // `order` is the position in the list; new words are introduced in this order.
+      order: index,
+      addedAt: now,
+    }));
+    await putAll('words', words);
+  } else if ((await getSetting('builtInListVersion', 1)) < BUILT_IN_LIST_VERSION) {
+    const stored = new Map(existing.map((word) => [word.id, word]));
+    const updated = builtIn
+      .filter((word) => stored.has(wordId(word)))
+      // Keep the stored record's own fields (id, order, addedAt) and take the
+      // list's current wording and readings.
+      .map((word) => ({ ...stored.get(wordId(word)), ...word }));
+    await putAll('words', updated);
   }
-  const now = Date.now();
-  const words = parseWordList(seedText).map((word, index) => ({
-    id: wordId(word),
-    ...word,
-    // `order` is the position in the list; new words are introduced in this order.
-    order: index,
-    addedAt: now,
-  }));
-  await putAll('words', words);
+  await setSetting('builtInListVersion', BUILT_IN_LIST_VERSION);
 }
 
 // ---- Modes ----
@@ -192,7 +208,7 @@ window.addEventListener('resize', () => {
 // ---- Startup ----
 
 async function startUp() {
-  await addBuiltInWordsIfEmpty();
+  await addOrUpdateBuiltInWords();
 
   settings = await createSettings(
     {
@@ -200,6 +216,7 @@ async function startUp() {
       openButton: byId('settings-button'),
       closeButton: byId('settings-close'),
       scriptSelect: byId('script-select'),
+      pronunciationSelect: byId('pronunciation-select'),
       newWordsInput: byId('new-words-input'),
       typeCheckboxes: [...document.querySelectorAll('#settings-panel [data-card-type]')],
     },

@@ -1,7 +1,7 @@
 // Tone cards: you see the word and give the tone of each character in turn.
 
 import { formatPinyin } from './wordList.js';
-import { TONE_LABELS } from './tones.js';
+import { TONE_LABELS, describeReading } from './tones.js';
 
 // After a right answer, the next character comes up by itself after this long.
 const MOVE_ON_AFTER_MS = 500;
@@ -34,6 +34,9 @@ export function createToneFlow(elements) {
   // was right.
   let givenTones = [];
   let passedPerChar = [];
+  // True where the tone given was accepted only as a variant (see toneAnswers
+  // in tones.js), not because it is the tone listed.
+  let variantPerChar = [];
   // 'asking':  waiting for a tone
   // 'right':   just answered correctly; about to move on by itself
   // 'wrong':   answered incorrectly; waiting for a tap
@@ -81,12 +84,27 @@ export function createToneFlow(elements) {
     renderWordRow();
     const wrong = passedPerChar.filter((passed) => !passed).length;
     statusElement.textContent = wrong === 0 ? 'All tones right' : `${wrong} wrong`;
-    cardFace.replaceChildren(
-      faceWord(chars.join('')),
-      paragraph('face-pinyin', formatPinyin(current.word.pinyin)),
-      paragraph('face-meaning', current.word.definition),
-    );
-    current.onDone({ givenTones: [...givenTones], passedPerChar: [...passedPerChar] });
+    const described = describeReading(current.reading);
+    const parts = [faceWord(chars.join('')), paragraph('face-pinyin', described.main)];
+    if (described.other) {
+      parts.push(paragraph('face-hint', described.other));
+    }
+    parts.push(paragraph('face-meaning', current.word.definition));
+    if (variantPerChar.includes(true)) {
+      // Accepted, but not what is listed: say so, so the listed tone is learned.
+      parts.push(
+        paragraph(
+          'face-note',
+          `Accepted as a regional or neutral-tone variant. Listed: ${described.main}.`,
+        ),
+      );
+    }
+    cardFace.replaceChildren(...parts);
+    current.onDone({
+      givenTones: [...givenTones],
+      passedPerChar: [...passedPerChar],
+      variantPerChar: [...variantPerChar],
+    });
   }
 
   function moveOn() {
@@ -105,9 +123,11 @@ export function createToneFlow(elements) {
       return;
     }
     const expected = current.answers[position];
-    const passed = expected.tones.includes(tone);
+    const listed = expected.tones.includes(tone);
+    const passed = listed || expected.variantTones.includes(tone);
     givenTones[position] = tone;
     passedPerChar[position] = passed;
+    variantPerChar[position] = passed && !listed;
     renderWordRow();
 
     // Show the syllable with its tone mark, green or red.
@@ -155,8 +175,10 @@ export function createToneFlow(elements) {
     // options:
     //   word:    the word record
     //   script:  'traditional' or 'simplified'
+    //   reading: which reading to show (from readingsFor in tones.js)
     //   answers: one entry per character, from toneAnswers() in tones.js
-    //   onDone({ givenTones, passedPerChar }): every character was answered
+    //   onDone({ givenTones, passedPerChar, variantPerChar }): every
+    //            character was answered
     //   onContinue(): the card was tapped after that
     start(options) {
       clearTimeout(moveOnTimer);
@@ -165,6 +187,7 @@ export function createToneFlow(elements) {
       position = 0;
       givenTones = [];
       passedPerChar = [];
+      variantPerChar = [];
       ask();
     },
 

@@ -265,6 +265,12 @@ button.verdict.selected.missed {
   font-size: 1.1rem;
 }
 
+.face-note {
+  font-size: 0.85rem;
+  line-height: 1.3;
+  color: #8a5a00;
+}
+
 .tone-buttons button {
   min-width: 52px;
   font-size: 1.6rem;

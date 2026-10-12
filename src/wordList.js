@@ -4,6 +4,10 @@
 // by tabs: simplified, traditional, pinyin, definition. This is the format of
 // Skritter's TSV export, and of the built-in list in seed-words.tsv.
 //
+// An optional fifth column gives the word's reading in Taiwan where that
+// differs from the pinyin column, which holds the mainland reading. Either
+// column may list several readings separated by commas.
+//
 // Pinyin in these lists is written with tone numbers and "v" for ü, for
 // example "nv3'er2" for nǚ'ér. Tone 5 is the neutral tone.
 
@@ -16,8 +20,12 @@ export function parseWordList(text) {
     if (columns.length < 4 || columns[0] === '' || columns[1] === '') {
       continue;
     }
-    const [simplified, traditional, pinyin, definition] = columns;
-    words.push({ simplified, traditional, pinyin, definition });
+    const [simplified, traditional, pinyin, definition, pinyinTaiwan] = columns;
+    const word = { simplified, traditional, pinyin, definition };
+    if (pinyinTaiwan) {
+      word.pinyinTaiwan = pinyinTaiwan;
+    }
+    words.push(word);
   }
   return words;
 }

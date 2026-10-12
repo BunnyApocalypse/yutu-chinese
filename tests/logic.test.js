@@ -17,7 +17,10 @@ import {
   CARD_TYPES,
   SIBLING_GAP_MS,
 } from '../src/session.js';
-import { splitSyllables, toneAnswers } from '../src/tones.js';
+import { splitSyllables, toneAnswers, readingsFor } from '../src/tones.js';
+
+// The tone table the app uses (see data/cedict/README.md).
+const toneTable = JSON.parse(fs.readFileSync('data/cedict/tones.json', 'utf8'));
 import { parseWordList, wordId, formatPinyin } from '../src/wordList.js';
 import { checkBackup } from '../src/backup.js';
 
@@ -220,25 +223,90 @@ test('pinyin is split into one syllable per character', () => {
 });
 
 test('tone answers line up with the characters', () => {
-  assert.deepEqual(toneAnswers('xue2xiao4', 2), [
-    { syllable: 'xue2', tones: [2] },
-    { syllable: 'xiao4', tones: [4] },
+  assert.deepEqual(toneAnswers(['學', '校'], 'xue2xiao4', null, null), [
+    { syllable: 'xue2', tones: [2], variantTones: [] },
+    { syllable: 'xiao4', tones: [4], variantTones: [] },
   ]);
-  // Several listed readings: any of their tones is accepted.
-  assert.deepEqual(toneAnswers('shan1, shan4', 1), [{ syllable: 'shan1', tones: [1, 4] }]);
-  assert.deepEqual(toneAnswers('xing1qi1, xing1qi2', 2)[1], { syllable: 'qi1', tones: [1, 2] });
+  // Several listed readings: any of their tones is simply right.
+  assert.deepEqual(toneAnswers(['扇'], 'shan1, shan4', null, null)[0].tones, [1, 4]);
   // A reading that doesn't fit the characters is left out; if none fits,
   // there is no tone card.
-  assert.deepEqual(toneAnswers('yi1dian3r5, yi1dianr3', 3).map((a) => a.syllable), ['yi1', 'dian3', 'r5']);
-  assert.equal(toneAnswers('yi1dianr3', 3), null);
-  assert.equal(toneAnswers('', 2), null);
+  const erhua = toneAnswers(['一', '點', '兒'], 'yi1dian3r5, yi1dianr3', null, null);
+  assert.deepEqual(erhua.map((answer) => answer.syllable), ['yi1', 'dian3', 'r5']);
+  assert.equal(toneAnswers(['一', '點', '兒'], 'yi1dianr3', null, null), null);
+  assert.equal(toneAnswers(['學', '校'], '', null, null), null);
 });
 
-test('every word in the built-in list can have a tone card', () => {
+test('the pronunciation setting decides which reading is expected', () => {
+  const week = { traditional: '星期', pinyin: 'xing1qi1', pinyinTaiwan: 'xing1qi2' };
+  assert.deepEqual(readingsFor(week, 'mainland', null), {
+    primary: 'xing1qi1',
+    other: 'xing1qi2',
+    otherLabel: 'Taiwan',
+  });
+  assert.deepEqual(readingsFor(week, 'taiwan', null), {
+    primary: 'xing1qi2',
+    other: 'xing1qi1',
+    otherLabel: 'mainland',
+  });
+  // A word with no Taiwan reading listed is the same under both settings.
+  const school = { traditional: '學校', pinyin: 'xue2xiao4' };
+  assert.equal(readingsFor(school, 'taiwan', toneTable).primary, 'xue2xiao4');
+  assert.equal(readingsFor(school, 'taiwan', toneTable).other, null);
+  // The tone table supplies Taiwan readings for words that don't list one.
+  const garbage = { traditional: '垃圾', pinyin: 'la1ji1' };
+  assert.equal(readingsFor(garbage, 'taiwan', toneTable).primary, 'le4se4');
+  assert.equal(readingsFor(garbage, 'mainland', toneTable).other, 'le4se4');
+});
+
+test("the other region's tone is accepted as a variant", () => {
+  // Expecting the mainland reading, the Taiwan tone is a variant, and the
+  // other way round.
+  assert.deepEqual(toneAnswers(['星', '期'], 'xing1qi1', 'xing1qi2', null)[1], {
+    syllable: 'qi1',
+    tones: [1],
+    variantTones: [2],
+  });
+  assert.deepEqual(toneAnswers(['星', '期'], 'xing1qi2', 'xing1qi1', null)[1], {
+    syllable: 'qi2',
+    tones: [2],
+    variantTones: [1],
+  });
+  // A tone in neither reading is not accepted at all.
+  const answer = toneAnswers(['星', '期'], 'xing1qi1', 'xing1qi2', toneTable)[1];
+  assert.ok(!answer.tones.includes(4) && !answer.variantTones.includes(4));
+});
+
+test('the tone table adds regional and neutral-tone variants', () => {
+  // 期 is qī on the mainland and qí in Taiwan, even where the word itself
+  // lists no Taiwan reading.
+  assert.deepEqual(toneAnswers(['日', '期'], 'ri4qi1', null, toneTable)[1].variantTones, [2]);
+  // Where the list says neutral, the character's own tone is accepted too.
+  assert.deepEqual(toneAnswers(['朋', '友'], 'peng2you5', null, toneTable)[1], {
+    syllable: 'you5',
+    tones: [5],
+    variantTones: [3],
+  });
+  // A full tone in the list is not loosened to neutral.
+  assert.deepEqual(toneAnswers(['學', '校'], 'xue2xiao4', null, toneTable)[1].variantTones, []);
+  // Without the table, only the listed tone counts.
+  assert.deepEqual(toneAnswers(['朋', '友'], 'peng2you5', null, null)[1].variantTones, []);
+});
+
+test('every word in the built-in list can have a tone card, under both settings', () => {
   const words = parseWordList(fs.readFileSync('src/seed-words.tsv', 'utf8'));
+  let withTaiwanReading = 0;
   for (const word of words) {
-    assert.ok(toneAnswers(word.pinyin, Array.from(word.traditional).length), word.traditional);
+    const chars = Array.from(word.traditional);
+    for (const pronunciation of ['mainland', 'taiwan']) {
+      const { primary, other } = readingsFor(word, pronunciation, toneTable);
+      assert.ok(toneAnswers(chars, primary, other, toneTable), `${word.traditional} (${pronunciation})`);
+    }
+    if (word.pinyinTaiwan) {
+      withTaiwanReading += 1;
+    }
   }
+  assert.ok(withTaiwanReading >= 10);
 });
 
 test('a character is missed after a hint, peeking, or too many mistakes', () => {
@@ -301,6 +369,12 @@ test('the built-in word list is well formed', () => {
       assert.ok(fs.existsSync(file), `${word.traditional}: no stroke data for ${char}`);
     }
   }
+});
+
+test('a fifth column gives the Taiwan reading', () => {
+  const words = parseWordList('星期\t星期\txing1qi1\tweek\txing1qi2\n学\t學\txue2\tto learn\n');
+  assert.equal(words[0].pinyinTaiwan, 'xing1qi2');
+  assert.equal('pinyinTaiwan' in words[1], false);
 });
 
 test('word list parsing skips incomplete lines', () => {

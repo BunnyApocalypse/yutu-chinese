@@ -1,7 +1,7 @@
 // Meaning and pinyin cards: you see the word, recall its meaning or its
 // reading, tap to see the answer, and grade yourself.
 
-import { formatPinyin } from './wordList.js';
+import { describeReading } from './tones.js';
 
 // A tap right after the answer appears is probably the same tap that revealed
 // it; ignore taps for this long.
@@ -31,11 +31,17 @@ export function createRecallCard(cardFace) {
   function reveal() {
     revealed = true;
     tapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
-    const { word, ask } = current;
-    const pinyin = paragraph('face-pinyin', formatPinyin(word.pinyin));
+    const { word, ask, reading } = current;
+    const described = describeReading(reading);
+    const pinyin = [paragraph('face-pinyin', described.main)];
+    if (described.other) {
+      pinyin.push(paragraph('face-hint', described.other));
+    }
     const meaning = paragraph('face-meaning', word.definition);
     // The thing that was asked for comes first.
-    cardFace.querySelector('.face-hint').replaceWith(...(ask === 'meaning' ? [meaning, pinyin] : [pinyin, meaning]));
+    cardFace
+      .querySelector('.face-hint')
+      .replaceWith(...(ask === 'meaning' ? [meaning, ...pinyin] : [...pinyin, meaning]));
     current.onReveal();
   }
 
@@ -55,9 +61,10 @@ export function createRecallCard(cardFace) {
     // Shows a card.
     //
     // options:
-    //   word:   the word record
-    //   script: 'traditional' or 'simplified'
-    //   ask:    'meaning' or 'pinyin'
+    //   word:    the word record
+    //   script:  'traditional' or 'simplified'
+    //   ask:     'meaning' or 'pinyin'
+    //   reading: which reading to show (from readingsFor in tones.js)
     //   onReveal():   the answer was shown
     //   onContinue(): the card was tapped again after the answer was shown
     start(options) {

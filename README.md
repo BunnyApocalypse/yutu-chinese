@@ -16,7 +16,7 @@ Stroke display and grading are done by [Hanzi Writer](https://hanziwriter.org/).
 - Traditional or simplified, chosen with a switch. Traditional uses Taiwan-standard forms and stroke order; where the mainland stroke order uses the same strokes, that is accepted too.
 - Two strokes written without lifting the pen (such as the hook of 子) are accepted where one runs into the next.
 - A built-in list of about 100 common words to start from.
-- Settings for new words per day and which kinds of card you want.
+- Settings for new words per day, which kinds of card you want, and Taiwan or mainland pronunciation. Tone cards accept both regions' tones.
 
 ## Your data
 
@@ -58,5 +58,7 @@ The stroke data is **not** covered by the GPL. It is separate material under the
 
 - `data/animcjk/` (see the README in that folder)
 - the `hanzi-writer-data` package, downloaded by `npm install`
+
+The tone table in `data/cedict/` is adapted from [CC-CEDICT](https://cc-cedict.org/wiki/) and is under the Creative Commons Attribution-ShareAlike 4.0 license (see the README in that folder).
 
 The libraries the app uses, [Hanzi Writer](https://github.com/chanind/hanzi-writer) and [ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs), are under the MIT license, which is compatible with the GPL.

@@ -12,8 +12,7 @@
 import { getAll, saveReview, randomId } from './db.js';
 import { gradeOptions, GRADES, AGAIN, GOOD } from './scheduler.js';
 import { planSession, suggestGrade, judgeChar, formatInterval, cardId } from './session.js';
-import { formatPinyin } from './wordList.js';
-import { toneAnswers } from './tones.js';
+import { toneAnswers, readingsFor, describeReading } from './tones.js';
 
 const TYPE_LABELS = {
   writing: 'Writing',
@@ -59,6 +58,9 @@ export function createReview(elements, flows, settings) {
   let words = [];
   // Card ID → card, for every card that has been studied.
   const cards = new Map();
+  // The tone table (see data/cedict/README.md), loaded at startup. Supplies
+  // Taiwan readings and tone variants.
+  let toneTable = null;
   // Words whose characters turned out to have no stroke data. They can't have
   // a writing card; left out for this session.
   const unwritable = new Set();
@@ -97,8 +99,23 @@ export function createReview(elements, flows, settings) {
     flows.recall.stop();
   }
 
+  // Which reading of a word to show and expect, going by the pronunciation setting.
+  function readingOf(word) {
+    return readingsFor(word, settings.pronunciation, toneTable);
+  }
+
+  // The tone answers for a word, or null if it can't have a tone card. The
+  // tone table is keyed by traditional characters, whatever script is shown.
+  function toneAnswersOf(word) {
+    const reading = readingOf(word);
+    return toneAnswers(Array.from(word.traditional), reading.primary, reading.other, toneTable);
+  }
+
   function showPinyin() {
-    pinyinElement.textContent = formatPinyin(current.word.pinyin);
+    const described = describeReading(readingOf(current.word));
+    pinyinElement.textContent = described.other
+      ? `${described.main} (${described.other})`
+      : described.main;
     pinyinElement.hidden = false;
     pinyinButton.hidden = true;
   }
@@ -222,15 +239,21 @@ export function createReview(elements, flows, settings) {
 
   function showToneCard() {
     const { word } = current;
-    const chars = Array.from(word[settings.script]);
     flows.tone.start({
       word,
       script: settings.script,
-      answers: toneAnswers(word.pinyin, chars.length),
-      onDone({ givenTones, passedPerChar }) {
+      reading: readingOf(word),
+      answers: toneAnswersOf(word),
+      onDone({ givenTones, passedPerChar, variantPerChar }) {
         // One wrong tone fails the card.
         const allRight = passedPerChar.every(Boolean);
-        offerGrades(allRight ? GOOD : AGAIN, { givenTones, passedPerChar });
+        offerGrades(allRight ? GOOD : AGAIN, {
+          givenTones,
+          passedPerChar,
+          // True where a tone was accepted only as a regional or neutral-tone variant.
+          variantPerChar,
+          pronunciation: settings.pronunciation,
+        });
       },
       onContinue: () => grade(suggested),
     });
@@ -242,6 +265,7 @@ export function createReview(elements, flows, settings) {
     flows.recall.start({
       word: current.word,
       script: settings.script,
+      reading: readingOf(current.word),
       ask,
       onReveal: () => offerGrades(GOOD, {}),
       onContinue: () => grade(suggested),
@@ -256,7 +280,7 @@ export function createReview(elements, flows, settings) {
     }
     if (type === 'tone') {
       // The pinyin must have one syllable per character.
-      return toneAnswers(word.pinyin, Array.from(word.traditional).length) !== null;
+      return toneAnswersOf(word) !== null;
     }
     return true;
   }
@@ -331,6 +355,14 @@ export function createReview(elements, flows, settings) {
     // Reads words and cards from the database. Call once at startup.
     async load() {
       words = await getAll('words');
+      // import() fetches the table as its own file, so it doesn't make the
+      // main program bigger. If it can't be loaded, tones are judged against
+      // the word list alone.
+      try {
+        toneTable = (await import('../data/cedict/tones.json')).default;
+      } catch {
+        toneTable = null;
+      }
       cards.clear();
       for (const card of await getAll('cards')) {
         cards.set(card.id, card);

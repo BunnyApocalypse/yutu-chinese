@@ -24,6 +24,7 @@ The owner has said they would not use the app without these (feedback after mile
 
 - The app's own code is GPL-3.0-only (`LICENSE`).
 - Stroke data (`data/animcjk/`, `hanzi-writer-data`) stays under the Arphic Public License, which is GPL-incompatible. It is kept as separate data files that the app loads; never paste stroke data into source files or relicense it.
+- The tone table in `data/cedict/` is CC BY-SA 4.0, as CC-CEDICT requires.
 - A new dependency must have a GPL-compatible license (MIT, BSD, Apache-2.0, LGPL, GPL). New data must keep its own license in its own folder with a README, as `data/animcjk/` does.
 
 ## Working with the owner
@@ -52,7 +53,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `src/review.js`: Review mode. Picks the next card, hands it to the code for its kind, shows the grade buttons, saves the result.
 - `src/recallCard.js`: meaning and pinyin cards (see the word, tap to reveal, grade yourself).
 - `src/toneFlow.js`: tone cards (one tone per character, checked automatically).
-- `src/tones.js`: splits pinyin into syllables and lines them up with characters. Plain calculation.
+- `src/tones.js`: which reading of a word applies (Taiwan or mainland), lining syllables up with characters, and which tones are accepted. Plain calculation.
 - `src/settings.js`: the settings and their panel.
 - `src/wordFlow.js`: writing a word one character after another (slot row, status line, Restart / Outline / Animate / Next, tap to continue). Shared by both modes; tracks mistakes, hints and peeking per character, and in Review shows each character's verdict.
 - `src/quiz.js`: the only file that imports Hanzi Writer. It reports plain results (strokes done, mistakes, hint shown) through handler functions. One Hanzi Writer instance is reused for all characters via `setCharacter()`.
@@ -69,6 +70,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `src/style.css`: styles, phone-first.
 - `scripts/copy-char-data.js`: fills the two git-ignored stroke data folders, naming files by Unicode number (`學.json` becomes `5b78.json`): `public/char-data/` from `node_modules/hanzi-writer-data/` (about 9,500 characters) and `public/char-data-tw/` from `data/animcjk/graphicsZhHant.txt` (1,013 characters, plus an `index.json` listing them and recording `TAIWAN_SET_VERSION`; raise that number whenever the script changes what it writes, or existing copies will not be regenerated).
 - `scripts/strokeOrder.js`: finds a character's second stroke order by comparing the two data sets. Used by the copy script.
+- `scripts/build-tone-table.js`, `data/cedict/`: the tone table extracted from CC-CEDICT (run by hand; see above).
 - `data/animcjk/`: the animCJK traditional stroke data, copied unchanged from that project at a pinned commit. Its README records the source, license and how to update. This is vendored data, not an npm dependency.
 - `tests/logic.test.js`, `tests/shortcuts.test.js`, `tests/strokeOrder.test.js`: tests for the plain-calculation code.
 
@@ -82,7 +84,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - **A word's cards are introduced in the order meaning, pinyin, tone, writing**, one at a time.
 - **Cards of one word are kept apart** (`SIBLING_GAP_MS`, 3 minutes), because each gives away the others' answers: a writing card ends by showing the pinyin, the others show the characters. With few words in play this makes the app say "next review in N minutes" although cards exist. That is intended.
 - **New words per day counts words, not cards** (setting, default 5). A word is introduced when its first card of any type is studied. New cards of words already introduced are not limited.
-- **Settings** (`settings` store): `script`, `newWordsPerDay`, `enabledTypes`. A type switched off never appears but keeps its cards and history. At least one type stays on.
+- **Settings** (`settings` store): `script`, `pronunciation`, `newWordsPerDay`, `enabledTypes`. A type switched off never appears but keeps its cards and history. At least one type stays on.
 - **Writing prompts show the meaning only.** The owner decided pinyin must not be given. A "Show pinyin" button reveals it for near-synonyms and does not affect the grade; the pinyin is shown once the word is finished. Glosses in word lists must therefore be distinguishable from each other.
 - **One writing card per word.** A setting chooses the script written (traditional or simplified); the schedule is shared.
 - **FSRS** with default parameters (90% target retention, learning steps of 1 and 10 minutes, fuzz on).
@@ -105,6 +107,15 @@ The owner reads Python and JavaScript comfortably but is not a developer.
   - `tests/shortcuts.test.js` simulates shifted, resized and shaky strokes over the built-in list and requires zero misfires of both kinds. Run it after touching any constant in `src/shortcuts.js`.
   - **Out of scope so far:** three or more strokes in one go, and shortcuts that reorder or drop strokes (口 in 2, 艹 in 3, 糸's lower part).
 - **Leniency:** the `LENIENCY` constant in `src/quiz.js`.
+
+## Taiwan and mainland pronunciation
+
+- **A word's `pinyin` is its mainland reading; `pinyinTaiwan`, if present, its Taiwan reading** (the optional fifth column of a word list). The `pronunciation` setting (`mainland` by default, or `taiwan`) decides which is shown as the answer and expected on tone cards; the other is shown next to it, labeled. A word with no Taiwan reading is the same under both settings. `readingsFor` in `src/tones.js` is the one place that decides this.
+- **Shown readings are never guessed.** The owner chose this. A Taiwan reading comes only from the word's own fifth column or from a whole-word "Taiwan pr." note in CC-CEDICT (`taiwanWords` in the tone table). The built-in list's 13 Taiwan readings were checked against Taiwan's MOE dictionary (moedict.tw). Readings recalled from memory turned out wrong for several words, so always check.
+- **Accepted tones are wider than shown readings** (`toneAnswers` in `src/tones.js`). Besides the listed tones, a tone card accepts, as a *variant*: the other region's tone for the word; a tone CC-CEDICT links to the listed one as a mainland and Taiwan reading of the character; and the character's own full tone where the list says neutral. The last two are approximations that accept some things neither standard says (yìnggāi for 應該, háizǐ for 孩子), so an answer accepted only as a variant is pointed out on the card together with the listed reading.
+- **Not accepted:** neutral where the list has a full tone (xīngqi for 星期), unless listed as an extra reading. Adding a reading to a word's `pinyin` would change the word's ID (`<traditional>|<pinyin>`), so that needs a different mechanism first.
+- **The tone table** `data/cedict/tones.json` is built from CC-CEDICT by `scripts/build-tone-table.js`, run by hand; it is the only script that uses the internet. The table is CC BY-SA 4.0, not GPL. The app loads it with a dynamic `import()` so it is a separate file; if it fails to load, tones are judged against the word list alone.
+- **Changing the built-in word list:** raise `BUILT_IN_LIST_VERSION` in `src/main.js`, or devices that already have the words keep their old copies. Never change the `pinyin` or `traditional` of an existing entry: that changes its ID and orphans its cards.
 
 ## Two accepted stroke orders
 
@@ -158,8 +169,13 @@ The owner wants to bring their Skritter data across eventually rather than start
 3. **Done:** practice any typed character or multi-character word; stroke data loaded on demand.
 4. **Done:** FSRS scheduling of writing cards on a built-in word list, IndexedDB storage, backup export/import.
 5. **Done:** Taiwan-standard stroke data for the 1,013 traditional characters animCJK covers, with the mainland stroke order also accepted where the strokes are the same. Still open: the traditional characters it does not cover.
-6. **In progress:** the other card types. Stage 1 done (meaning, pinyin and tone cards with buttons, scheduling across types, settings panel). Stage 2: drawing the tone mark. Stage 3: accepting Taiwan and mainland tone variants using CC-CEDICT. Later: zhuyin as an alternative to pinyin.
+6. **In progress:** the other card types. Stage 1 done (meaning, pinyin and tone cards with buttons, scheduling across types, settings panel). Also done: the pronunciation setting and Taiwan/mainland tone variants. Still to do: drawing the tone mark. Later: zhuyin as an alternative to pinyin.
 7. **Done:** two consecutive strokes joined, for every character. Still open: longer runs, and shortcuts that reorder or drop strokes.
 8. PWA: manifest, service worker, GitHub Pages deploy, installable and offline on the phone.
 9. Import the Skritter word list (TSV) and, if the GDPR request (sent 2026-10-12) yields it, its scheduling data. The owner does not want the word list imported without scheduling data.
 10. Merge backups between devices instead of replacing; a settings screen (new words per day, target retention).
+11. **To do, asked for by the owner:**
+    - A skip button next to the current character on a writing card (suggested: an arrow to its right) that skips that character and counts it as passed, so that in 為什麼 only 為 has to be written if that is the one being practiced.
+    - Raw squigs when a character is started off-center. Strokes are graded against fixed positions in the box, so if the first strokes are written to one side, the rest are still expected where a centered character would have them (seen with 麼: top written at the left, the 木 parts expected in the middle). The owner is not sure of the best fix; ideas to weigh are shifting and scaling the expected positions to fit what has been written so far, or showing a faint guide once the first strokes are down.
+    - Accepting a neutral tone where the list has a full one (xīngqi for 星期).
+
