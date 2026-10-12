@@ -8,7 +8,7 @@ Stroke display and grading are done by [Hanzi Writer](https://hanziwriter.org/).
 
 - **Review:** each word has up to four cards, scheduled separately by the [FSRS](https://github.com/open-spaced-repetition/ts-fsrs) scheduler:
   - **Writing:** you are shown a meaning and write the word stroke by stroke. Your own handwriting stays on screen, and the printed character appears underneath when you finish so you can compare.
-  - **Tone:** you are shown the word and give the tone of each character.
+  - **Tone:** you are shown the word and give the tone of each character, by tapping a button or drawing the tone mark.
   - **Pinyin** and **Meaning:** you are shown the word, recall its reading or meaning, and reveal the answer.
 
   After each card you grade yourself; where the app can check your answer it suggests a grade.

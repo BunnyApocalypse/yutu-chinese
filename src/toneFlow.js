@@ -1,7 +1,9 @@
-// Tone cards: you see the word and give the tone of each character in turn.
+// Tone cards: you see the word and give the tone of each character in turn,
+// either with the five tone buttons or by drawing the tone mark on the card.
 
 import { formatPinyin } from './wordList.js';
 import { TONE_LABELS, describeReading } from './tones.js';
+import { recognizeToneMark } from './toneMark.js';
 
 // After a right answer, the next character comes up by itself after this long.
 const MOVE_ON_AFTER_MS = 500;
@@ -9,6 +11,15 @@ const MOVE_ON_AFTER_MS = 500;
 // After a wrong answer or at the end, tapping the card continues. Taps are
 // ignored for this long first, so a stray touch doesn't skip the answer.
 const TAP_TO_CONTINUE_DELAY_MS = 600;
+
+// A new character ignores touches for this long, so the tap that brought it up
+// isn't taken for a neutral-tone dot.
+const DRAW_ALLOWED_AFTER_MS = 300;
+
+// How long a mark that wasn't recognized stays visible before it is cleared.
+const CLEAR_UNRECOGNIZED_AFTER_MS = 600;
+
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
 function paragraph(className, text) {
   const element = document.createElement('p');
@@ -45,6 +56,29 @@ export function createToneFlow(elements) {
   let tapAllowedFrom = 0;
   let moveOnTimer = null;
 
+  // Drawing the tone mark. The "ink" is a see-through layer over the card
+  // that shows the stroke while it is being drawn.
+  const ink = document.createElementNS(SVG_NAMESPACE, 'svg');
+  ink.setAttribute('class', 'tone-ink');
+  const inkPath = document.createElementNS(SVG_NAMESPACE, 'path');
+  ink.appendChild(inkPath);
+  // The points of the stroke being drawn, or null when no stroke is under way.
+  let drawing = null;
+  let drawAllowedFrom = 0;
+  let clearInkTimer = null;
+
+  function showInk(points) {
+    const d = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
+    // A single point has no length, so nothing would show; draw a tiny line.
+    inkPath.setAttribute('d', points.length === 1 ? `${d} l 0.1 0` : d);
+  }
+
+  // Where a touch is, measured from the corner of the ink layer.
+  function pointOf(event) {
+    const box = ink.getBoundingClientRect();
+    return { x: event.clientX - box.left, y: event.clientY - box.top };
+  }
+
   function renderWordRow() {
     wordRow.replaceChildren();
     chars.forEach((char, index) => {
@@ -72,7 +106,15 @@ export function createToneFlow(elements) {
     state = 'asking';
     nextButton.hidden = true;
     renderWordRow();
-    cardFace.replaceChildren(faceWord(chars[position]));
+    clearTimeout(clearInkTimer);
+    showInk([]);
+    drawing = null;
+    drawAllowedFrom = Date.now() + DRAW_ALLOWED_AFTER_MS;
+    cardFace.replaceChildren(
+      faceWord(chars[position]),
+      paragraph('face-hint', 'Draw the tone mark, or use the buttons'),
+      ink,
+    );
     statusElement.textContent =
       chars.length > 1 ? `Tone of character ${position + 1} of ${chars.length}` : 'Which tone?';
   }
@@ -90,12 +132,20 @@ export function createToneFlow(elements) {
       parts.push(paragraph('face-hint', described.other));
     }
     parts.push(paragraph('face-meaning', current.word.definition));
-    if (variantPerChar.includes(true)) {
+    // If the tones given differ from the listed reading, show what was
+    // answered: the syllables with the tones that were chosen.
+    const answered = formatPinyin(
+      current.answers.map((answer, index) => answer.syllable.slice(0, -1) + givenTones[index]).join(''),
+    );
+    const listedFirst = formatPinyin(current.answers.map((answer) => answer.syllable).join(''));
+    if (wrong > 0) {
+      parts.push(paragraph('face-note missed', `You answered ${answered}.`));
+    } else if (variantPerChar.includes(true)) {
       // Accepted, but not what is listed: say so, so the listed tone is learned.
       parts.push(
         paragraph(
           'face-note',
-          `Accepted as a regional or neutral-tone variant. Listed: ${described.main}.`,
+          `You answered ${answered}: accepted as a regional or neutral-tone variant of ${listedFirst}.`,
         ),
       );
     }
@@ -148,6 +198,45 @@ export function createToneFlow(elements) {
     }
   }
 
+  // A stroke was finished: work out which tone mark it is.
+  function finishDrawing() {
+    const points = drawing;
+    drawing = null;
+    const tone = recognizeToneMark(points, ink.getBoundingClientRect().width);
+    if (tone === null) {
+      statusElement.textContent = 'Mark not recognized. Try again, or use the buttons.';
+      clearInkTimer = setTimeout(() => showInk([]), CLEAR_UNRECOGNIZED_AFTER_MS);
+    } else {
+      answer(tone);
+    }
+  }
+
+  // "pointer" events cover fingers, styluses and the mouse alike.
+  cardFace.addEventListener('pointerdown', (event) => {
+    if (!current || state !== 'asking' || Date.now() < drawAllowedFrom) {
+      return;
+    }
+    // Keeps the rest of this stroke coming to the card even if the finger
+    // slides off its edge.
+    cardFace.setPointerCapture(event.pointerId);
+    clearTimeout(clearInkTimer);
+    drawing = [pointOf(event)];
+    showInk(drawing);
+  });
+
+  cardFace.addEventListener('pointermove', (event) => {
+    if (drawing) {
+      drawing.push(pointOf(event));
+      showInk(drawing);
+    }
+  });
+
+  // The system took the touch away, e.g. for a gesture: drop the stroke.
+  cardFace.addEventListener('pointercancel', () => {
+    drawing = null;
+    showInk([]);
+  });
+
   for (const button of toneButtons) {
     button.addEventListener('click', () => answer(Number(button.dataset.tone)));
   }
@@ -159,6 +248,10 @@ export function createToneFlow(elements) {
   });
 
   cardFace.addEventListener('pointerup', () => {
+    if (drawing) {
+      finishDrawing();
+      return;
+    }
     if (!current || Date.now() < tapAllowedFrom) {
       return;
     }
@@ -183,6 +276,8 @@ export function createToneFlow(elements) {
     start(options) {
       clearTimeout(moveOnTimer);
       current = options;
+      // Lets the style sheet stop the page from scrolling under a drawing finger.
+      cardFace.classList.add('drawable');
       chars = Array.from(options.word[options.script]);
       position = 0;
       givenTones = [];
@@ -193,6 +288,9 @@ export function createToneFlow(elements) {
 
     stop() {
       clearTimeout(moveOnTimer);
+      clearTimeout(clearInkTimer);
+      drawing = null;
+      cardFace.classList.remove('drawable');
       current = null;
     },
   };

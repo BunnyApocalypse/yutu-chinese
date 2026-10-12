@@ -52,7 +52,8 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `src/main.js`: entry point; the two modes (Review, Free practice), backup buttons, first-run seeding.
 - `src/review.js`: Review mode. Picks the next card, hands it to the code for its kind, shows the grade buttons, saves the result.
 - `src/recallCard.js`: meaning and pinyin cards (see the word, tap to reveal, grade yourself).
-- `src/toneFlow.js`: tone cards (one tone per character, checked automatically).
+- `src/toneFlow.js`: tone cards (one tone per character, by button or drawn mark, checked automatically).
+- `src/toneMark.js`: recognizes a drawn tone mark (level, rising, down-then-up, falling, dot). Plain calculation.
 - `src/tones.js`: which reading of a word applies (Taiwan or mainland), lining syllables up with characters, and which tones are accepted. Plain calculation.
 - `src/settings.js`: the settings and their panel.
 - `src/wordFlow.js`: writing a word one character after another (slot row, status line, Restart / Outline / Animate / Next, tap to continue). Shared by both modes; tracks mistakes, hints and peeking per character, and in Review shows each character's verdict.
@@ -72,14 +73,14 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `scripts/strokeOrder.js`: finds a character's second stroke order by comparing the two data sets. Used by the copy script.
 - `scripts/build-tone-table.js`, `data/cedict/`: the tone table extracted from CC-CEDICT (run by hand; see above).
 - `data/animcjk/`: the animCJK traditional stroke data, copied unchanged from that project at a pinned commit. Its README records the source, license and how to update. This is vendored data, not an npm dependency.
-- `tests/logic.test.js`, `tests/shortcuts.test.js`, `tests/strokeOrder.test.js`: tests for the plain-calculation code.
+- `tests/logic.test.js`, `tests/shortcuts.test.js`, `tests/strokeOrder.test.js`, `tests/toneMark.test.js`: tests for the plain-calculation code.
 
 ## Cards, scheduling and storage
 
 - **Four card types per word, as in Skritter**, each with its own schedule (`cards` store, keyed `<wordId>#<type>`):
   - `meaning`: see the word, recall the meaning. Reveal and self-grade.
   - `pinyin`: see the word, recall the reading. Reveal and self-grade.
-  - `tone`: see the word, give each character's tone with five buttons. Checked automatically; a right answer moves on by itself, a wrong one waits for a tap; one wrong tone suggests Again. A word whose pinyin doesn't have one syllable per character gets no tone card.
+  - `tone`: see the word, give each character's tone, with five buttons or by drawing the tone mark on the card. Checked automatically; a right answer moves on by itself, a wrong one waits for a tap; one wrong tone suggests Again. A word whose pinyin doesn't have one syllable per character gets no tone card.
   - `writing`: see the meaning, write the word.
 - **A word's cards are introduced in the order meaning, pinyin, tone, writing**, one at a time.
 - **Cards of one word are kept apart** (`SIBLING_GAP_MS`, 3 minutes), because each gives away the others' answers: a writing card ends by showing the pinyin, the others show the characters. With few words in play this makes the app say "next review in N minutes" although cards exist. That is intended.
@@ -130,6 +131,9 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 
 ## Things that are easy to get wrong
 
+- **On a tone card a tap is an answer** (a dot means the neutral tone), so `toneFlow` ignores touches for the first 300 ms after a character comes up. A stroke the recognizer can't classify is not an answer and not a mistake; the card says so and waits.
+- The tone mark is drawn on a layer inside the card face, which `replaceChildren` removes; `ask()` in `src/toneFlow.js` puts it back each time.
+
 - **The study area is shared by all card kinds.** `showPartsFor` in `src/review.js` decides which parts are visible for each kind, and Free practice needs the writing parts back (`deactivate`). A new element in the study area must be added there.
 - **The writing area is an SVG element, which has no `.hidden` property.** Use `toggleAttribute('hidden', ...)` on it.
 - **A flow that is not on screen must ignore taps.** `toneFlow` and `recallCard` both listen on the card face; each checks that it has a current card first, and `review.js` calls `stop()` on both before showing the next card.
@@ -169,7 +173,7 @@ The owner wants to bring their Skritter data across eventually rather than start
 3. **Done:** practice any typed character or multi-character word; stroke data loaded on demand.
 4. **Done:** FSRS scheduling of writing cards on a built-in word list, IndexedDB storage, backup export/import.
 5. **Done:** Taiwan-standard stroke data for the 1,013 traditional characters animCJK covers, with the mainland stroke order also accepted where the strokes are the same. Still open: the traditional characters it does not cover.
-6. **In progress:** the other card types. Stage 1 done (meaning, pinyin and tone cards with buttons, scheduling across types, settings panel). Also done: the pronunciation setting and Taiwan/mainland tone variants. Still to do: drawing the tone mark. Later: zhuyin as an alternative to pinyin.
+6. **Done:** the other card types (meaning, pinyin, tone with buttons or a drawn mark), scheduling across types, the settings panel, the pronunciation setting and Taiwan/mainland tone variants. Later: zhuyin as an alternative to pinyin.
 7. **Done:** two consecutive strokes joined, for every character. Still open: longer runs, and shortcuts that reorder or drop strokes.
 8. PWA: manifest, service worker, GitHub Pages deploy, installable and offline on the phone.
 9. Import the Skritter word list (TSV) and, if the GDPR request (sent 2026-10-12) yields it, its scheduling data. The owner does not want the word list imported without scheduling data.
