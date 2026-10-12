@@ -1,0 +1,57 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #f5f2ea;
+  color: #222;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+}
+
+.status {
+  margin: 0;
+  min-height: 1.5em;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.writing-area {
+  background: #fff;
+  border: 2px solid #b9b2a3;
+  border-radius: 8px;
+  /* Without this, dragging a finger here would scroll or zoom the page instead of drawing */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+button {
+  font: inherit;
+  /* 48px is the recommended minimum height for a finger-sized touch target */
+  min-height: 48px;
+  padding: 0 16px;
+  border: 1px solid #b9b2a3;
+  border-radius: 8px;
+  background: #fff;
+  color: inherit;
+}
+
+button:active {
+  background: #e9e4d8;
+}

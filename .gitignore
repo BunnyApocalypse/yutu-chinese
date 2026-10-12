@@ -1,0 +1,8 @@
+# Downloaded dependencies (recreated by `npm install`)
+node_modules/
+
+# Build output (recreated by `npm run build`)
+dist/
+
+# Personal data exports (e.g. from Skritter) never belong in the repo
+exports/

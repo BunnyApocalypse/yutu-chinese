@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Makes the page use the phone's real width instead of a zoomed-out desktop layout -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hanzi Trainer</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <main>
+      <p id="status" class="status"></p>
+
+      <!-- Hanzi Writer draws the character into this SVG. main.js sets its size and adds the guide grid. -->
+      <svg id="writing-area" class="writing-area"></svg>
+
+      <div class="buttons">
+        <button id="restart-button" type="button">Restart</button>
+        <button id="outline-button" type="button">Show outline</button>
+        <button id="animate-button" type="button">Animate</button>
+      </div>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
