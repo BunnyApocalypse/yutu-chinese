@@ -160,6 +160,41 @@ select {
   border: 2px solid #3b6fb6;
 }
 
+/* A character that was skipped, not written. */
+.slot.skipped {
+  border-style: dashed;
+}
+
+/* The writing area with a thin arrow on each side: back on the left, skip on
+   the right. */
+.writing-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.side-arrow {
+  width: 28px;
+  min-height: 96px;
+  padding: 0 0 6px;
+  border: none;
+  background: transparent;
+  font-size: 2.6rem;
+  line-height: 1;
+  color: #3b6fb6;
+}
+
+.side-arrow:active {
+  background: transparent;
+  color: #222;
+}
+
+/* An arrow that doesn't apply right now keeps its place, so the writing area
+   doesn't shift when it comes and goes. */
+.side-arrow.unavailable {
+  visibility: hidden;
+}
+
 .slot.passed {
   border-color: #3b9c5a;
   background: #dff1e4;

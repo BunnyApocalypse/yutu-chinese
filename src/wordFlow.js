@@ -17,7 +17,8 @@ const TAP_TO_CONTINUE_DELAY_MS = 600;
 
 // As big as fits on the screen, leaving room for everything above and below.
 function chooseSize() {
-  const fitsWidth = window.innerWidth - 32;
+  // 32 for the page's margins, 64 for the arrows on either side of the area.
+  const fitsWidth = window.innerWidth - 32 - 64;
   const fitsHeight = window.innerHeight - 500;
   return Math.max(200, Math.min(fitsWidth, fitsHeight, 640));
 }
@@ -56,7 +57,8 @@ function sum(numbers) {
 // elements: the page elements the flow controls:
 //   writingArea, wordRow, statusElement, noteElement,
 //   nextButton, restartButton, outlineButton, animateButton,
-//   verdictRow, missedButton, gotItButton, orderNote
+//   verdictRow, missedButton, gotItButton, orderNote,
+//   skipButton, backButton
 //
 // Returns { start, rebuild }.
 export function createWordFlow(elements) {
@@ -73,6 +75,8 @@ export function createWordFlow(elements) {
     missedButton,
     gotItButton,
     orderNote,
+    skipButton,
+    backButton,
   } = elements;
 
   // The word being written, as a list of characters, and where we are in it.
@@ -91,6 +95,8 @@ export function createWordFlow(elements) {
   let passedPerChar = []; // the verdict that stands (true = passed)
   let orderPerChar = []; // 'moe' or 'mainland' where a character has two
   //                        accepted stroke orders, otherwise null
+  let skippedPerChar = []; // true where the character was skipped, not written
+  let finishedPerChar = []; // true once the character has been written or skipped
 
   // Mistakes on the current character so far in this attempt, and mistakes
   // from earlier attempts at it (before Restart or Animate was pressed).
@@ -115,7 +121,7 @@ export function createWordFlow(elements) {
     wordRow.replaceChildren();
     chars.forEach((char, index) => {
       const slot = document.createElement('span');
-      const finished = index < position || (index === position && charDone);
+      const finished = Boolean(finishedPerChar[index]);
       slot.textContent = finished ? char : '·';
       slot.className = 'slot';
       if (index === position) {
@@ -124,8 +130,47 @@ export function createWordFlow(elements) {
       if (finished && passedPerChar[index] !== undefined) {
         slot.classList.add(passedPerChar[index] ? 'passed' : 'missed');
       }
+      if (skippedPerChar[index]) {
+        slot.classList.add('skipped');
+      }
       wordRow.appendChild(slot);
     });
+    showArrows();
+  }
+
+  // The two arrows beside the writing area.
+  //
+  // Skip (right) moves past the current character without writing it and
+  // counts it as passed, for when only another character of the word needs
+  // the practice. It only makes sense in a word of several characters, and
+  // only while the current one is still to be written.
+  //
+  // Back (left) undoes a skip made by accident: it returns to the most recent
+  // skipped character before this point, even after the word is finished.
+  function canSkip() {
+    return !charDone && chars.length > 1;
+  }
+
+  // The character the back arrow would return to: the nearest skipped one at
+  // or before the current position, or -1 if there is none.
+  function backTarget() {
+    // The current character only counts once it is finished (skipped as the
+    // last one); while it is being written, look before it.
+    for (let index = charDone ? position : position - 1; index >= 0; index--) {
+      if (skippedPerChar[index]) {
+        return index;
+      }
+    }
+    return -1;
+  }
+
+  function canGoBack() {
+    return backTarget() !== -1;
+  }
+
+  function showArrows() {
+    skipButton.classList.toggle('unavailable', !canSkip());
+    backButton.classList.toggle('unavailable', !canGoBack());
   }
 
   // Shows the two verdict buttons with the current verdict selected.
@@ -150,11 +195,23 @@ export function createWordFlow(elements) {
       passedPerChar: [...passedPerChar],
       suggestedPerChar: [...suggestedPerChar],
       orderPerChar: [...orderPerChar],
+      skippedPerChar: chars.map((char, index) => Boolean(skippedPerChar[index])),
     };
   }
 
-  function isLastChar() {
-    return position === chars.length - 1;
+  // True once every character has been written or skipped.
+  function wordFinished() {
+    return chars.every((char, index) => finishedPerChar[index]);
+  }
+
+  // The next character still to be written: the first unfinished one after
+  // the current position, or failing that the first one anywhere (after
+  // going back, the unfinished ones can lie on either side).
+  function nextUnfinished() {
+    const isUnfinished = (index) => !finishedPerChar[index];
+    const indexes = chars.map((char, index) => index);
+    const after = indexes.filter((index) => index > position && isUnfinished(index));
+    return after.length > 0 ? after[0] : indexes.find(isUnfinished);
   }
 
   const quizHandlers = {
@@ -162,6 +219,9 @@ export function createWordFlow(elements) {
       charDone = false;
       currentMistakes = 0;
       strokesPerChar[position] = totalStrokes;
+      // Starting the character (again) means it is being written after all.
+      skippedPerChar[position] = false;
+      finishedPerChar[position] = false;
       if (outlineVisible) {
         peekedPerChar[position] = true;
       }
@@ -179,6 +239,7 @@ export function createWordFlow(elements) {
     },
     onComplete({ totalMistakes, hintShown, order }) {
       charDone = true;
+      finishedPerChar[position] = true;
       orderPerChar[position] = order;
       // Writing the mainland order is accepted; the note only points out that
       // the standard order is different.
@@ -197,27 +258,10 @@ export function createWordFlow(elements) {
         passedPerChar[position] = suggestedPerChar[position];
         renderVerdict();
       }
-      renderWordRow();
-      statusElement.textContent = describeMistakes(mistakesPerChar[position]);
-
+      afterCharFinished();
       // Returned to the quiz, which colors the printed character to match.
       // In Free practice there is no verdict and this is undefined.
-      const passed = passedPerChar[position];
-
-      if (!isLastChar()) {
-        nextButton.textContent = 'Next';
-        nextButton.hidden = false;
-        return passed;
-      }
-      if (chars.length > 1) {
-        statusElement.textContent = `Word done · ${describeMistakes(sum(mistakesPerChar)).toLowerCase()}`;
-      }
-      if (options.continueLabel) {
-        nextButton.textContent = options.continueLabel;
-        nextButton.hidden = false;
-      }
-      options.onWordDone?.(wordResult());
-      return passed;
+      return passedPerChar[position];
     },
     onAnimateStart() {
       nextButton.hidden = true;
@@ -226,6 +270,83 @@ export function createWordFlow(elements) {
       statusElement.textContent = 'Watch the stroke order…';
     },
   };
+
+  // The current character is finished (written, or skipped as the last one):
+  // update the page and, at the end of the word, tell the mode.
+  function afterCharFinished() {
+    renderWordRow();
+    statusElement.textContent = skippedPerChar[position]
+      ? 'Skipped'
+      : describeMistakes(mistakesPerChar[position]);
+
+    if (!wordFinished()) {
+      nextButton.textContent = 'Next';
+      nextButton.hidden = false;
+      return;
+    }
+    if (chars.length > 1) {
+      statusElement.textContent = `Word done · ${describeMistakes(sum(mistakesPerChar)).toLowerCase()}`;
+    }
+    if (options.continueLabel) {
+      nextButton.textContent = options.continueLabel;
+      nextButton.hidden = false;
+    }
+    options.onWordDone?.(wordResult());
+  }
+
+  // The skip button: move past the current character and count it as passed.
+  function skipChar() {
+    if (!canSkip()) {
+      return;
+    }
+    skippedPerChar[position] = true;
+    // Mistakes made before skipping still count toward the word.
+    mistakesPerChar[position] = carriedMistakes + currentMistakes;
+    orderPerChar[position] = null;
+    if (options.judgeChar) {
+      suggestedPerChar[position] = true;
+      passedPerChar[position] = true;
+    }
+
+    finishedPerChar[position] = true;
+
+    if (!wordFinished()) {
+      position = nextUnfinished();
+      showCurrentCharacter();
+      return;
+    }
+    // Nothing is left to write: show this character, since the word is now
+    // complete, and finish as if it had been written.
+    charDone = true;
+    tapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
+    quiz.reveal();
+    if (options.judgeChar) {
+      renderVerdict();
+    }
+    afterCharFinished();
+  }
+
+  skipButton.addEventListener('click', skipChar);
+
+  // The back button: return to the character that was skipped, to write it.
+  function goBack() {
+    const target = backTarget();
+    if (target === -1) {
+      return;
+    }
+    position = target;
+    charDone = false;
+    // Forget the verdict the skip gave it, but keep any mistakes made on it
+    // before it was skipped. Going back is for undoing a slip, so it is not
+    // held against you as having seen the answer.
+    const mistakesBeforeSkip = mistakesPerChar[position] || 0;
+    passedPerChar[position] = undefined;
+    suggestedPerChar[position] = undefined;
+    showCurrentCharacter();
+    carriedMistakes = mistakesBeforeSkip;
+  }
+
+  backButton.addEventListener('click', goBack);
 
   function setOutlineVisible(visible) {
     outlineVisible = visible;
@@ -271,8 +392,8 @@ export function createWordFlow(elements) {
 
   // The Next button, or a tap on the writing area once a character is done.
   function goOn() {
-    if (!isLastChar()) {
-      position += 1;
+    if (!wordFinished()) {
+      position = nextUnfinished();
       showCurrentCharacter();
     } else {
       options.onContinue?.();
@@ -286,7 +407,7 @@ export function createWordFlow(elements) {
     renderVerdict();
     renderWordRow();
     quiz.showVerdict(passed);
-    if (isLastChar()) {
+    if (wordFinished()) {
       options.onVerdictChange?.(wordResult());
     }
   }
@@ -335,7 +456,7 @@ export function createWordFlow(elements) {
     //   onCharStart(): a character starts (or starts over)
     //   onWordDone(result): the last character was finished. `result` has
     //                  mistakes, mistakesPerChar, passedPerChar,
-    //                  suggestedPerChar, orderPerChar
+    //                  suggestedPerChar, orderPerChar, skippedPerChar
     //   onVerdictChange(result): the last character's verdict was overruled
     //   onContinue():  Next was pressed, or the writing area tapped, after the
     //                  word was finished
@@ -368,6 +489,8 @@ export function createWordFlow(elements) {
       suggestedPerChar = [];
       passedPerChar = [];
       orderPerChar = [];
+      skippedPerChar = [];
+      finishedPerChar = [];
       if (options.hideOutline) {
         setOutlineVisible(false);
       }

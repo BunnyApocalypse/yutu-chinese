@@ -92,6 +92,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - **FSRS** with default parameters (90% target retention, learning steps of 1 and 10 minutes, fuzz on).
 - **Each character gets a pass/fail verdict, and one missed character fails the word.** After a character is written, its slot turns green or red and two buttons (Missed / Got it) let the owner overrule the proposal. `judgeChar` (`src/session.js`) proposes "missed" if a hint flashed, the outline or animation was used, a finished character was restarted, or mistakes exceed a quarter of the character's strokes (one slip is always forgiven).
 - **Word grade:** `suggestGrade` proposes Again if any character is missed, Hard if there were any mistakes, otherwise Good. Easy is never suggested. The owner can pick any of the four; tapping the writing area accepts the suggestion. Overruling the last character's verdict updates the suggestion live.
+- **Skip and back arrows** beside the writing area. Skip (right, `›`) is there in a word of several characters: it moves past the current character and counts it as passed (the owner's request: in 為什麼, practice only 為). Mistakes made before skipping still count. Skipping the last character shows it and finishes the word. Back (left, `‹`) undoes a skip: whenever a character at or before the current one was skipped, including after the word is finished, it returns to the nearest such character to write it, with no penalty. Because of this, characters are not always finished in order: `wordFlow` tracks `finishedPerChar`, the word is done when all are finished (`wordFinished`), and Next goes to the next unfinished one (`nextUnfinished`). Don't test for "the last character" by position. Skipped characters are saved as `skippedPerChar` and shown with a dashed slot.
 - Reviews store both the final verdicts (`passedPerChar`) and the proposed ones (`suggestedPerChar`), plus `mistakesPerChar`.
 - **Session order:** due cards first (longest overdue first), then new cards of words already introduced, then new words in list order; the day starts at 4:00.
 - **Every review is logged** in the `reviews` store and never deleted. This is what a future FSRS parameter fit, and merging between devices, will work from.
@@ -136,7 +137,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - The tone mark is drawn on a layer inside the card face, which `replaceChildren` removes; `ask()` in `src/toneFlow.js` puts it back each time.
 
 - **The study area is shared by all card kinds.** `showPartsFor` in `src/review.js` decides which parts are visible for each kind, and Free practice needs the writing parts back (`deactivate`). A new element in the study area must be added there.
-- **The writing area is an SVG element, which has no `.hidden` property.** Use `toggleAttribute('hidden', ...)` on it.
+- **The writing area is an SVG element, which has no `.hidden` property.** Hide its row (`#writing-row`) instead, or use `toggleAttribute('hidden', ...)`.
 - **A flow that is not on screen must ignore taps.** `toneFlow` and `recallCard` both listen on the card face; each checks that it has a current card first, and `review.js` calls `stop()` on both before showing the next card.
 
 - **Hanzi Writer remembers quiz options from one quiz to the next.** `quizStartStrokeNum` must be passed on every `quiz()` call (0 for a normal start), or a later quiz silently starts partway through.
@@ -180,7 +181,6 @@ The owner wants to bring their Skritter data across eventually rather than start
 9. Import the Skritter word list (TSV) and, if the GDPR request (sent 2026-10-12) yields it, its scheduling data. The owner does not want the word list imported without scheduling data.
 10. Merge backups between devices instead of replacing; a settings screen (new words per day, target retention).
 11. **To do, asked for by the owner:**
-    - A skip button next to the current character on a writing card (suggested: an arrow to its right) that skips that character and counts it as passed, so that in 為什麼 only 為 has to be written if that is the one being practiced.
     - Raw squigs when a character is started off-center. Strokes are graded against fixed positions in the box, so if the first strokes are written to one side, the rest are still expected where a centered character would have them (seen with 麼: top written at the left, the 木 parts expected in the middle). The owner is not sure of the best fix; ideas to weigh are shifting and scaling the expected positions to fit what has been written so far, or showing a faint guide once the first strokes are down.
     - Accepting a neutral tone where the list has a full one (xīngqi for 星期).
 

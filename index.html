@@ -68,7 +68,12 @@
         </div>
 
         <!-- Hanzi Writer draws the character into this SVG. wordFlow.js sets its size and adds the guide grid. -->
-        <svg id="writing-area" class="writing-area"></svg>
+        <div id="writing-row" class="writing-row">
+          <!-- Beside the writing area: go back to a character skipped by accident, and skip the current character. -->
+          <button id="back-button" class="side-arrow" type="button" aria-label="Go back to the skipped character" title="Go back to the skipped character">‹</button>
+          <svg id="writing-area" class="writing-area"></svg>
+          <button id="skip-button" class="side-arrow" type="button" aria-label="Skip this character" title="Skip this character (counts as known)">›</button>
+        </div>
 
         <!-- Takes the writing area's place on tone, pinyin and meaning cards: shows the
              characters large, and the answer once given or revealed. -->

@@ -337,6 +337,15 @@ export function createQuiz(target, size, handlers) {
       }
     },
 
+    // Ends the quiz and shows the printed character, as when it has been
+    // written. Used when a character is skipped.
+    async reveal() {
+      clearTimeout(afterAnimationTimer);
+      writer.cancelQuiz();
+      await setPrintedColor(REFERENCE_COLOR);
+      writer.showCharacter();
+    },
+
     // Recolors the printed character of a finished quiz after its verdict
     // changed: red for missed (false), green otherwise.
     showVerdict(passed) {

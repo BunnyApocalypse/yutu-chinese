@@ -28,7 +28,7 @@ const RECHECK_MS = 15 * 1000;
 //   countsElement, typeElement, meaningElement, pinyinElement, pinyinButton,
 //   gradeRow, donePanel, doneMessage, studyArea,
 //   and the parts of the study area that differ per kind of card:
-//   wordRow, statusRow, verdictRow, writingArea, writingButtons, cardFace,
+//   wordRow, statusRow, verdictRow, writingRow, writingButtons, cardFace,
 //   toneButtonRow, orderNote
 // flows:    { writing, tone, recall }: the three pieces of code named above
 // settings: the current settings (see settings.js)
@@ -48,7 +48,7 @@ export function createReview(elements, flows, settings) {
     wordRow,
     statusRow,
     verdictRow,
-    writingArea,
+    writingRow,
     writingButtons,
     cardFace,
     toneButtonRow,
@@ -86,7 +86,7 @@ export function createReview(elements, flows, settings) {
   function showPartsFor(type) {
     const writing = type === 'writing';
     const tone = type === 'tone';
-    writingArea.toggleAttribute('hidden', !writing);
+    writingRow.hidden = !writing;
     writingButtons.hidden = !writing;
     cardFace.hidden = writing;
     toneButtonRow.hidden = !tone;
@@ -221,6 +221,8 @@ export function createReview(elements, flows, settings) {
       // For characters with two accepted stroke orders, which one was
       // written: 'moe' or 'mainland'. null for all other characters.
       orderPerChar: result.orderPerChar,
+      // True for characters that were skipped with the skip button.
+      skippedPerChar: result.skippedPerChar,
     });
 
     return flows.writing.start(word[settings.script], {

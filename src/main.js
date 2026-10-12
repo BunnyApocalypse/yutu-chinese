@@ -37,6 +37,8 @@ const flow = createWordFlow({
   missedButton: byId('missed-button'),
   gotItButton: byId('got-it-button'),
   orderNote: byId('order-note'),
+  skipButton: byId('skip-button'),
+  backButton: byId('back-button'),
 });
 
 const toneFlow = createToneFlow({
@@ -266,11 +268,13 @@ async function startUp() {
       wordRow: byId('word-row'),
       statusRow: byId('status-row'),
       verdictRow: byId('verdict-row'),
-      writingArea: byId('writing-area'),
+      writingRow: byId('writing-row'),
       writingButtons: byId('writing-buttons'),
       cardFace: byId('card-face'),
       toneButtonRow: byId('tone-buttons'),
       orderNote: byId('order-note'),
+  skipButton: byId('skip-button'),
+  backButton: byId('back-button'),
     },
     { writing: flow, tone: toneFlow, recall: recallCard },
     settings,
