@@ -1,6 +1,6 @@
 // Following where a character is being written.
 //
-// With raw squigs the reference character is invisible, so the writer chooses
+// With raw input the reference character is invisible, so the writer chooses
 // where in the box to write and how big. The reference, though, sits at one
 // fixed place. This file works out the "frame" being written in, from the
 // strokes accepted so far, and moves the reference into it, so that the

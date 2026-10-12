@@ -17,7 +17,7 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //   script:         'traditional' or 'simplified'
 //   pronunciation:  'mainland' or 'taiwan': which reading is shown and
 //                   expected where a word is pronounced differently
-//   rawSquigs:      true to keep your own strokes on screen when writing,
+//   rawInput:      true to keep your own strokes on screen when writing,
 //                   false to replace each correct stroke with the printed one
 //   newWordsPerDay: a number
 //   enabledTypes:   the card types switched on, e.g. ['meaning', 'writing']
@@ -36,7 +36,9 @@ export async function createSettings(elements, onChange) {
   const settings = {
     script: await getSetting('script', 'traditional'),
     pronunciation: await getSetting('pronunciation', 'mainland'),
-    rawSquigs: await getSetting('rawSquigs', true),
+    // Saved as 'rawSquigs' before the setting was renamed; a device that still
+    // has it under the old name keeps its choice.
+    rawInput: await getSetting('rawInput', await getSetting('rawSquigs', true)),
     newWordsPerDay: await getSetting('newWordsPerDay', DEFAULT_NEW_WORDS_PER_DAY),
     enabledTypes: await getSetting('enabledTypes', CARD_TYPES),
   };
@@ -45,7 +47,7 @@ export async function createSettings(elements, onChange) {
   function fillPanel() {
     scriptSelect.value = settings.script;
     pronunciationSelect.value = settings.pronunciation;
-    handwritingSelect.value = settings.rawSquigs ? 'raw' : 'snap';
+    handwritingSelect.value = settings.rawInput ? 'raw' : 'snap';
     newWordsInput.value = settings.newWordsPerDay;
     for (const checkbox of typeCheckboxes) {
       checkbox.checked = settings.enabledTypes.includes(checkbox.dataset.cardType);
@@ -64,7 +66,7 @@ export async function createSettings(elements, onChange) {
   );
 
   handwritingSelect.addEventListener('change', () =>
-    change('rawSquigs', handwritingSelect.value === 'raw'),
+    change('rawInput', handwritingSelect.value === 'raw'),
   );
 
   newWordsInput.addEventListener('change', () => {

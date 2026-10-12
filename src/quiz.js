@@ -4,7 +4,7 @@
 //
 // There are two ways of showing what you write, chosen by a setting:
 //
-// "Raw squigs": the strokes you actually drew are kept on screen, and the
+// "Raw input": the strokes you actually drew are kept on screen, and the
 // printed strokes stay invisible during the quiz. When the character is
 // finished, the printed character appears underneath in a light color so you
 // can compare.
@@ -116,9 +116,9 @@ export function createQuiz(target, size, handlers) {
 
   let outlineVisible = false;
 
-  // True for raw squigs, false for snapping to the printed strokes. Set with
+  // True for raw input, false for snapping to the printed strokes. Set with
   // each character (see showCharacter).
-  let rawSquigs = true;
+  let rawInput = true;
 
   // The timer for the pause after an animation, so it can be called off if
   // you move on before it runs out.
@@ -137,12 +137,12 @@ export function createQuiz(target, size, handlers) {
   }
 
   // Our own layer for the strokes you drew.
-  const squigLayer = document.createElementNS(SVG_NAMESPACE, 'g');
-  squigLayer.setAttribute('class', 'squigs');
+  const drawnLayer = document.createElementNS(SVG_NAMESPACE, 'g');
+  drawnLayer.setAttribute('class', 'drawn-strokes');
 
   // pathString is the stroke exactly as drawn, in the SVG's own pixel coordinates.
-  function keepSquig(pathString) {
-    if (!rawSquigs) {
+  function keepDrawnStroke(pathString) {
+    if (!rawInput) {
       return; // the printed stroke is shown instead
     }
     const path = document.createElementNS(SVG_NAMESPACE, 'path');
@@ -152,7 +152,7 @@ export function createQuiz(target, size, handlers) {
     path.setAttribute('stroke-width', penWidth);
     path.setAttribute('stroke-linecap', 'round');
     path.setAttribute('stroke-linejoin', 'round');
-    squigLayer.appendChild(path);
+    drawnLayer.appendChild(path);
   }
 
   // Changes the color of the printed strokes immediately (no fade).
@@ -173,17 +173,17 @@ export function createQuiz(target, size, handlers) {
   // The color of the printed strokes while the character is being written:
   // invisible under your own strokes, or plain ink when they stand in for them.
   function colorWhileWriting() {
-    return rawSquigs ? INVISIBLE : INK_COLOR;
+    return rawInput ? INVISIBLE : INK_COLOR;
   }
 
-  // The color of the printed character once it is finished. With raw squigs
+  // The color of the printed character once it is finished. With raw input
   // it is the light reference under your handwriting, green or red. Without,
   // it is the character itself, and only turns red if it was missed.
   function referenceColor(passed) {
     if (passed === false) {
       return REFERENCE_COLOR_MISSED;
     }
-    return rawSquigs ? REFERENCE_COLOR : INK_COLOR;
+    return rawInput ? REFERENCE_COLOR : INK_COLOR;
   }
 
   function drewShortcut(stroke) {
@@ -199,7 +199,7 @@ export function createQuiz(target, size, handlers) {
     // Setting a character rebuilds Hanzi Writer's layers. Later elements in an
     // SVG are drawn on top, so (re)adding ours puts your strokes above the
     // printed character. It also resets the outline to hidden.
-    target.appendChild(squigLayer);
+    target.appendChild(drawnLayer);
     if (outlineVisible) {
       writer.showOutline({ duration: 0 });
     }
@@ -285,7 +285,7 @@ export function createQuiz(target, size, handlers) {
   // showing you are tracing a visible reference, which must stay where it is.
   // The same goes for printed strokes that have already snapped into place.
   function canFollow() {
-    return rawSquigs && !outlineVisible;
+    return rawInput && !outlineVisible;
   }
 
   // Refits the frame to the accepted strokes. Returns true if it changed
@@ -502,7 +502,7 @@ export function createQuiz(target, size, handlers) {
   // Starts (or restarts) the quiz for the current character, from a clean slate.
   async function start() {
     clearTimeout(afterAnimationTimer);
-    squigLayer.replaceChildren();
+    drawnLayer.replaceChildren();
     mistakes = 0;
     hintShown = false;
     handlers.onStart({ totalStrokes: baseData.strokes.length });
@@ -510,7 +510,7 @@ export function createQuiz(target, size, handlers) {
     try {
       await useOriginalData();
       await setPrintedColor(colorWhileWriting());
-      target.appendChild(squigLayer);
+      target.appendChild(drawnLayer);
       if (outlineVisible) {
         writer.showOutline({ duration: 0 });
       }
@@ -534,7 +534,7 @@ export function createQuiz(target, size, handlers) {
       highlightOnComplete: false,
       // Hanzi Writer accepted the stroke as the textbook stroke.
       onCorrectStroke: (stroke) => {
-        keepSquig(stroke.drawnPath.pathString);
+        keepDrawnStroke(stroke.drawnPath.pathString);
         const baseStrokes = [sequence[stroke.strokeNum]];
         let strokesDone = stroke.strokeNum + 1; // strokeNum counts from 0
         const isShortcut = drewShortcut(stroke);
@@ -567,7 +567,7 @@ export function createQuiz(target, size, handlers) {
       // next stroke of the character's other accepted order.
       onMistake: (stroke) => {
         if (drewShortcut(stroke)) {
-          keepSquig(stroke.drawnPath.pathString);
+          keepDrawnStroke(stroke.drawnPath.pathString);
           noteAccepted(
             stroke.strokeNum,
             [sequence[stroke.strokeNum], sequence[stroke.strokeNum + 1]],
@@ -585,7 +585,7 @@ export function createQuiz(target, size, handlers) {
         }
         const otherReading = otherOrderFor(stroke);
         if (otherReading) {
-          keepSquig(stroke.drawnPath.pathString);
+          keepDrawnStroke(stroke.drawnPath.pathString);
           switchToOtherOrder(stroke, otherReading, totalStrokes);
           return;
         }
@@ -593,7 +593,7 @@ export function createQuiz(target, size, handlers) {
         // centered reference than Hanzi Writer allows: accept it, and let the
         // frame follow it.
         if (isFirstStrokeAnywhere(stroke)) {
-          keepSquig(stroke.drawnPath.pathString);
+          keepDrawnStroke(stroke.drawnPath.pathString);
           noteAccepted(0, [sequence[0]], stroke.drawnPath.points);
           handlers.onProgress({ strokesDone: 1, totalStrokes, totalMistakes: mistakes });
           writer.skipQuizStroke();
@@ -627,17 +627,17 @@ export function createQuiz(target, size, handlers) {
   return {
     // Switches to a character and starts quizzing it. `script` is
     // 'traditional' or 'simplified' and decides which form is drawn.
-    // `useRawSquigs` chooses between keeping your own strokes on screen
+    // `useRawInput` chooses between keeping your own strokes on screen
     // (true) and snapping to the printed strokes (false). Returns false if
     // there is no stroke data for the character.
-    async showCharacter(newChar, script, useRawSquigs) {
+    async showCharacter(newChar, script, useRawInput) {
       clearTimeout(afterAnimationTimer);
       const data = await loadCharData(newChar, script);
       if (!data) {
         return false;
       }
       char = newChar;
-      rawSquigs = useRawSquigs;
+      rawInput = useRawInput;
       baseData = data;
       charData = data;
       sequence = data.strokes.map((stroke, index) => index);
@@ -708,7 +708,7 @@ export function createQuiz(target, size, handlers) {
     async animate() {
       clearTimeout(afterAnimationTimer);
       writer.cancelQuiz();
-      squigLayer.replaceChildren();
+      drawnLayer.replaceChildren();
       handlers.onAnimateStart();
       await useOriginalData();
       await writer.hideCharacter({ duration: 0 });
@@ -730,7 +730,7 @@ export function createQuiz(target, size, handlers) {
       if (writer) {
         writer.cancelQuiz();
       }
-      squigLayer.remove();
+      drawnLayer.remove();
     },
   };
 }

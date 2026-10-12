@@ -107,7 +107,7 @@ function startFreePractice() {
     // Writing works for any characters, in the word list or not.
     return flow.start(text, {
       script: settings.script,
-      rawSquigs: settings.rawSquigs,
+      rawInput: settings.rawInput,
       continueLabel: 'Again',
       onContinue: startFreePractice,
     });
