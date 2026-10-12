@@ -17,6 +17,8 @@
       <!-- Review mode: what is left to do, and the prompt for the current word -->
       <section id="review-header" class="review-header">
         <p id="review-counts" class="counts"></p>
+        <!-- Which kind of card this is: Writing, Tone, Pinyin or Meaning -->
+        <p id="card-type" class="card-type"></p>
         <p id="prompt-meaning" class="meaning"></p>
         <p id="prompt-pinyin" class="pinyin" hidden></p>
         <button id="pinyin-button" class="small" type="button" hidden>Show pinyin</button>
@@ -48,7 +50,7 @@
 
         <!-- The status line. In Review, once a character is written, the two
              verdict buttons appear next to it. -->
-        <div class="status-row">
+        <div id="status-row" class="status-row">
           <p id="status" class="status"></p>
           <div id="verdict-row" class="verdict-row" hidden>
             <button id="missed-button" class="small verdict missed" type="button">Missed</button>
@@ -59,11 +61,25 @@
         <!-- Hanzi Writer draws the character into this SVG. wordFlow.js sets its size and adds the guide grid. -->
         <svg id="writing-area" class="writing-area"></svg>
 
-        <div class="buttons">
+        <!-- Takes the writing area's place on tone, pinyin and meaning cards: shows the
+             characters large, and the answer once given or revealed. -->
+        <div id="card-face" class="card-face" hidden></div>
+
+        <div id="writing-buttons" class="buttons">
           <button id="restart-button" type="button">Restart</button>
           <button id="outline-button" type="button">Show outline</button>
           <button id="animate-button" type="button">Animate</button>
           <button id="next-button" class="primary" type="button" hidden>Next</button>
+        </div>
+
+        <!-- Tone cards: one button per tone. The last is the neutral tone. -->
+        <div id="tone-buttons" class="buttons tone-buttons" hidden>
+          <button type="button" data-tone="1" aria-label="First tone">ā</button>
+          <button type="button" data-tone="2" aria-label="Second tone">á</button>
+          <button type="button" data-tone="3" aria-label="Third tone">ǎ</button>
+          <button type="button" data-tone="4" aria-label="Fourth tone">à</button>
+          <button type="button" data-tone="5" aria-label="Neutral tone">a</button>
+          <button id="tone-next-button" class="primary" type="button" hidden>Next</button>
         </div>
 
         <!-- Review mode: the four grades, shown once the word is written. Filled in by review.js. -->
@@ -78,17 +94,42 @@
       </div>
 
       <footer>
-        <label>
+        <button id="settings-button" class="small" type="button">Settings</button>
+      </footer>
+
+      <!-- <dialog> is the browser's built-in pop-up panel. It stays hidden until opened by settings.js. -->
+      <dialog id="settings-panel" class="settings-panel">
+        <h2>Settings</h2>
+
+        <label class="setting">
           Script
           <select id="script-select">
             <option value="traditional">Traditional 繁體</option>
             <option value="simplified">Simplified 简体</option>
           </select>
         </label>
-        <button id="export-button" class="small" type="button">Export backup</button>
-        <button id="import-button" class="small" type="button">Import backup</button>
-        <input id="import-file" type="file" accept="application/json,.json" hidden />
-      </footer>
+
+        <label class="setting">
+          New words per day
+          <input id="new-words-input" type="number" min="0" max="50" inputmode="numeric" />
+        </label>
+
+        <fieldset class="setting">
+          <legend>Card types</legend>
+          <label><input type="checkbox" data-card-type="meaning" /> Meaning: see the word, recall what it means</label>
+          <label><input type="checkbox" data-card-type="pinyin" /> Pinyin: see the word, recall how it is read</label>
+          <label><input type="checkbox" data-card-type="tone" /> Tone: see the word, give each tone</label>
+          <label><input type="checkbox" data-card-type="writing" /> Writing: see the meaning, write the word</label>
+        </fieldset>
+
+        <div class="setting">
+          <button id="export-button" class="small" type="button">Export backup</button>
+          <button id="import-button" class="small" type="button">Import backup</button>
+          <input id="import-file" type="file" accept="application/json,.json" hidden />
+        </div>
+
+        <button id="settings-close" class="primary" type="button">Done</button>
+      </dialog>
     </main>
 
     <script type="module" src="/src/main.js"></script>

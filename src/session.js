@@ -7,8 +7,26 @@
 
 import { AGAIN, HARD, GOOD } from './scheduler.js';
 
-// How many words may be seen for the first time per day.
-export const NEW_WORDS_PER_DAY = 10;
+// The four kinds of card a word can have, in the order they are introduced
+// for a new word: recognizing it first, producing it last.
+//   meaning: shown the characters, recall the meaning
+//   pinyin:  shown the characters, recall the reading
+//   tone:    shown the characters, give the tone of each
+//   writing: shown the meaning, write the characters
+export const CARD_TYPES = ['meaning', 'pinyin', 'tone', 'writing'];
+
+// How many words may be seen for the first time per day, unless the setting
+// says otherwise.
+export const DEFAULT_NEW_WORDS_PER_DAY = 5;
+
+// Cards of the same word give each other's answers away: a writing card ends
+// by showing the pinyin, and the other three show the characters. So after
+// any card of a word is reviewed, the word's other cards wait this long.
+export const SIBLING_GAP_MS = 3 * 60 * 1000;
+
+export function cardId(wordId, type) {
+  return `${wordId}#${type}`;
+}
 
 // The study day starts at 4:00 in the morning rather than midnight (as in
 // Anki), so a late-night session still counts toward the same day.
@@ -24,56 +42,118 @@ export function startOfStudyDay(now) {
   return start.getTime();
 }
 
+// When a card was last reviewed. Cards saved before `lastReviewedAt` existed
+// only have the time inside their FSRS state, as text.
+function lastReviewOf(card) {
+  return card.lastReviewedAt ?? Date.parse(card.fsrsState.last_review);
+}
+
 // Looks at all words and their cards and reports what there is to do.
 //
 // words: list of word records, each with an `id` and an `order`
-// cards: a Map from word ID to that word's card. A word without a card has
-//        never been studied.
+// cards: a Map from card ID (see cardId above) to card. A card that isn't in
+//        the map has never been studied.
+// now:   the current time
+// options:
+//   newWordsPerDay: how many words may be introduced per day
+//   enabledTypes:   the card types switched on, e.g. ['meaning', 'writing']
+//   hasCardType(word, type): optional; return false for a word that can't
+//                   have that kind of card
 //
 // Returns:
-//   next:         { word, card } to review now (card is null for a new word),
-//                 or null if there is nothing to do right now
-//   dueCount:     how many studied words are due now
-//   newLeftToday: how many new words can still be introduced today
-//   nextDueAt:    when the next studied word becomes due, or null
-export function planSession(words, cards, now) {
+//   next:         { word, type, card } to review now (card is null for a card
+//                 never studied), or null if there is nothing to do right now
+//   dueCount:     how many studied cards are due now
+//   newCardCount: how many never-studied cards are waiting for words already
+//                 introduced
+//   newWordsLeftToday: how many more words can be introduced today
+//   nextDueAt:    when something next becomes available, or null
+export function planSession(words, cards, now, options) {
+  const { newWordsPerDay, enabledTypes, hasCardType = () => true } = options;
+  const dayStart = startOfStudyDay(now);
+  // Introduce a word's cards in the standard order, whatever order the
+  // enabled types were given in.
+  const types = CARD_TYPES.filter((type) => enabledTypes.includes(type));
+
   const due = [];
-  const unseen = [];
+  const newForKnownWords = [];
+  const unseenWords = [];
   let nextDueAt = null;
   let introducedToday = 0;
-  const dayStart = startOfStudyDay(now);
+  let newCardCount = 0;
 
-  for (const word of words) {
-    const card = cards.get(word.id);
-    if (!card) {
-      unseen.push(word);
+  const noteAvailableAt = (time) => {
+    if (nextDueAt === null || time < nextDueAt) {
+      nextDueAt = time;
+    }
+  };
+
+  const inListOrder = [...words].sort((a, b) => a.order - b.order);
+  for (const word of inListOrder) {
+    // All of the word's studied cards, including types now switched off:
+    // they still count for when the word was introduced and last seen.
+    const studied = CARD_TYPES.map((type) => cards.get(cardId(word.id, type))).filter(Boolean);
+    const wanted = types.filter((type) => hasCardType(word, type));
+
+    if (studied.length === 0) {
+      if (wanted.length > 0) {
+        unseenWords.push({ word, type: wanted[0], card: null });
+      }
       continue;
     }
-    if (card.firstReviewedAt >= dayStart) {
+    if (Math.min(...studied.map((card) => card.firstReviewedAt)) >= dayStart) {
       introducedToday += 1;
     }
-    if (card.due <= now) {
-      due.push({ word, card });
-    } else if (nextDueAt === null || card.due < nextDueAt) {
-      nextDueAt = card.due;
+
+    let offeredNewCard = false;
+    for (const type of wanted) {
+      const card = cards.get(cardId(word.id, type));
+      // The word's other cards hold this one back for a while after a review.
+      const siblings = studied.filter((other) => other !== card);
+      const heldUntil =
+        siblings.length > 0 ? Math.max(...siblings.map(lastReviewOf)) + SIBLING_GAP_MS : 0;
+
+      if (card) {
+        const availableAt = Math.max(card.due, heldUntil);
+        if (availableAt <= now) {
+          due.push({ word, type, card });
+        } else {
+          noteAvailableAt(availableAt);
+        }
+      } else {
+        newCardCount += 1;
+        // Only the word's next new card is on offer; the rest wait their turn.
+        if (offeredNewCard) {
+          continue;
+        }
+        offeredNewCard = true;
+        if (heldUntil <= now) {
+          newForKnownWords.push({ word, type, card: null });
+        } else {
+          noteAvailableAt(heldUntil);
+        }
+      }
     }
   }
 
   // Longest overdue first.
   due.sort((a, b) => a.card.due - b.card.due);
-  // New words in the order of the word list.
-  unseen.sort((a, b) => a.order - b.order);
 
-  const newLeftToday = Math.min(unseen.length, Math.max(0, NEW_WORDS_PER_DAY - introducedToday));
+  const newWordsLeftToday = Math.min(
+    unseenWords.length,
+    Math.max(0, newWordsPerDay - introducedToday),
+  );
 
   let next = null;
   if (due.length > 0) {
     next = due[0];
-  } else if (newLeftToday > 0) {
-    next = { word: unseen[0], card: null };
+  } else if (newForKnownWords.length > 0) {
+    next = newForKnownWords[0];
+  } else if (newWordsLeftToday > 0) {
+    next = unseenWords[0];
   }
 
-  return { next, dueCount: due.length, newLeftToday, nextDueAt };
+  return { next, dueCount: due.length, newCardCount, newWordsLeftToday, nextDueAt };
 }
 
 // A character counts as missed when its mistakes exceed this share of its

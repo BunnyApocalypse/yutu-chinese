@@ -245,6 +245,8 @@ export function createWordFlow(elements) {
     const size = chooseSize();
     writingArea.setAttribute('width', size);
     writingArea.setAttribute('height', size);
+    // Lets the style sheet give the card face (see style.css) the same size.
+    document.documentElement.style.setProperty('--area-size', `${size}px`);
     drawGrid(writingArea, size);
     quiz = createQuiz(writingArea, size, quizHandlers);
     quiz.setOutlineVisible(outlineVisible);

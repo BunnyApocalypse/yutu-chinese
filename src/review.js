@@ -1,29 +1,44 @@
-// Review mode: shows the word that is due, lets you write it, asks for a
-// grade and saves the result.
+// Review mode: picks the card that is due, shows it, asks for a grade and
+// saves the result.
 //
-// Only writing cards exist so far: you are shown the meaning and write the
-// characters. Tone, pinyin and meaning cards will be added later.
+// A word can have four kinds of card (see CARD_TYPES in session.js). Each kind
+// is shown by its own piece of code:
+//   writing          wordFlow.js
+//   tone             toneFlow.js
+//   meaning, pinyin  recallCard.js
+// What they share lives here: choosing the next card, the grade buttons, and
+// saving.
 
 import { getAll, saveReview, randomId } from './db.js';
-import { gradeOptions, GRADES } from './scheduler.js';
-import { planSession, suggestGrade, judgeChar, formatInterval } from './session.js';
+import { gradeOptions, GRADES, AGAIN, GOOD } from './scheduler.js';
+import { planSession, suggestGrade, judgeChar, formatInterval, cardId } from './session.js';
 import { formatPinyin } from './wordList.js';
+import { toneAnswers } from './tones.js';
 
-const CARD_TYPE = 'writing';
+const TYPE_LABELS = {
+  writing: 'Writing',
+  tone: 'Tone',
+  pinyin: 'Pinyin',
+  meaning: 'Meaning',
+};
 
-// While waiting for the next word to become due, look again this often.
+// While waiting for the next card to become due, look again this often.
 const RECHECK_MS = 15 * 1000;
 
 // elements: the page elements review controls:
-//   countsElement, meaningElement, pinyinElement, pinyinButton,
-//   gradeRow, donePanel, doneMessage, studyArea
-// flow:      the word flow (see wordFlow.js)
-// getScript: a function returning 'traditional' or 'simplified'
+//   countsElement, typeElement, meaningElement, pinyinElement, pinyinButton,
+//   gradeRow, donePanel, doneMessage, studyArea,
+//   and the parts of the study area that differ per kind of card:
+//   wordRow, statusRow, verdictRow, writingArea, writingButtons, cardFace,
+//   toneButtonRow, orderNote
+// flows:    { writing, tone, recall }: the three pieces of code named above
+// settings: the current settings (see settings.js)
 //
 // Returns { load, activate, deactivate, refresh }.
-export function createReview(elements, flow, getScript) {
+export function createReview(elements, flows, settings) {
   const {
     countsElement,
+    typeElement,
     meaningElement,
     pinyinElement,
     pinyinButton,
@@ -31,26 +46,56 @@ export function createReview(elements, flow, getScript) {
     donePanel,
     doneMessage,
     studyArea,
+    wordRow,
+    statusRow,
+    verdictRow,
+    writingArea,
+    writingButtons,
+    cardFace,
+    toneButtonRow,
+    orderNote,
   } = elements;
 
   let words = [];
-  // Word ID → that word's writing card. A word with no entry is new.
+  // Card ID → card, for every card that has been studied.
   const cards = new Map();
-  // Words that turned out to have no stroke data; left out for this session.
-  const unusable = new Set();
+  // Words whose characters turned out to have no stroke data. They can't have
+  // a writing card; left out for this session.
+  const unwritable = new Set();
 
   // True while Review is the mode on screen.
   let active = false;
   let recheckTimer = null;
 
-  // The word on screen and its card (null for a new word).
+  // The card on screen: { word, type, card }, with card null if never studied.
   let current = null;
-  // Set once the word has been written: how it went, the time it was
-  // finished, what each grade would do, and which grade is suggested.
-  let result = null;
+  // Set once the card has been answered: the time, what each grade would do,
+  // which grade is suggested, and details of the answer to save.
   let finishedAt = null;
   let options = null;
   let suggested = null;
+  let answerDetails = null;
+
+  // Shows the parts of the study area that the given kind of card uses, and
+  // hides the rest.
+  function showPartsFor(type) {
+    const writing = type === 'writing';
+    const tone = type === 'tone';
+    writingArea.toggleAttribute('hidden', !writing);
+    writingButtons.hidden = !writing;
+    cardFace.hidden = writing;
+    toneButtonRow.hidden = !tone;
+    wordRow.hidden = !(writing || tone);
+    statusRow.hidden = !(writing || tone);
+    // These two belong to the writing card and may be left over from the last one.
+    verdictRow.hidden = true;
+    orderNote.hidden = true;
+  }
+
+  function stopFlows() {
+    flows.tone.stop();
+    flows.recall.stop();
+  }
 
   function showPinyin() {
     pinyinElement.textContent = formatPinyin(current.word.pinyin);
@@ -72,50 +117,44 @@ export function createReview(elements, flow, getScript) {
     }
     const chosen = options[value];
     options = null;
-    const { word, card } = current;
+    const { word, type, card } = current;
     const time = finishedAt.getTime();
 
     const newCard = {
-      id: `${word.id}#${CARD_TYPE}`,
+      id: cardId(word.id, type),
       wordId: word.id,
-      type: CARD_TYPE,
+      type,
       due: chosen.due,
       firstReviewedAt: card ? card.firstReviewedAt : time,
+      lastReviewedAt: time,
       fsrsState: chosen.fsrsState,
     };
     const review = {
       id: randomId(),
       cardId: newCard.id,
       wordId: word.id,
-      type: CARD_TYPE,
+      type,
       time,
       grade: value,
       suggestedGrade: suggested,
-      mistakesPerChar: result.mistakesPerChar,
-      // The verdict on each character (true = passed), and what the app had
-      // proposed before any overruling.
-      passedPerChar: result.passedPerChar,
-      suggestedPerChar: result.suggestedPerChar,
-      // For characters with two accepted stroke orders, which one was
-      // written: 'moe' or 'mainland'. null for all other characters.
-      orderPerChar: result.orderPerChar,
-      script: getScript(),
+      script: settings.script,
       log: chosen.log,
+      // What was answered; the fields depend on the kind of card.
+      ...answerDetails,
     };
     await saveReview(newCard, review);
-    cards.set(word.id, newCard);
+    cards.set(newCard.id, newCard);
     showNext();
   }
 
   // Shows the four grade buttons with the suggested one highlighted.
   function renderGrades() {
-    suggested = suggestGrade(result);
     gradeRow.replaceChildren();
     for (const { value, label } of GRADES) {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = value === suggested ? 'grade primary' : 'grade';
-      // Each button says when the word would come back.
+      // Each button says when the card would come back.
       const wait = document.createElement('span');
       wait.className = 'wait';
       wait.textContent = formatInterval(options[value].due - finishedAt.getTime());
@@ -126,22 +165,100 @@ export function createReview(elements, flow, getScript) {
     gradeRow.hidden = false;
   }
 
-  // The word has been written: show the answer's pinyin and the grade buttons.
-  function onWordDone(wordResult) {
-    result = wordResult;
+  // The card has been answered: work out what each grade would do and offer
+  // the grade buttons.
+  function offerGrades(suggestedGrade, details) {
     finishedAt = new Date();
     options = gradeOptions(current.card ? current.card.fsrsState : null, finishedAt);
-    showPinyin();
+    suggested = suggestedGrade;
+    answerDetails = details;
     renderGrades();
   }
 
-  // The last character's verdict was overruled, which can change the suggestion.
-  function onVerdictChange(wordResult) {
-    if (!options) {
-      return;
+  // ---- The four kinds of card ----
+
+  // Returns false if the word can't be written (no stroke data).
+  async function showWritingCard() {
+    const { word } = current;
+    meaningElement.textContent = word.definition;
+    pinyinButton.hidden = false;
+
+    // What to save about a written word.
+    const details = (result) => ({
+      mistakesPerChar: result.mistakesPerChar,
+      // The verdict on each character (true = passed), and what the app had
+      // proposed before any overruling.
+      passedPerChar: result.passedPerChar,
+      suggestedPerChar: result.suggestedPerChar,
+      // For characters with two accepted stroke orders, which one was
+      // written: 'moe' or 'mainland'. null for all other characters.
+      orderPerChar: result.orderPerChar,
+    });
+
+    return flows.writing.start(word[settings.script], {
+      script: settings.script,
+      continueLabel: null,
+      hideOutline: true,
+      judgeChar,
+      // Starting a character over after the word was finished takes the grade
+      // buttons away again until it is finished once more.
+      onCharStart: hideGrades,
+      onWordDone(result) {
+        showPinyin();
+        offerGrades(suggestGrade(result), details(result));
+      },
+      // The last character's verdict was overruled, which can change the suggestion.
+      onVerdictChange(result) {
+        if (options) {
+          suggested = suggestGrade(result);
+          answerDetails = details(result);
+          renderGrades();
+        }
+      },
+      // Tapping the writing area accepts the suggested grade.
+      onContinue: () => grade(suggested),
+    });
+  }
+
+  function showToneCard() {
+    const { word } = current;
+    const chars = Array.from(word[settings.script]);
+    flows.tone.start({
+      word,
+      script: settings.script,
+      answers: toneAnswers(word.pinyin, chars.length),
+      onDone({ givenTones, passedPerChar }) {
+        // One wrong tone fails the card.
+        const allRight = passedPerChar.every(Boolean);
+        offerGrades(allRight ? GOOD : AGAIN, { givenTones, passedPerChar });
+      },
+      onContinue: () => grade(suggested),
+    });
+  }
+
+  // Meaning and pinyin cards: nothing is checked, so "Good" is highlighted
+  // and you choose.
+  function showRecallCard(ask) {
+    flows.recall.start({
+      word: current.word,
+      script: settings.script,
+      ask,
+      onReveal: () => offerGrades(GOOD, {}),
+      onContinue: () => grade(suggested),
+    });
+  }
+
+  // ---- Choosing the next card ----
+
+  function hasCardType(word, type) {
+    if (type === 'writing') {
+      return !unwritable.has(word.id);
     }
-    result = wordResult;
-    renderGrades();
+    if (type === 'tone') {
+      // The pinyin must have one syllable per character.
+      return toneAnswers(word.pinyin, Array.from(word.traditional).length) !== null;
+    }
+    return true;
   }
 
   function describeWait(nextDueAt, now) {
@@ -166,21 +283,27 @@ export function createReview(elements, flow, getScript) {
     if (!active) {
       return;
     }
+    stopFlows();
     const now = Date.now();
-    const usableWords = words.filter((word) => !unusable.has(word.id));
-    const plan = planSession(usableWords, cards, now);
-    countsElement.textContent = `Due ${plan.dueCount} · New ${plan.newLeftToday}`;
+    const plan = planSession(words, cards, now, {
+      newWordsPerDay: settings.newWordsPerDay,
+      enabledTypes: settings.enabledTypes,
+      hasCardType,
+    });
+    countsElement.textContent =
+      `Due ${plan.dueCount} · New cards ${plan.newCardCount} · New words ${plan.newWordsLeftToday}`;
     hideGrades();
+    meaningElement.textContent = '';
+    pinyinElement.hidden = true;
+    pinyinButton.hidden = true;
 
     if (!plan.next) {
       current = null;
       studyArea.hidden = true;
-      meaningElement.textContent = '';
-      pinyinElement.hidden = true;
-      pinyinButton.hidden = true;
+      typeElement.textContent = '';
       doneMessage.textContent = `All done for now. ${describeWait(plan.nextDueAt, now)}`;
       donePanel.hidden = false;
-      // Freshly learned words come back after a few minutes, so keep checking.
+      // Cards come back after a few minutes, so keep checking.
       recheckTimer = setTimeout(showNext, RECHECK_MS);
       return;
     }
@@ -188,26 +311,19 @@ export function createReview(elements, flow, getScript) {
     current = plan.next;
     donePanel.hidden = true;
     studyArea.hidden = false;
-    meaningElement.textContent = current.word.definition;
-    pinyinElement.hidden = true;
-    pinyinButton.hidden = false;
+    typeElement.textContent = TYPE_LABELS[current.type];
+    showPartsFor(current.type);
 
-    const started = await flow.start(current.word[getScript()], {
-      script: getScript(),
-      continueLabel: null,
-      hideOutline: true,
-      // Starting a character over after the word was finished takes the grade
-      // buttons away again until it is finished once more.
-      judgeChar,
-      onCharStart: hideGrades,
-      onWordDone,
-      onVerdictChange,
-      // Tapping the writing area accepts the suggested grade.
-      onContinue: () => grade(suggested),
-    });
-    if (!started) {
-      unusable.add(current.word.id);
-      showNext();
+    if (current.type === 'writing') {
+      const started = await showWritingCard();
+      if (!started) {
+        unwritable.add(current.word.id);
+        showNext();
+      }
+    } else if (current.type === 'tone') {
+      showToneCard();
+    } else {
+      showRecallCard(current.type);
     }
   }
 
@@ -217,9 +333,7 @@ export function createReview(elements, flow, getScript) {
       words = await getAll('words');
       cards.clear();
       for (const card of await getAll('cards')) {
-        if (card.type === CARD_TYPE) {
-          cards.set(card.wordId, card);
-        }
+        cards.set(card.id, card);
       }
     },
 
@@ -228,16 +342,18 @@ export function createReview(elements, flow, getScript) {
       return showNext();
     },
 
+    // Leaves the page ready for Free practice, which uses the writing parts.
     deactivate() {
       active = false;
       clearTimeout(recheckTimer);
+      stopFlows();
       donePanel.hidden = true;
       studyArea.hidden = false;
+      showPartsFor('writing');
       hideGrades();
     },
 
-    // Shows the current word again from the start, e.g. after the script
-    // setting changed.
+    // Works out the next card afresh, e.g. after a setting changed.
     refresh() {
       return showNext();
     },

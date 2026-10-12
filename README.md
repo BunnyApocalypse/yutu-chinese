@@ -6,11 +6,17 @@ Stroke display and grading are done by [Hanzi Writer](https://hanziwriter.org/).
 
 ## Status
 
-- **Review:** you are shown a meaning and write the word stroke by stroke. Your own handwriting stays on screen, and the printed character appears underneath when you finish so you can compare. You then grade yourself (the app suggests a grade from your mistakes), and the [FSRS](https://github.com/open-spaced-repetition/ts-fsrs) scheduler decides when the word comes back.
+- **Review:** each word has up to four cards, scheduled separately by the [FSRS](https://github.com/open-spaced-repetition/ts-fsrs) scheduler:
+  - **Writing:** you are shown a meaning and write the word stroke by stroke. Your own handwriting stays on screen, and the printed character appears underneath when you finish so you can compare.
+  - **Tone:** you are shown the word and give the tone of each character.
+  - **Pinyin** and **Meaning:** you are shown the word, recall its reading or meaning, and reveal the answer.
+
+  After each card you grade yourself; where the app can check your answer it suggests a grade.
 - **Free practice:** type any character or word and write it. Nothing is recorded.
 - Traditional or simplified, chosen with a switch. Traditional uses Taiwan-standard forms and stroke order; where the mainland stroke order uses the same strokes, that is accepted too.
 - Two strokes written without lifting the pen (such as the hook of 子) are accepted where one runs into the next.
 - A built-in list of about 100 common words to start from.
+- Settings for new words per day and which kinds of card you want.
 
 ## Your data
 

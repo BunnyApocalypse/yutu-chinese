@@ -20,6 +20,12 @@ The owner has said they would not use the app without these (feedback after mile
 - **Common handwriting shortcuts are accepted.** For example 子 written in 2 strokes (㇇ and 亅 joined) instead of 3. The textbook stroke count must not be forced.
 - **Grading must not be fussy.** Small, awkward strokes (e.g. the ㇇ at the top of 子) should pass when written reasonably.
 
+## Licensing
+
+- The app's own code is GPL-3.0-only (`LICENSE`).
+- Stroke data (`data/animcjk/`, `hanzi-writer-data`) stays under the Arphic Public License, which is GPL-incompatible. It is kept as separate data files that the app loads; never paste stroke data into source files or relicense it.
+- A new dependency must have a GPL-compatible license (MIT, BSD, Apache-2.0, LGPL, GPL). New data must keep its own license in its own folder with a README, as `data/animcjk/` does.
+
 ## Working with the owner
 
 The owner reads Python and JavaScript comfortably but is not a developer.
@@ -42,12 +48,16 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 ## Layout
 
 - `index.html`: the single page.
-- `src/main.js`: entry point; the two modes (Review, Free practice), the script setting, backup buttons, first-run seeding.
-- `src/review.js`: Review mode. Shows the due word's meaning, runs the word flow, shows grade buttons, saves the result.
+- `src/main.js`: entry point; the two modes (Review, Free practice), backup buttons, first-run seeding.
+- `src/review.js`: Review mode. Picks the next card, hands it to the code for its kind, shows the grade buttons, saves the result.
+- `src/recallCard.js`: meaning and pinyin cards (see the word, tap to reveal, grade yourself).
+- `src/toneFlow.js`: tone cards (one tone per character, checked automatically).
+- `src/tones.js`: splits pinyin into syllables and lines them up with characters. Plain calculation.
+- `src/settings.js`: the settings and their panel.
 - `src/wordFlow.js`: writing a word one character after another (slot row, status line, Restart / Outline / Animate / Next, tap to continue). Shared by both modes; tracks mistakes, hints and peeking per character, and in Review shows each character's verdict.
 - `src/quiz.js`: the only file that imports Hanzi Writer. It reports plain results (strokes done, mistakes, hint shown) through handler functions. One Hanzi Writer instance is reused for all characters via `setCharacter()`.
 - `src/scheduler.js`: the only file that imports `ts-fsrs`. `gradeOptions(fsrsState, now)` returns what each of the four grades would do to a card.
-- `src/session.js`: plain calculation, no page or database: which word is next (`planSession`), the suggested grade (`suggestGrade`), the 4:00 day boundary, the daily new-word limit.
+- `src/session.js`: plain calculation, no page or database: which card is next (`planSession`), the suggested grade for writing (`suggestGrade`, `judgeChar`), the 4:00 day boundary, the daily new-word limit, the hold between cards of one word.
 - `src/db.js`: small promise wrapper around IndexedDB. The store layout is documented at the top of the file.
 - `src/backup.js`: build, check and restore a backup file.
 - `src/wordList.js`: parses the four-column TSV word list format (same as Skritter's export) and converts numbered pinyin to tone marks.
@@ -64,14 +74,22 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 
 ## Cards, scheduling and storage
 
-- **Four card types per word, as in Skritter:** `writing` (shown the meaning, write the characters), `tone`, `pinyin` and `meaning` (each shown the characters). Only `writing` is built. Each card has its own schedule; the `cards` store is keyed `<wordId>#<type>` so the others can be added without changing storage.
+- **Four card types per word, as in Skritter**, each with its own schedule (`cards` store, keyed `<wordId>#<type>`):
+  - `meaning`: see the word, recall the meaning. Reveal and self-grade.
+  - `pinyin`: see the word, recall the reading. Reveal and self-grade.
+  - `tone`: see the word, give each character's tone with five buttons. Checked automatically; a right answer moves on by itself, a wrong one waits for a tap; one wrong tone suggests Again. A word whose pinyin doesn't have one syllable per character gets no tone card.
+  - `writing`: see the meaning, write the word.
+- **A word's cards are introduced in the order meaning, pinyin, tone, writing**, one at a time.
+- **Cards of one word are kept apart** (`SIBLING_GAP_MS`, 3 minutes), because each gives away the others' answers: a writing card ends by showing the pinyin, the others show the characters. With few words in play this makes the app say "next review in N minutes" although cards exist. That is intended.
+- **New words per day counts words, not cards** (setting, default 5). A word is introduced when its first card of any type is studied. New cards of words already introduced are not limited.
+- **Settings** (`settings` store): `script`, `newWordsPerDay`, `enabledTypes`. A type switched off never appears but keeps its cards and history. At least one type stays on.
 - **Writing prompts show the meaning only.** The owner decided pinyin must not be given. A "Show pinyin" button reveals it for near-synonyms and does not affect the grade; the pinyin is shown once the word is finished. Glosses in word lists must therefore be distinguishable from each other.
 - **One writing card per word.** A setting chooses the script written (traditional or simplified); the schedule is shared.
 - **FSRS** with default parameters (90% target retention, learning steps of 1 and 10 minutes, fuzz on).
 - **Each character gets a pass/fail verdict, and one missed character fails the word.** After a character is written, its slot turns green or red and two buttons (Missed / Got it) let the owner overrule the proposal. `judgeChar` (`src/session.js`) proposes "missed" if a hint flashed, the outline or animation was used, a finished character was restarted, or mistakes exceed a quarter of the character's strokes (one slip is always forgiven).
 - **Word grade:** `suggestGrade` proposes Again if any character is missed, Hard if there were any mistakes, otherwise Good. Easy is never suggested. The owner can pick any of the four; tapping the writing area accepts the suggestion. Overruling the last character's verdict updates the suggestion live.
 - Reviews store both the final verdicts (`passedPerChar`) and the proposed ones (`suggestedPerChar`), plus `mistakesPerChar`.
-- **Session order:** due cards first (longest overdue first), then new words in list order, 10 new per day, day starting at 4:00.
+- **Session order:** due cards first (longest overdue first), then new cards of words already introduced, then new words in list order; the day starts at 4:00.
 - **Every review is logged** in the `reviews` store and never deleted. This is what a future FSRS parameter fit, and merging between devices, will work from.
 - **IDs must be the same on every device.** A word's ID is `<traditional>|<pinyin>`; review IDs are random. Never use auto-incrementing keys: two devices would hand out the same numbers, making a later merge impossible.
 - **Dates are stored as numbers** (milliseconds, like `Date.now()`), and FSRS state as plain JSON with ISO date strings, so records go into a backup file unchanged.
@@ -100,6 +118,10 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - **Limits:** characters whose shapes differ between the sets (為) accept only the MOE order. Traditional characters outside the Taiwan set come from the big set and so follow the mainland order, with no MOE alternative.
 
 ## Things that are easy to get wrong
+
+- **The study area is shared by all card kinds.** `showPartsFor` in `src/review.js` decides which parts are visible for each kind, and Free practice needs the writing parts back (`deactivate`). A new element in the study area must be added there.
+- **The writing area is an SVG element, which has no `.hidden` property.** Use `toggleAttribute('hidden', ...)` on it.
+- **A flow that is not on screen must ignore taps.** `toneFlow` and `recallCard` both listen on the card face; each checks that it has a current card first, and `review.js` calls `stop()` on both before showing the next card.
 
 - **Hanzi Writer remembers quiz options from one quiz to the next.** `quizStartStrokeNum` must be passed on every `quiz()` call (0 for a normal start), or a later quiz silently starts partway through.
 - **Don't replace Hanzi Writer's character from inside one of its own callbacks.** `switchOrder` in `src/quiz.js` waits a tick first.
@@ -136,7 +158,7 @@ The owner wants to bring their Skritter data across eventually rather than start
 3. **Done:** practice any typed character or multi-character word; stroke data loaded on demand.
 4. **Done:** FSRS scheduling of writing cards on a built-in word list, IndexedDB storage, backup export/import.
 5. **Done:** Taiwan-standard stroke data for the 1,013 traditional characters animCJK covers, with the mainland stroke order also accepted where the strokes are the same. Still open: the traditional characters it does not cover.
-6. The other card types: tone, pinyin (with zhuyin as an alternative), meaning.
+6. **In progress:** the other card types. Stage 1 done (meaning, pinyin and tone cards with buttons, scheduling across types, settings panel). Stage 2: drawing the tone mark. Stage 3: accepting Taiwan and mainland tone variants using CC-CEDICT. Later: zhuyin as an alternative to pinyin.
 7. **Done:** two consecutive strokes joined, for every character. Still open: longer runs, and shortcuts that reorder or drop strokes.
 8. PWA: manifest, service worker, GitHub Pages deploy, installable and offline on the phone.
 9. Import the Skritter word list (TSV) and, if the GDPR request (sent 2026-10-12) yields it, its scheduling data. The owner does not want the word list imported without scheduling data.

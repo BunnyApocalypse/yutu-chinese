@@ -47,6 +47,14 @@ main {
   color: #6b6557;
 }
 
+.card-type {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #3b6fb6;
+}
+
 .meaning {
   font-size: 1.25rem;
 }
@@ -199,6 +207,123 @@ button.verdict.selected.missed {
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* Stands in for the writing area on tone, pinyin and meaning cards, at the
+   same size. wordFlow.js sets --area-size when it sizes the writing area. */
+.card-face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: var(--area-size, 300px);
+  height: var(--area-size, 300px);
+  padding: 12px;
+  background: #fff;
+  border: 2px solid #b9b2a3;
+  border-radius: 8px;
+  text-align: center;
+  /* Tapping the card is how you reveal and continue; don't select its text instead. */
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+}
+
+.card-face p {
+  margin: 0;
+}
+
+.face-word {
+  font-size: 3.2rem;
+  line-height: 1.2;
+}
+
+.face-word.single {
+  font-size: 6rem;
+}
+
+.face-hint {
+  font-size: 0.95rem;
+  color: #6b6557;
+}
+
+.face-pinyin {
+  font-size: 1.5rem;
+  color: #3b6fb6;
+}
+
+.face-pinyin.passed {
+  color: #3b9c5a;
+}
+
+.face-pinyin.missed {
+  color: #c2452d;
+}
+
+.face-meaning {
+  font-size: 1.1rem;
+}
+
+.tone-buttons button {
+  min-width: 52px;
+  font-size: 1.6rem;
+}
+
+.tone-buttons button.primary {
+  font-size: 1rem;
+}
+
+.settings-panel {
+  width: min(92vw, 420px);
+  padding: 20px;
+  border: 1px solid #b9b2a3;
+  border-radius: 12px;
+  background: #f5f2ea;
+  color: #222;
+}
+
+/* The dimmed page behind the open panel. */
+.settings-panel::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.settings-panel h2 {
+  margin: 0 0 12px;
+  font-size: 1.2rem;
+}
+
+.setting {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+fieldset.setting {
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 8px 12px;
+  border: 1px solid #b9b2a3;
+  border-radius: 8px;
+}
+
+.setting input[type='number'] {
+  width: 5em;
+  min-height: 40px;
+  padding: 0 8px;
+  font: inherit;
+  border: 1px solid #b9b2a3;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.setting input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
 }
 
 .buttons {

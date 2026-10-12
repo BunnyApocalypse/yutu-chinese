@@ -1,11 +1,14 @@
 // Entry point: sets up the page, the two modes (Review and Free practice),
-// the script setting and backups.
+// settings and backups.
 
 import seedText from './seed-words.tsv?raw'; // "?raw" makes Vite hand us the file's text
-import { getAll, putAll, getSetting, setSetting } from './db.js';
+import { getAll, putAll } from './db.js';
 import { parseWordList, wordId } from './wordList.js';
 import { createWordFlow } from './wordFlow.js';
+import { createToneFlow } from './toneFlow.js';
+import { createRecallCard } from './recallCard.js';
 import { createReview } from './review.js';
+import { createSettings } from './settings.js';
 import { buildBackup, checkBackup, describeBackup, restoreBackup } from './backup.js';
 
 const byId = (id) => document.getElementById(id);
@@ -15,7 +18,6 @@ const practiceTab = byId('practice-tab');
 const reviewHeader = byId('review-header');
 const wordForm = byId('word-form');
 const wordInput = byId('word-input');
-const scriptSelect = byId('script-select');
 const exportButton = byId('export-button');
 const importButton = byId('import-button');
 const importFile = byId('import-file');
@@ -35,20 +37,19 @@ const flow = createWordFlow({
   orderNote: byId('order-note'),
 });
 
-const review = createReview(
-  {
-    countsElement: byId('review-counts'),
-    meaningElement: byId('prompt-meaning'),
-    pinyinElement: byId('prompt-pinyin'),
-    pinyinButton: byId('pinyin-button'),
-    gradeRow: byId('grade-row'),
-    donePanel: byId('done-panel'),
-    doneMessage: byId('done-message'),
-    studyArea: byId('study-area'),
-  },
-  flow,
-  () => scriptSelect.value,
-);
+const toneFlow = createToneFlow({
+  cardFace: byId('card-face'),
+  wordRow: byId('word-row'),
+  statusElement: byId('status'),
+  toneButtons: [...document.querySelectorAll('#tone-buttons [data-tone]')],
+  nextButton: byId('tone-next-button'),
+});
+
+const recallCard = createRecallCard(byId('card-face'));
+
+// Both are set up in startUp() below, once the saved settings have been read.
+let settings = null;
+let review = null;
 
 // The first time the app runs, fill the database with the built-in word list.
 async function addBuiltInWordsIfEmpty() {
@@ -75,7 +76,7 @@ let mode = 'review';
 function startFreePractice() {
   const text = wordInput.value;
   return flow.start(text, {
-    script: scriptSelect.value,
+    script: settings.script,
     continueLabel: 'Again',
     onContinue: startFreePractice,
   });
@@ -106,16 +107,16 @@ wordForm.addEventListener('submit', (event) => {
   wordInput.blur();
 });
 
-// ---- Script setting ----
+// ---- Settings ----
 
-scriptSelect.addEventListener('change', async () => {
-  await setSetting('script', scriptSelect.value);
+// Called whenever a setting changes: show the current card or word afresh.
+function onSettingsChange() {
   if (mode === 'review') {
     review.refresh();
   } else {
     startFreePractice();
   }
-});
+}
 
 // ---- Backups ----
 
@@ -192,7 +193,43 @@ window.addEventListener('resize', () => {
 
 async function startUp() {
   await addBuiltInWordsIfEmpty();
-  scriptSelect.value = await getSetting('script', 'traditional');
+
+  settings = await createSettings(
+    {
+      panel: byId('settings-panel'),
+      openButton: byId('settings-button'),
+      closeButton: byId('settings-close'),
+      scriptSelect: byId('script-select'),
+      newWordsInput: byId('new-words-input'),
+      typeCheckboxes: [...document.querySelectorAll('#settings-panel [data-card-type]')],
+    },
+    onSettingsChange,
+  );
+
+  review = createReview(
+    {
+      countsElement: byId('review-counts'),
+      typeElement: byId('card-type'),
+      meaningElement: byId('prompt-meaning'),
+      pinyinElement: byId('prompt-pinyin'),
+      pinyinButton: byId('pinyin-button'),
+      gradeRow: byId('grade-row'),
+      donePanel: byId('done-panel'),
+      doneMessage: byId('done-message'),
+      studyArea: byId('study-area'),
+      wordRow: byId('word-row'),
+      statusRow: byId('status-row'),
+      verdictRow: byId('verdict-row'),
+      writingArea: byId('writing-area'),
+      writingButtons: byId('writing-buttons'),
+      cardFace: byId('card-face'),
+      toneButtonRow: byId('tone-buttons'),
+      orderNote: byId('order-note'),
+    },
+    { writing: flow, tone: toneFlow, recall: recallCard },
+    settings,
+  );
+
   await review.load();
   await setMode('review');
 }

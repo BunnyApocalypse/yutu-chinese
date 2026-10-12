@@ -13,8 +13,11 @@ import {
   suggestGrade,
   judgeChar,
   formatInterval,
-  NEW_WORDS_PER_DAY,
+  cardId,
+  CARD_TYPES,
+  SIBLING_GAP_MS,
 } from '../src/session.js';
+import { splitSyllables, toneAnswers } from '../src/tones.js';
 import { parseWordList, wordId, formatPinyin } from '../src/wordList.js';
 import { checkBackup } from '../src/backup.js';
 
@@ -65,55 +68,177 @@ test('the study day starts at 4:00', () => {
   assert.equal(startOfStudyDay(at('2026-10-12T04:00:00')), at('2026-10-12T04:00:00'));
 });
 
-test('with nothing studied, the first new word in list order is next', () => {
+// ---- Session planning ----
+
+const ALL_TYPES = { newWordsPerDay: 5, enabledTypes: CARD_TYPES };
+const WRITING_ONLY = { newWordsPerDay: 5, enabledTypes: ['writing'] };
+
+// A studied card for makeCards below.
+function studied(wordId, type, { due, first, last }) {
+  return [cardId(wordId, type), { due, firstReviewedAt: first, lastReviewedAt: last ?? first }];
+}
+
+test('with nothing studied, the first word in list order is next, meaning card first', () => {
   const words = makeWords(30).reverse();
-  const plan = planSession(words, new Map(), at('2026-10-12T10:00:00'));
+  const plan = planSession(words, new Map(), at('2026-10-12T10:00:00'), ALL_TYPES);
   assert.equal(plan.next.word.id, 'w0');
+  assert.equal(plan.next.type, 'meaning');
   assert.equal(plan.next.card, null);
   assert.equal(plan.dueCount, 0);
-  assert.equal(plan.newLeftToday, NEW_WORDS_PER_DAY);
+  assert.equal(plan.newWordsLeftToday, 5);
   assert.equal(plan.nextDueAt, null);
 });
 
-test('due words come before new words, longest overdue first', () => {
+test('due cards come before new ones, longest overdue first', () => {
   const now = at('2026-10-12T10:00:00');
-  const words = makeWords(5);
+  const old = now - 3 * DAY;
   const cards = new Map([
-    ['w0', { due: now - 5 * MINUTE, firstReviewedAt: now - 3 * DAY }],
-    ['w1', { due: now - 60 * MINUTE, firstReviewedAt: now - 3 * DAY }],
-    ['w2', { due: now + 30 * MINUTE, firstReviewedAt: now - 3 * DAY }],
+    studied('w0', 'writing', { due: now - 5 * MINUTE, first: old }),
+    studied('w1', 'writing', { due: now - 60 * MINUTE, first: old }),
+    studied('w2', 'writing', { due: now + 30 * MINUTE, first: old }),
   ]);
-  const plan = planSession(words, cards, now);
+  const plan = planSession(makeWords(5), cards, now, WRITING_ONLY);
   assert.equal(plan.next.word.id, 'w1');
+  assert.equal(plan.next.type, 'writing');
   assert.equal(plan.dueCount, 2);
   assert.equal(plan.nextDueAt, now + 30 * MINUTE);
 });
 
 test('no more than the daily limit of new words is introduced', () => {
   const now = at('2026-10-12T10:00:00');
-  const words = makeWords(30);
   const cards = new Map();
-  for (let i = 0; i < NEW_WORDS_PER_DAY; i++) {
-    cards.set(`w${i}`, { due: now + 2 * DAY, firstReviewedAt: now - 10 * MINUTE });
+  for (let i = 0; i < 5; i++) {
+    cards.set(...studied(`w${i}`, 'writing', { due: now + 2 * DAY, first: now - 10 * MINUTE }));
   }
-  const today = planSession(words, cards, now);
-  assert.equal(today.newLeftToday, 0);
+  const words = makeWords(30);
+  const today = planSession(words, cards, now, WRITING_ONLY);
+  assert.equal(today.newWordsLeftToday, 0);
   assert.equal(today.next, null);
   assert.equal(today.nextDueAt, now + 2 * DAY);
 
+  // A higher setting allows more the same day.
+  const more = planSession(words, cards, now, { ...WRITING_ONLY, newWordsPerDay: 8 });
+  assert.equal(more.newWordsLeftToday, 3);
+  assert.equal(more.next.word.id, 'w5');
+
   // The next morning the limit resets, even though nothing is due yet.
-  const tomorrow = planSession(words, cards, at('2026-10-13T08:00:00'));
-  assert.equal(tomorrow.newLeftToday, NEW_WORDS_PER_DAY);
-  assert.equal(tomorrow.next.word.id, `w${NEW_WORDS_PER_DAY}`);
+  const tomorrow = planSession(words, cards, at('2026-10-13T08:00:00'), WRITING_ONLY);
+  assert.equal(tomorrow.newWordsLeftToday, 5);
+  assert.equal(tomorrow.next.word.id, 'w5');
 
   // A session that runs past midnight still belongs to the same study day.
-  const lateNight = planSession(words, cards, at('2026-10-13T01:00:00'));
-  assert.equal(lateNight.newLeftToday, 0);
+  const lateNight = planSession(words, cards, at('2026-10-13T01:00:00'), WRITING_ONLY);
+  assert.equal(lateNight.newWordsLeftToday, 0);
 });
 
 test('new words left never exceeds the words that exist', () => {
-  const plan = planSession(makeWords(3), new Map(), at('2026-10-12T10:00:00'));
-  assert.equal(plan.newLeftToday, 3);
+  const plan = planSession(makeWords(3), new Map(), at('2026-10-12T10:00:00'), ALL_TYPES);
+  assert.equal(plan.newWordsLeftToday, 3);
+});
+
+test("a word's cards are introduced in order and kept apart", () => {
+  const now = at('2026-10-12T10:00:00');
+  const words = makeWords(1);
+  // The meaning card was studied a minute ago and comes back in ten.
+  const cards = new Map([
+    studied('w0', 'meaning', { due: now + 10 * MINUTE, first: now - MINUTE }),
+  ]);
+  const soon = planSession(words, cards, now, ALL_TYPES);
+  // The pinyin card is next in line, but held back for now.
+  assert.equal(soon.next, null);
+  assert.equal(soon.nextDueAt, now - MINUTE + SIBLING_GAP_MS);
+  assert.equal(soon.newCardCount, 3);
+
+  const later = planSession(words, cards, now + 5 * MINUTE, ALL_TYPES);
+  assert.equal(later.next.type, 'pinyin');
+  assert.equal(later.next.card, null);
+});
+
+test('a due card waits while another card of its word was just reviewed', () => {
+  const now = at('2026-10-12T10:00:00');
+  const old = now - 3 * DAY;
+  const cards = new Map([
+    studied('w0', 'meaning', { due: now - MINUTE, first: old, last: old }),
+    studied('w0', 'writing', { due: now + 2 * DAY, first: old, last: now - MINUTE }),
+  ]);
+  const plan = planSession(makeWords(1), cards, now, ALL_TYPES);
+  assert.equal(plan.dueCount, 0);
+  // A card is not held back by its own review, only by its siblings'.
+  const own = new Map([studied('w0', 'meaning', { due: now - MINUTE, first: old, last: now - 2 * MINUTE })]);
+  assert.equal(planSession(makeWords(1), own, now, { ...ALL_TYPES, enabledTypes: ['meaning'] }).dueCount, 1);
+});
+
+test('words that only have writing cards get their other cards as new', () => {
+  const now = at('2026-10-12T10:00:00');
+  const old = now - 3 * DAY;
+  const cards = new Map([studied('w0', 'writing', { due: now + 2 * DAY, first: old })]);
+  const plan = planSession(makeWords(1), cards, now, { ...ALL_TYPES, newWordsPerDay: 0 });
+  // Not limited by new words per day: the word is not new.
+  assert.equal(plan.next.type, 'meaning');
+  assert.equal(plan.newCardCount, 3);
+});
+
+test('card types that are switched off never appear', () => {
+  const now = at('2026-10-12T10:00:00');
+  const old = now - 3 * DAY;
+  const cards = new Map([studied('w0', 'tone', { due: now - MINUTE, first: old })]);
+  const options = { newWordsPerDay: 5, enabledTypes: ['writing', 'meaning'] };
+  const plan = planSession(makeWords(2), cards, now, options);
+  assert.equal(plan.dueCount, 0); // the due tone card is ignored
+  assert.equal(plan.next.type, 'meaning');
+  assert.equal(plan.next.word.id, 'w0');
+  // A word that can't have a kind of card skips it.
+  const noMeaning = { ...options, hasCardType: (word, type) => type !== 'meaning' };
+  assert.equal(planSession(makeWords(2), cards, now, noMeaning).next.type, 'writing');
+});
+
+test('cards saved before lastReviewedAt existed still hold their siblings back', () => {
+  const now = at('2026-10-12T10:00:00');
+  const cards = new Map([
+    [
+      cardId('w0', 'writing'),
+      {
+        due: now + DAY,
+        firstReviewedAt: now - DAY,
+        fsrsState: { last_review: new Date(now - MINUTE).toISOString() },
+      },
+    ],
+  ]);
+  const plan = planSession(makeWords(1), cards, now, ALL_TYPES);
+  assert.equal(plan.next, null);
+  assert.equal(plan.nextDueAt, now - MINUTE + SIBLING_GAP_MS);
+});
+
+// ---- Tones ----
+
+test('pinyin is split into one syllable per character', () => {
+  assert.deepEqual(splitSyllables('xue2xiao4'), ['xue2', 'xiao4']);
+  assert.deepEqual(splitSyllables("nv3'er2"), ['nv3', 'er2']);
+  assert.deepEqual(splitSyllables('tiao4 wu3'), ['tiao4', 'wu3']);
+  assert.deepEqual(splitSyllables('yi1dian3r5'), ['yi1', 'dian3', 'r5']);
+  assert.deepEqual(splitSyllables('Zhong1guo2'), ['zhong1', 'guo2']);
+});
+
+test('tone answers line up with the characters', () => {
+  assert.deepEqual(toneAnswers('xue2xiao4', 2), [
+    { syllable: 'xue2', tones: [2] },
+    { syllable: 'xiao4', tones: [4] },
+  ]);
+  // Several listed readings: any of their tones is accepted.
+  assert.deepEqual(toneAnswers('shan1, shan4', 1), [{ syllable: 'shan1', tones: [1, 4] }]);
+  assert.deepEqual(toneAnswers('xing1qi1, xing1qi2', 2)[1], { syllable: 'qi1', tones: [1, 2] });
+  // A reading that doesn't fit the characters is left out; if none fits,
+  // there is no tone card.
+  assert.deepEqual(toneAnswers('yi1dian3r5, yi1dianr3', 3).map((a) => a.syllable), ['yi1', 'dian3', 'r5']);
+  assert.equal(toneAnswers('yi1dianr3', 3), null);
+  assert.equal(toneAnswers('', 2), null);
+});
+
+test('every word in the built-in list can have a tone card', () => {
+  const words = parseWordList(fs.readFileSync('src/seed-words.tsv', 'utf8'));
+  for (const word of words) {
+    assert.ok(toneAnswers(word.pinyin, Array.from(word.traditional).length), word.traditional);
+  }
 });
 
 test('a character is missed after a hint, peeking, or too many mistakes', () => {
