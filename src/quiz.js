@@ -10,7 +10,9 @@
 
 import HanziWriter from 'hanzi-writer';
 import { loadCharData } from './charData.js';
-import { isShortcutStroke } from './shortcuts.js';
+import { isShortcutStroke, joinedLine } from './shortcuts.js';
+import { fitFrame, applyFrame, framesDiffer, NO_FRAME } from './frame.js';
+import { toPoints } from './lines.js';
 import {
   fitsStroke,
   distanceFromStroke,
@@ -70,12 +72,19 @@ export function createQuiz(target, size, handlers) {
   let char = null;
   // Its stroke data as loaded, with the strokes in the standard order.
   let baseData = null;
-  // The stroke data Hanzi Writer currently holds. Usually the same as
-  // baseData; for a character being written in its second accepted order it
-  // is a copy with the strokes rearranged (see switchOrder below).
+  // The stroke data Hanzi Writer currently holds: baseData with its strokes
+  // in the order being written (`sequence`) and moved to where the character
+  // is being written (`frame`). Usually that is baseData itself.
   let charData = null;
   // All stroke numbers of baseData, in the order currently expected.
   let sequence = [];
+  // Where and how big the character is being written (see frame.js), and
+  // baseData moved into that frame.
+  let frame = NO_FRAME;
+  let framedData = null;
+  // The strokes accepted so far, for working out the frame: for each, the
+  // middle line of the textbook stroke(s) it was, and the points as drawn.
+  let acceptedStrokes = [];
 
   // We count mistakes ourselves rather than using Hanzi Writer's count, because
   // Hanzi Writer counts a shortcut stroke as a mistake before we recognize it.
@@ -143,12 +152,78 @@ export function createQuiz(target, size, handlers) {
     }
   }
 
-  // Goes back to the standard stroke order if the second one was in use.
-  async function useStandardOrder() {
-    if (!isStandardOrder(sequence)) {
-      sequence = baseData.strokes.map((stroke, index) => index);
+  // Builds the stroke data for Hanzi Writer from the current order and frame.
+  function currentData() {
+    if (isStandardOrder(sequence)) {
+      return framedData;
+    }
+    return {
+      strokes: sequence.map((strokeNum) => framedData.strokes[strokeNum]),
+      medians: sequence.map((strokeNum) => framedData.medians[strokeNum]),
+    };
+  }
+
+  // Hands Hanzi Writer the stroke data for the current order and frame, and
+  // carries on with the quiz after the `written` strokes already on the page.
+  // None of this is visible: your own strokes stay on screen and the printed
+  // strokes are invisible until the end.
+  async function resume(written) {
+    const startedOn = char;
+    const data = currentData();
+    // We are usually inside one of Hanzi Writer's own callbacks here. Waiting
+    // a moment lets it finish what it was doing before its character is replaced.
+    await Promise.resolve();
+    await giveWriter(data);
+    if (char === startedOn) {
+      runQuiz(written);
+    }
+  }
+
+  // Goes back to the centered character in the standard stroke order, if it
+  // had been moved or rearranged.
+  async function useOriginalData() {
+    const changed = !isStandardOrder(sequence) || frame !== NO_FRAME;
+    sequence = baseData.strokes.map((stroke, index) => index);
+    frame = NO_FRAME;
+    framedData = baseData;
+    acceptedStrokes = [];
+    if (changed) {
       await giveWriter(baseData);
     }
+  }
+
+  // ---- Following where the character is written ----
+  //
+  // The reference is invisible, so you choose where to write and how big. Each
+  // accepted stroke tells us more about that. We fit a frame to the strokes
+  // so far (frame.js) and move the reference into it, so the remaining strokes
+  // are expected where you will naturally put them.
+
+  // Notes an accepted stroke. `baseStrokes` are the stroke numbers of
+  // baseData it covers: one, or two for a joined stroke.
+  function noteAccepted(baseStrokes, drawnPoints) {
+    const reference =
+      baseStrokes.length === 1
+        ? toPoints(baseData.medians[baseStrokes[0]])
+        : joinedLine({ medians: baseStrokes.map((strokeNum) => baseData.medians[strokeNum]) }, 0);
+    acceptedStrokes.push({ reference, drawn: drawnPoints });
+  }
+
+  // Refits the frame to the accepted strokes. Returns true if it changed
+  // enough that Hanzi Writer needs the moved data.
+  function refitFrame() {
+    // With the outline showing you are tracing a visible reference, which
+    // must stay where it is.
+    if (outlineVisible) {
+      return false;
+    }
+    const fitted = fitFrame(acceptedStrokes);
+    if (!framesDiffer(fitted, frame)) {
+      return false;
+    }
+    frame = fitted;
+    framedData = applyFrame(baseData, frame);
+    return true;
   }
 
   // ---- Two accepted stroke orders ----
@@ -158,8 +233,7 @@ export function createQuiz(target, size, handlers) {
   // sequence. So when a stroke it rejects turns out to be the stroke the other
   // order expects at this point, we accept the stroke ourselves, hand Hanzi
   // Writer the same strokes rearranged into the other order, and resume the
-  // quiz after the strokes already written. None of this is visible: your own
-  // strokes stay on screen and the printed strokes are invisible until the end.
+  // quiz after the strokes already written.
 
   // If the rejected stroke belongs to the other accepted order, returns the
   // strokes still to be written in that order. Otherwise returns null.
@@ -169,29 +243,13 @@ export function createQuiz(target, size, handlers) {
       return null;
     }
     const points = stroke.drawnPath.points;
-    const expectedMedian = baseData.medians[sequence[stroke.strokeNum]];
-    const otherMedian = baseData.medians[other[0]];
+    // Compare with the strokes where they are expected now, in the current frame.
+    const expectedMedian = framedData.medians[sequence[stroke.strokeNum]];
+    const otherMedian = framedData.medians[other[0]];
     const fitsOther =
       fitsStroke(points, otherMedian, LENIENCY) &&
       distanceFromStroke(points, otherMedian) < distanceFromStroke(points, expectedMedian);
     return fitsOther ? other : null;
-  }
-
-  // Continues the quiz in the other order. `written` strokes are on the page.
-  async function switchOrder(written, remainingInNewOrder) {
-    const startedOn = char;
-    sequence = [...sequence.slice(0, written - 1), ...remainingInNewOrder];
-    const rearranged = {
-      strokes: sequence.map((strokeNum) => baseData.strokes[strokeNum]),
-      medians: sequence.map((strokeNum) => baseData.medians[strokeNum]),
-    };
-    // We are inside one of Hanzi Writer's own callbacks here. Waiting a moment
-    // lets it finish what it was doing before its character is replaced.
-    await Promise.resolve();
-    await giveWriter(rearranged);
-    if (char === startedOn) {
-      runQuiz(written);
-    }
   }
 
   // Starts (or restarts) the quiz for the current character, from a clean slate.
@@ -201,7 +259,7 @@ export function createQuiz(target, size, handlers) {
     mistakes = 0;
     hintShown = false;
     handlers.onStart({ totalStrokes: baseData.strokes.length });
-    await useStandardOrder();
+    await useOriginalData();
     await setPrintedColor(INVISIBLE);
     target.appendChild(squigLayer);
     if (outlineVisible) {
@@ -225,36 +283,53 @@ export function createQuiz(target, size, handlers) {
       // Hanzi Writer accepted the stroke as the textbook stroke.
       onCorrectStroke: (stroke) => {
         keepSquig(stroke.drawnPath.pathString);
+        const baseStrokes = [sequence[stroke.strokeNum]];
         let strokesDone = stroke.strokeNum + 1; // strokeNum counts from 0
         // A shortcut stroke can occasionally also pass as its first half. Then
         // the second half is already on the page, so move past it too.
         if (drewShortcut(stroke)) {
+          baseStrokes.push(sequence[stroke.strokeNum + 1]);
           strokesDone += 1;
           writer.skipQuizStroke();
         }
+        noteAccepted(baseStrokes, stroke.drawnPath.points);
         handlers.onProgress({ strokesDone, totalStrokes, totalMistakes: mistakes });
+        // Unless that was the last stroke, see whether the frame has moved.
+        if (strokesDone < totalStrokes && refitFrame()) {
+          resume(strokesDone);
+        }
       },
       // Hanzi Writer rejected the stroke. It may still be a shortcut, or the
       // next stroke of the character's other accepted order.
       onMistake: (stroke) => {
         if (drewShortcut(stroke)) {
           keepSquig(stroke.drawnPath.pathString);
-          handlers.onProgress({
-            strokesDone: stroke.strokeNum + 2,
-            totalStrokes,
-            totalMistakes: mistakes,
-          });
+          noteAccepted(
+            [sequence[stroke.strokeNum], sequence[stroke.strokeNum + 1]],
+            stroke.drawnPath.points,
+          );
+          const strokesDone = stroke.strokeNum + 2;
+          handlers.onProgress({ strokesDone, totalStrokes, totalMistakes: mistakes });
           // One drawn stroke covered two textbook strokes.
           writer.skipQuizStroke();
           writer.skipQuizStroke();
+          if (strokesDone < totalStrokes && refitFrame()) {
+            resume(strokesDone);
+          }
           return;
         }
         const otherOrder = otherOrderFor(stroke);
         if (otherOrder) {
           keepSquig(stroke.drawnPath.pathString);
           const written = stroke.strokeNum + 1;
+          // Carry on in the other order: the strokes written so far, then the
+          // rest as that order has them. The other order always has at least
+          // one more stroke to come, so the quiz is resumed either way.
+          sequence = [...sequence.slice(0, stroke.strokeNum), ...otherOrder];
+          noteAccepted([otherOrder[0]], stroke.drawnPath.points);
+          refitFrame();
           handlers.onProgress({ strokesDone: written, totalStrokes, totalMistakes: mistakes });
-          switchOrder(written, otherOrder);
+          resume(written);
           return;
         }
         mistakes += 1;
@@ -293,6 +368,9 @@ export function createQuiz(target, size, handlers) {
       baseData = data;
       charData = data;
       sequence = data.strokes.map((stroke, index) => index);
+      frame = NO_FRAME;
+      framedData = data;
+      acceptedStrokes = [];
 
       if (!writer) {
         writer = HanziWriter.create(target, char, {
@@ -352,14 +430,14 @@ export function createQuiz(target, size, handlers) {
       setPrintedColor(referenceColor(passed));
     },
 
-    // Plays the stroke order, then starts the quiz again. For a character
-    // with two accepted orders this always shows the standard one.
+    // Plays the stroke order, then starts the quiz again. This always shows
+    // the centered character in the standard order.
     async animate() {
       clearTimeout(afterAnimationTimer);
       writer.cancelQuiz();
       squigLayer.replaceChildren();
       handlers.onAnimateStart();
-      await useStandardOrder();
+      await useOriginalData();
       await writer.hideCharacter({ duration: 0 });
       await setPrintedColor(INK_COLOR);
       writer.animateCharacter({

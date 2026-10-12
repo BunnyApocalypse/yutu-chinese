@@ -67,13 +67,14 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `src/charData.js`: the only place stroke data is loaded from. `loadCharData(char, script)` returns `null` when a character has no data. For `'traditional'` it uses the Taiwan set where that has the character and the big set otherwise; for `'simplified'` only the big set.
 - `src/shortcuts.js`: recognizes handwriting shortcuts (two textbook strokes written as one). Plain calculation, no page or Hanzi Writer.
 - `src/strokeMatch.js`: judges whether a drawn stroke fits a given textbook stroke, and keeps track of two stroke orders. Plain calculation.
+- `src/frame.js`: works out where and how big a character is being written and moves stroke data there. Plain calculation.
 - `src/lines.js`: shared helpers for lines of points (length, resampling, shape, distance).
 - `src/style.css`: styles, phone-first.
 - `scripts/copy-char-data.js`: fills the two git-ignored stroke data folders, naming files by Unicode number (`學.json` becomes `5b78.json`): `public/char-data/` from `node_modules/hanzi-writer-data/` (about 9,500 characters) and `public/char-data-tw/` from `data/animcjk/graphicsZhHant.txt` (1,013 characters, plus an `index.json` listing them and recording `TAIWAN_SET_VERSION`; raise that number whenever the script changes what it writes, or existing copies will not be regenerated).
 - `scripts/strokeOrder.js`: finds a character's second stroke order by comparing the two data sets. Used by the copy script.
 - `scripts/build-tone-table.js`, `data/cedict/`: the tone table extracted from CC-CEDICT (run by hand; see above).
 - `data/animcjk/`: the animCJK traditional stroke data, copied unchanged from that project at a pinned commit. Its README records the source, license and how to update. This is vendored data, not an npm dependency.
-- `tests/logic.test.js`, `tests/shortcuts.test.js`, `tests/strokeOrder.test.js`, `tests/toneMark.test.js`: tests for the plain-calculation code.
+- `tests/logic.test.js`, `tests/shortcuts.test.js`, `tests/strokeOrder.test.js`, `tests/toneMark.test.js`, `tests/frame.test.js`: tests for the plain-calculation code.
 
 ## Cards, scheduling and storage
 
@@ -119,6 +120,15 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - **Not accepted:** neutral where the list has a full tone (xīngqi for 星期), unless listed as an extra reading. Adding a reading to a word's `pinyin` would change the word's ID (`<traditional>|<pinyin>`), so that needs a different mechanism first.
 - **The tone table** `data/cedict/tones.json` is built from CC-CEDICT by `scripts/build-tone-table.js`, run by hand; it is the only script that uses the internet. The table is CC BY-SA 4.0, not GPL. The app loads it with a dynamic `import()` so it is a separate file; if it fails to load, tones are judged against the word list alone.
 - **Changing the built-in word list:** raise `BUILT_IN_LIST_VERSION` in `src/main.js`, or devices that already have the words keep their old copies. Never change the `pinyin` or `traditional` of an existing entry: that changes its ID and orphans its cards.
+
+## Following where a character is written
+
+- **The problem:** with raw squigs the reference is invisible, so the owner writes wherever and at whatever size feels natural, but Hanzi Writer grades against one fixed, centered position. A character begun off-center had its later strokes expected in the wrong place.
+- **The fix** (`src/frame.js`, and the section of the same name in `src/quiz.js`): after each accepted stroke, a least-squares fit over all accepted strokes gives a *frame* (shift and size). If it has changed enough, Hanzi Writer is handed the stroke data moved into that frame and the quiz resumes, the same way the second stroke order is handled.
+- **The data Hanzi Writer holds is always: base data, in the current stroke order, in the current frame** (`currentData` in `src/quiz.js`). Anything that compares drawn strokes with textbook ones must use the framed data (`framedData`, `charData`), never `baseData`, or it will judge against the centered position.
+- **Because the data itself is moved**, hints appear where the character is being written, and the printed character at the end lines up with the handwriting.
+- **Rules:** shift from the first stroke; size only once the strokes written span about 30% of the box; size limited to 0.6–1.5 and shift to about 30% of the box; no following while the outline is shown; Restart, Animate and a new character go back to the centered data. The first stroke is still graded against the centered position (Hanzi Writer is lenient there).
+- **Limits:** only shift and size, not slant or stretch. A wrong stroke accepted early skews the frame for the strokes after it.
 
 ## Two accepted stroke orders
 
@@ -181,6 +191,6 @@ The owner wants to bring their Skritter data across eventually rather than start
 9. Import the Skritter word list (TSV) and, if the GDPR request (sent 2026-10-12) yields it, its scheduling data. The owner does not want the word list imported without scheduling data.
 10. Merge backups between devices instead of replacing; a settings screen (new words per day, target retention).
 11. **To do, asked for by the owner:**
-    - Raw squigs when a character is started off-center. Strokes are graded against fixed positions in the box, so if the first strokes are written to one side, the rest are still expected where a centered character would have them (seen with 麼: top written at the left, the 木 parts expected in the middle). The owner is not sure of the best fix; ideas to weigh are shifting and scaling the expected positions to fit what has been written so far, or showing a faint guide once the first strokes are down.
+    - A setting for which traditional forms to use: mainland, Hong Kong or Taiwan, so that people can choose. Today Traditional always means Taiwan forms where animCJK has them. Needs stroke data for the other two regions' forms; the big set's traditional characters are mainland-style, and no Hong Kong set has been looked for yet.
     - Accepting a neutral tone where the list has a full one (xīngqi for 星期).
 
