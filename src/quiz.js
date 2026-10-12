@@ -25,6 +25,13 @@ const HINT_AFTER_MISSES = 3;
 // strokes that are further from the reference in position, shape and length.
 const LENIENCY = 1.5;
 
+// How fast the Animate button plays, compared with Hanzi Writer's default.
+// 1.5 means each stroke is drawn 1.5 times as fast and the pause between
+// strokes is 1.5 times shorter.
+const ANIMATION_SPEED = 1.5;
+// Hanzi Writer's default pause between strokes, in milliseconds.
+const DEFAULT_PAUSE_BETWEEN_STROKES_MS = 1000;
+
 const INK_COLOR = '#222222';
 const INVISIBLE = 'rgba(0, 0, 0, 0)';
 // The printed character shown under your handwriting once you finish: green,
@@ -293,6 +300,8 @@ export function createQuiz(target, size, handlers) {
           drawingColor: INK_COLOR,
           drawingWidth: penWidth,
           highlightColor: '#3b9c5a',
+          strokeAnimationSpeed: ANIMATION_SPEED,
+          delayBetweenStrokes: DEFAULT_PAUSE_BETWEEN_STROKES_MS / ANIMATION_SPEED,
           // Tells Hanzi Writer to use our own data instead of fetching from
           // its CDN. We always load a character before asking Hanzi Writer to
           // show it, so the data it wants is the data we just loaded.
