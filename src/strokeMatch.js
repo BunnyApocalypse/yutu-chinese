@@ -93,6 +93,23 @@ export function remainingInOtherOrder(sequence, written, altOrder) {
   return other.length > 0 && other[0] !== remaining[0] ? other : null;
 }
 
+// The last point, at or before `written` strokes, where the strokes written
+// were a complete beginning of both orders: the same strokes, whichever order
+// they came in. Everything written since then lies inside one stretch where
+// the two orders differ. Returns that number of strokes (0 if only the very
+// start qualifies).
+export function lastSyncPoint(sequence, written, altOrder) {
+  for (let count = written; count > 0; count--) {
+    const done = new Set(sequence.slice(0, count));
+    const isBeginningOf = (order) => order.slice(0, count).every((stroke) => done.has(stroke));
+    const standard = sequence.map((stroke, index) => index);
+    if (isBeginningOf(standard) && isBeginningOf(altOrder)) {
+      return count;
+    }
+  }
+  return 0;
+}
+
 // True if `sequence` is the standard order: stroke numbers counting up.
 export function isStandardOrder(sequence) {
   return sequence.every((stroke, position) => stroke === position);

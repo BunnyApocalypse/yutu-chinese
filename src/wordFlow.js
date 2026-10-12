@@ -375,7 +375,7 @@ export function createWordFlow(elements) {
 
   function showCurrentCharacter() {
     carriedMistakes = 0;
-    return quiz.showCharacter(chars[position], options.script);
+    return quiz.showCharacter(chars[position], options.script, options.rawSquigs !== false);
   }
 
   // Called before the current character is started over: keeps the mistakes
@@ -447,6 +447,8 @@ export function createWordFlow(elements) {
     // newOptions:
     //   script:        'traditional' or 'simplified'; decides which printed
     //                  form of each character is used
+    //   rawSquigs:     false to replace each correct stroke with the printed
+    //                  one; otherwise your own strokes stay on screen
     //   continueLabel: text for the Next button once the word is finished, or
     //                  null to leave it hidden
     //   hideOutline:   true to switch the outline off first

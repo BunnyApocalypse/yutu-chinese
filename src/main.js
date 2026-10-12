@@ -107,6 +107,7 @@ function startFreePractice() {
     // Writing works for any characters, in the word list or not.
     return flow.start(text, {
       script: settings.script,
+      rawSquigs: settings.rawSquigs,
       continueLabel: 'Again',
       onContinue: startFreePractice,
     });
@@ -248,6 +249,7 @@ async function startUp() {
       closeButton: byId('settings-close'),
       scriptSelect: byId('script-select'),
       pronunciationSelect: byId('pronunciation-select'),
+      handwritingSelect: byId('handwriting-select'),
       newWordsInput: byId('new-words-input'),
       typeCheckboxes: [...document.querySelectorAll('#settings-panel [data-card-type]')],
     },

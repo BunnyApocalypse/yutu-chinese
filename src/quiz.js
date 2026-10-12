@@ -2,21 +2,26 @@
 // createQuiz() and gets plain numbers back through the handlers, so it never
 // needs to know how Hanzi Writer works.
 //
-// "Raw squigs": Hanzi Writer normally replaces each correct stroke with the
-// printed stroke. Here the printed strokes are kept invisible during the quiz
-// and the strokes you actually drew are kept on screen instead. When the
-// character is finished, the printed character appears underneath in a light
-// color so you can compare.
+// There are two ways of showing what you write, chosen by a setting:
+//
+// "Raw squigs": the strokes you actually drew are kept on screen, and the
+// printed strokes stay invisible during the quiz. When the character is
+// finished, the printed character appears underneath in a light color so you
+// can compare.
+//
+// "Snap to print": each correct stroke is replaced by the printed stroke, as
+// Hanzi Writer does on its own, so the character builds up neatly.
 
 import HanziWriter from 'hanzi-writer';
 import { loadCharData } from './charData.js';
 import { isShortcutStroke, joinedLine } from './shortcuts.js';
 import { fitFrame, applyFrame, framesDiffer, NO_FRAME } from './frame.js';
-import { toPoints } from './lines.js';
+import { toPoints, resample, averageDistance } from './lines.js';
 import {
   fitsStroke,
   distanceFromStroke,
   remainingInOtherOrder,
+  lastSyncPoint,
   isStandardOrder,
 } from './strokeMatch.js';
 
@@ -42,6 +47,19 @@ const INVISIBLE = 'rgba(0, 0, 0, 0)';
 // or red if the character was judged as missed.
 const REFERENCE_COLOR = '#a9d4b8';
 const REFERENCE_COLOR_MISSED = '#ecb3a7';
+
+// Nothing shows where a character will be until its first stroke is written,
+// so the first stroke may land anywhere, at any reasonable size: only its
+// shape has to be right. When we check a first stroke ourselves, the leniency
+// about position is multiplied by this, which in effect switches it off.
+const FIRST_STROKE_EXTRA_LENIENCY = 4;
+
+// A stroke Hanzi Writer has accepted is still re-read as the other stroke
+// order if that fits clearly better: the misfit (average distance, in the
+// data's units) must be below this share of the current reading's, and lower
+// by at least this much.
+const OTHER_ORDER_MISFIT_SHARE = 0.6;
+const OTHER_ORDER_MISFIT_MARGIN = 15;
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
@@ -82,8 +100,11 @@ export function createQuiz(target, size, handlers) {
   // baseData moved into that frame.
   let frame = NO_FRAME;
   let framedData = null;
-  // The strokes accepted so far, for working out the frame: for each, the
-  // middle line of the textbook stroke(s) it was, and the points as drawn.
+  // The strokes accepted so far. For each:
+  //   position:    how many strokes had been written before it
+  //   strokeCount: how many textbook strokes it covered (2 for a joined stroke)
+  //   reference:   the middle line of the textbook stroke(s) it was taken for
+  //   drawn:       the points as drawn
   let acceptedStrokes = [];
 
   // We count mistakes ourselves rather than using Hanzi Writer's count, because
@@ -93,6 +114,10 @@ export function createQuiz(target, size, handlers) {
   let hintShown = false;
 
   let outlineVisible = false;
+
+  // True for raw squigs, false for snapping to the printed strokes. Set with
+  // each character (see showCharacter).
+  let rawSquigs = true;
 
   // The timer for the pause after an animation, so it can be called off if
   // you move on before it runs out.
@@ -104,6 +129,9 @@ export function createQuiz(target, size, handlers) {
 
   // pathString is the stroke exactly as drawn, in the SVG's own pixel coordinates.
   function keepSquig(pathString) {
+    if (!rawSquigs) {
+      return; // the printed stroke is shown instead
+    }
     const path = document.createElementNS(SVG_NAMESPACE, 'path');
     path.setAttribute('d', pathString);
     path.setAttribute('fill', 'none');
@@ -129,8 +157,20 @@ export function createQuiz(target, size, handlers) {
     return lastColorChange;
   }
 
+  // The color of the printed strokes while the character is being written:
+  // invisible under your own strokes, or plain ink when they stand in for them.
+  function colorWhileWriting() {
+    return rawSquigs ? INVISIBLE : INK_COLOR;
+  }
+
+  // The color of the printed character once it is finished. With raw squigs
+  // it is the light reference under your handwriting, green or red. Without,
+  // it is the character itself, and only turns red if it was missed.
   function referenceColor(passed) {
-    return passed === false ? REFERENCE_COLOR_MISSED : REFERENCE_COLOR;
+    if (passed === false) {
+      return REFERENCE_COLOR_MISSED;
+    }
+    return rawSquigs ? REFERENCE_COLOR : INK_COLOR;
   }
 
   function drewShortcut(stroke) {
@@ -199,22 +239,41 @@ export function createQuiz(target, size, handlers) {
   // so far (frame.js) and move the reference into it, so the remaining strokes
   // are expected where you will naturally put them.
 
-  // Notes an accepted stroke. `baseStrokes` are the stroke numbers of
-  // baseData it covers: one, or two for a joined stroke.
-  function noteAccepted(baseStrokes, drawnPoints) {
+  // Notes an accepted stroke. `position` is how many strokes had been written
+  // before it; `baseStrokes` are the stroke numbers of baseData it covers:
+  // one, or two for a joined stroke.
+  function noteAccepted(position, baseStrokes, drawnPoints) {
     const reference =
       baseStrokes.length === 1
         ? toPoints(baseData.medians[baseStrokes[0]])
         : joinedLine({ medians: baseStrokes.map((strokeNum) => baseData.medians[strokeNum]) }, 0);
-    acceptedStrokes.push({ reference, drawn: drawnPoints });
+    acceptedStrokes.push({
+      position,
+      strokeCount: baseStrokes.length,
+      reference,
+      drawn: drawnPoints,
+    });
+  }
+
+  // The two textbook strokes at `position` and after it, as they are in
+  // baseData (not moved into the frame), in the form joinedLine wants.
+  function framelessPair(position) {
+    return {
+      medians: [baseData.medians[sequence[position]], baseData.medians[sequence[position + 1]]],
+    };
+  }
+
+  // The reference is only moved while it is invisible. With the outline
+  // showing you are tracing a visible reference, which must stay where it is.
+  // The same goes for printed strokes that have already snapped into place.
+  function canFollow() {
+    return rawSquigs && !outlineVisible;
   }
 
   // Refits the frame to the accepted strokes. Returns true if it changed
   // enough that Hanzi Writer needs the moved data.
   function refitFrame() {
-    // With the outline showing you are tracing a visible reference, which
-    // must stay where it is.
-    if (outlineVisible) {
+    if (!canFollow()) {
       return false;
     }
     const fitted = fitFrame(acceptedStrokes);
@@ -235,21 +294,171 @@ export function createQuiz(target, size, handlers) {
   // Writer the same strokes rearranged into the other order, and resume the
   // quiz after the strokes already written.
 
-  // If the rejected stroke belongs to the other accepted order, returns the
-  // strokes still to be written in that order. Otherwise returns null.
-  function otherOrderFor(stroke) {
-    const other = remainingInOtherOrder(sequence, stroke.strokeNum, baseData.altOrder);
+  // What it would mean to read the stroke just drawn, and those before it, as
+  // the other accepted order. Returns null if there is no other order to
+  // consider here; otherwise:
+  //   sequence:  all strokes in the order that reading implies
+  //   accepted:  the accepted strokes, with those written since the two orders
+  //              last agreed re-read as the other order's strokes
+  //   sinceSync: how many accepted strokes that re-reading covers
+  //   strokeNum: the stroke the one just drawn would be
+  function otherReadingOf(stroke) {
+    const { altOrder } = baseData;
+    const position = stroke.strokeNum;
+    // Not at the last stroke: by then there is nothing left to tell the
+    // orders apart, and the quiz is about to end.
+    if (!altOrder || position >= baseData.strokes.length - 1) {
+      return null;
+    }
+    const syncAt = lastSyncPoint(sequence, position, altOrder);
+    const other = remainingInOtherOrder(sequence, syncAt, altOrder);
     if (!other) {
       return null;
     }
+    const sinceSync = acceptedStrokes.filter((entry) => entry.position >= syncAt);
+    // A joined stroke among them is too much to untangle.
+    if (sinceSync.some((entry) => entry.strokeCount !== 1)) {
+      return null;
+    }
+    return {
+      sequence: [...sequence.slice(0, syncAt), ...other],
+      accepted: [
+        ...acceptedStrokes.filter((entry) => entry.position < syncAt),
+        ...sinceSync.map((entry) => ({
+          ...entry,
+          reference: toPoints(baseData.medians[other[entry.position - syncAt]]),
+        })),
+      ],
+      sinceSync: sinceSync.length,
+      strokeNum: other[position - syncAt],
+    };
+  }
+
+  // A line of points moved into a frame.
+  function moved(points, intoFrame) {
+    return points.map((point) => ({
+      x: intoFrame.scale * point.x + intoFrame.dx,
+      y: intoFrame.scale * point.y + intoFrame.dy,
+    }));
+  }
+
+  // If the rejected stroke makes sense as the other accepted order, returns
+  // how to carry on in that order (see otherReadingOf, plus the `frame` that
+  // reading implies). Otherwise returns null.
+  //
+  // The simple case is a stroke at the point where the two orders part ways.
+  // The harder case is one stroke later. Where the two orders start with
+  // similar strokes side by side (學 starts with a ノ either way, one in the
+  // middle and one at the left), the first stroke is accepted in the standard
+  // order wherever it is written, because the reference is invisible and
+  // Hanzi Writer is forgiving about where a character starts. Only the next
+  // stroke shows which order was meant. So here we ask: if the strokes since
+  // the orders last agreed are read as the *other* order's strokes, does
+  // everything fit, including the one just drawn?
+  function otherOrderFor(stroke) {
+    const reading = otherReadingOf(stroke);
+    if (!reading) {
+      return null;
+    }
     const points = stroke.drawnPath.points;
-    // Compare with the strokes where they are expected now, in the current frame.
-    const expectedMedian = framedData.medians[sequence[stroke.strokeNum]];
-    const otherMedian = framedData.medians[other[0]];
-    const fitsOther =
-      fitsStroke(points, otherMedian, LENIENCY) &&
-      distanceFromStroke(points, otherMedian) < distanceFromStroke(points, expectedMedian);
-    return fitsOther ? other : null;
+    // Read differently, the strokes say something different about where the
+    // character is being written.
+    const otherFrame = reading.sinceSync > 0 && canFollow() ? fitFrame(reading.accepted) : frame;
+    const fits = (drawn, reference, leniency) =>
+      // fitsStroke takes a middle line as [x, y] pairs.
+      fitsStroke(drawn, moved(reference, otherFrame).map((point) => [point.x, point.y]), leniency);
+
+    // With nothing written yet, nobody knows where the character will be.
+    const nothingWritten = acceptedStrokes.length === 0 && canFollow();
+    const leniency = nothingWritten ? LENIENCY * FIRST_STROKE_EXTRA_LENIENCY : LENIENCY;
+    const reference = toPoints(baseData.medians[reading.strokeNum]);
+    if (!fits(points, reference, leniency)) {
+      return null;
+    }
+    if (reading.sinceSync === 0) {
+      // At the parting of the ways: it must fit the other order's stroke
+      // better than the one that was expected.
+      const expectedMedian = framedData.medians[sequence[stroke.strokeNum]];
+      const fromOther = averageDistance(resample(points), resample(moved(reference, otherFrame)));
+      if (fromOther >= distanceFromStroke(points, expectedMedian)) {
+        return null;
+      }
+    } else {
+      // Each earlier stroke must make sense in the other order too.
+      const earlier = reading.accepted.slice(-reading.sinceSync);
+      if (!earlier.every((entry) => fits(entry.drawn, entry.reference, LENIENCY))) {
+        return null;
+      }
+    }
+    return { ...reading, frame: otherFrame };
+  }
+
+  // For a stroke Hanzi Writer has accepted: returns how to carry on in the
+  // other order if reading the strokes that way fits clearly better, otherwise
+  // null. `currentReference` is the middle line the stroke was accepted as.
+  //
+  // This catches what a rejection can't. Written to the right, the left-hand
+  // 丨 of 學 lands on the 爻 and passes for one of its strokes, although as the
+  // 丨 of the other order it fits far better.
+  function otherOrderBeats(stroke, currentReference) {
+    const reading = otherReadingOf(stroke);
+    if (!reading) {
+      return null;
+    }
+    const drawn = stroke.drawnPath.points;
+    const currentPairs = [...acceptedStrokes, { reference: currentReference, drawn }];
+    const otherPairs = [
+      ...reading.accepted,
+      { reference: toPoints(baseData.medians[reading.strokeNum]), drawn },
+    ];
+    // Each reading gets the frame that suits it best, then we see how well
+    // the strokes in question sit on their references.
+    const frameFor = (pairs) => (canFollow() ? fitFrame(pairs) : frame);
+    const misfit = (pairs) => {
+      const pairFrame = frameFor(pairs);
+      const inQuestion = pairs.slice(-(reading.sinceSync + 1));
+      const distances = inQuestion.map((pair) =>
+        averageDistance(resample(pair.drawn), resample(moved(pair.reference, pairFrame))),
+      );
+      return distances.reduce((sum, distance) => sum + distance, 0) / distances.length;
+    };
+    const current = misfit(currentPairs);
+    const other = misfit(otherPairs);
+    const clearlyBetter =
+      other < current * OTHER_ORDER_MISFIT_SHARE && current - other > OTHER_ORDER_MISFIT_MARGIN;
+    return clearlyBetter ? { ...reading, frame: frameFor(otherPairs) } : null;
+  }
+
+  // True if the rejected stroke is the first stroke of the character in every
+  // way except where it was written.
+  function isFirstStrokeAnywhere(stroke) {
+    return (
+      stroke.strokeNum === 0 &&
+      acceptedStrokes.length === 0 &&
+      canFollow() &&
+      fitsStroke(
+        stroke.drawnPath.points,
+        baseData.medians[sequence[0]],
+        LENIENCY * FIRST_STROKE_EXTRA_LENIENCY,
+      )
+    );
+  }
+
+  // Carries on in the other stroke order, with the strokes so far read that
+  // way. `reading` comes from otherOrderFor or otherOrderBeats.
+  function switchToOtherOrder(stroke, reading, totalStrokes) {
+    const written = stroke.strokeNum + 1;
+    sequence = reading.sequence;
+    acceptedStrokes = reading.accepted;
+    if (reading.frame !== frame) {
+      frame = reading.frame;
+      framedData = applyFrame(baseData, frame);
+    }
+    noteAccepted(stroke.strokeNum, [reading.strokeNum], stroke.drawnPath.points);
+    refitFrame();
+    handlers.onProgress({ strokesDone: written, totalStrokes, totalMistakes: mistakes });
+    // This never happens at the last stroke, so there is always more to come.
+    resume(written);
   }
 
   // Starts (or restarts) the quiz for the current character, from a clean slate.
@@ -260,7 +469,7 @@ export function createQuiz(target, size, handlers) {
     hintShown = false;
     handlers.onStart({ totalStrokes: baseData.strokes.length });
     await useOriginalData();
-    await setPrintedColor(INVISIBLE);
+    await setPrintedColor(colorWhileWriting());
     target.appendChild(squigLayer);
     if (outlineVisible) {
       writer.showOutline({ duration: 0 });
@@ -285,14 +494,26 @@ export function createQuiz(target, size, handlers) {
         keepSquig(stroke.drawnPath.pathString);
         const baseStrokes = [sequence[stroke.strokeNum]];
         let strokesDone = stroke.strokeNum + 1; // strokeNum counts from 0
+        const isShortcut = drewShortcut(stroke);
+        // Accepted, but does it fit the other stroke order clearly better?
+        const otherReading = otherOrderBeats(
+          stroke,
+          isShortcut
+            ? joinedLine(framelessPair(stroke.strokeNum), 0)
+            : toPoints(baseData.medians[sequence[stroke.strokeNum]]),
+        );
+        if (otherReading) {
+          switchToOtherOrder(stroke, otherReading, totalStrokes);
+          return;
+        }
         // A shortcut stroke can occasionally also pass as its first half. Then
         // the second half is already on the page, so move past it too.
-        if (drewShortcut(stroke)) {
+        if (isShortcut) {
           baseStrokes.push(sequence[stroke.strokeNum + 1]);
           strokesDone += 1;
           writer.skipQuizStroke();
         }
-        noteAccepted(baseStrokes, stroke.drawnPath.points);
+        noteAccepted(stroke.strokeNum, baseStrokes, stroke.drawnPath.points);
         handlers.onProgress({ strokesDone, totalStrokes, totalMistakes: mistakes });
         // Unless that was the last stroke, see whether the frame has moved.
         if (strokesDone < totalStrokes && refitFrame()) {
@@ -305,6 +526,7 @@ export function createQuiz(target, size, handlers) {
         if (drewShortcut(stroke)) {
           keepSquig(stroke.drawnPath.pathString);
           noteAccepted(
+            stroke.strokeNum,
             [sequence[stroke.strokeNum], sequence[stroke.strokeNum + 1]],
             stroke.drawnPath.points,
           );
@@ -318,18 +540,23 @@ export function createQuiz(target, size, handlers) {
           }
           return;
         }
-        const otherOrder = otherOrderFor(stroke);
-        if (otherOrder) {
+        const otherReading = otherOrderFor(stroke);
+        if (otherReading) {
           keepSquig(stroke.drawnPath.pathString);
-          const written = stroke.strokeNum + 1;
-          // Carry on in the other order: the strokes written so far, then the
-          // rest as that order has them. The other order always has at least
-          // one more stroke to come, so the quiz is resumed either way.
-          sequence = [...sequence.slice(0, stroke.strokeNum), ...otherOrder];
-          noteAccepted([otherOrder[0]], stroke.drawnPath.points);
-          refitFrame();
-          handlers.onProgress({ strokesDone: written, totalStrokes, totalMistakes: mistakes });
-          resume(written);
+          switchToOtherOrder(stroke, otherReading, totalStrokes);
+          return;
+        }
+        // The first stroke of all, in the right shape but further from the
+        // centered reference than Hanzi Writer allows: accept it, and let the
+        // frame follow it.
+        if (isFirstStrokeAnywhere(stroke)) {
+          keepSquig(stroke.drawnPath.pathString);
+          noteAccepted(0, [sequence[0]], stroke.drawnPath.points);
+          handlers.onProgress({ strokesDone: 1, totalStrokes, totalMistakes: mistakes });
+          writer.skipQuizStroke();
+          if (totalStrokes > 1 && refitFrame()) {
+            resume(1);
+          }
           return;
         }
         mistakes += 1;
@@ -356,15 +583,18 @@ export function createQuiz(target, size, handlers) {
 
   return {
     // Switches to a character and starts quizzing it. `script` is
-    // 'traditional' or 'simplified' and decides which form is drawn. Returns
-    // false if there is no stroke data for the character.
-    async showCharacter(newChar, script) {
+    // 'traditional' or 'simplified' and decides which form is drawn.
+    // `useRawSquigs` chooses between keeping your own strokes on screen
+    // (true) and snapping to the printed strokes (false). Returns false if
+    // there is no stroke data for the character.
+    async showCharacter(newChar, script, useRawSquigs) {
       clearTimeout(afterAnimationTimer);
       const data = await loadCharData(newChar, script);
       if (!data) {
         return false;
       }
       char = newChar;
+      rawSquigs = useRawSquigs;
       baseData = data;
       charData = data;
       sequence = data.strokes.map((stroke, index) => index);
@@ -420,7 +650,7 @@ export function createQuiz(target, size, handlers) {
     async reveal() {
       clearTimeout(afterAnimationTimer);
       writer.cancelQuiz();
-      await setPrintedColor(REFERENCE_COLOR);
+      await setPrintedColor(referenceColor(true));
       writer.showCharacter();
     },
 

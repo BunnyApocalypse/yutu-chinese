@@ -23,11 +23,11 @@ const BOX_CENTER = { x: 512, y: 388 };
 // The size is only estimated once the reference strokes written so far span
 // at least this much, across or down. One short stroke says where the
 // character is, but nothing reliable about how big it is.
-const MIN_SPAN_FOR_SCALE = 300;
+const MIN_SPAN_FOR_SCALE = 200;
 
 // The frame never goes beyond these. A character written smaller, bigger or
 // further off than this is no longer followed.
-const MIN_SCALE = 0.6;
+const MIN_SCALE = 0.4;
 const MAX_SCALE = 1.5;
 const MAX_SHIFT = 320; // how far the middle of the character may move
 

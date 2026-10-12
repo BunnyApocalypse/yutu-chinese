@@ -227,6 +227,7 @@ export function createReview(elements, flows, settings) {
 
     return flows.writing.start(word[settings.script], {
       script: settings.script,
+      rawSquigs: settings.rawSquigs,
       continueLabel: null,
       hideOutline: true,
       judgeChar,

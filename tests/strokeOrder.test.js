@@ -11,6 +11,7 @@ import {
   fitsStroke,
   distanceFromStroke,
   remainingInOtherOrder,
+  lastSyncPoint,
   isStandardOrder,
 } from '../src/strokeMatch.js';
 import { toPoints } from '../src/lines.js';
@@ -114,6 +115,23 @@ test('the other order is offered only where the two orders part ways', () => {
   assert.equal(remainingInOtherOrder(standard, 1, [2, 0, 1, 3, 4]), null);
   assert.equal(remainingInOtherOrder(standard, 1, null), null);
   assert.equal(remainingInOtherOrder(standard, 5, altOrder), null); // finished
+});
+
+test('the last point where both orders had the same strokes written', () => {
+  // Orders 0 1 2 3 4 5 and 1 0 2 3 5 4: they agree again after two strokes,
+  // and after four.
+  const standard = [0, 1, 2, 3, 4, 5];
+  const altOrder = [1, 0, 2, 3, 5, 4];
+  assert.equal(lastSyncPoint(standard, 0, altOrder), 0);
+  assert.equal(lastSyncPoint(standard, 1, altOrder), 0); // one stroke into the first stretch
+  assert.equal(lastSyncPoint(standard, 2, altOrder), 2);
+  assert.equal(lastSyncPoint(standard, 3, altOrder), 3);
+  assert.equal(lastSyncPoint(standard, 5, altOrder), 4); // one stroke into the second stretch
+  assert.equal(lastSyncPoint(altOrder, 5, altOrder), 4);
+  // 學: the first eight strokes are one long stretch.
+  const xueAlt = [4, 5, 6, 7, 0, 1, 2, 3, 8, 9];
+  assert.equal(lastSyncPoint([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 5, xueAlt), 0);
+  assert.equal(lastSyncPoint([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 8, xueAlt), 8);
 });
 
 test('two separate differing stretches can be written in different orders', () => {

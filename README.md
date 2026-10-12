@@ -16,6 +16,7 @@ Stroke display and grading are done by [Hanzi Writer](https://hanziwriter.org/).
 - Traditional or simplified, chosen with a switch. Traditional uses Taiwan-standard forms and stroke order; where the mainland stroke order uses the same strokes, that is accepted too.
 - Two strokes written without lifting the pen (such as the hook of 子) are accepted where one runs into the next.
 - A built-in list of about 100 common words to start from.
+- A choice between keeping your own handwriting on screen ("raw squigs") and having each correct stroke snap to the printed one.
 - Settings for new words per day, which kinds of card you want, and Taiwan or mainland pronunciation. Tone cards accept both regions' tones.
 
 ## Your data

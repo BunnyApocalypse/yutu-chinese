@@ -72,8 +72,8 @@ test('one short stroke gives a shift but leaves the size alone', () => {
 test('the frame stays within its limits', () => {
   const random = makeRandom(3);
   const medians = taiwanData.get('學').medians;
-  const tiny = fitFrame(pairsFor(medians, { scale: 0.3, dx: 0, dy: 0 }, random));
-  assert.equal(tiny.scale, 0.6);
+  const tiny = fitFrame(pairsFor(medians, { scale: 0.2, dx: 0, dy: 0 }, random));
+  assert.equal(tiny.scale, 0.4);
   const huge = fitFrame(pairsFor(medians, { scale: 2.5, dx: -700, dy: -500 }, random));
   assert.equal(huge.scale, 1.5);
   // Written far off in a corner: followed only part of the way.
