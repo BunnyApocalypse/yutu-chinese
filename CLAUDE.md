@@ -226,6 +226,11 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 
 The owner wants to bring their Skritter data across eventually rather than start from scratch. Don't build it early, but keep it in mind whenever the data model is designed: it should hold words as well as single characters, both scripts, and per-item review history and scheduling state. Look at a real Skritter export before finalising the IndexedDB schema. Personal exports go in `exports/`, which is git-ignored.
 
+## To discuss with the owner at the start of the next session
+
+1. **The proposed meaning from the dictionary cuts off too much** (raised by the owner on 2026-10-12, not yet discussed). For 聯絡 the entry is "to get in touch with; to contact; to stay in contact (with); liaison / (math.) connection", and with the simplified form typed the owner saw only "to get in touch with" proposed. Their view: dropping obscure senses is understandable, but cutting off fine gradations of meaning is wrong. `proposeMeaning` in `src/dictionary.js` takes only the first slash-separated group and at most three of its semicolon-separated parts. Check first why one part was shown where three were expected, then agree on a rule together before changing it. Options to bring: keep the whole first group; keep every group except ones marked as specialist, such as "(math.)"; or fill in everything and let the owner delete.
+2. What to do next: the interface settings for script and Taiwan pronunciation (to-do list), or the PWA milestone, which waits on two answers from the owner (roadmap item 8).
+
 ## Roadmap
 
 1. **Done:** one hardcoded character, stroke-by-stroke quiz with grading, reachable from a phone over the LAN.
