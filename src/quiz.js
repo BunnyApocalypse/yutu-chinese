@@ -25,12 +25,14 @@ const HINT_AFTER_MISSES = 3;
 // strokes that are further from the reference in position, shape and length.
 const LENIENCY = 1.5;
 
-// How fast the Animate button plays, compared with Hanzi Writer's default.
-// 1.5 means each stroke is drawn 1.5 times as fast and the pause between
-// strokes is 1.5 times shorter.
-const ANIMATION_SPEED = 1.5;
-// Hanzi Writer's default pause between strokes, in milliseconds.
-const DEFAULT_PAUSE_BETWEEN_STROKES_MS = 1000;
+// The Animate button: how fast each stroke is drawn (1 is Hanzi Writer's
+// default speed), and how long it waits between strokes, in milliseconds
+// (Hanzi Writer's default is 1000).
+const STROKE_ANIMATION_SPEED = 1;
+const PAUSE_BETWEEN_STROKES_MS = 300;
+// How long the finished character stays on screen after the animation,
+// before the quiz starts again.
+const PAUSE_AFTER_ANIMATION_MS = 1500;
 
 const INK_COLOR = '#222222';
 const INVISIBLE = 'rgba(0, 0, 0, 0)';
@@ -82,6 +84,10 @@ export function createQuiz(target, size, handlers) {
   let hintShown = false;
 
   let outlineVisible = false;
+
+  // The timer for the pause after an animation, so it can be called off if
+  // you move on before it runs out.
+  let afterAnimationTimer = null;
 
   // Our own layer for the strokes you drew.
   const squigLayer = document.createElementNS(SVG_NAMESPACE, 'g');
@@ -190,6 +196,7 @@ export function createQuiz(target, size, handlers) {
 
   // Starts (or restarts) the quiz for the current character, from a clean slate.
   async function start() {
+    clearTimeout(afterAnimationTimer);
     squigLayer.replaceChildren();
     mistakes = 0;
     hintShown = false;
@@ -277,6 +284,7 @@ export function createQuiz(target, size, handlers) {
     // 'traditional' or 'simplified' and decides which form is drawn. Returns
     // false if there is no stroke data for the character.
     async showCharacter(newChar, script) {
+      clearTimeout(afterAnimationTimer);
       const data = await loadCharData(newChar, script);
       if (!data) {
         return false;
@@ -300,8 +308,8 @@ export function createQuiz(target, size, handlers) {
           drawingColor: INK_COLOR,
           drawingWidth: penWidth,
           highlightColor: '#3b9c5a',
-          strokeAnimationSpeed: ANIMATION_SPEED,
-          delayBetweenStrokes: DEFAULT_PAUSE_BETWEEN_STROKES_MS / ANIMATION_SPEED,
+          strokeAnimationSpeed: STROKE_ANIMATION_SPEED,
+          delayBetweenStrokes: PAUSE_BETWEEN_STROKES_MS,
           // Tells Hanzi Writer to use our own data instead of fetching from
           // its CDN. We always load a character before asking Hanzi Writer to
           // show it, so the data it wants is the data we just loaded.
@@ -338,6 +346,7 @@ export function createQuiz(target, size, handlers) {
     // Plays the stroke order, then starts the quiz again. For a character
     // with two accepted orders this always shows the standard one.
     async animate() {
+      clearTimeout(afterAnimationTimer);
       writer.cancelQuiz();
       squigLayer.replaceChildren();
       handlers.onAnimateStart();
@@ -348,7 +357,8 @@ export function createQuiz(target, size, handlers) {
         // The animation is canceled if you move to another character meanwhile.
         onComplete: (result) => {
           if (!result.canceled) {
-            start();
+            // Leave the finished character up for a moment before clearing it.
+            afterAnimationTimer = setTimeout(start, PAUSE_AFTER_ANIMATION_MS);
           }
         },
       });
@@ -356,6 +366,7 @@ export function createQuiz(target, size, handlers) {
 
     // Stops this quiz for good. Used when the writing area is rebuilt at a new size.
     destroy() {
+      clearTimeout(afterAnimationTimer);
       if (writer) {
         writer.cancelQuiz();
       }
