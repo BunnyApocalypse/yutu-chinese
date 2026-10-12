@@ -6,6 +6,14 @@
 //
 // Milestone 1 only knows one character. Later this file will load any
 // character on demand; the rest of the app won't need to change.
+//
+// The data for one character looks like this:
+//   strokes:    one SVG outline per stroke (the printed shape)
+//   medians:    one list of [x, y] points per stroke, running down its middle.
+//               This is what a drawn stroke is graded against.
+//   radStrokes: which stroke numbers belong to the radical
+// Strokes are numbered from 0, in writing order. Coordinates run from 0 to
+// 1024 across, and from about -124 (bottom) to 900 (top) upwards.
 
 import xue from 'hanzi-writer-data/學.json';
 
