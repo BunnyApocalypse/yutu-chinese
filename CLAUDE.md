@@ -44,7 +44,8 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - Both of these first run `scripts/copy-char-data.js` automatically (npm's `predev`/`prebuild` hooks), which copies the stroke data into `public/char-data/` and `public/char-data-tw/` if it isn't there yet.
 - `npm run preview`: serve the built `dist/` to check the production build.
 
-- `npm test`: run the tests in `tests/` with Node's built-in test runner (no extra dependency). They cover the plain-calculation code: scheduling, session planning, grade suggestion, pinyin formatting, word list parsing, backup checking. Anything touching the page or IndexedDB is not covered; verify that in a browser.
+- `npm test`: run the tests in `tests/` with Node's built-in test runner (no extra dependency). They cover the plain-calculation code: scheduling, session planning, grade suggestion, pinyin formatting, word list parsing, backup checking. Anything touching the page or IndexedDB is not covered by these.
+- `npm run test:browser`: run the tests in `tests/browser/`, which write characters in the real app in several headless Chromium browsers at once. About half a minute. See "Browser tests" below.
 
 ## Layout
 
@@ -75,6 +76,24 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `scripts/build-tone-table.js`, `data/cedict/`: the tone table extracted from CC-CEDICT (run by hand; see above).
 - `data/animcjk/`: the animCJK traditional stroke data, copied unchanged from that project at a pinned commit. Its README records the source, license and how to update. This is vendored data, not an npm dependency.
 - `tests/logic.test.js`, `tests/shortcuts.test.js`, `tests/strokeOrder.test.js`, `tests/toneMark.test.js`, `tests/frame.test.js`: tests for the plain-calculation code.
+- `tests/browser/harness.js`: what the browser tests share: serving the app, starting the browsers, drawing strokes, reading the status line.
+- `tests/browser/writing-grid.browser.js`: writes 15 characters in both stroke orders at seven positions and sizes.
+
+## Browser tests
+
+- **No dependency was added.** The tests start the Chromium installed on the computer (`chromium-browser`, `chromium` or `google-chrome` on the PATH, or `CHROME_PATH`) without a window, and drive it over the DevTools protocol with Node's built-in WebSocket. They start their own Vite dev server on port 5273, so `npm run dev` need not be running.
+- **Parallel by sharing a pool of browsers.** `startBrowsers` starts several (half the processor's cores; `BROWSERS=3` to choose), each with its own temporary profile and so its own IndexedDB. A test asks the pool for a page with `browsers.use(...)` and gets whichever is free. Node's test runner runs as many tests at once as there are browsers (`concurrency` on the `describe`).
+- **`npm test` does not run them:** it only picks up files named `*.test.js`. Browser test files are named `*.browser.js`.
+- **Run part of the grid** with `CHARS=學母 npm run test:browser`.
+- **Each test draws the same strokes every time**, whichever browser it lands on: its random shaking is seeded from the test's name.
+- **Knowing when the next stroke can be drawn:** `src/quiz.js` puts a `data-busy` attribute on the writing area while Hanzi Writer is being handed stroke data (`setBusy`). A stroke drawn then would be lost. The tests wait for the status line to change and for `data-busy` to go, instead of pausing a fixed time. Any new place in `quiz.js` that awaits `giveWriter` must be wrapped the same way.
+- **A stroke that begins outside the writing area never reaches the app**, so the grid skips a character at a position where that would happen (wide characters in "shifted left").
+- **Mouse events arrive about 60 a second in headless Chromium**, which is what a run's time is made of. More browsers help; shorter waits do not.
+- **Known failures on 2026-10-12** (132 of 165 runs pass, 10 skipped). The command exits with an error while any remain:
+  - At half size (0.45 and 0.5 times the reference), 31 of 50 runs fail, 28 of them at the first stroke: `isFirstStrokeAnywhere` does not accept a first stroke that small. The owner writes at about this size.
+  - 學 in the mainland order, shifted right so its left ノ lands on the 爻: the third stroke is rejected.
+  - 長 in the mainland order, small at the top left: the first stroke is rejected.
+- **Not covered yet:** tone, pinyin and meaning cards, Review mode, the settings panel. Use the same harness.
 
 ## Cards, scheduling and storage
 
@@ -197,7 +216,7 @@ The owner wants to bring their Skritter data across eventually rather than start
 9. Import the Skritter word list (TSV) and, if the GDPR request (sent 2026-10-12) yields it, its scheduling data. The owner does not want the word list imported without scheduling data.
 10. Merge backups between devices instead of replacing; a settings screen (new words per day, target retention).
 11. **To do, asked for by the owner:**
-    - A browser test suite that lives in the repo and runs in parallel. So far, everything that needs a browser (drawing strokes, cards, settings) has been checked with throwaway scripts that drive headless Chromium over the DevTools protocol and are deleted afterwards. They draw one stroke at a time in a single browser, so a grid of characters, stroke orders and writing positions takes over 20 minutes. The last such grid (15 characters, both orders, seven positions and sizes) was cut short on 2026-10-12 after 12 of about 180 runs, so the off-center stroke order changes of that day have only been checked on a smaller grid. Wanted: the scripts kept under `tests/`, split across several browser instances, with `npm test` still covering the plain-calculation code quickly.
+    - **Done for writing:** a browser test suite that lives in the repo and runs in parallel (see "Browser tests"). Still open: its known failures, and browser tests for the cards and settings, which are still only checked by hand.
     - A setting for which traditional forms to use: mainland, Hong Kong or Taiwan, so that people can choose. Today Traditional always means Taiwan forms where animCJK has them. Needs stroke data for the other two regions' forms; the big set's traditional characters are mainland-style, and no Hong Kong set has been looked for yet.
     - Accepting a neutral tone where the list has a full one (xīngqi for 星期).
 

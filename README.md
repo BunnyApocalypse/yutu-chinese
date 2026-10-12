@@ -35,6 +35,8 @@ npm run dev      # starts the dev server
 npm test         # runs the tests
 ```
 
+`npm run test:browser` runs a second set of tests that write characters in the real app, in several browsers at once. It needs Node.js 22 or newer and Chromium or Chrome installed, and takes about half a minute.
+
 Then open:
 
 - on this computer: http://localhost:5173

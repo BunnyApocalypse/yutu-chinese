@@ -123,6 +123,18 @@ export function createQuiz(target, size, handlers) {
   // you move on before it runs out.
   let afterAnimationTimer = null;
 
+  // While Hanzi Writer is being handed stroke data (at the start of a
+  // character, and when the order or frame changes partway), a stroke drawn
+  // would be lost. That takes a few hundredths of a second, too short for a
+  // hand to notice. The writing area carries a `data-busy` attribute for as
+  // long as it lasts, so that the browser tests (tests/browser/), which draw
+  // much faster than a hand, know when the next stroke can be drawn.
+  let busyCount = 0;
+  function setBusy(isBusy) {
+    busyCount += isBusy ? 1 : -1;
+    target.toggleAttribute('data-busy', busyCount > 0);
+  }
+
   // Our own layer for the strokes you drew.
   const squigLayer = document.createElementNS(SVG_NAMESPACE, 'g');
   squigLayer.setAttribute('class', 'squigs');
@@ -210,12 +222,17 @@ export function createQuiz(target, size, handlers) {
   async function resume(written) {
     const startedOn = char;
     const data = currentData();
-    // We are usually inside one of Hanzi Writer's own callbacks here. Waiting
-    // a moment lets it finish what it was doing before its character is replaced.
-    await Promise.resolve();
-    await giveWriter(data);
-    if (char === startedOn) {
-      runQuiz(written);
+    setBusy(true);
+    try {
+      // We are usually inside one of Hanzi Writer's own callbacks here. Waiting
+      // a moment lets it finish what it was doing before its character is replaced.
+      await Promise.resolve();
+      await giveWriter(data);
+      if (char === startedOn) {
+        runQuiz(written);
+      }
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -468,13 +485,18 @@ export function createQuiz(target, size, handlers) {
     mistakes = 0;
     hintShown = false;
     handlers.onStart({ totalStrokes: baseData.strokes.length });
-    await useOriginalData();
-    await setPrintedColor(colorWhileWriting());
-    target.appendChild(squigLayer);
-    if (outlineVisible) {
-      writer.showOutline({ duration: 0 });
+    setBusy(true);
+    try {
+      await useOriginalData();
+      await setPrintedColor(colorWhileWriting());
+      target.appendChild(squigLayer);
+      if (outlineVisible) {
+        writer.showOutline({ duration: 0 });
+      }
+      runQuiz(0);
+    } finally {
+      setBusy(false);
     }
-    runQuiz(0);
   }
 
   // Runs Hanzi Writer's quiz on charData, beginning at stroke `startAt`.
