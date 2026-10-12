@@ -43,3 +43,14 @@ Stroke data comes from two sources, both licensed under the Arphic Public Licens
 - [animCJK](https://github.com/parsimonhi/animCJK): Taiwan-standard forms for about 1,000 traditional characters, kept in `data/animcjk/`. These are used when the script is set to Traditional. Traditional characters outside this set fall back to the first source, whose forms can differ from the Taiwan standard.
 
 Both are copied into `public/` automatically the first time you run `npm run dev` or `npm run build`.
+
+## License
+
+The app's own code is free software under the GNU General Public License, version 3. See [LICENSE](LICENSE).
+
+The stroke data is **not** covered by the GPL. It is separate material under the Arphic Public License, a free license of its own that is not compatible with the GPL, so it keeps that license:
+
+- `data/animcjk/` (see the README in that folder)
+- the `hanzi-writer-data` package, downloaded by `npm install`
+
+The libraries the app uses, [Hanzi Writer](https://github.com/chanind/hanzi-writer) and [ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs), are under the MIT license, which is compatible with the GPL.

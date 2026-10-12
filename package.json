@@ -2,6 +2,7 @@
   "name": "hanzi-trainer",
   "version": "0.1.0",
   "description": "Personal, local-first Chinese character writing trainer",
+  "license": "GPL-3.0-only",
   "private": true,
   "type": "module",
   "scripts": {
