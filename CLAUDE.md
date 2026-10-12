@@ -89,10 +89,9 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - **Knowing when the next stroke can be drawn:** `src/quiz.js` puts a `data-busy` attribute on the writing area while Hanzi Writer is being handed stroke data (`setBusy`). A stroke drawn then would be lost. The tests wait for the status line to change and for `data-busy` to go, instead of pausing a fixed time. Any new place in `quiz.js` that awaits `giveWriter` must be wrapped the same way.
 - **A stroke that begins outside the writing area never reaches the app**, so the grid skips a character at a position where that would happen (wide characters in "shifted left").
 - **Mouse events arrive about 60 a second in headless Chromium**, which is what a run's time is made of. More browsers help; shorter waits do not.
-- **Known failures on 2026-10-12** (132 of 165 runs pass, 10 skipped). The command exits with an error while any remain:
-  - At half size (0.45 and 0.5 times the reference), 31 of 50 runs fail, 28 of them at the first stroke: `isFirstStrokeAnywhere` does not accept a first stroke that small. The owner writes at about this size.
+- **Known failures on 2026-10-12** (159 of 165 runs pass, 10 skipped). The command exits with an error while any remain. None is at the first stroke any more:
+  - At half size, the second or third stroke is rejected for 學 (MOE order, both half-size positions), and at the bottom right for 覺, 麼 and 謝 (MOE order). The size is not yet known that early, so the stroke is expected at full size.
   - 學 in the mainland order, shifted right so its left ノ lands on the 爻: the third stroke is rejected.
-  - 長 in the mainland order, small at the top left: the first stroke is rejected.
 - **Not covered yet:** tone, pinyin and meaning cards, Review mode, the settings panel. Use the same harness.
 
 ## Cards, scheduling and storage
@@ -148,7 +147,9 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - **The data Hanzi Writer holds is always: base data, in the current stroke order, in the current frame** (`currentData` in `src/quiz.js`). Anything that compares drawn strokes with textbook ones must use the framed data (`framedData`, `charData`), never `baseData`, or it will judge against the centered position.
 - **Because the data itself is moved**, hints appear where the character is being written, and the printed character at the end lines up with the handwriting.
 - **Rules:** shift from the first stroke; size only once the strokes written span about 20% of the box; size limited to 0.4–1.5 and shift to about 30% of the box; no following while the outline is shown or when raw squigs is off; Restart, Animate and a new character go back to the centered data.
-- **The first stroke may land anywhere.** If Hanzi Writer rejects the very first stroke only for where it is, `isFirstStrokeAnywhere` in `src/quiz.js` accepts it by shape and size, and the frame follows. The owner writes at about half the size of the box, often in a corner.
+- **The first stroke may land anywhere, at any size that can be followed.** If Hanzi Writer rejects the very first stroke only for where it is or how small, `isFirstStrokeAnywhere` in `src/quiz.js` accepts it by shape, and the frame follows. The owner writes at about half the size of the box, often in a corner, so `fitsStroke` lets a first stroke be as short as 0.35 times the textbook's (0.5 for later strokes).
+- **Which order a first stroke belongs to is decided by shape, not position** (`otherOrderFor`, when nothing is written yet). Written small in a corner, the mainland order's first stroke can lie nearer the MOE order's (長, 馬). Where both orders start with the same shape (學), the re-reading described under "Two accepted stroke orders" sorts it out a stroke later.
+- **The size is not known after one short stroke** (`MIN_SPAN_FOR_SCALE`), so until the strokes span enough, the next ones are expected at full size around the first. At half size this still rejects the second or third stroke of some characters (see the known failures under "Browser tests").
 - **Limits:** only shift and size, not slant or stretch. A wrong stroke accepted early skews the frame for the strokes after it.
 
 ## Two accepted stroke orders

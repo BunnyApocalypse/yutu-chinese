@@ -20,6 +20,7 @@ import { toPoints, resample, averageDistance } from './lines.js';
 import {
   fitsStroke,
   distanceFromStroke,
+  shapeDifferenceFromStroke,
   remainingInOtherOrder,
   lastSyncPoint,
   isStandardOrder,
@@ -381,24 +382,43 @@ export function createQuiz(target, size, handlers) {
     // Read differently, the strokes say something different about where the
     // character is being written.
     const otherFrame = reading.sinceSync > 0 && canFollow() ? fitFrame(reading.accepted) : frame;
-    const fits = (drawn, reference, leniency) =>
+    const fits = (drawn, reference, leniency, isFirstStroke = false) =>
       // fitsStroke takes a middle line as [x, y] pairs.
-      fitsStroke(drawn, moved(reference, otherFrame).map((point) => [point.x, point.y]), leniency);
+      fitsStroke(
+        drawn,
+        moved(reference, otherFrame).map((point) => [point.x, point.y]),
+        leniency,
+        isFirstStroke,
+      );
 
     // With nothing written yet, nobody knows where the character will be.
     const nothingWritten = acceptedStrokes.length === 0 && canFollow();
     const leniency = nothingWritten ? LENIENCY * FIRST_STROKE_EXTRA_LENIENCY : LENIENCY;
     const reference = toPoints(baseData.medians[reading.strokeNum]);
-    if (!fits(points, reference, leniency)) {
+    if (!fits(points, reference, leniency, nothingWritten)) {
       return null;
     }
     if (reading.sinceSync === 0) {
       // At the parting of the ways: it must fit the other order's stroke
       // better than the one that was expected.
       const expectedMedian = framedData.medians[sequence[stroke.strokeNum]];
-      const fromOther = averageDistance(resample(points), resample(moved(reference, otherFrame)));
-      if (fromOther >= distanceFromStroke(points, expectedMedian)) {
-        return null;
+      if (nothingWritten) {
+        // Where the first stroke lands says nothing about which stroke it is
+        // (written small in a corner, it may be nearer the wrong one). So if
+        // it could be the expected stroke as well, go by shape alone.
+        const otherMedian = baseData.medians[reading.strokeNum];
+        if (
+          fitsStroke(points, expectedMedian, leniency, true) &&
+          shapeDifferenceFromStroke(points, otherMedian) >=
+            shapeDifferenceFromStroke(points, expectedMedian)
+        ) {
+          return null;
+        }
+      } else {
+        const fromOther = averageDistance(resample(points), resample(moved(reference, otherFrame)));
+        if (fromOther >= distanceFromStroke(points, expectedMedian)) {
+          return null;
+        }
       }
     } else {
       // Each earlier stroke must make sense in the other order too.
@@ -457,6 +477,7 @@ export function createQuiz(target, size, handlers) {
         stroke.drawnPath.points,
         baseData.medians[sequence[0]],
         LENIENCY * FIRST_STROKE_EXTRA_LENIENCY,
+        true,
       )
     );
   }

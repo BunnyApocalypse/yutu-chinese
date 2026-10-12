@@ -18,6 +18,11 @@ const AVERAGE_TOLERANCE = 110; // how far off the stroke may be on average
 // The drawn stroke's length must be within these fractions of the textbook's.
 const MIN_LENGTH_RATIO = 0.5;
 const MAX_LENGTH_RATIO = 2;
+// The same for the first stroke of a character. Until it is written nothing
+// says how big the character will be, and a character written at half size
+// has a first stroke half as long. The lower limit sits a little under the
+// smallest size that is followed (MIN_SCALE in frame.js).
+const MIN_LENGTH_RATIO_FIRST_STROKE = 0.35;
 
 // How different the shapes may be once position and size are taken away
 // (see shapeOf in lines.js). Not multiplied by leniency.
@@ -25,13 +30,16 @@ const SHAPE_TOLERANCE = 0.2;
 
 // True if `drawnPoints` (a list of { x, y }) is an acceptable attempt at the
 // textbook stroke whose middle line is `median` ([[x, y], ...]).
-export function fitsStroke(drawnPoints, median, leniency) {
+// `isFirstStroke` says nothing of the character has been written yet, so its
+// size is not known: a shorter stroke is then accepted.
+export function fitsStroke(drawnPoints, median, leniency, isFirstStroke = false) {
   if (drawnPoints.length < 2) {
     return false;
   }
   const textbook = toPoints(median);
   const lengthRatio = lineLength(drawnPoints) / lineLength(textbook);
-  if (lengthRatio < MIN_LENGTH_RATIO || lengthRatio > MAX_LENGTH_RATIO) {
+  const minLengthRatio = isFirstStroke ? MIN_LENGTH_RATIO_FIRST_STROKE : MIN_LENGTH_RATIO;
+  if (lengthRatio < minLengthRatio || lengthRatio > MAX_LENGTH_RATIO) {
     return false;
   }
 
@@ -49,6 +57,13 @@ export function fitsStroke(drawnPoints, median, leniency) {
 // Smaller means a closer fit. Used to say which of two strokes was meant.
 export function distanceFromStroke(drawnPoints, median) {
   return averageDistance(resample(drawnPoints), resample(toPoints(median)));
+}
+
+// How different the drawn stroke's shape is from the textbook stroke's, with
+// position and size taken away. Smaller means more alike. Used for the first
+// stroke of a character, whose position says nothing yet.
+export function shapeDifferenceFromStroke(drawnPoints, median) {
+  return averageDistance(shapeOf(resample(drawnPoints)), shapeOf(resample(toPoints(median))));
 }
 
 // ---- Keeping track of two stroke orders ----

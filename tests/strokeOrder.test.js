@@ -10,6 +10,7 @@ import { findAlternativeOrder } from '../scripts/strokeOrder.js';
 import {
   fitsStroke,
   distanceFromStroke,
+  shapeDifferenceFromStroke,
   remainingInOtherOrder,
   lastSyncPoint,
   isStandardOrder,
@@ -182,4 +183,21 @@ test('strokes are attributed to the right order', () => {
     notRecognized.length <= trials * 0.05,
     `${notRecognized.length} of ${trials} strokes of the other order were not recognized: ${[...new Set(notRecognized)].join(', ')}`,
   );
+});
+
+test('a first stroke may be half as long, a later stroke may not', () => {
+  // The first stroke of 學, written at 0.45 times the size in the top left corner.
+  const median = taiwanData.get('學').medians[0];
+  const drawn = median.map(([x, y]) => ({ x: 0.45 * x + 30, y: 0.45 * y + 420 }));
+  // Leniency 6 is what the app uses for a first stroke (LENIENCY times
+  // FIRST_STROKE_EXTRA_LENIENCY in src/quiz.js), so position does not count.
+  assert.equal(fitsStroke(drawn, median, 6, true), true);
+  assert.equal(fitsStroke(drawn, median, 6), false);
+});
+
+test('shape tells a level stroke from an upright one, wherever they are', () => {
+  const level = [[100, 500], [400, 500]];
+  const upright = [[250, 700], [250, 300]];
+  const drawn = toPoints([[600, 100], [760, 104]]); // level, small, elsewhere
+  assert.ok(shapeDifferenceFromStroke(drawn, level) < shapeDifferenceFromStroke(drawn, upright));
 });
