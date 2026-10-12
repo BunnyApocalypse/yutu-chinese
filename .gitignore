@@ -6,6 +6,7 @@ dist/
 
 # Stroke data copied from node_modules by scripts/copy-char-data.js
 public/char-data/
+public/char-data-tw/
 
 # Personal data exports (e.g. from Skritter) never belong in the repo
 exports/

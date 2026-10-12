@@ -7,9 +7,10 @@ A personal, local-first Chinese character writing trainer: a PWA built as an alt
 - **Vanilla JavaScript.** Vite is the only build tool. No frameworks (no React, Vue, Svelte, etc.) and no TypeScript.
 - **No backend.** The app is static files only. Nothing is sent to a server.
 - **All user data lives in IndexedDB** on the device.
-- **Must work offline.** Nothing may be fetched from the internet at runtime. In particular, stroke data is served from the app's own address (`public/char-data/`, copied from the `hanzi-writer-data` package), never from Hanzi Writer's default CDN loader.
+- **Must work offline.** Nothing may be fetched from the internet at runtime. In particular, stroke data is served from the app's own address (`public/char-data/` and `public/char-data-tw/`), never from Hanzi Writer's default CDN loader.
 - **Hanzi Writer** does stroke display and stroke-by-stroke quiz grading. Don't replace its grading with a custom stroke recognizer. The one agreed exception is the small check for joined strokes in `src/shortcuts.js`, which exists because Hanzi Writer cannot grade one drawn stroke against two textbook strokes.
 - **Traditional and simplified characters are both first-class.** Never assume one script.
+- **Traditional means Taiwan-standard forms** (為 with 9 strokes, 辶 and 艹 with 4), not mainland or Hong Kong variants.
 
 ## Must-have writing features
 
@@ -33,7 +34,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 
 - `npm run dev`: start the dev server. On the PC: http://localhost:5173. On a phone on the same Wi-Fi: `http://<PC's LAN address>:5173` (Vite prints it as "Network" on startup).
 - `npm run build`: bundle the app into `dist/`.
-- Both of these first run `scripts/copy-char-data.js` automatically (npm's `predev`/`prebuild` hooks), which copies the stroke data into `public/char-data/` if it isn't there yet.
+- Both of these first run `scripts/copy-char-data.js` automatically (npm's `predev`/`prebuild` hooks), which copies the stroke data into `public/char-data/` and `public/char-data-tw/` if it isn't there yet.
 - `npm run preview`: serve the built `dist/` to check the production build.
 
 - `npm test`: run the tests in `tests/` with Node's built-in test runner (no extra dependency). They cover the plain-calculation code: scheduling, session planning, grade suggestion, pinyin formatting, word list parsing, backup checking. Anything touching the page or IndexedDB is not covered; verify that in a browser.
@@ -51,10 +52,11 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `src/backup.js`: build, check and restore a backup file.
 - `src/wordList.js`: parses the four-column TSV word list format (same as Skritter's export) and converts numbered pinyin to tone marks.
 - `src/seed-words.tsv`: the built-in list of 109 common words, loaded into the database on first run. Hand-written, not from a frequency corpus.
-- `src/charData.js`: the only place stroke data is loaded from. `loadCharData(char)` fetches `char-data/<unicode number in hex>.json` and returns `null` when a character has no data.
+- `src/charData.js`: the only place stroke data is loaded from. `loadCharData(char, script)` returns `null` when a character has no data. For `'traditional'` it uses the Taiwan set where that has the character and the big set otherwise; for `'simplified'` only the big set.
 - `src/shortcuts.js`: recognizes handwriting shortcuts (two textbook strokes written as one).
 - `src/style.css`: styles, phone-first.
-- `scripts/copy-char-data.js`: copies stroke data from `node_modules/hanzi-writer-data/` to `public/char-data/` (git-ignored), renaming `學.json` to `5b78.json`.
+- `scripts/copy-char-data.js`: fills the two git-ignored stroke data folders, naming files by Unicode number (`學.json` becomes `5b78.json`): `public/char-data/` from `node_modules/hanzi-writer-data/` (about 9,500 characters) and `public/char-data-tw/` from `data/animcjk/graphicsZhHant.txt` (1,013 characters, plus an `index.json` listing them).
+- `data/animcjk/`: the animCJK traditional stroke data, copied unchanged from that project at a pinned commit. Its README records the source, license and how to update. This is vendored data, not an npm dependency.
 - `tests/logic.test.js`: tests for the plain-calculation code.
 
 ## Cards, scheduling and storage
@@ -81,8 +83,10 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 
 ## Things that are easy to get wrong
 
-- **The stroke data's traditional characters are not Taiwan-standard forms.** `hanzi-writer-data` (from Make Me a Hanzi) draws 為 as 爲 (12 strokes), 說 as 説, 辶 with 3 strokes and 艹 with 3 strokes. The owner wants Taiwan forms. The animCJK project's `graphicsZhHant.txt` has Taiwan-style data in the same format for 1,013 characters (Arphic Public License); the MOE's own data is CC BY-NC-ND and cannot be converted and redistributed. Not yet resolved; see the roadmap.
-
+- **Only 1,013 traditional characters have Taiwan-standard stroke data.** The big set (`hanzi-writer-data`, from Make Me a Hanzi) draws traditional characters in mainland-style forms: 為 as 爲 (12 strokes), 說 as 説, 辶 and 艹 with 3 strokes. The animCJK overlay fixes the characters it covers; the rest (for example 吃, 真, 骨) still come from the big set and may differ from the Taiwan standard. Taiwan's MOE data would be complete but is CC BY-NC-ND, so it cannot be converted and redistributed.
+- **The script decides the form even for characters both scripts share** (花, 起, 道). Always pass the script to `loadCharData`; never cache stroke data by character alone.
+- **Stroke numbers can differ between the two sets** for the same character (花 has 8 strokes in one and 7 in the other). The stroke numbers in `shortcutStarts` (`src/shortcuts.js`) must be checked against both.
+- The slot row sets `lang` (`zh-Hant-TW` or `zh-Hans-CN`) so the device picks the right regional font. Without it a phone may show Japanese or mainland glyphs for the same character.
 - `crypto.randomUUID()` only exists on HTTPS or localhost, so it fails on the LAN dev address. `randomId()` in `src/db.js` uses `crypto.getRandomValues()`, which works everywhere.
 - The four grade buttons must fit side by side at phone width, and the whole review screen should fit without scrolling. The writing area's size is worked out in `chooseSize` (`src/wordFlow.js`) by reserving a fixed height for everything else; adjust that number when adding rows to the screen.
 - In Review, the outline is switched off at the start of every word. Left on, it would count as peeking and make every suggestion "Again".
@@ -109,7 +113,7 @@ The owner wants to bring their Skritter data across eventually rather than start
 2. **Done:** raw squigs, lenient grading, optional 2-stroke 子 (in 學 only).
 3. **Done:** practice any typed character or multi-character word; stroke data loaded on demand.
 4. **Done:** FSRS scheduling of writing cards on a built-in word list, IndexedDB storage, backup export/import.
-5. Taiwan-standard stroke data for traditional characters (overlay animCJK zh-Hant where available; depends on the script setting because characters shared by both scripts differ too).
+5. **Done:** Taiwan-standard stroke data for the 1,013 traditional characters animCJK covers. Still open: the traditional characters it does not cover.
 6. The other card types: tone, pinyin (with zhuyin as an alternative), meaning.
 7. Shortcuts for every character, not just 學 (candidate: allow joining any two consecutive strokes that meet end to start; or explicit rules per component).
 8. PWA: manifest, service worker, GitHub Pages deploy, installable and offline on the phone.

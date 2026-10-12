@@ -74,6 +74,7 @@ let mode = 'review';
 function startFreePractice() {
   const text = wordInput.value;
   return flow.start(text, {
+    script: scriptSelect.value,
     continueLabel: 'Again',
     onContinue: startFreePractice,
   });
@@ -110,6 +111,8 @@ scriptSelect.addEventListener('change', async () => {
   await setSetting('script', scriptSelect.value);
   if (mode === 'review') {
     review.refresh();
+  } else {
+    startFreePractice();
   }
 });
 

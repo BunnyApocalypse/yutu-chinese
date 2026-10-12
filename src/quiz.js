@@ -9,7 +9,7 @@
 // color so you can compare.
 
 import HanziWriter from 'hanzi-writer';
-import { loadCharData, getLoadedCharData } from './charData.js';
+import { loadCharData } from './charData.js';
 import { isShortcutStroke } from './shortcuts.js';
 
 // After this many wrong attempts at one stroke, the correct stroke flashes as a hint.
@@ -21,8 +21,10 @@ const LENIENCY = 1.5;
 
 const INK_COLOR = '#222222';
 const INVISIBLE = 'rgba(0, 0, 0, 0)';
-// The printed character shown under your handwriting once you finish.
+// The printed character shown under your handwriting once you finish: green,
+// or red if the character was judged as missed.
 const REFERENCE_COLOR = '#a9d4b8';
+const REFERENCE_COLOR_MISSED = '#ecb3a7';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
@@ -32,6 +34,8 @@ const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 //   onStart({ totalStrokes })
 //   onProgress({ strokesDone, totalStrokes, totalMistakes })
 //   onComplete({ totalMistakes, hintShown })
+//       may return false to say the character was missed, which turns the
+//       printed character red instead of green
 //   onAnimateStart()
 //
 // Returns an object with functions to control the quiz. Call showCharacter()
@@ -76,9 +80,20 @@ export function createQuiz(target, size, handlers) {
   // Changes the color of the printed strokes immediately (no fade).
   // Hanzi Writer keeps a separate color for the strokes of the character's
   // radical (the 子 in 學), so both have to be set or the radical is left behind.
-  async function setPrintedColor(color) {
-    await writer.updateColor('strokeColor', color, { duration: 0 });
-    await writer.updateColor('radicalColor', color, { duration: 0 });
+  //
+  // Each change waits for the one before it to finish, so two requests made
+  // close together can't end up half applied in the wrong order.
+  let lastColorChange = Promise.resolve();
+  function setPrintedColor(color) {
+    lastColorChange = lastColorChange.then(async () => {
+      await writer.updateColor('strokeColor', color, { duration: 0 });
+      await writer.updateColor('radicalColor', color, { duration: 0 });
+    });
+    return lastColorChange;
+  }
+
+  function referenceColor(passed) {
+    return passed === false ? REFERENCE_COLOR_MISSED : REFERENCE_COLOR;
   }
 
   function drewShortcut(stroke) {
@@ -145,17 +160,18 @@ export function createQuiz(target, size, handlers) {
         });
       },
       onComplete: () => {
-        setPrintedColor(REFERENCE_COLOR);
-        handlers.onComplete({ totalMistakes: mistakes, hintShown });
+        const passed = handlers.onComplete({ totalMistakes: mistakes, hintShown });
+        setPrintedColor(referenceColor(passed));
       },
     });
   }
 
   return {
-    // Switches to a character and starts quizzing it. Returns false if there
-    // is no stroke data for it.
-    async showCharacter(newChar) {
-      const data = await loadCharData(newChar);
+    // Switches to a character and starts quizzing it. `script` is
+    // 'traditional' or 'simplified' and decides which form is drawn. Returns
+    // false if there is no stroke data for the character.
+    async showCharacter(newChar, script) {
+      const data = await loadCharData(newChar, script);
       if (!data) {
         return false;
       }
@@ -177,8 +193,9 @@ export function createQuiz(target, size, handlers) {
           drawingWidth: penWidth,
           highlightColor: '#3b9c5a',
           // Tells Hanzi Writer to use our own data instead of fetching from
-          // its CDN. We always load a character before asking for it.
-          charDataLoader: (requestedChar, onLoad) => onLoad(getLoadedCharData(requestedChar)),
+          // its CDN. We always load a character before asking Hanzi Writer to
+          // show it, so the data it wants is the data we just loaded.
+          charDataLoader: (requestedChar, onLoad) => onLoad(charData),
         });
       } else {
         await writer.setCharacter(char);
@@ -200,6 +217,12 @@ export function createQuiz(target, size, handlers) {
       } else {
         writer.hideOutline();
       }
+    },
+
+    // Recolors the printed character of a finished quiz after its verdict
+    // changed: red for missed (false), green otherwise.
+    showVerdict(passed) {
+      setPrintedColor(referenceColor(passed));
     },
 
     // Plays the correct stroke order, then starts the quiz again.

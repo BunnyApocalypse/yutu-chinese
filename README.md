@@ -36,4 +36,9 @@ Stop the server with Ctrl+C.
 
 ## Stroke data
 
-Stroke data comes from [hanzi-writer-data](https://github.com/chanind/hanzi-writer-data), which is derived from [Make Me a Hanzi](https://github.com/skishore/makemeahanzi) and licensed under the Arphic Public License. It is copied into `public/char-data/` automatically the first time you run `npm run dev` or `npm run build`.
+Stroke data comes from two sources, both licensed under the Arphic Public License:
+
+- [hanzi-writer-data](https://github.com/chanind/hanzi-writer-data), derived from [Make Me a Hanzi](https://github.com/skishore/makemeahanzi): about 9,500 characters.
+- [animCJK](https://github.com/parsimonhi/animCJK): Taiwan-standard forms for about 1,000 traditional characters, kept in `data/animcjk/`. These are used when the script is set to Traditional. Traditional characters outside this set fall back to the first source, whose forms can differ from the Taiwan standard.
+
+Both are copied into `public/` automatically the first time you run `npm run dev` or `npm run build`.

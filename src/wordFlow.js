@@ -191,10 +191,14 @@ export function createWordFlow(elements) {
       renderWordRow();
       statusElement.textContent = describeMistakes(mistakesPerChar[position]);
 
+      // Returned to the quiz, which colors the printed character to match.
+      // In Free practice there is no verdict and this is undefined.
+      const passed = passedPerChar[position];
+
       if (!isLastChar()) {
         nextButton.textContent = 'Next';
         nextButton.hidden = false;
-        return;
+        return passed;
       }
       if (chars.length > 1) {
         statusElement.textContent = `Word done · ${describeMistakes(sum(mistakesPerChar)).toLowerCase()}`;
@@ -204,6 +208,7 @@ export function createWordFlow(elements) {
         nextButton.hidden = false;
       }
       options.onWordDone?.(wordResult());
+      return passed;
     },
     onAnimateStart() {
       nextButton.hidden = true;
@@ -237,7 +242,7 @@ export function createWordFlow(elements) {
 
   function showCurrentCharacter() {
     carriedMistakes = 0;
-    return quiz.showCharacter(chars[position]);
+    return quiz.showCharacter(chars[position], options.script);
   }
 
   // Called before the current character is started over: keeps the mistakes
@@ -268,6 +273,7 @@ export function createWordFlow(elements) {
     passedPerChar[position] = passed;
     renderVerdict();
     renderWordRow();
+    quiz.showVerdict(passed);
     if (isLastChar()) {
       options.onVerdictChange?.(wordResult());
     }
@@ -306,6 +312,8 @@ export function createWordFlow(elements) {
     // stroke data, in which case nothing changes.
     //
     // newOptions:
+    //   script:        'traditional' or 'simplified'; decides which printed
+    //                  form of each character is used
     //   continueLabel: text for the Next button once the word is finished, or
     //                  null to leave it hidden
     //   hideOutline:   true to switch the outline off first
@@ -324,7 +332,7 @@ export function createWordFlow(elements) {
       const typed = Array.from(text).filter((char) => char.trim() !== '');
 
       // Find out which characters have stroke data, loading it at the same time.
-      const data = await Promise.all(typed.map(loadCharData));
+      const data = await Promise.all(typed.map((char) => loadCharData(char, newOptions.script)));
       const usable = typed.filter((char, index) => data[index] !== null);
       const skipped = typed.filter((char, index) => data[index] === null);
 
@@ -335,6 +343,9 @@ export function createWordFlow(elements) {
       }
 
       options = newOptions;
+      // Tells the browser which regional font to use for the characters in
+      // the slot row. Without it, a phone may show Japanese or mainland shapes.
+      wordRow.lang = options.script === 'traditional' ? 'zh-Hant-TW' : 'zh-Hans-CN';
       chars = usable;
       position = 0;
       strokesPerChar = [];

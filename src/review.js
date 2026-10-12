@@ -190,6 +190,7 @@ export function createReview(elements, flow, getScript) {
     pinyinButton.hidden = false;
 
     const started = await flow.start(current.word[getScript()], {
+      script: getScript(),
       continueLabel: null,
       hideOutline: true,
       // Starting a character over after the word was finished takes the grade

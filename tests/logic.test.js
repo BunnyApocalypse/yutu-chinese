@@ -198,3 +198,20 @@ test('backups are checked before use', () => {
   assert.throws(() => checkBackup({ ...good, cards: undefined }), /"cards" is missing/);
   assert.throws(() => checkBackup({ ...good, words: [{ name: 'no id' }] }), /has no id/);
 });
+
+test('the Taiwan-form stroke data is well formed', () => {
+  const lines = fs
+    .readFileSync('data/animcjk/graphicsZhHant.txt', 'utf8')
+    .split('\n')
+    .filter((line) => line.trim() !== '');
+  assert.ok(lines.length >= 1000);
+  for (const line of lines) {
+    const entry = JSON.parse(line);
+    assert.equal(Array.from(entry.character).length, 1);
+    assert.ok(entry.strokes.length > 0, `${entry.character}: no strokes`);
+    assert.equal(entry.strokes.length, entry.medians.length, `${entry.character}: strokes and medians differ`);
+  }
+  // The reason this data is here: 為 in its Taiwan form has 9 strokes.
+  const wei = lines.map((line) => JSON.parse(line)).find((entry) => entry.character === '為');
+  assert.equal(wei.strokes.length, 9);
+});
