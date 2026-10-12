@@ -7,13 +7,28 @@
 import { getAll, putAll, removeWord } from './db.js';
 import { formatPinyin } from './wordList.js';
 import { CARD_TYPES, cardId } from './session.js';
-import { checkWord, readWordList, newWordRecords, orderForStudyingNext, matchesSearch } from './words.js';
+import {
+  checkWord,
+  readWordList,
+  newWordRecords,
+  wordsWithSameCharacters,
+  orderForStudyingNext,
+  matchesSearch,
+} from './words.js';
+import { readDictionary, lookUp } from './dictionary.js';
+// "?url" makes Vite hand us the file's address instead of its contents, so
+// the dictionary stays a separate file that is only fetched when needed.
+import dictionaryUrl from '../data/cedict/dictionary.tsv?url';
 
 // With thousands of words, building a row for each would make the page slow,
 // so only this many are shown at a time; the search box narrows them down.
 const MAX_ROWS = 200;
 // How many unreadable lines of a pasted list are spelled out.
 const MAX_PROBLEMS_SHOWN = 20;
+// How many dictionary entries are offered for the characters typed, and how
+// much of each entry's list of meanings is shown.
+const MAX_SUGGESTIONS = 8;
+const MAX_MEANINGS_LENGTH = 140;
 
 const byId = (id) => document.getElementById(id);
 
@@ -31,6 +46,7 @@ export function createWordsPanel(onChange) {
     definition: byId('add-definition'),
   };
   const pinyinPreview = byId('add-pinyin-preview');
+  const suggestions = byId('add-suggestions');
   const addNote = byId('add-word-note');
 
   const listText = byId('list-text');
@@ -126,9 +142,108 @@ export function createWordsPanel(onChange) {
   // ---- Adding one word ----
 
   // Shows the pinyin with tone marks as it is typed, to check it by eye.
-  addFields.pinyin.addEventListener('input', () => {
+  function showPinyinPreview() {
     pinyinPreview.textContent = formatPinyin(addFields.pinyin.value.trim());
-  });
+  }
+  addFields.pinyin.addEventListener('input', showPinyinPreview);
+
+  // ---- The dictionary ----
+
+  // The dictionary once it has been fetched (see dictionary.js), and the
+  // fetch itself, so it is only made once.
+  let dictionary = null;
+  let dictionaryLoading = null;
+  // The characters field last typed in, which is what gets looked up.
+  let lookedUpField = addFields.traditional;
+
+  function loadDictionary() {
+    if (!dictionaryLoading) {
+      dictionaryLoading = fetch(dictionaryUrl)
+        .then((response) => response.text())
+        .then((text) => {
+          dictionary = readDictionary(text);
+          showSuggestions();
+        })
+        // Without the dictionary the fields are simply filled in by hand.
+        .catch(() => {
+          dictionaryLoading = null;
+        });
+    }
+  }
+
+  const paragraph = (className, text) => {
+    const element = document.createElement('p');
+    element.className = className;
+    element.textContent = text;
+    return element;
+  };
+
+  // Puts a dictionary entry into the fields, ready to be edited.
+  function fillIn(entry) {
+    addFields.traditional.value = entry.traditional;
+    addFields.simplified.value = entry.simplified === entry.traditional ? '' : entry.simplified;
+    addFields.pinyin.value = entry.pinyin;
+    addFields.pinyinTaiwan.value = entry.pinyinTaiwan || '';
+    addFields.definition.value = entry.proposedMeaning;
+    showPinyinPreview();
+    addNote.textContent = '';
+    // The meaning is the part most likely to want changing.
+    addFields.definition.focus();
+  }
+
+  // Shows, under the characters typed, the words in the list written the
+  // same way and what the dictionary has for them.
+  function showSuggestions() {
+    const typed = lookedUpField.value.trim();
+    const parts = [];
+    if (typed !== '') {
+      const alreadyHave = wordsWithSameCharacters({ traditional: typed, simplified: typed }, words);
+      for (const word of alreadyHave) {
+        parts.push(
+          paragraph('note', `Already in your words: ${charactersOf(word)} ${formatPinyin(word.pinyin)} (${word.definition})`),
+        );
+      }
+      const entries = dictionary ? lookUp(dictionary, typed) : [];
+      for (const entry of entries.slice(0, MAX_SUGGESTIONS)) {
+        const span = (className, text) => {
+          const element = document.createElement('span');
+          element.className = className;
+          element.textContent = text;
+          return element;
+        };
+        const meanings = entry.meanings.join(' / ');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'word-entry';
+        button.append(
+          span('entry-characters', charactersOf(entry)),
+          span('entry-pinyin', formatPinyin(entry.pinyin)),
+          span(
+            'entry-definition',
+            meanings.length > MAX_MEANINGS_LENGTH ? `${meanings.slice(0, MAX_MEANINGS_LENGTH)}…` : meanings,
+          ),
+          span('entry-new', 'fill in'),
+        );
+        button.addEventListener('click', () => fillIn(entry));
+        parts.push(button);
+      }
+      if (dictionary && entries.length === 0 && alreadyHave.length === 0) {
+        parts.push(paragraph('hint', 'Not in the dictionary. Fill in the fields yourself.'));
+      }
+    }
+    suggestions.replaceChildren(...parts);
+  }
+
+  for (const field of [addFields.traditional, addFields.simplified]) {
+    // Fetch the dictionary as soon as a word is about to be typed, so it is
+    // usually there by the time the characters are.
+    field.addEventListener('focus', loadDictionary);
+    field.addEventListener('input', () => {
+      lookedUpField = field;
+      loadDictionary(); // in case the text arrived without the box being tapped
+      showSuggestions();
+    });
+  }
 
   addForm.addEventListener('submit', async (event) => {
     event.preventDefault(); // or the browser would reload the page
@@ -149,6 +264,7 @@ export function createWordsPanel(onChange) {
     await putAll('words', toAdd);
     addForm.reset();
     pinyinPreview.textContent = '';
+    suggestions.replaceChildren();
     addNote.textContent = `Added ${charactersOf(toAdd[0])}. It is last in line among the new words.`;
     await afterChange();
     addFields.traditional.focus();
@@ -187,9 +303,17 @@ export function createWordsPanel(onChange) {
       listReport.textContent = 'There is nothing in the box yet.';
       return;
     }
+    // New words written like a word already in the list, but read differently.
+    const sameCharacters = toAdd.filter((word) => wordsWithSameCharacters(word, words).length > 0);
     listReport.textContent =
       `${plural(toAdd.length, 'new word')}, ${alreadyHave} you already have, ` +
-      `${plural(problems.length, 'line')} that can't be read.`;
+      `${plural(problems.length, 'line')} that can't be read.` +
+      (sameCharacters.length > 0
+        ? ` Of the new words, ${sameCharacters.length} ${sameCharacters.length === 1 ? 'has' : 'have'} the same` +
+          ` characters as a word you already have, with another reading:` +
+          ` ${sameCharacters.slice(0, 10).map((word) => word.traditional).join(', ')}` +
+          `${sameCharacters.length > 10 ? ', …' : ''}.`
+        : '');
     const shown = problems.slice(0, MAX_PROBLEMS_SHOWN).map(({ lineNumber, text, problem }) => {
       const item = document.createElement('li');
       item.textContent = `Line ${lineNumber} (${text.slice(0, 30)}): ${problem}`;

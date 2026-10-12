@@ -14,7 +14,9 @@ const PINYIN_HELP = 'Write pinyin with tone numbers, like xue2xi2 (5 for the neu
 
 // Tidies numbered pinyin as typed, so the same reading is always stored the
 // same way: "Xue2 xi2" stays capitalized but loses its space (or hyphen), ü
-// and u: become v, and several readings are separated by a comma and a space.
+// and u: become v, an apostrophe goes before every later syllable that starts
+// with a, e or o (nv3'er2) and nowhere else, and several readings are
+// separated by a comma and a space.
 // Returns null if it is not numbered pinyin.
 export function tidyPinyin(text) {
   const readings = text
@@ -23,7 +25,14 @@ export function tidyPinyin(text) {
   if (readings.some((reading) => !READING_PATTERN.test(reading))) {
     return null;
   }
-  return readings.join(', ');
+  return readings
+    .map((reading) =>
+      reading
+        .match(/[a-zA-Z]+[1-5]/g)
+        .map((syllable, index) => (index > 0 && /^[aeo]/i.test(syllable) ? `'${syllable}` : syllable))
+        .join(''),
+    )
+    .join(', ');
 }
 
 // Checks the fields of one word as typed or read from a list:
@@ -204,6 +213,17 @@ export function newWordRecords(candidates, existing, now) {
     toAdd.push({ id, ...word, order, addedAt: now });
   }
   return { toAdd, alreadyHave };
+}
+
+// The words in the list that are written with the same characters as `word`,
+// in either script. With the same pinyin too it would be the same word; with
+// another reading it may be a different word (地方 dìfang and dìfāng) or the
+// same one written down differently (péngyou and péngyǒu), which is worth
+// pointing out before it is added.
+export function wordsWithSameCharacters(word, words) {
+  return words.filter(
+    (other) => other.traditional === word.traditional || other.simplified === word.simplified,
+  );
 }
 
 // The `order` that puts a word ahead of every other word, so that it is the

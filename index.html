@@ -60,6 +60,9 @@
           <h2>Add a word</h2>
           <input id="add-traditional" type="text" placeholder="Traditional 繁體" aria-label="Traditional characters" lang="zh-Hant-TW" autocomplete="off" autocapitalize="off" />
           <input id="add-simplified" type="text" placeholder="Simplified 简体 (if different)" aria-label="Simplified characters, if different" lang="zh-Hans-CN" autocomplete="off" autocapitalize="off" />
+          <!-- What the dictionary has for the characters typed, and whether the
+               word is in the list already. Filled in by wordsPanel.js. -->
+          <div id="add-suggestions" class="suggestions"></div>
           <input id="add-pinyin" type="text" placeholder="Pinyin with tone numbers: xue2xi2" aria-label="Pinyin with tone numbers" autocomplete="off" autocapitalize="off" spellcheck="false" />
           <!-- The pinyin with tone marks, as a check on what was typed. -->
           <p id="add-pinyin-preview" class="pinyin-preview"></p>

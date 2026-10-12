@@ -24,7 +24,7 @@ The owner has said they would not use the app without these (feedback after mile
 
 - The app's own code is GPL-3.0-only (`LICENSE`).
 - Stroke data (`data/animcjk/`, `hanzi-writer-data`) stays under the Arphic Public License, which is GPL-incompatible. It is kept as separate data files that the app loads; never paste stroke data into source files or relicense it.
-- The tone table in `data/cedict/` is CC BY-SA 4.0, as CC-CEDICT requires.
+- The tone table and the dictionary in `data/cedict/` are CC BY-SA 4.0, as CC-CEDICT requires.
 - A new dependency must have a GPL-compatible license (MIT, BSD, Apache-2.0, LGPL, GPL). New data must keep its own license in its own folder with a README, as `data/animcjk/` does.
 
 ## Working with the owner
@@ -53,6 +53,8 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `src/main.js`: entry point; the three tabs (Review, Free practice, Words), backup buttons, first-run seeding.
 - `src/wordsPanel.js`: the Words tab: add a word, add a list, search the words, and a pop-up panel per word to change it, study it next or remove it.
 - `src/words.js`: the plain calculation behind the Words tab: checking a typed word, reading a TSV or CSV list, working out which words are new, searching.
+- `src/dictionary.js`: looks a word up in the dictionary and proposes a short meaning. Plain calculation.
+- `scripts/build-dictionary.js`, `data/cedict/dictionary.tsv`: the dictionary made from CC-CEDICT (run by hand, uses the internet, like the tone table script). About 117,000 entries, 7.9 MB, 3.5 MB as downloaded.
 - `src/review.js`: Review mode. Picks the next card, hands it to the code for its kind, shows the grade buttons, saves the result.
 - `src/recallCard.js`: meaning and pinyin cards (see the word, tap to reveal, grade yourself).
 - `src/toneFlow.js`: tone cards (one tone per character, by button or drawn mark, checked automatically).
@@ -81,7 +83,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `tests/browser/harness.js`: what the browser tests share: serving the app, starting the browsers, drawing strokes, reading the status line.
 - `tests/browser/writing-grid.browser.js`: writes 15 characters in both stroke orders at seven positions and sizes.
 - `tests/browser/words.browser.js`: the Words tab from adding a word to finding it in Review.
-- `tests/words.test.js`: tests for `src/words.js`.
+- `tests/words.test.js`, `tests/dictionary.test.js`: tests for `src/words.js` and `src/dictionary.js`; the second also checks every line of the real dictionary.
 
 ## Browser tests
 
@@ -101,9 +103,12 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 
 ## The word list
 
-- **Words are added in the Words tab**, one at a time by typing every field (the owner's choice on 2026-10-12; a dictionary lookup is on the to-do list), or as a list pasted or chosen as a file. A device also starts with the built-in list.
+- **Words are added in the Words tab**, one at a time or as a list pasted or chosen as a file. A device also starts with the built-in list.
+- **Dictionary lookup when adding one word:** as the characters are typed (either script), the entries CC-CEDICT has for them are listed under the box, one per reading, names last. Tapping one fills in every field, with a short proposed meaning (`proposeMeaning`: the first group of meanings, at most three). Nothing is filled in without a tap, and everything stays editable: writing prompts show only the meaning, so the owner words it.
+- **The dictionary is a separate 7.9 MB file, fetched only when a word is about to be typed** (`loadDictionary` in `src/wordsPanel.js`, through a `?url` import so Vite keeps it out of the program). Its lines are indexed by word and only taken apart on lookup. If it can't be fetched, the fields are filled in by hand as before. The PWA will have to save it for offline use.
+- **A word typed that is already in the list under any reading is pointed out** ("Already in your words"), and the list check counts new words that share their characters with an existing one (`wordsWithSameCharacters`). Dictionaries disagree on neutral tones, so the same word can arrive as two readings (péngyou, péngyǒu); since the ID includes the pinyin, nothing else would catch that.
 - **A word is its traditional characters plus its pinyin** (the ID), so those two can't be edited; the meaning, simplified form and Taiwan reading can. The same characters with another reading are a different word.
-- **Pinyin is stored tidied** (`tidyPinyin` in `src/words.js`): tone numbers required, no spaces or hyphens, `v` for ü, several readings joined by a comma and a space. The built-in list is already written that way. Tone marks are not accepted as input.
+- **Pinyin is stored tidied** (`tidyPinyin` in `src/words.js`): tone numbers required, no spaces or hyphens, `v` for ü, an apostrophe before a later syllable starting with a, e or o and nowhere else, several readings joined by a comma and a space. The dictionary is built with the same function, so its entries get the same IDs as typed or imported words. The built-in list is already written that way. Tone marks are not accepted as input.
 - **Lists are read as TSV or CSV**, line by line; a line with a tab is TSV. Skritter's CSV export does not put quotes around fields with commas, so `columnsFromCsv` works out which fields are pinyin and which are the meaning. Both of the owner's exports read to the same 2,298 words; the 40 lines left out are zhuyin symbols and patterns like "yue4 ... yue4".
 - **New words go to the end of the queue** (`order` one above the highest). "Study next" gives a word an `order` below every other, so `order` can be negative.
 - **Removing a word deletes its cards but never its reviews** (`removeWord` in `src/db.js`). A removed built-in word stays removed: the built-in list is only loaded when no `builtInListVersion` setting exists, and later versions only update words still present.
@@ -234,7 +239,6 @@ The owner wants to bring their Skritter data across eventually rather than start
 9. Import the Skritter scheduling data, if the GDPR request (sent 2026-10-12) yields it. The word list itself can be added in the Words tab since 2026-10-12; the owner had said they did not want it imported without scheduling data, so when to do that is theirs to decide.
 10. Merge backups between devices instead of replacing; a settings screen (new words per day, target retention).
 11. **To do, asked for by the owner:**
-    - **Soon:** a dictionary lookup when adding a word: type the characters and have the simplified form, pinyin and a meaning filled in from CC-CEDICT, to be edited before saving. It adds a dictionary of several megabytes (CC BY-SA, so in its own folder like `data/cedict/`), and CC-CEDICT's meanings are long and need trimming for writing prompts.
     - **Done for writing:** a browser test suite that lives in the repo and runs in parallel (see "Browser tests"). Still open: its known failures, and browser tests for the cards and settings, which are still only checked by hand.
     - The browser grid's remaining failures (listed under "Browser tests"): at half size the second or third stroke of some characters is rejected, because the size is not yet known after one short stroke; and 學 in the mainland order shifted right. The owner chose on 2026-10-12 to leave these for later. Fixing the first means estimating the size earlier than `MIN_SPAN_FOR_SCALE` allows.
     - Tapping "Free practice" before the app has finished starting throws an error in `setMode` (`src/main.js`), because `review` is not created yet. The app recovers once start-up finishes.

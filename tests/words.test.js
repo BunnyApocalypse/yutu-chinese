@@ -9,6 +9,7 @@ import {
   splitCsvLine,
   readWordList,
   newWordRecords,
+  wordsWithSameCharacters,
   orderForStudyingNext,
   matchesSearch,
 } from '../src/words.js';
@@ -18,6 +19,10 @@ test('pinyin is tidied to one way of writing it', () => {
   assert.equal(tidyPinyin('xue2 xi2'), 'xue2xi2');
   assert.equal(tidyPinyin('san1-xin1'), 'san1xin1');
   assert.equal(tidyPinyin("nü3'er2"), "nv3'er2");
+  // The apostrophe is put in, or taken out, wherever it was typed.
+  assert.equal(tidyPinyin('nv3er2'), "nv3'er2");
+  assert.equal(tidyPinyin("xue2'xi2"), 'xue2xi2');
+  assert.equal(tidyPinyin('ke3 ai4'), "ke3'ai4");
   assert.equal(tidyPinyin('lu:4'), 'lv4');
   assert.equal(tidyPinyin('Zhong1guo2'), 'Zhong1guo2');
   assert.equal(tidyPinyin('di4fang5,di4fang1'), 'di4fang5, di4fang1');
@@ -122,6 +127,13 @@ test('new words are queued after the others; known and repeated ones are left ou
 test('the same characters with another reading are a different word', () => {
   const { toAdd } = newWordRecords([{ traditional: '地方', simplified: '地方', pinyin: 'di4fang1', definition: 'local' }], stored, 0);
   assert.equal(toAdd.length, 1);
+});
+
+test('words written the same way are found in either script', () => {
+  const same = (word) => wordsWithSameCharacters(word, stored).map((found) => found.id);
+  assert.deepEqual(same({ traditional: '地方', simplified: '地方' }), ['地方|di4fang5']);
+  assert.deepEqual(same({ traditional: '学习', simplified: '学习' }), ['學習|xue2xi2']);
+  assert.deepEqual(same({ traditional: '貓', simplified: '猫' }), []);
 });
 
 test('studying a word next puts it ahead of every other word', () => {

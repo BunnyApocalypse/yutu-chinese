@@ -92,8 +92,28 @@ describe('the Words tab', { concurrency: false }, () => {
     assert.equal(await textOf(page, 'words-panel'), '');
   });
 
-  it('adds a list, pasted as CSV', async () => {
+  it('fills in a word from the dictionary', async () => {
     await tap(page, 'words-tab');
+    await type(page, 'add-simplified', '图书馆');
+    await waitUntil(page, `document.querySelector('#add-suggestions button') !== null`, 'a dictionary entry');
+    assert.match(await textOf(page, '#add-suggestions button'), /圖書館 · 图书馆.*túshūguǎn.*library/);
+    await page.evaluate(`document.querySelector('#add-suggestions button').click()`);
+    const fields = await page.evaluate(`['traditional', 'simplified', 'pinyin', 'definition'].map(
+      (name) => document.getElementById('add-' + name).value)`);
+    assert.deepEqual(fields, ['圖書館', '图书馆', 'tu2shu1guan3', 'library']);
+
+    await page.evaluate(`document.getElementById('add-word-form').requestSubmit()`);
+    await waitUntil(page, `document.getElementById('word-count').textContent === '${countAtStart + 2}'`);
+    assert.equal(await textOf(page, 'add-suggestions'), '');
+  });
+
+  it('says so when the characters typed are in the list already', async () => {
+    await type(page, 'add-traditional', '圖書館');
+    await waitUntil(page, `document.getElementById('add-suggestions').textContent.includes('Already in your words')`);
+    await type(page, 'add-traditional', '');
+  });
+
+  it('adds a list, pasted as CSV', async () => {
     await page.evaluate(`document.querySelector('.add-list').open = true`);
     await type(
       page,
@@ -104,7 +124,7 @@ describe('the Words tab', { concurrency: false }, () => {
     assert.equal(await textOf(page, 'list-report'), "2 new words, 1 you already have, 1 line that can't be read.");
     assert.match(await textOf(page, 'list-problems'), /^Line 4/);
     await tap(page, 'add-list-button');
-    await waitUntil(page, `document.getElementById('word-count').textContent === '${countAtStart + 3}'`);
+    await waitUntil(page, `document.getElementById('word-count').textContent === '${countAtStart + 4}'`);
     await type(page, 'word-search', 'penguin');
     await waitUntil(page, rows(1));
     assert.match(await textOf(page, '#word-list li'), /penguin, the bird/);
@@ -114,14 +134,14 @@ describe('the Words tab', { concurrency: false }, () => {
     await page.evaluate(`document.querySelector('#word-list li button').click()`);
     await tap(page, 'remove-word-button');
     await waitUntil(page, rows(0));
-    assert.equal(await wordCount(page), countAtStart + 2);
+    assert.equal(await wordCount(page), countAtStart + 3);
   });
 
   it('keeps it all when the app is opened again', async () => {
     await reloadApp(page);
     assert.match(await textOf(page, 'card-face'), /貓頭鷹/);
     await tap(page, 'words-tab');
-    await waitUntil(page, `document.getElementById('word-count').textContent === '${countAtStart + 2}'`);
+    await waitUntil(page, `document.getElementById('word-count').textContent === '${countAtStart + 3}'`);
     await type(page, 'word-search', 'peacock');
     await waitUntil(page, rows(1));
   });
