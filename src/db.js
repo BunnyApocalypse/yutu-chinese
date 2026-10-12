@@ -6,7 +6,9 @@
 // plain JavaScript object, found by its key.
 //
 //   words     key: id      { id, traditional, simplified, pinyin, definition,
-//                            order, addedAt }
+//                            order, addedAt } and, for some, pinyinTaiwan.
+//                          New words are introduced in the order of `order`,
+//                          lowest first; it may be negative.
 //   cards     key: id      { id, wordId, type, due, firstReviewedAt, fsrsState }
 //                          One per word and card type. `type` is 'writing' for
 //                          now; 'tone', 'pinyin' and 'meaning' will follow.
@@ -77,6 +79,17 @@ export function putAll(storeName, records) {
   return transaction([storeName], 'readwrite', (tx) => {
     for (const record of records) {
       tx.objectStore(storeName).put(record);
+    }
+  });
+}
+
+// Removes a word and its cards together. Its reviews stay: they are the
+// record of what was studied, and are never deleted.
+export function removeWord(wordId, cardIds) {
+  return transaction(['words', 'cards'], 'readwrite', (tx) => {
+    tx.objectStore('words').delete(wordId);
+    for (const id of cardIds) {
+      tx.objectStore('cards').delete(id);
     }
   });
 }

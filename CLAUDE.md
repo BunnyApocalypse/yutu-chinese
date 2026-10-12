@@ -50,7 +50,9 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 ## Layout
 
 - `index.html`: the single page.
-- `src/main.js`: entry point; the two modes (Review, Free practice), backup buttons, first-run seeding.
+- `src/main.js`: entry point; the three tabs (Review, Free practice, Words), backup buttons, first-run seeding.
+- `src/wordsPanel.js`: the Words tab: add a word, add a list, search the words, and a pop-up panel per word to change it, study it next or remove it.
+- `src/words.js`: the plain calculation behind the Words tab: checking a typed word, reading a TSV or CSV list, working out which words are new, searching.
 - `src/review.js`: Review mode. Picks the next card, hands it to the code for its kind, shows the grade buttons, saves the result.
 - `src/recallCard.js`: meaning and pinyin cards (see the word, tap to reveal, grade yourself).
 - `src/toneFlow.js`: tone cards (one tone per character, by button or drawn mark, checked automatically).
@@ -78,6 +80,8 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `tests/logic.test.js`, `tests/shortcuts.test.js`, `tests/strokeOrder.test.js`, `tests/toneMark.test.js`, `tests/frame.test.js`: tests for the plain-calculation code.
 - `tests/browser/harness.js`: what the browser tests share: serving the app, starting the browsers, drawing strokes, reading the status line.
 - `tests/browser/writing-grid.browser.js`: writes 15 characters in both stroke orders at seven positions and sizes.
+- `tests/browser/words.browser.js`: the Words tab from adding a word to finding it in Review.
+- `tests/words.test.js`: tests for `src/words.js`.
 
 ## Browser tests
 
@@ -92,7 +96,20 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - **Known failures on 2026-10-12** (159 of 165 runs pass, 10 skipped). The command exits with an error while any remain. None is at the first stroke any more:
   - At half size, the second or third stroke is rejected for 學 (MOE order, both half-size positions), and at the bottom right for 覺, 麼 and 謝 (MOE order). The size is not yet known that early, so the stroke is expected at full size.
   - 學 in the mainland order, shifted right so its left ノ lands on the 爻: the third stroke is rejected.
-- **Not covered yet:** tone, pinyin and meaning cards, Review mode, the settings panel. Use the same harness.
+- **Not covered yet:** tone, pinyin and meaning cards, grading in Review, the settings panel. Use the same harness.
+- **Each test file starts its own server and browsers**, and Node runs the files side by side. A file whose steps build on each other (`words.browser.js`) uses one browser and `concurrency: false`.
+
+## The word list
+
+- **Words are added in the Words tab**, one at a time by typing every field (the owner's choice on 2026-10-12; a dictionary lookup is on the to-do list), or as a list pasted or chosen as a file. A device also starts with the built-in list.
+- **A word is its traditional characters plus its pinyin** (the ID), so those two can't be edited; the meaning, simplified form and Taiwan reading can. The same characters with another reading are a different word.
+- **Pinyin is stored tidied** (`tidyPinyin` in `src/words.js`): tone numbers required, no spaces or hyphens, `v` for ü, several readings joined by a comma and a space. The built-in list is already written that way. Tone marks are not accepted as input.
+- **Lists are read as TSV or CSV**, line by line; a line with a tab is TSV. Skritter's CSV export does not put quotes around fields with commas, so `columnsFromCsv` works out which fields are pinyin and which are the meaning. Both of the owner's exports read to the same 2,298 words; the 40 lines left out are zhuyin symbols and patterns like "yue4 ... yue4".
+- **New words go to the end of the queue** (`order` one above the highest). "Study next" gives a word an `order` below every other, so `order` can be negative.
+- **Removing a word deletes its cards but never its reviews** (`removeWord` in `src/db.js`). A removed built-in word stays removed: the built-in list is only loaded when no `builtInListVersion` setting exists, and later versions only update words still present.
+- **After the Words tab changes anything**, Review and Free practice read the words afresh (`createWordsPanel`'s callback in `src/main.js`).
+- **The word list on screen shows at most 200 rows** and relies on the search box beyond that.
+- **Content from Skritter stays on the owner's devices.** The meanings in a Skritter export may be Skritter's own text. Never commit an export, a list derived from one, or test data copied from one. `exports/` is git-ignored; when checking an import against the real files, print counts, not words.
 
 ## Cards, scheduling and storage
 
@@ -213,10 +230,11 @@ The owner wants to bring their Skritter data across eventually rather than start
 5. **Done:** Taiwan-standard stroke data for the 1,013 traditional characters animCJK covers, with the mainland stroke order also accepted where the strokes are the same. Still open: the traditional characters it does not cover.
 6. **Done:** the other card types (meaning, pinyin, tone with buttons or a drawn mark), scheduling across types, the settings panel, the pronunciation setting and Taiwan/mainland tone variants. Later: zhuyin as an alternative to pinyin.
 7. **Done:** two consecutive strokes joined, for every character. Still open: longer runs, and shortcuts that reorder or drop strokes.
-8. PWA: manifest, service worker, GitHub Pages deploy, installable and offline on the phone.
-9. Import the Skritter word list (TSV) and, if the GDPR request (sent 2026-10-12) yields it, its scheduling data. The owner does not want the word list imported without scheduling data.
+8. PWA: manifest, service worker, GitHub Pages deploy, installable and offline on the phone. Planned on 2026-10-12 and put on hold until words can be added. Still to be decided by the owner: whether all stroke data is saved for offline use (about 14 MB per device, recommended) or only the word list's characters, and the go-ahead to switch on GitHub Pages.
+9. Import the Skritter scheduling data, if the GDPR request (sent 2026-10-12) yields it. The word list itself can be added in the Words tab since 2026-10-12; the owner had said they did not want it imported without scheduling data, so when to do that is theirs to decide.
 10. Merge backups between devices instead of replacing; a settings screen (new words per day, target retention).
 11. **To do, asked for by the owner:**
+    - **Soon:** a dictionary lookup when adding a word: type the characters and have the simplified form, pinyin and a meaning filled in from CC-CEDICT, to be edited before saving. It adds a dictionary of several megabytes (CC BY-SA, so in its own folder like `data/cedict/`), and CC-CEDICT's meanings are long and need trimming for writing prompts.
     - **Done for writing:** a browser test suite that lives in the repo and runs in parallel (see "Browser tests"). Still open: its known failures, and browser tests for the cards and settings, which are still only checked by hand.
     - The browser grid's remaining failures (listed under "Browser tests"): at half size the second or third stroke of some characters is rejected, because the size is not yet known after one short stroke; and 學 in the mainland order shifted right. The owner chose on 2026-10-12 to leave these for later. Fixing the first means estimating the size earlier than `MIN_SPAN_FOR_SCALE` allows.
     - Tapping "Free practice" before the app has finished starting throws an error in `setMode` (`src/main.js`), because `review` is not created yet. The app recovers once start-up finishes.

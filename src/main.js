@@ -1,5 +1,5 @@
-// Entry point: sets up the page, the two modes (Review and Free practice),
-// settings and backups.
+// Entry point: sets up the page, the three tabs (Review, Free practice and
+// Words), settings and backups.
 
 import seedText from './seed-words.tsv?raw'; // "?raw" makes Vite hand us the file's text
 import { getAll, putAll, getSetting, setSetting } from './db.js';
@@ -9,12 +9,15 @@ import { createToneFlow } from './toneFlow.js';
 import { createRecallCard } from './recallCard.js';
 import { createReview } from './review.js';
 import { createSettings } from './settings.js';
+import { createWordsPanel } from './wordsPanel.js';
 import { buildBackup, checkBackup, describeBackup, restoreBackup } from './backup.js';
 
 const byId = (id) => document.getElementById(id);
 
 const reviewTab = byId('review-tab');
 const practiceTab = byId('practice-tab');
+const wordsTab = byId('words-tab');
+const wordsPanelElement = byId('words-panel');
 const reviewHeader = byId('review-header');
 const wordForm = byId('word-form');
 const wordInput = byId('word-input');
@@ -61,12 +64,16 @@ const BUILT_IN_LIST_VERSION = 2;
 
 // The first time the app runs, fills the database with the built-in word
 // list. Later, when the list has changed, brings the stored copies of those
-// words up to date without touching their cards or anything else.
+// words up to date without touching their cards or anything else. A built-in
+// word that has been removed stays removed.
 async function addOrUpdateBuiltInWords() {
   const existing = await getAll('words');
   const builtIn = parseWordList(seedText);
+  // No version saved means the list has never been loaded on this device.
+  // (An empty word list alone doesn't: every word may have been removed.)
+  const neverLoaded = (await getSetting('builtInListVersion', null)) === null;
 
-  if (existing.length === 0) {
+  if (existing.length === 0 && neverLoaded) {
     const now = Date.now();
     const words = builtIn.map((word, index) => ({
       id: wordId(word),
@@ -94,6 +101,26 @@ let mode = 'review';
 
 // The words in the database, for Free practice to look up what was typed.
 let wordList = [];
+
+// Reads the words from the database, and offers them as suggestions under
+// Free practice's text box.
+async function loadWordList() {
+  wordList = await getAll('words');
+  byId('word-suggestions').replaceChildren(
+    ...wordList.map((word) => {
+      const option = document.createElement('option');
+      option.value = word.traditional;
+      return option;
+    }),
+  );
+}
+
+// The Words tab. After it changes the list, Review and Free practice read
+// the words afresh.
+const wordsPanel = createWordsPanel(async () => {
+  await review.load();
+  await loadWordList();
+});
 
 // Free practice: any kind of card for what is in the text box. Nothing is
 // saved and the schedule is not touched.
@@ -134,18 +161,28 @@ function setMode(newMode) {
   mode = newMode;
   const reviewing = mode === 'review';
   reviewTab.classList.toggle('selected', reviewing);
-  practiceTab.classList.toggle('selected', !reviewing);
+  practiceTab.classList.toggle('selected', mode === 'practice');
+  wordsTab.classList.toggle('selected', mode === 'words');
   reviewHeader.hidden = !reviewing;
-  wordForm.hidden = reviewing;
+  wordForm.hidden = mode !== 'practice';
+  wordsPanelElement.hidden = mode !== 'words';
+  noteElement.textContent = '';
   if (reviewing) {
     return review.activate();
   }
+  // Stops any card being shown and brings the study area back for writing.
   review.deactivate();
+  if (mode === 'words') {
+    // The Words tab has the page to itself.
+    byId('study-area').hidden = true;
+    return wordsPanel.show();
+  }
   return startFreePractice();
 }
 
 reviewTab.addEventListener('click', () => setMode('review'));
 practiceTab.addEventListener('click', () => setMode('practice'));
+wordsTab.addEventListener('click', () => setMode('words'));
 
 wordForm.addEventListener('submit', (event) => {
   // Without this the browser would reload the page, as forms do by default.
@@ -161,7 +198,7 @@ wordForm.addEventListener('submit', (event) => {
 function onSettingsChange() {
   if (mode === 'review') {
     review.refresh();
-  } else {
+  } else if (mode === 'practice') {
     startFreePractice();
   }
 }
@@ -284,14 +321,7 @@ async function startUp() {
 
   await review.load();
 
-  wordList = await getAll('words');
-  // Offer the list's words as suggestions under the text box.
-  const suggestions = byId('word-suggestions');
-  for (const word of wordList) {
-    const option = document.createElement('option');
-    option.value = word.traditional;
-    suggestions.appendChild(option);
-  }
+  await loadWordList();
 
   await setMode('review');
 }

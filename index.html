@@ -12,6 +12,7 @@
       <nav class="tabs">
         <button id="review-tab" class="selected" type="button">Review</button>
         <button id="practice-tab" type="button">Free practice</button>
+        <button id="words-tab" type="button">Words</button>
       </nav>
 
       <!-- Review mode: what is left to do, and the prompt for the current word -->
@@ -52,6 +53,45 @@
       <div id="done-panel" class="done-panel" hidden>
         <p id="done-message"></p>
       </div>
+
+      <!-- The Words tab: add words and look after the list. Run by wordsPanel.js. -->
+      <section id="words-panel" class="words-panel" hidden>
+        <form id="add-word-form" class="add-word-form">
+          <h2>Add a word</h2>
+          <input id="add-traditional" type="text" placeholder="Traditional 繁體" aria-label="Traditional characters" lang="zh-Hant-TW" autocomplete="off" autocapitalize="off" />
+          <input id="add-simplified" type="text" placeholder="Simplified 简体 (if different)" aria-label="Simplified characters, if different" lang="zh-Hans-CN" autocomplete="off" autocapitalize="off" />
+          <input id="add-pinyin" type="text" placeholder="Pinyin with tone numbers: xue2xi2" aria-label="Pinyin with tone numbers" autocomplete="off" autocapitalize="off" spellcheck="false" />
+          <!-- The pinyin with tone marks, as a check on what was typed. -->
+          <p id="add-pinyin-preview" class="pinyin-preview"></p>
+          <input id="add-pinyin-taiwan" type="text" placeholder="Taiwan reading (if different)" aria-label="Taiwan reading, if different" autocomplete="off" autocapitalize="off" spellcheck="false" />
+          <input id="add-definition" type="text" placeholder="Meaning" aria-label="Meaning" autocomplete="off" />
+          <button type="submit" class="primary">Add word</button>
+          <p id="add-word-note" class="note"></p>
+        </form>
+
+        <!-- <details> is the browser's built-in fold-out: closed until its summary is tapped. -->
+        <details class="add-list">
+          <summary>Add a list of words</summary>
+          <p class="hint">
+            One word per line, as in a TSV or CSV file: simplified, traditional, pinyin with
+            tone numbers, meaning, and optionally the Taiwan reading, separated by tabs or commas.
+          </p>
+          <textarea id="list-text" rows="6" aria-label="Word list" spellcheck="false"></textarea>
+          <div class="buttons">
+            <button id="list-file-button" class="small" type="button">Choose a file</button>
+            <input id="list-file" type="file" accept=".tsv,.csv,.txt,text/plain,text/csv,text/tab-separated-values" hidden />
+            <button id="check-list-button" class="small" type="button">Check list</button>
+            <button id="add-list-button" class="small primary" type="button" hidden>Add</button>
+          </div>
+          <p id="list-report" class="note"></p>
+          <ul id="list-problems" class="list-problems"></ul>
+        </details>
+
+        <h2>Your words (<span id="word-count">0</span>)</h2>
+        <input id="word-search" type="search" placeholder="Search characters, pinyin or meaning" aria-label="Search your words" autocomplete="off" autocapitalize="off" />
+        <p id="word-list-note" class="note"></p>
+        <ul id="word-list" class="word-list"></ul>
+      </section>
 
       <div id="study-area" class="study-area">
         <!-- One slot per character of the word. Filled in by wordFlow.js. -->
@@ -110,6 +150,34 @@
       <footer>
         <button id="settings-button" class="small" type="button">Settings</button>
       </footer>
+
+      <!-- One word from the Words tab: change it, study it next, or remove it. -->
+      <dialog id="word-dialog" class="settings-panel">
+        <form id="word-dialog-form">
+          <h2 id="word-dialog-title"></h2>
+          <p id="word-dialog-status" class="hint"></p>
+          <label class="setting stacked">
+            Meaning
+            <input id="edit-definition" type="text" autocomplete="off" />
+          </label>
+          <label class="setting stacked">
+            Simplified
+            <input id="edit-simplified" type="text" lang="zh-Hans-CN" autocomplete="off" autocapitalize="off" />
+          </label>
+          <label class="setting stacked">
+            Taiwan reading (if different)
+            <input id="edit-pinyin-taiwan" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" />
+          </label>
+          <p class="hint">To change the characters or the pinyin, remove the word and add it again.</p>
+          <p id="word-dialog-note" class="note"></p>
+          <div class="buttons">
+            <button type="submit" class="small primary">Save</button>
+            <button id="study-next-button" class="small" type="button">Study next</button>
+            <button id="remove-word-button" class="small" type="button">Remove</button>
+            <button id="word-dialog-close" class="small" type="button">Close</button>
+          </div>
+        </form>
+      </dialog>
 
       <!-- <dialog> is the browser's built-in pop-up panel. It stays hidden until opened by settings.js. -->
       <dialog id="settings-panel" class="settings-panel">

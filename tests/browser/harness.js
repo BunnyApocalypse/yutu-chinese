@@ -112,6 +112,7 @@ async function launchBrowser() {
   runningBrowsers.add(browser);
 
   // The browser announces where it listens for DevTools on its error output.
+  let startTimer;
   const port = await new Promise((resolve, reject) => {
     let output = '';
     child.stderr.on('data', (chunk) => {
@@ -122,8 +123,10 @@ async function launchBrowser() {
       }
     });
     child.on('exit', () => reject(new Error(`The browser stopped before it was ready:\n${output}`)));
-    setTimeout(() => reject(new Error(`The browser did not start in time:\n${output}`)), 20000);
+    startTimer = setTimeout(() => reject(new Error(`The browser did not start in time:\n${output}`)), 20000);
   });
+  // A timer left running would keep the tests from ending until it ran out.
+  clearTimeout(startTimer);
   const targets = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
   const socket = new WebSocket(targets.find((target) => target.type === 'page').webSocketDebuggerUrl);
   await new Promise((resolve, reject) => {
@@ -244,6 +247,28 @@ function waitInPage(page, condition, limit) {
   })`);
 }
 
+// Loads the page again, as closing and reopening the app would, and waits
+// until the app has started. It comes up in Review.
+export async function reloadApp(page) {
+  // A mark on the page as it is now, which the freshly loaded page won't have.
+  await page.evaluate('window.loadedBefore = true');
+  await page.send('Page.reload');
+  for (let attempt = 0; attempt < 100; attempt++) {
+    await sleep(100);
+    try {
+      const started = await page.evaluate(`!window.loadedBefore && (
+        document.getElementById('card-type').textContent !== '' ||
+        !document.getElementById('done-panel').hidden)`);
+      if (started) {
+        return;
+      }
+    } catch {
+      // The page was between two loads; try again.
+    }
+  }
+  throw new Error('The app did not start again after reloading.');
+}
+
 // Opens the app and switches to Free practice, which starts on its default word.
 async function openFreePractice(page, appUrl) {
   await page.send('Page.navigate', { url: appUrl });
@@ -292,6 +317,43 @@ export async function startWriting(page, word) {
 }
 
 export const statusText = (page) => page.evaluate(STATUS);
+
+// Taps the element with this id.
+export const tap = (page, id) => page.evaluate(`document.getElementById(${JSON.stringify(id)}).click()`);
+
+// Types into the text box with this id, replacing what was there.
+export const type = (page, id, text) =>
+  page.evaluate(`(() => {
+    const box = document.getElementById(${JSON.stringify(id)});
+    box.value = ${JSON.stringify(text)};
+    // What a text box announces when someone types in it.
+    box.dispatchEvent(new Event('input', { bubbles: true }));
+  })()`);
+
+// The text of the element with this id, or of the first element matching a
+// CSS selector such as '#word-list li'. '' if there is none or it is hidden.
+export const textOf = (page, idOrSelector) =>
+  page.evaluate(`(() => {
+    const wanted = ${JSON.stringify(idOrSelector)};
+    const element = document.getElementById(wanted) || document.querySelector(wanted);
+    return element && !element.closest('[hidden]') ? element.textContent.trim() : '';
+  })()`);
+
+// Waits until `condition` (JavaScript text, run in the page) is true. Fails
+// the test if it isn't within five seconds.
+export async function waitUntil(page, condition, description = condition) {
+  const cameTrue = await page.evaluate(`new Promise((resolve) => {
+    const start = performance.now();
+    (function look() {
+      if (${condition}) resolve(true);
+      else if (performance.now() - start > 5000) resolve(false);
+      else setTimeout(look, 10);
+    })();
+  })`);
+  if (!cameTrue) {
+    throw new Error(`Waited in vain for: ${description}`);
+  }
+}
 
 // True if the element with this id is on the page and not hidden.
 export const isShown = (page, id) =>

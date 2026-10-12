@@ -485,6 +485,128 @@ button.primary:active {
   background: #315d99;
 }
 
+/* ---- The Words tab ---- */
+
+.words-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 520px;
+}
+
+.words-panel h2,
+.add-list summary {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.add-word-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.words-panel input[type='text'],
+.words-panel input[type='search'],
+.words-panel textarea,
+.setting.stacked input {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  /* Below 16px, mobile browsers zoom the whole page in when the field is tapped */
+  font: inherit;
+  font-size: 1rem;
+  border: 1px solid #b9b2a3;
+  border-radius: 8px;
+  background: #fff;
+  color: inherit;
+}
+
+.pinyin-preview {
+  margin: 0;
+  color: #3b6fb6;
+}
+
+.pinyin-preview:empty {
+  display: none;
+}
+
+.hint {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  color: #6b6557;
+}
+
+.add-list {
+  padding: 10px 12px;
+  border: 1px solid #b9b2a3;
+  border-radius: 8px;
+}
+
+.add-list[open] summary {
+  margin-bottom: 8px;
+}
+
+.add-list .buttons {
+  justify-content: flex-start;
+  margin: 8px 0;
+}
+
+.list-problems {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 0.85rem;
+  color: #6b6557;
+}
+
+.word-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* One word: characters and pinyin on the first line, the meaning below. */
+button.word-entry {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 8px;
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.entry-characters {
+  font-size: 1.2rem;
+}
+
+.entry-pinyin {
+  color: #3b6fb6;
+  text-align: right;
+}
+
+.entry-definition {
+  font-size: 0.9rem;
+  color: #6b6557;
+}
+
+.entry-new {
+  font-size: 0.8rem;
+  color: #8a5a00;
+  text-align: right;
+}
+
+/* In the word's pop-up panel: the label above its text box. */
+.setting.stacked {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
 /* Browsers hide elements with the "hidden" attribute, but any "display" rule
    overrides that. This makes sure hidden always wins. */
 [hidden] {
