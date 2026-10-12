@@ -218,6 +218,8 @@ The owner wants to bring their Skritter data across eventually rather than start
 10. Merge backups between devices instead of replacing; a settings screen (new words per day, target retention).
 11. **To do, asked for by the owner:**
     - **Done for writing:** a browser test suite that lives in the repo and runs in parallel (see "Browser tests"). Still open: its known failures, and browser tests for the cards and settings, which are still only checked by hand.
+    - The browser grid's remaining failures (listed under "Browser tests"): at half size the second or third stroke of some characters is rejected, because the size is not yet known after one short stroke; and 學 in the mainland order shifted right. The owner chose on 2026-10-12 to leave these for later. Fixing the first means estimating the size earlier than `MIN_SPAN_FOR_SCALE` allows.
+    - Tapping "Free practice" before the app has finished starting throws an error in `setMode` (`src/main.js`), because `review` is not created yet. The app recovers once start-up finishes.
     - A setting for which traditional forms to use: mainland, Hong Kong or Taiwan, so that people can choose. Today Traditional always means Taiwan forms where animCJK has them. Needs stroke data for the other two regions' forms; the big set's traditional characters are mainland-style, and no Hong Kong set has been looked for yet.
     - Accepting a neutral tone where the list has a full one (xīngqi for 星期).
 
