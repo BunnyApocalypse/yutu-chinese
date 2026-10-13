@@ -10,7 +10,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, type, choose, waitUntil, openDeckPage, isShown } from './harness.js';
+import { startApp, startBrowsers, tap, type, choose, waitUntil, openDeckPage, isShown, ANSWER_YES } from './harness.js';
 
 const spoken = `document.getElementById('listen-button').dataset.spoken`;
 // The addresses of the recordings the page has fetched so far.
@@ -73,7 +73,7 @@ describe('hearing a word', { concurrency: false }, () => {
     // Free of the first word: the next one to learn is 星期, read xīngqí.
     await tap(page, 'decks-tab');
     await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
-    await page.evaluate('window.confirm = () => true');
+    await page.evaluate(ANSWER_YES);
     await tap(page, 'remove-word-button');
     await waitUntil(page, `document.querySelectorAll('#word-list li').length === 1`, 'one word left');
     await tap(page, 'learn-tab');

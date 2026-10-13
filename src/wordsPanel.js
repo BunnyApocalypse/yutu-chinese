@@ -14,6 +14,7 @@ import { missingReadyMadeDecks, deckTree, deckWithInside, isInDecks, withDeck, D
 import { createDecksPanel, fillDeckSelect } from './decksPanel.js';
 import { createCardsPanel } from './cardsPanel.js';
 import { createWordPage } from './wordPage.js';
+import { ask } from './confirm.js';
 import { isSentence, sentenceId, sentenceRecord, clozeInBoth } from './sentences.js';
 import { lapsesOf } from './leeches.js';
 import { findLeeches, describeLeech, describeSuspended, leechList, leechPrompt } from './leeches.js';
@@ -377,6 +378,20 @@ export function createWordsPanel(onChange, getSettings, studyDeck, goToWords) {
     decksPanel.render();
     byId('deck-adding').hidden = !openDeck();
     byId('word-list-title').textContent = listDeck() ? 'Words in this deck' : 'All your words';
+  }
+
+  // The three ways of adding to a deck (a word, a list, a sentence) are
+  // fold-outs. Opening one closes the others, so that only one form is ever
+  // in the way.
+  const addFolds = [...document.querySelectorAll('#deck-adding > details')];
+  for (const fold of addFolds) {
+    fold.addEventListener('toggle', () => {
+      if (fold.open) {
+        addFolds.filter((other) => other !== fold).forEach((other) => {
+          other.open = false;
+        });
+      }
+    });
   }
 
   // ---- The tab's two sections ----
@@ -1317,10 +1332,11 @@ export function createWordsPanel(onChange, getSettings, studyDeck, goToWords) {
   });
 
   byId('remove-word-button').addEventListener('click', async () => {
-    const confirmed = window.confirm(
-      `Remove ${charactersOf(openWord)} (${formatPinyin(openWord.pinyin)}) from your words?\n\n` +
-        'Its cards and their schedule are removed too. Your review history is kept.',
-    );
+    const confirmed = await ask({
+      question: `Remove ${charactersOf(openWord)} from your words?`,
+      detail: 'Its cards and their schedule are removed too. Your review history is kept.',
+      yes: 'Remove',
+    });
     if (!confirmed) {
       return;
     }

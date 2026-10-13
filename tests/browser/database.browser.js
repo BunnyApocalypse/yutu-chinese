@@ -8,7 +8,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, reloadApp, tap, type, waitUntil, openDeckPage } from './harness.js';
+import { startApp, startBrowsers, reloadApp, tap, type, waitUntil, openDeckPage, ANSWER_YES } from './harness.js';
 
 const rows = (count) => `document.querySelectorAll('#word-list li').length === ${count}`;
 
@@ -143,7 +143,7 @@ describe('the database', { concurrency: false }, () => {
   it('leaves a mark when a word is removed, which stays when the word is added again', async () => {
     const before = Date.now();
     // The pop-up that asks before a word is removed: answer OK.
-    await page.evaluate('window.confirm = () => true');
+    await page.evaluate(ANSWER_YES);
     await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
     await tap(page, 'remove-word-button');
     await waitUntil(page, rows(0));

@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, type, choose, textOf, waitUntil, openDeckPage } from './harness.js';
+import { startApp, startBrowsers, tap, type, choose, textOf, waitUntil, openDeckPage, ANSWER_YES } from './harness.js';
 
 // Everything in one store of the app's database, read through a connection
 // of the test's own.
@@ -41,7 +41,7 @@ describe('managing cards', { concurrency: false }, () => {
       page = thePage;
     });
     // The pop-ups that ask before starting over or removing: answer OK.
-    await page.evaluate('window.confirm = () => true');
+    await page.evaluate(ANSWER_YES);
   });
 
   after(async () => {

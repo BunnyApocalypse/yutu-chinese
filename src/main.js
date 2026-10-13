@@ -17,6 +17,7 @@ import { setUpOffline, keepData } from './offline.js';
 import { createWelcome } from './welcome.js';
 import { buildBackup, checkBackup, describeBackup, restoreBackup } from './backup.js';
 import { mergeBackups, describeMerge } from './merge.js';
+import { ask, tell } from './confirm.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -298,7 +299,7 @@ importFile.addEventListener('change', async () => {
   } catch (error) {
     // JSON.parse fails with a technical message; checkBackup with a readable one.
     const reason = error instanceof SyntaxError ? 'This file is not a Hanzi Trainer backup.' : error.message;
-    window.alert(`Nothing was changed.\n\n${reason}`);
+    await tell('That file could not be used', `${reason} Nothing was changed.`);
     return;
   }
 
@@ -330,10 +331,11 @@ byId('import-combine-button').addEventListener('click', async () => {
 });
 
 byId('import-replace-button').addEventListener('click', async () => {
-  const confirmed = window.confirm(
-    'Replace everything on this device with the backup?\n\n' +
-      'What is on this device now will be gone. This cannot be undone.',
-  );
+  const confirmed = await ask({
+    question: 'Replace everything on this device with the backup?',
+    detail: 'What is on this device now will be gone. This cannot be undone.',
+    yes: 'Replace everything',
+  });
   if (!confirmed) {
     return;
   }

@@ -434,6 +434,16 @@
         </form>
       </dialog>
 
+      <!-- Asks before something that cannot be undone (confirm.js). -->
+      <dialog id="confirm-dialog" class="settings-panel">
+        <h2 id="confirm-question"></h2>
+        <p id="confirm-detail"></p>
+        <div class="buttons">
+          <button id="confirm-yes" class="small primary" type="button"></button>
+          <button id="confirm-no" class="small" type="button"></button>
+        </div>
+      </dialog>
+
       <!-- Everything about one word or character, to read: wordPage.js fills it in. -->
       <dialog id="word-page" class="settings-panel word-page">
         <div id="word-page-body" class="word-page-body">

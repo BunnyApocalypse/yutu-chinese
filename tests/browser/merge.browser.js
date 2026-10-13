@@ -6,7 +6,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, type, textOf, waitUntil, openDeckPage } from './harness.js';
+import { startApp, startBrowsers, tap, type, textOf, waitUntil, openDeckPage, ANSWER_YES } from './harness.js';
 
 // Everything in one store of the app's database, read through a connection
 // of the test's own.
@@ -188,7 +188,7 @@ describe('importing a backup', { concurrency: false }, () => {
 
   it('replaces everything when asked to', async () => {
     // The pop-up that asks before everything is replaced: answer OK.
-    await page.evaluate('window.confirm = () => true; window.loadedBefore = true');
+    await page.evaluate(`${ANSWER_YES}; window.loadedBefore = true`);
     await tap(page, 'import-replace-button');
     await waitForRestart(page);
     assert.deepEqual((await stored(page, 'words')).map((word) => word.id), ['貓|mao1']);

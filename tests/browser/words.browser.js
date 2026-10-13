@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, reloadApp, tap, type, choose, textOf, waitUntil, addTestWords } from './harness.js';
+import { startApp, startBrowsers, reloadApp, tap, type, choose, textOf, waitUntil, addTestWords, ANSWER_YES } from './harness.js';
 
 // Text for "the Decks tab's list has this many rows".
 const rows = (count) => `document.querySelectorAll('#word-list li').length === ${count}`;
@@ -37,7 +37,7 @@ describe('the Decks tab', { concurrency: false }, () => {
     assert.equal(await textOf(page, 'word-count'), '0');
     await addTestWords(page);
     // The pop-up that asks before a word is removed: answer OK.
-    await page.evaluate('window.confirm = () => true');
+    await page.evaluate(ANSWER_YES);
     await tap(page, 'decks-tab');
     await waitUntil(page, `document.getElementById('word-count').textContent !== '0'`, 'the word list');
     countAtStart = await wordCount(page);

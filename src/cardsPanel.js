@@ -8,6 +8,7 @@ import { CARD_TYPES, allCardIds, formatInterval } from './session.js';
 import { cardsOfWord, withStartedOver, markedKnown } from './cardManager.js';
 import { fillDeckSelect } from './decksPanel.js';
 import { withDeck } from './decks.js';
+import { ask } from './confirm.js';
 
 const byId = (id) => document.getElementById(id);
 const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`;
@@ -109,10 +110,11 @@ export function createCardsPanel({
   }
 
   async function startOver(type) {
-    const confirmed = window.confirm(
-      `Start the ${KIND_NAMES[type].toLowerCase()} card of this word over?\n\n` +
-        'It becomes a new card, as if never studied. Its reviews are kept in the history but no longer count.',
-    );
+    const confirmed = await ask({
+      question: `Start the ${KIND_NAMES[type].toLowerCase()} card of this word over?`,
+      detail: 'It becomes a new card, as if never studied. Its reviews are kept in the history but no longer count.',
+      yes: 'Start over',
+    });
     if (!confirmed) {
       return;
     }
@@ -219,11 +221,12 @@ export function createCardsPanel({
     ),
   );
 
-  byId('bulk-start-over-button').addEventListener('click', () => {
-    const confirmed = window.confirm(
-      `Start every card of ${plural(selected.size, 'word')} over?\n\n` +
-        'They become new cards, as if never studied. Their reviews are kept in the history but no longer count.',
-    );
+  byId('bulk-start-over-button').addEventListener('click', async () => {
+    const confirmed = await ask({
+      question: `Start every card of ${plural(selected.size, 'word')} over?`,
+      detail: 'They become new cards, as if never studied. Their reviews are kept in the history but no longer count.',
+      yes: 'Start over',
+    });
     if (!confirmed) {
       return;
     }
@@ -255,11 +258,12 @@ export function createCardsPanel({
     );
   });
 
-  byId('bulk-remove-button').addEventListener('click', () => {
-    const confirmed = window.confirm(
-      `Remove ${plural(selected.size, 'word')} from your words altogether?\n\n` +
-        'Their cards go too. Their reviews are kept in the history.',
-    );
+  byId('bulk-remove-button').addEventListener('click', async () => {
+    const confirmed = await ask({
+      question: `Remove ${plural(selected.size, 'word')} from your words altogether?`,
+      detail: 'Their cards go too. Their reviews are kept in the history.',
+      yes: 'Remove',
+    });
     if (!confirmed) {
       return;
     }

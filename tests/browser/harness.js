@@ -424,6 +424,15 @@ export async function addTestWords(page) {
   await waitInPage(page, `${STATUS}.startsWith('Stroke 1 of') && ${NOT_BUSY}`, 5000);
 }
 
+// For page.evaluate: from then on, the app's question before something that
+// cannot be undone (confirm.js) is answered with its first button, as soon
+// as it comes up. (Until the page is loaded again.)
+export const ANSWER_YES = `setInterval(() => {
+  if (document.getElementById('confirm-dialog').open) {
+    document.getElementById('confirm-yes').click();
+  }
+}, 20)`;
+
 // Picks the option with this value in the drop-down list with this id.
 export const choose = (page, id, value) =>
   page.evaluate(`(() => {
