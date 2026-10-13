@@ -487,7 +487,7 @@ Asked for by the owner on 2026-10-13; the screens' wording and the extras noted 
 - **Stroke numbers can differ between the two sets** for the same character (花 has 8 strokes in one and 7 in the other). Never hard-code a stroke number for a character; derive what you need from the data in use, as `src/shortcuts.js` does.
 - The slot row sets `lang` (`zh-Hant-TW` or `zh-Hans-CN`) so the device picks the right regional font. Without it a phone may show Japanese or mainland glyphs for the same character.
 - `crypto.randomUUID()` only exists on HTTPS or localhost, so it fails on the LAN dev address. `randomId()` in `src/db.js` uses `crypto.getRandomValues()`, which works everywhere.
-- The four grade buttons must fit side by side at phone width, and the whole review screen should fit without scrolling. The writing area's size is worked out in `chooseSize` (`src/wordFlow.js`) by reserving a fixed height for everything else; adjust that number when adding rows to the screen.
+- The four grade buttons must fit side by side at phone width, and the whole review screen should fit without scrolling. The writing area's size is worked out in `chooseSize` (`src/wordFlow.js`) by reserving a fixed height for everything else (560 since 2026-10-13, measured during a lesson, which has the most rows; a lesson for a word with a long meaning is still about 36px taller than the screen); measure again when adding rows to the screen.
 - In Review, the outline is switched off at the start of every word. Left on, it would count as peeking and make every suggestion "Again".
 
 - Vite's dev server answers a request for a missing file with the app's HTML page and status 200, not a 404. `loadCharData` therefore treats "not valid JSON" as "no stroke data".

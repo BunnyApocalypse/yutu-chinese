@@ -292,8 +292,18 @@ async function showBackupStatus() {
     (last === null
       ? 'No backup has been made on this device yet.'
       : `Last backup: ${days === 0 ? 'today' : days === 1 ? 'yesterday' : `${days} days ago`}.`) +
-    (due ? ' Your words and progress are kept only in this browser: export a backup now and then.' : '');
-  byId('settings-button').classList.toggle('reminder', due);
+    (due
+      ? ' Your words and progress are kept only in this browser, so export a backup now and then. ' +
+        'The red dot on the cog wheel is this reminder; it goes away once you have exported one.'
+      : '');
+  // The dot says why it is there to anyone who rests the mouse on the cog or
+  // uses a screen reader, and in Settings the same dot is on the heading of
+  // the group it is about, which is opened.
+  const cog = byId('settings-button');
+  cog.classList.toggle('reminder', due);
+  cog.title = due ? 'Settings (time to make a backup)' : 'Settings';
+  cog.setAttribute('aria-label', cog.title);
+  byId('settings-data').classList.toggle('reminder', due);
   byId('settings-data').open = due || byId('settings-data').open;
 }
 

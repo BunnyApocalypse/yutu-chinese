@@ -645,6 +645,17 @@ button.settings-cog.reminder::after {
   background: #c2452d;
 }
 
+/* The same dot on the heading of the group of settings it is about. */
+.settings-group.reminder > summary::after {
+  content: '';
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-left: 8px;
+  border-radius: 50%;
+  background: #c2452d;
+}
+
 .settings-panel h2 {
   margin: 0 0 12px;
   font-size: 1.2rem;

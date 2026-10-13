@@ -553,11 +553,13 @@ export function createReview(elements, flows, settings, editWord, showWord) {
   let lesson = null;
 
   const LESSON_NOTES = {
-    meet: 'A new word. Have a look, then go on.',
-    tone: 'First the tones: give the tone of each character.',
+    // Kept short: each shares a line with "I know this word", and a second
+    // line pushes the writing area down the screen.
+    meet: 'A new word: have a look.',
+    tone: 'First its tones.',
     trace: 'Write each stroke as it is shown.',
-    outline: 'Once more over the outline, without the strokes being shown.',
-    test: 'Now from memory. This is the one that counts.',
+    outline: 'Again, over the bare outline.',
+    test: 'Now from memory. This one counts.',
   };
 
   function endLesson() {
