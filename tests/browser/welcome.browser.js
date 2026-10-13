@@ -46,9 +46,11 @@ describe('the introduction', { concurrency: false }, () => {
   it('sets the script, the pronunciation and the kinds of card', async () => {
     await tap(page, 'welcome-next');
     assert.equal(await heading(), 'Which characters are you learning?');
-    // It starts from the settings as they are.
-    assert.equal(await page.evaluate(`document.querySelector('input[name="welcome-script"]:checked').value`), 'both-traditional');
-    await click('input[name="welcome-script"][value="simplified"]');
+    // It starts from the settings as they are: a new device learns simplified
+    // only, with both pronunciations and the mainland one first.
+    assert.equal(await page.evaluate(`document.querySelector('input[name="welcome-script"]:checked').value`), 'simplified');
+    assert.equal(await page.evaluate(`document.querySelector('input[name="welcome-pronunciation"]:checked').value`), 'mainland');
+    await click('input[name="welcome-script"][value="traditional"]');
     await click('input[name="welcome-pronunciation"][value="mainlandOnly"]');
 
     await tap(page, 'welcome-next');
@@ -102,11 +104,12 @@ describe('the introduction', { concurrency: false }, () => {
     assert.equal(await textOf(page, 'welcome-next'), 'Add my first words');
     await tap(page, 'welcome-next');
     await waitUntil(page, `!${welcomeOpen} && document.getElementById('words-tab').classList.contains('selected')`, 'the Words tab');
-    // One box for the word, in simplified, and no Taiwan reading.
-    assert.equal(await isShown(page, 'add-traditional'), false);
+    // One box for the word, in traditional, and no Taiwan reading.
+    assert.equal(await isShown(page, 'add-simplified'), false);
+    assert.equal(await isShown(page, 'add-traditional'), true);
     assert.equal(await isShown(page, 'add-pinyin-taiwan'), false);
     await tap(page, 'settings-button');
-    assert.equal(await page.evaluate(`document.getElementById('script-select').value`), 'simplified');
+    assert.equal(await page.evaluate(`document.getElementById('script-select').value`), 'traditional');
     assert.equal(await page.evaluate(`document.getElementById('pronunciation-select').value`), 'mainlandOnly');
     assert.deepEqual(
       await page.evaluate(`[...document.querySelectorAll('#settings-panel [data-card-type]')].filter((box) => box.checked).map((box) => box.dataset.cardType)`),
@@ -123,12 +126,12 @@ describe('the introduction', { concurrency: false }, () => {
     assert.equal(await page.evaluate(welcomeOpen), true);
     assert.equal(await heading(), 'Welcome to Hanzi Trainer');
     await tap(page, 'welcome-next');
-    assert.equal(await page.evaluate(`document.querySelector('input[name="welcome-script"]:checked').value`), 'simplified');
+    assert.equal(await page.evaluate(`document.querySelector('input[name="welcome-script"]:checked').value`), 'traditional');
     // Skipping changes nothing.
-    await click('input[name="welcome-script"][value="traditional"]');
+    await click('input[name="welcome-script"][value="simplified"]');
     await tap(page, 'welcome-skip');
     await tap(page, 'settings-button');
-    assert.equal(await page.evaluate(`document.getElementById('script-select').value`), 'simplified');
+    assert.equal(await page.evaluate(`document.getElementById('script-select').value`), 'traditional');
     await tap(page, 'settings-close');
   });
 
@@ -167,5 +170,24 @@ describe('the introduction', { concurrency: false }, () => {
     await reloadApp(page);
     const later = await inDatabase(`stores.words.getAllKeys().onsuccess = (event) => { result.words = event.target.result; };`);
     assert.deepEqual(later.words.sort(), ['今天|jin1tian1', '貓頭鷹|mao1tou2ying1']);
+  });
+
+  it('leaves a device from before on both scripts with cards in traditional', async () => {
+    // Such a device has settings stored, but may never have had the Script
+    // setting touched: what it had then was not written down anywhere.
+    await page.evaluate(`new Promise((resolve, reject) => {
+      const opening = indexedDB.open('hanzi-trainer');
+      opening.onsuccess = () => {
+        const tx = opening.result.transaction(['settings'], 'readwrite');
+        tx.objectStore('settings').delete('script');
+        tx.objectStore('settings').delete('bothScripts');
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      };
+    })`);
+    await reloadApp(page);
+    await tap(page, 'settings-button');
+    assert.equal(await page.evaluate(`document.getElementById('script-select').value`), 'both-traditional');
+    await tap(page, 'settings-close');
   });
 });

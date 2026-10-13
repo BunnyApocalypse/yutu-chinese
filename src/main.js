@@ -282,7 +282,25 @@ window.addEventListener('resize', () => {
 
 // ---- Startup ----
 
+// Until 2026-10-13 a device that had never touched the Script setting was
+// learning both scripts with cards in traditional, without that being saved
+// anywhere. Now that a new device starts with simplified only, a device from
+// before has what it had written down here, so that it does not change. A
+// device that has stored any setting at all is one from before.
+async function keepOldScriptDefaults() {
+  if ((await getAll('settings')).length === 0) {
+    return; // a new device
+  }
+  if ((await getSetting('script', null)) === null) {
+    await setSetting('script', 'traditional');
+  }
+  if ((await getSetting('bothScripts', null)) === null) {
+    await setSetting('bothScripts', true);
+  }
+}
+
 async function startUp() {
+  await keepOldScriptDefaults();
   await removeOldBuiltInWords();
   // Once per device (and again after an older backup is restored): cards
   // studied before writing cards were kept per script are filed under the
@@ -358,6 +376,10 @@ async function startUp() {
     byId('settings-panel').close();
     welcome.open();
   });
+  // Free practice starts with an example character in the script being learned.
+  if (settings.script === 'simplified' && wordInput.value === '學') {
+    wordInput.value = '学';
+  }
   await welcome.openIfFirstTime();
 
   // Review, unless another tab was tapped in the meantime.

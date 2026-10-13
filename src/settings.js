@@ -17,6 +17,10 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 // onChange: called after any setting changes
 //
 // Returns an object whose properties are the current settings:
+// A new device starts out learning simplified only, with both pronunciations
+// and the mainland one first: the owner's choice (2026-10-13) of what suits
+// most learners. The introduction asks about all of it straight away.
+//
 //   script:         'traditional' or 'simplified': the script cards are
 //                   shown and written in
 //   bothScripts:    true if both scripts are being learned; false if only
@@ -52,8 +56,8 @@ export async function createSettings(elements, onChange) {
   } = elements;
 
   const settings = {
-    script: await getSetting('script', 'traditional'),
-    bothScripts: await getSetting('bothScripts', true),
+    script: await getSetting('script', 'simplified'),
+    bothScripts: await getSetting('bothScripts', false),
     pronunciation: await getSetting('pronunciation', 'mainland'),
     // Saved as 'rawSquigs' before the setting was renamed; a device that still
     // has it under the old name keeps its choice.

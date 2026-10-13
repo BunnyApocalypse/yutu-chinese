@@ -235,8 +235,10 @@ async function launchBrowser() {
 // A test calls use() and gets whichever browser is free next, so the tests
 // spread themselves over the browsers.
 //
-// The app opens with its introduction the first time. It is skipped here,
-// unless `keepWelcome` is true (for the test of the introduction itself).
+// The app opens with its introduction the first time, learning simplified
+// only. Here the introduction is skipped and the script set to both, with
+// cards in traditional, unless `keepWelcome` is true (for the test of the
+// introduction itself).
 export async function startBrowsers(appUrl, count = BROWSER_COUNT, { keepWelcome = false } = {}) {
   const pages = await Promise.all(Array.from({ length: count }, launchBrowser));
   await Promise.all(pages.map((page) => openFreePractice(page, appUrl, keepWelcome)));
@@ -329,6 +331,15 @@ async function openFreePractice(page, appUrl, keepWelcome = false) {
         // The introduction lies over the page and would catch the strokes.
         if (started && !${keepWelcome} && document.getElementById('welcome').open) {
           document.getElementById('welcome-skip').click();
+        }
+        // A new device learns simplified only. The tests were written for
+        // both scripts with cards in traditional (the Taiwan stroke data and
+        // its two stroke orders), so that is chosen here.
+        const script = document.getElementById('script-select');
+        if (started && !${keepWelcome} && script.value !== 'both-traditional') {
+          script.value = 'both-traditional';
+          script.dispatchEvent(new Event('change', { bubbles: true }));
+          return '';
         }
         const tab = document.getElementById('practice-tab');
         if (started && !tab.classList.contains('selected')) {
