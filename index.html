@@ -153,8 +153,12 @@
 
           <!-- Adding words: only on a deck's page, since every word is in a deck. -->
           <div id="deck-adding" class="words-panel" hidden>
+            <!-- <details> is the browser's built-in fold-out: closed until its summary is
+                 tapped. This one is closed so that the deck's words are not far down the
+                 page, and open on a deck without words (wordsPanel.js). -->
+            <details id="add-word-fold" class="add-list">
+            <summary>Add a word</summary>
             <form id="add-word-form" class="add-word-form">
-              <h2>Add a word</h2>
               <input id="add-traditional" type="text" placeholder="Traditional 繁體" aria-label="Traditional characters" lang="zh-Hant-TW" autocomplete="off" autocapitalize="off" />
               <input id="add-simplified" type="text" placeholder="Simplified 简体 (if different)" aria-label="Simplified characters, if different" lang="zh-Hans-CN" autocomplete="off" autocapitalize="off" />
               <!-- What the dictionary has for the characters typed, and whether the
@@ -177,8 +181,8 @@
               <button type="submit" class="primary">Add word</button>
               <p id="add-word-note" class="note"></p>
             </form>
+            </details>
 
-            <!-- <details> is the browser's built-in fold-out: closed until its summary is tapped. -->
             <details class="add-list">
               <summary>Add a list of words</summary>
               <!-- Which columns a list has; worded by wordsPanel.js to suit the settings. -->

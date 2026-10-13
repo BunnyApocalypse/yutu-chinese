@@ -152,6 +152,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     searchInput.value = '';
     forgetCheckedList();
     addNote.textContent = '';
+    foldAddWord();
     renderDecks();
     renderList();
     byId('words-panel').scrollIntoView();
@@ -169,6 +170,16 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     study: studyDeck,
     afterChange: () => afterChange(),
   });
+
+  // "Add a word" is folded away, so that the deck's words are near the top
+  // of its page, except on a deck without words: there, adding one is what
+  // the page is for. Only done when a page is opened, so that the form does
+  // not close under someone adding a deck's first words.
+  function foldAddWord() {
+    const deck = openDeck();
+    const inside = deck ? deckWithInside(decks, deck.id) : null;
+    byId('add-word-fold').open = Boolean(deck) && !words.some((word) => isInDecks(word, inside));
+  }
 
   // Shows the decks, and the forms for adding words if a deck's page is open.
   function renderDecks() {
@@ -921,6 +932,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       // page is opened: it is where the first words go.
       if (openDeckId === undefined) {
         openDeckId = decks.length === 1 ? decks[0].id : null;
+        foldAddWord();
       }
       renderDecks();
       renderList();
