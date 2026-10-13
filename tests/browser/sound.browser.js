@@ -124,7 +124,7 @@ describe('hearing a word', { concurrency: false }, () => {
 
   it('offers the loudspeaker all through a lesson, and in Review only where it gives nothing away', async () => {
     await tap(page, 'settings-button');
-    await choose(page, 'sound-select', 'tap');
+    await choose(page, 'sound-select', 'auto');
     await tap(page, 'settings-close');
     await waitUntil(page, `!document.getElementById('listen-button').hidden`, 'the loudspeaker back');
     // On to the lesson's next step, by a tap on the card, which does the
@@ -132,6 +132,13 @@ describe('hearing a word', { concurrency: false }, () => {
     await tap(page, 'card-face');
     await waitUntil(page, `document.getElementById('card-type').textContent.includes('step 2')`, 'step 2');
     assert.equal(await isShown(page, 'listen-button'), true);
+    // Step 2 is the word's tones: once both are given, the word is spoken.
+    await page.evaluate(`delete document.getElementById('listen-button').dataset.spoken`);
+    for (const tone of [1, 2]) {
+      await waitUntil(page, `document.getElementById('status').textContent.includes('${tone} of 2')`, `tone ${tone}`);
+      await page.evaluate(`document.querySelector('#tone-buttons [data-tone="${tone}"]').click()`);
+    }
+    await waitUntil(page, `${spoken} === '星期|xing1qi1 syllables'`, 'the word spoken after the step');
     // The word is known: its cards go to Review, some days ahead.
     await tap(page, 'skip-lesson-button');
     await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'nothing left to learn');

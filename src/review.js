@@ -230,6 +230,14 @@ export function createReview(elements, flows, settings, editWord, showWord) {
 
   listenButton.addEventListener('click', speakCurrent);
 
+  // With sound playing by itself, a word being learned is spoken whenever a
+  // step of its lesson is finished: its tones given, the word written.
+  function speakAfterStep() {
+    if (settings.sound === 'auto') {
+      speakCurrent();
+    }
+  }
+
   // "About this word", shown with the grades: the word's page, with its
   // note, an example sentence and how its characters are built.
   aboutWordButton.addEventListener('click', () => {
@@ -638,6 +646,7 @@ export function createReview(elements, flows, settings, editWord, showWord) {
         // Practice: nothing is saved, and the tone card comes by itself later.
         onDone() {
           lessonNextButton.hidden = false;
+          speakAfterStep();
         },
         onContinue: () => nextLessonStep(),
       });
@@ -650,6 +659,8 @@ export function createReview(elements, flows, settings, editWord, showWord) {
       showOutline: true,
       demoStrokes: step === 'trace',
       continueLabel: 'Next step',
+      // The word is heard each time a step of its lesson is finished.
+      onWordDone: speakAfterStep,
       onContinue: () => nextLessonStep(),
     });
   }
