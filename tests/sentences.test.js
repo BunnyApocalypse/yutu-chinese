@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { isSentence, sentenceId, sentenceRecord, sentenceWriting, sentenceCardTypes } from '../src/sentences.js';
+import { isSentence, sentenceId, sentenceRecord, sentenceWriting, sentenceCardTypes, clozeInBoth } from '../src/sentences.js';
 import { cardIdFor } from '../src/session.js';
 import { planSpeech } from '../src/speechPlan.js';
 import { splitSyllables } from '../src/tones.js';
@@ -60,6 +60,16 @@ test('a sentence\'s writing card asks for its cloze word or for all of it', () =
   // Without a cloze word there is only the whole sentence to write.
   const { cloze, ...plain } = record;
   assert.deepEqual(sentenceWriting(plain, 'traditional', 'word'), { text: '我們是同學。', prompt: null });
+});
+
+test('the word to fill in is found in the other script by its place', () => {
+  assert.deepEqual(clozeInBoth('你好嗎？', '你好吗？', '嗎'), { own: '嗎', other: '吗' });
+  assert.deepEqual(clozeInBoth('我們是同學。', '我们是同学。', '同學'), { own: '同學', other: '同学' });
+  // Sentences of different lengths: the word as typed.
+  assert.deepEqual(clozeInBoth('你好嗎？', '你好', '嗎'), { own: '嗎', other: '嗎' });
+  // Not in the sentence, or nothing typed.
+  assert.equal(clozeInBoth('你好嗎？', '你好吗？', '們'), null);
+  assert.equal(clozeInBoth('你好嗎？', '你好吗？', ''), null);
 });
 
 test('the settings say which cards sentences have', () => {

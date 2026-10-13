@@ -13,6 +13,9 @@
 //     device.
 //   - It may have a `cloze`: one word in it, { traditional, simplified },
 //     that its writing card asks for.
+//   - Changing its characters changes its ID, as correcting a word's
+//     characters does; its cards and reviews move with it (renameWord in
+//     db.js).
 //   - It is not taught in the Learn tab: it counts as learned when it is
 //     added (`learnedAt`), and its cards come up in Review.
 //
@@ -65,6 +68,30 @@ export function sentenceRecord(sentence, order, deckId, now) {
     record.cloze = { traditional: cloze.traditional, simplified: cloze.simplified };
   }
   return record;
+}
+
+// The word to fill in, in both scripts, from the word as typed in one.
+//
+// own, other: the sentence in the script the word was typed in, and in the
+//             other script
+// clozeOwn:   the word, as it stands in `own`
+//
+// Returns { own, other }: in the other script it is the characters at the
+// same place, if the two sentences have the same number of characters;
+// otherwise the word as typed. Returns null if the word is not in the
+// sentence.
+export function clozeInBoth(own, other, clozeOwn) {
+  const at = own.indexOf(clozeOwn);
+  if (clozeOwn === '' || at < 0) {
+    return null;
+  }
+  const place = Array.from(own.slice(0, at)).length;
+  const length = Array.from(clozeOwn).length;
+  const sameLength = Array.from(own).length === Array.from(other).length;
+  return {
+    own: clozeOwn,
+    other: sameLength ? Array.from(other).slice(place, place + length).join('') : clozeOwn,
+  };
 }
 
 // What a sentence's writing card asks for, in one script.

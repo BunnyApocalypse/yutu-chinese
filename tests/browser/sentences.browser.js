@@ -128,14 +128,15 @@ describe('sentences', { concurrency: false }, () => {
     assert.deepEqual(greeting.cloze, { traditional: '嗎', simplified: '吗' });
     assert.equal(greeting.pinyin, '');
 
-    // Its panel has only what can be changed about a sentence.
+    // Its panel has what can be changed about a sentence.
     await type(page, 'word-search', '你好');
     await waitUntil(page, `document.querySelectorAll('#word-list li').length === 1`, 'the sentence in the list');
     await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
     // (Each box sits in a <label>, which is what is put out of sight.)
     const boxHidden = (id) => page.evaluate(`document.getElementById('${id}').closest('label').hidden`);
-    assert.equal(await boxHidden('edit-pinyin'), true);
-    assert.equal(await boxHidden('edit-traditional'), true);
+    assert.equal(await boxHidden('edit-pinyin-also'), true);
+    assert.equal(await boxHidden('edit-cloze'), false);
+    assert.equal(await page.evaluate(`document.getElementById('edit-cloze').value`), '嗎');
     // Two cards at most: reading and writing.
     await waitUntil(page, `document.querySelectorAll('#edit-cards li').length === 2`, 'the sentence\'s two cards');
     await type(page, 'edit-definition', 'How are you?');
@@ -145,11 +146,37 @@ describe('sentences', { concurrency: false }, () => {
     assert.equal(greeting.definition, 'How are you?');
     assert.equal(greeting.kind, 'sentence');
     assert.deepEqual(greeting.cloze, { traditional: '嗎', simplified: '吗' });
+
+    // Its characters, pinyin and word to fill in can be changed too. The ID
+    // follows the characters, and the old one is remembered.
+    await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
+    await type(page, 'edit-traditional', '你們好嗎？');
+    await type(page, 'edit-simplified', '你们好吗？');
+    await type(page, 'edit-pinyin', 'Nǐmen hǎo ma?');
+    await type(page, 'edit-cloze', '你們');
+    await page.evaluate(`document.getElementById('word-dialog-form').requestSubmit()`);
+    await waitUntil(page, `!document.getElementById('word-dialog').open`, 'the panel to close');
+    const all = await stored(page, 'words');
+    assert.equal(all.some((word) => word.id === '你好嗎？|sentence'), false);
+    const changed = all.find((word) => word.id === '你們好嗎？|sentence');
+    assert.equal(changed.simplified, '你们好吗？');
+    assert.equal(changed.pinyin, 'Nǐmen hǎo ma?');
+    assert.deepEqual(changed.cloze, { traditional: '你們', simplified: '你们' });
+    assert.deepEqual(changed.formerIds, ['你好嗎？|sentence']);
+    assert.equal(changed.definition, 'How are you?');
+    // A word that is not in the sentence is refused.
+    await type(page, 'word-search', '你們好');
+    await waitUntil(page, `document.querySelectorAll('#word-list li').length === 1`, 'the changed sentence');
+    await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
+    await type(page, 'edit-cloze', '老師');
+    await page.evaluate(`document.getElementById('word-dialog-form').requestSubmit()`);
+    await waitUntil(page, `document.getElementById('word-dialog-note').textContent === '"老師" is not in the sentence.'`, 'the refusal');
+    await tap(page, 'word-dialog-close');
     // A word's panel has all its boxes again.
     await type(page, 'word-search', 'wo3men');
     await waitUntil(page, `document.querySelectorAll('#word-list li').length === 1`, 'the word in the list');
     await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
-    assert.equal(await boxHidden('edit-pinyin'), false);
-    assert.equal(await boxHidden('edit-traditional'), false);
+    assert.equal(await boxHidden('edit-pinyin-also'), false);
+    assert.equal(await boxHidden('edit-cloze'), true);
   });
 });

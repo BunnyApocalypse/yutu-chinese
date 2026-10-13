@@ -14,7 +14,7 @@ import { missingReadyMadeDecks, deckTree, deckWithInside, isInDecks, withDeck } 
 import { createDecksPanel } from './decksPanel.js';
 import { createCardsPanel } from './cardsPanel.js';
 import { createWordPage } from './wordPage.js';
-import { isSentence, sentenceId, sentenceRecord } from './sentences.js';
+import { isSentence, sentenceId, sentenceRecord, clozeInBoth } from './sentences.js';
 import { lapsesOf } from './leeches.js';
 import { findLeeches, describeLeech, describeSuspended, leechList, leechPrompt } from './leeches.js';
 import {
@@ -115,6 +115,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   const editPinyinTaiwan = byId('edit-pinyin-taiwan');
   const editPinyinAlso = byId('edit-pinyin-also');
   const editCardScript = byId('edit-card-script');
+  const editCloze = byId('edit-cloze');
   const dialogNote = byId('word-dialog-note');
   const studyNextButton = byId('study-next-button');
 
@@ -287,14 +288,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       sentenceNote.textContent = `"${clozeOwn}" is not in the sentence.`;
       return;
     }
-    // The word to fill in, in the other script: the characters at the same
-    // place, if the two sentences are of the same length.
-    const at = Array.from(own).join('').indexOf(clozeOwn);
-    const place = Array.from(own.slice(0, at)).length;
-    const clozeOther =
-      Array.from(own).length === Array.from(other).length
-        ? Array.from(other).slice(place, place + Array.from(clozeOwn).length).join('')
-        : clozeOwn;
+    const cloze = clozeInBoth(own, other, clozeOwn);
     const inScript = (ownForm, otherForm) =>
       settings.script === 'traditional'
         ? { traditional: ownForm, simplified: otherForm }
@@ -304,7 +298,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
         ...inScript(own, other),
         pinyin: sentenceFields.pinyin.value.trim(),
         definition: meaning,
-        ...(clozeOwn === '' ? {} : { cloze: inScript(clozeOwn, clozeOther) }),
+        ...(cloze ? { cloze: inScript(cloze.own, cloze.other) } : {}),
       },
       openDeck().id,
     );
@@ -1034,17 +1028,20 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   }
 
   function openDialog(word) {
-    // A sentence has fewer things to change: its meaning, its decks and its
-    // cards. The rest of its boxes are put out of sight.
+    // A sentence has no Taiwan reading, no readings for tone cards and no
+    // script of its own; it has a word to fill in instead.
     applySettings();
-    if (isSentence(word)) {
-      for (const box of [editTraditional, editSimplified, editPinyin, editPinyinTaiwan, editPinyinAlso, editCardScript]) {
+    const sentence = isSentence(word);
+    if (sentence) {
+      for (const box of [editPinyinTaiwan, editPinyinAlso, editCardScript]) {
         box.closest('label').hidden = true;
       }
     } else {
-      editPinyin.closest('label').hidden = false;
       editPinyinAlso.closest('label').hidden = false;
     }
+    editCloze.closest('label').hidden = !sentence;
+    // The word to fill in is shown in the script the sentence is studied in.
+    editCloze.value = sentence && word.cloze ? word.cloze[scriptFor(word, getSettings())] : '';
     openWord = word;
     dialogResult = { changed: false, word };
     const studied = studiedWordIds.has(word.id);
@@ -1105,24 +1102,65 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     // those are filed under the new ID (renameWord).
     // What is not asked for (see applySettings) stays as it was stored.
     if (isSentence(openWord)) {
-      // Only a sentence's meaning, decks and suspended cards are changed here.
+      // A sentence is saved by rules of its own: its pinyin is kept as
+      // typed, and it has a word to fill in.
+      const asksSentence = asksFor();
+      // A script that is not asked for cannot be typed. If the sentence in
+      // the other one was changed, it is the best there is for both.
+      const typed = (box, asked, stored, otherBox, otherStored) =>
+        asked ? box.value.trim() : otherBox.value.trim() === otherStored ? stored : otherBox.value.trim();
+      const traditional = typed(editTraditional, asksSentence.traditional, openWord.traditional, editSimplified, openWord.simplified);
+      const simplified = typed(editSimplified, asksSentence.simplified, openWord.simplified, editTraditional, openWord.traditional);
+      const definition = editDefinition.value.trim();
+      if (traditional === '' || simplified === '' || definition === '') {
+        dialogNote.textContent = 'A sentence needs its characters and what it means.';
+        return;
+      }
+      const script = scriptFor(openWord, getSettings());
+      const [own, other] = script === 'traditional' ? [traditional, simplified] : [simplified, traditional];
+      const clozeTyped = editCloze.value.trim();
+      const cloze = clozeInBoth(own, other, clozeTyped);
+      if (clozeTyped !== '' && !cloze) {
+        dialogNote.textContent = `"${clozeTyped}" is not in the sentence.`;
+        return;
+      }
       if (tickedDecks().length === 0) {
         byId('edit-decks-row').open = true;
         dialogNote.textContent = 'A sentence has to be in at least one deck. To be rid of it, use Remove.';
         return;
       }
       const there = new Set(decks.map((deck) => deck.id));
-      const { changedAt, suspended: unused, ...kept } = openWord;
+      const { changedAt, suspended: wasSuspended, cloze: oldCloze, ...kept } = openWord;
       const sentence = {
         ...kept,
-        definition: editDefinition.value.trim() || openWord.definition,
+        id: sentenceId(traditional),
+        traditional,
+        simplified,
+        pinyin: editPinyin.value.trim(),
+        definition,
         decks: [...(openWord.decks || []).filter((id) => !there.has(id)), ...tickedDecks()],
       };
+      if (cloze) {
+        sentence.cloze =
+          script === 'traditional'
+            ? { traditional: cloze.own, simplified: cloze.other }
+            : { traditional: cloze.other, simplified: cloze.own };
+      }
       const off = suspendedBoxes.filter((box) => box.checked).map((box) => box.value);
       if (off.length > 0) {
         sentence.suspended = off;
       }
-      await putAll('words', [sentence]);
+      if (sentence.id === openWord.id) {
+        await putAll('words', [sentence]);
+      } else if (words.some((word) => word.id === sentence.id)) {
+        dialogNote.textContent = 'This sentence is already in your words.';
+        return;
+      } else {
+        // Its characters changed, and its ID with them: its cards and
+        // reviews are filed under the new one, as for a corrected word.
+        await renameWord(openWord.id, withFormerId(sentence, openWord));
+      }
+      await fileCardsByScript([sentence]);
       await afterChange();
       dialogResult = { changed: true, word: sentence };
       dialog.close();
