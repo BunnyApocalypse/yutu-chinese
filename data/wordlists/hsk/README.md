@@ -9,6 +9,8 @@ The word lists of the HSK (Hanyu Shuiping Kaoshi, 汉语水平考试), mainland 
 
 Both are built by `scripts/build-word-lists.js`, one word per line with tabs between the columns: level, simplified, traditional, pinyin, meaning. The meaning is empty wherever the app's dictionary has the word with that reading (nearly always); the app then proposes one from the dictionary.
 
+The lower levels (HSK 3.0 levels 1 to 3, HSK 2.0 levels 1 to 3) have a sixth column, the word's group, and are in an order for learning instead of alphabetical: see `groups/README.md`.
+
 ## Sources
 
 - **HSK 3.0:** [ivankra/hsk30](https://github.com/ivankra/hsk30), `hsk30-expanded.csv` at commit `4ff9e39`: the official list cleaned up, with each term matched to its CC-CEDICT entry. That match was made against an older CC-CEDICT, so each term is matched again to the app's dictionary, by its characters and reading, and takes its traditional form and reading from there. Rows that are only examples of a prefix or suffix are left out, and a term listed in two variants is two words.

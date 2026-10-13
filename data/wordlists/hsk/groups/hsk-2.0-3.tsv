@@ -1,0 +1,300 @@
+1	People and family	阿姨	a1yi2
+1	People and family	叔叔	shu1shu5
+1	People and family	爷爷	ye2ye5
+1	People and family	奶奶	nai3nai5
+1	People and family	邻居	lin2ju1
+1	People and family	同事	tong2shi4
+1	People and family	客人	ke4ren2
+1	People and family	别人	bie2ren5
+1	People and family	经理	jing1li3
+1	People and family	司机	si1ji1
+1	People and family	校长	xiao4zhang3
+1	People and family	自己	zi4ji3
+1	People and family	年轻	nian2qing1
+1	People and family	老	lao3
+1	People and family	聪明	cong1ming5
+1	People and family	结婚	jie2hun1
+2	Body and health	脸	lian3
+2	Body and health	鼻子	bi2zi5
+2	Body and health	嘴	zui3
+2	Body and health	耳朵	er3duo5
+2	Body and health	腿	tui3
+2	Body and health	脚	jiao3
+2	Body and health	头发	tou2fa5
+2	Body and health	个子	ge4zi5
+2	Body and health	矮	ai3
+2	Body and health	胖	pang4
+2	Body and health	瘦	shou4
+2	Body and health	疼	teng2
+2	Body and health	饿	e4
+2	Body and health	饱	bao3
+2	Body and health	渴	ke3
+2	Body and health	感冒	gan3mao4
+2	Body and health	发烧	fa1shao1
+2	Body and health	健康	jian4kang1
+2	Body and health	舒服	shu1fu5
+2	Body and health	锻炼	duan4lian4
+2	Body and health	刷牙	shua1ya2
+2	Body and health	洗澡	xi3zao3
+3	Food and drink	面包	mian4bao1
+3	Food and drink	蛋糕	dan4gao1
+3	Food and drink	香蕉	xiang1jiao1
+3	Food and drink	啤酒	pi2jiu3
+3	Food and drink	饮料	yin3liao4
+3	Food and drink	碗	wan3
+3	Food and drink	盘子	pan2zi5
+3	Food and drink	筷子	kuai4zi5
+3	Food and drink	瓶子	ping2zi5
+3	Food and drink	菜单	cai4dan1
+3	Food and drink	甜	tian2
+3	Food and drink	新鲜	xin1xian1
+3	Food and drink	超市	chao1shi4
+4	Home and city	楼	lou2
+4	Home and city	层	ceng2
+4	Home and city	灯	deng1
+4	Home and city	冰箱	bing1xiang1
+4	Home and city	空调	kong1tiao2
+4	Home and city	电梯	dian4ti1
+4	Home and city	打扫	da3sao3
+4	Home and city	干净	gan1jing4
+4	Home and city	搬	ban1
+4	Home and city	洗手间	xi3shou3jian1
+4	Home and city	放	fang4
+4	Home and city	拿	na2
+4	Home and city	办公室	ban4gong1shi4
+4	Home and city	地方	di4fang5
+4	Home and city	街道	jie1dao4
+4	Home and city	城市	cheng2shi4
+4	Home and city	地铁	di4tie3
+4	Home and city	地图	di4tu2
+4	Home and city	公园	gong1yuan2
+4	Home and city	图书馆	tu2shu1guan3
+4	Home and city	银行	yin2hang2
+4	Home and city	附近	fu4jin4
+4	Home and city	国家	guo2jia1
+4	Home and city	世界	shi4jie4
+4	Home and city	中间	zhong1jian1
+4	Home and city	地	di4
+5	Clothes and belongings	衬衫	chen4shan1
+5	Clothes and belongings	裤子	ku4zi5
+5	Clothes and belongings	裙子	qun2zi5
+5	Clothes and belongings	帽子	mao4zi5
+5	Clothes and belongings	皮鞋	pi2xie2
+5	Clothes and belongings	伞	san3
+5	Clothes and belongings	包	bao1
+5	Clothes and belongings	双	shuang1
+5	Clothes and belongings	条	tiao2
+5	Clothes and belongings	笔记本	bi3ji4ben3
+5	Clothes and belongings	照相机	zhao4xiang4ji1
+5	Clothes and belongings	照片	zhao4pian4
+5	Clothes and belongings	礼物	li3wu4
+5	Clothes and belongings	信用卡	xin4yong4ka3
+6	Seasons and time	春	chun1
+6	Seasons and time	夏	xia4
+6	Seasons and time	秋	qiu1
+6	Seasons and time	冬	dong1
+6	Seasons and time	季节	ji4jie2
+6	Seasons and time	周末	zhou1mo4
+6	Seasons and time	节日	jie2ri4
+6	Seasons and time	刚才	gang1cai2
+6	Seasons and time	以前	yi3qian2
+6	Seasons and time	后来	hou4lai2
+6	Seasons and time	最近	zui4jin4
+6	Seasons and time	最后	zui4hou4
+6	Seasons and time	过去	guo4qu4
+6	Seasons and time	久	jiu3
+6	Seasons and time	一会儿	yi1hui4r5
+6	Seasons and time	半	ban4
+6	Seasons and time	刻	ke4
+6	Seasons and time	差	cha4
+7	Directions and nature	东	dong1
+7	Directions and nature	南	nan2
+7	Directions and nature	西	xi1
+7	Directions and nature	北方	bei3fang1
+7	Directions and nature	太阳	tai4yang5
+7	Directions and nature	月亮	yue4liang5
+7	Directions and nature	草	cao3
+7	Directions and nature	树	shu4
+7	Directions and nature	花	hua1
+7	Directions and nature	鸟	niao3
+7	Directions and nature	动物	dong4wu4
+7	Directions and nature	熊猫	xiong2mao1
+7	Directions and nature	马	ma3
+7	Directions and nature	刮风	gua1feng1
+7	Directions and nature	黄河	Huang2He2
+8	Degree adverbs	更	geng4
+8	Degree adverbs	极	ji2
+8	Degree adverbs	越	yue4
+8	Degree adverbs	比较	bi3jiao4
+8	Degree adverbs	特别	te4bie2
+8	Degree adverbs	多么	duo1me5
+8	Degree adverbs	一共	yi1gong4
+8	Degree adverbs	几乎	ji1hu1
+8	Degree adverbs	一定	yi1ding4
+8	Degree adverbs	必须	bi4xu1
+8	Degree adverbs	一般	yi1ban1
+8	Degree adverbs	一样	yi1yang4
+9	School and study	班	ban1
+9	School and study	年级	nian2ji2
+9	School and study	黑板	hei1ban3
+9	School and study	成绩	cheng2ji4
+9	School and study	作业	zuo4ye4
+9	School and study	数学	shu4xue2
+9	School and study	历史	li4shi3
+9	School and study	体育	ti3yu4
+9	School and study	中文	Zhong1wen2
+9	School and study	词典	ci2dian3
+9	School and study	句子	ju4zi5
+9	School and study	复习	fu4xi2
+9	School and study	练习	lian4xi2
+9	School and study	留学	liu2xue2
+9	School and study	迟到	chi2dao4
+9	School and study	请假	qing3jia4
+10	Travel, money and measures	船	chuan2
+10	Travel, money and measures	起飞	qi3fei1
+10	Travel, money and measures	站	zhan4
+10	Travel, money and measures	辆	liang4
+10	Travel, money and measures	离开	li2kai1
+10	Travel, money and measures	见面	jian4mian4
+10	Travel, money and measures	欢迎	huan1ying2
+10	Travel, money and measures	遇到	yu4dao4
+10	Travel, money and measures	经过	jing1guo4
+10	Travel, money and measures	护照	hu4zhao4
+10	Travel, money and measures	自行车	zi4xing2che1
+10	Travel, money and measures	行李箱	xing2li5xiang1
+10	Travel, money and measures	元	yuan2
+10	Travel, money and measures	角	jiao3
+10	Travel, money and measures	分	fen1
+10	Travel, money and measures	公斤	gong1jin1
+10	Travel, money and measures	米	mi3
+10	Travel, money and measures	万	wan4
+10	Travel, money and measures	段	duan4
+10	Travel, money and measures	张	zhang1
+10	Travel, money and measures	种	zhong3
+10	Travel, money and measures	位	wei4
+10	Travel, money and measures	只	zhi1
+10	Travel, money and measures	口	kou3
+11	Everyday verbs and fun	带	dai4
+11	Everyday verbs and fun	换	huan4
+11	Everyday verbs and fun	借	jie4
+11	Everyday verbs and fun	接	jie1
+11	Everyday verbs and fun	关	guan1
+11	Everyday verbs and fun	发	fa1
+11	Everyday verbs and fun	试	shi4
+11	Everyday verbs and fun	用	yong4
+11	Everyday verbs and fun	教	jiao1
+11	Everyday verbs and fun	讲	jiang3
+11	Everyday verbs and fun	回答	hui2da2
+11	Everyday verbs and fun	爱好	ai4hao4
+11	Everyday verbs and fun	感兴趣	gan3xing4qu4
+11	Everyday verbs and fun	音乐	yin1yue4
+11	Everyday verbs and fun	声音	sheng1yin1
+11	Everyday verbs and fun	游戏	you2xi4
+11	Everyday verbs and fun	画	hua4
+11	Everyday verbs and fun	爬山	pa2shan1
+11	Everyday verbs and fun	骑	qi2
+11	Everyday verbs and fun	比赛	bi3sai4
+11	Everyday verbs and fun	节目	jie2mu4
+11	Everyday verbs and fun	角	jue2
+11	Everyday verbs and fun	故事	gu4shi5
+11	Everyday verbs and fun	聊天	liao2tian1
+11	Everyday verbs and fun	电子邮件	dian4zi3you2jian4
+11	Everyday verbs and fun	上网	shang4wang3
+11	Everyday verbs and fun	新闻	xin1wen2
+12	Feelings and character	哭	ku1
+12	Feelings and character	担心	dan1xin1
+12	Feelings and character	放心	fang4xin1
+12	Feelings and character	小心	xiao3xin1
+12	Feelings and character	着急	zhao2ji2
+12	Feelings and character	害怕	hai4pa4
+12	Feelings and character	生气	sheng1qi4
+12	Feelings and character	难过	nan2guo4
+12	Feelings and character	满意	man3yi4
+12	Feelings and character	可爱	ke3'ai4
+12	Feelings and character	热情	re4qing2
+12	Feelings and character	安静	an1jing4
+12	Feelings and character	努力	nu3li4
+12	Feelings and character	认真	ren4zhen1
+12	Feelings and character	愿意	yuan4yi4
+12	Feelings and character	关心	guan1xin1
+12	Feelings and character	照顾	zhao4gu5
+13	Time and manner adverbs	又	you4
+13	Time and manner adverbs	才	cai2
+13	Time and manner adverbs	一直	yi1zhi2
+13	Time and manner adverbs	经常	jing1chang2
+13	Time and manner adverbs	总是	zong3shi4
+13	Time and manner adverbs	马上	ma3shang4
+13	Time and manner adverbs	突然	tu1ran2
+13	Time and manner adverbs	终于	zhong1yu2
+13	Time and manner adverbs	当然	dang1ran2
+13	Time and manner adverbs	其实	qi2shi2
+13	Time and manner adverbs	只有	zhi3you3
+13	Time and manner adverbs	只	zhi3
+13	Time and manner adverbs	起来	qi3lai5
+14	Thinking and deciding	了解	liao3jie3
+14	Thinking and deciding	记得	ji4de5
+14	Thinking and deciding	忘记	wang4ji4
+14	Thinking and deciding	明白	ming2bai5
+14	Thinking and deciding	清楚	qing1chu5
+14	Thinking and deciding	相信	xiang1xin4
+14	Thinking and deciding	认为	ren4wei2
+14	Thinking and deciding	决定	jue2ding4
+14	Thinking and deciding	同意	tong2yi4
+14	Thinking and deciding	打算	da3suan4
+14	Thinking and deciding	选择	xuan3ze2
+14	Thinking and deciding	注意	zhu4yi4
+14	Thinking and deciding	解决	jie3jue2
+14	Thinking and deciding	发现	fa1xian4
+14	Thinking and deciding	检查	jian3cha2
+14	Thinking and deciding	习惯	xi2guan4
+14	Thinking and deciding	要求	yao1qiu2
+14	Thinking and deciding	需要	xu1yao4
+14	Thinking and deciding	应该	ying1gai1
+15	Describing things	蓝	lan2
+15	Describing things	绿	lv4
+15	Describing things	旧	jiu4
+15	Describing things	坏	huai4
+15	Describing things	短	duan3
+15	Describing things	难	nan2
+15	Describing things	容易	rong2yi4
+15	Describing things	简单	jian3dan1
+15	Describing things	方便	fang1bian4
+15	Describing things	重要	zhong4yao4
+15	Describing things	主要	zhu3yao4
+15	Describing things	有名	you3ming2
+15	Describing things	奇怪	qi2guai4
+15	Describing things	其他	qi2ta1
+16	Work and society	办法	ban4fa3
+16	Work and society	机会	ji1hui4
+16	Work and society	会议	hui4yi4
+16	Work and society	参加	can1jia1
+16	Work and society	帮忙	bang1mang2
+16	Work and society	变化	bian4hua4
+16	Work and society	完成	wan2cheng2
+16	Work and society	结束	jie2shu4
+16	Work and society	提高	ti2gao1
+16	Work and society	影响	ying3xiang3
+16	Work and society	关系	guan1xi5
+16	Work and society	关于	guan1yu2
+16	Work and society	环境	huan2jing4
+16	Work and society	水平	shui3ping2
+16	Work and society	文化	wen2hua4
+16	Work and society	根据	gen1ju4
+17	Linking words	不但	bu4dan4
+17	Linking words	而且	er2qie3
+17	Linking words	如果	ru2guo3
+17	Linking words	或者	huo4zhe3
+17	Linking words	还是	hai2shi5
+17	Linking words	除了	chu2le5
+17	Linking words	为了	wei4le5
+17	Linking words	然后	ran2hou4
+17	Linking words	先	xian1
+17	Linking words	一边	yi1bian1
+17	Linking words	把	ba3
+17	Linking words	被	bei4
+17	Linking words	跟	gen1
+17	Linking words	向	xiang4
+17	Linking words	像	xiang4
+17	Linking words	为	wei4
+17	Linking words	地	de5
+17	Linking words	啊	a5

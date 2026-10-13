@@ -449,7 +449,12 @@ const TOCFL_TOPICS = {
 // The sheets that are levels, in order, and what the app calls each level.
 const TOCFL_LEVELS = ['Novice 1', 'Novice 2', 'Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'];
 
-const tocflZip = Buffer.from(await (await fetch(TOCFL_SOURCE)).arrayBuffer());
+// The committee's server is slow (the 10 MB file can take minutes). With a
+// copy of the zip file at hand, give its place in TOCFL_ZIP to use that:
+//   TOCFL_ZIP=~/Downloads/8000zhuyin_202307.zip node scripts/build-word-lists.js
+const tocflZip = process.env.TOCFL_ZIP
+  ? fs.readFileSync(process.env.TOCFL_ZIP)
+  : Buffer.from(await (await fetch(TOCFL_SOURCE)).arrayBuffer());
 const tocflSheets = sheetsOf(filesInZip(tocflZip).find((file) => file.name.endsWith('.xlsx')).read());
 const tocfl = [];
 const tocflLeftOut = [];

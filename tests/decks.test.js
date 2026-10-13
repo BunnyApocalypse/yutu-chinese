@@ -61,6 +61,28 @@ test('the levels listed for the decks are those in the list files', () => {
   }
 });
 
+test('the lower levels of each list are divided into groups, with every word in one', () => {
+  const grouped = {
+    'hsk/hsk-3.0.tsv': { 1: 28, 2: 39, 3: 47 },
+    'hsk/hsk-2.0.tsv': { 1: 11, 2: 10, 3: 17 },
+    'tocfl/tocfl.tsv': { 'Novice 1': 11, 'Novice 2': 12, 1: 12, 2: 12 },
+  };
+  for (const [file, levels] of Object.entries(grouped)) {
+    const entries = parseReadyList(fs.readFileSync(`data/wordlists/${file}`, 'utf8'));
+    const groupsOf = new Map();
+    for (const entry of entries) {
+      const where = `${file} level ${entry.level}: ${entry.simplified}`;
+      // A level has groups for all of its words or for none.
+      assert.equal(entry.group !== '', entry.level in levels, where);
+      if (entry.group !== '') {
+        assert.match(entry.group, /^\d\d \S/, where);
+        groupsOf.set(entry.level, (groupsOf.get(entry.level) || new Set()).add(entry.group));
+      }
+    }
+    assert.deepEqual(Object.fromEntries([...groupsOf].map(([level, groups]) => [level, groups.size])), levels, file);
+  }
+});
+
 test('only the decks that are not stored yet are made, with the list they are in', () => {
   const words = [
     { id: 'a', decks: ['hsk-3.0/1'] },

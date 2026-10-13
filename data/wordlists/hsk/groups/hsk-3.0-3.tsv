@@ -1,0 +1,958 @@
+1	Family and people	父母	fu4mu3
+1	Family and people	父亲	fu4qin1
+1	Family and people	母亲	mu3qin1
+1	Family and people	亲	qin1
+1	Family and people	亲人	qin1ren2
+1	Family and people	子女	zi3nv3
+1	Family and people	家属	jia1shu3
+1	Family and people	男子	nan2zi3
+1	Family and people	女子	nv3zi3
+1	Family and people	姑娘	gu1niang5
+1	Family and people	老太太	lao3tai4tai5
+1	Family and people	老头儿	lao3tou2r5
+1	Family and people	熟人	shu2ren2
+1	Family and people	年纪	nian2ji4
+1	Family and people	人类	ren2lei4
+1	Family and people	人生	ren2sheng1
+1	Family and people	人群	ren2qun2
+1	Family and people	老百姓	lao3bai3xing4
+1	Family and people	人民	ren2min2
+1	Family and people	公民	gong1min2
+1	Family and people	结婚	jie2hun1
+1	Family and people	离婚	li2hun1
+2	Food and drink	白菜	bai2cai4
+2	Food and drink	苹果	ping2guo3
+2	Food and drink	香蕉	xiang1jiao1
+2	Food and drink	咖啡	ka1fei1
+2	Food and drink	可乐	ke3le4
+2	Food and drink	奶茶	nai3cha2
+2	Food and drink	红茶	hong2cha2
+2	Food and drink	绿茶	lv4cha2
+2	Food and drink	红酒	hong2jiu3
+2	Food and drink	啤酒	pi2jiu3
+2	Food and drink	果汁	guo3zhi1
+2	Food and drink	凉水	liang2shui3
+2	Food and drink	汤	tang1
+2	Food and drink	糖	tang2
+2	Food and drink	甜	tian2
+2	Food and drink	香	xiang1
+2	Food and drink	美食	mei3shi2
+2	Food and drink	食品	shi2pin3
+2	Food and drink	营养	ying2yang3
+2	Food and drink	烟	yan1
+2	Food and drink	顿	dun4
+3	Home and furniture	屋子	wu1zi5
+3	Home and furniture	房屋	fang2wu1
+3	Home and furniture	房东	fang2dong1
+3	Home and furniture	房租	fang2zu1
+3	Home and furniture	搬	ban1
+3	Home and furniture	搬家	ban1jia1
+3	Home and furniture	家具	jia1ju4
+3	Home and furniture	沙发	sha1fa1
+3	Home and furniture	被子	bei4zi5
+3	Home and furniture	书架	shu1jia4
+3	Home and furniture	衣架	yi1jia4
+3	Home and furniture	空调	kong1tiao2
+3	Home and furniture	卫生间	wei4sheng1jian1
+3	Home and furniture	室	shi4
+3	Home and furniture	板	ban3
+3	Home and furniture	挂	gua4
+3	Home and furniture	刀	dao1
+4	Clothes and things we carry	衬衫	chen4shan1
+4	Clothes and things we carry	衬衣	chen4yi1
+4	Clothes and things we carry	上衣	shang4yi1
+4	Clothes and things we carry	短裤	duan3ku4
+4	Clothes and things we carry	裤子	ku4zi5
+4	Clothes and things we carry	裙子	qun2zi5
+4	Clothes and things we carry	服装	fu2zhuang1
+4	Clothes and things we carry	皮	pi2
+4	Clothes and things we carry	皮包	pi2bao1
+4	Clothes and things we carry	布	bu4
+4	Clothes and things we carry	行李	xing2li5
+4	Clothes and things we carry	牌子	pai2zi5
+4	Clothes and things we carry	玩具	wan2ju4
+5	Body and health	血	xue4
+5	Body and health	心	xin1
+5	Body and health	手指	shou3zhi3
+5	Body and health	头脑	tou2nao3
+5	Body and health	感冒	gan3mao4
+5	Body and health	痛	tong4
+5	Body and health	伤	shang1
+5	Body and health	受伤	shou4shang1
+5	Body and health	胖	pang4
+5	Body and health	困	kun4
+5	Body and health	救	jiu4
+5	Body and health	死	si3
+5	Body and health	去世	qu4shi4
+5	Body and health	生命	sheng1ming4
+5	Body and health	活	huo2
+5	Body and health	理发	li3fa4
+5	Body and health	握手	wo4shou3
+5	Body and health	卫生	wei4sheng1
+5	Body and health	生存	sheng1cun2
+5	Body and health	生长	sheng1zhang3
+5	Body and health	成长	cheng2zhang3
+5	Body and health	受	shou4
+6	Animals and nature	牛	niu2
+6	Animals and nature	羊	yang2
+6	Animals and nature	猪	zhu1
+6	Animals and nature	马	ma3
+6	Animals and nature	龙	long2
+6	Animals and nature	火	huo3
+6	Animals and nature	土	tu3
+6	Animals and nature	石头	shi2tou5
+6	Animals and nature	木头	mu4tou5
+6	Animals and nature	沙子	sha1zi5
+6	Animals and nature	铁	tie3
+6	Animals and nature	石油	shi2you2
+6	Animals and nature	天空	tian1kong1
+6	Animals and nature	阳光	yang2guang1
+6	Animals and nature	气候	qi4hou4
+6	Animals and nature	暖和	nuan3huo5
+6	Animals and nature	温暖	wen1nuan3
+6	Animals and nature	种子	zhong3zi5
+6	Animals and nature	光	guang1
+6	Animals and nature	光明	guang1ming2
+7	City and countryside	城	cheng2
+7	City and countryside	城市	cheng2shi4
+7	City and countryside	长城	Chang2cheng2
+7	City and countryside	首都	shou3du1
+7	City and countryside	村	cun1
+7	City and countryside	农村	nong2cun1
+7	City and countryside	农民	nong2min2
+7	City and countryside	农业	nong2ye4
+7	City and countryside	地区	di4qu1
+7	City and countryside	区	qu1
+7	City and countryside	当地	dang1di4
+7	City and countryside	各地	ge4di4
+7	City and countryside	国内	guo2nei4
+7	City and countryside	大使馆	da4shi3guan3
+7	City and countryside	海关	hai3guan1
+7	City and countryside	民间	min2jian1
+7	City and countryside	华人	Hua2ren2
+7	City and countryside	民族	min2zu2
+7	City and countryside	中华民族	Zhong1hua2min2zu2
+7	City and countryside	国庆	Guo2qing4
+7	City and countryside	场合	chang3he2
+7	City and countryside	场所	chang3suo3
+7	City and countryside	家乡	jia1xiang1
+7	City and countryside	故乡	gu4xiang1
+8	Roads and trips	桥	qiao2
+8	Roads and trips	铁路	tie3lu4
+8	Roads and trips	高速	gao1su4
+8	Roads and trips	高速公路	gao1su4gong1lu4
+8	Roads and trips	路线	lu4xian4
+8	Roads and trips	旅馆	lv3guan3
+8	Roads and trips	旅行社	lv3xing2she4
+8	Roads and trips	飞行	fei1xing2
+8	Roads and trips	前往	qian2wang3
+8	Roads and trips	到达	dao4da2
+8	Roads and trips	赶	gan3
+8	Roads and trips	赶到	gan3dao4
+8	Roads and trips	迎接	ying2jie1
+8	Roads and trips	接待	jie1dai4
+8	Roads and trips	访问	fang3wen4
+8	Roads and trips	做客	zuo4ke4
+8	Roads and trips	前进	qian2jin4
+8	Roads and trips	接近	jie1jin4
+8	Roads and trips	运输	yun4shu1
+9	Feelings	爱心	ai4xin1
+9	Feelings	热爱	re4'ai4
+9	Feelings	害怕	hai4pa4
+9	Feelings	好奇	hao4qi2
+9	Feelings	欢乐	huan1le4
+9	Feelings	乐	le4
+9	Feelings	哈哈	ha1ha1
+9	Feelings	伤心	shang1xin1
+9	Feelings	痛苦	tong4ku3
+9	Feelings	幸福	xing4fu2
+9	Feelings	幸运	xing4yun4
+9	Feelings	满足	man3zu2
+9	Feelings	紧张	jin3zhang1
+9	Feelings	不安	bu4'an1
+9	Feelings	感情	gan3qing2
+9	Feelings	感受	gan3shou4
+9	Feelings	情感	qing2gan3
+9	Feelings	愿望	yuan4wang4
+9	Feelings	希望	xi1wang4
+9	Feelings	祝	zhu4
+9	Feelings	庆祝	qing4zhu4
+9	Feelings	内心	nei4xin1
+9	Feelings	充满	chong1man3
+9	Feelings	精神	jing1shen2
+9	Feelings	精神	jing1shen5
+9	Feelings	静	jing4
+9	Feelings	福	fu2
+10	Years and dates	后年	hou4nian2
+10	Years and dates	年初	nian2chu1
+10	Years and dates	年底	nian2di3
+10	Years and dates	年代	nian2dai4
+10	Years and dates	世纪	shi4ji4
+10	Years and dates	时代	shi2dai4
+10	Years and dates	时	shi2
+10	Years and dates	时刻	shi2ke4
+10	Years and dates	古	gu3
+10	Years and dates	古代	gu3dai4
+10	Years and dates	旧	jiu4
+10	Years and dates	初	chu1
+10	Years and dates	期	qi1
+10	Years and dates	长期	chang2qi1
+10	Years and dates	短期	duan3qi1
+10	Years and dates	近期	jin4qi1
+10	Years and dates	定期	ding4qi1
+10	Years and dates	日常	ri4chang2
+10	Years and dates	久	jiu3
+10	Years and dates	整天	zheng3tian1
+10	Years and dates	空儿	kong4r5
+10	Years and dates	钟	zhong1
+11	Before, now, soon	当初	dang1chu1
+11	Before, now, soon	从前	cong2qian2
+11	Before, now, soon	目前	mu4qian2
+11	Before, now, soon	眼前	yan3qian2
+11	Before, now, soon	将来	jiang1lai2
+11	Before, now, soon	以来	yi3lai2
+11	Before, now, soon	至今	zhi4jin1
+11	Before, now, soon	自从	zi4cong2
+11	Before, now, soon	提前	ti2qian2
+11	Before, now, soon	已	yi3
+11	Before, now, soon	曾经	ceng2jing1
+11	Before, now, soon	早已	zao3yi3
+11	Before, now, soon	本来	ben3lai2
+11	Before, now, soon	立刻	li4ke4
+11	Before, now, soon	连忙	lian2mang2
+11	Before, now, soon	赶紧	gan3jin3
+11	Before, now, soon	赶快	gan3kuai4
+11	Before, now, soon	及时	ji2shi2
+11	Before, now, soon	终于	zhong1yu2
+11	Before, now, soon	突然	tu1ran2
+12	Direction and position	北部	bei3bu4
+12	Direction and position	南部	nan2bu4
+12	Direction and position	东部	dong1bu4
+12	Direction and position	西部	xi1bu4
+12	Direction and position	中部	zhong1bu4
+12	Direction and position	朝	chao2
+12	Direction and position	内	nei4
+12	Direction and position	周围	zhou1wei2
+12	Direction and position	背后	bei4hou4
+12	Direction and position	表面	biao3mian4
+12	Direction and position	前后	qian2hou4
+12	Direction and position	左右	zuo3you4
+12	Direction and position	上来	shang4lai2
+12	Direction and position	上去	shang4qu4
+12	Direction and position	下来	xia4lai5
+12	Direction and position	下去	xia4qu4
+12	Direction and position	上面	shang4mian4
+12	Direction and position	下面	xia4mian4
+12	Direction and position	前面	qian2mian4
+12	Direction and position	后面	hou4mian5
+12	Direction and position	里面	li3mian4
+12	Direction and position	外面	wai4mian4
+12	Direction and position	底下	di3xia5
+12	Direction and position	当中	dang1zhong1
+12	Direction and position	直	zhi2
+13	Little grammar words	把	ba3
+13	Little grammar words	被	bei4
+13	Little grammar words	使	shi3
+13	Little grammar words	所	suo3
+13	Little grammar words	连	lian2
+13	Little grammar words	了	liao3
+13	Little grammar words	仅	jin3
+13	Little grammar words	仅仅	jin3jin3
+13	Little grammar words	比较	bi3jiao4
+13	Little grammar words	较	jiao4
+13	Little grammar words	更加	geng4jia1
+13	Little grammar words	任何	ren4he2
+13	Little grammar words	某	mou3
+13	Little grammar words	每	mei3
+13	Little grammar words	各	ge4
+13	Little grammar words	应当	ying1dang1
+13	Little grammar words	必要	bi4yao4
+13	Little grammar words	不必	bu4bi4
+14	School and study	班级	ban1ji2
+14	School and study	初中	chu1zhong1
+14	School and study	初级	chu1ji2
+14	School and study	课程	ke4cheng2
+14	School and study	功课	gong1ke4
+14	School and study	教材	jiao4cai2
+14	School and study	学费	xue2fei4
+14	School and study	留学	liu2xue2
+14	School and study	预习	yu4xi2
+14	School and study	试题	shi4ti2
+14	School and study	题目	ti2mu4
+14	School and study	提问	ti2wen4
+14	School and study	请教	qing3jiao4
+14	School and study	单元	dan1yuan2
+14	School and study	念	nian4
+14	School and study	背	bei1
+14	School and study	训练	xun4lian4
+14	School and study	听力	ting1li4
+14	School and study	实验	shi2yan4
+14	School and study	实验室	shi2yan4shi4
+14	School and study	试验	shi4yan4
+14	School and study	专业	zhuan1ye4
+14	School and study	专题	zhuan1ti2
+14	School and study	系	xi4
+14	School and study	资格	zi1ge2
+14	School and study	合格	he2ge2
+14	School and study	志愿	zhi4yuan4
+14	School and study	报到	bao4dao4
+15	TV and radio	电视剧	dian4shi4ju4
+15	TV and radio	连续剧	lian2xu4ju4
+15	TV and radio	电视台	dian4shi4tai2
+15	TV and radio	电台	dian4tai2
+15	TV and radio	影视	ying3shi4
+15	TV and radio	播出	bo1chu1
+15	TV and radio	播放	bo1fang4
+15	TV and radio	直播	zhi2bo1
+15	TV and radio	广播	guang3bo1
+15	TV and radio	收看	shou1kan4
+15	TV and radio	收听	shou1ting1
+15	TV and radio	收音机	shou1yin1ji1
+15	TV and radio	录	lu4
+15	TV and radio	录音	lu4yin1
+15	TV and radio	媒体	mei2ti3
+15	TV and radio	观看	guan1kan4
+15	TV and radio	观众	guan1zhong4
+15	TV and radio	听众	ting1zhong4
+15	TV and radio	报	bao4
+15	TV and radio	报道	bao4dao4
+15	TV and radio	消息	xiao1xi5
+15	TV and radio	宣传	xuan1chuan2
+15	TV and radio	传播	chuan2bo1
+16	Sports and competition	比赛	bi3sai4
+16	Sports and competition	决赛	jue2sai4
+16	Sports and competition	世界杯	Shi4jie4bei1
+16	Sports and competition	足球	zu2qiu2
+16	Sports and competition	球迷	qiu2mi2
+16	Sports and competition	跑步	pao3bu4
+16	Sports and competition	散步	san4bu4
+16	Sports and competition	游	you2
+16	Sports and competition	游泳	you2yong3
+16	Sports and competition	划船	hua2chuan2
+16	Sports and competition	跳	tiao4
+16	Sports and competition	跳高	tiao4gao1
+16	Sports and competition	跳远	tiao4yuan3
+16	Sports and competition	金	jin1
+16	Sports and competition	金牌	jin1pai2
+16	Sports and competition	银	yin2
+16	Sports and competition	银牌	yin2pai2
+16	Sports and competition	得分	de2fen1
+16	Sports and competition	输	shu1
+16	Sports and competition	赢	ying2
+16	Sports and competition	胜	sheng4
+16	Sports and competition	胜利	sheng4li4
+16	Sports and competition	排名	pai2ming2
+16	Sports and competition	教练	jiao4lian4
+16	Sports and competition	选手	xuan3shou3
+16	Sports and competition	队员	dui4yuan2
+16	Sports and competition	对手	dui4shou3
+16	Sports and competition	领先	ling3xian1
+16	Sports and competition	落后	luo4hou4
+16	Sports and competition	武术	wu3shu4
+16	Sports and competition	武器	wu3qi4
+17	Stage and music	歌声	ge1sheng1
+17	Stage and music	歌手	ge1shou3
+17	Stage and music	歌迷	ge1mi2
+17	Stage and music	演唱	yan3chang4
+17	Stage and music	演唱会	yan3chang4hui4
+17	Stage and music	乐队	yue4dui4
+17	Stage and music	演	yan3
+17	Stage and music	演员	yan3yuan2
+17	Stage and music	导演	dao3yan3
+17	Stage and music	演出	yan3chu1
+17	Stage and music	表演	biao3yan3
+17	Stage and music	舞台	wu3tai2
+17	Stage and music	话剧	hua4ju4
+17	Stage and music	京剧	Jing1ju4
+17	Stage and music	剧场	ju4chang3
+17	Stage and music	跳舞	tiao4wu3
+17	Stage and music	游戏	you2xi4
+17	Stage and music	迷	mi2
+18	Measure words and money	张	zhang1
+18	Measure words and money	支	zhi1
+18	Measure words and money	只	zhi1
+18	Measure words and money	种	zhong3
+18	Measure words and money	双	shuang1
+18	Measure words and money	束	shu4
+18	Measure words and money	群	qun2
+18	Measure words and money	架	jia4
+18	Measure words and money	部	bu4
+18	Measure words and money	步	bu4
+18	Measure words and money	代	dai4
+18	Measure words and money	团	tuan2
+18	Measure words and money	各位	ge4wei4
+18	Measure words and money	数量	shu4liang4
+18	Measure words and money	人民币	ren2min2bi4
+18	Measure words and money	美元	mei3yuan2
+18	Measure words and money	现金	xian4jin1
+18	Measure words and money	价格	jia4ge2
+18	Measure words and money	价钱	jia4qian5
+18	Measure words and money	台	tai2
+19	Really and probably	其实	qi2shi2
+19	Really and probably	事实上	shi4shi2shang4
+19	Really and probably	实际上	shi2ji4shang4
+19	Really and probably	事实	shi4shi2
+19	Really and probably	当然	dang1ran2
+19	Really and probably	果然	guo3ran2
+19	Really and probably	显然	xian3ran2
+19	Really and probably	确实	que4shi2
+19	Really and probably	根本	gen1ben3
+19	Really and probably	简直	jian3zhi2
+19	Really and probably	绝对	jue2dui4
+19	Really and probably	难道	nan2dao4
+19	Really and probably	恐怕	kong3pa4
+19	Really and probably	反正	fan3zheng4
+19	Really and probably	基本上	ji1ben3shang5
+19	Really and probably	大概	da4gai4
+19	Really and probably	大约	da4yue1
+19	Really and probably	必然	bi4ran2
+19	Really and probably	相当	xiang1dang1
+19	Really and probably	极了	ji2le5
+19	Really and probably	到底	dao4di3
+19	Really and probably	将近	jiang1jin4
+19	Really and probably	千万	qian1wan4
+19	Really and probably	约	yue1
+19	Really and probably	至少	zhi4shao3
+20	Always, often, again	总	zong3
+20	Always, often, again	总是	zong3shi4
+20	Always, often, again	通常	tong1chang2
+20	Always, often, again	往往	wang3wang3
+20	Always, often, again	从来	cong2lai2
+20	Always, often, again	始终	shi3zhong1
+20	Always, often, again	不断	bu4duan4
+20	Always, often, again	反复	fan3fu4
+20	Always, often, again	仍	reng2
+20	Always, often, again	仍然	reng2ran2
+20	Always, often, again	连续	lian2xu4
+20	Always, often, again	持续	chi2xu4
+20	Always, often, again	继续	ji4xu4
+20	Always, often, again	好好	hao3hao3
+20	Always, often, again	慢慢	man4man4
+20	Always, often, again	尽量	jin3liang4
+21	Character and personality	个性	ge4xing4
+21	Character and personality	性格	xing4ge2
+21	Character and personality	性	xing4
+21	Character and personality	性别	xing4bie2
+21	Character and personality	坚强	jian1qiang2
+21	Character and personality	坚决	jian1jue2
+21	Character and personality	敢	gan3
+21	Character and personality	积极	ji1ji2
+21	Character and personality	乐观	le4guan1
+21	Character and personality	主动	zhu3dong4
+21	Character and personality	自觉	zi4jue2
+21	Character and personality	亲切	qin1qie4
+21	Character and personality	热烈	re4lie4
+21	Character and personality	巧	qiao3
+21	Character and personality	伟大	wei3da4
+21	Character and personality	成熟	cheng2shu2
+21	Character and personality	可靠	ke3kao4
+21	Character and personality	真实	zhen1shi2
+21	Character and personality	结实	jie1shi5
+22	Doing things with hands	拍	pai1
+22	Doing things with hands	抓	zhua1
+22	Doing things with hands	抓住	zhua1zhu4
+22	Doing things with hands	推开	tui1kai1
+22	Doing things with hands	断	duan4
+22	Doing things with hands	破	po4
+22	Doing things with hands	打破	da3po4
+22	Doing things with hands	破坏	po4huai4
+22	Doing things with hands	解开	jie3kai1
+22	Doing things with hands	放到	fang4dao4
+22	Doing things with hands	修	xiu1
+22	Doing things with hands	补	bu3
+22	Doing things with hands	订	ding4
+22	Doing things with hands	存	cun2
+22	Doing things with hands	保存	bao3cun2
+22	Doing things with hands	保留	bao3liu2
+22	Doing things with hands	配	pei4
+22	Doing things with hands	传	chuan2
+22	Doing things with hands	传来	chuan2lai2
+22	Doing things with hands	退	tui4
+22	Doing things with hands	退出	tui4chu1
+22	Doing things with hands	转	zhuan3
+22	Doing things with hands	补充	bu3chong1
+22	Doing things with hands	围	wei2
+22	Doing things with hands	指	zhi3
+22	Doing things with hands	追	zhui1
+23	Internet, mail and technology	电子邮件	dian4zi3you2jian4
+23	Internet, mail and technology	邮件	you2jian4
+23	Internet, mail and technology	邮箱	you2xiang1
+23	Internet, mail and technology	互联网	Hu4lian2wang3
+23	Internet, mail and technology	发送	fa1song4
+23	Internet, mail and technology	发出	fa1chu1
+23	Internet, mail and technology	输入	shu1ru4
+23	Internet, mail and technology	安装	an1zhuang1
+23	Internet, mail and technology	按	an4
+23	Internet, mail and technology	通信	tong1xin4
+23	Internet, mail and technology	联系	lian2xi4
+23	Internet, mail and technology	复印	fu4yin4
+23	Internet, mail and technology	计算	ji4suan4
+23	Internet, mail and technology	科技	ke1ji4
+23	Internet, mail and technology	技术	ji4shu4
+23	Internet, mail and technology	人工	ren2gong1
+23	Internet, mail and technology	自动	zi4dong4
+23	Internet, mail and technology	现代	xian4dai4
+23	Internet, mail and technology	现代化	xian4dai4hua4
+23	Internet, mail and technology	开发	kai1fa1
+24	Art, writing and papers	艺术	yi4shu4
+24	Art, writing and papers	美术	mei3shu4
+24	Art, writing and papers	图	tu2
+24	Art, writing and papers	图画	tu2hua4
+24	Art, writing and papers	作品	zuo4pin3
+24	Art, writing and papers	创作	chuang4zuo4
+24	Art, writing and papers	文学	wen2xue2
+24	Art, writing and papers	文字	wen2zi4
+24	Art, writing and papers	文章	wen2zhang1
+24	Art, writing and papers	写作	xie3zuo4
+24	Art, writing and papers	作者	zuo4zhe3
+24	Art, writing and papers	读者	du2zhe3
+24	Art, writing and papers	外文	wai4wen2
+24	Art, writing and papers	杂志	za2zhi4
+24	Art, writing and papers	标题	biao1ti2
+24	Art, writing and papers	表格	biao3ge2
+24	Art, writing and papers	文件	wen2jian4
+24	Art, writing and papers	邮票	you2piao4
+24	Art, writing and papers	身份证	shen1fen4zheng4
+24	Art, writing and papers	证件	zheng4jian4
+24	Art, writing and papers	证	zheng4
+24	Art, writing and papers	信封	xin4feng1
+25	Because, if, but	为	wei2
+25	Because, if, but	为了	wei4le5
+25	Because, if, but	因此	yin1ci3
+25	Because, if, but	由于	you2yu2
+25	Because, if, but	由	you2
+25	Because, if, but	要是	yao4shi5
+25	Because, if, but	不论	bu4lun4
+25	Because, if, but	不仅	bu4jin3
+25	Because, if, but	不光	bu4guang1
+25	Because, if, but	并	bing4
+25	Because, if, but	并且	bing4qie3
+25	Because, if, but	另外	ling4wai4
+25	Because, if, but	另一方面	ling4yi1fang1mian4
+25	Because, if, but	一方面	yi1fang1mian4
+25	Because, if, but	其次	qi2ci4
+25	Because, if, but	首先	shou3xian1
+25	Because, if, but	除了	chu2le5
+25	Because, if, but	就是	jiu4shi4
+25	Because, if, but	只是	zhi3shi4
+25	Because, if, but	只有	zhi3you3
+25	Because, if, but	只好	zhi3hao3
+25	Because, if, but	不得不	bu4de2bu4
+25	Because, if, but	直到	zhi2dao4
+25	Because, if, but	随	sui2
+25	Because, if, but	按照	an4zhao4
+26	All, each, both	各种	ge4zhong3
+26	All, each, both	各自	ge4zi4
+26	All, each, both	整	zheng3
+26	All, each, both	整个	zheng3ge4
+26	All, each, both	整体	zheng3ti3
+26	All, each, both	一切	yi1qie4
+26	All, each, both	全面	quan2mian4
+26	All, each, both	全场	quan2chang3
+26	All, each, both	全球	quan2qiu2
+26	All, each, both	共同	gong4tong2
+26	All, each, both	共有	gong4you3
+26	All, each, both	互相	hu4xiang1
+26	All, each, both	相互	xiang1hu4
+26	All, each, both	双方	shuang1fang1
+26	All, each, both	对方	dui4fang1
+26	All, each, both	自身	zi4shen1
+26	All, each, both	个人	ge4ren2
+26	All, each, both	亲自	qin1zi4
+26	All, each, both	整整	zheng3zheng3
+27	Jobs and people at work	大夫	dai4fu5
+27	Jobs and people at work	警察	jing3cha2
+27	Jobs and people at work	交警	jiao1jing3
+27	Jobs and people at work	保安	bao3'an1
+27	Jobs and people at work	老板	lao3ban3
+27	Jobs and people at work	工程师	gong1cheng2shi1
+27	Jobs and people at work	公务员	gong1wu4yuan2
+27	Jobs and people at work	专家	zhuan1jia1
+27	Jobs and people at work	记者	ji4zhe3
+27	Jobs and people at work	志愿者	zhi4yuan4zhe3
+27	Jobs and people at work	主任	zhu3ren4
+27	Jobs and people at work	部长	bu4zhang3
+27	Jobs and people at work	所长	suo3zhang3
+27	Jobs and people at work	领导	ling3dao3
+27	Jobs and people at work	员工	yuan2gong1
+27	Jobs and people at work	职工	zhi2gong1
+27	Jobs and people at work	人员	ren2yuan2
+27	Jobs and people at work	员	yuan2
+27	Jobs and people at work	者	zhe3
+27	Jobs and people at work	成员	cheng2yuan2
+27	Jobs and people at work	会员	hui4yuan2
+27	Jobs and people at work	人才	ren2cai2
+28	Work and jobs	职业	zhi2ye4
+28	Work and jobs	就业	jiu4ye4
+28	Work and jobs	创业	chuang4ye4
+28	Work and jobs	事业	shi4ye4
+28	Work and jobs	退休	tui4xiu1
+28	Work and jobs	工资	gong1zi1
+28	Work and jobs	部门	bu4men2
+28	Work and jobs	工业	gong1ye4
+28	Work and jobs	厂	chang3
+28	Work and jobs	工厂	gong1chang3
+28	Work and jobs	加工	jia1gong1
+28	Work and jobs	任务	ren4wu5
+28	Work and jobs	行	hang2
+29	Business and money	商业	shang1ye4
+29	Business and money	商品	shang1pin3
+29	Business and money	市场	shi4chang3
+29	Business and money	生意	sheng1yi5
+29	Business and money	经营	jing1ying2
+29	Business and money	开业	kai1ye4
+29	Business and money	消费	xiao1fei4
+29	Business and money	交易	jiao1yi4
+29	Business and money	经济	jing1ji4
+29	Business and money	费	fei4
+29	Business and money	费用	fei4yong4
+29	Business and money	付	fu4
+29	Business and money	支付	zhi1fu4
+29	Business and money	交费	jiao1fei4
+29	Business and money	收费	shou1fei4
+29	Business and money	票价	piao4jia4
+29	Business and money	富	fu4
+29	Business and money	浪费	lang4fei4
+29	Business and money	节约	jie2yue1
+29	Business and money	需求	xu1qiu2
+29	Business and money	需要	xu1yao4
+29	Business and money	资金	zi1jin1
+29	Business and money	价值	jia4zhi2
+29	Business and money	值	zhi2
+29	Business and money	值得	zhi2de5
+30	Easy and hard	简单	jian3dan1
+30	Easy and hard	复杂	fu4za2
+30	Easy and hard	容易	rong2yi4
+30	Easy and hard	困难	kun4nan5
+30	Easy and hard	难度	nan2du4
+30	Easy and hard	缺	que1
+30	Easy and hard	缺点	que1dian3
+30	Easy and hard	缺少	que1shao3
+30	Easy and hard	优点	you1dian3
+30	Easy and hard	优势	you1shi4
+30	Easy and hard	长处	chang2chu4
+30	Easy and hard	短处	duan3chu4
+30	Easy and hard	足够	zu2gou4
+30	Easy and hard	紧	jin3
+30	Easy and hard	紧急	jin3ji2
+30	Easy and hard	快速	kuai4su4
+30	Easy and hard	速度	su4du4
+30	Easy and hard	有效	you3xiao4
+30	Easy and hard	有利	you3li4
+31	Looks and shapes	美	mei3
+31	Looks and shapes	美好	mei3hao3
+31	Looks and shapes	美丽	mei3li4
+31	Looks and shapes	形象	xing2xiang4
+31	Looks and shapes	形状	xing2zhuang4
+31	Looks and shapes	形式	xing2shi4
+31	Looks and shapes	线	xian4
+31	Looks and shapes	完美	wan2mei3
+31	Looks and shapes	彩色	cai3se4
+31	Looks and shapes	景色	jing3se4
+31	Looks and shapes	精彩	jing1cai3
+31	Looks and shapes	奇怪	qi2guai4
+31	Looks and shapes	动人	dong4ren2
+32	Clear and obvious	明确	ming2que4
+32	Clear and obvious	明显	ming2xian3
+32	Clear and obvious	具体	ju4ti3
+32	Clear and obvious	客观	ke4guan1
+32	Clear and obvious	正式	zheng4shi4
+32	Clear and obvious	完整	wan2zheng3
+32	Clear and obvious	完善	wan2shan4
+32	Clear and obvious	整齐	zheng3qi2
+32	Clear and obvious	齐	qi2
+32	Clear and obvious	突出	tu1chu1
+32	Clear and obvious	生动	sheng1dong4
+32	Clear and obvious	具有	ju4you3
+32	Clear and obvious	有的是	you3de5shi4
+32	Clear and obvious	合理	he2li3
+32	Clear and obvious	合法	he2fa3
+32	Clear and obvious	普遍	pu3bian4
+32	Clear and obvious	普及	pu3ji2
+32	Clear and obvious	特色	te4se4
+32	Clear and obvious	专门	zhuan1men2
+33	Size and degree	深	shen1
+33	Size and degree	深刻	shen1ke4
+33	Size and degree	深入	shen1ru4
+33	Size and degree	广大	guang3da4
+33	Size and degree	重	chong2
+33	Size and degree	重大	zhong4da4
+33	Size and degree	丰富	feng1fu4
+33	Size and degree	程度	cheng2du4
+33	Size and degree	范围	fan4wei2
+33	Size and degree	面积	mian4ji1
+33	Size and degree	比例	bi3li4
+33	Size and degree	空	kong1
+33	Size and degree	状况	zhuang4kuang4
+33	Size and degree	状态	zhuang4tai4
+33	Size and degree	情况	qing2kuang4
+33	Size and degree	基本	ji1ben3
+33	Size and degree	基础	ji1chu3
+33	Size and degree	内容	nei4rong2
+33	Size and degree	方式	fang1shi4
+33	Size and degree	关系	guan1xi5
+33	Size and degree	超级	chao1ji2
+34	Talking and telling	谈	tan2
+34	Talking and telling	谈话	tan2hua4
+34	Talking and telling	谈判	tan2pan4
+34	Talking and telling	吵	chao3
+34	Talking and telling	吵架	chao3jia4
+34	Talking and telling	告别	gao4bie2
+34	Talking and telling	发言	fa1yan2
+34	Talking and telling	发表	fa1biao3
+34	Talking and telling	表达	biao3da2
+34	Talking and telling	表明	biao3ming2
+34	Talking and telling	强调	qiang2diao4
+34	Talking and telling	指出	zhi3chu1
+34	Talking and telling	指导	zhi3dao3
+34	Talking and telling	声明	sheng1ming2
+34	Talking and telling	宣布	xuan1bu4
+34	Talking and telling	公布	gong1bu4
+34	Talking and telling	报告	bao4gao4
+34	Talking and telling	据说	ju4shuo1
+34	Talking and telling	传说	chuan2shuo1
+34	Talking and telling	称为	cheng1wei2
+34	Talking and telling	打听	da3ting5
+34	Talking and telling	话题	hua4ti2
+34	Talking and telling	交流	jiao1liu2
+34	Talking and telling	交往	jiao1wang3
+35	Opinions and ideas	思想	si1xiang3
+35	Opinions and ideas	观念	guan1nian4
+35	Opinions and ideas	概念	gai4nian4
+35	Opinions and ideas	理论	li3lun4
+35	Opinions and ideas	理由	li3you2
+35	Opinions and ideas	主意	zhu3yi5
+35	Opinions and ideas	主张	zhu3zhang1
+35	Opinions and ideas	建议	jian4yi4
+35	Opinions and ideas	意义	yi4yi4
+35	Opinions and ideas	印象	yin4xiang4
+35	Opinions and ideas	判断	pan4duan4
+35	Opinions and ideas	评价	ping2jia4
+35	Opinions and ideas	批评	pi1ping2
+35	Opinions and ideas	同意	tong2yi4
+35	Opinions and ideas	反对	fan3dui4
+35	Opinions and ideas	否定	fou3ding4
+35	Opinions and ideas	否认	fou3ren4
+35	Opinions and ideas	认可	ren4ke3
+35	Opinions and ideas	信任	xin4ren4
+35	Opinions and ideas	理解	li3jie3
+36	Noticing and showing	观察	guan1cha2
+36	Noticing and showing	关注	guan1zhu4
+36	Noticing and showing	体会	ti3hui4
+36	Noticing and showing	体验	ti3yan4
+36	Noticing and showing	体现	ti3xian4
+36	Noticing and showing	显得	xian3de5
+36	Noticing and showing	显示	xian3shi4
+36	Noticing and showing	看起来	kan4qi3lai5
+36	Noticing and showing	看上去	kan4shang5qu5
+36	Noticing and showing	表现	biao3xian4
+36	Noticing and showing	面对	mian4dui4
+36	Noticing and showing	对待	dui4dai4
+36	Noticing and showing	现象	xian4xiang4
+36	Noticing and showing	现场	xian4chang3
+36	Noticing and showing	现实	xian4shi2
+36	Noticing and showing	照	zhao4
+36	Noticing and showing	反应	fan3ying4
+36	Noticing and showing	注意	zhu4yi4
+36	Noticing and showing	认出	ren4chu1
+36	Noticing and showing	认得	ren4de5
+37	Beginning, ending, events	开始	kai1shi3
+37	Beginning, ending, events	开展	kai1zhan3
+37	Beginning, ending, events	展开	zhan3kai1
+37	Beginning, ending, events	举办	ju3ban4
+37	Beginning, ending, events	发生	fa1sheng1
+37	Beginning, ending, events	发动	fa1dong4
+37	Beginning, ending, events	结束	jie2shu4
+37	Beginning, ending, events	停止	ting2zhi3
+37	Beginning, ending, events	取消	qu3xiao1
+37	Beginning, ending, events	失去	shi1qu4
+37	Beginning, ending, events	消失	xiao1shi1
+37	Beginning, ending, events	开放	kai1fang4
+37	Beginning, ending, events	等待	deng3dai4
+37	Beginning, ending, events	如何	ru2he2
+37	Beginning, ending, events	干吗	gan4ma2
+37	Beginning, ending, events	初步	chu1bu4
+37	Beginning, ending, events	存在	cun2zai4
+37	Beginning, ending, events	事件	shi4jian4
+38	Change and growth	变化	bian4hua4
+38	Change and growth	变为	bian4wei2
+38	Change and growth	转变	zhuan3bian4
+38	Change and growth	化	hua4
+38	Change and growth	发展	fa1zhan3
+38	Change and growth	发达	fa1da2
+38	Change and growth	进展	jin4zhan3
+38	Change and growth	进步	jin4bu4
+38	Change and growth	进一步	jin4yi1bu4
+38	Change and growth	增加	zeng1jia1
+38	Change and growth	增长	zeng1zhang3
+38	Change and growth	加快	jia1kuai4
+38	Change and growth	上升	shang4sheng1
+38	Change and growth	升	sheng1
+38	Change and growth	改进	gai3jin4
+38	Change and growth	改造	gai3zao4
+38	Change and growth	修改	xiu1gai3
+38	Change and growth	调整	tiao2zheng3
+38	Change and growth	调	tiao2
+38	Change and growth	先进	xian1jin4
+39	Goals and success	目标	mu4biao1
+39	Goals and success	决定	jue2ding4
+39	Goals and success	决心	jue2xin1
+39	Goals and success	争	zheng1
+39	Goals and success	争取	zheng1qu3
+39	Goals and success	达到	da2dao4
+39	Goals and success	成功	cheng2gong1
+39	Goals and success	成就	cheng2jiu4
+39	Goals and success	成果	cheng2guo3
+39	Goals and success	克服	ke4fu2
+39	Goals and success	解决	jie3jue2
+39	Goals and success	坚持	jian1chi2
+39	Goals and success	确定	que4ding4
+39	Goals and success	准	zhun3
+39	Goals and success	命运	ming4yun4
+39	Goals and success	把握	ba3wo4
+40	Ability and strength	本领	ben3ling3
+40	Ability and strength	本事	ben3shi5
+40	Ability and strength	才能	cai2neng2
+40	Ability and strength	能力	neng2li4
+40	Ability and strength	能不能	neng2bu5neng2
+40	Ability and strength	力	li4
+40	Ability and strength	力量	li4liang5
+40	Ability and strength	动力	dong4li4
+40	Ability and strength	实力	shi2li4
+40	Ability and strength	功能	gong1neng2
+40	Ability and strength	功夫	gong1fu5
+40	Ability and strength	工夫	gong1fu5
+40	Ability and strength	压	ya1
+40	Ability and strength	压力	ya1li4
+40	Ability and strength	强	qiang2
+40	Ability and strength	强大	qiang2da4
+40	Ability and strength	强烈	qiang2lie4
+40	Ability and strength	加强	jia1qiang2
+41	Making and building	造	zao4
+41	Making and building	造成	zao4cheng2
+41	Making and building	创造	chuang4zao4
+41	Making and building	创新	chuang4xin1
+41	Making and building	发明	fa1ming2
+41	Making and building	制造	zhi4zao4
+41	Making and building	制作	zhi4zuo4
+41	Making and building	生产	sheng1chan3
+41	Making and building	设计	she4ji4
+41	Making and building	设备	she4bei4
+41	Making and building	机器	ji1qi4
+41	Making and building	工具	gong1ju4
+41	Making and building	建	jian4
+41	Making and building	建成	jian4cheng2
+41	Making and building	建立	jian4li4
+41	Making and building	建设	jian4she4
+41	Making and building	设立	she4li4
+41	Making and building	成立	cheng2li4
+41	Making and building	形成	xing2cheng2
+41	Making and building	产生	chan3sheng1
+42	Using and handling	利用	li4yong4
+42	Using and handling	应用	ying4yong4
+42	Using and handling	适用	shi4yong4
+42	Using and handling	采用	cai3yong4
+42	Using and handling	采取	cai3qu3
+42	Using and handling	没用	mei2yong4
+42	Using and handling	从事	cong2shi4
+42	Using and handling	处理	chu3li3
+42	Using and handling	安排	an1pai2
+42	Using and handling	实行	shi2xing2
+42	Using and handling	适合	shi4he2
+42	Using and handling	适应	shi4ying4
+43	Protection and risk	保	bao3
+43	Protection and risk	保护	bao3hu4
+43	Protection and risk	保持	bao3chi2
+43	Protection and risk	保险	bao3xian3
+43	Protection and risk	保证	bao3zheng4
+43	Protection and risk	确保	que4bao3
+43	Protection and risk	防	fang2
+43	Protection and risk	防止	fang2zhi3
+43	Protection and risk	预防	yu4fang2
+43	Protection and risk	预报	yu4bao4
+43	Protection and risk	预计	yu4ji4
+43	Protection and risk	危害	wei1hai4
+43	Protection and risk	危险	wei1xian3
+43	Protection and risk	风险	feng1xian3
+43	Protection and risk	事故	shi4gu4
+43	Protection and risk	意外	yi4wai4
+43	Protection and risk	麻烦	ma2fan5
+43	Protection and risk	毛病	mao2bing4
+43	Protection and risk	错误	cuo4wu4
+43	Protection and risk	乱	luan4
+44	Rules and leaders	制度	zhi4du4
+44	Rules and leaders	制定	zhi4ding4
+44	Rules and leaders	规定	gui1ding4
+44	Rules and leaders	规范	gui1fan4
+44	Rules and leaders	标准	biao1zhun3
+44	Rules and leaders	批准	pi1zhun3
+44	Rules and leaders	手续	shou3xu4
+44	Rules and leaders	办理	ban4li3
+44	Rules and leaders	管	guan3
+44	Rules and leaders	管理	guan3li3
+44	Rules and leaders	负责	fu4ze2
+44	Rules and leaders	责任	ze2ren4
+44	Rules and leaders	任	ren4
+44	Rules and leaders	派	pai4
+44	Rules and leaders	领	ling3
+44	Rules and leaders	带领	dai4ling3
+44	Rules and leaders	带动	dai4dong4
+44	Rules and leaders	主持	zhu3chi2
+44	Rules and leaders	推动	tui1dong4
+44	Rules and leaders	推广	tui1guang3
+44	Rules and leaders	推进	tui1jin4
+45	Society and world	社会	she4hui4
+45	Society and world	文化	wen2hua4
+45	Society and world	文明	wen2ming2
+45	Society and world	和平	he2ping2
+45	Society and world	世界	shi4jie4
+45	Society and world	外交	wai4jiao1
+45	Society and world	联合	lian2he2
+45	Society and world	联合国	Lian2he2guo2
+45	Society and world	公共	gong1gong4
+45	Society and world	公开	gong1kai1
+45	Society and world	团结	tuan2jie2
+45	Society and world	团体	tuan2ti3
+45	Society and world	集体	ji2ti3
+45	Society and world	集中	ji2zhong1
+45	Society and world	代表	dai4biao3
+45	Society and world	代表团	dai4biao3tuan2
+45	Society and world	会议	hui4yi4
+45	Society and world	合作	he2zuo4
+45	Society and world	配合	pei4he2
+45	Society and world	环境	huan2jing4
+45	Society and world	环保	huan2bao3
+45	Society and world	环	huan2
+45	Society and world	自然	zi4ran2
+45	Society and world	自主	zi4zhu3
+45	Society and world	支持	zhi1chi2
+46	Sorting and grouping	分别	fen1bie2
+46	Sorting and grouping	分配	fen1pei4
+46	Sorting and grouping	分组	fen1zu3
+46	Sorting and grouping	区别	qu1bie2
+46	Sorting and grouping	类	lei4
+46	Sorting and grouping	类似	lei4si4
+46	Sorting and grouping	相似	xiang1si4
+46	Sorting and grouping	相关	xiang1guan1
+46	Sorting and grouping	相比	xiang1bi3
+46	Sorting and grouping	属	shu3
+46	Sorting and grouping	属于	shu3yu2
+46	Sorting and grouping	组合	zu3he2
+46	Sorting and grouping	结合	jie2he2
+46	Sorting and grouping	合	he2
+46	Sorting and grouping	对象	dui4xiang4
+47	Checking and records	调	diao4
+47	Checking and records	调查	diao4cha2
+47	Checking and records	证据	zheng4ju4
+47	Checking and records	证明	zheng4ming2
+47	Checking and records	总结	zong3jie2
+47	Checking and records	整理	zheng3li3
+47	Checking and records	记录	ji4lu4
+47	Checking and records	纪录	ji4lu4
+47	Checking and records	纪念	ji4nian4
+47	Checking and records	考验	kao3yan4
+47	Checking and records	经验	jing1yan4
+47	Checking and records	经历	jing1li4
+47	Checking and records	效果	xiao4guo3
+47	Checking and records	后果	hou4guo3
+47	Checking and records	过程	guo4cheng2
