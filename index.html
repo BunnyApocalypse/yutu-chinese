@@ -53,6 +53,10 @@
           </button>
           <!-- On a writing card: shows the word's pinyin, which does not count against the grade. -->
           <button id="pinyin-button" class="link-button" type="button" hidden>Show pinyin</button>
+          <!-- Once the answer is showing: the word's page, and its panel to correct it
+               (review.js). Up here, so that nothing is added under the writing area. -->
+          <button id="about-word-button" class="link-button" type="button" title="About this word" hidden>About</button>
+          <button id="edit-word-button" class="link-button" type="button" title="Edit this word" hidden>Edit</button>
         </div>
         <p id="prompt-meaning" class="meaning"></p>
         <p id="prompt-pinyin" class="pinyin" hidden></p>
@@ -359,9 +363,6 @@
         <button id="lesson-next-button" class="primary" type="button" hidden>Next step</button>
 
         <!-- Review mode, with the grades: opens the word's panel to correct it (review.js). -->
-        <!-- With the grades: the word's page, and its panel to correct it (review.js). -->
-        <button id="about-word-button" class="small" type="button" hidden>About this word</button>
-        <button id="edit-word-button" class="small" type="button" hidden>Edit word</button>
         <!-- With the grades, on a card that keeps being forgotten (review.js). -->
         <p id="leech-note" class="order-note" hidden></p>
         <!-- With the note: takes the card out of Review there and then. -->

@@ -187,6 +187,22 @@ main.focused:not(.show-nav) .focus-exit {
   padding: 0 2px;
 }
 
+/* On a writing card the pinyin only shows once the word is written (or when
+   asked for). Its line keeps its room meanwhile, so that the writing area
+   does not move down when it appears. (:has picks the page out while the
+   writing area's row is in view.) */
+main:has(#writing-row:not([hidden])) #prompt-pinyin[hidden] {
+  display: block;
+  visibility: hidden;
+  /* An empty line has no height by itself. */
+  min-height: 1.5em;
+}
+
+/* The same for the buttons that come and go beside the kind of card. */
+.type-row .link-button[hidden] {
+  display: none;
+}
+
 /* On a sentence's writing card: the sentence with its gap, under the meaning. */
 .cloze-sentence {
   display: block;

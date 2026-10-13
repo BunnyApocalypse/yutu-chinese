@@ -58,7 +58,8 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
 
     // The Words tab: the words in view, with their tools, and no decks.
     await tap(page, 'words-tab');
-    await waitUntil(page, rows(2), 'both words');
+    // (The list has its two rows already, out of view; wait for the tab itself.)
+    await waitUntil(page, `document.getElementById('word-list').offsetParent !== null && ${rows(2)}`, 'the Words tab with both words');
     assert.equal(await inView(page, 'word-list'), true);
     assert.equal(await inView(page, 'word-search'), true);
     assert.equal(await inView(page, 'select-words-button'), true);

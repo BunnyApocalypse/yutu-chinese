@@ -492,6 +492,7 @@ Asked for by the owner on 2026-10-13; the screens' wording and the extras noted 
   - **The meaning takes one line**, and a tap on a cut-off meaning opens all of it in a panel (`clampWithPopup` in `src/clamp.js`), so a long meaning costs no height. A sentence's writing card allows two lines, for the sentence with its gap.
   - **A word of one character has no row of slots** (`.word-row.single`).
   - Measured then: the rows above the area and the buttons under it take 264px for one character and 320 for more; the grade buttons need about 70 more. In the owner's window (670 by 910) the area went from 414 to 500.
+  - **Nothing is added under the grade buttons, and nothing above the area changes height while a word is written** (the owner, on a screencast that day): "About" and "Edit" (once "About this word" and "Edit word", on rows of their own under the grades) are links beside the kind of card, and on a writing card the pinyin's line keeps its room while the pinyin is hidden.
   - Ideas left for the pass over the looks: one slim line for the kind of card, step and pinyin; hints inside the area's edge; buttons as icons; two columns on wide screens.
 - In Review, the outline is switched off at the start of every word. Left on, it would count as peeking and make every suggestion "Again".
 
