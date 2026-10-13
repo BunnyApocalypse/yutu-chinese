@@ -418,8 +418,8 @@ test('the tone table adds regional and neutral-tone variants', () => {
   assert.deepEqual(toneAnswers(['朋', '友'], 'peng2you5', null, null)[1].variantTones, []);
 });
 
-test('every word in the built-in list can have a tone card, under both settings', () => {
-  const words = parseWordList(fs.readFileSync('src/seed-words.tsv', 'utf8'));
+test('every word in the test word list can have a tone card, under both settings', () => {
+  const words = parseWordList(fs.readFileSync('tests/words.tsv', 'utf8'));
   let withTaiwanReading = 0;
   for (const word of words) {
     const chars = Array.from(word.traditional);
@@ -477,8 +477,8 @@ test('numbered pinyin is shown with tone marks', () => {
   assert.equal(formatPinyin('E2'), 'É');
 });
 
-test('the built-in word list is well formed', () => {
-  const words = parseWordList(fs.readFileSync('src/seed-words.tsv', 'utf8'));
+test('the test word list is well formed', () => {
+  const words = parseWordList(fs.readFileSync('tests/words.tsv', 'utf8'));
   assert.ok(words.length >= 100);
   const ids = new Set(words.map(wordId));
   assert.equal(ids.size, words.length, 'two words share an ID');

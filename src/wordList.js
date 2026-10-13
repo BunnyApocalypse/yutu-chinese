@@ -2,7 +2,7 @@
 //
 // A word list is plain text with one word per line and four columns separated
 // by tabs: simplified, traditional, pinyin, definition. This is the format of
-// Skritter's TSV export, and of the built-in list in seed-words.tsv.
+// Skritter's TSV export, and of the test word list in tests/words.tsv.
 //
 // An optional fifth column gives the word's reading in Taiwan where that
 // differs from the pinyin column, which holds the mainland reading. Either

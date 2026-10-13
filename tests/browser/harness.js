@@ -234,9 +234,12 @@ async function launchBrowser() {
 //   close()
 // A test calls use() and gets whichever browser is free next, so the tests
 // spread themselves over the browsers.
-export async function startBrowsers(appUrl, count = BROWSER_COUNT) {
+//
+// The app opens with its introduction the first time. It is skipped here,
+// unless `keepWelcome` is true (for the test of the introduction itself).
+export async function startBrowsers(appUrl, count = BROWSER_COUNT, { keepWelcome = false } = {}) {
   const pages = await Promise.all(Array.from({ length: count }, launchBrowser));
-  await Promise.all(pages.map((page) => openFreePractice(page, appUrl)));
+  await Promise.all(pages.map((page) => openFreePractice(page, appUrl, keepWelcome)));
 
   const free = [...pages];
   const queue = []; // tasks waiting for a page
@@ -310,7 +313,7 @@ export async function reloadApp(page) {
 }
 
 // Opens the app and switches to Free practice, which starts on its default word.
-async function openFreePractice(page, appUrl) {
+async function openFreePractice(page, appUrl, keepWelcome = false) {
   await page.send('Page.navigate', { url: appUrl });
   // The first time the dev server serves the app it may make the page reload
   // itself once, so keep trying until the app has really started.
@@ -323,6 +326,10 @@ async function openFreePractice(page, appUrl) {
         const started =
           document.getElementById('card-type').textContent !== '' ||
           !document.getElementById('done-panel').hidden;
+        // The introduction lies over the page and would catch the strokes.
+        if (started && !${keepWelcome} && document.getElementById('welcome').open) {
+          document.getElementById('welcome-skip').click();
+        }
         const tab = document.getElementById('practice-tab');
         if (started && !tab.classList.contains('selected')) {
           tab.click();
@@ -369,6 +376,22 @@ export const type = (page, id, text) =>
     // What a text box announces when someone types in it.
     box.dispatchEvent(new Event('input', { bubbles: true }));
   })()`);
+
+// The app starts with no words. This gives it the test word list
+// (tests/words.tsv, 109 common words) through the Words tab's "Add a list",
+// and goes back to Free practice.
+export async function addTestWords(page) {
+  const list = fs.readFileSync('tests/words.tsv', 'utf8');
+  const count = list.split('\n').filter((line) => line.trim() !== '').length;
+  await tap(page, 'words-tab');
+  await type(page, 'list-text', list);
+  await tap(page, 'check-list-button');
+  await waitUntil(page, `!document.getElementById('add-list-button').hidden`, 'the list to be checked');
+  await tap(page, 'add-list-button');
+  await waitUntil(page, `document.getElementById('word-count').textContent === '${count}'`, 'the test words');
+  await tap(page, 'practice-tab');
+  await waitInPage(page, `${STATUS}.startsWith('Stroke 1 of') && ${NOT_BUSY}`, 5000);
+}
 
 // Picks the option with this value in the drop-down list with this id.
 export const choose = (page, id, value) =>

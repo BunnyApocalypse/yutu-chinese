@@ -221,6 +221,86 @@
         </form>
       </dialog>
 
+      <!-- The introduction shown the first time the app is opened: a few screens,
+           one at a time, that set the app up and explain it. Run by welcome.js. -->
+      <dialog id="welcome" class="settings-panel welcome">
+        <p id="welcome-progress" class="hint"></p>
+
+        <section data-step>
+          <h2>Welcome to Hanzi Trainer</h2>
+          <p>This app helps you learn to read and write Chinese words. It brings each word back just before you would forget it.</p>
+          <p>Everything stays on this device. There is no account, and nothing is sent anywhere.</p>
+          <p>The next few screens set the app up and show how it works. It takes about a minute.</p>
+        </section>
+
+        <section data-step hidden>
+          <h2>Which characters are you learning?</h2>
+          <fieldset class="setting">
+            <legend>Script</legend>
+            <label><input type="radio" name="welcome-script" value="traditional" /> Traditional 繁體</label>
+            <label><input type="radio" name="welcome-script" value="simplified" /> Simplified 简体</label>
+            <label><input type="radio" name="welcome-script" value="both-traditional" /> Both, mostly traditional</label>
+            <label><input type="radio" name="welcome-script" value="both-simplified" /> Both, mostly simplified</label>
+          </fieldset>
+          <p class="hint">With both, your cards are in the script you mostly use, and you can pick the other one for single words.</p>
+          <fieldset class="setting">
+            <legend>Pronunciation</legend>
+            <label><input type="radio" name="welcome-pronunciation" value="mainlandOnly" /> Mainland only</label>
+            <label><input type="radio" name="welcome-pronunciation" value="mainland" /> Both, mainland first</label>
+            <label><input type="radio" name="welcome-pronunciation" value="taiwan" /> Both, Taiwan first</label>
+          </fieldset>
+          <p class="hint">Some words are read differently in Taiwan: 星期 is xīngqī on the mainland and xīngqí in Taiwan. With both, a card shows both readings and accepts both tones.</p>
+          <p class="hint">You can change all of this later in Settings.</p>
+        </section>
+
+        <section data-step hidden>
+          <h2>Four kinds of card</h2>
+          <p>Each word is practiced in up to four ways. Each kind has its own schedule, so you may know what a word means long before you can write it.</p>
+          <fieldset class="setting">
+            <legend>Cards you want</legend>
+            <label><input type="checkbox" data-welcome-type="meaning" /> <b>Meaning:</b> you see the word and recall what it means.</label>
+            <label><input type="checkbox" data-welcome-type="pinyin" /> <b>Pinyin:</b> you see the word and recall how it is read.</label>
+            <label><input type="checkbox" data-welcome-type="tone" /> <b>Tone:</b> you see the word and give the tone of each character, with a button or by drawing the tone mark.</label>
+            <label><input type="checkbox" data-welcome-type="writing" /> <b>Writing:</b> you see the meaning and write the word, stroke by stroke.</label>
+          </fieldset>
+          <p class="hint">Untick the kinds you don't want. A new word starts with its first kind in this order and gets the others one by one.</p>
+          <p id="welcome-types-note" class="note"></p>
+        </section>
+
+        <section data-step hidden>
+          <h2>How it works</h2>
+          <p><b>Review</b> shows the card that is due next. After you answer, you grade yourself: Again, Hard, Good or Easy. Each button says when the card would come back, and where the app can check your answer it suggests a grade.</p>
+          <p><b>New words</b> arrive a few per day (5 to begin with), so that reviews don't pile up.</p>
+          <p><b>Writing:</b> write anywhere in the box, at any size. Your own strokes stay on screen, and two strokes joined the way handwriting joins them are accepted.</p>
+          <p><b>Free practice</b> lets you try any card, or write any characters at all. Nothing there is recorded.</p>
+        </section>
+
+        <section data-step hidden>
+          <h2>Your words</h2>
+          <p>The app starts with no words. You add the ones you want to learn in the <b>Words</b> tab.</p>
+          <p>Type a word's characters and tap its dictionary entry to fill in the reading and meaning, or paste a whole list at once.</p>
+          <p>If something about a word is wrong, correct it in the Words tab, or tap <b>Edit word</b> after answering one of its cards.</p>
+        </section>
+
+        <section data-step hidden>
+          <h2>Keeping your data</h2>
+          <p>Your words and your review history are stored in this browser, on this device, and nowhere else.</p>
+          <p>A browser may delete what a site has stored, without asking, when the device runs short of space. To rule that out, the app needs the browser's permission to store its data for the long term.</p>
+          <!-- What this particular browser does when asked, and what to do (storageAdvice.js). -->
+          <p id="welcome-keep-note" class="note"></p>
+          <button id="welcome-install-button" class="small" type="button" hidden>Install the app</button>
+          <button id="welcome-keep-button" class="small primary" type="button">Allow long-term storage</button>
+          <p class="hint">Either way, <b>Export backup</b> in Settings saves everything as one file. Do that now and then; it is also how you move to another device.</p>
+          <p class="hint">The app also saves itself and its stroke data on this device (about 18 MB to download), so it works without a connection. On a phone or tablet, install it from the browser's menu: "Install app" or "Add to Home Screen".</p>
+        </section>
+
+        <div class="buttons">
+          <button id="welcome-back" class="small" type="button">Back</button>
+          <button id="welcome-next" class="small primary" type="button">Next</button>
+        </div>
+        <button id="welcome-skip" class="link-button" type="button">Skip the introduction</button>
+      </dialog>
+
       <!-- <dialog> is the browser's built-in pop-up panel. It stays hidden until opened by settings.js. -->
       <dialog id="settings-panel" class="settings-panel">
         <h2>Settings</h2>
@@ -293,6 +373,13 @@
           Offline use
           <!-- How much of the app is saved on this device. Filled in by offline.js. -->
           <p id="offline-status" class="hint">Checking…</p>
+          <!-- Shown while the browser has not agreed to keep the app's data (offline.js). -->
+          <button id="install-button" class="small" type="button" hidden>Install the app</button>
+          <button id="keep-data-button" class="small" type="button" hidden>Allow long-term storage</button>
+        </div>
+
+        <div class="setting">
+          <button id="welcome-again-button" class="small" type="button">Show the introduction again</button>
         </div>
 
         <button id="settings-close" class="primary" type="button">Done</button>

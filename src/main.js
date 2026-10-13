@@ -1,9 +1,9 @@
 // Entry point: sets up the page, the three tabs (Review, Free practice and
 // Words), settings and backups.
 
-import seedText from './seed-words.tsv?raw'; // "?raw" makes Vite hand us the file's text
-import { getAll, putAll, getSetting, setSetting } from './db.js';
-import { parseWordList, wordId } from './wordList.js';
+import { getAll, getSetting, setSetting, removeWord } from './db.js';
+import { allCardIds } from './session.js';
+import { OLD_BUILT_IN_WORD_IDS } from './oldBuiltInWords.js';
 import { createWordFlow } from './wordFlow.js';
 import { createToneFlow } from './toneFlow.js';
 import { createRecallCard } from './recallCard.js';
@@ -12,7 +12,8 @@ import { createSettings } from './settings.js';
 import { createWordsPanel } from './wordsPanel.js';
 import { scriptFor, scriptFlagFor } from './words.js';
 import { fileCardsByScript } from './scriptCards.js';
-import { setUpOffline } from './offline.js';
+import { setUpOffline, keepData } from './offline.js';
+import { createWelcome } from './welcome.js';
 import { buildBackup, checkBackup, describeBackup, restoreBackup } from './backup.js';
 
 const byId = (id) => document.getElementById(id);
@@ -61,41 +62,23 @@ const recallCard = createRecallCard(byId('card-face'));
 let settings = null;
 let review = null;
 
-// Raise this number whenever seed-words.tsv changes, so that devices which
-// already have the built-in words pick up the changes.
-const BUILT_IN_LIST_VERSION = 2;
-
-// The first time the app runs, fills the database with the built-in word
-// list. Later, when the list has changed, brings the stored copies of those
-// words up to date without touching their cards or anything else. A built-in
-// word that has been removed stays removed.
-async function addOrUpdateBuiltInWords() {
-  const existing = await getAll('words');
-  const builtIn = parseWordList(seedText);
-  // No version saved means the list has never been loaded on this device.
-  // (An empty word list alone doesn't: every word may have been removed.)
-  const neverLoaded = (await getSetting('builtInListVersion', null)) === null;
-
-  if (existing.length === 0 && neverLoaded) {
-    const now = Date.now();
-    const words = builtIn.map((word, index) => ({
-      id: wordId(word),
-      ...word,
-      // `order` is the position in the list; new words are introduced in this order.
-      order: index,
-      addedAt: now,
-    }));
-    await putAll('words', words);
-  } else if ((await getSetting('builtInListVersion', 1)) < BUILT_IN_LIST_VERSION) {
-    const stored = new Map(existing.map((word) => [word.id, word]));
-    const updated = builtIn
-      .filter((word) => stored.has(wordId(word)))
-      // Keep the stored record's own fields (id, order, addedAt) and take the
-      // list's current wording and readings.
-      .map((word) => ({ ...stored.get(wordId(word)), ...word }));
-    await putAll('words', updated);
+// Until 2026-10-13 a new database was filled with a list of 109 words for
+// trying the app out. A device that was given them (it has the
+// `builtInListVersion` setting from then) loses them here, once: the words
+// and their cards, studied or not. Reviews are never deleted. Words the owner
+// added are not on the list and stay.
+async function removeOldBuiltInWords() {
+  const wasGivenThem = (await getSetting('builtInListVersion', null)) !== null;
+  if (!wasGivenThem || (await getSetting('oldBuiltInWordsRemoved', false))) {
+    return;
   }
-  await setSetting('builtInListVersion', BUILT_IN_LIST_VERSION);
+  const old = new Set(OLD_BUILT_IN_WORD_IDS);
+  for (const word of await getAll('words')) {
+    if (old.has(word.id)) {
+      await removeWord(word.id, allCardIds(word));
+    }
+  }
+  await setSetting('oldBuiltInWordsRemoved', true);
 }
 
 // ---- Modes ----
@@ -300,7 +283,7 @@ window.addEventListener('resize', () => {
 // ---- Startup ----
 
 async function startUp() {
-  await addOrUpdateBuiltInWords();
+  await removeOldBuiltInWords();
   // Once per device (and again after an older backup is restored): cards
   // studied before writing cards were kept per script are filed under the
   // script they were learned in.
@@ -359,6 +342,24 @@ async function startUp() {
 
   await loadWordList();
 
+  // The introduction, the first time the app is opened on a device. It ends
+  // in the Words tab if there are no words yet.
+  const welcome = createWelcome({
+    settings,
+    keepData,
+    hasWords: () => wordList.length > 0,
+    onFinish: () => {
+      if (wordList.length === 0) {
+        setMode('words');
+      }
+    },
+  });
+  byId('welcome-again-button').addEventListener('click', () => {
+    byId('settings-panel').close();
+    welcome.open();
+  });
+  await welcome.openIfFirstTime();
+
   // Review, unless another tab was tapped in the meantime.
   await setMode(mode);
 
@@ -366,6 +367,8 @@ async function startUp() {
   setUpOffline({
     statusElement: byId('offline-status'),
     updateButton: byId('update-button'),
+    keepButton: byId('keep-data-button'),
+    installButton: byId('install-button'),
   });
 }
 

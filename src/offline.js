@@ -4,6 +4,9 @@
 // one. The service worker itself is src/serviceWorker.js; read its opening
 // comment first.
 
+import { getSetting, setSetting } from './db.js';
+import { browserKind, storageAdvice } from './storageAdvice.js';
+
 // BASE_URL is the folder the app is served from.
 const BASE = import.meta.env.BASE_URL;
 // The same as a full address, for naming what goes into the cache.
@@ -116,18 +119,119 @@ async function saveOfflineData(report) {
   return complete;
 }
 
+// ---- Keeping your data ----
+//
+// Browsers may clear a site's stored data when the device runs short of
+// space. navigator.storage.persist() asks for this app's data (your words and
+// reviews included) to be left alone. Some browsers ask the person; others
+// decide by themselves, and say yes more readily once the app is installed
+// on the home screen. The app only asks after explaining why: in the
+// introduction (welcome.js) or with the button in Settings. What it says
+// depends on the browser: see storageAdvice.js.
+
+// What the page knows about long-term storage and installing, for the
+// introduction and for Settings. listen(callback) is told whenever any of it
+// may have changed.
+const listeners = [];
+const tellListeners = () => listeners.forEach((callback) => callback());
+
+// A Chromium browser announces "beforeinstallprompt" when the app can be
+// installed. Holding on to that event lets the app offer its own "Install
+// the app" button instead of sending people to the browser's menu.
+let installEvent = null;
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault(); // or some browsers show a banner of their own
+  installEvent = event;
+  tellListeners();
+});
+
+export const keepData = {
+  listen(callback) {
+    listeners.push(callback);
+  },
+
+  // Which family of browser this is (see storageAdvice.js).
+  kind: browserKind(navigator.userAgent, navigator.userAgentData ? navigator.userAgentData.brands : []),
+
+  // Everything storageAdvice() wants to know.
+  async state() {
+    return {
+      canAsk: Boolean(navigator.storage && navigator.storage.persist),
+      kept: Boolean(navigator.storage && navigator.storage.persisted && (await navigator.storage.persisted())),
+      asked: await getSetting('keepDataWanted', false),
+      // Running as an installed app: in a window of its own, or (iPhone and
+      // iPad) started from the Home Screen.
+      installed: window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true,
+      canInstall: installEvent !== null,
+    };
+  },
+
+  // Asks for long-term storage. Only ever called because a button was
+  // tapped, after the explanation. Returns the answer: true or false.
+  async ask() {
+    // Remembered, so that browsers which decide by themselves can be asked
+    // again later without bothering anyone (see setUpOffline).
+    await setSetting('keepDataWanted', true);
+    const kept = navigator.storage && navigator.storage.persist ? await navigator.storage.persist() : false;
+    tellListeners();
+    return kept;
+  },
+
+  // Shows the browser's own "install this app?" question.
+  async install() {
+    if (installEvent) {
+      installEvent.prompt();
+      await installEvent.userChoice;
+      installEvent = null; // an event can only be used once
+      tellListeners();
+    }
+  },
+};
+
+// Once the app is installed, a browser that had said no will usually say yes.
+window.addEventListener('appinstalled', async () => {
+  installEvent = null;
+  if ((await getSetting('keepDataWanted', false)) && navigator.storage && navigator.storage.persist) {
+    await navigator.storage.persist();
+  }
+  tellListeners();
+});
+
 // Sets all of it going. Nothing here holds the app up: it is called once the
 // app has started.
 //
 // elements:
 //   statusElement: a line in the settings panel saying how things stand
 //   updateButton:  shown when a new version of the app is ready
-export async function setUpOffline({ statusElement, updateButton }) {
+//   keepButton:    asks the browser for long-term storage
+//   installButton: installs the app, where the browser lets the app offer that
+export async function setUpOffline({ statusElement, updateButton, keepButton, installButton }) {
   // What is known so far, shown as one short paragraph.
   const state = { app: '', data: '', kept: '' };
   const show = () => {
     statusElement.textContent = [state.app, state.data, state.kept].filter(Boolean).join(' ');
   };
+
+  // Long-term storage: say how it stands and what to do about it.
+  const showKeeping = async () => {
+    const keeping = await keepData.state();
+    state.kept = storageAdvice(keepData.kind, keeping);
+    keepButton.hidden = keeping.kept || !keeping.canAsk;
+    installButton.hidden = !keeping.canInstall;
+    show();
+  };
+  keepData.listen(showKeeping);
+  keepButton.addEventListener('click', () => keepData.ask());
+  installButton.addEventListener('click', () => keepData.install());
+  // Someone who has asked for it before wants it. A browser that decides by
+  // itself may have said no then and say yes now (after installing, or after
+  // some use), so it is asked again, which shows nothing. Firefox would put
+  // its question up again, so there it is left to the button.
+  const keeping = await keepData.state();
+  if (keeping.asked && !keeping.kept && keeping.canAsk && keepData.kind !== 'firefox') {
+    await navigator.storage.persist();
+  }
+  await showKeeping();
 
   // import.meta.env.PROD is true in the built app and false under `npm run dev`.
   if (!import.meta.env.PROD) {
@@ -183,20 +287,6 @@ export async function setUpOffline({ statusElement, updateButton }) {
       window.location.reload();
     }
   });
-
-  // ---- Keeping your data ----
-
-  // Browsers may clear a site's stored data when the device runs short of
-  // space. persist() asks for this app's data (your words and reviews
-  // included) to be left alone. The browser decides; it says yes more readily
-  // once the app is installed on the home screen.
-  if (navigator.storage && navigator.storage.persist) {
-    const kept = await navigator.storage.persist();
-    state.kept = kept
-      ? 'The browser has agreed not to clear this data to free up space.'
-      : 'The browser may clear this data if the device runs out of space, so export a backup now and then. Installing the app on the home screen usually prevents it.';
-    show();
-  }
 
   // ---- Stroke data and dictionary ----
 

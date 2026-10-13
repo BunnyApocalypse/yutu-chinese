@@ -20,6 +20,7 @@ import {
   type,
   textOf,
   waitUntil,
+  addTestWords,
 } from './harness.js';
 
 // One browser, and the steps in order: each builds on the one before.
@@ -42,6 +43,7 @@ describe('offline use', { concurrency: false }, () => {
     await browsers.use(async (thePage) => {
       page = thePage;
     });
+    await addTestWords(page);
   });
 
   after(async () => {

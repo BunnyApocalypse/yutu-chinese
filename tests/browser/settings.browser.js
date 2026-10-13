@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, type, choose, textOf, isShown, waitUntil } from './harness.js';
+import { startApp, startBrowsers, tap, type, choose, textOf, isShown, waitUntil, addTestWords } from './harness.js';
 
 // Text for "the Words tab's list has this many rows".
 const rows = (count) => `document.querySelectorAll('#word-list li').length === ${count}`;
@@ -18,7 +18,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
   let browsers;
   let page;
 
-  // Starts a Free practice card of this kind for a word of the built-in list.
+  // Starts a Free practice card of this kind for a word of the test word list.
   async function practice(word, kind) {
     await tap(page, 'practice-tab');
     await type(page, 'word-input', word);
@@ -46,6 +46,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     await browsers.use(async (thePage) => {
       page = thePage;
     });
+    await addTestWords(page);
   });
 
   after(async () => {
@@ -101,7 +102,8 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     await choose(page, 'script-select', 'simplified');
     await tap(page, 'words-tab');
     await waitUntil(page, `document.getElementById('word-count').textContent !== '0'`, 'the word list');
-    assert.equal(await isShown(page, 'add-traditional'), false);
+    // A setting is saved before it takes effect, which takes a moment.
+    await waitUntil(page, `document.getElementById('add-traditional').hidden`, 'the traditional box to go');
     assert.equal(await isShown(page, 'add-simplified'), true);
     assert.equal(await isShown(page, 'add-pinyin-taiwan'), false);
     // The one box left is not labeled with a script.

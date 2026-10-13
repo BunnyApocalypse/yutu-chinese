@@ -34,6 +34,8 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //                   proposeMeaning in dictionary.js)
 //   newWordsPerDay: a number
 //   enabledTypes:   the card types switched on, e.g. ['meaning', 'writing']
+// and one function, for setting them from elsewhere (the introduction):
+//   change(key, value): saves a setting and tells the rest of the app
 export async function createSettings(elements, onChange) {
   const {
     panel,
@@ -81,10 +83,13 @@ export async function createSettings(elements, onChange) {
   }
 
   scriptSelect.addEventListener('change', async () => {
+    // Both halves of the choice are set before either is saved, so nothing
+    // that looks at the settings meanwhile sees one without the other.
     const both = scriptSelect.value.startsWith('both-');
     settings.bothScripts = both;
+    settings.script = scriptSelect.value.replace('both-', '');
     await setSetting('bothScripts', both);
-    await change('script', scriptSelect.value.replace('both-', ''));
+    await change('script', settings.script);
   });
   pronunciationSelect.addEventListener('change', () =>
     change('pronunciation', pronunciationSelect.value),
@@ -149,5 +154,6 @@ export async function createSettings(elements, onChange) {
   closeButton.addEventListener('click', () => panel.close());
 
   fillPanel();
+  settings.change = change;
   return settings;
 }

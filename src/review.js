@@ -414,7 +414,11 @@ export function createReview(elements, flows, settings, editWord) {
       current = null;
       studyArea.hidden = true;
       typeElement.textContent = '';
-      doneMessage.textContent = `All done for now. ${describeWait(plan.nextDueAt, now)}`;
+      // The app starts with no words at all.
+      doneMessage.textContent =
+        words.length === 0
+          ? 'You have no words yet. Add some in the Words tab.'
+          : `All done for now. ${describeWait(plan.nextDueAt, now)}`;
       donePanel.hidden = false;
       // Cards come back after a few minutes, so keep checking.
       recheckTimer = setTimeout(showNext, RECHECK_MS);

@@ -1,7 +1,7 @@
 // Tests for recognizing two strokes written as one (src/shortcuts.js).
 //
 // Most of this is a simulation: for every joinable pair in the characters of
-// the built-in word list, it "draws" strokes that are shifted, resized and
+// the test word list, it "draws" strokes that are shifted, resized and
 // shaky, and checks how the recognizer judges them.
 
 import test from 'node:test';
@@ -76,9 +76,9 @@ function vary(points, { scale, dx, dy, jitter }, random) {
 
 const toPoints = (median) => median.map(([x, y]) => ({ x, y }));
 
-// Every joinable pair in the characters of the built-in list, in both scripts.
+// Every joinable pair in the characters of the test word list, in both scripts.
 function joinablePairsInWordList() {
-  const words = parseWordList(fs.readFileSync('src/seed-words.tsv', 'utf8'));
+  const words = parseWordList(fs.readFileSync('tests/words.tsv', 'utf8'));
   const pairs = [];
   for (const script of ['traditional', 'simplified']) {
     const chars = new Set(words.flatMap((word) => Array.from(word[script])));

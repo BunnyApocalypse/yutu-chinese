@@ -85,6 +85,40 @@ main {
   color: #6b6557;
 }
 
+/* The introduction: one screen of it at a time. */
+.welcome p {
+  margin: 0 0 12px;
+}
+
+.welcome fieldset.setting label {
+  display: block;
+  margin: 4px 0;
+}
+
+.welcome input[type='radio'] {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+}
+
+/* The button that asks for long-term storage sits among the paragraphs. */
+.welcome section > button {
+  margin-bottom: 12px;
+}
+
+/* A button that looks like a link, for things of little weight. */
+.link-button {
+  display: block;
+  margin: 12px auto 0;
+  min-height: 0;
+  padding: 4px;
+  border: none;
+  background: none;
+  font-size: 0.9rem;
+  color: #6b6557;
+  text-decoration: underline;
+}
+
 footer {
   display: flex;
   flex-wrap: wrap;

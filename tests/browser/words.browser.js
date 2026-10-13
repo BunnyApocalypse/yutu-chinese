@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, reloadApp, tap, type, choose, textOf, waitUntil } from './harness.js';
+import { startApp, startBrowsers, reloadApp, tap, type, choose, textOf, waitUntil, addTestWords } from './harness.js';
 
 // Text for "the Words tab's list has this many rows".
 const rows = (count) => `document.querySelectorAll('#word-list li').length === ${count}`;
@@ -26,6 +26,16 @@ describe('the Words tab', { concurrency: false }, () => {
     await browsers.use(async (thePage) => {
       page = thePage;
     });
+    // The app starts without any words, and says so in Review.
+    await tap(page, 'review-tab');
+    await waitUntil(
+      page,
+      `document.getElementById('done-message').textContent === 'You have no words yet. Add some in the Words tab.'`,
+      'the note that there are no words',
+    );
+    await tap(page, 'words-tab');
+    assert.equal(await textOf(page, 'word-count'), '0');
+    await addTestWords(page);
     // The pop-up that asks before a word is removed: answer OK.
     await page.evaluate('window.confirm = () => true');
     await tap(page, 'words-tab');
