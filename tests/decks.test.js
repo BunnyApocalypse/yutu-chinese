@@ -63,7 +63,7 @@ test('the levels listed for the decks are those in the list files', () => {
 
 test('the lower levels of each list are divided into groups, with every word in one', () => {
   const grouped = {
-    'hsk/hsk-3.0.tsv': { 1: 28, 2: 39, 3: 47 },
+    'hsk/hsk-3.0.tsv': { 1: 28, 2: 39, 3: 47, 4: 60 },
     'hsk/hsk-2.0.tsv': { 1: 11, 2: 10, 3: 17 },
     'tocfl/tocfl.tsv': { 'Novice 1': 11, 'Novice 2': 12, 1: 12, 2: 12 },
   };

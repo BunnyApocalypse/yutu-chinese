@@ -95,15 +95,15 @@ function writeList(file, title, source, words, folder = FOLDER) {
 // the columns group number, group name, simplified, pinyin. These files were
 // written for this project (see the README there), not taken from the HSK.
 
-const GROUPS_FOLDER = `${FOLDER}/groups`;
-
 // Returns `words` with those of each level that has a groups file put in
 // that file's order and given their `group`. Levels keep their places in
-// the list.
-function withGroups(words, listId) {
+// the list. A level that has groups already (TOCFL's topics) is left alone.
+//
+// folder: the list's folder; the group files are in its "groups" folder
+function withGroups(words, listId, folder = FOLDER) {
   const result = [...words];
   for (const level of new Set(words.map((word) => word.level))) {
-    const file = `${GROUPS_FOLDER}/${listId}-${level}.tsv`;
+    const file = `${folder}/groups/${listId}-${level}.tsv`;
     if (!fs.existsSync(file)) {
       continue;
     }
@@ -498,5 +498,5 @@ for (const levelName of TOCFL_LEVELS) {
   }
 }
 fs.mkdirSync(TOCFL_FOLDER, { recursive: true });
-writeList('tocfl.tsv', 'TOCFL (2023): Novice 1 and 2, levels 1 to 5', TOCFL_SOURCE, tocfl, TOCFL_FOLDER);
+writeList('tocfl.tsv', 'TOCFL (2023): Novice 1 and 2, levels 1 to 5', TOCFL_SOURCE, withGroups(tocfl, 'tocfl', TOCFL_FOLDER), TOCFL_FOLDER);
 console.log(`  ${tocflLeftOut.length} left out, not being in the dictionary with that reading: ${tocflLeftOut.join(', ')}`);
