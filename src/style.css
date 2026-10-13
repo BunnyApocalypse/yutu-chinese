@@ -723,6 +723,13 @@ button.word-entry {
   color: #6b6557;
 }
 
+/* In the list of leeches: what is forgotten about the word, on a line of its own. */
+.entry-leech {
+  grid-column: 1 / -1;
+  font-size: 0.85rem;
+  color: #c2452d;
+}
+
 .entry-new {
   font-size: 0.8rem;
   color: #8a5a00;

@@ -201,6 +201,20 @@
 
           <h2><span id="word-list-title">All your words</span> (<span id="word-count">0</span>)</h2>
           <input id="word-search" type="search" placeholder="Search characters, pinyin or meaning" aria-label="Search your words" autocomplete="off" autocapitalize="off" />
+          <!-- Which of the words are listed (wordsPanel.js). -->
+          <label class="setting">
+            Show
+            <select id="word-filter">
+              <option value="">All words</option>
+              <option value="leeches">Leeches: cards I keep forgetting</option>
+              <option value="suspended">Words with a suspended card</option>
+            </select>
+          </label>
+          <!-- Only with the leeches listed: two ways to take them elsewhere. -->
+          <div id="leech-export" class="buttons" hidden>
+            <button id="leech-list-button" class="small" type="button">Download list</button>
+            <button id="leech-prompt-button" class="small" type="button">Copy as AI prompt</button>
+          </div>
           <p id="word-list-note" class="note"></p>
           <ul id="word-list" class="word-list"></ul>
         </section>
@@ -261,6 +275,8 @@
 
         <!-- Review mode, with the grades: opens the word's panel to correct it (review.js). -->
         <button id="edit-word-button" class="small" type="button" hidden>Edit word</button>
+        <!-- With the grades, on a card that keeps being forgotten (review.js). -->
+        <p id="leech-note" class="order-note" hidden></p>
 
         <!-- Shown when a character with two accepted stroke orders was written in the mainland one. -->
         <p id="order-note" class="order-note" hidden>
@@ -317,6 +333,18 @@
           <details id="edit-decks-row" class="add-list" hidden>
             <summary id="edit-decks-summary">Decks</summary>
             <fieldset id="edit-decks" class="setting"><legend>This word is in</legend></fieldset>
+          </details>
+          <!-- One checkbox per kind of card: ticked ones do not come up in Review. -->
+          <details id="edit-suspended-row" class="add-list">
+            <summary id="edit-suspended-summary">Suspended cards</summary>
+            <fieldset id="edit-suspended" class="setting">
+              <legend>Do not show me this word's</legend>
+              <label><input type="checkbox" value="meaning" /> meaning card</label>
+              <label><input type="checkbox" value="pinyin" /> pinyin card</label>
+              <label><input type="checkbox" value="tone" /> tone card</label>
+              <label><input type="checkbox" value="writing" /> writing card</label>
+            </fieldset>
+            <p class="hint">A suspended card keeps its history and its schedule; it just does not come up until you untick it here.</p>
           </details>
           <p class="hint">Pinyin is written with tone numbers, like xue2xi2. Your progress with the word is kept whatever you change.</p>
           <p id="word-dialog-note" class="note"></p>
@@ -540,6 +568,26 @@
         <label class="setting">
           New words per day (goal)
           <input id="new-words-input" type="number" min="0" max="50" inputmode="numeric" />
+        </label>
+
+        <label class="setting">
+          A card is a leech after
+          <input id="leech-input" type="number" min="2" max="30" inputmode="numeric" aria-label="Times forgotten before a card is a leech" />
+          <span class="hint">
+            times forgotten. A leech is a card you keep getting wrong. The Decks tab can list your leeches, so
+            you can do something about them.
+          </span>
+        </label>
+
+        <label class="setting">
+          When a card becomes a leech
+          <select id="leech-action-select">
+            <option value="flag">Point it out</option>
+            <option value="suspend">Suspend it</option>
+          </select>
+          <span class="hint">
+            A suspended card no longer comes up in Review, until you switch it back on in the word's panel (Decks tab).
+          </span>
         </label>
 
         <fieldset class="setting">

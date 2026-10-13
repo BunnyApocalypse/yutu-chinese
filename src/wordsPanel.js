@@ -12,6 +12,7 @@ import { allCardIds } from './session.js';
 import { fileCardsByScript } from './scriptCards.js';
 import { missingReadyMadeDecks, deckTree, deckWithInside, isInDecks, withDeck } from './decks.js';
 import { createDecksPanel } from './decksPanel.js';
+import { findLeeches, describeLeech, describeSuspended, leechList, leechPrompt } from './leeches.js';
 import {
   checkWord,
   readWordList,
@@ -93,6 +94,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
 
   const countElement = byId('word-count');
   const searchInput = byId('word-search');
+  const filterSelect = byId('word-filter');
   const listElement = byId('word-list');
   const listNote = byId('word-list-note');
   const editDecks = byId('edit-decks');
@@ -114,6 +116,11 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   let words = [];
   let decks = [];
   let cards = [];
+  // The reviews, read only once the leeches are listed (see renderList);
+  // null until then, and again after anything changes.
+  let reviews = null;
+  // The leeches in the list as it is shown, for the two export buttons.
+  let shownLeeches = [];
   // The ID of the deck whose page is open; null on the front page, and
   // undefined until the tab is first shown (see show()).
   let openDeckId;
@@ -132,6 +139,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     words = (await getAll('words')).sort((a, b) => a.order - b.order);
     decks = await getAll('decks');
     cards = await getAll('cards');
+    reviews = null;
     // A word is learned once it has been through the Learn tab, or has a card
     // (see isLearned in session.js).
     studiedWordIds = new Set([
@@ -297,15 +305,46 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     const deck = openDeck();
     const inside = deck ? deckWithInside(decks, deck.id) : null;
     const listed = inside ? words.filter((word) => isInDecks(word, inside)) : words;
-    const matching = listed.filter((word) => matchesSearch(word, searchInput.value));
+    const searched = listed.filter((word) => matchesSearch(word, searchInput.value));
     countElement.textContent = listed.length;
     const nameOf = new Map(decks.map((entry) => [entry.id, entry.name]));
+
+    // With "Leeches" chosen, only the words with a card that keeps being
+    // forgotten are listed, the most forgotten first, each with what is
+    // forgotten about it.
+    const onlyLeeches = filterSelect.value === 'leeches';
+    if (onlyLeeches && reviews === null) {
+      // The reviews say which character of a word is missed. They are only
+      // read when wanted, since there can be very many; the list is shown
+      // again once they are here.
+      getAll('reviews').then((all) => {
+        reviews = all;
+        renderList();
+      });
+    }
+    const { leechLapses } = getSettings();
+    shownLeeches = onlyLeeches ? findLeeches(searched, cards, reviews || [], leechLapses) : [];
+    const leechesOf = new Map();
+    for (const leech of shownLeeches) {
+      leechesOf.set(leech.word.id, [...(leechesOf.get(leech.word.id) || []), leech]);
+    }
+    const onlySuspended = filterSelect.value === 'suspended';
+    const matching = onlyLeeches
+      ? [...new Set(shownLeeches.map((leech) => leech.word))]
+      : onlySuspended
+        ? searched.filter((word) => describeSuspended(word) !== '')
+        : searched;
+    byId('leech-export').hidden = shownLeeches.length === 0;
     listNote.textContent =
       matching.length > MAX_ROWS
         ? `Showing the first ${MAX_ROWS} of ${matching.length}. Search to narrow them down.`
-        : matching.length === 0
-          ? 'No words match.'
-          : '';
+        : matching.length > 0
+          ? ''
+          : onlyLeeches
+            ? `No leeches here: no card has been forgotten ${leechLapses} times. (The number is in Settings.)`
+            : onlySuspended
+              ? 'No suspended cards here.'
+              : 'No words match.';
 
     const rows = matching.slice(0, MAX_ROWS).map((word) => {
       const span = (className, text) => {
@@ -332,6 +371,13 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       if (where || waiting) {
         button.append(span('entry-new', [where, waiting].filter(Boolean).join(' · ')));
       }
+      for (const leech of leechesOf.get(word.id) || []) {
+        button.append(span('entry-leech', describeLeech(leech)));
+      }
+      // Outside the list of leeches, a word's suspended cards are named.
+      if (!onlyLeeches && describeSuspended(word) !== '') {
+        button.append(span('entry-leech', describeSuspended(word)));
+      }
       button.addEventListener('click', () => openDialog(word));
       const row = document.createElement('li');
       row.append(button);
@@ -341,6 +387,39 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   }
 
   searchInput.addEventListener('input', renderList);
+  filterSelect.addEventListener('change', renderList);
+
+  // ---- Taking the leeches elsewhere ----
+
+  // Saves text as a file in the device's Downloads folder (see downloadBackup
+  // in main.js for how).
+  function downloadText(text, fileName) {
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+
+  const scriptOfWord = (word) => scriptFor(word, getSettings());
+
+  byId('leech-list-button').addEventListener('click', () => {
+    downloadText(leechList(shownLeeches, scriptOfWord, formatPinyin), 'hanzi-trainer-leeches.tsv');
+  });
+
+  // The clipboard is what "copy" fills and "paste" empties. A page may only
+  // write to it at an https or localhost address; elsewhere, or if the
+  // browser refuses, the prompt is saved as a file instead.
+  byId('leech-prompt-button').addEventListener('click', async () => {
+    const prompt = leechPrompt(shownLeeches, scriptOfWord, formatPinyin);
+    try {
+      await navigator.clipboard.writeText(prompt);
+      listNote.textContent = 'Copied. Paste it into the AI you use.';
+    } catch {
+      downloadText(prompt, 'hanzi-trainer-leeches-prompt.txt');
+      listNote.textContent = 'It could not be copied here, so it was saved as a file instead.';
+    }
+  });
 
   // ---- Adding one word ----
 
@@ -777,6 +856,17 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
 
   // ---- One word: change, study next, remove ----
 
+  // The checkboxes for suspending a word's cards, one per kind.
+  const suspendedBoxes = [...document.querySelectorAll('#edit-suspended input')];
+  // Says on the closed fold-out how many are ticked.
+  function showSuspendedCount() {
+    const count = suspendedBoxes.filter((box) => box.checked).length;
+    byId('edit-suspended-summary').textContent = count > 0 ? `Suspended cards (${count})` : 'Suspended cards';
+  }
+  for (const box of suspendedBoxes) {
+    box.addEventListener('change', showSuspendedCount);
+  }
+
   function openDialog(word) {
     openWord = word;
     dialogResult = { changed: false, word };
@@ -808,6 +898,12 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     byId('edit-decks-row').hidden = false;
     byId('edit-decks-row').open = false;
     showDeckCount();
+    // The suspended kinds of card are ticked; the fold-out is open if any is.
+    for (const box of suspendedBoxes) {
+      box.checked = (word.suspended || []).includes(box.value);
+    }
+    byId('edit-suspended-row').open = suspendedBoxes.some((box) => box.checked);
+    showSuspendedCount();
     dialogNote.textContent = '';
     // Only a word still waiting can be moved to the front of the line.
     studyNextButton.hidden = studied;
@@ -866,6 +962,10 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     }
     if (openWord.learnedAt !== undefined) {
       saved.learnedAt = openWord.learnedAt;
+    }
+    const suspended = suspendedBoxes.filter((box) => box.checked).map((box) => box.value);
+    if (suspended.length > 0) {
+      saved.suspended = suspended;
     }
     if (saved.id === openWord.id) {
       await putAll('words', [saved]);

@@ -4,6 +4,7 @@
 import { getSetting, setSetting } from './db.js';
 import { DEFAULT_MEANING_DETAIL } from './dictionary.js';
 import { CARD_TYPES, DEFAULT_NEW_WORDS_PER_DAY } from './session.js';
+import { DEFAULT_LEECH_LAPSES, MIN_LEECH_LAPSES, MAX_LEECH_LAPSES } from './leeches.js';
 
 const MAX_NEW_WORDS_PER_DAY = 50;
 
@@ -39,6 +40,10 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //   lessons:        true to teach a word before it is first written from
 //                   memory (tones, tracing; see review.js)
 //   newWordsPerDay: a number
+//   leechLapses:    how many times a card has to be forgotten to be pointed
+//                   out as a leech (see leeches.js)
+//   leechAction:    'flag' to only point a leech out, 'suspend' to also
+//                   suspend the card when it becomes one
 //   enabledTypes:   the card types switched on, e.g. ['meaning', 'writing']
 //   studyDeck:      the ID of the deck studied in Review and Learn, or ''
 //                   for all words. Chosen at the top of those two tabs, not
@@ -56,6 +61,8 @@ export async function createSettings(elements, onChange) {
     lessonsCheckbox,
     meaningDetailSelect,
     newWordsInput,
+    leechInput,
+    leechActionSelect,
     typeCheckboxes,
   } = elements;
 
@@ -69,6 +76,8 @@ export async function createSettings(elements, onChange) {
     lessons: await getSetting('lessons', true),
     meaningDetail: await getSetting('meaningDetail', DEFAULT_MEANING_DETAIL),
     newWordsPerDay: await getSetting('newWordsPerDay', DEFAULT_NEW_WORDS_PER_DAY),
+    leechLapses: await getSetting('leechLapses', DEFAULT_LEECH_LAPSES),
+    leechAction: await getSetting('leechAction', 'flag'),
     enabledTypes: await getSetting('enabledTypes', CARD_TYPES),
     studyDeck: await getSetting('studyDeck', ''),
   };
@@ -82,6 +91,8 @@ export async function createSettings(elements, onChange) {
     lessonsCheckbox.checked = settings.lessons;
     meaningDetailSelect.value = settings.meaningDetail;
     newWordsInput.value = settings.newWordsPerDay;
+    leechInput.value = settings.leechLapses;
+    leechActionSelect.value = settings.leechAction;
     for (const checkbox of typeCheckboxes) {
       checkbox.checked = settings.enabledTypes.includes(checkbox.dataset.cardType);
     }
@@ -149,6 +160,17 @@ export async function createSettings(elements, onChange) {
     const value = Number.isFinite(typed) ? Math.min(MAX_NEW_WORDS_PER_DAY, Math.max(0, typed)) : settings.newWordsPerDay;
     newWordsInput.value = value;
     change('newWordsPerDay', value);
+  });
+
+  leechActionSelect.addEventListener('change', () => change('leechAction', leechActionSelect.value));
+
+  leechInput.addEventListener('change', () => {
+    const typed = Math.round(Number(leechInput.value));
+    const value = Number.isFinite(typed)
+      ? Math.min(MAX_LEECH_LAPSES, Math.max(MIN_LEECH_LAPSES, typed))
+      : settings.leechLapses;
+    leechInput.value = value;
+    change('leechLapses', value);
   });
 
   for (const checkbox of typeCheckboxes) {

@@ -72,6 +72,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `src/welcome.js`, `src/storageAdvice.js`: the introduction shown on first use, and what it says about long-term storage in each browser (see that section).
 - `src/scriptCards.js`: files writing cards under the script they were learned in (see "Switching script").
 - `src/backup.js`: build, check and restore a backup file.
+- `src/leeches.js`: which cards are leeches, suspended cards, and the two leech exports (see "Leeches and suspended cards"). Plain calculation.
 - `src/merge.js`: combines what is on the device with a backup from another device (see "Combining backups"). Plain calculation.
 - `src/wordList.js`: parses the four-column TSV word list format (same as Skritter's export) and converts numbered pinyin to tone marks.
 - `tests/words.tsv`: 109 common words, hand-written, for the tests only. The app itself starts with no words (the owner's decision, 2026-10-13: this list had been loaded into every new database, and they did not want test words in their app). Browser tests that need words add it through the Decks tab (`addTestWords` in the harness).
@@ -95,6 +96,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `tests/browser/database.browser.js`: a database from before brought up to date, and what is kept for merging (removal marks, `changedAt`, `formerIds`).
 - `tests/decks.test.js`: tests for `src/decks.js`.
 - `tests/browser/decks.browser.js`: decks from making one to deleting it, and studying one in Learn.
+- `tests/leeches.test.js`, `tests/browser/leeches.browser.js`: leeches and suspending, as a calculation and in the app.
 - `tests/merge.test.js`, `tests/browser/merge.browser.js`: combining backups, as a calculation and in the app.
 - `tests/words.test.js`, `tests/dictionary.test.js`: tests for `src/words.js` and `src/dictionary.js`; the second also checks every line of the real dictionary.
 
@@ -142,7 +144,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - **Cards of one word are kept apart** (`SIBLING_GAP_MS`, 3 minutes), because each gives away the others' answers: a writing card ends by showing the pinyin, the others show the characters. With few words in play this makes the app say "next review in N minutes" although cards exist. That is intended.
 - **New words per day counts words, not cards** (setting, default 5). A word is introduced when its first card of any type is studied. New cards of words already introduced are not limited.
 - **Free practice shows any of the four card kinds without recording anything**, mainly so cards can be tried and tested. Writing works for any typed characters (`startFreePractice` in `src/main.js`); tone, pinyin and meaning need the word's reading and meaning, so the typed word must be in the word list (`practice` in `src/review.js`). A practice card gets no grade buttons, and continuing shows it again.
-- **Settings** (`settings` store): `script`, `pronunciation`, `rawInput`, `newWordsPerDay`, `enabledTypes`. A type switched off never appears but keeps its cards and history. At least one type stays on.
+- **Settings** (`settings` store): `script`, `pronunciation`, `rawInput`, `newWordsPerDay`, `enabledTypes`, `leechLapses`, `leechAction`. A type switched off never appears but keeps its cards and history. At least one type stays on.
 - **Writing prompts show the meaning only.** The owner decided pinyin must not be given. A "Show pinyin" button reveals it for near-synonyms and does not affect the grade; the pinyin is shown once the word is finished. Glosses in word lists must therefore be distinguishable from each other.
 - **One writing card per word.** A setting chooses the script written (traditional or simplified); the schedule is shared.
 - **FSRS** with default parameters (90% target retention, learning steps of 1 and 10 minutes, fuzz on).
@@ -212,6 +214,18 @@ Built on 2026-10-13 to a plan the owner agreed to. It is number 3 of the order o
 - **Limits, accepted with the owner:** if one device changes a word's meaning and the other puts it in a deck, the later save wins whole and the other change is lost; "later" trusts each device's clock; and making two devices equal takes two steps (export A, combine on B, export B, combine or replace on A).
 - **Tests:** `tests/merge.test.js` (same result from either device, nothing new the second time, and a case per rule) and `tests/browser/merge.browser.js` (the panel, combining, replacing). The browser test hands the app a file through the hidden file input (`chooseBackup`).
 - **Not done:** the owner has not tried it between their real devices, and nobody has looked at the panel on a phone.
+
+## Leeches and suspended cards
+
+Built on 2026-10-13 to a plan the owner agreed to; number 4 of the order of work in "Long-term goals", first half. The second half, the rest of the card manager, is in "Where the work stands".
+
+- **A leech is a card forgotten often**: graded Again at least `leechLapses` times after it had been learned (setting, default 6, the owner's number; 2 to 30). The count is ts-fsrs's own `lapses` in the card's `fsrsState`, so nothing is stored for it and it comes out the same when cards are rebuilt from reviews. `isLeech`, `lapsesOf` in `src/leeches.js`.
+- **What happens to a leech is a setting** (owner, 2026-10-13): `leechAction`, `flag` (the default: only pointed out) or `suspend`. The owner wants, in the long run, as many scheduling options as Anki has; settings of this kind are welcome.
+- **Pointed out in two places:** a line under the grades in Review when a leech's answer is showing (`leech-note`), and the "Show" list above the words in the Decks tab (`word-filter`): All words, Leeches, Words with a suspended card. The list follows the deck page that is open and the search box. A leech's row says what is forgotten: "writing · forgotten 7 times · 習 missed 5 of 9 times" (the character from the reviews' `passedPerChar`; the reviews are only read once the leeches are listed).
+- **Two exports**, with the leeches listed: "Download list" (a TSV) and "Copy as AI prompt" (the list inside a request for component breakdowns and mnemonics; `leechPrompt`). The prompt goes to the clipboard, or into a file where the browser will not allow that (the LAN dev address). The app sends nothing anywhere.
+- **Suspended cards are on the word**: `suspended`, a list of card kinds, because cards are rebuilt from reviews when backups are combined and a mark on a card would be lost. A word's writing cards in both scripts are suspended together. `hasCardType` in `src/review.js` keeps a suspended kind out of Review; the card keeps its history and schedule. Like `decks` and `formerIds`, the field has to be carried over by hand where a word is rebuilt from a form (the pop-up panel does).
+- **Switching a card off or back on:** the "Suspended cards" fold-out in the word's pop-up panel, a checkbox per kind.
+- **With `suspend`, a card is suspended at the review that makes it a leech** (`becameLeech`: forgotten once more, and now at or over the number). A card switched back on is therefore suspended again the next time it is forgotten. Nothing on screen says so at that moment; the card just stops coming, and is in the list of suspended cards.
 
 ## How the must-haves are implemented
 
@@ -418,7 +432,9 @@ Written on 2026-10-13 for whichever session picks the work up next (the owner wo
 - **Done that day:** the conversation about long-term goals, the database made ready for merging, and decks with the Decks tab in place of the Words tab (see "Long-term goals", "Ready for merging", "Decks").
 - **Done later that day: combining backups**, number 3 in the order of work (see "Combining backups"). The owner has not tried it yet.
 - **Done later that day: groups inside the lower levels** of the ready-made lists (TOCFL's topics; HSK 3.0 and 2.0 levels 1 to 3 in a teaching order), each a deck inside its level. See "Ready-made word lists". The owner saw and approved HSK 3.0 level 1; the other five HSK levels were read by Claude only.
-- **Next: leeches with their export, and a card manager**, number 4. Propose a plan to the owner before writing code.
+- **Done later that day: leeches** with their two exports, and suspending a card (see "Leeches and suspended cards"). The owner has not tried it.
+- **Next: the rest of the card manager**, agreed in outline with the owner: a "Cards" section in the word's pop-up panel (per card: next due, interval, reviews, lapses, with "Start over"), sorting the word list by next due or by lapses, and selecting several words to suspend, start over, move to a deck or remove. "Start over" needs a `startedOverAt` per card kind on the word, which `replay` and the merge must honor as they do removal marks. Open with the owner: whether to add "mark as known" and "set the next due date by hand" (Claude advised the first, as an ordinary Easy review, and against the second).
+- **Asked about by the owner, not decided:** learning notes for each word of the lower levels, shown on a word's page as in Skritter (a breakdown, a usage point, an example sentence), written by AI models in the background. Claude's estimate and advice were given in the session of 2026-10-13; Skritter's own notes must not be copied.
 - **The owner has only tried the Decks tab briefly.** They asked for the Back button after their first look; expect more remarks on it.
 - **Deploying:** if the deploy step fails with "Fetching artifact metadata failed", do not re-run the failed run (the re-run uploads a second copy of the site and fails on that); start a fresh one with `gh workflow run deploy.yml --ref main`.
 - **The repository's address** is `BunnyApocalypse/hanzi-trainer`, with capitals; the lowercase one still works but git says it has moved.

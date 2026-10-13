@@ -24,6 +24,7 @@ import {
 } from './session.js';
 import { toneAnswers, readingsFor, describeReading } from './tones.js';
 import { scriptFor, scriptFlagFor } from './words.js';
+import { isLeech, lapsesOf, isSuspended, withSuspended, becameLeech } from './leeches.js';
 
 const TYPE_LABELS = {
   writing: 'Writing',
@@ -37,7 +38,7 @@ const RECHECK_MS = 15 * 1000;
 
 // elements: the page elements review controls:
 //   countsElement, typeElement, meaningElement, pinyinElement, pinyinButton,
-//   gradeRow, editWordButton, donePanel, doneMessage, studyArea, scriptFlag,
+//   gradeRow, editWordButton, leechNote, donePanel, doneMessage, studyArea, scriptFlag,
 //   lessonNote, skipLessonButton, lessonNextButton, learnNextButton,
 //   and the parts of the study area that differ per kind of card:
 //   wordRow, statusRow, verdictRow, writingRow, writingButtons, cardFace,
@@ -61,6 +62,7 @@ export function createReview(elements, flows, settings, editWord) {
     pinyinButton,
     gradeRow,
     editWordButton,
+    leechNote,
     donePanel,
     doneMessage,
     studyArea,
@@ -172,6 +174,7 @@ export function createReview(elements, flows, settings, editWord) {
   function hideGrades() {
     gradeRow.hidden = true;
     editWordButton.hidden = true;
+    leechNote.hidden = true;
     options = null;
   }
 
@@ -208,6 +211,14 @@ export function createReview(elements, flows, settings, editWord) {
       showNext();
     }
   });
+
+  // Suspends one kind of card of a word, here and in the database.
+  async function suspend(word, type) {
+    // `changedAt` is put on by the database when the word is saved.
+    const { changedAt, ...suspended } = withSuspended(word, type);
+    await putAll('words', [suspended]);
+    words = words.map((entry) => (entry.id === word.id ? suspended : entry));
+  }
 
   // Saves the review with the chosen grade and moves on.
   async function grade(value) {
@@ -249,6 +260,10 @@ export function createReview(elements, flows, settings, editWord) {
     };
     await saveReview(newCard, review);
     cards.set(newCard.id, newCard);
+    // Forgotten once too often: with that setting, the card is suspended.
+    if (settings.leechAction === 'suspend' && becameLeech(card, newCard, settings.leechLapses)) {
+      await suspend(word, type);
+    }
     if (current.learning) {
       // That was the last step of a new word's lesson.
       await finishLearning();
@@ -274,6 +289,11 @@ export function createReview(elements, flows, settings, editWord) {
     }
     gradeRow.hidden = false;
     editWordButton.hidden = false;
+    // A card that keeps being forgotten is pointed out, now that its answer
+    // is in view: the moment to think of a way to remember it.
+    const lapses = lapsesOf(current.card);
+    leechNote.textContent = `Leech: you have forgotten this card ${lapses} times. The Decks tab lists your leeches.`;
+    leechNote.hidden = !isLeech(current.card, settings.leechLapses);
   }
 
   // The card has been answered: work out what each grade would do and offer
@@ -674,6 +694,10 @@ export function createReview(elements, flows, settings, editWord) {
   // ---- Choosing the next card ----
 
   function hasCardType(word, type) {
+    // A suspended card does not come up (see leeches.js).
+    if (isSuspended(word, type)) {
+      return false;
+    }
     if (type === 'writing') {
       return !unwritable.has(word.id);
     }
