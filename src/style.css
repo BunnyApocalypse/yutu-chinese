@@ -27,17 +27,11 @@ button.settings-cog {
   position: absolute;
   top: 16px;
   right: 12px;
-  width: 40px;
-  height: 40px;
-  min-height: 40px;
 }
 
 @media (max-width: 460px) {
   button.settings-cog {
     right: 8px;
-    width: 36px;
-    height: 36px;
-    min-height: 36px;
   }
 }
 
@@ -113,7 +107,7 @@ button.settings-cog {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 32px;
+  min-height: 36px;
 }
 
 /* A round button with only a picture on it. */
@@ -121,8 +115,13 @@ button.icon-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  /* Buttons are at least 48px tall (see "button" below); a round one has to
+     say otherwise, or it comes out taller than it is wide. flex: none keeps
+     a row from squeezing or stretching it. */
+  flex: none;
+  width: 36px;
+  height: 36px;
+  min-height: 0;
   padding: 0;
   border-radius: 50%;
   color: #3b6fb6;
