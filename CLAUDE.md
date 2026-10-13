@@ -1,6 +1,6 @@
 # Hanzi Trainer
 
-A personal, local-first Chinese character writing trainer: a PWA built as an alternative to Skritter. One user, their own devices.
+A local-first Chinese character writing trainer: a PWA built as an alternative to Skritter. For the owner first, on their own devices, and for any learner who wants it (see "Long-term goals").
 
 ## Hard constraints
 
@@ -320,19 +320,33 @@ Asked for by the owner on 2026-10-13; the screens' wording and the extras noted 
 
 The owner wants to bring their Skritter data across eventually rather than start from scratch. Don't build it early, but keep it in mind whenever the data model is designed: it should hold words as well as single characters, both scripts, and per-item review history and scheduling state. Look at a real Skritter export before finalising the IndexedDB schema. Personal exports go in `exports/`, which is git-ignored.
 
-## To discuss with the owner at the start of the next session
+## Long-term goals
 
-**First, before any further building** (asked for by the owner on 2026-10-13): a conversation about the long-term goals for the app, what the owner wants it to do, and whether that calls for architectural changes or for putting things in a different order. Do not start a new feature until it has been had. Things it should cover, as far as Claude can see them:
+Agreed with the owner on 2026-10-13, in the conversation that had been put first on the to-do list.
 
-- Who the app is for. It began as "one user, their own devices"; since then it has gained an introduction for newcomers, defaults chosen for "the largest userbase", and a public address. Is it becoming an app for other learners too, and if so what does that change (support, wording, what is promised about data)?
-- What "done" looks like against Skritter: which of its features matter (decks, sentence or example study, listening, statistics, sync between devices) and which do not.
-- Data: everything is in one browser's IndexedDB with manual backups. Is sync between the owner's devices wanted, and would that be allowed to break the "no backend" rule?
-- The pieces already promised that touch the data model: decks and sub-decks, merging backups, the Skritter import, the 繁/簡 helper mode. In what order, and should the model be settled for all of them at once?
-- The hard constraints at the top of this file (vanilla JavaScript, no dependencies to speak of, Hanzi Writer for grading): still right for where the app is going? `src/review.js`, `src/wordsPanel.js` and `src/quiz.js` have each grown large.
-- Smaller things waiting: dark mode, collapsing long meanings, TBCL, browser tests for grading.
+- **Who it is for:** the owner first, and any learner who wants it ("If I am putting the effort into this, why not share it?"). Wording, defaults and help text should work for a stranger.
+- **Nobody's data is ever held by us.** The owner does not want to make or run a sync server or touch anyone's data, unless that becomes necessary. Everything stays on the device.
+- **Sync without a server:** first merging backups by hand; as a very long-term goal, syncing through storage the learner already has (Google Drive, Proton Drive, iCloud, OneDrive). Both are the same merge with a different way of moving the file, so the merge is built once.
+- **Better than Skritter where Anki is:** decks and sub-decks, managing cards, flagging leeches, a choice of scheduling (retention, parameters), and everything portable. Leeches can be exported as a list, and as a prompt for an AI to make mnemonics from.
+- **A word can be in several decks and has one schedule.** Studying a deck filters the same cards.
+- **Sentences and audio:** hearing the word and sentence cards (without audio) are core. Listening cards, example sentences on a word's answer page and audio for sentences are nice to have.
+- **The hard constraints are open to change** (vanilla JavaScript, no framework, few dependencies) if a change makes the app easier to grow or to contribute to. Nothing planned needs one yet, so they stand until a concrete case comes up; each change is still asked for first.
+- **Order of work:**
+  1. Settle the data model for decks, merging and the Skritter import together.
+  2. Merge backups.
+  3. Decks.
+  4. Leeches with their export, and a card manager.
+  5. Sentences and audio.
+  6. Statistics.
+  - The Skritter import comes whenever the GDPR data arrives. Dark mode and collapsing long meanings fit in between.
+- **Consequences for the data model**, as Claude sees them: a removed word or card must leave a mark, or a merge brings it back; records need the time they were last changed; a corrected word's old ID must be remembered; and a card's schedule should be recomputable from its reviews, which also serves changed scheduling, leeches and statistics.
+- **Sharing raises the bar on licensing.** The TOCFL list has no stated license (see "Ready-made word lists").
 
-1. The Script and Pronunciation settings were built without the owner at the keyboard (see "Fitting the interface to what is learned"). Ask whether the two lists, their wording and the choices listed there suit them.
-2. Whether the installed app works on the phone and tablet, offline too, and whether the backup was moved across from the old address.
+## Settled with the owner on 2026-10-13
+
+- The Script and Pronunciation settings suit them as built.
+- **The owner is only testing the app for now; their real study is still in Skritter.** Nothing in the app's database on any of their devices, at the old LAN address or the published one, needs saving. Other people may be using the published app, though, so a change to the database still has to carry existing data over.
+- The Skritter exports in `exports/` are plain word lists (a TSV and a CSV). The scheduling data from the GDPR request has not arrived.
 
 ## Roadmap
 
@@ -347,7 +361,7 @@ The owner wants to bring their Skritter data across eventually rather than start
 9. Import the Skritter scheduling data, if the GDPR request (sent 2026-10-12) yields it. The word list itself can be added in the Words tab since 2026-10-12; the owner had said they did not want it imported without scheduling data, so when to do that is theirs to decide.
 10. Merge backups between devices instead of replacing; a settings screen (new words per day, target retention).
 11. **To do, asked for by the owner:**
-    - **First of all: the conversation about long-term goals** (see "To discuss with the owner at the start of the next session"). Nothing below is to be started before it.
+    - **Done on 2026-10-13:** the conversation about long-term goals (see "Long-term goals", which also has the order of work).
     - **Done on 2026-10-13:** fit the interface to the script and pronunciation being learned (see "Fitting the interface to what is learned"). The owner has not seen it yet.
     - **Done for writing:** a browser test suite that lives in the repo and runs in parallel (see "Browser tests"). Still open: browser tests for grading in Review and for most of the settings panel.
     - **Done on 2026-10-13:** the browser grid's remaining failures (half-size second or third stroke; 學 in the mainland order shifted right). See "Following where a character is written" and "Two accepted stroke orders".
