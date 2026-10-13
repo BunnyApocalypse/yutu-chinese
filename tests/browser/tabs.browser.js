@@ -109,7 +109,7 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     assert.match(await textOf(page, 'app-version'), /^Version \d+\.\d+\.\d+ \(/);
     await tap(page, 'credits-button');
     assert.equal(await page.evaluate(`document.getElementById('credits-dialog').open`), true);
-    assert.match(await textOf(page, '#credits-dialog .credits'), /CC-CEDICT[\s\S]*Chen Wang[\s\S]*Arphic/);
+    assert.match(await textOf(page, '#credits-dialog .credits'), /Arphic[\s\S]*CC-CEDICT[\s\S]*Chen Wang/);
     await tap(page, 'credits-close');
     await tap(page, 'settings-close');
 
