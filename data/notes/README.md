@@ -12,7 +12,7 @@ One file per level, named like the level's group file (`hsk-3.0-1.tsv` is HSK 3.
 6. the sentence's pinyin with tone marks, a space between words (the app tells the words of the sentence apart by these spaces)
 7. the sentence in English
 
-So far there are two levels: HSK 3.0 level 1 (509 words, written as a trial) and level 2 (755 words).
+So far: HSK 3.0 level 1 (509 words, written as a trial) and level 2 (755 words), and `tocfl-novice.tsv`, the 76 words of the TOCFL's two beginner levels that those do not cover. A word has one note, whichever list it is met in. The notes for the HSK levels have the Chinese inside the note in simplified characters; those written for the TOCFL have it in traditional characters and describe Taiwan's usage first.
 
 `radicals.tsv` is of another kind: notes about parts of characters, the 60 radicals that occur most often in the lower levels' words. It has the radical in the first column, nothing in the second, and the note in the third, with no example sentence. The app shows such a note on the page of a part of a character, whatever reading the part has. These notes were written from what Make Me a Hanzi says of the characters each radical occurs in, and from Wiktionary for the radical's own origin.
 
