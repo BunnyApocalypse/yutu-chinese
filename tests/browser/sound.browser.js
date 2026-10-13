@@ -72,7 +72,7 @@ describe('hearing a word', { concurrency: false }, () => {
     await tap(page, 'settings-close');
     // Free of the first word: the next one to learn is 星期, read xīngqí.
     await tap(page, 'decks-tab');
-    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
     await page.evaluate('window.confirm = () => true');
     await tap(page, 'remove-word-button');
     await waitUntil(page, `document.querySelectorAll('#word-list li').length === 1`, 'one word left');

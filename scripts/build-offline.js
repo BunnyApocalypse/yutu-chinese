@@ -58,9 +58,10 @@ for (let start = 0; start < strokeFiles.length; start += CHARS_PER_PACK) {
   packs.push({ file: name, count: Object.keys(contents).length });
 }
 
-// The dictionary is one big file already, so it is saved as it is. Vite puts
-// a fingerprint in its name too.
-const bigFiles = filesUnder('assets').filter((file) => file.endsWith('.tsv'));
+// The dictionary, the word lists, the notes (.tsv) and the dictionary of how
+// characters are built (.txt) are one big file each already, so they are
+// saved as they are. Vite puts a fingerprint in their names too.
+const bigFiles = filesUnder('assets').filter((file) => file.endsWith('.tsv') || file.endsWith('.txt'));
 
 // ---- The recordings ----
 //

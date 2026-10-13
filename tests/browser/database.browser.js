@@ -109,7 +109,7 @@ describe('the database', { concurrency: false }, () => {
 
   it('marks a changed word and a changed setting with the time', async () => {
     const before = Date.now();
-    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
     await type(page, 'edit-definition', 'to love; love');
     await page.evaluate(`document.getElementById('word-dialog-form').requestSubmit()`);
     await waitUntil(page, `document.querySelector('#word-list li').textContent.includes('love; love')`);
@@ -123,7 +123,7 @@ describe('the database', { concurrency: false }, () => {
   });
 
   it('remembers the ID a word had before its pinyin was corrected', async () => {
-    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
     await type(page, 'edit-pinyin', 'ai3');
     await page.evaluate(`document.getElementById('word-dialog-form').requestSubmit()`);
     await waitUntil(page, `document.querySelector('#word-list li').textContent.includes('ǎi')`, 'the new reading');
@@ -132,7 +132,7 @@ describe('the database', { concurrency: false }, () => {
     assert.deepEqual(word.formerIds, ['愛|ai4']);
 
     // A change that keeps the ID keeps the former ones too.
-    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
     await type(page, 'edit-definition', 'to love');
     await page.evaluate(`document.getElementById('word-dialog-form').requestSubmit()`);
     await waitUntil(page, `!document.querySelector('#word-list li').textContent.includes('love; love')`);
@@ -144,7 +144,7 @@ describe('the database', { concurrency: false }, () => {
     const before = Date.now();
     // The pop-up that asks before a word is removed: answer OK.
     await page.evaluate('window.confirm = () => true');
-    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
     await tap(page, 'remove-word-button');
     await waitUntil(page, rows(0));
     const removed = await stored(page, 'removed');

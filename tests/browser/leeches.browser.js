@@ -145,7 +145,7 @@ describe('leeches', { concurrency: false }, () => {
     await choose(page, 'word-filter', 'suspended');
     await waitUntil(page, rows(1), 'the word with a suspended card');
     assert.match(await textOf(page, '#word-list li'), /suspended: meaning$/);
-    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
     assert.equal(await textOf(page, 'edit-suspended-summary'), 'Suspended cards (1)');
     await page.evaluate(`document.querySelector('#edit-suspended input[value="meaning"]').click()`);
     await page.evaluate(`document.getElementById('word-dialog-form').requestSubmit()`);

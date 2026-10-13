@@ -313,6 +313,8 @@
         <button id="skip-lesson-button" class="small" type="button" hidden>I know this word: skip its lesson</button>
 
         <!-- Review mode, with the grades: opens the word's panel to correct it (review.js). -->
+        <!-- With the grades: the word's page, and its panel to correct it (review.js). -->
+        <button id="about-word-button" class="small" type="button" hidden>About this word</button>
         <button id="edit-word-button" class="small" type="button" hidden>Edit word</button>
         <!-- With the grades, on a card that keeps being forgotten (review.js). -->
         <p id="leech-note" class="order-note" hidden></p>
@@ -406,6 +408,16 @@
             <button id="word-dialog-close" class="small" type="button">Close</button>
           </div>
         </form>
+      </dialog>
+
+      <!-- Everything about one word or character, to read: wordPage.js fills it in. -->
+      <dialog id="word-page" class="settings-panel word-page">
+        <div id="word-page-body" class="word-page-body"></div>
+        <div class="buttons">
+          <button id="word-page-back" class="small" type="button" hidden>‹ Back</button>
+          <button id="word-page-edit" class="small" type="button" hidden>Edit</button>
+          <button id="word-page-close" class="small primary" type="button">Close</button>
+        </div>
       </dialog>
 
       <!-- One deck from the Decks tab: rename it, move it, give it a daily goal, or delete it. -->

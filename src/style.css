@@ -755,6 +755,151 @@ button.word-entry {
   margin-bottom: 8px;
 }
 
+/* ---- The word page ---- */
+
+.word-page-body {
+  max-height: 72vh;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+
+.page-heading {
+  text-align: center;
+}
+
+.page-word {
+  margin: 0;
+  font-size: 3rem;
+  line-height: 1.2;
+}
+
+/* The word in the other script, under the first. */
+.page-word.second {
+  font-size: 1.8rem;
+  color: #6b6557;
+}
+
+.page-reading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 1.3rem;
+}
+
+.page-meaning {
+  margin: 8px 0;
+  font-size: 1.1rem;
+}
+
+.page-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.chip {
+  padding: 2px 8px;
+  border: 1px solid #b9b2a3;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #6b6557;
+}
+
+.page-section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #ddd7c9;
+}
+
+.page-section h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.page-pinyin {
+  margin: 0 0 2px;
+  color: #3b6fb6;
+}
+
+.page-note,
+.page-english {
+  margin: 0 0 8px;
+}
+
+.page-sentence {
+  margin: 8px 0 2px;
+  font-size: 1.5rem;
+}
+
+/* A word of the example sentence: looks like text, taps like a button. */
+button.sentence-word {
+  padding: 0 1px;
+  border: none;
+  border-bottom: 1px dotted #3b6fb6;
+  border-radius: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+}
+
+.character-card {
+  margin-bottom: 12px;
+}
+
+.character-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.character-top p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6b6557;
+}
+
+button.character-big {
+  padding: 2px 10px;
+  font-size: 2rem;
+}
+
+.character-parts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+
+/* A part of a character, with what it does written under it. */
+button.part {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 52px;
+  padding: 4px 8px;
+}
+
+.part-character {
+  font-size: 1.5rem;
+}
+
+.part-role {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+button.part.meaning .part-role {
+  color: #3b9c5a;
+}
+
+button.part.sound .part-role {
+  color: #3b6fb6;
+}
+
 /* A word's cards in its pop-up panel: one line each, the button at the end. */
 .card-rows {
   display: flex;

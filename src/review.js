@@ -54,7 +54,7 @@ const RECHECK_MS = 15 * 1000;
 // Learn (see "Studying one deck").
 //
 // Returns { load, activate, deactivate, practice, refresh }.
-export function createReview(elements, flows, settings, editWord) {
+export function createReview(elements, flows, settings, editWord, showWord) {
   const {
     deckSelect,
     countsElement,
@@ -64,6 +64,7 @@ export function createReview(elements, flows, settings, editWord) {
     pinyinButton,
     gradeRow,
     editWordButton,
+    aboutWordButton,
     leechNote,
     listenButton,
     noticeElement,
@@ -178,6 +179,7 @@ export function createReview(elements, flows, settings, editWord) {
   function hideGrades() {
     gradeRow.hidden = true;
     editWordButton.hidden = true;
+    aboutWordButton.hidden = true;
     leechNote.hidden = true;
     options = null;
   }
@@ -217,6 +219,14 @@ export function createReview(elements, flows, settings, editWord) {
   }
 
   listenButton.addEventListener('click', speakCurrent);
+
+  // "About this word", shown with the grades: the word's page, with its
+  // note, an example sentence and how its characters are built.
+  aboutWordButton.addEventListener('click', () => {
+    if (current) {
+      showWord(current.word);
+    }
+  });
 
   // "Edit word", shown with the grades: a mistake in a word is usually
   // noticed when its answer is on screen. Opens the word's panel.
@@ -341,6 +351,7 @@ export function createReview(elements, flows, settings, editWord) {
     }
     gradeRow.hidden = false;
     editWordButton.hidden = false;
+    aboutWordButton.hidden = false;
     offerListen(true);
     // A card that keeps being forgotten is pointed out, now that its answer
     // is in view: the moment to think of a way to remember it.

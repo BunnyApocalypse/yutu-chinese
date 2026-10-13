@@ -64,7 +64,7 @@ describe('managing cards', { concurrency: false }, () => {
     await waitUntil(page, rows(2));
 
     // The second word, 愛: four cards, none studied.
-    await page.evaluate(`document.querySelectorAll('#word-list li button')[1].click()`);
+    await page.evaluate(`document.querySelectorAll('#word-list li button')[1].click(); document.getElementById('word-page-edit').click()`);
     await waitUntil(page, `document.querySelectorAll('#edit-cards li').length === 4`, 'the four cards');
     assert.deepEqual(await page.evaluate(cardRows), [
       'Meaning not studied yet',
@@ -113,10 +113,10 @@ describe('managing cards', { concurrency: false }, () => {
   it('does one thing to several words at once', async () => {
     await tap(page, 'select-words-button');
     assert.equal(await page.evaluate(`document.getElementById('bulk-suspend-button').disabled`), true);
-    // A tap selects the word instead of opening its panel.
+    // A tap selects the word instead of opening its page.
     await page.evaluate(`document.querySelector('#word-list li button').click()`);
     assert.match(await textOf(page, 'bulk-count'), /^1 word selected/);
-    assert.equal(await page.evaluate(`document.getElementById('word-dialog').open`), false);
+    assert.equal(await page.evaluate(`document.getElementById('word-page').open`), false);
     await tap(page, 'bulk-all-button');
     assert.match(await textOf(page, 'bulk-count'), /^2 words selected/);
     assert.equal(await page.evaluate(`document.querySelectorAll('#word-list button.selected').length`), 2);

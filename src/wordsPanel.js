@@ -13,6 +13,7 @@ import { fileCardsByScript } from './scriptCards.js';
 import { missingReadyMadeDecks, deckTree, deckWithInside, isInDecks, withDeck } from './decks.js';
 import { createDecksPanel } from './decksPanel.js';
 import { createCardsPanel } from './cardsPanel.js';
+import { createWordPage } from './wordPage.js';
 import { lapsesOf } from './leeches.js';
 import { findLeeches, describeLeech, describeSuspended, leechList, leechPrompt } from './leeches.js';
 import {
@@ -219,6 +220,19 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       studyNextButton.hidden = studiedWordIds.has(word.id);
       showDialogStatus(word);
     },
+  });
+
+  // The page of a word (wordPage.js): what a tap on a word in the list
+  // opens. Its Edit button leads to the pop-up panel for changing the word.
+  const wordPage = createWordPage({
+    getWords: () => words,
+    getDecks: () => decks,
+    getSettings,
+    lookUp: async (text) => {
+      await loadDictionary();
+      return dictionary ? lookUp(dictionary, text) : [];
+    },
+    edit: (word) => openDialog(words.find((entry) => entry.id === word.id) || word),
   });
 
   // Shows the decks, and the forms for adding words if a deck's page is open.
@@ -433,7 +447,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
           cardsPanel.toggle(word);
           button.classList.toggle('selected', cardsPanel.isSelected(word));
         } else {
-          openDialog(word);
+          wordPage.open(word);
         }
       });
       const row = document.createElement('li');
@@ -1091,6 +1105,14 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       return new Promise((resolve) => {
         dialog.addEventListener('close', () => resolve(dialogResult), { once: true });
       });
+    },
+
+    // Opens a word's page from elsewhere in the app (Review's "About this
+    // word").
+    async showWord(word) {
+      applySettings();
+      await load();
+      wordPage.open(words.find((entry) => entry.id === word.id) || word);
     },
 
     async show() {

@@ -88,7 +88,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     await tap(page, 'decks-tab');
     await type(page, 'word-search', '星期');
     await waitUntil(page, `document.querySelectorAll('#word-list li').length >= 1`);
-    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
     await type(page, 'edit-pinyin-also', 'xing1 qi5');
     await page.evaluate(`document.getElementById('word-dialog-form').requestSubmit()`);
     await waitUntil(page, `!document.getElementById('word-dialog').open`, 'the word saved');
@@ -126,7 +126,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     const row = await textOf(page, '#word-list li');
     assert.match(row, /^图书馆/);
     assert.doesNotMatch(row, /圖書館/);
-    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
     assert.match(await textOf(page, 'word-dialog-title'), /^图书馆/);
     assert.equal(await page.evaluate(`document.getElementById('edit-pinyin-taiwan').closest('label').hidden`), true);
     await tap(page, 'word-dialog-close');
@@ -167,7 +167,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     await type(page, 'word-search', 'library');
     await waitUntil(page, `${rows(1)} && document.querySelector('#word-list li').textContent.startsWith('圖書館')`);
     assert.doesNotMatch(await textOf(page, '#word-list li'), /图书馆/);
-    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
     assert.equal(await page.evaluate(`document.getElementById('edit-simplified').closest('label').hidden`), true);
     // Saving keeps the simplified form that is out of sight.
     await type(page, 'edit-definition', 'library (building)');
@@ -204,7 +204,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     assert.equal(await page.evaluate(`document.getElementById('add-card-script').value`), '');
 
     // This one word in simplified, in a deck that is otherwise traditional.
-    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
     await choose(page, 'edit-card-script', 'simplified');
     await page.evaluate(`document.getElementById('word-dialog-form').requestSubmit()`);
     await waitUntil(page, `document.querySelector('#word-list li').textContent.startsWith('图书馆 · 圖書館')`, 'simplified first');
@@ -231,7 +231,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     assert.equal(await textOf(page, 'script-flag'), '');
     await tap(page, 'decks-tab');
     await waitUntil(page, `document.getElementById('add-card-script-row').hidden`, 'the choice to go');
-    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
     assert.equal(await page.evaluate(`document.getElementById('edit-card-script').closest('label').hidden`), true);
     await tap(page, 'word-dialog-close');
   });
@@ -275,7 +275,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     await choose(page, 'script-select', 'both-traditional');
     await type(page, 'word-search', 'bookworms');
     await waitUntil(page, `${rows(1)} && !document.getElementById('edit-traditional').closest('label').hidden`);
-    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
     assert.equal(await page.evaluate(`document.getElementById('edit-traditional').value`), '书虫们');
     await type(page, 'edit-traditional', '書蟲們');
     await page.evaluate(`document.getElementById('word-dialog-form').requestSubmit()`);

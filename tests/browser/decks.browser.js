@@ -160,7 +160,7 @@ describe('decks', { concurrency: false }, () => {
   it('keeps every word in at least one deck', async () => {
     await type(page, 'word-search', 'dog');
     await waitUntil(page, rows(1));
-    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
     assert.equal(await textOf(page, 'edit-decks-summary'), 'Decks: in 1');
     await page.evaluate(`document.querySelector('#edit-decks input:checked').click()`);
     await page.evaluate(`document.getElementById('word-dialog-form').requestSubmit()`);

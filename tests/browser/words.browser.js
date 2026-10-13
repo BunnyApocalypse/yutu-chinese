@@ -84,12 +84,12 @@ describe('the Decks tab', { concurrency: false }, () => {
   });
 
   it('changes the meaning and moves the word to the front', async () => {
-    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
     await type(page, 'edit-definition', 'owl (the bird)');
     await page.evaluate(`document.getElementById('word-dialog-form').requestSubmit()`);
     await waitUntil(page, `document.querySelector('#word-list li').textContent.includes('the bird')`);
 
-    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
     await tap(page, 'study-next-button');
     await type(page, 'word-search', '');
     await waitUntil(page, `document.querySelector('#word-list li').textContent.includes('貓頭鷹')`, 'the word at the top of the list');
@@ -222,7 +222,7 @@ describe('the Decks tab', { concurrency: false }, () => {
   });
 
   it('removes a word', async () => {
-    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
     await tap(page, 'remove-word-button');
     await waitUntil(page, rows(0));
     assert.equal(await wordCount(page), countAtStart + 3);

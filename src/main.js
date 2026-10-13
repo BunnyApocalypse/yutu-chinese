@@ -417,6 +417,7 @@ async function startUp() {
       pinyinButton: byId('pinyin-button'),
       gradeRow: byId('grade-row'),
       editWordButton: byId('edit-word-button'),
+      aboutWordButton: byId('about-word-button'),
       leechNote: byId('leech-note'),
       listenButton: byId('listen-button'),
       noticeElement: byId('review-notice'),
@@ -442,6 +443,7 @@ async function startUp() {
     { writing: flow, tone: toneFlow, recall: recallCard },
     settings,
     (word) => wordsPanel.edit(word),
+    (word) => wordsPanel.showWord(word),
   );
 
   await review.load();
