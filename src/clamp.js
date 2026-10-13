@@ -1,28 +1,25 @@
-// Keeping long text short on screen: an element is cut off after a few
-// lines, and a button beside it shows all of it. Some dictionary meanings
-// run to a dozen lines, which would push a card's writing area off the
-// screen.
-//
-// The cutting itself is the style sheet's (the class "clamped": see
-// style.css). This file only works out whether anything was cut, since the
-// button is not wanted otherwise.
+// Keeping long text short on screen: an element is cut off after one line
+// (the style sheet's class "clamped" does that, see style.css), and tapping
+// it shows all of it in a panel on top of the page. Some dictionary meanings
+// run to a dozen lines, which would push a card's writing area down or make
+// it smaller; this way a long meaning takes no more room than a short one.
 
-// element: what holds the text; it gets the class "clamped"
-// button:  shown while there is more than fits; tapping it shows everything,
-//          tapping again cuts it short again
+// element:  what holds the text; it gets the class "clamped", and the class
+//           "has-more" while there is more than fits
+// showAll(text): called when the element is tapped while it has more
 //
-// Whenever the element's contents change, it is cut short afresh.
-export function clampWithToggle(element, button) {
+// Whenever the element's contents change, this is worked out afresh.
+export function clampWithPopup(element, showAll) {
   const check = () => {
     element.classList.add('clamped');
-    button.textContent = 'Show all';
     // scrollHeight is how tall the text is in full; clientHeight how much of
     // that is showing.
-    button.hidden = element.scrollHeight <= element.clientHeight + 1;
+    element.classList.toggle('has-more', element.scrollHeight > element.clientHeight + 1);
   };
-  button.addEventListener('click', () => {
-    const cut = element.classList.toggle('clamped');
-    button.textContent = cut ? 'Show all' : 'Show less';
+  element.addEventListener('click', () => {
+    if (element.classList.contains('has-more')) {
+      showAll(element.textContent);
+    }
   });
   // A MutationObserver is told whenever the element's contents change, so
   // the rest of the app can go on setting its text as it always did.

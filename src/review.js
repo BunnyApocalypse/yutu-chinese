@@ -73,6 +73,7 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     gradeRow,
     editWordButton,
     aboutWordButton,
+    focusExit,
     leechNote,
     leechSuspendButton,
     listenButton,
@@ -141,6 +142,8 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     // These two belong to the writing card and may be left over from the last one.
     verdictRow.hidden = true;
     orderNote.hidden = true;
+    // A sentence's writing card lets its prompt run to two lines (see there).
+    meaningElement.style.webkitLineClamp = '';
   }
 
   // Above the card: a note if this word is in another script than the rest
@@ -195,6 +198,20 @@ export function createReview(elements, flows, settings, editWord, showWord) {
   }
 
   // ---- Hearing the word ----
+
+  // ---- Focus ----
+  //
+  // While a card is up, the tabs and the line with the deck and the counts
+  // are put away (the style sheet does it, for main.focused), so that the
+  // writing area has their room. "‹ Menu" brings them back until the next
+  // card; between cards, and when there is nothing to study, they are there.
+  const page = document.querySelector('main');
+  function setFocus(on) {
+    page.classList.toggle('focused', on);
+    page.classList.remove('show-nav');
+    focusExit.hidden = !on;
+  }
+  focusExit.addEventListener('click', () => page.classList.add('show-nav'));
 
   // The loudspeaker beside the kind of card. It is there whenever hearing
   // the word does not give the answer away: all through a new word's lesson;
@@ -424,6 +441,9 @@ export function createReview(elements, flows, settings, editWord, showWord) {
       : { text: word[script], prompt: null };
     const showPrompt = (sentence) => {
       meaningElement.textContent = word.definition;
+      // The prompt is cut off after one line (clamp.js); a sentence with its
+      // gap is a second line that has to stay in view.
+      meaningElement.style.webkitLineClamp = sentence ? '2' : '';
       if (sentence) {
         const line = document.createElement('span');
         line.className = 'cloze-sentence';
@@ -783,6 +803,7 @@ export function createReview(elements, flows, settings, editWord, showWord) {
   // goes on to the next word.
   function showLearnMessage(message, canGoOn) {
     current = null;
+    setFocus(false);
     offerListen(false);
     studyArea.hidden = true;
     typeElement.textContent = '';
@@ -799,6 +820,7 @@ export function createReview(elements, flows, settings, editWord, showWord) {
       return;
     }
     current = { word, type: 'writing', card: null, learning: true };
+    setFocus(true);
     lesson = { steps: stepsFor(word, true), index: 0 };
     donePanel.hidden = true;
     studyArea.hidden = false;
@@ -957,6 +979,7 @@ export function createReview(elements, flows, settings, editWord, showWord) {
 
     if (!plan.next) {
       current = null;
+      setFocus(false);
       offerListen(false);
       studyArea.hidden = true;
       typeElement.textContent = '';
@@ -981,6 +1004,7 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     }
 
     current = plan.next;
+    setFocus(true);
     donePanel.hidden = true;
     studyArea.hidden = false;
     typeElement.textContent = isSentence(current.word)
@@ -1057,6 +1081,7 @@ export function createReview(elements, flows, settings, editWord, showWord) {
 
     // Leaves the page ready for Free practice, which uses the writing parts.
     deactivate() {
+      setFocus(false);
       showNotice('');
       offerListen(false);
       active = false;

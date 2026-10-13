@@ -145,8 +145,40 @@ button.icon-button.no-sound {
 .clamped {
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   overflow: hidden;
+}
+
+/* Cut-off text that can be tapped to see all of it. */
+.has-more {
+  cursor: pointer;
+}
+
+/* ---- Focus: while a card is up ----
+   The tabs and the line with the deck and the counts are put away, so that
+   the writing area can have their room ("focused" on main, set by
+   review.js). "‹ Menu" brings them back until the next card ("show-nav"). */
+main.focused:not(.show-nav) #main-tabs,
+main.focused:not(.show-nav) .counts-row {
+  display: none;
+}
+
+.focus-exit {
+  display: none;
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  margin: 0;
+}
+
+main.focused:not(.show-nav) .focus-exit {
+  display: block;
+}
+
+/* A word of one character needs no row of slots: there is nothing to keep
+   track of, and the row's room is better spent on the writing area. */
+.word-row.single {
+  display: none;
 }
 
 .review-header .link-button {

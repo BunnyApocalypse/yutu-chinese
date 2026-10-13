@@ -19,13 +19,16 @@ const TAP_TO_CONTINUE_DELAY_MS = 600;
 function chooseSize() {
   // 32 for the page's margins, 64 for the arrows on either side of the area.
   const fitsWidth = window.innerWidth - 32 - 64;
-  // 500 is what is set aside for everything else on the screen. That is not
-  // enough during a new word's lesson (measured on 2026-10-13: the rest
-  // takes 543 with a meaning of one line, 596 with a long one), so the
-  // buttons under the area can end up below the screen. The owner would
-  // rather that than a smaller writing area: the room has to be found in
-  // the rows around it, not here.
-  const fitsHeight = window.innerHeight - 500;
+  // 410 is what is set aside for everything else on the screen while a card
+  // is up: measured on 2026-10-13, the rows above the area and the buttons
+  // under it take 264 for a word of one character and 320 for a longer one
+  // (which has its row of slots), and the four grade buttons that come once
+  // the word is written need about 70 more, with the page's margin. The
+  // tabs and the deck line are not counted: they are put away while a card
+  // is up (see "Focus" in review.js). The writing area is the point of the
+  // app, so room is found by trimming the rows around it, never by raising
+  // this number.
+  const fitsHeight = window.innerHeight - 410;
   return Math.max(200, Math.min(fitsWidth, fitsHeight, 640));
 }
 
@@ -125,6 +128,7 @@ export function createWordFlow(elements) {
   // come are placeholders.
   function renderWordRow() {
     wordRow.replaceChildren();
+    wordRow.classList.toggle('single', chars.length === 1);
     chars.forEach((char, index) => {
       const slot = document.createElement('span');
       const finished = Boolean(finishedPerChar[index]);

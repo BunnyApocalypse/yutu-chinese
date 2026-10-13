@@ -18,7 +18,7 @@ import { createWelcome } from './welcome.js';
 import { buildBackup, checkBackup, describeBackup, restoreBackup } from './backup.js';
 import { mergeBackups, describeMerge } from './merge.js';
 import { ask, tell } from './confirm.js';
-import { clampWithToggle } from './clamp.js';
+import { clampWithPopup } from './clamp.js';
 import { watchForErrors, showVersion } from './errors.js';
 
 const byId = (id) => document.getElementById(id);
@@ -105,8 +105,9 @@ showVersion();
 byId('credits-button').addEventListener('click', () => byId('credits-dialog').showModal());
 byId('credits-close').addEventListener('click', () => byId('credits-dialog').close());
 
-// A long meaning in the prompt above a card is cut off after two lines.
-clampWithToggle(byId('prompt-meaning'), byId('meaning-more'));
+// A long meaning in the prompt above a card is cut off after one line; a tap
+// on it shows the whole of it in a panel.
+clampWithPopup(byId('prompt-meaning'), (text) => tell('Meaning', text));
 
 // ---- Modes ----
 
@@ -483,6 +484,7 @@ async function startUp() {
       gradeRow: byId('grade-row'),
       editWordButton: byId('edit-word-button'),
       aboutWordButton: byId('about-word-button'),
+      focusExit: byId('focus-exit'),
       leechNote: byId('leech-note'),
       leechSuspendButton: byId('leech-suspend-button'),
       listenButton: byId('listen-button'),
