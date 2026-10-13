@@ -11,7 +11,7 @@ import { formatPinyin, wordId } from './wordList.js';
 import { allCardIds } from './session.js';
 import { fileCardsByScript } from './scriptCards.js';
 import { missingReadyMadeDecks, deckTree, deckWithInside, isInDecks, withDeck, DEFAULT_DECK } from './decks.js';
-import { createDecksPanel } from './decksPanel.js';
+import { createDecksPanel, fillDeckSelect } from './decksPanel.js';
 import { createCardsPanel } from './cardsPanel.js';
 import { createWordPage } from './wordPage.js';
 import { isSentence, sentenceId, sentenceRecord, clozeInBoth } from './sentences.js';
@@ -70,10 +70,16 @@ const byId = (id) => document.getElementById(id);
 //
 // studyDeck(deckId, mode): shows Review ('review') or Learn ('learn') with
 //           that deck chosen
+// goToWords(): opens the Words tab
 //
-// Returns { show(), edit(word) }; call show() whenever the tab is opened or a
-// setting has changed.
-export function createWordsPanel(onChange, getSettings, studyDeck) {
+// The panel serves two tabs. The Decks tab shows the decks: choosing one,
+// adding to it, studying it. The Words tab shows the words: finding them,
+// filtering and ordering them, and doing things to several at once.
+//
+// Returns { show(view), edit(word), showWord(word) }; call show() whenever
+// one of the two tabs is opened ('decks' or 'words') or a setting has
+// changed (without a view: the one that was showing).
+export function createWordsPanel(onChange, getSettings, studyDeck, goToWords) {
   const addForm = byId('add-word-form');
   const addFields = {
     traditional: byId('add-traditional'),
@@ -119,6 +125,11 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   const dialogNote = byId('word-dialog-note');
   const studyNextButton = byId('study-next-button');
 
+  // Which of the two tabs is showing: 'decks' or 'words'.
+  let view = 'decks';
+  // The deck whose words the Words tab lists; '' for all of them.
+  let listDeckId = '';
+
   let words = [];
   let decks = [];
   let cards = [];
@@ -162,6 +173,43 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   function openDeck() {
     return decks.find((deck) => deck.id === openDeckId) || null;
   }
+
+  // The deck whose words are listed: on the Words tab the one chosen there
+  // (null for all words); on the Decks tab, where the list is out of view,
+  // the deck whose page is open.
+  function listDeck() {
+    return view === 'words' ? decks.find((deck) => deck.id === listDeckId) || null : openDeck();
+  }
+
+  // Shows the parts that belong to the tab that is open.
+  const listDeckSelect = byId('words-deck-select');
+  function showView() {
+    const onWords = view === 'words';
+    byId('decks-part').classList.toggle('view-hidden', onWords);
+    byId('words-part').classList.toggle('view-hidden', !onWords);
+    // "My decks" and "Ready-made decks" belong to the Decks tab.
+    byId('my-decks-button').parentElement.classList.toggle('view-hidden', onWords);
+    if (onWords) {
+      byId('my-decks-section').hidden = false;
+      byId('ready-decks-section').hidden = true;
+    } else {
+      // Back on the section that was showing.
+      const readyMade = byId('ready-decks-button').classList.contains('selected');
+      byId('my-decks-section').hidden = readyMade;
+      byId('ready-decks-section').hidden = !readyMade;
+    }
+    fillDeckSelect(listDeckSelect, decks, [{ value: '', label: 'All decks' }]);
+    listDeckSelect.value = decks.some((deck) => deck.id === listDeckId) ? listDeckId : '';
+  }
+  listDeckSelect.addEventListener('change', () => {
+    listDeckId = listDeckSelect.value;
+    renderList();
+  });
+  // "Its words" on a deck's page.
+  byId('deck-words-button').addEventListener('click', () => {
+    listDeckId = openDeckId;
+    goToWords();
+  });
 
   // Opens a deck's page, or the front page (null), at its top.
   function openDeckPage(deckId) {
@@ -236,6 +284,12 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     },
     edit: (word) => openDialog(words.find((entry) => entry.id === word.id) || word),
     addSentence: (sentence, deckId) => addSentence(sentence, deckId),
+    // "Practice" on a word's page: Free practice with that word, which is a
+    // text box and a button of the page (main.js).
+    practice: (word) => {
+      byId('word-input').value = word[scriptFor(word, getSettings())];
+      byId('practice-tab').click();
+    },
     // The deck a sentence added from a page goes into unless another is
     // chosen: the one whose page is open, else the deck the app starts
     // with, else the first there is.
@@ -321,7 +375,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   function renderDecks() {
     decksPanel.render();
     byId('deck-adding').hidden = !openDeck();
-    byId('word-list-title').textContent = openDeck() ? 'Words in this deck' : 'All your words';
+    byId('word-list-title').textContent = listDeck() ? 'Words in this deck' : 'All your words';
   }
 
   // ---- The tab's two sections ----
@@ -431,7 +485,8 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   function renderList() {
     // On a deck's page: its words and those of the decks inside it. On the
     // front page: all words.
-    const deck = openDeck();
+    const deck = listDeck();
+    byId('word-list-title').textContent = deck ? 'Words in this deck' : 'All your words';
     const inside = deck ? deckWithInside(decks, deck.id) : null;
     const listed = inside ? words.filter((word) => isInDecks(word, inside)) : words;
     const searched = listed.filter((word) => matchesSearch(word, searchInput.value));
@@ -1277,7 +1332,8 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       wordPage.open(words.find((entry) => entry.id === word.id) || word);
     },
 
-    async show() {
+    async show(newView) {
+      view = newView || view;
       applySettings();
       await load();
       // The first time, with only the deck the app starts with, that deck's
@@ -1287,6 +1343,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
         foldAddWord();
       }
       renderDecks();
+      showView();
       renderList();
       showSuggestions();
     },

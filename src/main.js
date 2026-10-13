@@ -24,6 +24,8 @@ const reviewTab = byId('review-tab');
 const learnTab = byId('learn-tab');
 const practiceTab = byId('practice-tab');
 const wordsTab = byId('decks-tab');
+// The Words tab: the same panel as the Decks tab, showing its list of words.
+const browseTab = byId('words-tab');
 const wordsPanelElement = byId('words-panel');
 const reviewHeader = byId('review-header');
 const wordForm = byId('word-form');
@@ -118,6 +120,9 @@ const wordsPanel = createWordsPanel(
     await settings.change('studyDeck', deckId);
     await setMode(newMode);
   },
+  // "Its words" on a deck's page: the Words tab, which the panel has told
+  // which deck to list.
+  () => setMode('browse'),
 );
 
 // Free practice: any kind of card for what is in the text box. Nothing is
@@ -172,9 +177,10 @@ function setMode(newMode) {
   learnTab.classList.toggle('selected', mode === 'learn');
   practiceTab.classList.toggle('selected', mode === 'practice');
   wordsTab.classList.toggle('selected', mode === 'words');
+  browseTab.classList.toggle('selected', mode === 'browse');
   reviewHeader.hidden = !reviewing;
   wordForm.hidden = mode !== 'practice';
-  wordsPanelElement.hidden = mode !== 'words';
+  wordsPanelElement.hidden = mode !== 'words' && mode !== 'browse';
   noteElement.textContent = '';
   if (!review) {
     // A tab was tapped before the app finished starting. The tab is marked;
@@ -186,10 +192,10 @@ function setMode(newMode) {
   }
   // Stops any card being shown and brings the study area back for writing.
   review.deactivate();
-  if (mode === 'words') {
-    // The Decks tab has the page to itself.
+  if (mode === 'words' || mode === 'browse') {
+    // The Decks tab and the Words tab have the page to themselves.
     byId('study-area').hidden = true;
-    return wordsPanel.show();
+    return wordsPanel.show(mode === 'browse' ? 'words' : 'decks');
   }
   return startFreePractice();
 }
@@ -198,6 +204,7 @@ reviewTab.addEventListener('click', () => setMode('review'));
 learnTab.addEventListener('click', () => setMode('learn'));
 practiceTab.addEventListener('click', () => setMode('practice'));
 wordsTab.addEventListener('click', () => setMode('words'));
+browseTab.addEventListener('click', () => setMode('browse'));
 
 wordForm.addEventListener('submit', (event) => {
   // Without this the browser would reload the page, as forms do by default.
@@ -212,7 +219,7 @@ wordForm.addEventListener('submit', (event) => {
 // Called whenever a setting changes: show the current card or word afresh.
 function onSettingsChange() {
   loadWordList(); // the suggestions are in the script being learned
-  if (mode === 'words') {
+  if (mode === 'words' || mode === 'browse') {
     wordsPanel.show();
   } else if (mode === 'review' || mode === 'learn') {
     review.refresh();

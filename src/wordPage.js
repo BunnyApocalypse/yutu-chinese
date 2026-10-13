@@ -49,13 +49,15 @@ function element(tag, className, text) {
 //                     thing to study (see sentences.js); returns a promise
 //                     for 'added', 'put in deck' or 'already there'
 // defaultDeckId():    the deck first offered for that
+// practice(word):     opens Free practice with the word
 //
 // Returns { open(word), openText(characters) }.
-export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, addSentence, defaultDeckId }) {
+export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, addSentence, defaultDeckId, practice }) {
   const dialog = byId('word-page');
   const body = byId('word-page-body');
   const backButton = byId('word-page-back');
   const editButton = byId('word-page-edit');
+  const practiceButton = byId('word-page-practice');
 
   // The big files, fetched once. A file that cannot be fetched is left out:
   // the page then simply has less on it.
@@ -329,6 +331,7 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
     body.scrollTop = 0;
     backButton.hidden = trail.length < 2;
     editButton.hidden = !shown.word;
+    practiceButton.hidden = !shown.word;
     // For the browser tests, which wait for a page to be filled in.
     dialog.dataset.shown = word ? word.id : target.text;
   }
@@ -353,11 +356,21 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
     edit(word);
   });
 
+  practiceButton.addEventListener('click', () => {
+    if (!dialog.open || !shown.word) {
+      return;
+    }
+    const { word } = shown;
+    dialog.close();
+    practice(word);
+  });
+
   function start(target) {
     trail = [target];
     // The buttons work at once; the rest is filled in as the files arrive.
     shown = target.word ? { word: target.word } : { text: target.text, entries: [] };
     editButton.hidden = !target.word;
+    practiceButton.hidden = !target.word;
     backButton.hidden = true;
     body.replaceChildren();
     delete dialog.dataset.shown;

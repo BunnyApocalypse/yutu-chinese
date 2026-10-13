@@ -1036,6 +1036,12 @@ button.part.sound .part-role {
   color: #3b6fb6;
 }
 
+/* A part of the Decks and Words tabs that the other of the two shows. (A
+   class, not the "hidden" attribute: the part is still kept up to date.) */
+.view-hidden {
+  display: none;
+}
+
 /* Above the list of words: what is shown, in what order, and "Select
    words", side by side. */
 .list-tools {
