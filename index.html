@@ -48,10 +48,13 @@
               <path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
             </svg>
           </button>
+          <!-- On a writing card: shows the word's pinyin, which does not count against the grade. -->
+          <button id="pinyin-button" class="link-button" type="button" hidden>Show pinyin</button>
         </div>
         <p id="prompt-meaning" class="meaning"></p>
+        <!-- Shown when the meaning above is longer than two lines (clamp.js). -->
+        <button id="meaning-more" class="link-button" type="button" hidden>Show all</button>
         <p id="prompt-pinyin" class="pinyin" hidden></p>
-        <button id="pinyin-button" class="small" type="button" hidden>Show pinyin</button>
         <!-- The lesson for a new word: what this step asks for (review.js). -->
         <div class="lesson-row">
           <p id="lesson-note" class="hint" hidden></p>

@@ -140,6 +140,21 @@ button.icon-button.no-sound {
   font-size: 1.25rem;
 }
 
+/* Text cut off after a few lines, with "…" (clamp.js adds a button that
+   shows the rest). The three odd-looking lines are how browsers spell it. */
+.clamped {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.review-header .link-button {
+  display: inline;
+  margin: 0;
+  padding: 0 2px;
+}
+
 /* On a sentence's writing card: the sentence with its gap, under the meaning. */
 .cloze-sentence {
   display: block;
@@ -516,6 +531,11 @@ button.verdict.selected.missed {
 
 .face-meaning {
   font-size: 1.1rem;
+  /* On a card's face a long meaning is cut off after five lines. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  overflow: hidden;
 }
 
 .face-note {
@@ -855,6 +875,11 @@ button.word-entry {
 .entry-definition {
   font-size: 0.9rem;
   color: #6b6557;
+  /* A long meaning takes two lines of the row at most; the word's page has all of it. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 /* The fold-outs of a pop-up panel, one under the other. */
@@ -1115,6 +1140,11 @@ button.word-entry.selected {
 
 /* The deck studied, at the top of Review and Learn. Kept small: the whole
    review screen has to fit on a phone without scrolling. */
+/* The deck chooser is kept narrow, so that it and the counts share a line. */
+.counts-row .deck-select {
+  max-width: 46%;
+}
+
 .counts-row {
   display: flex;
   flex-wrap: wrap;

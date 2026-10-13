@@ -18,6 +18,7 @@ import { createWelcome } from './welcome.js';
 import { buildBackup, checkBackup, describeBackup, restoreBackup } from './backup.js';
 import { mergeBackups, describeMerge } from './merge.js';
 import { ask, tell } from './confirm.js';
+import { clampWithToggle } from './clamp.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -86,6 +87,9 @@ async function removeOldBuiltInWords() {
   }
   await setSetting('oldBuiltInWordsRemoved', true);
 }
+
+// A long meaning in the prompt above a card is cut off after two lines.
+clampWithToggle(byId('prompt-meaning'), byId('meaning-more'));
 
 // ---- Modes ----
 
