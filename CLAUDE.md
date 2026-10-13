@@ -519,6 +519,21 @@ Agreed with the owner on 2026-10-13, in the conversation that had been put first
 - **Consequences for the data model**, as Claude sees them: a removed word or card must leave a mark, or a merge brings it back; records need the time they were last changed; a corrected word's old ID must be remembered; and a card's schedule should be recomputable from its reviews, which also serves changed scheduling, leeches and statistics.
 - **Sharing raises the bar on licensing.** The TOCFL list has no stated license (see "Ready-made word lists").
 
+## Before other people use it
+
+A review by Claude on 2026-10-13 of what having testers changes; the decisions are the owner's and were open when this was written. `docs/alpha/` has what to give testers and how to run a first round.
+
+- **The address is where everyone's data lives.** Words and progress are kept by the browser under the address the app was opened at. Moving the app later (a domain of its own, a renamed repository) leaves every tester with an empty app unless they export first. Decide the address before the first tester.
+- **Every push to `main` is live within minutes.** With testers that means untested work reaches them at once. Wanted: a stable address that only gets what has been tried, and somewhere else for work in progress.
+- **The app does not say which version it is**, so a report cannot name one, and there is no list of what changed.
+- **Nothing tells anyone when something goes wrong.** The app sends nothing anywhere, by design, so an error on a tester's phone is invisible unless the app shows it and offers its details to copy.
+- **The IDs of the group decks hold the groups' names** (`hsk-3.0/1/03 Family`). Renaming or regrouping changes the ID and leaves a tester's deck behind under the old name. Cheap to change before anyone has added a list, awkward after.
+- **Credits are owed on screen.** The dictionary, recordings and notes are CC BY-SA, the stroke data is under the Arphic license; each asks to be credited where the work is used. The READMEs do it in the repository; the app has no credits screen.
+- **The TOCFL list has no stated license.** That was the owner's call for their own use; handing the app to others is distributing it.
+- **How feedback comes back** is not decided (email, a form, the issue tracker).
+- **What does not need deciding now:** scheduling settings (cards can be rebuilt from reviews), looks, and the database's layout, which has version numbers and upgrade code already.
+- **The code** (asked about by the owner the same day): works and is tested, but `src/wordsPanel.js` (about 1,400 lines) now serves two tabs, three forms and a pop-up panel; some names are behind the times (the mode `'words'` is the Decks tab, `practice-tab` is no longer a tab, `edit-cards` is on the word's page); most browser tests read the word list while it is out of view; and colors and sizes are written out all over `src/style.css`. Claude's advice: leave it until the testers' feedback has settled the structure, then split `wordsPanel.js` by what the screen shows and rename, in one go with the pass over the looks.
+
 ## Where the work stands
 
 Written on 2026-10-13 for whichever session picks the work up next (the owner works from more than one computer; everything is on `main` and published).
