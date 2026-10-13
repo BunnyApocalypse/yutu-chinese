@@ -444,6 +444,13 @@ Agreed with the owner on 2026-10-13, in the conversation that had been put first
 
 Written on 2026-10-13 for whichever session picks the work up next (the owner works from more than one computer; everything is on `main` and published).
 
+- **To do, the owner's: try what was built on 2026-10-13.** None of it has been tested by them (asked to be put on the list that day). Ask how it went before building further on any of it:
+  - Combining backups between two real devices, and whether the `...-before-combining.json` file lands in the downloads (not verifiable in the tests' browser).
+  - The Import backup panel and the ready-made lists' rows on a phone.
+  - Percent learned and its bar; "Add a word" folded away.
+  - The groups inside the lower HSK and TOCFL levels: only HSK 3.0 level 1 was seen by the owner.
+  - Leeches: the two settings, the note in Review, the lists in the Decks tab, both exports, and the notice when a card is suspended.
+  - The card manager: the Cards fold-out, Start over, "I know this word", the order of the list, and Select words.
 - **Done that day:** the conversation about long-term goals, the database made ready for merging, and decks with the Decks tab in place of the Words tab (see "Long-term goals", "Ready for merging", "Decks").
 - **Done later that day: combining backups**, number 3 in the order of work (see "Combining backups"). The owner has not tried it yet.
 - **Done later that day: groups inside the lower levels** of the ready-made lists (TOCFL's topics; HSK 3.0 and 2.0 levels 1 to 3 in a teaching order), each a deck inside its level. See "Ready-made word lists". The owner saw and approved HSK 3.0 level 1; the other five HSK levels were read by Claude only.
