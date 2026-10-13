@@ -242,7 +242,7 @@ test('the ready-made lists are well formed, and every word can get a meaning', a
   const fs = await import('node:fs');
   const { readDictionary, lookUp } = await import('../src/dictionary.js');
   const dictionary = readDictionary(fs.readFileSync('data/cedict/dictionary.tsv', 'utf8'));
-  for (const [file, count, levels] of [['hsk/hsk-3.0.tsv', 11054, 7], ['hsk/hsk-2.0.tsv', 5008, 6], ['tocfl/tocfl.tsv', 7431, 7]]) {
+  for (const [file, count, levels] of [['hsk/hsk-3.0.tsv', 11054, 7], ['hsk/hsk-2.0.tsv', 5008, 6], ['tocfl/tocfl.tsv', 7433, 7]]) {
     const entries = parseReadyList(fs.readFileSync(`data/wordlists/${file}`, 'utf8'));
     assert.equal(entries.length, count, file);
     assert.equal(levelsOfReadyList(entries, []).length, levels, file);

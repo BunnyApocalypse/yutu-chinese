@@ -397,11 +397,16 @@ function formsOf(cell) {
 // Taiwan reading counts as well as its main one (垃圾 is lèsè in the list).
 function tocflFit(entry, pinyin) {
   const { letters, tones: listedTones } = markedPinyin(pinyin);
+  // An entry's own reading counts for a little more than its Taiwan
+  // reading: 打 "to hit" is dǎ, and so, in Taiwan, is the entry for "dozen"
+  // (dá on the mainland), which would otherwise fit the list's dǎ just as
+  // well and come first.
   const fits = [entry.pinyin, ...(entry.pinyinTaiwan ? entry.pinyinTaiwan.split(', ') : [])]
     .filter((reading) => withoutTones(reading) === letters)
-    .map((reading) => {
+    .map((reading, index) => {
       const full = tones(reading).replace(/5/g, '');
-      return full === listedTones ? 100 : [...full].filter((tone, index) => tone === listedTones[index]).length;
+      const own = index === 0 ? 1 : 0;
+      return full === listedTones ? 100 + own : [...full].filter((tone, place) => tone === listedTones[place]).length;
     });
   return Math.max(-1, ...fits);
 }
@@ -413,9 +418,14 @@ function tocflMatch(traditional, pinyins) {
   const fit = (entry) => Math.max(...pinyins.map((pinyin) => tocflFit(entry, pinyin)));
   // Names (pinyin with a capital) come after other entries that fit as well.
   const isName = (entry) => /^[A-Z]/.test(entry.pinyin);
+  // Where the list gives no tone (個 "ge") several entries fit equally. The
+  // reading the HSK list has for the word decides then (個 is gè there).
+  const inHsk = (entry) => hsk3.some((word) => word.traditional === entry.traditional && word.pinyin === entry.pinyin);
   const fitting = candidates
     .filter((entry) => fit(entry) >= 0)
-    .sort((a, b) => fit(b) - fit(a) || Number(isName(a)) - Number(isName(b)));
+    .sort(
+      (a, b) => fit(b) - fit(a) || Number(isName(a)) - Number(isName(b)) || Number(inHsk(b)) - Number(inHsk(a)),
+    );
   if (fitting.length > 0) {
     return fitting[0];
   }

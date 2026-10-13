@@ -69,7 +69,7 @@ Novice 1	的	的	de5		01 Personal information 個人資料
 Novice 1	第	第	di4		01 Personal information 個人資料
 Novice 1	分	分	fen1		01 Personal information 個人資料
 Novice 1	点	點	dian3		01 Personal information 個人資料
-Novice 1	个	個	ge3		01 Personal information 個人資料
+Novice 1	个	個	ge4		01 Personal information 個人資料
 Novice 1	岁	歲	sui4		01 Personal information 個人資料
 Novice 1	年	年	nian2		01 Personal information 個人資料
 Novice 1	住	住	zhu4		01 Personal information 個人資料
@@ -309,7 +309,7 @@ Novice 2	先	先	xian1		06 Free time 閒暇時間、娛樂
 Novice 2	常常	常常	chang2chang2		06 Free time 閒暇時間、娛樂
 Novice 2	常	常	chang2		06 Free time 閒暇時間、娛樂
 Novice 2	每	每	mei3		06 Free time 閒暇時間、娛樂
-Novice 2	打	打	da2		06 Free time 閒暇時間、娛樂
+Novice 2	打	打	da3		06 Free time 閒暇時間、娛樂
 Novice 2	玩	玩	wan2		06 Free time 閒暇時間、娛樂
 Novice 2	运动	運動	yun4dong4		06 Free time 閒暇時間、娛樂
 Novice 2	走路	走路	zou3lu4		06 Free time 閒暇時間、娛樂
@@ -370,7 +370,7 @@ Novice 2	眼睛	眼睛	yan3jing5		09 Health 健康及身體照護
 Novice 2	鼻	鼻	bi2		09 Health 健康及身體照護
 Novice 2	鼻子	鼻子	bi2zi5		09 Health 健康及身體照護
 Novice 2	药	藥	yao4		09 Health 健康及身體照護
-Novice 2	累	累	lei3		09 Health 健康及身體照護
+Novice 2	累	累	lei4		09 Health 健康及身體照護
 Novice 2	头	頭	tou2		09 Health 健康及身體照護
 Novice 2	耳朵	耳朵	er3duo5		09 Health 健康及身體照護
 Novice 2	感冒	感冒	gan3mao4		09 Health 健康及身體照護
@@ -893,7 +893,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 2	关心	關心	guan1xin1		01 Personal information 個人資料
 2	心情	心情	xin1qing2		01 Personal information 個人資料
 2	幸福	幸福	xing4fu2		01 Personal information 個人資料
-2	差	差	cha1		01 Personal information 個人資料
+2	差	差	cha4		01 Personal information 個人資料
 2	兄弟	兄弟	xiong1di4		01 Personal information 個人資料
 2	阿姨	阿姨	a1yi2		01 Personal information 個人資料
 2	身边	身邊	shen1bian1		01 Personal information 個人資料
@@ -1000,7 +1000,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 2	大门	大門	da4men2		04 Home and surroundings 房屋與家庭、環境
 2	邻居	鄰居	lin2ju1		04 Home and surroundings 房屋與家庭、環境
 2	热闹	熱鬧	re4nao5		04 Home and surroundings 房屋與家庭、環境
-2	吵	吵	chao1		04 Home and surroundings 房屋與家庭、環境
+2	吵	吵	chao3		04 Home and surroundings 房屋與家庭、環境
 2	乱	亂	luan4		04 Home and surroundings 房屋與家庭、環境
 2	房东	房東	fang2dong1		04 Home and surroundings 房屋與家庭、環境
 2	房屋	房屋	fang2wu1		04 Home and surroundings 房屋與家庭、環境
@@ -1087,7 +1087,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 2	门票	門票	men2piao4		06 Free time 閒暇時間、娛樂
 2	陪	陪	pei2		07 Other people 與他人的關係
 2	利用	利用	li4yong4		07 Other people 與他人的關係
-2	好处	好處	hao3chu3		07 Other people 與他人的關係
+2	好处	好處	hao3chu5		07 Other people 與他人的關係
 2	坏处	壞處	huai4chu5		07 Other people 與他人的關係
 2	目的	目的	mu4di4		07 Other people 與他人的關係
 2	要求	要求	yao1qiu2		07 Other people 與他人的關係
@@ -1433,6 +1433,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 3	慢用	慢用	man4yong4		05 Food and cooking
 3	醉	醉	zui4		05 Food and cooking
 3	奶	奶	nai3		05 Food and cooking
+3	炸	炸	zha4		05 Food and cooking
 3	衬衫	襯衫	chen4shan1		06 Clothes, colors and looks
 3	牛仔裤	牛仔褲	niu2zai3ku4		06 Clothes, colors and looks
 3	皮带	皮帶	pi2dai4		06 Clothes, colors and looks
@@ -1763,7 +1764,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 3	填	填	tian2		28 Handling and repairing things
 3	剪	剪	jian3		28 Handling and repairing things
 3	烧	燒	shao1		28 Handling and repairing things
-3	结	結	jie1		28 Handling and repairing things
+3	结	結	jie2		28 Handling and repairing things
 3	修	修	xiu1		28 Handling and repairing things
 3	修理	修理	xiu1li3		28 Handling and repairing things
 3	修改	修改	xiu1gai3		28 Handling and repairing things
@@ -2215,7 +2216,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 3	负担	負擔	fu4dan1		58 Rules and conditions
 3	维持	維持	wei2chi2		58 Rules and conditions
 3	依靠	依靠	yi1kao4		58 Rules and conditions
-3	令	令	ling2		58 Rules and conditions
+3	令	令	ling4		58 Rules and conditions
 3	假如	假如	jia3ru2		59 If, even if, must
 3	如	如	ru2		59 If, even if, must
 3	就算	就算	jiu4suan4		59 If, even if, must
@@ -2607,6 +2608,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 4	策略	策略	ce4lve4
 4	测试	測試	ce4shi4
 4	测验	測驗	ce4yan4
+4	差	差	cha1
 4	插	插	cha1
 4	差错	差錯	cha1cuo4
 4	插花	插花	cha1hua1
@@ -2684,7 +2686,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 4	传播	傳播	chuan2bo1
 4	传达	傳達	chuan2da2
 4	传单	傳單	chuan2dan1
-4	幢	幢	chuang2
+4	幢	幢	zhuang4
 4	闯	闖	chuang3
 4	床单	床單	chuang2dan1
 4	窗口	窗口	chuang1kou3
@@ -3203,7 +3205,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 4	回忆	回憶	hui2yi4
 4	会员	會員	hui4yuan2
 4	忽略	忽略	hu1lve4
-4	混	混	hun2
+4	混	混	hun4
 4	昏倒	昏倒	hun1dao3
 4	混合	混合	hun4he2
 4	昏迷	昏迷	hun1mi2
@@ -3224,7 +3226,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 4	互助	互助	hu4zhu4
 4	级	級	ji2
 4	集	集	ji2
-4	夹	夾	jia1
+4	夹	夾	jia2
 4	嫁	嫁	jia4
 4	甲	甲	jia3
 4	家电	家電	jia1dian4
@@ -4520,7 +4522,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 4	语音	語音	yu3yin1
 4	砸	砸	za2
 4	杂	雜	za2
-4	载	載	zai3
+4	载	載	zai4
 4	再度	再度	zai4du4
 4	灾害	災害	zai1hai4
 4	在乎	在乎	zai4hu5
@@ -5719,7 +5721,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 5	洁白	潔白	jie2bai2
 5	节俭	節儉	jie2jian3
 5	竭力	竭力	jie2li4
-5	结实	結實	jie1shi2
+5	结实	結實	jie1shi5
 5	结业	結業	jie2ye4
 5	结缘	結緣	jie2yuan2
 5	解放	解放	jie3fang4
@@ -5846,7 +5848,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 5	刻画	刻畫	ke4hua4
 5	科幻	科幻	ke1huan4
 5	苛责	苛責	ke1ze2
-5	壳	殼	ke2
+5	壳	殼	qiao4
 5	可观	可觀	ke3guan1
 5	可见	可見	ke3jian4
 5	可望	可望	ke3wang4
@@ -6541,7 +6543,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 5	狩猎	狩獵	shou4lie4
 5	寿星	壽星	shou4xing1
 5	疏导	疏導	shu1dao3
-5	疏散	疏散	shu1san3
+5	疏散	疏散	shu1san4
 5	梳	梳	shu1
 5	书本	書本	shu1ben3
 5	书面	書面	shu1mian4
