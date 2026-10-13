@@ -1,7 +1,8 @@
 // Backups: the whole database as one file, to keep safe or to carry to
 // another device.
 //
-// Importing a backup replaces everything on the device. It does not merge.
+// A backup can replace everything on the device (restoreBackup below), or be
+// combined with what is there (merge.js).
 //
 // Format versions:
 //   1  words, cards, reviews, settings.

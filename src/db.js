@@ -33,12 +33,16 @@
 //                          "#simplified" id (see scriptCards.js).
 //   settings  key: key     { key, value, changedAt }
 //   removed   key: id      { id, removedAt } and, for a deck, kind: 'deck'.
-//                          One per word or deck that was removed, under its
-//                          ID. Without it, combining this device's data with
-//                          another's would bring it back. Gone again once the
-//                          word or deck is saved again. (A word's ID has a
-//                          "|" in it and a deck's has none, so the two never
-//                          meet.)
+//                          One per word or deck that was ever removed, under
+//                          its ID, with the time of the latest removal.
+//                          Without it, combining this device's data with
+//                          another's would bring it back. The mark stays if
+//                          the word or deck is added again (it then has a
+//                          later `changedAt`), because the reviews made
+//                          before the removal must not count toward the new
+//                          word's schedule (see merge.js). (A word's ID has
+//                          a "|" in it and a deck's has none, so the two
+//                          never meet.)
 //   decks     key: id      { id, name, parentId, order, changedAt } and, for
 //                          some, newWordsPerDay.
 //                          Groups of words. `parentId` is the deck this one
@@ -138,14 +142,9 @@ export async function getAll(storeName) {
 export function putAll(storeName, records, { stamp = true } = {}) {
   const changedAt = Date.now();
   const stamped = stamp && STAMPED.includes(storeName);
-  // A word or deck saved is one that is there: any mark of its removal goes.
-  const marked = storeName === 'words' || storeName === 'decks';
-  return transaction(marked ? [storeName, 'removed'] : [storeName], 'readwrite', (tx) => {
+  return transaction([storeName], 'readwrite', (tx) => {
     for (const record of records) {
       tx.objectStore(storeName).put(stamped ? { ...record, changedAt } : record);
-      if (marked) {
-        tx.objectStore('removed').delete(record.id);
-      }
     }
   });
 }
@@ -189,11 +188,10 @@ export function removeDecks(deckIds) {
 // words.js). Card IDs begin with the word's ID, so they change with it.
 export function renameWord(oldId, word) {
   const renamed = (id) => word.id + id.slice(oldId.length);
-  return transaction(['words', 'cards', 'reviews', 'removed'], 'readwrite', (tx) => {
+  return transaction(['words', 'cards', 'reviews'], 'readwrite', (tx) => {
     const words = tx.objectStore('words');
     words.delete(oldId);
     words.put({ ...word, changedAt: Date.now() });
-    tx.objectStore('removed').delete(word.id);
     // getAll() answers later, through onsuccess; the transaction stays open
     // until the work started there is done.
     const cards = tx.objectStore('cards');

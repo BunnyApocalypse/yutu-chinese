@@ -140,7 +140,7 @@ describe('the database', { concurrency: false }, () => {
     assert.deepEqual(word.formerIds, ['愛|ai4']);
   });
 
-  it('leaves a mark when a word is removed, and takes it away when the word is added again', async () => {
+  it('leaves a mark when a word is removed, which stays when the word is added again', async () => {
     const before = Date.now();
     // The pop-up that asks before a word is removed: answer OK.
     await page.evaluate('window.confirm = () => true');
@@ -159,7 +159,10 @@ describe('the database', { concurrency: false }, () => {
     await type(page, 'add-definition', 'to love');
     await page.evaluate(`document.getElementById('add-word-form').requestSubmit()`);
     await waitUntil(page, rows(1));
-    assert.deepEqual(await stored(page, 'removed'), []);
-    assert.equal((await stored(page, 'words')).length, 1);
+    // The mark stays, so that reviews from before the removal do not count
+    // for the new word; the word is there because it was saved later.
+    assert.deepEqual(await stored(page, 'removed'), removed);
+    const [word] = await stored(page, 'words');
+    assert.ok(word.changedAt >= removed[0].removedAt);
   });
 });

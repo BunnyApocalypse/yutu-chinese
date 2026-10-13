@@ -72,6 +72,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `src/welcome.js`, `src/storageAdvice.js`: the introduction shown on first use, and what it says about long-term storage in each browser (see that section).
 - `src/scriptCards.js`: files writing cards under the script they were learned in (see "Switching script").
 - `src/backup.js`: build, check and restore a backup file.
+- `src/merge.js`: combines what is on the device with a backup from another device (see "Combining backups"). Plain calculation.
 - `src/wordList.js`: parses the four-column TSV word list format (same as Skritter's export) and converts numbered pinyin to tone marks.
 - `tests/words.tsv`: 109 common words, hand-written, for the tests only. The app itself starts with no words (the owner's decision, 2026-10-13: this list had been loaded into every new database, and they did not want test words in their app). Browser tests that need words add it through the Decks tab (`addTestWords` in the harness).
 - `src/charData.js`: the only place stroke data is loaded from. `loadCharData(char, script)` returns `null` when a character has no data. For `'traditional'` it uses the Taiwan set where that has the character and the big set otherwise; for `'simplified'` only the big set.
@@ -94,6 +95,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `tests/browser/database.browser.js`: a database from before brought up to date, and what is kept for merging (removal marks, `changedAt`, `formerIds`).
 - `tests/decks.test.js`: tests for `src/decks.js`.
 - `tests/browser/decks.browser.js`: decks from making one to deleting it, and studying one in Learn.
+- `tests/merge.test.js`, `tests/browser/merge.browser.js`: combining backups, as a calculation and in the app.
 - `tests/words.test.js`, `tests/dictionary.test.js`: tests for `src/words.js` and `src/dictionary.js`; the second also checks every line of the real dictionary.
 
 ## Browser tests
@@ -152,7 +154,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - **Every review is logged** in the `reviews` store and never deleted. This is what a future FSRS parameter fit, and merging between devices, will work from.
 - **IDs must be the same on every device.** A word's ID is `<traditional>|<pinyin>`; review IDs are random. Never use auto-incrementing keys: two devices would hand out the same numbers, making a later merge impossible.
 - **Dates are stored as numbers** (milliseconds, like `Date.now()`), and FSRS state as plain JSON with ISO date strings, so records go into a backup file unchanged.
-- **No sync.** IndexedDB belongs to one browser on one device at one address, so the phone and tablet have separate progress, and moving to GitHub Pages starts empty. Export/Import backup moves the whole database as one JSON file; import replaces everything (no merge yet). The backup has a `version` number: raise it and keep reading old versions if the shape changes.
+- **No sync.** IndexedDB belongs to one browser on one device at one address, so the phone and tablet have separate progress, and moving to GitHub Pages starts empty. Export/Import backup moves the whole database as one JSON file; importing either combines it with what is on the device or replaces everything (see "Combining backups"). The backup has a `version` number: raise it and keep reading old versions if the shape changes.
 - **Changing the store layout** means raising `DATABASE_VERSION` in `src/db.js` and handling existing databases in `onupgradeneeded` (by `oldVersion`, so nothing stored is lost), and usually raising the backup version too. Both are at 2.
 
 ## Decks
@@ -183,17 +185,31 @@ Built on 2026-10-13 as the first step of the order of work in "Long-term goals".
 
 - **`changedAt` on words, settings and decks**, filled in by `putAll` in `src/db.js` (and `renameWord`), never by the callers. Records from before have none. A change the app makes by itself to bring old records up to date passes `{ stamp: false }`, so that it does not look newer than a change the owner made on another device.
 - **A record read from the database has `changedAt`; the one about to be saved does not.** Comparing the two field by field must leave it out (as "Edit word" in `src/review.js` does), and compare lists such as `decks` by content.
-- **A removed word leaves a mark** in the `removed` store (`{ id, removedAt }`). Saving a word with that ID again takes the mark away.
+- **A removed word leaves a mark** in the `removed` store (`{ id, removedAt }`). The mark stays when a word with that ID is saved again (changed on 2026-10-13, for the merge: until then it was taken away). A word or deck is there if it is in its store; the mark only matters when two devices' data are combined.
 - **A corrected word remembers its old IDs** in `formerIds` (`withFormerId` in `src/words.js`). The pop-up panel builds the saved word from the form, so every field that is not in the form has to be carried over there by hand: `decks`, `formerIds`, `learnedAt`.
 - **A card's schedule can be rebuilt from its reviews**: `replay` in `src/scheduler.js`. A test checks that it gives exactly the saved state, which relies on ts-fsrs varying intervals the same way for the same review, and on a review's `time` being the time handed to `gradeOptions`.
 - **Decks:** a `decks` store (`{ id, name, parentId, order }`) and a `decks` list on each word. The ready-made lists' decks have fixed IDs so every device makes the same ones (`readyMadeDeck`). `READY_MADE_LISTS` in `src/decks.js` repeats the lists' levels; a test checks it against the files. See "Decks" for the rest.
 - **A tab still running an older version keeps the database from being upgraded.** The app now closes its connection when a newer version asks (`onversionchange`), and a newer version that is kept waiting says to close the other tab (`onblocked`). The version published before 2026-10-13 does not let go, so the message can appear once on a device with two tabs open.
 - **Backup format 2** adds `removed` and `decks`; a version 1 file is still read.
-- **For the merge itself, still to settle:**
-  - Removing a word deletes its cards but keeps its reviews, so replaying reviews would bring back the cards of a word that was removed and added again. The removal time has to be taken into account (it is gone once the word is added again, so it may need keeping).
-  - Some settings belong to the device, not the learner (`welcomeDone`, `keepDataWanted`, `cardsFiledByScript`, `oldBuiltInWordsRemoved`) and should not travel.
-  - Reviews made before 2026-10-13 can carry the plain card ID of a card since moved to its `#simplified` ID (`src/scriptCards.js`), so reviews cannot simply be grouped by `cardId`.
-  - Cards carry no `changedAt`: they are meant to be rebuilt from the reviews.
+
+## Combining backups
+
+Built on 2026-10-13 to a plan the owner agreed to. It is number 3 of the order of work in "Long-term goals", and the same calculation a later sync through the learner's own storage would use.
+
+- **Where:** "Import backup" in Settings. Once a file is chosen, a panel (`import-dialog`) says what the backup holds, what the device holds and what combining would bring, in counts, and offers "Combine with this device", "Replace everything on this device" (which asks once more) and Cancel. Combine is switched off when it would change nothing.
+- **A backup of the device is downloaded before combining** (owner), named `...-before-combining.json`, since combining cannot be undone. Not before replacing.
+- **`mergeBackups(mine, theirs)` in `src/merge.js`** takes two backups and gives the combined contents and a summary; the page writes them with `replaceEverything`, in one transaction, and reloads. The rules are at the top of the file:
+  - Reviews: all of both sides.
+  - Words, decks, settings: the record saved later (`changedAt`), whole; this device's if neither is later. A word's earliest `learnedAt` is kept whichever record wins.
+  - A removal counts unless the record was saved after it. All marks are kept.
+  - A word corrected on one device (`formerIds`) takes the place of the record still under the old ID on the other, and that side's cards and reviews are filed under the new ID. If the device that corrected it also has a word under the old ID, that is a word of its own.
+  - Settings that belong to the device are never taken from the backup (`DEVICE_SETTINGS`: `welcomeDone`, `keepDataWanted`, `cardsFiledByScript`, `oldBuiltInWordsRemoved`, `builtInListVersion`, `studyDeck`). A new setting of that kind must be added there.
+- **Cards are not combined but worked out from the reviews** (`replay`), with one exception that Claude added to the plan: where one side already has every review of a word's cards of one kind, its cards are kept as stored. So combining never changes a schedule that only one device contributed to, and a device's cards that do not come out of `replay` exactly as stored (anything from before 2026-10-13 that was moved by `fileCardsByScript`) are left alone.
+- **Which card a review belongs to** goes by its word, kind and `script`, not its `cardId` (reviews from before 2026-10-13 can carry a plain ID of a card since moved).
+- **A word removed and added again starts from scratch:** reviews made before the removal mark do not count toward its cards, on either device's side.
+- **Limits, accepted with the owner:** if one device changes a word's meaning and the other puts it in a deck, the later save wins whole and the other change is lost; "later" trusts each device's clock; and making two devices equal takes two steps (export A, combine on B, export B, combine or replace on A).
+- **Tests:** `tests/merge.test.js` (same result from either device, nothing new the second time, and a case per rule) and `tests/browser/merge.browser.js` (the panel, combining, replacing). The browser test hands the app a file through the hidden file input (`chooseBackup`).
+- **Not done:** the owner has not tried it between their real devices, and nobody has looked at the panel on a phone.
 
 ## How the must-haves are implemented
 
@@ -268,7 +284,7 @@ Built on 2026-10-13. The owner chose: all stroke data saved on the device, and a
 
 Asked for by the owner on 2026-10-13: HSK 3.0 first, 2.0 supported too, and TOCFL from the official files.
 
-- **Where:** the "Ready-made decks" section of the Decks tab (see "Decks"). A list is chosen (HSK 3.0, HSK 2.0 marked "older", or TOCFL), its levels appear with checkboxes and counts ("Level 1: 512 words, 480 new"), and the button adds the chosen levels' new words at the end of the queue, lowest level first. A paragraph above explains what the HSK is and which list to pick, with a link to Wikipedia, for someone new to it.
+- **Where:** the "Ready-made decks" section of the Decks tab (see "Decks"). A list is chosen by tapping its row (HSK 3.0, HSK 2.0 marked "older", or TOCFL; rows like those of My decks, each with a line saying what it is, in place of a drop-down list since 2026-10-13, at the owner's request; the chosen one has a heavy edge and HSK 3.0 is chosen to begin with), its levels appear with checkboxes and counts ("Level 1: 512 words, 480 new"), and the button adds the chosen levels' new words at the end of the queue, lowest level first. A paragraph above explains what the HSK is and which list to pick, with a link to Wikipedia, for someone new to it.
 - **The files** are `data/wordlists/hsk/hsk-3.0.tsv` (11,054 words) and `hsk-2.0.tsv` (5,008), built by `scripts/build-word-lists.js` from two MIT-licensed projects at fixed versions; the folder's README has the sources and the license notice. Columns: level, simplified, traditional, pinyin, meaning. They are separate files (`?url` imports in `src/wordsPanel.js`), fetched when the section is opened and saved for offline use with the dictionary (`scripts/build-offline.js` saves every `.tsv` among the build's files).
 - **Meanings come from the app's dictionary** when a list is added, like for a word typed by hand, so the "Dictionary meanings" setting applies. A list only carries a meaning for the few words the dictionary lacks (31 in HSK 3.0); those, with their readings, are hand-written in `data/wordlists/hsk/extra-meanings.tsv`. A test checks that every listed word can get a meaning.
 - **Every listed word is matched to the dictionary** by its simplified form and reading (`bestMatch` in the build script) and takes its traditional form and reading from there, so that its ID is the same as when the word is typed by hand, and the same in both lists. The sources could not be used as they are: the HSK 3.0 source was matched to an older CC-CEDICT, and the HSK 2.0 source has character-by-character traditional forms (后面 for 後面) and tones as spoken (yi4qi3).
@@ -380,7 +396,7 @@ Agreed with the owner on 2026-10-13, in the conversation that had been put first
 - **Order of work:**
   1. **Done on 2026-10-13:** settle the data model for decks and merging (see "Ready for merging"). The Skritter scheduling data has not arrived, so the import was not looked at.
   2. **Done on 2026-10-13:** decks, with the Decks tab in place of the Words tab (see "Decks"). Swapped with merging that day: the owner is only testing for now, so decks were of more use to them first.
-  3. Merge backups.
+  3. **Done on 2026-10-13:** merge backups (see "Combining backups").
   4. Leeches with their export, and a card manager.
   5. Sentences and audio.
   6. Statistics.
@@ -393,7 +409,8 @@ Agreed with the owner on 2026-10-13, in the conversation that had been put first
 Written on 2026-10-13 for whichever session picks the work up next (the owner works from more than one computer; everything is on `main` and published).
 
 - **Done that day:** the conversation about long-term goals, the database made ready for merging, and decks with the Decks tab in place of the Words tab (see "Long-term goals", "Ready for merging", "Decks").
-- **Next: merging backups**, number 3 in the order of work. Propose a plan to the owner before writing code. "Ready for merging" lists what is in place and the points still to settle, the main one being that a word removed and added again must not get its old schedule back from the reviews that were kept.
+- **Done later that day: combining backups**, number 3 in the order of work (see "Combining backups"). The owner has not tried it yet.
+- **Next: leeches with their export, and a card manager**, number 4. Propose a plan to the owner before writing code.
 - **The owner has only tried the Decks tab briefly.** They asked for the Back button after their first look; expect more remarks on it. One thing offered and not answered: folding "Add a word" away on a deck's page, so that the deck's words are not so far down.
 - **Deploying:** if the deploy step fails with "Fetching artifact metadata failed", do not re-run the failed run (the re-run uploads a second copy of the site and fails on that); start a fresh one with `gh workflow run deploy.yml --ref main`.
 - **The repository's address** is `BunnyApocalypse/hanzi-trainer`, with capitals; the lowercase one still works but git says it has moved.
@@ -415,7 +432,7 @@ Written on 2026-10-13 for whichever session picks the work up next (the owner wo
 7. **Done:** two consecutive strokes joined, for every character. Still open: longer runs, and shortcuts that reorder or drop strokes.
 8. **Done:** PWA: manifest, service worker, all stroke data and the dictionary saved offline, deployed to GitHub Pages on every push to `main` (see "Offline use and deployment"). Still open: the owner trying it installed on the phone and tablet.
 9. Import the Skritter scheduling data, if the GDPR request (sent 2026-10-12) yields it. The word list itself can be added in the Decks tab since 2026-10-12; the owner had said they did not want it imported without scheduling data, so when to do that is theirs to decide.
-10. Merge backups between devices instead of replacing; a settings screen (new words per day, target retention).
+10. **Done on 2026-10-13:** combine backups between devices instead of only replacing (see "Combining backups"). Still open: a setting for target retention.
 11. **To do, asked for by the owner:**
     - **Done on 2026-10-13:** the conversation about long-term goals (see "Long-term goals", which also has the order of work).
     - **Done on 2026-10-13:** fit the interface to the script and pronunciation being learned (see "Fitting the interface to what is learned"). The owner has not seen it yet.

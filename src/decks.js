@@ -11,8 +11,8 @@
 // The page side is the Decks tab (wordsPanel.js and decksPanel.js) and the
 // deck chooser in review.js.
 
-// The ready-made lists and their levels, in order. The IDs are the values of
-// the List drop-down in index.html, and the levels are those in the first
+// The ready-made lists and their levels, in order. The IDs are the `data-list`
+// of the rows in the Ready-made decks section of index.html, and the levels are those in the first
 // column of the files in data/wordlists/ (a test checks they agree).
 export const READY_MADE_LISTS = [
   { id: 'hsk-3.0', name: 'HSK 3.0', levels: ['1', '2', '3', '4', '5', '6', '7-9'] },

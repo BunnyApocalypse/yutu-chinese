@@ -1,7 +1,7 @@
 // Entry point: sets up the page, the three tabs (Review, Free practice and
 // Words), settings and backups.
 
-import { getAll, putAll, getSetting, setSetting, removeWord } from './db.js';
+import { getAll, putAll, getSetting, setSetting, removeWord, replaceEverything } from './db.js';
 import { allCardIds } from './session.js';
 import { OLD_BUILT_IN_WORD_IDS } from './oldBuiltInWords.js';
 import { createWordFlow } from './wordFlow.js';
@@ -16,6 +16,7 @@ import { missingReadyMadeDecks, wordsWithListsAsDecks, homeForEveryWord } from '
 import { setUpOffline, keepData } from './offline.js';
 import { createWelcome } from './welcome.js';
 import { buildBackup, checkBackup, describeBackup, restoreBackup } from './backup.js';
+import { mergeBackups, describeMerge } from './merge.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -221,8 +222,11 @@ function onSettingsChange() {
 
 // ---- Backups ----
 
-exportButton.addEventListener('click', async () => {
-  const backup = await buildBackup();
+// Saves a backup as a file in the device's Downloads folder.
+//
+// backup: as buildBackup() gives it
+// label:  added to the file's name, to tell one kind of backup from another
+function downloadBackup(backup, label = '') {
   // A Blob is a file held in memory. Pointing a link at it and "clicking" the
   // link is how a web page saves a file to the device's Downloads folder.
   const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
@@ -234,13 +238,21 @@ exportButton.addEventListener('click', async () => {
   const stamp =
     `${now.getFullYear()}-${twoDigits(now.getMonth() + 1)}-${twoDigits(now.getDate())}` +
     `-${twoDigits(now.getHours())}${twoDigits(now.getMinutes())}`;
-  link.download = `hanzi-trainer-backup-${stamp}.json`;
+  link.download = `hanzi-trainer-backup-${stamp}${label}.json`;
   link.click();
   URL.revokeObjectURL(link.href);
-});
+}
+
+exportButton.addEventListener('click', async () => downloadBackup(await buildBackup()));
 
 // The real file chooser is a hidden <input type="file">; the visible button opens it.
 importButton.addEventListener('click', () => importFile.click());
+
+// The backup that was chosen and what is on the device, while the panel that
+// asks what to do with them is open.
+const importDialog = byId('import-dialog');
+let chosenBackup = null;
+let onDevice = null;
 
 importFile.addEventListener('change', async () => {
   const file = importFile.files[0];
@@ -250,10 +262,9 @@ importFile.addEventListener('change', async () => {
     return;
   }
 
-  let backup;
   try {
-    backup = JSON.parse(await file.text());
-    checkBackup(backup);
+    chosenBackup = JSON.parse(await file.text());
+    checkBackup(chosenBackup);
   } catch (error) {
     // JSON.parse fails with a technical message; checkBackup with a readable one.
     const reason = error instanceof SyntaxError ? 'This file is not a Hanzi Trainer backup.' : error.message;
@@ -261,17 +272,42 @@ importFile.addEventListener('change', async () => {
     return;
   }
 
-  const onDevice = await buildBackup();
+  onDevice = await buildBackup();
+  byId('import-backup-text').textContent = `In the backup: ${describeBackup(chosenBackup)}.`;
+  byId('import-device-text').textContent = `On this device now: ${describeBackup(onDevice)}.`;
+  // What combining would do, worked out now so it can be said before choosing.
+  const changes = describeMerge(mergeBackups(onDevice, chosenBackup).summary);
+  byId('import-combine-text').textContent =
+    changes.length > 0
+      ? `Combining would bring this device: ${changes.join(', ')}.`
+      : 'Combining would change nothing: this device already has everything in the backup.';
+  byId('import-combine-button').disabled = changes.length === 0;
+  byId('import-note').textContent = '';
+  importDialog.showModal();
+});
+
+byId('import-cancel-button').addEventListener('click', () => importDialog.close());
+
+byId('import-combine-button').addEventListener('click', async () => {
+  // What is on the device is saved as a file first: combining cannot be undone.
+  downloadBackup(onDevice, '-before-combining');
+  // Worked out again from the database as it is now, in case something was
+  // studied in another tab since the panel opened.
+  const { data } = mergeBackups(await buildBackup(), chosenBackup);
+  await replaceEverything(data);
+  // Start afresh from the combined data.
+  window.location.reload();
+});
+
+byId('import-replace-button').addEventListener('click', async () => {
   const confirmed = window.confirm(
     'Replace everything on this device with the backup?\n\n' +
-      `In the backup: ${describeBackup(backup)}\n\n` +
-      `On this device now: ${describeBackup(onDevice)}\n\n` +
-      'This cannot be undone.',
+      'What is on this device now will be gone. This cannot be undone.',
   );
   if (!confirmed) {
     return;
   }
-  await restoreBackup(backup);
+  await restoreBackup(chosenBackup);
   // Start afresh from the restored data.
   window.location.reload();
 });

@@ -753,6 +753,12 @@ button.deck-entry {
   grid-template-columns: 1fr;
 }
 
+/* A ready-made list to choose from: the chosen one has a heavy edge. */
+button.ready-entry.selected {
+  border-color: #222;
+  box-shadow: inset 0 0 0 1px #222;
+}
+
 /* The Back button with the line saying where you are beside it. */
 .deck-path-row {
   display: flex;

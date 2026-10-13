@@ -179,11 +179,11 @@ describe('the Decks tab', { concurrency: false }, () => {
     assert.match(await textOf(page, '#ready-levels label'), /^Level 1: 512 words, \d+ new$/);
     assert.equal(await page.evaluate(`document.getElementById('add-ready-button').disabled`), true);
     // Taiwan's list has two levels with names of their own, then five.
-    await choose(page, 'ready-list-select', 'tocfl');
+    await page.evaluate(`document.querySelector('#ready-list button[data-list="tocfl"]').click()`);
     await waitUntil(page, `document.querySelector('#ready-levels label')?.textContent.trim().startsWith('Novice 1:')`, 'the levels of TOCFL');
     assert.equal(await page.evaluate(`document.querySelectorAll('#ready-levels input').length`), 7);
     // The older list has six.
-    await choose(page, 'ready-list-select', 'hsk-2.0');
+    await page.evaluate(`document.querySelector('#ready-list button[data-list="hsk-2.0"]').click()`);
     await waitUntil(page, `document.querySelectorAll('#ready-levels input').length === 6`, 'the levels of HSK 2.0');
     await page.evaluate(`document.querySelector('#ready-levels input[value="1"]').click()`);
     const button = await textOf(page, 'add-ready-button');

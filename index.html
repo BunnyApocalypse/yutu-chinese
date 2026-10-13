@@ -80,30 +80,37 @@
         <!-- Ready-made decks: the word lists of the official tests. -->
         <section id="ready-decks-section" class="words-panel" hidden>
           <p class="hint">
-            These are the word lists of the two official tests of Chinese for learners. They are a common answer to
-            "which words should I learn first?", and many textbooks and courses follow them. The lowest level is the easiest.
+            These are the word lists of the two official tests of Chinese for learners, the
+            <a href="https://en.wikipedia.org/wiki/Hanyu_Shuiping_Kaoshi" target="_blank" rel="noopener">HSK</a> and the
+            <a href="https://en.wikipedia.org/wiki/Test_of_Chinese_as_a_Foreign_Language" target="_blank" rel="noopener">TOCFL</a>.
+            They are a common answer to "which words should I learn first?", and many textbooks and courses follow
+            them. The lowest level is the easiest. Not sure? Start with HSK 3.0, level 1.
           </p>
-          <p class="hint">
-            The <a href="https://en.wikipedia.org/wiki/Hanyu_Shuiping_Kaoshi" target="_blank" rel="noopener">HSK</a>
-            is mainland China's test. <b>HSK 3.0</b> is its current standard, with levels 1 to 6 and an advanced band 7-9.
-            <b>HSK 2.0</b> is the older six-level standard it replaces, which a lot of teaching material still uses.
-          </p>
-          <p class="hint">
-            The <a href="https://en.wikipedia.org/wiki/Test_of_Chinese_as_a_Foreign_Language" target="_blank" rel="noopener">TOCFL</a>
-            is Taiwan's test, with two Novice levels and then levels 1 to 5. Its words are the ones used in Taiwan,
-            so it suits someone learning traditional characters there.
-          </p>
-          <p class="hint">Not sure? Start with HSK 3.0, level 1. What you add appears under My decks, a deck for each level.</p>
-          <label class="setting">
-            List
-            <select id="ready-list-select">
-              <option value="hsk-3.0">HSK 3.0</option>
-              <option value="hsk-2.0">HSK 2.0 (older)</option>
-              <option value="tocfl">TOCFL (Taiwan)</option>
-            </select>
-          </label>
+          <!-- The lists to choose from; tapping one shows its levels below
+               (wordsPanel.js). data-list is the list's ID, as in READY_MADE_LISTS. -->
+          <ul id="ready-list" class="word-list">
+            <li>
+              <button class="word-entry deck-entry ready-entry" type="button" data-list="hsk-3.0">
+                <span class="entry-characters">HSK 3.0</span>
+                <span class="entry-definition">Mainland China's test, as it is now: levels 1 to 6 and an advanced band 7-9.</span>
+              </button>
+            </li>
+            <li>
+              <button class="word-entry deck-entry ready-entry" type="button" data-list="hsk-2.0">
+                <span class="entry-characters">HSK 2.0 (older)</span>
+                <span class="entry-definition">The six-level standard that HSK 3.0 replaces. A lot of teaching material still uses it.</span>
+              </button>
+            </li>
+            <li>
+              <button class="word-entry deck-entry ready-entry" type="button" data-list="tocfl">
+                <span class="entry-characters">TOCFL (Taiwan)</span>
+                <span class="entry-definition">Taiwan's test: two Novice levels, then levels 1 to 5. Its words are the ones used in Taiwan, so it suits someone learning traditional characters there.</span>
+              </button>
+            </li>
+          </ul>
           <!-- One checkbox per level, with how many of its words are new. Filled in by wordsPanel.js. -->
-          <fieldset id="ready-levels" class="setting"><legend>Levels</legend></fieldset>
+          <fieldset id="ready-levels" class="setting"><legend id="ready-levels-title">Levels</legend></fieldset>
+          <p class="hint">What you add appears under My decks, a deck for each level.</p>
           <div class="buttons">
             <button id="add-ready-button" class="small primary" type="button" disabled>Add</button>
           </div>
@@ -352,6 +359,26 @@
             </div>
           </div>
         </form>
+      </dialog>
+
+      <!-- Shown once a backup file has been chosen with "Import backup": what is
+           in it, and the choice between combining and replacing (main.js). -->
+      <dialog id="import-dialog" class="settings-panel">
+        <h2>Import backup</h2>
+        <p id="import-backup-text"></p>
+        <p id="import-device-text"></p>
+        <p id="import-combine-text"></p>
+        <div class="buttons">
+          <button id="import-combine-button" class="small primary" type="button">Combine with this device</button>
+          <button id="import-replace-button" class="small" type="button">Replace everything on this device</button>
+          <button id="import-cancel-button" class="small" type="button">Cancel</button>
+        </div>
+        <p class="hint">
+          <b>Combine</b> keeps what is on this device and adds what the backup has: for studying on two devices. A
+          backup of this device is saved to your downloads first, in case you want to go back.<br />
+          <b>Replace</b> throws away what is on this device and puts the backup in its place.
+        </p>
+        <p id="import-note" class="note"></p>
       </dialog>
 
       <!-- The introduction shown the first time the app is opened: a few screens,

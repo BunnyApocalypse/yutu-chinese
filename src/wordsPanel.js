@@ -36,8 +36,8 @@ import hsk3Url from '../data/wordlists/hsk/hsk-3.0.tsv?url';
 import hsk2Url from '../data/wordlists/hsk/hsk-2.0.tsv?url';
 import tocflUrl from '../data/wordlists/tocfl/tocfl.tsv?url';
 
-// Where each ready-made list is fetched from, by the value of its entry in
-// the List drop-down (index.html).
+// Where each ready-made list is fetched from, by the `data-list` of its row
+// in the Ready-made decks section (index.html).
 const READY_LIST_URLS = { 'hsk-3.0': hsk3Url, 'hsk-2.0': hsk2Url, tocfl: tocflUrl };
 
 // With thousands of words, building a row for each would make the page slow,
@@ -634,7 +634,10 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
 
   // ---- Adding a ready-made list ----
 
-  const readySelect = byId('ready-list-select');
+  // The rows to choose a list with, and the list chosen: the first to begin
+  // with.
+  const readyRows = [...document.querySelectorAll('#ready-list button')];
+  let readyListId = readyRows[0].dataset.list;
   const readyLevels = byId('ready-levels');
   const addReadyButton = byId('add-ready-button');
   const readyReport = byId('ready-report');
@@ -643,7 +646,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   const readyLists = new Map();
 
   async function readyEntries() {
-    const listId = readySelect.value;
+    const listId = readyListId;
     if (!readyLists.has(listId)) {
       const response = await fetch(READY_LIST_URLS[listId]);
       readyLists.set(listId, parseReadyList(await response.text()));
@@ -666,12 +669,27 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
 
   // Lists the levels of the chosen list, each with a checkbox.
   async function showReadyLevels() {
+    const listId = readyListId;
+    for (const row of readyRows) {
+      const chosen = row.dataset.list === listId;
+      row.classList.toggle('selected', chosen);
+      // Says to a screen reader which row is the chosen one.
+      row.setAttribute('aria-pressed', chosen);
+      if (chosen) {
+        byId('ready-levels-title').textContent = `Levels of ${row.firstElementChild.textContent}`;
+      }
+    }
     let entries;
     try {
       entries = await readyEntries();
     } catch {
+      readyLevels.replaceChildren(readyLevels.firstElementChild);
+      showReadyCount();
       readyReport.textContent = 'The list could not be fetched. It needs a connection the first time.';
       return;
+    }
+    if (listId !== readyListId) {
+      return; // another list was tapped while this one was being fetched
     }
     const boxes = levelsOfReadyList(entries, words).map(({ level, count, newCount }) => {
       const box = document.createElement('input');
@@ -693,13 +711,16 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     showReadyCount();
   }
 
-  readySelect.addEventListener('change', () => {
-    readyReport.textContent = '';
-    showReadyLevels();
-  });
+  for (const row of readyRows) {
+    row.addEventListener('click', () => {
+      readyListId = row.dataset.list;
+      readyReport.textContent = '';
+      showReadyLevels();
+    });
+  }
 
   addReadyButton.addEventListener('click', async () => {
-    const listId = readySelect.value;
+    const listId = readyListId;
     const levels = new Set(chosenLevels());
     const entries = (await readyEntries()).filter((entry) => levels.has(entry.level));
     addReadyButton.disabled = true;
