@@ -3,9 +3,11 @@
 //
 // A deck is a record { id, name, parentId, order } in the `decks` store, and
 // a word lists the IDs of the decks it is in (`decks`). A word can be in
-// several and still has one schedule. Nothing on screen uses decks yet; this
-// file only gives the ready-made lists their decks, so that the words added
-// from them are already filed when decks arrive.
+// several and still has one schedule: studying a deck only narrows down
+// which words come up. A deck may have a `newWordsPerDay` of its own.
+//
+// The page side is decksPanel.js (the Decks section of the Words tab) and
+// the deck chooser in review.js.
 
 // The ready-made lists and their levels, in order. The IDs are the values of
 // the List drop-down in index.html, and the levels are those in the first
@@ -62,4 +64,103 @@ export function wordsWithListsAsDecks(words) {
   return words
     .filter((word) => word.lists)
     .map(({ lists, ...word }) => ({ ...word, decks: [...new Set([...(word.decks || []), ...lists])] }));
+}
+
+// ---- The tree ----
+
+// The decks in the order they are listed: each one followed by the decks
+// inside it. Decks side by side go by `order`, then by name.
+//
+// Returns [{ deck, depth, label }]: depth is 0 for a deck inside no other,
+// and label is the deck's name with those it is inside, "HSK 3.0 › Level 1".
+export function deckTree(decks) {
+  const ids = new Set(decks.map((deck) => deck.id));
+  // A deck whose parent is not there (any more) is listed at the top.
+  const parentOf = (deck) => (ids.has(deck.parentId) ? deck.parentId : null);
+  const rows = [];
+  const listed = new Set();
+  const list = (parentId, depth, path) => {
+    const inside = decks
+      .filter((deck) => parentOf(deck) === parentId && !listed.has(deck.id))
+      .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
+    for (const deck of inside) {
+      listed.add(deck.id);
+      rows.push({ deck, depth, label: [...path, deck.name].join(' › ') });
+      list(deck.id, depth + 1, [...path, deck.name]);
+    }
+  };
+  list(null, 0, []);
+  // Decks that are inside each other in a circle are reached from no top.
+  // It should not happen (see canBeInside); they are listed at the end.
+  for (const deck of decks) {
+    if (!listed.has(deck.id)) {
+      listed.add(deck.id);
+      rows.push({ deck, depth: 0, label: deck.name });
+      list(deck.id, 1, [deck.name]);
+    }
+  }
+  return rows;
+}
+
+// The IDs of a deck and of every deck inside it, as a Set.
+export function deckWithInside(decks, deckId) {
+  const ids = new Set([deckId]);
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const deck of decks) {
+      if (ids.has(deck.parentId) && !ids.has(deck.id)) {
+        ids.add(deck.id);
+        grew = true;
+      }
+    }
+  }
+  return ids;
+}
+
+// Whether a deck may be put inside `parentId` (null for "inside no deck"):
+// not inside itself, nor inside a deck that is inside it.
+export function canBeInside(decks, deckId, parentId) {
+  return parentId === null || !deckWithInside(decks, deckId).has(parentId);
+}
+
+// A new deck's record. It goes after the decks there are.
+//
+// id: a random ID (see randomId in db.js)
+export function newDeckRecord(id, name, parentId, decks) {
+  const order = Math.max(-1, ...decks.map((deck) => deck.order)) + 1;
+  return { id, name, parentId, order };
+}
+
+// How many new words a day is the goal while `deck` is studied: its own
+// number if it has one, otherwise the one from Settings. `deck` is null when
+// all words are studied.
+export function dailyGoal(deck, goalInSettings) {
+  return deck && Number.isInteger(deck.newWordsPerDay) ? deck.newWordsPerDay : goalInSettings;
+}
+
+// ---- Words and decks ----
+
+// Whether a word is in any of the decks whose IDs are in `deckIds` (a Set).
+export function isInDecks(word, deckIds) {
+  return (word.decks || []).some((id) => deckIds.has(id));
+}
+
+// The word put in a deck as well. Returns the same record if it is in it.
+export function withDeck(word, deckId) {
+  return (word.decks || []).includes(deckId) ? word : { ...word, decks: [...(word.decks || []), deckId] };
+}
+
+// The word taken out of the decks in `deckIds` (a Set). A word left in no
+// deck has no `decks` field.
+export function withoutDecks(word, deckIds) {
+  const { decks = [], ...rest } = word;
+  const left = decks.filter((id) => !deckIds.has(id));
+  return left.length > 0 ? { ...rest, decks: left } : rest;
+}
+
+// Of the words in the decks in `deckIds` (a Set), those in no other deck:
+// the ones that deleting those decks would leave without any.
+export function wordsOnlyIn(words, deckIds) {
+  return words.filter((word) => isInDecks(word, deckIds) && word.decks.every((id) => deckIds.has(id)));
 }

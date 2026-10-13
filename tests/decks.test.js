@@ -4,7 +4,21 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-import { READY_MADE_LISTS, readyMadeDeck, missingReadyMadeDecks, wordsWithListsAsDecks } from '../src/decks.js';
+import {
+  READY_MADE_LISTS,
+  readyMadeDeck,
+  missingReadyMadeDecks,
+  wordsWithListsAsDecks,
+  deckTree,
+  deckWithInside,
+  canBeInside,
+  newDeckRecord,
+  dailyGoal,
+  isInDecks,
+  withDeck,
+  withoutDecks,
+  wordsOnlyIn,
+} from '../src/decks.js';
 import { parseReadyList, levelsOfReadyList, listTag } from '../src/words.js';
 
 test('a ready-made list and its levels have decks with fixed IDs', () => {
@@ -41,4 +55,73 @@ test('only the decks that are not stored yet are made, with the list they are in
 test('the list tags of words added before there were decks become their decks', () => {
   const words = [{ id: 'a', lists: ['hsk-3.0/1', 'hsk-2.0/1'], order: 3 }, { id: 'b' }, { id: 'c', decks: ['x'] }];
   assert.deepEqual(wordsWithListsAsDecks(words), [{ id: 'a', order: 3, decks: ['hsk-3.0/1', 'hsk-2.0/1'] }]);
+});
+
+// A textbook with two chapters, the second with a part of its own, and a
+// deck beside it.
+const DECKS = [
+  { id: 'verbs', name: 'Verbs', parentId: null, order: 5 },
+  { id: 'ch2', name: 'Chapter 2', parentId: 'book', order: 2 },
+  { id: 'book', name: 'Textbook', parentId: null, order: 0 },
+  { id: 'ch1', name: 'Chapter 1', parentId: 'book', order: 1 },
+  { id: 'ch2b', name: 'Dialogue', parentId: 'ch2', order: 3 },
+];
+
+test('decks are listed as a tree, each followed by the decks inside it', () => {
+  assert.deepEqual(
+    deckTree(DECKS).map(({ deck, depth, label }) => [deck.id, depth, label]),
+    [
+      ['book', 0, 'Textbook'],
+      ['ch1', 1, 'Textbook › Chapter 1'],
+      ['ch2', 1, 'Textbook › Chapter 2'],
+      ['ch2b', 2, 'Textbook › Chapter 2 › Dialogue'],
+      ['verbs', 0, 'Verbs'],
+    ],
+  );
+  // A deck whose parent is gone is listed at the top; decks inside each
+  // other in a circle are not lost.
+  assert.deepEqual(deckTree([{ id: 'a', name: 'A', parentId: 'gone', order: 0 }])[0].depth, 0);
+  const circle = [{ id: 'a', name: 'A', parentId: 'b', order: 0 }, { id: 'b', name: 'B', parentId: 'a', order: 1 }];
+  assert.equal(deckTree(circle).length, 2);
+});
+
+test('a deck cannot be put inside itself or a deck inside it', () => {
+  assert.deepEqual([...deckWithInside(DECKS, 'book')].sort(), ['book', 'ch1', 'ch2', 'ch2b']);
+  assert.deepEqual([...deckWithInside(DECKS, 'ch1')], ['ch1']);
+  assert.equal(canBeInside(DECKS, 'book', 'ch2b'), false);
+  assert.equal(canBeInside(DECKS, 'book', 'book'), false);
+  assert.equal(canBeInside(DECKS, 'ch2b', 'verbs'), true);
+  assert.equal(canBeInside(DECKS, 'ch2b', null), true);
+});
+
+test('a new deck goes after the others, and a deck may have a daily goal of its own', () => {
+  assert.deepEqual(newDeckRecord('x', 'Idioms', 'book', DECKS), { id: 'x', name: 'Idioms', parentId: 'book', order: 6 });
+  assert.equal(newDeckRecord('x', 'First', null, []).order, 0);
+  assert.equal(dailyGoal(null, 5), 5);
+  assert.equal(dailyGoal(DECKS[0], 5), 5);
+  assert.equal(dailyGoal({ ...DECKS[0], newWordsPerDay: 0 }, 5), 0);
+  assert.equal(dailyGoal({ ...DECKS[0], newWordsPerDay: 12 }, 5), 12);
+});
+
+test('words are put in decks and taken out of them', () => {
+  const word = { id: 'a', decks: ['ch1'] };
+  assert.equal(withDeck(word, 'ch1'), word);
+  assert.deepEqual(withDeck(word, 'verbs').decks, ['ch1', 'verbs']);
+  assert.deepEqual(withDeck({ id: 'b' }, 'verbs').decks, ['verbs']);
+  assert.equal(isInDecks(word, deckWithInside(DECKS, 'book')), true);
+  assert.equal(isInDecks(word, deckWithInside(DECKS, 'ch2')), false);
+  assert.equal(isInDecks({ id: 'b' }, deckWithInside(DECKS, 'book')), false);
+  assert.deepEqual(withoutDecks({ id: 'a', decks: ['ch1', 'verbs'] }, new Set(['ch1'])), { id: 'a', decks: ['verbs'] });
+  assert.deepEqual(withoutDecks(word, new Set(['ch1'])), { id: 'a' });
+});
+
+test('the words a deck\'s deletion would leave without a deck are found', () => {
+  const words = [
+    { id: 'a', decks: ['ch1'] },
+    { id: 'b', decks: ['ch1', 'ch2b'] },
+    { id: 'c', decks: ['ch1', 'verbs'] },
+    { id: 'd', decks: ['verbs'] },
+    { id: 'e' },
+  ];
+  assert.deepEqual(wordsOnlyIn(words, deckWithInside(DECKS, 'book')).map((word) => word.id), ['a', 'b']);
 });

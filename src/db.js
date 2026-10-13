@@ -32,16 +32,20 @@
 //                          the plain id of a card since moved to its
 //                          "#simplified" id (see scriptCards.js).
 //   settings  key: key     { key, value, changedAt }
-//   removed   key: id      { id, removedAt }
-//                          One per word that was removed, under the word's
+//   removed   key: id      { id, removedAt } and, for a deck, kind: 'deck'.
+//                          One per word or deck that was removed, under its
 //                          ID. Without it, combining this device's data with
-//                          another's would bring the word back. Gone again
-//                          once the word is added again.
-//   decks     key: id      { id, name, parentId, order, changedAt }
+//                          another's would bring it back. Gone again once the
+//                          word or deck is saved again. (A word's ID has a
+//                          "|" in it and a deck's has none, so the two never
+//                          meet.)
+//   decks     key: id      { id, name, parentId, order, changedAt } and, for
+//                          some, newWordsPerDay.
 //                          Groups of words. `parentId` is the deck this one
 //                          is inside, or null. A deck made from a ready-made
 //                          list has a fixed ID ('hsk-3.0', 'hsk-3.0/1'), the
-//                          same on every device (see decks.js).
+//                          same on every device; any other has a random one
+//                          (see decks.js).
 //
 // `changedAt` is when a record was last saved (a number, like Date.now()).
 // It is filled in here, by putAll, so that when two devices' data are
@@ -134,12 +138,12 @@ export async function getAll(storeName) {
 export function putAll(storeName, records, { stamp = true } = {}) {
   const changedAt = Date.now();
   const stamped = stamp && STAMPED.includes(storeName);
-  // A word saved is a word that is there: any mark of its removal goes.
-  const storeNames = storeName === 'words' ? ['words', 'removed'] : [storeName];
-  return transaction(storeNames, 'readwrite', (tx) => {
+  // A word or deck saved is one that is there: any mark of its removal goes.
+  const marked = storeName === 'words' || storeName === 'decks';
+  return transaction(marked ? [storeName, 'removed'] : [storeName], 'readwrite', (tx) => {
     for (const record of records) {
       tx.objectStore(storeName).put(stamped ? { ...record, changedAt } : record);
-      if (storeName === 'words') {
+      if (marked) {
         tx.objectStore('removed').delete(record.id);
       }
     }
@@ -150,12 +154,32 @@ export function putAll(storeName, records, { stamp = true } = {}) {
 // removed. Its reviews stay: they are the record of what was studied, and are
 // never deleted.
 export function removeWord(wordId, cardIds) {
+  return removeWords([{ wordId, cardIds }]);
+}
+
+// The same for several words at once. entries: [{ wordId, cardIds }].
+export function removeWords(entries) {
+  const removedAt = Date.now();
   return transaction(['words', 'cards', 'removed'], 'readwrite', (tx) => {
-    tx.objectStore('words').delete(wordId);
-    for (const id of cardIds) {
-      tx.objectStore('cards').delete(id);
+    for (const { wordId, cardIds } of entries) {
+      tx.objectStore('words').delete(wordId);
+      for (const id of cardIds) {
+        tx.objectStore('cards').delete(id);
+      }
+      tx.objectStore('removed').put({ id: wordId, removedAt });
     }
-    tx.objectStore('removed').put({ id: wordId, removedAt: Date.now() });
+  });
+}
+
+// Removes decks, leaving a mark for each. The words in them are not touched
+// here: taking the decks off their words is the caller's business.
+export function removeDecks(deckIds) {
+  const removedAt = Date.now();
+  return transaction(['decks', 'removed'], 'readwrite', (tx) => {
+    for (const id of deckIds) {
+      tx.objectStore('decks').delete(id);
+      tx.objectStore('removed').put({ id, kind: 'deck', removedAt });
+    }
   });
 }
 

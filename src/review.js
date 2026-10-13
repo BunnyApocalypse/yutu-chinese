@@ -11,6 +11,8 @@
 
 import { getAll, putAll, saveReview, randomId } from './db.js';
 import { gradeOptions, GRADES, AGAIN, GOOD } from './scheduler.js';
+import { deckWithInside, isInDecks, dailyGoal } from './decks.js';
+import { fillDeckSelect } from './decksPanel.js';
 import {
   planSession,
   suggestGrade,
@@ -45,9 +47,13 @@ const RECHECK_MS = 15 * 1000;
 // editWord(word): opens the word's panel to change it; returns a promise for
 //           { changed, word } (see edit() in wordsPanel.js)
 //
+// The deck studied is chosen with `deckSelect`, at the top of Review and
+// Learn (see "Studying one deck").
+//
 // Returns { load, activate, deactivate, practice, refresh }.
 export function createReview(elements, flows, settings, editWord) {
   const {
+    deckSelect,
     countsElement,
     typeElement,
     meaningElement,
@@ -74,6 +80,7 @@ export function createReview(elements, flows, settings, editWord) {
   } = elements;
 
   let words = [];
+  let decks = [];
   // Card ID → card, for every card that has been studied.
   const cards = new Map();
   // The tone table (see data/cedict/README.md), loaded at startup. Supplies
@@ -552,8 +559,8 @@ export function createReview(elements, flows, settings, editWord) {
   }
 
   function learnCounts() {
-    const plan = planSession(words, cards, Date.now(), {
-      newWordsPerDay: settings.newWordsPerDay,
+    const plan = planSession(studyWords(), cards, Date.now(), {
+      newWordsPerDay: goalForToday(),
       enabledTypes: settings.enabledTypes,
       hasCardType,
       scriptOf: (word) => scriptFor(word, settings),
@@ -574,7 +581,7 @@ export function createReview(elements, flows, settings, editWord) {
 
   async function startNextWord() {
     justLearned = null;
-    const word = nextToLearn(words, cards);
+    const word = nextToLearn(studyWords(), cards);
     if (!word) {
       showNextToLearn();
       return;
@@ -598,7 +605,7 @@ export function createReview(elements, flows, settings, editWord) {
   // and when there is nothing to learn, a message.
   function showNextToLearn() {
     const { learnedToday, waiting } = learnCounts();
-    const goal = settings.newWordsPerDay;
+    const goal = goalForToday();
     countsElement.textContent = `Learned today ${learnedToday} of ${goal} · ${waiting} waiting`;
     const progress =
       learnedToday >= goal && goal > 0
@@ -616,7 +623,9 @@ export function createReview(elements, flows, settings, editWord) {
       showLearnMessage(
         words.length === 0
           ? 'You have no words yet. Add some in the Words tab.'
-          : 'No words are waiting to be learned. Add more in the Words tab.',
+          : studyDeck()
+            ? 'No words of this deck are waiting to be learned.'
+            : 'No words are waiting to be learned. Add more in the Words tab.',
         false,
       );
     } else if (learnedToday >= goal) {
@@ -625,6 +634,41 @@ export function createReview(elements, flows, settings, editWord) {
       startNextWord();
     }
   }
+
+  // ---- Studying one deck ----
+
+  // The deck chosen at the top of Review and Learn, or null for all words
+  // (also if the deck chosen has since been deleted).
+  function studyDeck() {
+    return decks.find((deck) => deck.id === settings.studyDeck) || null;
+  }
+
+  // The words studied: all of them, or those in the chosen deck and the
+  // decks inside it. A word in several decks still has one set of cards, so
+  // this only narrows down which words come up.
+  function studyWords() {
+    const deck = studyDeck();
+    if (!deck) {
+      return words;
+    }
+    const ids = deckWithInside(decks, deck.id);
+    return words.filter((word) => isInDecks(word, ids));
+  }
+
+  // The goal for new words a day: the deck's own, or the one in Settings.
+  function goalForToday() {
+    return dailyGoal(studyDeck(), settings.newWordsPerDay);
+  }
+
+  // The list of decks to choose from, which is only there once there is one.
+  function showDeckChoice() {
+    fillDeckSelect(deckSelect, decks, [{ value: '', label: 'All words' }]);
+    deckSelect.value = studyDeck() ? settings.studyDeck : '';
+    deckSelect.hidden = decks.length === 0;
+  }
+
+  // Saving the setting has the next card worked out afresh (see refresh).
+  deckSelect.addEventListener('change', () => settings.change('studyDeck', deckSelect.value));
 
   // ---- Choosing the next card ----
 
@@ -675,8 +719,9 @@ export function createReview(elements, flows, settings, editWord) {
     }
     justLearned = null;
     const now = Date.now();
-    const plan = planSession(words, cards, now, {
-      newWordsPerDay: settings.newWordsPerDay,
+    const studied = studyWords();
+    const plan = planSession(studied, cards, now, {
+      newWordsPerDay: goalForToday(),
       enabledTypes: settings.enabledTypes,
       hasCardType,
       scriptOf: (word) => scriptFor(word, settings),
@@ -697,7 +742,9 @@ export function createReview(elements, flows, settings, editWord) {
           : '';
       if (words.length === 0) {
         doneMessage.textContent = 'You have no words yet. Add some in the Words tab.';
-      } else if (plan.waitingCount === words.length) {
+      } else if (studied.length === 0) {
+        doneMessage.textContent = 'This deck has no words yet. Put some in it in the Words tab.';
+      } else if (plan.waitingCount === studied.length) {
         doneMessage.textContent = `Nothing to review yet.${waiting}`;
       } else {
         doneMessage.textContent = `All done for now. ${describeWait(plan.nextDueAt, now)}${waiting}`;
@@ -742,6 +789,7 @@ export function createReview(elements, flows, settings, editWord) {
         // sees new words beside old cards.
         const newWords = await getAll('words');
         const newCards = await getAll('cards');
+        const newDecks = await getAll('decks');
         // import() fetches the table as its own file, so it doesn't make the
         // main program bigger. If it can't be loaded, tones are judged
         // against the word list alone.
@@ -752,6 +800,8 @@ export function createReview(elements, flows, settings, editWord) {
           // left as null
         }
         words = newWords;
+        decks = newDecks;
+        showDeckChoice();
         toneTable = table;
         cards.clear();
         for (const card of newCards) {

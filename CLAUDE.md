@@ -66,7 +66,8 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `src/scheduler.js`: the only file that imports `ts-fsrs`. `gradeOptions(fsrsState, now)` returns what each of the four grades would do to a card.
 - `src/session.js`: plain calculation, no page or database: which card is next (`planSession`), the suggested grade for writing (`suggestGrade`, `judgeChar`), the 4:00 day boundary, the daily new-word limit, the hold between cards of one word.
 - `src/db.js`: small promise wrapper around IndexedDB. The store layout is documented at the top of the file.
-- `src/decks.js`: the decks of the ready-made lists. Plain calculation. Nothing on screen uses decks yet (see "Ready for merging").
+- `src/decks.js`: the plain calculation behind decks: the tree, which words are in a deck, a deck's daily goal, the decks of the ready-made lists.
+- `src/decksPanel.js`: the Decks section of the Words tab and the pop-up panel per deck. Set up by `src/wordsPanel.js`. Also `fillDeckSelect`, which every list of decks to choose from is filled with.
 - `src/offline.js`, `src/serviceWorker.js`, `scripts/build-offline.js`, `public/manifest.webmanifest`, `.github/workflows/deploy.yml`: offline use and deployment (see that section).
 - `src/welcome.js`, `src/storageAdvice.js`: the introduction shown on first use, and what it says about long-term storage in each browser (see that section).
 - `src/scriptCards.js`: files writing cards under the script they were learned in (see "Switching script").
@@ -92,6 +93,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `tests/browser/lesson.browser.js`, `tests/browser/welcome.browser.js`, `tests/browser/offline.browser.js`: the Learn tab and its lesson, the introduction, and offline use.
 - `tests/browser/database.browser.js`: a database from before brought up to date, and what is kept for merging (removal marks, `changedAt`, `formerIds`).
 - `tests/decks.test.js`: tests for `src/decks.js`.
+- `tests/browser/decks.browser.js`: decks from making one to deleting it, and studying one in Learn.
 - `tests/words.test.js`, `tests/dictionary.test.js`: tests for `src/words.js` and `src/dictionary.js`; the second also checks every line of the real dictionary.
 
 ## Browser tests
@@ -153,6 +155,22 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - **No sync.** IndexedDB belongs to one browser on one device at one address, so the phone and tablet have separate progress, and moving to GitHub Pages starts empty. Export/Import backup moves the whole database as one JSON file; import replaces everything (no merge yet). The backup has a `version` number: raise it and keep reading old versions if the shape changes.
 - **Changing the store layout** means raising `DATABASE_VERSION` in `src/db.js` and handling existing databases in `onupgradeneeded` (by `oldVersion`, so nothing stored is lost), and usually raising the backup version too. Both are at 2.
 
+## Decks
+
+Built on 2026-10-13. The answers marked "owner" were given to questions put to them.
+
+- **A word can be in several decks and has one schedule** (owner). A word's `decks` field lists deck IDs; studying a deck only narrows down which words come up. A deck includes the decks inside it (`deckWithInside`), to any depth.
+- **The Decks section of the Words tab** lists the decks as a tree (`deckTree`), each with its words, how many are learned and how many cards are due, and has a form to add one. "Inside" keeps its choice from one new deck to the next, for adding chapters in a row. Tapping a deck opens its pop-up panel: name, the deck it is inside, a daily goal, Delete.
+- **Putting words in decks:** "Add to deck" in the Add a word form (it stays chosen for the next word) and in Add a list (words of the list that were there already go into the deck too, and a list with nothing new can still be "put in the deck"); a fold-out of checkboxes in the word's pop-up panel; and the ready-made lists file their words by level. All lists of decks are only shown once there is a deck.
+- **"Show" above the word list** narrows it to a deck, or to the words in no deck.
+- **Studying a deck:** the chooser at the top of Review and Learn (`deck-select`, the `studyDeck` setting; `studyWords` in `src/review.js`). Review plans and Learn picks from the deck's words only. "All words" keeps the queue's order (owner). If the deck studied is deleted, all words are studied again.
+- **A deck can have its own "New words per day"** (owner: a deck *can* have its own number, otherwise the one in Settings is the default); `dailyGoal`. It is the goal Learn shows while that deck is studied, counting the words of that deck learned today, and the limit Review uses for cards to be written again. A deck inside another does not take its number from the one it is inside.
+- **Deleting a deck asks what becomes of its words** (owner: ask each time). The panel then offers "Delete the deck, keep the words" and, if any of its words are in no other deck, "Delete the deck and remove N words". The decks inside it go too. Kept words are taken out of the decks before the decks are removed, and a deleted deck leaves a mark in `removed` with `kind: 'deck'`.
+- **A deck cannot be put inside itself or a deck inside it** (`canBeInside`); the panel does not offer those.
+- **The chooser shares a line with the counts** in Review and Learn, and wraps onto a line of its own when they do not fit (on a phone, with a long deck name). `chooseSize` in `src/wordFlow.js` was not changed for it.
+- **Not built:** changing the order of decks (they go by when they were made, the ready-made ones first), exporting or sharing a deck, per-deck card kinds, putting many words in a deck at once from the word list, and deck counts that take the hold between cards of one word into account ("due" there is simply cards past their time).
+- **For the merge:** `studyDeck` is a setting that belongs to the device.
+
 ## Ready for merging
 
 Built on 2026-10-13 as the first step of the order of work in "Long-term goals". Nothing on screen changed; the database now keeps what combining two devices' data will need.
@@ -162,7 +180,7 @@ Built on 2026-10-13 as the first step of the order of work in "Long-term goals".
 - **A removed word leaves a mark** in the `removed` store (`{ id, removedAt }`). Saving a word with that ID again takes the mark away.
 - **A corrected word remembers its old IDs** in `formerIds` (`withFormerId` in `src/words.js`). The pop-up panel builds the saved word from the form, so every field that is not in the form has to be carried over there by hand: `decks`, `formerIds`, `learnedAt`.
 - **A card's schedule can be rebuilt from its reviews**: `replay` in `src/scheduler.js`. A test checks that it gives exactly the saved state, which relies on ts-fsrs varying intervals the same way for the same review, and on a review's `time` being the time handed to `gradeOptions`.
-- **Decks:** a `decks` store (`{ id, name, parentId, order }`) and a `decks` list on each word. Only the ready-made lists have decks so far, with fixed IDs so every device makes the same ones (`readyMadeDeck`). `READY_MADE_LISTS` in `src/decks.js` repeats the lists' levels; a test checks it against the files.
+- **Decks:** a `decks` store (`{ id, name, parentId, order }`) and a `decks` list on each word. The ready-made lists' decks have fixed IDs so every device makes the same ones (`readyMadeDeck`). `READY_MADE_LISTS` in `src/decks.js` repeats the lists' levels; a test checks it against the files. See "Decks" for the rest.
 - **A tab still running an older version keeps the database from being upgraded.** The app now closes its connection when a newer version asks (`onversionchange`), and a newer version that is kept waiting says to close the other tab (`onblocked`). The version published before 2026-10-13 does not let go, so the message can appear once on a device with two tabs open.
 - **Backup format 2** adds `removed` and `decks`; a version 1 file is still read.
 - **For the merge itself, still to settle:**
@@ -355,7 +373,7 @@ Agreed with the owner on 2026-10-13, in the conversation that had been put first
 - **The hard constraints are open to change** (vanilla JavaScript, no framework, few dependencies) if a change makes the app easier to grow or to contribute to. Nothing planned needs one yet, so they stand until a concrete case comes up; each change is still asked for first.
 - **Order of work:**
   1. **Done on 2026-10-13:** settle the data model for decks and merging (see "Ready for merging"). The Skritter scheduling data has not arrived, so the import was not looked at.
-  2. Decks. (Swapped with merging on 2026-10-13: the owner is only testing for now, so decks are of more use to them first.)
+  2. **Done on 2026-10-13:** decks (see "Decks"). Swapped with merging that day: the owner is only testing for now, so decks were of more use to them first.
   3. Merge backups.
   4. Leeches with their export, and a card manager.
   5. Sentences and audio.
@@ -392,7 +410,7 @@ Agreed with the owner on 2026-10-13, in the conversation that had been put first
     - **Dark mode** (asked for by the owner on 2026-10-13): a choice in Settings, presumably light, dark, or as the device has it. The colors are written out all over `src/style.css` and in a few places in the code (the writing area's ink, outline and grid in `src/quiz.js` and `src/wordFlow.js`, the manifest's colors, the icon), so the first step is to gather them into named colors.
     - **Done on 2026-10-13:** ready-made word lists for the HSK (3.0 and 2.0) and the TOCFL (see "Ready-made word lists"). Not done: TBCL, and the 79 TOCFL entries left out.
     - **Long meanings should collapse** (asked for by the owner on 2026-10-13): some words get a very long meaning from the dictionary (点 is the owner's example), which crowds a card. A meaning beyond some length should be shown cut short, with a way to see all of it. To settle: where it applies (the prompt of a writing card, the card's face, the word list), and whether proposing a shorter meaning in the first place would serve better for single characters.
-    - **Decks, as in Anki** (asked for by the owner on 2026-10-13): words grouped into decks; studying one deck at a time as well as everything together ("all words learned"); and decks inside decks, such as a textbook with its chapters. A ready-made word list would arrive as a deck, with its levels as sub-decks. To settle first: whether a word can be in several decks (a word's ID is its characters and pinyin, so it exists once), where a deck's place in the tree is stored, how the daily limit of new words works per deck and overall, and what the backup and a later merge between devices need.
+    - **Done on 2026-10-13** (see "Decks"). As first written down: **Decks, as in Anki** (asked for by the owner on 2026-10-13): words grouped into decks; studying one deck at a time as well as everything together ("all words learned"); and decks inside decks, such as a textbook with its chapters. A ready-made word list would arrive as a deck, with its levels as sub-decks. To settle first: whether a word can be in several decks (a word's ID is its characters and pinyin, so it exists once), where a deck's place in the tree is stored, how the daily limit of new words works per deck and overall, and what the backup and a later merge between devices need.
     - **Nice to have, long term** (the owner's idea, 2026-10-13): a mode that helps someone go from 繁體 to 簡體 or back. Today every word whose forms differ has its writing card learned again. The mode would work by character or component instead: having learned 們 → 们 once in one word, the learner is taken to know it in 他們, 你們 and the rest, so only the characters that are new to them come up. Needs a table of which characters differ between the scripts (the word list's own pairs give most of it) and a record of which the learner has written.
     - A setting for which traditional forms to use: mainland, Hong Kong or Taiwan, so that people can choose. Today Traditional always means Taiwan forms where animCJK has them. Needs stroke data for the other two regions' forms; the big set's traditional characters are mainland-style, and no Hong Kong set has been looked for yet.
     - **Done on 2026-10-13:** a neutral tone is accepted where the dictionary has one or the owner added one to the word (see "Taiwan and mainland pronunciation").

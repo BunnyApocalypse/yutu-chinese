@@ -355,6 +355,7 @@ async function startUp() {
 
   review = createReview(
     {
+      deckSelect: byId('deck-select'),
       countsElement: byId('review-counts'),
       typeElement: byId('card-type'),
       meaningElement: byId('prompt-meaning'),

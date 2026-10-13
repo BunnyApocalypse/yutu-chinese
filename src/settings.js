@@ -40,6 +40,9 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //                   memory (tones, tracing; see review.js)
 //   newWordsPerDay: a number
 //   enabledTypes:   the card types switched on, e.g. ['meaning', 'writing']
+//   studyDeck:      the ID of the deck studied in Review and Learn, or ''
+//                   for all words. Chosen at the top of those two tabs, not
+//                   in the panel.
 // and one function, for setting them from elsewhere (the introduction):
 //   change(key, value): saves a setting and tells the rest of the app
 export async function createSettings(elements, onChange) {
@@ -67,6 +70,7 @@ export async function createSettings(elements, onChange) {
     meaningDetail: await getSetting('meaningDetail', DEFAULT_MEANING_DETAIL),
     newWordsPerDay: await getSetting('newWordsPerDay', DEFAULT_NEW_WORDS_PER_DAY),
     enabledTypes: await getSetting('enabledTypes', CARD_TYPES),
+    studyDeck: await getSetting('studyDeck', ''),
   };
 
   // Shows the current settings in the panel's controls.

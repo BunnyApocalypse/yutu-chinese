@@ -729,6 +729,41 @@ button.word-entry {
   text-align: right;
 }
 
+/* ---- Decks ---- */
+
+/* The deck studied, at the top of Review and Learn. Kept small: the whole
+   review screen has to fit on a phone without scrolling. */
+.counts-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 10px;
+}
+
+.deck-select {
+  max-width: 100%;
+  min-height: 32px;
+  padding: 2px 8px;
+  font-size: 0.9rem;
+}
+
+/* One deck in the Words tab: its name, and its counts below. */
+button.deck-entry {
+  grid-template-columns: 1fr;
+  width: auto;
+}
+
+.deck-entry .entry-characters {
+  font-size: 1.05rem;
+}
+
+/* A deck's row is narrower the deeper it lies, so let the list item size it. */
+#deck-list li {
+  display: flex;
+  flex-direction: column;
+}
+
 /* In the word's pop-up panel: the label above its text box. */
 .setting.stacked {
   flex-direction: column;

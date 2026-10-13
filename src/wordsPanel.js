@@ -8,7 +8,8 @@ import { getAll, putAll, removeWord, renameWord } from './db.js';
 import { formatPinyin, wordId } from './wordList.js';
 import { allCardIds } from './session.js';
 import { fileCardsByScript } from './scriptCards.js';
-import { missingReadyMadeDecks } from './decks.js';
+import { missingReadyMadeDecks, deckTree, deckWithInside, isInDecks, withDeck } from './decks.js';
+import { createDecksPanel, fillDeckSelect } from './decksPanel.js';
 import {
   checkWord,
   readWordList,
@@ -89,6 +90,10 @@ export function createWordsPanel(onChange, getSettings) {
   const searchInput = byId('word-search');
   const listElement = byId('word-list');
   const listNote = byId('word-list-note');
+  const deckFilter = byId('word-deck-filter');
+  const addDeckSelect = byId('add-deck');
+  const listDeckSelect = byId('list-deck');
+  const editDecks = byId('edit-decks');
 
   const dialog = byId('word-dialog');
   const dialogTitle = byId('word-dialog-title');
@@ -105,10 +110,14 @@ export function createWordsPanel(onChange, getSettings) {
   const studyNextButton = byId('study-next-button');
 
   let words = [];
+  let decks = [];
+  let cards = [];
   // The IDs of the words that have been learned.
   let studiedWordIds = new Set();
-  // The checked words of a pasted list, waiting for "Add".
+  // The checked words of a pasted list, waiting for "Add", and every word
+  // that could be read from it, those already there included.
   let listToAdd = [];
+  let listRead = [];
   // The word open in the dialog.
   let openWord = null;
   // What became of it, for edit(): see there.
@@ -116,17 +125,46 @@ export function createWordsPanel(onChange, getSettings) {
 
   async function load() {
     words = (await getAll('words')).sort((a, b) => a.order - b.order);
+    decks = await getAll('decks');
+    cards = await getAll('cards');
     // A word is learned once it has been through the Learn tab, or has a card
     // (see isLearned in session.js).
     studiedWordIds = new Set([
-      ...(await getAll('cards')).map((card) => card.wordId),
+      ...cards.map((card) => card.wordId),
       ...words.filter((word) => word.learnedAt !== undefined).map((word) => word.id),
     ]);
+  }
+
+  // The Decks section (decksPanel.js). It saves its own changes and then
+  // calls afterChange, like everything else here.
+  const decksPanel = createDecksPanel({
+    getWords: () => words,
+    getDecks: () => decks,
+    getCards: () => cards,
+    isLearned: (word) => studiedWordIds.has(word.id),
+    afterChange: () => afterChange(),
+  });
+
+  // Shows the decks: their section, and the lists of decks to choose from
+  // elsewhere in the tab, which are only there once there is a deck.
+  function renderDecks() {
+    decksPanel.render();
+    const none = decks.length === 0;
+    fillDeckSelect(deckFilter, decks, [
+      { value: '', label: 'All words' },
+      { value: 'none', label: 'Words in no deck' },
+    ]);
+    byId('word-deck-filter-row').hidden = none;
+    for (const select of [addDeckSelect, listDeckSelect]) {
+      fillDeckSelect(select, decks, [{ value: '', label: 'No deck' }]);
+      select.closest('label').hidden = none;
+    }
   }
 
   // Reads the list afresh, shows it, and tells the rest of the app.
   async function afterChange() {
     await load();
+    renderDecks();
     renderList();
     await onChange();
   }
@@ -205,7 +243,14 @@ export function createWordsPanel(onChange, getSettings) {
   // ---- The list of words ----
 
   function renderList() {
-    const matching = words.filter((word) => matchesSearch(word, searchInput.value));
+    // The deck chosen under "Show", with the decks inside it; or the words
+    // in no deck at all.
+    const shownDecks = decks.some((deck) => deck.id === deckFilter.value)
+      ? deckWithInside(decks, deckFilter.value)
+      : null;
+    const inShownDecks = (word) =>
+      deckFilter.value === 'none' ? !(word.decks || []).length : !shownDecks || isInDecks(word, shownDecks);
+    const matching = words.filter((word) => inShownDecks(word) && matchesSearch(word, searchInput.value));
     countElement.textContent = words.length;
     listNote.textContent =
       matching.length > MAX_ROWS
@@ -242,6 +287,7 @@ export function createWordsPanel(onChange, getSettings) {
   }
 
   searchInput.addEventListener('input', renderList);
+  deckFilter.addEventListener('change', renderList);
 
   // ---- Adding one word ----
 
@@ -424,8 +470,11 @@ export function createWordsPanel(onChange, getSettings) {
         `${charactersOf(checked.word)} (${formatPinyin(checked.word.pinyin)}) is already in your words.`;
       return;
     }
-    await putAll('words', toAdd);
+    // The deck stays chosen for the next word: a chapter is typed in a row.
+    const deckId = addDeckSelect.value;
+    await putAll('words', deckId ? toAdd.map((word) => withDeck(word, deckId)) : toAdd);
     addForm.reset();
+    addDeckSelect.value = deckId;
     filledEntry = null;
     applySettings(); // "Cards in" is back to "As in Settings", so both boxes are
 
@@ -440,6 +489,7 @@ export function createWordsPanel(onChange, getSettings) {
 
   function forgetCheckedList() {
     listToAdd = [];
+    listRead = [];
     addListButton.hidden = true;
     listReport.textContent = '';
     listProblems.replaceChildren();
@@ -497,17 +547,38 @@ export function createWordsPanel(onChange, getSettings) {
     listProblems.replaceChildren(...shown);
 
     listToAdd = toAdd;
-    addListButton.textContent = `Add ${plural(toAdd.length, 'word')}`;
-    addListButton.hidden = toAdd.length === 0;
+    listRead = readable;
+    showAddListButton();
   });
+
+  // With a deck chosen, a list is worth adding even if every word in it is
+  // there already: they are put in the deck.
+  function showAddListButton() {
+    const intoDeck = listDeckSelect.value !== '' && listRead.length > 0;
+    addListButton.textContent =
+      listToAdd.length > 0 || !intoDeck
+        ? `Add ${plural(listToAdd.length, 'word')}`
+        : `Put ${plural(listRead.length, 'word')} in the deck`;
+    addListButton.hidden = listToAdd.length === 0 && !intoDeck;
+  }
+  listDeckSelect.addEventListener('change', showAddListButton);
 
   addListButton.addEventListener('click', async () => {
     // Worked out again here, in case the list of words changed since the check.
     const { toAdd } = newWordRecords(listToAdd, words, Date.now());
-    await putAll('words', toAdd);
+    const deckId = listDeckSelect.value;
+    // Words of the list that were there already are put in the deck too.
+    const listed = new Set(listRead.map((word) => wordId(word)));
+    const alreadyThere = deckId
+      ? words.filter((word) => listed.has(word.id) && !(word.decks || []).includes(deckId))
+      : [];
+    await putAll('words', deckId ? [...toAdd, ...alreadyThere].map((word) => withDeck(word, deckId)) : toAdd);
     forgetCheckedList();
     listText.value = '';
-    listReport.textContent = `Added ${plural(toAdd.length, 'word')}. They wait in the Learn tab.`;
+    listReport.textContent =
+      `Added ${plural(toAdd.length, 'word')}.` +
+      (toAdd.length > 0 ? ' They wait in the Learn tab.' : '') +
+      (alreadyThere.length > 0 ? ` ${plural(alreadyThere.length, 'word')} you already had went into the deck.` : '');
     await afterChange();
   });
 
@@ -647,11 +718,37 @@ export function createWordsPanel(onChange, getSettings) {
     editPinyinTaiwan.value = word.pinyinTaiwan || '';
     editPinyinAlso.value = word.pinyinAlso || '';
     editCardScript.value = word.cardScript || '';
+    // One checkbox per deck, in the fold-out "Decks".
+    const boxes = deckTree(decks).map(({ deck, label: name }) => {
+      const box = document.createElement('input');
+      box.type = 'checkbox';
+      box.value = deck.id;
+      box.checked = (word.decks || []).includes(deck.id);
+      box.addEventListener('change', showDeckCount);
+      const label = document.createElement('label');
+      label.append(box, ` ${name}`);
+      return label;
+    });
+    // The first child is the fieldset's caption, which stays.
+    editDecks.replaceChildren(editDecks.firstElementChild, ...boxes);
+    byId('edit-decks-row').hidden = decks.length === 0;
+    byId('edit-decks-row').open = false;
+    showDeckCount();
     dialogNote.textContent = '';
     // Only a word still waiting can be moved to the front of the line.
     studyNextButton.hidden = studied;
     // showModal() opens a <dialog> on top of the page and dims the rest.
     dialog.showModal();
+  }
+
+  // The decks ticked in the word's panel.
+  const tickedDecks = () => [...editDecks.querySelectorAll('input:checked')].map((box) => box.value);
+
+  // Says on the fold-out how many decks the word is in, so it need not be
+  // opened to see.
+  function showDeckCount() {
+    const count = tickedDecks().length;
+    byId('edit-decks-summary').textContent = count === 0 ? 'Decks: in none' : `Decks: in ${count}`;
   }
 
   byId('word-dialog-form').addEventListener('submit', async (event) => {
@@ -681,9 +778,12 @@ export function createWordsPanel(onChange, getSettings) {
       order: openWord.order,
       addedAt: openWord.addedAt,
     };
-    // The decks the word is in and the IDs it had before are kept.
-    if (openWord.decks) {
-      saved.decks = openWord.decks;
+    // The decks ticked, and any the word is in that are not there to tick
+    // (which should not happen). The IDs it had before are kept.
+    const known = new Set(decks.map((deck) => deck.id));
+    const inDecks = [...(openWord.decks || []).filter((id) => !known.has(id)), ...tickedDecks()];
+    if (inDecks.length > 0) {
+      saved.decks = inDecks;
     }
     if (openWord.formerIds) {
       saved.formerIds = openWord.formerIds;
@@ -741,6 +841,7 @@ export function createWordsPanel(onChange, getSettings) {
     async edit(word) {
       applySettings();
       await load();
+      renderDecks();
       openDialog(words.find((entry) => entry.id === word.id) || word);
       // A <dialog> announces "close" however it was closed, the Esc key included.
       return new Promise((resolve) => {
@@ -751,6 +852,7 @@ export function createWordsPanel(onChange, getSettings) {
     async show() {
       applySettings();
       await load();
+      renderDecks();
       renderList();
       showSuggestions();
     },

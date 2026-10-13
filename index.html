@@ -23,7 +23,11 @@
 
       <!-- Review mode: what is left to do, and the prompt for the current word -->
       <section id="review-header" class="review-header">
-        <p id="review-counts" class="counts"></p>
+        <!-- Which deck is studied; only there once there are decks (review.js). -->
+        <div class="counts-row">
+          <select id="deck-select" class="deck-select" aria-label="Deck to study" hidden></select>
+          <p id="review-counts" class="counts"></p>
+        </div>
         <!-- Which kind of card this is: Writing, Tone, Pinyin or Meaning -->
         <p id="card-type" class="card-type"></p>
         <p id="prompt-meaning" class="meaning"></p>
@@ -87,6 +91,11 @@
               <option value="simplified">Simplified 简体</option>
             </select>
           </label>
+          <!-- Only shown once there are decks (wordsPanel.js). -->
+          <label id="add-deck-row" class="setting" hidden>
+            Add to deck
+            <select id="add-deck"></select>
+          </label>
           <button type="submit" class="primary">Add word</button>
           <p id="add-word-note" class="note"></p>
         </form>
@@ -97,6 +106,10 @@
           <!-- Which columns a list has; worded by wordsPanel.js to suit the settings. -->
           <p id="list-hint" class="hint"></p>
           <textarea id="list-text" rows="6" aria-label="Word list" spellcheck="false"></textarea>
+          <label id="list-deck-row" class="setting" hidden>
+            Add to deck
+            <select id="list-deck"></select>
+          </label>
           <div class="buttons">
             <button id="list-file-button" class="small" type="button">Choose a file</button>
             <input id="list-file" type="file" accept=".tsv,.csv,.txt,text/plain,text/csv,text/tab-separated-values" hidden />
@@ -140,8 +153,30 @@
           <p id="ready-report" class="note"></p>
         </details>
 
+        <!-- The decks, as a tree. Run by decksPanel.js. -->
+        <h2>Decks</h2>
+        <p class="hint">
+          A deck groups words: a textbook and its chapters, say. A word can be in several decks and is still
+          scheduled once. Once you have a deck, you choose which to study at the top of Review and Learn.
+        </p>
+        <ul id="deck-list" class="word-list"></ul>
+        <form id="add-deck-form" class="add-word-form">
+          <input id="add-deck-name" type="text" placeholder="Name of a new deck" aria-label="Name of a new deck" autocomplete="off" />
+          <label id="add-deck-parent-row" class="setting" hidden>
+            Inside
+            <select id="add-deck-parent"></select>
+          </label>
+          <div class="buttons">
+            <button type="submit" class="small">Add deck</button>
+          </div>
+        </form>
+
         <h2>Your words (<span id="word-count">0</span>)</h2>
         <input id="word-search" type="search" placeholder="Search characters, pinyin or meaning" aria-label="Search your words" autocomplete="off" autocapitalize="off" />
+        <label id="word-deck-filter-row" class="setting" hidden>
+          Show
+          <select id="word-deck-filter"></select>
+        </label>
         <p id="word-list-note" class="note"></p>
         <ul id="word-list" class="word-list"></ul>
       </section>
@@ -253,6 +288,11 @@
               <option value="simplified">Simplified 简体</option>
             </select>
           </label>
+          <!-- One checkbox per deck; only shown once there are decks (wordsPanel.js). -->
+          <details id="edit-decks-row" class="add-list" hidden>
+            <summary id="edit-decks-summary">Decks</summary>
+            <fieldset id="edit-decks" class="setting"><legend>This word is in</legend></fieldset>
+          </details>
           <p class="hint">Pinyin is written with tone numbers, like xue2xi2. Your progress with the word is kept whatever you change.</p>
           <p id="word-dialog-note" class="note"></p>
           <div class="buttons">
@@ -260,6 +300,44 @@
             <button id="study-next-button" class="small" type="button">Study next</button>
             <button id="remove-word-button" class="small" type="button">Remove</button>
             <button id="word-dialog-close" class="small" type="button">Close</button>
+          </div>
+        </form>
+      </dialog>
+
+      <!-- One deck from the Words tab: rename it, move it, give it a daily goal, or delete it. -->
+      <dialog id="deck-dialog" class="settings-panel">
+        <form id="deck-dialog-form">
+          <h2 id="deck-dialog-title"></h2>
+          <p id="deck-dialog-status" class="hint"></p>
+          <label class="setting stacked">
+            Name
+            <input id="deck-name" type="text" autocomplete="off" />
+          </label>
+          <label class="setting">
+            Inside
+            <select id="deck-parent"></select>
+          </label>
+          <label class="setting">
+            New words per day
+            <input id="deck-goal" type="number" min="0" max="50" step="1" inputmode="numeric" placeholder="—" />
+            <span class="hint">
+              The goal shown in the Learn tab while this deck is studied. Leave it empty to use the number in Settings.
+            </span>
+          </label>
+          <p id="deck-dialog-note" class="note"></p>
+          <div id="deck-buttons" class="buttons">
+            <button type="submit" class="small primary">Save</button>
+            <button id="deck-delete-button" class="small" type="button">Delete</button>
+            <button id="deck-dialog-close" class="small" type="button">Close</button>
+          </div>
+          <!-- Shown in place of the buttons once Delete is tapped. -->
+          <div id="deck-delete-choice" hidden>
+            <p id="deck-delete-text"></p>
+            <div class="buttons">
+              <button id="deck-delete-keep" class="small" type="button">Delete the deck, keep the words</button>
+              <button id="deck-delete-words" class="small" type="button"></button>
+              <button id="deck-delete-cancel" class="small" type="button">Don't delete</button>
+            </div>
           </div>
         </form>
       </dialog>
