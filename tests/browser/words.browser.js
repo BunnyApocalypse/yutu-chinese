@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, reloadApp, tap, type, textOf, waitUntil } from './harness.js';
+import { startApp, startBrowsers, reloadApp, tap, type, choose, textOf, waitUntil } from './harness.js';
 
 // Text for "the Words tab's list has this many rows".
 const rows = (count) => `document.querySelectorAll('#word-list li').length === ${count}`;
@@ -111,6 +111,37 @@ describe('the Words tab', { concurrency: false }, () => {
     await type(page, 'add-traditional', '圖書館');
     await waitUntil(page, `document.getElementById('add-suggestions').textContent.includes('Already in your words')`);
     await type(page, 'add-traditional', '');
+  });
+
+  it('fills in as much of the meaning as the setting asks for', async () => {
+    // Types the word, taps its dictionary entry and returns the meaning filled in.
+    const meaningFilledIn = async () => {
+      await type(page, 'add-traditional', '');
+      await type(page, 'add-traditional', '聯絡');
+      await waitUntil(page, `document.querySelector('#add-suggestions button') !== null`, 'a dictionary entry');
+      await page.evaluate(`document.querySelector('#add-suggestions button').click()`);
+      return page.evaluate(`document.getElementById('add-definition').value`);
+    };
+    const everyday = 'to get in touch with; to contact; to stay in contact (with); liaison';
+    assert.equal(await meaningFilledIn(), everyday);
+    await choose(page, 'meaning-detail-select', 'first');
+    assert.equal(await meaningFilledIn(), 'to get in touch with');
+    await choose(page, 'meaning-detail-select', 'all');
+    assert.equal(await meaningFilledIn(), `${everyday}; (math.) connection`);
+    await choose(page, 'meaning-detail-select', 'everyday');
+    for (const field of ['traditional', 'simplified', 'pinyin', 'definition']) {
+      await type(page, `add-${field}`, '');
+    }
+  });
+
+  it('explains that setting when its "?" is tapped', async () => {
+    await tap(page, 'settings-button');
+    assert.equal(await textOf(page, 'meaning-detail-hint'), '');
+    await tap(page, 'meaning-detail-help');
+    assert.match(await textOf(page, 'meaning-detail-hint'), /specialist field/);
+    await tap(page, 'meaning-detail-help');
+    assert.equal(await textOf(page, 'meaning-detail-hint'), '');
+    await tap(page, 'settings-close');
   });
 
   it('adds a list, pasted as CSV', async () => {

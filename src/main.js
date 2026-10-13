@@ -117,10 +117,13 @@ async function loadWordList() {
 
 // The Words tab. After it changes the list, Review and Free practice read
 // the words afresh.
-const wordsPanel = createWordsPanel(async () => {
-  await review.load();
-  await loadWordList();
-});
+const wordsPanel = createWordsPanel(
+  async () => {
+    await review.load();
+    await loadWordList();
+  },
+  () => settings.meaningDetail,
+);
 
 // Free practice: any kind of card for what is in the text box. Nothing is
 // saved and the schedule is not touched.
@@ -287,6 +290,9 @@ async function startUp() {
       scriptSelect: byId('script-select'),
       pronunciationSelect: byId('pronunciation-select'),
       handwritingSelect: byId('handwriting-select'),
+      meaningDetailSelect: byId('meaning-detail-select'),
+      meaningDetailHelp: byId('meaning-detail-help'),
+      meaningDetailHint: byId('meaning-detail-hint'),
       newWordsInput: byId('new-words-input'),
       typeCheckboxes: [...document.querySelectorAll('#settings-panel [data-card-type]')],
     },

@@ -26,7 +26,6 @@ test('a word is found by its traditional or its simplified characters', () => {
     simplified: '学习',
     pinyin: 'xue2xi2',
     meanings: ['to learn; to study'],
-    proposedMeaning: 'to learn; to study',
   }];
   assert.deepEqual(lookUp(dictionary, '學習'), expected);
   assert.deepEqual(lookUp(dictionary, '学习'), expected);
@@ -45,10 +44,37 @@ test('a Taiwan reading is passed on, and simplified filled in where it is the sa
   assert.equal(entry.simplified, '垃圾');
 });
 
-test('the proposed meaning is short', () => {
-  assert.equal(proposeMeaning(['place; location; area; space; territory', 'aspect; part']), 'place; location; area');
-  assert.equal(proposeMeaning(['(bound form) row; line', 'trade']), 'row; line');
-  assert.equal(proposeMeaning(['week', 'day of the week']), 'week');
+const LIAISON = ['to get in touch with', 'to contact', 'to stay in contact (with)', 'liaison', '(math.) connection'];
+
+test('the proposed meaning leaves out specialist meanings unless told otherwise', () => {
+  const everyday = 'to get in touch with; to contact; to stay in contact (with); liaison';
+  assert.equal(proposeMeaning(LIAISON), everyday);
+  assert.equal(proposeMeaning(LIAISON, 'everyday'), everyday);
+  assert.equal(proposeMeaning(LIAISON, 'first'), 'to get in touch with');
+  assert.equal(proposeMeaning(LIAISON, 'all'), `${everyday}; (math.) connection`);
+});
+
+test('a specialist meaning is known by any of its labels', () => {
+  assert.equal(proposeMeaning(['(Tw) (computing) folder', 'clip']), 'clip');
+  assert.equal(proposeMeaning(['(math., physics) field', 'meadow']), 'meadow');
+  // Not specialist: a label that says how the word is used, or brackets that are not a label.
+  assert.equal(proposeMeaning(['(Tw) taxi', '(slang) cab']), '(Tw) taxi; (slang) cab');
+  assert.equal(proposeMeaning(['to stay in contact (with)', 'liaison (law)']), 'to stay in contact (with); liaison (law)');
+});
+
+test('a word with only specialist meanings keeps them', () => {
+  assert.equal(proposeMeaning(['(computing) mouse', '(computing) pointer']), '(computing) mouse; (computing) pointer');
+  assert.equal(proposeMeaning(['(computing) mouse', '(computing) pointer'], 'first'), '(computing) mouse');
+});
+
+test('the first meaning is the first everyday one, with its group kept whole', () => {
+  assert.equal(proposeMeaning(['(math.) locus', 'place; location; area; space; territory', 'aspect; part'], 'first'), 'place; location; area; space; territory');
+});
+
+test('grammar and style labels are dropped, except when everything is asked for', () => {
+  assert.equal(proposeMeaning(['(bound form) row; line', '(literary) trade']), 'row; line; trade');
+  assert.equal(proposeMeaning(['(bound form) row; line', '(literary) trade'], 'all'), '(bound form) row; line; (literary) trade');
+  assert.equal(proposeMeaning(['week', 'day of the week']), 'week; day of the week');
 });
 
 const realText = fs.readFileSync('data/cedict/dictionary.tsv', 'utf8');
@@ -74,7 +100,7 @@ test('entries of the real dictionary can be added as words unchanged', () => {
     const entries = lookUp(dictionary, characters);
     assert.ok(entries.length > 0, characters);
     for (const entry of entries) {
-      const { word, problem } = checkWord({ ...entry, definition: entry.proposedMeaning });
+      const { word, problem } = checkWord({ ...entry, definition: proposeMeaning(entry.meanings) });
       assert.equal(problem, undefined, `${characters}: ${problem}`);
       assert.equal(word.pinyin, entry.pinyin);
     }

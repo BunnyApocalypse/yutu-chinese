@@ -15,7 +15,7 @@ import {
   orderForStudyingNext,
   matchesSearch,
 } from './words.js';
-import { readDictionary, lookUp } from './dictionary.js';
+import { readDictionary, lookUp, proposeMeaning } from './dictionary.js';
 // "?url" makes Vite hand us the file's address instead of its contents, so
 // the dictionary stays a separate file that is only fetched when needed.
 import dictionaryUrl from '../data/cedict/dictionary.tsv?url';
@@ -34,9 +34,12 @@ const byId = (id) => document.getElementById(id);
 
 // onChange: called after the word list has changed, so the rest of the app
 //           can read it afresh
+// getMeaningDetail: returns the "Dictionary meanings" setting (see
+//           proposeMeaning in dictionary.js). A function, because the
+//           settings are only read after this panel is set up.
 //
 // Returns { show() }; call show() whenever the tab is opened.
-export function createWordsPanel(onChange) {
+export function createWordsPanel(onChange, getMeaningDetail) {
   const addForm = byId('add-word-form');
   const addFields = {
     traditional: byId('add-traditional'),
@@ -184,7 +187,7 @@ export function createWordsPanel(onChange) {
     addFields.simplified.value = entry.simplified === entry.traditional ? '' : entry.simplified;
     addFields.pinyin.value = entry.pinyin;
     addFields.pinyinTaiwan.value = entry.pinyinTaiwan || '';
-    addFields.definition.value = entry.proposedMeaning;
+    addFields.definition.value = proposeMeaning(entry.meanings, getMeaningDetail());
     showPinyinPreview();
     addNote.textContent = '';
     // The meaning is the part most likely to want changing.

@@ -210,6 +210,24 @@
           </select>
         </label>
 
+        <div class="setting">
+          <span>
+            <label for="meaning-detail-select">Dictionary meanings</label>
+            <button id="meaning-detail-help" class="help-button" type="button" aria-label="What does this setting do?" aria-expanded="false" aria-controls="meaning-detail-hint">?</button>
+          </span>
+          <select id="meaning-detail-select">
+            <option value="first">First only</option>
+            <option value="everyday">Everyday</option>
+            <option value="all">All</option>
+          </select>
+          <p id="meaning-detail-hint" class="hint" hidden>
+            How much of a dictionary entry is filled in as the meaning when you add a word. You can still edit it before saving.<br />
+            <b>First only:</b> just the first meaning.<br />
+            <b>Everyday:</b> every meaning except those marked for a specialist field, such as "(math.)" or "(law)".<br />
+            <b>All:</b> everything the dictionary lists.
+          </p>
+        </div>
+
         <label class="setting">
           New words per day
           <input id="new-words-input" type="number" min="0" max="50" inputmode="numeric" />

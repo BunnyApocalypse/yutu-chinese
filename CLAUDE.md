@@ -53,7 +53,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `src/main.js`: entry point; the three tabs (Review, Free practice, Words), backup buttons, first-run seeding.
 - `src/wordsPanel.js`: the Words tab: add a word, add a list, search the words, and a pop-up panel per word to change it, study it next or remove it.
 - `src/words.js`: the plain calculation behind the Words tab: checking a typed word, reading a TSV or CSV list, working out which words are new, searching.
-- `src/dictionary.js`: looks a word up in the dictionary and proposes a short meaning. Plain calculation.
+- `src/dictionary.js`: looks a word up in the dictionary and proposes a meaning. Plain calculation.
 - `scripts/build-dictionary.js`, `data/cedict/dictionary.tsv`: the dictionary made from CC-CEDICT (run by hand, uses the internet, like the tone table script). About 117,000 entries, 7.9 MB, 3.5 MB as downloaded.
 - `src/review.js`: Review mode. Picks the next card, hands it to the code for its kind, shows the grade buttons, saves the result.
 - `src/recallCard.js`: meaning and pinyin cards (see the word, tap to reveal, grade yourself).
@@ -104,7 +104,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 ## The word list
 
 - **Words are added in the Words tab**, one at a time or as a list pasted or chosen as a file. A device also starts with the built-in list.
-- **Dictionary lookup when adding one word:** as the characters are typed (either script), the entries CC-CEDICT has for them are listed under the box, one per reading, names last. Tapping one fills in every field, with a short proposed meaning (`proposeMeaning`: the first group of meanings, at most three). Nothing is filled in without a tap, and everything stays editable: writing prompts show only the meaning, so the owner words it.
+- **Dictionary lookup when adding one word:** as the characters are typed (either script), the entries CC-CEDICT has for them are listed under the box, one per reading, names last. Tapping one fills in every field, with a proposed meaning (`proposeMeaning`). How much of the entry that is depends on the "Dictionary meanings" setting (`meaningDetail`): `first` (the first meaning), `everyday` (the default: every meaning except those whose label names a specialist field, such as "(math.)"; the fields are listed in `SPECIALIST_FIELDS`) or `all`. The owner chose this on 2026-10-13, because CC-CEDICT separates near-synonyms with slashes as often as with semicolons, so cutting at the first slash lost shades of meaning. A word with only specialist meanings keeps them. Only a label at the start of a meaning counts. Nothing is filled in without a tap, and everything stays editable: writing prompts show only the meaning, so the owner words it.
 - **The dictionary is a separate 7.9 MB file, fetched only when a word is about to be typed** (`loadDictionary` in `src/wordsPanel.js`, through a `?url` import so Vite keeps it out of the program). Its lines are indexed by word and only taken apart on lookup. If it can't be fetched, the fields are filled in by hand as before. The PWA will have to save it for offline use.
 - **A word typed that is already in the list under any reading is pointed out** ("Already in your words"), and the list check counts new words that share their characters with an existing one (`wordsWithSameCharacters`). Dictionaries disagree on neutral tones, so the same word can arrive as two readings (péngyou, péngyǒu); since the ID includes the pinyin, nothing else would catch that.
 - **A word is its traditional characters plus its pinyin** (the ID), so those two can't be edited; the meaning, simplified form and Taiwan reading can. The same characters with another reading are a different word.
@@ -228,8 +228,7 @@ The owner wants to bring their Skritter data across eventually rather than start
 
 ## To discuss with the owner at the start of the next session
 
-1. **The proposed meaning from the dictionary cuts off too much** (raised by the owner on 2026-10-12, not yet discussed). For 聯絡 the entry is "to get in touch with / to contact / to stay in contact (with) / liaison / (math.) connection", and only "to get in touch with" is proposed. Their view: dropping obscure senses is understandable, but cutting off fine gradations of meaning is wrong. The cause: `proposeMeaning` in `src/dictionary.js` takes only the first slash-separated meaning (and at most three semicolon-separated parts of it), but CC-CEDICT separates near-synonyms with slashes as often as with semicolons, so the slash does not mark a different sense. Agree on a rule together before changing it. Options to bring: keep every meaning except ones marked as specialist, such as "(math.)"; keep the first few meanings whatever separates them; or fill in everything and let the owner delete.
-2. What to do next: the interface settings for script and Taiwan pronunciation (to-do list), or the PWA milestone, which waits on two answers from the owner (roadmap item 8).
+1. What to do next: the interface settings for script and Taiwan pronunciation (to-do list), or the PWA milestone, which waits on two answers from the owner (roadmap item 8).
 
 ## Roadmap
 

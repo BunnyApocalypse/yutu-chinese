@@ -330,6 +330,15 @@ export const type = (page, id, text) =>
     box.dispatchEvent(new Event('input', { bubbles: true }));
   })()`);
 
+// Picks the option with this value in the drop-down list with this id.
+export const choose = (page, id, value) =>
+  page.evaluate(`(() => {
+    const list = document.getElementById(${JSON.stringify(id)});
+    list.value = ${JSON.stringify(value)};
+    // What a drop-down list announces when someone picks from it.
+    list.dispatchEvent(new Event('change', { bubbles: true }));
+  })()`);
+
 // The text of the element with this id, or of the first element matching a
 // CSS selector such as '#word-list li'. '' if there is none or it is hidden.
 export const textOf = (page, idOrSelector) =>

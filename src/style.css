@@ -377,6 +377,30 @@ button.verdict.selected.missed {
   margin: 0 0 16px;
 }
 
+/* The small round "?" beside a setting, and the explanation it shows, which
+   takes a line of its own under the setting. */
+.help-button {
+  width: 32px;
+  height: 32px;
+  /* Buttons are otherwise made tall enough for a finger. */
+  min-height: 0;
+  margin-left: 4px;
+  padding: 0;
+  font: inherit;
+  font-size: 0.85rem;
+  line-height: 1;
+  border: 1px solid #b9b2a3;
+  border-radius: 50%;
+  background: #fff;
+  color: #6b6557;
+  cursor: help;
+}
+
+.setting .hint {
+  flex-basis: 100%;
+  margin: 0;
+}
+
 fieldset.setting {
   flex-direction: column;
   align-items: flex-start;

@@ -2,6 +2,7 @@
 // They are kept in the database's `settings` store, one record per setting.
 
 import { getSetting, setSetting } from './db.js';
+import { DEFAULT_MEANING_DETAIL } from './dictionary.js';
 import { CARD_TYPES, DEFAULT_NEW_WORDS_PER_DAY } from './session.js';
 
 const MAX_NEW_WORDS_PER_DAY = 50;
@@ -9,6 +10,8 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 // elements: the panel's parts:
 //   panel, openButton, closeButton, scriptSelect, pronunciationSelect,
 //   handwritingSelect, newWordsInput,
+//   meaningDetailSelect, and its meaningDetailHelp (the "?" button) and
+//   meaningDetailHint (the explanation the button shows),
 //   typeCheckboxes (a list of the four checkboxes; each has a
 //   data-card-type attribute saying which type it is)
 // onChange: called after any setting changes
@@ -19,6 +22,9 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //                   expected where a word is pronounced differently
 //   rawInput:      true to keep your own strokes on screen when writing,
 //                   false to replace each correct stroke with the printed one
+//   meaningDetail:  'first', 'everyday' or 'all': how much of a dictionary
+//                   entry is filled in as a word's meaning (see
+//                   proposeMeaning in dictionary.js)
 //   newWordsPerDay: a number
 //   enabledTypes:   the card types switched on, e.g. ['meaning', 'writing']
 export async function createSettings(elements, onChange) {
@@ -29,6 +35,9 @@ export async function createSettings(elements, onChange) {
     scriptSelect,
     pronunciationSelect,
     handwritingSelect,
+    meaningDetailSelect,
+    meaningDetailHelp,
+    meaningDetailHint,
     newWordsInput,
     typeCheckboxes,
   } = elements;
@@ -39,6 +48,7 @@ export async function createSettings(elements, onChange) {
     // Saved as 'rawSquigs' before the setting was renamed; a device that still
     // has it under the old name keeps its choice.
     rawInput: await getSetting('rawInput', await getSetting('rawSquigs', true)),
+    meaningDetail: await getSetting('meaningDetail', DEFAULT_MEANING_DETAIL),
     newWordsPerDay: await getSetting('newWordsPerDay', DEFAULT_NEW_WORDS_PER_DAY),
     enabledTypes: await getSetting('enabledTypes', CARD_TYPES),
   };
@@ -48,6 +58,7 @@ export async function createSettings(elements, onChange) {
     scriptSelect.value = settings.script;
     pronunciationSelect.value = settings.pronunciation;
     handwritingSelect.value = settings.rawInput ? 'raw' : 'snap';
+    meaningDetailSelect.value = settings.meaningDetail;
     newWordsInput.value = settings.newWordsPerDay;
     for (const checkbox of typeCheckboxes) {
       checkbox.checked = settings.enabledTypes.includes(checkbox.dataset.cardType);
@@ -68,6 +79,33 @@ export async function createSettings(elements, onChange) {
   handwritingSelect.addEventListener('change', () =>
     change('rawInput', handwritingSelect.value === 'raw'),
   );
+
+  meaningDetailSelect.addEventListener('change', () =>
+    change('meaningDetail', meaningDetailSelect.value),
+  );
+
+  // The "?" beside that setting shows its explanation: while a mouse is over
+  // it, and on a tap or click until the next one (a finger cannot hover).
+  let hintPinned = false;
+  const showHint = (shown) => {
+    meaningDetailHint.hidden = !shown;
+    meaningDetailHelp.setAttribute('aria-expanded', String(shown));
+  };
+  meaningDetailHelp.addEventListener('click', () => {
+    hintPinned = !hintPinned;
+    showHint(hintPinned);
+  });
+  // Pointer events cover mouse, finger and pen; pointerType says which.
+  meaningDetailHelp.addEventListener('pointerenter', (event) => {
+    if (event.pointerType === 'mouse') {
+      showHint(true);
+    }
+  });
+  meaningDetailHelp.addEventListener('pointerleave', (event) => {
+    if (event.pointerType === 'mouse') {
+      showHint(hintPinned);
+    }
+  });
 
   newWordsInput.addEventListener('change', () => {
     // Whatever was typed, end up with a whole number in the allowed range.
