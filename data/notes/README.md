@@ -12,7 +12,7 @@ One file per level, named like the level's group file (`hsk-3.0-1.tsv` is HSK 3.
 6. the sentence's pinyin with tone marks, a space between words (the app tells the words of the sentence apart by these spaces)
 7. the sentence in English
 
-So far there is one level, written as a trial: HSK 3.0 level 1, 509 words.
+So far there are two levels: HSK 3.0 level 1 (509 words, written as a trial) and level 2 (755 words).
 
 ## How they were made, and how far to trust them
 
