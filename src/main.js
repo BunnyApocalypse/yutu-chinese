@@ -12,6 +12,7 @@ import { createSettings } from './settings.js';
 import { createWordsPanel } from './wordsPanel.js';
 import { scriptFor, scriptFlagFor } from './words.js';
 import { fileCardsByScript } from './scriptCards.js';
+import { setUpOffline } from './offline.js';
 import { buildBackup, checkBackup, describeBackup, restoreBackup } from './backup.js';
 
 const byId = (id) => document.getElementById(id);
@@ -360,6 +361,12 @@ async function startUp() {
 
   // Review, unless another tab was tapped in the meantime.
   await setMode(mode);
+
+  // Last, and not waited for: saving the app for offline use in the background.
+  setUpOffline({
+    statusElement: byId('offline-status'),
+    updateButton: byId('update-button'),
+  });
 }
 
 startUp();

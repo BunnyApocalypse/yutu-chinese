@@ -5,6 +5,11 @@
     <!-- Makes the page use the phone's real width instead of a zoomed-out desktop layout -->
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Hanzi Trainer</title>
+    <!-- The manifest tells a phone how to install the app: its name, icon and colors. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#f5f2ea" />
+    <link rel="icon" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
@@ -164,6 +169,8 @@
 
       <footer>
         <button id="settings-button" class="small" type="button">Settings</button>
+        <!-- Shown when a newer version of the app has been fetched (offline.js). -->
+        <button id="update-button" class="small primary" type="button" hidden>New version ready: tap to reload</button>
       </footer>
 
       <!-- One word from the Words tab: change it, study it next, or remove it. -->
@@ -280,6 +287,12 @@
           <button id="export-button" class="small" type="button">Export backup</button>
           <button id="import-button" class="small" type="button">Import backup</button>
           <input id="import-file" type="file" accept="application/json,.json" hidden />
+        </div>
+
+        <div class="setting">
+          Offline use
+          <!-- How much of the app is saved on this device. Filled in by offline.js. -->
+          <p id="offline-status" class="hint">Checking…</p>
         </div>
 
         <button id="settings-close" class="primary" type="button">Done</button>

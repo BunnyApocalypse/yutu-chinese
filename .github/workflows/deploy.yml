@@ -1,0 +1,47 @@
+# Publishes the app to GitHub Pages whenever main changes.
+#
+# GitHub runs this on its own computers: it builds the app exactly as
+# `npm run build` does at home and puts the result (dist/) online at
+# https://bunnyapocalypse.github.io/hanzi-trainer/. Nothing is published if
+# the unit tests fail.
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Also allows starting it by hand from the repository's Actions tab.
+  workflow_dispatch:
+
+# What the workflow may do: read the code, and publish to Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# If two pushes come close together, the later one waits for the earlier.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      # "npm ci" installs exactly what package-lock.json lists.
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deployment
+        uses: actions/deploy-pages@v4

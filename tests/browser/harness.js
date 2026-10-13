@@ -8,7 +8,8 @@
 // use, which takes commands such as "press the mouse button at this point" as
 // JSON messages over a WebSocket.
 
-import { spawn } from 'node:child_process';
+import { spawn, execSync } from 'node:child_process';
+import http from 'node:http';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -38,6 +39,45 @@ export async function startApp() {
   });
   await server.listen();
   return { url: server.resolvedUrls.local[0], close: () => server.close() };
+}
+
+// Builds the app and serves the result the way GitHub Pages does: as plain
+// files, in a folder below the top of the site, with a real "not found" for
+// anything that isn't there. Unlike the dev server this has the service
+// worker, so it is what the offline test uses. Returns the address and a
+// function that stops the server, as if the connection had gone.
+export async function startBuiltApp() {
+  execSync('npm run build', { stdio: 'ignore' });
+  const TYPES = {
+    '.html': 'text/html; charset=utf-8',
+    '.js': 'text/javascript',
+    '.css': 'text/css',
+    '.json': 'application/json',
+    '.webmanifest': 'application/manifest+json',
+    '.png': 'image/png',
+  };
+  const FOLDER = '/hanzi-trainer/';
+  const server = http.createServer((request, response) => {
+    const asked = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
+    const inFolder = asked.startsWith(FOLDER) ? asked.slice(FOLDER.length) || 'index.html' : null;
+    const file = inFolder === null ? null : path.join('dist', inFolder);
+    // path.join has resolved any "..", so a file outside dist/ is refused here.
+    if (!file || !file.startsWith('dist') || !fs.existsSync(file) || !fs.statSync(file).isFile()) {
+      response.writeHead(404).end('Not found');
+      return;
+    }
+    response.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'text/plain; charset=utf-8' });
+    fs.createReadStream(file).pipe(response);
+  });
+  await new Promise((resolve) => server.listen(4273, '127.0.0.1', resolve));
+  return {
+    url: `http://127.0.0.1:4273${FOLDER}`,
+    close() {
+      // Also drops the connections browsers keep open for later requests.
+      server.closeAllConnections();
+      return new Promise((resolve) => server.close(resolve));
+    },
+  };
 }
 
 // ---- Browsers ----

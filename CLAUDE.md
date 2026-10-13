@@ -40,7 +40,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 ## Commands
 
 - `npm run dev`: start the dev server. On the PC: http://localhost:5173. On a phone on the same Wi-Fi: `http://<PC's LAN address>:5173` (Vite prints it as "Network" on startup).
-- `npm run build`: bundle the app into `dist/`.
+- `npm run build`: bundle the app into `dist/`, then (npm's `postbuild` hook) pack the stroke data and write the service worker there.
 - Both of these first run `scripts/copy-char-data.js` automatically (npm's `predev`/`prebuild` hooks), which copies the stroke data into `public/char-data/` and `public/char-data-tw/` if it isn't there yet.
 - `npm run preview`: serve the built `dist/` to check the production build.
 
@@ -66,6 +66,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `src/scheduler.js`: the only file that imports `ts-fsrs`. `gradeOptions(fsrsState, now)` returns what each of the four grades would do to a card.
 - `src/session.js`: plain calculation, no page or database: which card is next (`planSession`), the suggested grade for writing (`suggestGrade`, `judgeChar`), the 4:00 day boundary, the daily new-word limit, the hold between cards of one word.
 - `src/db.js`: small promise wrapper around IndexedDB. The store layout is documented at the top of the file.
+- `src/offline.js`, `src/serviceWorker.js`, `scripts/build-offline.js`, `public/manifest.webmanifest`, `.github/workflows/deploy.yml`: offline use and deployment (see that section).
 - `src/scriptCards.js`: files writing cards under the script they were learned in (see "Switching script").
 - `src/backup.js`: build, check and restore a backup file.
 - `src/wordList.js`: parses the four-column TSV word list format (same as Skritter's export) and converts numbered pinyin to tone marks.
@@ -106,7 +107,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 
 - **Words are added in the Words tab**, one at a time or as a list pasted or chosen as a file. A device also starts with the built-in list.
 - **Dictionary lookup when adding one word:** as the characters are typed (either script), the entries CC-CEDICT has for them are listed under the box, one per reading, names last. Tapping one fills in every field, with a proposed meaning (`proposeMeaning`). How much of the entry that is depends on the "Dictionary meanings" setting (`meaningDetail`): `first` (the first meaning), `everyday` (the default: every meaning except those whose label names a specialist field, such as "(math.)"; the fields are listed in `SPECIALIST_FIELDS`) or `all`. The owner chose this on 2026-10-13, because CC-CEDICT separates near-synonyms with slashes as often as with semicolons, so cutting at the first slash lost shades of meaning. A word with only specialist meanings keeps them. Only a label at the start of a meaning counts. Nothing is filled in without a tap, and everything stays editable: writing prompts show only the meaning, so the owner words it.
-- **The dictionary is a separate 7.9 MB file, fetched only when a word is about to be typed** (`loadDictionary` in `src/wordsPanel.js`, through a `?url` import so Vite keeps it out of the program). Its lines are indexed by word and only taken apart on lookup. If it can't be fetched, the fields are filled in by hand as before. The PWA will have to save it for offline use.
+- **The dictionary is a separate 7.9 MB file, fetched only when a word is about to be typed** (`loadDictionary` in `src/wordsPanel.js`, through a `?url` import so Vite keeps it out of the program). Its lines are indexed by word and only taken apart on lookup. If it can't be fetched, the fields are filled in by hand as before. The app saves it for offline use (see "Offline use and deployment").
 - **A word typed that is already in the list under any reading is pointed out** ("Already in your words"), and the list check counts new words that share their characters with an existing one (`wordsWithSameCharacters`). Dictionaries disagree on neutral tones, so the same word can arrive as two readings (péngyou, péngyǒu); since the ID includes the pinyin, nothing else would catch that.
 - **A word is its traditional characters plus its pinyin** (the ID). Both can be edited in the word's pop-up panel (the pinyin since 2026-10-13), which moves the word's cards and reviews to the new ID (`renameWord`; see "Switching script"); so can the meaning, simplified form and Taiwan reading.
 - **"Edit word" on Review's answer page** (asked for by the owner on 2026-10-13) opens the same pop-up panel, through `edit(word)` in `src/wordsPanel.js`, whenever the grade buttons are showing. If only the meaning was changed, the answer stays up with the new meaning and is still to be graded (`update(word)` in `src/recallCard.js` and `src/toneFlow.js`). Any other change alters what the card asks or which answers are right, so the card is shown again unanswered; if the word was removed, the next card comes. Not offered in Free practice, nor before the answer is shown.
@@ -182,6 +183,22 @@ Asked for by the owner on 2026-10-13: someone who learned simplified and moves t
 - **The traditional form can be corrected in the pop-up panel** (not shown to a simplified-only learner). That changes the word's ID, so `renameWord` in `src/db.js` files the word, its cards and its reviews under the new one in a single transaction. This is what fixes a word the dictionary could not supply a traditional form for. The pinyin can be corrected the same way.
 - **Not handled:** making a word's two forms the same again leaves its `#simplified` card unused. A list import cannot correct traditional forms in bulk.
 
+## Offline use and deployment (the PWA)
+
+Built on 2026-10-13. The owner chose: all stroke data saved on the device, and automatic deployment.
+
+- **Where it runs:** https://bunnyapocalypse.github.io/hanzi-trainer/, published by `.github/workflows/deploy.yml` on every push to `main` (after `npm test`; the browser tests are not run there). So anything pushed to `main` is live within minutes: run the tests before pushing.
+- **The build is relative** (`base: './'` in `vite.config.js`, for builds only), so the same `dist/` works in any folder. `import.meta.env.BASE_URL` is `./` there; build addresses with it, as `src/charData.js` and `src/offline.js` do, never with a leading `/`.
+- **`src/serviceWorker.js`** is not part of the program. `scripts/build-offline.js` (npm's `postbuild`) copies it to `dist/sw.js` with `VERSION` (a fingerprint of the app's files) and `APP_FILES` (page, program, styles, tone table, icons, manifest) in front. It answers every request from the device's caches if it can and from the network otherwise. There is no service worker under `npm run dev`.
+- **Two caches.** `app-<VERSION>` holds the app's files and is replaced with each version. `offline-data` holds the stroke data and dictionary and is kept across versions.
+- **Stroke data is saved in the background, in packs.** Fetching 10,600 files one by one is too slow for a phone, so `build-offline.js` packs them 600 to a file into `dist/offline/` (18 packs, 35 MB; about 14 MB as downloaded) with a list in `offline/index.json`. `saveOfflineData` in `src/offline.js` fetches each pack and puts every file into the cache under its own address, so `loadCharData` and the service worker need to know nothing about packs. A pack's name carries a fingerprint of its contents and a finished pack leaves a mark in the cache, so an interrupted download resumes and unchanged packs are never fetched again. The dictionary is saved whole. The single files stay in `dist/` for use until the packs are in.
+- **A new version waits** until the "New version ready: tap to reload" button in the footer is tapped, so the app never changes under a review. Without the tap it takes over once every tab and window of the app has been closed.
+- **`navigator.storage.persist()`** is asked for at start-up, so the browser does not clear the database to free space. The answer is shown under "Offline use" in Settings, with the progress of the download.
+- **The database at the Pages address is a different one** from the LAN dev address (see "No sync"). Moving over is Export backup there, Import backup here, once per device.
+- **Icons** (`public/icons/`) are 字 in Noto Serif CJK TC on the writing grid, rendered once with headless Chromium from an SVG; there is no script for it. The maskable one has the wider margin Android's icon shapes need.
+- **`tests/browser/offline.browser.js`** builds the app, serves `dist/` from a sub-folder with a plain file server (`startBuiltApp` in the harness, like GitHub Pages), waits for everything to be saved, fakes a new version, then stops the server and checks writing, the dictionary and tone cards. It leaves `dist/` built.
+- **Not tested here:** installing on a real phone, and airplane mode on it. Only the owner can.
+
 ## Taiwan and mainland pronunciation
 
 - **A word's `pinyin` is its mainland reading; `pinyinTaiwan`, if present, its Taiwan reading** (the optional fifth column of a word list). The `pronunciation` setting (`mainland` by default, or `taiwan`) decides which is shown as the answer and expected on tone cards; the other is shown next to it, labeled. (With `mainlandOnly` there is no other; see the section above.) A word with no Taiwan reading is the same under both settings. `readingsFor` in `src/tones.js` is the one place that decides this.
@@ -246,7 +263,7 @@ Asked for by the owner on 2026-10-13: someone who learned simplified and moves t
 - The window `resize` handler only reacts to width changes. On Android the on-screen keyboard changes the height, and that must not wipe a character in progress.
 - The stroke data is under the Arphic Public License; the copy script ships `ARPHICPL.TXT` alongside it.
 
-- Service workers and "Add to Home Screen" only work over HTTPS or on `localhost`. The LAN dev address (`http://192.168.x.x:5173`) is plain HTTP, so offline/install features cannot be tested there from the phone. The plan is to deploy the built site to GitHub Pages for that (the repo is public for this reason).
+- Service workers and "Add to Home Screen" only work over HTTPS or on `localhost`. The LAN dev address (`http://192.168.x.x:5173`) is plain HTTP, so offline/install features cannot be tested there from the phone. The app is deployed to GitHub Pages for that (see "Offline use and deployment"); on the computer, the built app can be tried at a `localhost` address.
 - The writing area needs `touch-action: none`, otherwise drawing scrolls the page on a phone.
 - Hanzi Writer adds its SVG layers only after the character data has loaded, and later SVG elements are drawn on top. The layer of drawn strokes is therefore re-appended at the start of each quiz so it stays above them.
 - Hanzi Writer colors the strokes of a character's radical separately (`radicalColor`, falling back to `strokeColor` only at creation). Changing `strokeColor` later leaves the radical's strokes in the old color, so always change both (see `setPrintedColor` in `src/quiz.js`).
@@ -259,7 +276,7 @@ The owner wants to bring their Skritter data across eventually rather than start
 ## To discuss with the owner at the start of the next session
 
 1. The Script and Pronunciation settings were built without the owner at the keyboard (see "Fitting the interface to what is learned"). Ask whether the two lists, their wording and the choices listed there suit them.
-2. What to do next: the PWA milestone (roadmap item 8); the owner has answered its two questions.
+2. Whether the installed app works on the phone and tablet, offline too, and whether the backup was moved across from the old address.
 
 ## Roadmap
 
@@ -270,7 +287,7 @@ The owner wants to bring their Skritter data across eventually rather than start
 5. **Done:** Taiwan-standard stroke data for the 1,013 traditional characters animCJK covers, with the mainland stroke order also accepted where the strokes are the same. Still open: the traditional characters it does not cover.
 6. **Done:** the other card types (meaning, pinyin, tone with buttons or a drawn mark), scheduling across types, the settings panel, the pronunciation setting and Taiwan/mainland tone variants. Later: zhuyin as an alternative to pinyin.
 7. **Done:** two consecutive strokes joined, for every character. Still open: longer runs, and shortcuts that reorder or drop strokes.
-8. PWA: manifest, service worker, GitHub Pages deploy, installable and offline on the phone. Planned on 2026-10-12 and put on hold until words can be added. The owner answered both open questions on 2026-10-13: save all stroke data for offline use (about 14 MB per device), and GitHub Pages may be switched on. Not started; propose the plan first.
+8. **Done:** PWA: manifest, service worker, all stroke data and the dictionary saved offline, deployed to GitHub Pages on every push to `main` (see "Offline use and deployment"). Still open: the owner trying it installed on the phone and tablet.
 9. Import the Skritter scheduling data, if the GDPR request (sent 2026-10-12) yields it. The word list itself can be added in the Words tab since 2026-10-12; the owner had said they did not want it imported without scheduling data, so when to do that is theirs to decide.
 10. Merge backups between devices instead of replacing; a settings screen (new words per day, target retention).
 11. **To do, asked for by the owner:**

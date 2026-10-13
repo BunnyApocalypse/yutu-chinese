@@ -10,6 +10,7 @@
     "dev": "vite",
     "prebuild": "node scripts/copy-char-data.js",
     "build": "vite build",
+    "postbuild": "node scripts/build-offline.js",
     "preview": "vite preview",
     "test": "node --test",
     "pretest:browser": "node scripts/copy-char-data.js",
