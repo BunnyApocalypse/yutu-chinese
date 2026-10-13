@@ -753,6 +753,13 @@ button.deck-entry {
   grid-template-columns: 1fr;
 }
 
+/* The Back button with the line saying where you are beside it. */
+.deck-path-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 /* Where you are, above a deck's page: Decks › Textbook › Chapter 2. */
 .deck-path {
   font-size: 0.95rem;

@@ -114,7 +114,11 @@
              other, or one deck's page. -->
         <section id="my-decks-section" class="words-panel">
           <!-- Where you are: Decks › Textbook › Chapter 2. Each part is a button. -->
-          <nav id="deck-path" class="deck-path" aria-label="Where you are"></nav>
+          <div id="deck-path-row" class="deck-path-row" hidden>
+            <!-- Up one level: to the deck this one is inside, or the front page. -->
+            <button id="deck-back-button" class="small" type="button">‹ Back</button>
+            <nav id="deck-path" class="deck-path" aria-label="Where you are"></nav>
+          </div>
           <!-- Only on a deck's page. -->
           <div id="deck-head" hidden>
             <h2 id="deck-title"></h2>

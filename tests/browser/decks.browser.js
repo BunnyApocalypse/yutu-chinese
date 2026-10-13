@@ -137,7 +137,9 @@ describe('decks', { concurrency: false }, () => {
     assert.equal(await textOf(page, 'deck-path'), 'Decks › Textbook › Chapter 1');
     assert.match(await addWord('狗', '狗', 'gou3', 'dog'), /^Added/);
     await waitUntil(page, rows(1));
-    await goUpTo('Textbook');
+    // "Back" goes up one level.
+    await tap(page, 'deck-back-button');
+    await waitUntil(page, titleIs('Textbook'), 'back to Textbook');
     await waitUntil(page, rows(1));
     assert.match(await textOf(page, '#word-list li'), /狗.*in Chapter 1 · waiting$/);
     assert.match(await page.evaluate(`${deckRow('Chapter 1')}.textContent`), /1 word · 0 learned/);
@@ -169,7 +171,10 @@ describe('decks', { concurrency: false }, () => {
   });
 
   it('puts the words of a list in the deck, those already there too', async () => {
-    await goUpTo('Decks');
+    // From a deck inside no other, "Back" goes to the front page, where the button is not shown.
+    await tap(page, 'deck-back-button');
+    await waitUntil(page, `document.getElementById('deck-head').hidden`, 'the front page');
+    assert.equal(await page.evaluate(`document.getElementById('deck-path-row').hidden`), true);
     await addDeck('Animals');
     await openDeck('Animals');
     await type(page, 'list-text', '鸟\t鳥\tniao3\tbird\n狗\t狗\tgou3\tdog\n');
@@ -182,7 +187,9 @@ describe('decks', { concurrency: false }, () => {
   });
 
   it('studies a deck from its page, toward the deck\'s own goal', async () => {
-    await goUpTo('Decks');
+    // So does "My decks", from any deck's page.
+    await tap(page, 'my-decks-button');
+    await waitUntil(page, `document.getElementById('deck-head').hidden`, 'the front page');
     await openDeck('Textbook');
     await openDeck('Chapter 1');
     await openSettings();

@@ -118,8 +118,15 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
     };
     const parts = current ? [link('Decks', null), ...above.map((deck) => link(deck.name, deck.id))] : [];
     pathElement.replaceChildren(...parts.flatMap((part) => [part, ' › ']), ...(current ? [current.name] : []));
-    pathElement.hidden = !current;
+    byId('deck-path-row').hidden = !current;
   }
+
+  // "Back" goes up one level: to the deck this one is inside, or from a deck
+  // inside no other to the front page.
+  byId('deck-back-button').addEventListener('click', () => {
+    const parent = parentOf(getOpenDeck());
+    open(parent ? parent.id : null);
+  });
 
   function render() {
     const decks = getDecks();

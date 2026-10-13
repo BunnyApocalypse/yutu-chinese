@@ -189,7 +189,14 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       showReadyLevels();
     }
   }
-  byId('my-decks-button').addEventListener('click', () => showSection(false));
+  // "My decks" tapped while a deck's page is open goes back to the front
+  // page: it is what the button says.
+  byId('my-decks-button').addEventListener('click', () => {
+    if (!byId('my-decks-section').hidden && openDeck()) {
+      openDeckPage(null);
+    }
+    showSection(false);
+  });
   byId('ready-decks-button').addEventListener('click', () => showSection(true));
 
   // Reads the list afresh, shows it, and tells the rest of the app.
