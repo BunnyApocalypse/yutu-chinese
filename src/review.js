@@ -63,6 +63,7 @@ export function createReview(elements, flows, settings, editWord) {
     gradeRow,
     editWordButton,
     leechNote,
+    noticeElement,
     donePanel,
     doneMessage,
     studyArea,
@@ -212,6 +213,12 @@ export function createReview(elements, flows, settings, editWord) {
     }
   });
 
+  // A line above the card for something that just happened; '' takes it away.
+  function showNotice(text) {
+    noticeElement.textContent = text;
+    noticeElement.hidden = text === '';
+  }
+
   // Suspends one kind of card of a word, here and in the database.
   async function suspend(word, type) {
     // `changedAt` is put on by the database when the word is saved.
@@ -230,6 +237,7 @@ export function createReview(elements, flows, settings, editWord) {
     if (!options) {
       return; // already graded, e.g. a double tap
     }
+    showNotice('');
     const chosen = options[value];
     options = null;
     const { word, type, card } = current;
@@ -263,6 +271,11 @@ export function createReview(elements, flows, settings, editWord) {
     // Forgotten once too often: with that setting, the card is suspended.
     if (settings.leechAction === 'suspend' && becameLeech(card, newCard, settings.leechLapses)) {
       await suspend(word, type);
+      // Said above the next card, until that one is graded.
+      showNotice(
+        `Suspended: the ${type} card of ${word[scriptFor(word, settings)]}, forgotten ${lapsesOf(newCard)} times. ` +
+          'It will not come up again until you switch it back on in the word\'s panel (Decks tab).',
+      );
     }
     if (current.learning) {
       // That was the last step of a new word's lesson.
@@ -852,6 +865,7 @@ export function createReview(elements, flows, settings, editWord) {
 
     // Leaves the page ready for Free practice, which uses the writing parts.
     deactivate() {
+      showNotice('');
       active = false;
       practicing = false;
       clearTimeout(recheckTimer);

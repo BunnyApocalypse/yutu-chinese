@@ -416,6 +416,7 @@ async function startUp() {
       gradeRow: byId('grade-row'),
       editWordButton: byId('edit-word-button'),
       leechNote: byId('leech-note'),
+      noticeElement: byId('review-notice'),
       donePanel: byId('done-panel'),
       doneMessage: byId('done-message'),
       studyArea: byId('study-area'),

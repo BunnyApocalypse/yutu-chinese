@@ -225,7 +225,7 @@ Built on 2026-10-13 to a plan the owner agreed to; number 4 of the order of work
 - **Two exports**, with the leeches listed: "Download list" (a TSV) and "Copy as AI prompt" (the list inside a request for component breakdowns and mnemonics; `leechPrompt`). The prompt goes to the clipboard, or into a file where the browser will not allow that (the LAN dev address). The app sends nothing anywhere.
 - **Suspended cards are on the word**: `suspended`, a list of card kinds, because cards are rebuilt from reviews when backups are combined and a mark on a card would be lost. A word's writing cards in both scripts are suspended together. `hasCardType` in `src/review.js` keeps a suspended kind out of Review; the card keeps its history and schedule. Like `decks` and `formerIds`, the field has to be carried over by hand where a word is rebuilt from a form (the pop-up panel does).
 - **Switching a card off or back on:** the "Suspended cards" fold-out in the word's pop-up panel, a checkbox per kind.
-- **With `suspend`, a card is suspended at the review that makes it a leech** (`becameLeech`: forgotten once more, and now at or over the number). A card switched back on is therefore suspended again the next time it is forgotten. Nothing on screen says so at that moment; the card just stops coming, and is in the list of suspended cards.
+- **With `suspend`, a card is suspended at the review that makes it a leech** (`becameLeech`: forgotten once more, and now at or over the number). A card switched back on is therefore suspended again the next time it is forgotten. A line above the next card says so (`review-notice`; the owner asked for it), until that card is graded.
 
 ## How the must-haves are implemented
 

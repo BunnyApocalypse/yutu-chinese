@@ -133,6 +133,8 @@ describe('leeches', { concurrency: false }, () => {
       love = (await stored(page, 'words')).find((word) => word.id === '愛|ai4');
     }
     assert.deepEqual(love.suspended, ['meaning']);
+    // The app says so, above the next card.
+    assert.match(await textOf(page, 'review-notice'), /^Suspended: the meaning card of 愛, forgotten 8 times\./);
     assert.equal((await stored(page, 'cards')).find((card) => card.id === '愛|ai4#meaning').fsrsState.lapses, 8);
     // It does not come up again, though it is due within minutes.
     assert.doesNotMatch(await textOf(page, 'card-type'), /meaning/i);
