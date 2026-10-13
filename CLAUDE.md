@@ -195,7 +195,7 @@ Built on 2026-10-13. The owner chose: all stroke data saved on the device, and a
 - **A new version waits** until the "New version ready: tap to reload" button in the footer is tapped, so the app never changes under a review. Without the tap it takes over once every tab and window of the app has been closed.
 - **`navigator.storage.persist()`** is asked for at start-up, so the browser does not clear the database to free space. The answer is shown under "Offline use" in Settings, with the progress of the download.
 - **The database at the Pages address is a different one** from the LAN dev address (see "No sync"). Moving over is Export backup there, Import backup here, once per device.
-- **Icons** (`public/icons/`) are 字 in Noto Serif CJK TC on the writing grid, rendered once with headless Chromium from an SVG; there is no script for it. The maskable one has the wider margin Android's icon shapes need.
+- **Icons** (`public/icons/`) are 字 in AR PL UKai TW (a Kai-style font, Fedora package `cjkuni-ukai-fonts`; the owner chose it on 2026-10-13) on the writing grid, rendered once with headless Chromium from an SVG; there is no script for it. The maskable one has the wider margin Android's icon shapes need.
 - **`tests/browser/offline.browser.js`** builds the app, serves `dist/` from a sub-folder with a plain file server (`startBuiltApp` in the harness, like GitHub Pages), waits for everything to be saved, fakes a new version, then stops the server and checks writing, the dictionary and tone cards. It leaves `dist/` built.
 - **Not tested here:** installing on a real phone, and airplane mode on it. Only the owner can.
 
