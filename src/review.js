@@ -615,7 +615,10 @@ export function createReview(elements, flows, settings, editWord, showWord) {
         face('face-meaning', word.definition),
       );
       lessonNextButton.hidden = false;
-      if (settings.sound === 'auto') {
+      // The word is spoken by itself only once something has been tapped
+      // here: not on arriving at the tab, when a voice out of nowhere would
+      // startle (and a browser may not allow sound yet anyway).
+      if (settings.sound === 'auto' && tappedSinceArriving) {
         speakCurrent();
       }
       return true;
@@ -671,6 +674,28 @@ export function createReview(elements, flows, settings, editWord, showWord) {
       nextLessonStep();
     }
   });
+  // At a new word's first look, a tap on the card does the same as "Next
+  // step". (On the other steps the card's face belongs to the tone card or
+  // is out of sight; those flows listen for their own taps.)
+  cardFace.addEventListener('click', () => {
+    if (lesson && lesson.steps[lesson.index] === 'meet' && !lessonNextButton.hidden) {
+      nextLessonStep();
+    }
+  });
+
+  // True once anything in Review or Learn has been tapped since the tab was
+  // opened (see where a new word is first spoken). "pointerdown" comes for a
+  // finger, a stylus and a mouse alike; `true` hears it before anything else.
+  let tappedSinceArriving = false;
+  for (const part of [studyArea, donePanel, typeElement.parentElement.parentElement]) {
+    part.addEventListener(
+      'pointerdown',
+      () => {
+        tappedSinceArriving = true;
+      },
+      true,
+    );
+  }
 
   // "I know this word": the lesson is skipped altogether. Each of the word's
   // cards that is still new is answered "Easy" (markedKnown in
@@ -1010,6 +1035,7 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     async activate(newMode = 'review') {
       active = true;
       mode = newMode;
+      tappedSinceArriving = false;
       justLearned = null;
       await loading;
       showDeckChoice(); // the deck studied may have been chosen on its page

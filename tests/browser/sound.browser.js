@@ -56,13 +56,22 @@ describe('hearing a word', { concurrency: false }, () => {
     await tap(page, 'learn-tab');
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('學習')`, 'the first look at the word');
     assert.equal(await isShown(page, 'listen-button'), true);
-    // It is spoken by itself, as the Sound setting has it to begin with.
-    await waitUntil(page, `${spoken} === '學習|xue2xi2 word'`, 'the word spoken from its recording');
+    // Sound plays by itself, as the setting has it to begin with, but not
+    // on arriving at the tab: only once something here has been tapped.
     assert.equal(await page.evaluate(`document.getElementById('sound-select').value`), 'auto');
-    // And again when the loudspeaker is tapped.
-    await page.evaluate(`delete document.getElementById('listen-button').dataset.spoken`);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    assert.equal(await page.evaluate(spoken), undefined);
+    // The loudspeaker speaks it.
     await tap(page, 'listen-button');
-    await waitUntil(page, `${spoken} === '學習|xue2xi2 word'`, 'the word spoken again');
+    await waitUntil(page, `${spoken} === '學習|xue2xi2 word'`, 'the word spoken from its recording');
+    // Something was tapped here (a finger down on the page): from now on a
+    // new word is spoken as it comes up, as when the card is shown afresh.
+    await page.evaluate(`delete document.getElementById('listen-button').dataset.spoken`);
+    await page.evaluate(`document.getElementById('study-area').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))`);
+    await tap(page, 'settings-button');
+    await choose(page, 'sound-select', 'auto');
+    await tap(page, 'settings-close');
+    await waitUntil(page, `${spoken} === '學習|xue2xi2 word'`, 'the word spoken by itself');
     assert.deepEqual(await page.evaluate(fetched), ['w/5b66-4e60.mp3']);
   });
 
@@ -78,6 +87,7 @@ describe('hearing a word', { concurrency: false }, () => {
     await waitUntil(page, `document.querySelectorAll('#word-list li').length === 1`, 'one word left');
     await tap(page, 'learn-tab');
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('xīngqí')`, 'the Taiwan reading');
+    await tap(page, 'listen-button');
     await waitUntil(page, `${spoken} === '星期|xing1qi1 syllables'`, 'the word spoken syllable by syllable');
     assert.deepEqual(await page.evaluate(fetched), ['s/qi2.mp3', 's/xing1.mp3', 'w/5b66-4e60.mp3']);
 
@@ -117,8 +127,9 @@ describe('hearing a word', { concurrency: false }, () => {
     await choose(page, 'sound-select', 'tap');
     await tap(page, 'settings-close');
     await waitUntil(page, `!document.getElementById('listen-button').hidden`, 'the loudspeaker back');
-    // On to the lesson's next step: it is still there.
-    await tap(page, 'lesson-next-button');
+    // On to the lesson's next step, by a tap on the card, which does the
+    // same as "Next step" at a word's first look: it is still there.
+    await tap(page, 'card-face');
     await waitUntil(page, `document.getElementById('card-type').textContent.includes('step 2')`, 'step 2');
     assert.equal(await isShown(page, 'listen-button'), true);
     // The word is known: its cards go to Review, some days ahead.
