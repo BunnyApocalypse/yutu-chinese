@@ -59,3 +59,19 @@ export function gradeOptions(fsrsState, now) {
   }
   return options;
 }
+
+// Works out a card's schedule afresh from the reviews made of it, as if they
+// were being made again one after another. Since every review is kept, this
+// gives the same result as the state saved with the card, and it is how a
+// card's schedule can be put together from reviews made on two devices.
+//
+// reviews: the card's review records (see db.js), in any order
+//
+// Returns { fsrsState, due } as gradeOptions does, or null without reviews.
+export function replay(reviews) {
+  let outcome = null;
+  for (const review of [...reviews].sort((a, b) => a.time - b.time)) {
+    outcome = gradeOptions(outcome ? outcome.fsrsState : null, new Date(review.time))[review.grade];
+  }
+  return outcome && { fsrsState: outcome.fsrsState, due: outcome.due };
+}

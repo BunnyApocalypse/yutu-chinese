@@ -2,6 +2,13 @@
 // another device.
 //
 // Importing a backup replaces everything on the device. It does not merge.
+//
+// Format versions:
+//   1  words, cards, reviews, settings.
+//   2  (2026-10-13) also `removed` and `decks`; see the top of db.js. A
+//      version 1 backup is read as having none of either. Its words may
+//      carry `lists` instead of `decks`, which the app converts when it
+//      starts (decks.js).
 
 import { STORES, getAll, replaceEverything } from './db.js';
 
@@ -9,7 +16,10 @@ const FORMAT_NAME = 'hanzi-trainer-backup';
 
 // Raise this when the shape of the backup changes, and teach checkBackup()
 // below to read the older shapes too.
-const FORMAT_VERSION = 1;
+const FORMAT_VERSION = 2;
+
+// The stores each older version had; a backup need not have the later ones.
+const STORES_IN_VERSION = { 1: ['words', 'cards', 'reviews', 'settings'], 2: STORES };
 
 // Collects everything in the database into one plain object.
 export async function buildBackup() {
@@ -30,12 +40,12 @@ export function checkBackup(data) {
   if (!data || typeof data !== 'object' || data.format !== FORMAT_NAME) {
     throw new Error('This file is not a Hanzi Trainer backup.');
   }
-  if (data.version !== FORMAT_VERSION) {
+  if (!STORES_IN_VERSION[data.version]) {
     throw new Error(
-      `This backup is format version ${data.version}, but this app reads version ${FORMAT_VERSION}. Update the app and try again.`,
+      `This backup is format version ${data.version}, but this app reads up to version ${FORMAT_VERSION}. Update the app and try again.`,
     );
   }
-  for (const storeName of STORES) {
+  for (const storeName of STORES_IN_VERSION[data.version]) {
     const records = data[storeName];
     if (!Array.isArray(records)) {
       throw new Error(`The backup is damaged: "${storeName}" is missing.`);
@@ -59,5 +69,10 @@ export function describeBackup(data) {
 // Replaces everything in the database with the backup's contents.
 export function restoreBackup(data) {
   checkBackup(data);
-  return replaceEverything(data);
+  // Stores an older backup does not have are left empty.
+  const everything = {};
+  for (const storeName of STORES) {
+    everything[storeName] = data[storeName] || [];
+  }
+  return replaceEverything(everything);
 }

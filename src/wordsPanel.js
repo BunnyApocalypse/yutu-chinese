@@ -8,6 +8,7 @@ import { getAll, putAll, removeWord, renameWord } from './db.js';
 import { formatPinyin, wordId } from './wordList.js';
 import { allCardIds } from './session.js';
 import { fileCardsByScript } from './scriptCards.js';
+import { missingReadyMadeDecks } from './decks.js';
 import {
   checkWord,
   readWordList,
@@ -20,6 +21,7 @@ import {
   parseReadyList,
   levelsOfReadyList,
   listTag,
+  withFormerId,
   tidyPinyin,
 } from './words.js';
 import { readDictionary, lookUp, proposeMeaning, otherScriptForm } from './dictionary.js';
@@ -611,11 +613,14 @@ export function createWordsPanel(onChange, getSettings) {
       candidates.push(checked.word);
       tags.set(wordId(checked.word), listTag(listId, entry.level));
     }
-    const withTag = (word) => ({ ...word, lists: [...new Set([...(word.lists || []), tags.get(word.id)])] });
+    const withTag = (word) => ({ ...word, decks: [...new Set([...(word.decks || []), tags.get(word.id)])] });
     const { toAdd, alreadyHave } = newWordRecords(candidates, words, Date.now());
-    // Words that were there already are marked as belonging to the list too.
-    const marked = words.filter((word) => tags.has(word.id) && !(word.lists || []).includes(tags.get(word.id)));
-    await putAll('words', [...toAdd, ...marked].map(withTag));
+    // Words that were there already are put in the level's deck too.
+    const marked = words.filter((word) => tags.has(word.id) && !(word.decks || []).includes(tags.get(word.id)));
+    const tagged = [...toAdd, ...marked].map(withTag);
+    await putAll('words', tagged);
+    // The list and its levels become decks, if they are not there yet.
+    await putAll('decks', missingReadyMadeDecks(tagged, await getAll('decks')));
     await afterChange();
     await showReadyLevels();
     readyReport.textContent =
@@ -676,9 +681,12 @@ export function createWordsPanel(onChange, getSettings) {
       order: openWord.order,
       addedAt: openWord.addedAt,
     };
-    // Which ready-made lists the word came from is kept (see listTag).
-    if (openWord.lists) {
-      saved.lists = openWord.lists;
+    // The decks the word is in and the IDs it had before are kept.
+    if (openWord.decks) {
+      saved.decks = openWord.decks;
+    }
+    if (openWord.formerIds) {
+      saved.formerIds = openWord.formerIds;
     }
     if (openWord.learnedAt !== undefined) {
       saved.learnedAt = openWord.learnedAt;
@@ -690,7 +698,7 @@ export function createWordsPanel(onChange, getSettings) {
         `${charactersOf(saved)} (${formatPinyin(saved.pinyin)}) is already in your words.`;
       return;
     } else {
-      await renameWord(openWord.id, saved);
+      await renameWord(openWord.id, withFormerId(saved, openWord));
     }
     // If the two scripts now differ where they were the same, a writing card
     // learned in simplified goes under the simplified form (scriptCards.js).

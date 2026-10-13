@@ -14,6 +14,7 @@ import {
   parseReadyList,
   levelsOfReadyList,
   listTag,
+  withFormerId,
   newWordRecords,
   wordsWithSameCharacters,
   orderForStudyingNext,
@@ -206,6 +207,14 @@ test('search finds characters, meaning and pinyin however it is written', () => 
   assert.equal(matchesSearch(study, 'place'), false);
   assert.equal(matchesSearch(place, 'difang1'.slice(0, 6)), true);
   assert.equal(matchesSearch(place, 'dìfāng'), true); // the Taiwan reading
+});
+
+test('a word whose ID changes remembers the IDs it had', () => {
+  const once = withFormerId({ id: 'b' }, { id: 'a' });
+  assert.deepEqual(once.formerIds, ['a']);
+  assert.deepEqual(withFormerId({ id: 'c' }, once).formerIds, ['a', 'b']);
+  // Corrected back to what it was: its present ID is not a former one.
+  assert.deepEqual(withFormerId({ id: 'a' }, once).formerIds, ['b']);
 });
 
 // ---- Ready-made lists ----

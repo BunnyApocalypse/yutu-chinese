@@ -285,10 +285,21 @@ export function levelsOfReadyList(entries, existing) {
   return [...levels.values()];
 }
 
-// The tag a word carries for a list and level it belongs to, in its `lists`
-// field: 'hsk-3.0/1'. Decks, once there are any, can be made from these.
+// The ID of the deck for one level of a ready-made list: 'hsk-3.0/1'. A word
+// from that level carries it in its `decks` field (see decks.js).
 export function listTag(listId, level) {
   return `${listId}/${level}`;
+}
+
+// A word whose ID is about to change (its characters or pinyin were
+// corrected) remembers the old one, so that another device's cards and
+// reviews under the old ID can later be matched to it.
+//
+// word:    the corrected record, with its new ID
+// oldWord: the record as stored
+export function withFormerId(word, oldWord) {
+  const formerIds = [...new Set([...(oldWord.formerIds || []), oldWord.id])].filter((id) => id !== word.id);
+  return { ...word, formerIds };
 }
 
 // Works out which of `candidates` (tidied words) are new to the list.

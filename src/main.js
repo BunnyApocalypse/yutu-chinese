@@ -1,7 +1,7 @@
 // Entry point: sets up the page, the three tabs (Review, Free practice and
 // Words), settings and backups.
 
-import { getAll, getSetting, setSetting, removeWord } from './db.js';
+import { getAll, putAll, getSetting, setSetting, removeWord } from './db.js';
 import { allCardIds } from './session.js';
 import { OLD_BUILT_IN_WORD_IDS } from './oldBuiltInWords.js';
 import { createWordFlow } from './wordFlow.js';
@@ -12,6 +12,7 @@ import { createSettings } from './settings.js';
 import { createWordsPanel } from './wordsPanel.js';
 import { scriptFor, scriptFlagFor } from './words.js';
 import { fileCardsByScript } from './scriptCards.js';
+import { missingReadyMadeDecks, wordsWithListsAsDecks } from './decks.js';
 import { setUpOffline, keepData } from './offline.js';
 import { createWelcome } from './welcome.js';
 import { buildBackup, checkBackup, describeBackup, restoreBackup } from './backup.js';
@@ -308,9 +309,26 @@ async function keepOldDefaults() {
   }
 }
 
+// Words added from a ready-made list before there were decks are put in the
+// list's decks, and the decks are made. Looked at on every start, since an
+// older backup may bring such words back; usually there is nothing to do.
+// The words are saved without a new `changedAt`: nothing about them changed
+// that the owner would see.
+async function fileListWordsInDecks() {
+  const converted = wordsWithListsAsDecks(await getAll('words'));
+  if (converted.length > 0) {
+    await putAll('words', converted, { stamp: false });
+  }
+  const missing = missingReadyMadeDecks(await getAll('words'), await getAll('decks'));
+  if (missing.length > 0) {
+    await putAll('decks', missing);
+  }
+}
+
 async function startUp() {
   await keepOldDefaults();
   await removeOldBuiltInWords();
+  await fileListWordsInDecks();
   // Once per device (and again after an older backup is restored): cards
   // studied before writing cards were kept per script are filed under the
   // script they were learned in.

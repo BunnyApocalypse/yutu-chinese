@@ -182,7 +182,11 @@ export function createReview(elements, flows, settings, editWord) {
     // The Words tab has had Review read the words and cards afresh (load()).
     const fields = new Set([...Object.keys(before), ...Object.keys(after || {})]);
     fields.delete('definition');
-    const onlyMeaningChanged = after && [...fields].every((field) => before[field] === after[field]);
+    // When the word was saved is filled in by the database, and always differs.
+    fields.delete('changedAt');
+    // Compared as text, since some fields are lists (`decks`).
+    const same = (field) => JSON.stringify(before[field]) === JSON.stringify(after[field]);
+    const onlyMeaningChanged = after && [...fields].every(same);
     if (onlyMeaningChanged) {
       // The answer stays up with the corrected meaning, still to be graded.
       current.word = after;

@@ -66,6 +66,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `src/scheduler.js`: the only file that imports `ts-fsrs`. `gradeOptions(fsrsState, now)` returns what each of the four grades would do to a card.
 - `src/session.js`: plain calculation, no page or database: which card is next (`planSession`), the suggested grade for writing (`suggestGrade`, `judgeChar`), the 4:00 day boundary, the daily new-word limit, the hold between cards of one word.
 - `src/db.js`: small promise wrapper around IndexedDB. The store layout is documented at the top of the file.
+- `src/decks.js`: the decks of the ready-made lists. Plain calculation. Nothing on screen uses decks yet (see "Ready for merging").
 - `src/offline.js`, `src/serviceWorker.js`, `scripts/build-offline.js`, `public/manifest.webmanifest`, `.github/workflows/deploy.yml`: offline use and deployment (see that section).
 - `src/welcome.js`, `src/storageAdvice.js`: the introduction shown on first use, and what it says about long-term storage in each browser (see that section).
 - `src/scriptCards.js`: files writing cards under the script they were learned in (see "Switching script").
@@ -89,6 +90,8 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `tests/browser/words.browser.js`: the Words tab from adding a word to finding it in Review.
 - `tests/browser/settings.browser.js`: the Script and Pronunciation settings, on cards and on the Words tab.
 - `tests/browser/lesson.browser.js`, `tests/browser/welcome.browser.js`, `tests/browser/offline.browser.js`: the Learn tab and its lesson, the introduction, and offline use.
+- `tests/browser/database.browser.js`: a database from before brought up to date, and what is kept for merging (removal marks, `changedAt`, `formerIds`).
+- `tests/decks.test.js`: tests for `src/decks.js`.
 - `tests/words.test.js`, `tests/dictionary.test.js`: tests for `src/words.js` and `src/dictionary.js`; the second also checks every line of the real dictionary.
 
 ## Browser tests
@@ -101,6 +104,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - **Knowing when the next stroke can be drawn:** `src/quiz.js` puts a `data-busy` attribute on the writing area while Hanzi Writer is being handed stroke data (`setBusy`). A stroke drawn then would be lost. The tests wait for the status line to change and for `data-busy` to go, instead of pausing a fixed time. Any new place in `quiz.js` that awaits `giveWriter` must be wrapped the same way.
 - **A stroke that begins outside the writing area never reaches the app**, so the grid skips a character at a position where that would happen (wide characters in "shifted left").
 - **Mouse events arrive about 60 a second in headless Chromium**, which is what a run's time is made of. More browsers help; shorter waits do not.
+- **A pop-up the page puts up (`window.confirm`) stops everything** until it is answered, and a test's `window.confirm = () => true` is lost when the page is reloaded. Set it again after `reloadApp`.
 - **No known failures since 2026-10-13:** all 165 runs of the grid pass (10 skipped). The command exits with an error if any fail.
 - **Not covered yet:** grading in Review, drawn tone marks, the rest of the settings panel. Tone and pinyin cards are only touched by `settings.browser.js`. Use the same harness.
 - **A setting is saved before it takes effect** (`change` in `src/settings.js` awaits the database), so after `choose(...)` a test waits for the effect instead of checking at once.
@@ -147,7 +151,25 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - **IDs must be the same on every device.** A word's ID is `<traditional>|<pinyin>`; review IDs are random. Never use auto-incrementing keys: two devices would hand out the same numbers, making a later merge impossible.
 - **Dates are stored as numbers** (milliseconds, like `Date.now()`), and FSRS state as plain JSON with ISO date strings, so records go into a backup file unchanged.
 - **No sync.** IndexedDB belongs to one browser on one device at one address, so the phone and tablet have separate progress, and moving to GitHub Pages starts empty. Export/Import backup moves the whole database as one JSON file; import replaces everything (no merge yet). The backup has a `version` number: raise it and keep reading old versions if the shape changes.
-- **Changing the store layout** means raising `DATABASE_VERSION` in `src/db.js` and handling existing databases in `onupgradeneeded`, and usually raising the backup version too.
+- **Changing the store layout** means raising `DATABASE_VERSION` in `src/db.js` and handling existing databases in `onupgradeneeded` (by `oldVersion`, so nothing stored is lost), and usually raising the backup version too. Both are at 2.
+
+## Ready for merging
+
+Built on 2026-10-13 as the first step of the order of work in "Long-term goals". Nothing on screen changed; the database now keeps what combining two devices' data will need.
+
+- **`changedAt` on words, settings and decks**, filled in by `putAll` in `src/db.js` (and `renameWord`), never by the callers. Records from before have none. A change the app makes by itself to bring old records up to date passes `{ stamp: false }`, so that it does not look newer than a change the owner made on another device.
+- **A record read from the database has `changedAt`; the one about to be saved does not.** Comparing the two field by field must leave it out (as "Edit word" in `src/review.js` does), and compare lists such as `decks` by content.
+- **A removed word leaves a mark** in the `removed` store (`{ id, removedAt }`). Saving a word with that ID again takes the mark away.
+- **A corrected word remembers its old IDs** in `formerIds` (`withFormerId` in `src/words.js`). The pop-up panel builds the saved word from the form, so every field that is not in the form has to be carried over there by hand: `decks`, `formerIds`, `learnedAt`.
+- **A card's schedule can be rebuilt from its reviews**: `replay` in `src/scheduler.js`. A test checks that it gives exactly the saved state, which relies on ts-fsrs varying intervals the same way for the same review, and on a review's `time` being the time handed to `gradeOptions`.
+- **Decks:** a `decks` store (`{ id, name, parentId, order }`) and a `decks` list on each word. Only the ready-made lists have decks so far, with fixed IDs so every device makes the same ones (`readyMadeDeck`). `READY_MADE_LISTS` in `src/decks.js` repeats the lists' levels; a test checks it against the files.
+- **A tab still running an older version keeps the database from being upgraded.** The app now closes its connection when a newer version asks (`onversionchange`), and a newer version that is kept waiting says to close the other tab (`onblocked`). The version published before 2026-10-13 does not let go, so the message can appear once on a device with two tabs open.
+- **Backup format 2** adds `removed` and `decks`; a version 1 file is still read.
+- **For the merge itself, still to settle:**
+  - Removing a word deletes its cards but keeps its reviews, so replaying reviews would bring back the cards of a word that was removed and added again. The removal time has to be taken into account (it is gone once the word is added again, so it may need keeping).
+  - Some settings belong to the device, not the learner (`welcomeDone`, `keepDataWanted`, `cardsFiledByScript`, `oldBuiltInWordsRemoved`) and should not travel.
+  - Reviews made before 2026-10-13 can carry the plain card ID of a card since moved to its `#simplified` ID (`src/scriptCards.js`), so reviews cannot simply be grouped by `cardId`.
+  - Cards carry no `changedAt`: they are meant to be rebuilt from the reviews.
 
 ## How the must-haves are implemented
 
@@ -228,7 +250,7 @@ Asked for by the owner on 2026-10-13: HSK 3.0 first, 2.0 supported too, and TOCF
 - **Every listed word is matched to the dictionary** by its simplified form and reading (`bestMatch` in the build script) and takes its traditional form and reading from there, so that its ID is the same as when the word is typed by hand, and the same in both lists. The sources could not be used as they are: the HSK 3.0 source was matched to an older CC-CEDICT, and the HSK 2.0 source has character-by-character traditional forms (后面 for 後面) and tones as spoken (yi4qi3).
 - **Do not use drkameleon/complete-hsk-vocabulary for readings.** It was the first source looked at; it lists every reading CC-CEDICT has for a word, not the one the HSK means (句 as gōu).
 - **TOCFL** (`data/wordlists/tocfl/tocfl.tsv`, 7,431 words in seven levels) is built by the same script from the spreadsheet the test's committee publishes, read without any library (`filesInZip`, `sheetsOf`). The sheet has only traditional characters and tone-marked pinyin, with several things in a cell (你/妳, 爸爸/爸, 車(子), zhuyin notes); `formsOf` takes them apart and `tocflMatch` finds each word in the dictionary, also by its Taiwan reading. 79 entries the dictionary does not have that way are left out. **The source states no license**; the owner chose to include it, and the folder's README says so.
-- **A word remembers its lists** in its `lists` field, as tags like `hsk-3.0/1` (`listTag` in `src/words.js`); a word already there gets the tag too. Nothing uses them yet: they are for the decks on the to-do list.
+- **A word from a list is put in that level's deck**: its `decks` field gets the deck's ID, like `hsk-3.0/1` (`listTag` in `src/words.js`); a word already there gets it too. The deck records are made at the same time (`src/decks.js`). Until 2026-10-13 the field was called `lists`; `fileListWordsInDecks` in `src/main.js` converts it at every start.
 - **The dictionary now follows pointers.** Many CC-CEDICT entries only say "erhua variant of 一點" or "variant of 詞典", and were left out of the dictionary for having no meaning, so 一点儿 and 辞典 could not be found. `scripts/build-dictionary.js` now gives such an entry the meanings of the one it points to (7,142 entries; the dictionary has 124,481 and is 8.4 MB).
 
 ## The introduction (first use)
@@ -332,9 +354,9 @@ Agreed with the owner on 2026-10-13, in the conversation that had been put first
 - **Sentences and audio:** hearing the word and sentence cards (without audio) are core. Listening cards, example sentences on a word's answer page and audio for sentences are nice to have.
 - **The hard constraints are open to change** (vanilla JavaScript, no framework, few dependencies) if a change makes the app easier to grow or to contribute to. Nothing planned needs one yet, so they stand until a concrete case comes up; each change is still asked for first.
 - **Order of work:**
-  1. Settle the data model for decks, merging and the Skritter import together.
-  2. Merge backups.
-  3. Decks.
+  1. **Done on 2026-10-13:** settle the data model for decks and merging (see "Ready for merging"). The Skritter scheduling data has not arrived, so the import was not looked at.
+  2. Decks. (Swapped with merging on 2026-10-13: the owner is only testing for now, so decks are of more use to them first.)
+  3. Merge backups.
   4. Leeches with their export, and a card manager.
   5. Sentences and audio.
   6. Statistics.

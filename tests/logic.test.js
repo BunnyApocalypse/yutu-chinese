@@ -6,7 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-import { gradeOptions, AGAIN, HARD, GOOD, EASY } from '../src/scheduler.js';
+import { gradeOptions, replay, AGAIN, HARD, GOOD, EASY } from '../src/scheduler.js';
 import {
   planSession,
   nextToLearn,
@@ -68,6 +68,27 @@ test('saved card state survives being written to a backup and read back', () => 
   const reloaded = JSON.parse(JSON.stringify(first.fsrsState));
   const again = gradeOptions(reloaded, new Date(first.due))[GOOD];
   assert.ok(again.due > first.due);
+});
+
+test('replaying a card\'s reviews gives the state that was saved with it', () => {
+  // Review a card as the app does: each review starts from the saved state
+  // and is made some time after the card fell due.
+  let state = null;
+  let due = null;
+  let time = at('2026-01-05T09:00:00');
+  const reviews = [];
+  for (const grade of [GOOD, GOOD, GOOD, HARD, GOOD, AGAIN, GOOD, GOOD, EASY, GOOD, GOOD, GOOD]) {
+    ({ fsrsState: state, due } = gradeOptions(state, new Date(time))[grade]);
+    reviews.push({ time, grade });
+    time = due + 7 * 60 * 60 * 1000;
+  }
+  // Long intervals are varied a little at random ("fuzz"); this only works
+  // because that variation comes out the same for the same review.
+  assert.ok(due - reviews.at(-1).time > 30 * DAY);
+  assert.deepEqual(replay(reviews), { fsrsState: state, due });
+  // The order the reviews are handed over in does not matter.
+  assert.deepEqual(replay([...reviews].reverse()), { fsrsState: state, due });
+  assert.equal(replay([]), null);
 });
 
 test('the study day starts at 4:00', () => {
@@ -525,6 +546,10 @@ test('backups are checked before use', () => {
   assert.throws(() => checkBackup({ ...good, version: 99 }), /format version 99/);
   assert.throws(() => checkBackup({ ...good, cards: undefined }), /"cards" is missing/);
   assert.throws(() => checkBackup({ ...good, words: [{ name: 'no id' }] }), /has no id/);
+  // The current version also has the removed words and the decks.
+  const current = { ...good, version: 2, removed: [{ id: 'b', removedAt: 1 }], decks: [{ id: 'hsk-3.0' }] };
+  assert.doesNotThrow(() => checkBackup(current));
+  assert.throws(() => checkBackup({ ...current, decks: undefined }), /"decks" is missing/);
 });
 
 test('the Taiwan-form stroke data is well formed', () => {

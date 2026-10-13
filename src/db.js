@@ -2,13 +2,20 @@
 // into the browser. It belongs to this browser on this device and to the exact
 // address the app was opened from; nothing is sent anywhere.
 //
-// The database has four "object stores" (roughly: tables). Each record is a
+// The database has six "object stores" (roughly: tables). Each record is a
 // plain JavaScript object, found by its key.
 //
 //   words     key: id      { id, traditional, simplified, pinyin, definition,
-//                            order, addedAt } and, for some, pinyinTaiwan.
+//                            order, addedAt, changedAt } and, for some,
+//                          pinyinTaiwan, pinyinAlso, cardScript, learnedAt,
+//                          decks, formerIds.
 //                          New words are introduced in the order of `order`,
 //                          lowest first; it may be negative.
+//                          `decks` lists the IDs of the decks the word is in.
+//                          `formerIds` lists the IDs the word had before its
+//                          characters or pinyin were corrected, so that
+//                          another device's records under an old ID can be
+//                          matched to it.
 //   cards     key: id      { id, wordId, type, due, firstReviewedAt, fsrsState }
 //                          One per word and card type ('meaning', 'pinyin',
 //                          'tone', 'writing'). The id is "<wordId>#<type>".
@@ -24,7 +31,22 @@
 //                          cardId of a review made before 2026-10-13 may be
 //                          the plain id of a card since moved to its
 //                          "#simplified" id (see scriptCards.js).
-//   settings  key: key     { key, value }
+//   settings  key: key     { key, value, changedAt }
+//   removed   key: id      { id, removedAt }
+//                          One per word that was removed, under the word's
+//                          ID. Without it, combining this device's data with
+//                          another's would bring the word back. Gone again
+//                          once the word is added again.
+//   decks     key: id      { id, name, parentId, order, changedAt }
+//                          Groups of words. `parentId` is the deck this one
+//                          is inside, or null. A deck made from a ready-made
+//                          list has a fixed ID ('hsk-3.0', 'hsk-3.0/1'), the
+//                          same on every device (see decks.js).
+//
+// `changedAt` is when a record was last saved (a number, like Date.now()).
+// It is filled in here, by putAll, so that when two devices' data are
+// combined the newer version of a record can be kept. Records saved before
+// 2026-10-13 have none.
 //
 // IndexedDB's own interface is built on callbacks and is awkward to use. The
 // functions below wrap it so the rest of the app can simply "await" results.
@@ -33,9 +55,12 @@ const DATABASE_NAME = 'hanzi-trainer';
 
 // Raise this number when the stores themselves change (a new store, a new
 // key). The browser then runs the upgrade code below on existing databases.
-const DATABASE_VERSION = 1;
+const DATABASE_VERSION = 2;
 
-export const STORES = ['words', 'cards', 'reviews', 'settings'];
+export const STORES = ['words', 'cards', 'reviews', 'settings', 'removed', 'decks'];
+
+// The stores whose records are given a `changedAt` when saved.
+const STAMPED = ['words', 'settings', 'decks'];
 
 let databasePromise = null;
 
@@ -43,16 +68,35 @@ function openDatabase() {
   if (!databasePromise) {
     databasePromise = new Promise((resolve, reject) => {
       const request = indexedDB.open(DATABASE_NAME, DATABASE_VERSION);
-      // Runs the first time the app is opened, and whenever DATABASE_VERSION goes up.
-      request.onupgradeneeded = () => {
+      // Runs the first time the app is opened, and whenever DATABASE_VERSION
+      // goes up. `oldVersion` is the version the database on this device had
+      // (0 if there was none), so only the stores it lacks are made and
+      // everything already stored stays.
+      request.onupgradeneeded = (event) => {
         const database = request.result;
-        database.createObjectStore('words', { keyPath: 'id' });
-        database.createObjectStore('cards', { keyPath: 'id' });
-        database.createObjectStore('reviews', { keyPath: 'id' });
-        database.createObjectStore('settings', { keyPath: 'key' });
+        if (event.oldVersion < 1) {
+          database.createObjectStore('words', { keyPath: 'id' });
+          database.createObjectStore('cards', { keyPath: 'id' });
+          database.createObjectStore('reviews', { keyPath: 'id' });
+          database.createObjectStore('settings', { keyPath: 'key' });
+        }
+        if (event.oldVersion < 2) {
+          database.createObjectStore('removed', { keyPath: 'id' });
+          database.createObjectStore('decks', { keyPath: 'id' });
+        }
       };
-      request.onsuccess = () => resolve(request.result);
+      request.onsuccess = () => {
+        // A later version of the app, opened in another tab, cannot change
+        // the stores while this tab holds the database open. Let go of it
+        // when asked; this tab then needs reloading.
+        request.result.onversionchange = () => request.result.close();
+        resolve(request.result);
+      };
       request.onerror = () => reject(request.error);
+      // The other way around: this is the later version, and a tab with an
+      // earlier one is still open.
+      request.onblocked = () =>
+        reject(new Error('Hanzi Trainer is open in another tab in an older version. Close that tab, then reload this one.'));
     });
   }
   return databasePromise;
@@ -81,35 +125,51 @@ export async function getAll(storeName) {
   return request.result;
 }
 
-// Saves records, replacing any that have the same key.
-export function putAll(storeName, records) {
-  return transaction([storeName], 'readwrite', (tx) => {
+// Saves records, replacing any that have the same key. Words, settings and
+// decks are marked with the time (`changedAt`).
+//
+// stamp: false leaves `changedAt` as it is, for a change the app makes by
+//        itself to bring old records up to date. Such a change must not make
+//        a record look newer than one the owner changed on another device.
+export function putAll(storeName, records, { stamp = true } = {}) {
+  const changedAt = Date.now();
+  const stamped = stamp && STAMPED.includes(storeName);
+  // A word saved is a word that is there: any mark of its removal goes.
+  const storeNames = storeName === 'words' ? ['words', 'removed'] : [storeName];
+  return transaction(storeNames, 'readwrite', (tx) => {
     for (const record of records) {
-      tx.objectStore(storeName).put(record);
+      tx.objectStore(storeName).put(stamped ? { ...record, changedAt } : record);
+      if (storeName === 'words') {
+        tx.objectStore('removed').delete(record.id);
+      }
     }
   });
 }
 
-// Removes a word and its cards together. Its reviews stay: they are the
-// record of what was studied, and are never deleted.
+// Removes a word and its cards together, and leaves a mark that it was
+// removed. Its reviews stay: they are the record of what was studied, and are
+// never deleted.
 export function removeWord(wordId, cardIds) {
-  return transaction(['words', 'cards'], 'readwrite', (tx) => {
+  return transaction(['words', 'cards', 'removed'], 'readwrite', (tx) => {
     tx.objectStore('words').delete(wordId);
     for (const id of cardIds) {
       tx.objectStore('cards').delete(id);
     }
+    tx.objectStore('removed').put({ id: wordId, removedAt: Date.now() });
   });
 }
 
-// Gives a word a new ID (its traditional form was corrected) and files its
-// cards and reviews under it, all together. `word` is the complete new
-// record. Card IDs begin with the word's ID, so they change with it.
+// Gives a word a new ID (its traditional form or pinyin was corrected) and
+// files its cards and reviews under it, all together. `word` is the complete
+// new record, with the old ID among its `formerIds` (see withFormerId in
+// words.js). Card IDs begin with the word's ID, so they change with it.
 export function renameWord(oldId, word) {
   const renamed = (id) => word.id + id.slice(oldId.length);
-  return transaction(['words', 'cards', 'reviews'], 'readwrite', (tx) => {
+  return transaction(['words', 'cards', 'reviews', 'removed'], 'readwrite', (tx) => {
     const words = tx.objectStore('words');
     words.delete(oldId);
-    words.put(word);
+    words.put({ ...word, changedAt: Date.now() });
+    tx.objectStore('removed').delete(word.id);
     // getAll() answers later, through onsuccess; the transaction stays open
     // until the work started there is done.
     const cards = tx.objectStore('cards');
