@@ -289,13 +289,22 @@ export function levelsOfReadyList(entries, existing) {
 }
 
 // The ID of the deck for one level of a ready-made list ('hsk-3.0/1'), or,
-// given a group as parseReadyList reads it, for that group inside the level
-// ('tocfl/1/03 Education 教育'). A word from the list carries the ID of its
-// group, or of its level if it is in no group, in its `decks` field (see
-// decks.js).
+// given a group as parseReadyList reads it ("03 Education 教育"), for that
+// group inside the level: 'tocfl/1/03'. A word from the list carries the ID
+// of its group, or of its level if it is in no group, in its `decks` field
+// (see decks.js).
+//
+// The ID has the group's number and not its name, so that a group can be
+// renamed without the decks people already have being left behind under the
+// old name. (Moving words between groups, or renumbering, still changes
+// which deck a word is in for those who add the list afterwards.)
 export function listTag(listId, level, group = '') {
-  return group === '' ? `${listId}/${level}` : `${listId}/${level}/${group}`;
+  return group === '' ? `${listId}/${level}` : `${listId}/${level}/${group.split(' ')[0]}`;
 }
+
+// The name of a group, from the group as parseReadyList reads it:
+// "03 Education 教育" is "Education 教育".
+export const groupName = (group) => group.slice(group.indexOf(' ') + 1);
 
 // A word whose ID is about to change (its characters or pinyin were
 // corrected) remembers the old one, so that another device's cards and

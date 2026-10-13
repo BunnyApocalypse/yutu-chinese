@@ -286,7 +286,7 @@ describe('decks', { concurrency: false }, () => {
     assert.deepEqual(topics.slice(0, 2).map((deck) => deck.name), ['Personal information 個人資料', 'Work 工作']);
     // A word is in its topic's deck, and so counts for the level and the list.
     const me = (await stored(page, 'words')).find((word) => word.id === '我|wo3');
-    assert.deepEqual(me.decks, ['tocfl/Novice 1/01 Personal information 個人資料']);
+    assert.deepEqual(me.decks, ['tocfl/Novice 1/01']);
     await tap(page, 'my-decks-button');
     await waitUntil(page, deckRows(2), 'the two decks');
     assert.match(await textOf(page, '#deck-list li:last-child'), /^TOCFL182 words · 0 learned \(0%\) · 12 decks inside$/);

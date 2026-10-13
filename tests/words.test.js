@@ -14,6 +14,7 @@ import {
   parseReadyList,
   levelsOfReadyList,
   listTag,
+  groupName,
   withFormerId,
   newWordRecords,
   wordsWithSameCharacters,
@@ -231,7 +232,10 @@ test('a ready-made list is read, and its levels counted against the words there 
   // A word in a group of its level, without and with a meaning of its own.
   const grouped = parseReadyList('1\t爱\t愛\tai4\t\t02 Feelings\n1\t车上\t車上\tche1shang5\tin the car\t05 Travel\n');
   assert.deepEqual(grouped.map((entry) => [entry.meaning, entry.group]), [['', '02 Feelings'], ['in the car', '05 Travel']]);
-  assert.equal(listTag('hsk-3.0', '1', grouped[0].group), 'hsk-3.0/1/02 Feelings');
+  // The deck's ID has the group's number; its name is kept apart.
+  assert.equal(listTag('hsk-3.0', '1', grouped[0].group), 'hsk-3.0/1/02');
+  assert.equal(groupName(grouped[1].group), 'Travel');
+  assert.equal(groupName('03 Education 教育'), 'Education 教育');
 });
 
 test('the ready-made lists are well formed, and every word can get a meaning', async () => {

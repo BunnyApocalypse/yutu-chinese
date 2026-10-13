@@ -30,6 +30,7 @@ import {
   parseReadyList,
   levelsOfReadyList,
   listTag,
+  groupName,
   withFormerId,
   tidyPinyin,
 } from './words.js';
@@ -1046,6 +1047,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, goToWords) {
     const { meaningDetail } = getSettings();
     const candidates = [];
     const tags = new Map(); // word ID → the tag for this list and level
+    const groupNames = new Map(); // a group's deck ID → its name
     let noMeaning = 0;
     for (const entry of entries) {
       const inDictionary = dictionary ? lookUp(dictionary, entry.traditional) : [];
@@ -1061,7 +1063,11 @@ export function createWordsPanel(onChange, getSettings, studyDeck, goToWords) {
         continue;
       }
       candidates.push(checked.word);
-      tags.set(wordId(checked.word), listTag(listId, entry.level, entry.group));
+      const tag = listTag(listId, entry.level, entry.group);
+      tags.set(wordId(checked.word), tag);
+      if (entry.group !== '') {
+        groupNames.set(tag, groupName(entry.group));
+      }
     }
     const withTag = (word) => ({ ...word, decks: [...new Set([...(word.decks || []), tags.get(word.id)])] });
     const { toAdd, alreadyHave } = newWordRecords(candidates, words, Date.now());
@@ -1070,7 +1076,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, goToWords) {
     const tagged = [...toAdd, ...marked].map(withTag);
     await putAll('words', tagged);
     // The list and its levels become decks, if they are not there yet.
-    await putAll('decks', missingReadyMadeDecks(tagged, await getAll('decks')));
+    await putAll('decks', missingReadyMadeDecks(tagged, await getAll('decks'), groupNames));
     await afterChange();
     await showReadyLevels();
     readyReport.textContent =

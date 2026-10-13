@@ -21,12 +21,15 @@ export const READY_MADE_LISTS = [
 ];
 
 // The deck record for a ready-made list ('hsk-3.0'), one of its levels
-// ('hsk-3.0/1') or a group of words inside a level ('tocfl/1/03 Education
-// 教育'; see listTag in words.js), or null if the ID is none of these.
-// The ID decides everything, so every device makes the same record. A
-// group's ID holds its number, which is its place among the level's groups,
-// and its name.
-export function readyMadeDeck(deckId) {
+// ('hsk-3.0/1') or a group of words inside a level ('tocfl/1/03'; see
+// listTag in words.js), or null if the ID is none of these. The ID decides
+// everything but a group's name, so every device makes the same deck.
+//
+// names: a Map from group deck ID to the group's name, from the list file
+//        (see groupName in words.js). A group that is not in it is called
+//        "Group 3"; that only happens where a group's deck has to be made
+//        without the list at hand.
+export function readyMadeDeck(deckId, names = new Map()) {
   for (const [position, list] of READY_MADE_LISTS.entries()) {
     if (deckId === list.id) {
       return { id: list.id, name: list.name, parentId: null, order: position };
@@ -38,9 +41,14 @@ export function readyMadeDeck(deckId) {
         const name = /^\d/.test(level) ? `Level ${level}` : level;
         return { id: deckId, name, parentId: list.id, order: list.levels.indexOf(level) };
       }
-      const group = deckId.startsWith(`${levelId}/`) && deckId.slice(levelId.length + 1).match(/^(\d+) (.+)$/);
+      const group = deckId.startsWith(`${levelId}/`) && deckId.slice(levelId.length + 1).match(/^(\d+)$/);
       if (group) {
-        return { id: deckId, name: group[2], parentId: levelId, order: Number(group[1]) };
+        return {
+          id: deckId,
+          name: names.get(deckId) || `Group ${Number(group[1])}`,
+          parentId: levelId,
+          order: Number(group[1]),
+        };
       }
     }
   }
@@ -52,7 +60,8 @@ export function readyMadeDeck(deckId) {
 //
 // words: word records
 // decks: the deck records already stored
-export function missingReadyMadeDecks(words, decks) {
+// names: the names of group decks, by ID (see readyMadeDeck)
+export function missingReadyMadeDecks(words, decks, names = new Map()) {
   const stored = new Set(decks.map((deck) => deck.id));
   const missing = new Map();
   for (const word of words) {
@@ -60,7 +69,7 @@ export function missingReadyMadeDecks(words, decks) {
       // The deck itself and each deck it is inside (a group's level, a
       // level's list), outermost first.
       const chain = [];
-      for (let deck = readyMadeDeck(deckId); deck; deck = deck.parentId && readyMadeDeck(deck.parentId)) {
+      for (let deck = readyMadeDeck(deckId, names); deck; deck = deck.parentId && readyMadeDeck(deck.parentId)) {
         chain.unshift(deck);
       }
       for (const deck of chain) {
