@@ -756,7 +756,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
         continue;
       }
       candidates.push(checked.word);
-      tags.set(wordId(checked.word), listTag(listId, entry.level));
+      tags.set(wordId(checked.word), listTag(listId, entry.level, entry.group));
     }
     const withTag = (word) => ({ ...word, decks: [...new Set([...(word.decks || []), tags.get(word.id)])] });
     const { toAdd, alreadyHave } = newWordRecords(candidates, words, Date.now());

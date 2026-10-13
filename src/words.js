@@ -252,17 +252,20 @@ export function readWordList(text, completeForms) {
 // Reads a ready-made word list (data/wordlists/, built by
 // scripts/build-word-lists.js): one word per line with the columns level,
 // simplified, traditional, pinyin and, for the few words the dictionary does
-// not have, a meaning. Lines starting with # are comments.
+// not have, a meaning. Where a level is divided into groups of words, a
+// sixth column has the word's group: its number within the level and its
+// name ("03 Education 教育"). Lines starting with # are comments.
 //
-// Returns [{ level, simplified, traditional, pinyin, meaning }], in the
-// file's order; meaning is '' where the dictionary is to supply it.
+// Returns [{ level, simplified, traditional, pinyin, meaning, group }], in
+// the file's order; meaning is '' where the dictionary is to supply it, and
+// group is '' for a word in no group.
 export function parseReadyList(text) {
   return text
     .split('\n')
     .filter((line) => line.trim() !== '' && !line.startsWith('#'))
     .map((line) => {
-      const [level, simplified, traditional, pinyin, meaning = ''] = line.trim().split('\t');
-      return { level, simplified, traditional, pinyin, meaning };
+      const [level, simplified, traditional, pinyin, meaning = '', group = ''] = line.trim().split('\t');
+      return { level, simplified, traditional, pinyin, meaning, group };
     });
 }
 
@@ -285,10 +288,13 @@ export function levelsOfReadyList(entries, existing) {
   return [...levels.values()];
 }
 
-// The ID of the deck for one level of a ready-made list: 'hsk-3.0/1'. A word
-// from that level carries it in its `decks` field (see decks.js).
-export function listTag(listId, level) {
-  return `${listId}/${level}`;
+// The ID of the deck for one level of a ready-made list ('hsk-3.0/1'), or,
+// given a group as parseReadyList reads it, for that group inside the level
+// ('tocfl/1/03 Education 教育'). A word from the list carries the ID of its
+// group, or of its level if it is in no group, in its `decks` field (see
+// decks.js).
+export function listTag(listId, level, group = '') {
+  return group === '' ? `${listId}/${level}` : `${listId}/${level}/${group}`;
 }
 
 // A word whose ID is about to change (its characters or pinyin were

@@ -1,0 +1,509 @@
+1	Greetings and pronouns	我	wo3
+1	Greetings and pronouns	你	ni3
+1	Greetings and pronouns	他	ta1
+1	Greetings and pronouns	她	ta1
+1	Greetings and pronouns	您	nin2
+1	Greetings and pronouns	们	men5
+1	Greetings and pronouns	我们	wo3men5
+1	Greetings and pronouns	你们	ni3men5
+1	Greetings and pronouns	他们	ta1men5
+1	Greetings and pronouns	她们	ta1men5
+1	Greetings and pronouns	好	hao3
+1	Greetings and pronouns	谢谢	xie4xie5
+1	Greetings and pronouns	不客气	bu4ke4qi5
+1	Greetings and pronouns	对不起	dui4bu5qi3
+1	Greetings and pronouns	没关系	mei2guan1xi5
+1	Greetings and pronouns	没什么	mei2shen2me5
+1	Greetings and pronouns	再见	zai4jian4
+1	Greetings and pronouns	请	qing3
+1	Greetings and pronouns	请问	qing3wen4
+1	Greetings and pronouns	请进	qing3jin4
+1	Greetings and pronouns	请坐	qing3zuo4
+2	Numbers 1	一	yi1
+2	Numbers 1	二	er4
+2	Numbers 1	三	san1
+2	Numbers 1	四	si4
+2	Numbers 1	五	wu3
+2	Numbers 1	六	liu4
+2	Numbers 1	七	qi1
+2	Numbers 1	八	ba1
+2	Numbers 1	九	jiu3
+2	Numbers 1	十	shi2
+2	Numbers 1	零	ling2
+2	Numbers 1	〇	ling2
+2	Numbers 1	两	liang3
+2	Numbers 1	百	bai3
+2	Numbers 1	几	ji3
+2	Numbers 1	多少	duo1shao5
+2	Numbers 1	半	ban4
+2	Numbers 1	第	di4
+3	Family	人	ren2
+3	Family	男	nan2
+3	Family	女	nv3
+3	Family	妈	ma1
+3	Family	妈妈	ma1ma5
+3	Family	爸	ba4
+3	Family	爸爸	ba4ba5
+3	Family	哥	ge1
+3	Family	哥哥	ge1ge5
+3	Family	姐	jie3
+3	Family	姐姐	jie3jie5
+3	Family	弟	di4
+3	Family	弟弟	di4di5
+3	Family	妹	mei4
+3	Family	妹妹	mei4mei5
+3	Family	奶奶	nai3nai5
+3	Family	爷爷	ye2ye5
+3	Family	儿子	er2zi5
+3	Family	女儿	nv3'er2
+3	Family	孩子	hai2zi5
+3	Family	子	zi5
+3	Family	家人	jia1ren2
+4	This, that, who, what	这	zhe4
+4	This, that, who, what	那	na4
+4	This, that, who, what	这儿	zhe4r5
+4	This, that, who, what	那儿	na4r5
+4	This, that, who, what	这里	zhe4li3
+4	This, that, who, what	那里	na4li5
+4	This, that, who, what	这些	zhe4xie1
+4	This, that, who, what	那些	na4xie1
+4	This, that, who, what	这边	zhe4bian1
+4	This, that, who, what	那边	na4bian5
+4	This, that, who, what	什么	shen2me5
+4	This, that, who, what	谁	shei2
+4	This, that, who, what	哪	na3
+4	This, that, who, what	哪儿	na3r5
+4	This, that, who, what	哪里	na3li3
+4	This, that, who, what	哪些	na3xie1
+4	This, that, who, what	怎么	zen3me5
+4	This, that, who, what	干什么	gan4shen2me5
+4	This, that, who, what	是不是	shi4bu5shi4
+5	Be, have, not, very	是	shi4
+5	Be, have, not, very	有	you3
+5	Be, have, not, very	在	zai4
+5	Be, have, not, very	不	bu4
+5	Be, have, not, very	没	mei2
+5	Be, have, not, very	没有	mei2you3
+5	Be, have, not, very	对	dui4
+5	Be, have, not, very	错	cuo4
+5	Be, have, not, very	不对	bu4dui4
+5	Be, have, not, very	不大	bu4da4
+5	Be, have, not, very	不用	bu4yong4
+5	Be, have, not, very	也	ye3
+5	Be, have, not, very	都	dou1
+5	Be, have, not, very	很	hen3
+5	Be, have, not, very	太	tai4
+5	Be, have, not, very	非常	fei1chang2
+5	Be, have, not, very	真	zhen1
+5	Be, have, not, very	真的	zhen1de5
+5	Be, have, not, very	行	xing2
+6	People around us	朋友	peng2you5
+6	People around us	男朋友	nan2peng2you5
+6	People around us	女朋友	nv3peng2you5
+6	People around us	小朋友	xiao3peng2you3
+6	People around us	男生	nan2sheng1
+6	People around us	女生	nv3sheng1
+6	People around us	男人	nan2ren2
+6	People around us	女人	nv3ren2
+6	People around us	男孩儿	nan2hai2r5
+6	People around us	女孩儿	nv3hai2r5
+6	People around us	小孩儿	xiao3hai2r5
+6	People around us	老人	lao3ren2
+6	People around us	小姐	xiao3jie5
+6	People around us	先生	xian1sheng5
+6	People around us	老师	lao3shi1
+6	People around us	同学	tong2xue2
+6	People around us	医生	yi1sheng1
+6	People around us	工人	gong1ren2
+6	People around us	病人	bing4ren2
+6	People around us	网友	wang3you3
+6	People around us	别人	bie2ren5
+7	Days and dates	年	nian2
+7	Days and dates	月	yue4
+7	Days and dates	日	ri4
+7	Days and dates	号	hao4
+7	Days and dates	天	tian1
+7	Days and dates	今天	jin1tian1
+7	Days and dates	明天	ming2tian1
+7	Days and dates	昨天	zuo2tian1
+7	Days and dates	后天	hou4tian1
+7	Days and dates	前天	qian2tian1
+7	Days and dates	今年	jin1nian2
+7	Days and dates	明年	ming2nian2
+7	Days and dates	去年	qu4nian2
+7	Days and dates	星期	xing1qi1
+7	Days and dates	星期日	Xing1qi1ri4
+7	Days and dates	星期天	Xing1qi1tian1
+7	Days and dates	生日	sheng1ri4
+7	Days and dates	日期	ri4qi1
+7	Days and dates	半年	ban4nian2
+7	Days and dates	半天	ban4tian1
+7	Days and dates	新年	xin1nian2
+8	Time of day	早	zao3
+8	Time of day	早上	zao3shang5
+8	Time of day	上午	shang4wu3
+8	Time of day	中午	zhong1wu3
+8	Time of day	下午	xia4wu3
+8	Time of day	晚	wan3
+8	Time of day	晚上	wan3shang5
+8	Time of day	白天	bai2tian1
+8	Time of day	现在	xian4zai4
+8	Time of day	时候	shi2hou5
+8	Time of day	时间	shi2jian1
+8	Time of day	小时	xiao3shi2
+8	Time of day	一会儿	yi1hui4r5
+8	Time of day	有时候	you3shi2hou5
+8	Time of day	有时	you3shi2
+8	Time of day	马上	ma3shang4
+8	Time of day	点	dian3
+8	Time of day	常	chang2
+8	Time of day	常常	chang2chang2
+8	Time of day	先	xian1
+8	Time of day	再	zai4
+8	Time of day	上次	shang4ci4
+8	Time of day	下次	xia4ci4
+9	Eating and drinking	吃	chi1
+9	Eating and drinking	喝	he1
+9	Eating and drinking	饭	fan4
+9	Eating and drinking	菜	cai4
+9	Eating and drinking	茶	cha2
+9	Eating and drinking	水	shui3
+9	Eating and drinking	奶	nai3
+9	Eating and drinking	牛奶	niu2nai3
+9	Eating and drinking	米饭	mi3fan4
+9	Eating and drinking	面包	mian4bao1
+9	Eating and drinking	面条儿	mian4tiao2r5
+9	Eating and drinking	包子	bao1zi5
+9	Eating and drinking	肉	rou4
+9	Eating and drinking	鸡蛋	ji1dan4
+9	Eating and drinking	水果	shui3guo3
+9	Eating and drinking	好吃	hao3chi1
+9	Eating and drinking	吃饭	chi1fan4
+9	Eating and drinking	早饭	zao3fan4
+9	Eating and drinking	午饭	wu3fan4
+9	Eating and drinking	晚饭	wan3fan4
+9	Eating and drinking	杯子	bei1zi5
+10	Little grammar words 1	的	de5
+10	Little grammar words 1	了	le5
+10	Little grammar words 1	吗	ma5
+10	Little grammar words 1	呢	ne5
+10	Little grammar words 1	吧	ba5
+10	Little grammar words 1	着	zhe5
+10	Little grammar words 1	过	guo4
+10	Little grammar words 1	地	de5
+10	Little grammar words 1	就	jiu4
+10	Little grammar words 1	还	hai2
+10	Little grammar words 1	正	zheng4
+10	Little grammar words 1	正在	zheng4zai4
+10	Little grammar words 1	别	bie2
+10	Little grammar words 1	有的	you3de5
+11	Coming and going	来	lai2
+11	Coming and going	去	qu4
+11	Coming and going	回	hui2
+11	Coming and going	到	dao4
+11	Coming and going	进	jin4
+11	Coming and going	出	chu1
+11	Coming and going	走	zou3
+11	Coming and going	跑	pao3
+11	Coming and going	坐	zuo4
+11	Coming and going	站	zhan4
+11	Coming and going	来到	lai2dao4
+11	Coming and going	回来	hui2lai5
+11	Coming and going	回去	hui2qu5
+11	Coming and going	回家	hui2jia1
+11	Coming and going	回到	hui2dao4
+11	Coming and going	进来	jin4lai2
+11	Coming and going	进去	jin4qu4
+11	Coming and going	出来	chu1lai2
+11	Coming and going	出去	chu1qu4
+11	Coming and going	坐下	zuo4xia5
+11	Coming and going	走路	zou3lu4
+11	Coming and going	起	qi3
+11	Coming and going	起来	qi3lai5
+12	Measure words and money	个	ge4
+12	Measure words and money	本	ben3
+12	Measure words and money	杯	bei1
+12	Measure words and money	次	ci4
+12	Measure words and money	包	bao1
+12	Measure words and money	块	kuai4
+12	Measure words and money	元	yuan2
+12	Measure words and money	毛	mao2
+12	Measure words and money	分	fen1
+12	Measure words and money	钱	qian2
+12	Measure words and money	钱包	qian2bao1
+12	Measure words and money	岁	sui4
+12	Measure words and money	一些	yi1xie1
+12	Measure words and money	一点儿	yi1dian3r5
+12	Measure words and money	一下儿	yi1xia4r5
+12	Measure words and money	有些	you3xie1
+12	Measure words and money	有一些	you3yi1xie1
+12	Measure words and money	少	shao3
+12	Measure words and money	多	duo1
+12	Measure words and money	一块儿	yi1kuai4r5
+12	Measure words and money	一半	yi1ban4
+13	Home and house	家	jia1
+13	Home and house	在家	zai4jia1
+13	Home and house	家里	jia1li3
+13	Home and house	房子	fang2zi5
+13	Home and house	房间	fang2jian1
+13	Home and house	洗手间	xi3shou3jian1
+13	Home and house	间	jian1
+13	Home and house	门	men2
+13	Home and house	门口	men2kou3
+13	Home and house	床	chuang2
+13	Home and house	起床	qi3chuang2
+13	Home and house	桌子	zhuo1zi5
+13	Home and house	楼	lou2
+13	Home and house	楼上	lou2shang4
+13	Home and house	楼下	lou2xia4
+13	Home and house	住	zhu4
+14	Direction and position	上	shang4
+14	Direction and position	下	xia4
+14	Direction and position	里	li3
+14	Direction and position	外	wai4
+14	Direction and position	前	qian2
+14	Direction and position	后	hou4
+14	Direction and position	左	zuo3
+14	Direction and position	右	you4
+14	Direction and position	东	dong1
+14	Direction and position	西	xi1
+14	Direction and position	南	nan2
+14	Direction and position	北	bei3
+14	Direction and position	中	zhong1
+14	Direction and position	旁边	pang2bian1
+14	Direction and position	中间	zhong1jian1
+14	Direction and position	上边	shang4bian5
+14	Direction and position	下边	xia4bian5
+14	Direction and position	里边	li3bian5
+14	Direction and position	外边	wai4bian5
+14	Direction and position	前边	qian2bian5
+14	Direction and position	后边	hou4bian5
+14	Direction and position	左边	zuo3bian5
+14	Direction and position	右边	you4bian5
+14	Direction and position	东边	dong1bian5
+14	Direction and position	西边	xi1bian1
+14	Direction and position	南边	nan2bian5
+14	Direction and position	北边	bei3bian1
+14	Direction and position	一边	yi1bian1
+15	Seeing, hearing, speaking	看	kan4
+15	Seeing, hearing, speaking	听	ting1
+15	Seeing, hearing, speaking	说	shuo1
+15	Seeing, hearing, speaking	读	du2
+15	Seeing, hearing, speaking	写	xie3
+15	Seeing, hearing, speaking	问	wen4
+15	Seeing, hearing, speaking	回答	hui2da2
+15	Seeing, hearing, speaking	叫	jiao4
+15	Seeing, hearing, speaking	名字	ming2zi5
+15	Seeing, hearing, speaking	告诉	gao4su5
+15	Seeing, hearing, speaking	看到	kan4dao4
+15	Seeing, hearing, speaking	看见	kan4jian4
+15	Seeing, hearing, speaking	听到	ting1dao4
+15	Seeing, hearing, speaking	听见	ting1jian4
+15	Seeing, hearing, speaking	说话	shuo1hua4
+15	Seeing, hearing, speaking	读书	du2shu1
+15	Seeing, hearing, speaking	听写	ting1xie3
+15	Seeing, hearing, speaking	笑	xiao4
+15	Seeing, hearing, speaking	唱	chang4
+15	Seeing, hearing, speaking	唱歌	chang4ge1
+15	Seeing, hearing, speaking	见	jian4
+15	Seeing, hearing, speaking	见面	jian4mian4
+15	Seeing, hearing, speaking	介绍	jie4shao4
+15	Seeing, hearing, speaking	话	hua4
+16	School	学	xue2
+16	School	学生	xue2sheng5
+16	School	学习	xue2xi2
+16	School	学校	xue2xiao4
+16	School	学院	xue2yuan4
+16	School	大学	da4xue2
+16	School	大学生	da4xue2sheng1
+16	School	小学	xiao3xue2
+16	School	小学生	xiao3xue2sheng1
+16	School	中学	zhong1xue2
+16	School	中学生	zhong1xue2sheng1
+16	School	上学	shang4xue2
+16	School	放学	fang4xue2
+16	School	教学楼	jiao4xue2lou2
+16	School	教	jiao1
+16	School	上课	shang4ke4
+16	School	下课	xia4ke4
+16	School	课	ke4
+16	School	课本	ke4ben3
+16	School	课文	ke4wen2
+17	Books and language	书	shu1
+17	Books and language	书包	shu1bao1
+17	Books and language	本子	ben3zi5
+17	Books and language	字	zi4
+17	Books and language	汉字	han4zi4
+17	Books and language	汉语	Han4yu3
+17	Books and language	中文	Zhong1wen2
+17	Books and language	外语	wai4yu3
+17	Books and language	考	kao3
+17	Books and language	考试	kao3shi4
+17	Books and language	试	shi4
+17	Books and language	页	ye4
+17	Books and language	班	ban1
+18	Want, can, like	想	xiang3
+18	Want, can, like	要	yao4
+18	Want, can, like	会	hui4
+18	Want, can, like	能	neng2
+18	Want, can, like	喜欢	xi3huan5
+18	Want, can, like	爱	ai4
+18	Want, can, like	爱好	ai4hao4
+18	Want, can, like	好看	hao3kan4
+18	Want, can, like	好听	hao3ting1
+18	Want, can, like	高兴	gao1xing4
+18	Want, can, like	生气	sheng1qi4
+18	Want, can, like	觉得	jue2de5
+19	Everyday verbs	做	zuo4
+19	Everyday verbs	干	gan4
+19	Everyday verbs	买	mai3
+19	Everyday verbs	东西	dong1xi5
+19	Everyday verbs	拿	na2
+19	Everyday verbs	放	fang4
+19	Everyday verbs	送	song4
+19	Everyday verbs	用	yong4
+19	Everyday verbs	有用	you3yong4
+19	Everyday verbs	得到	de2dao4
+19	Everyday verbs	还	huan2
+19	Everyday verbs	打	da3
+19	Everyday verbs	开	kai1
+19	Everyday verbs	关	guan1
+19	Everyday verbs	关上	guan1shang4
+19	Everyday verbs	打开	da3kai1
+19	Everyday verbs	动	dong4
+19	Everyday verbs	动作	dong4zuo4
+20	Describing things	大	da4
+20	Describing things	小	xiao3
+20	Describing things	高	gao1
+20	Describing things	新	xin1
+20	Describing things	老	lao3
+20	Describing things	坏	huai4
+20	Describing things	快	kuai4
+20	Describing things	慢	man4
+20	Describing things	难	nan2
+20	Describing things	贵	gui4
+20	Describing things	白	bai2
+20	Describing things	重	zhong4
+20	Describing things	干	gan1
+20	Describing things	干净	gan1jing4
+20	Describing things	差	cha4
+20	Describing things	远	yuan3
+20	Describing things	有名	you3ming2
+20	Describing things	重要	zhong4yao4
+20	Describing things	认真	ren4zhen1
+21	Body and health	身体	shen1ti3
+21	Body and health	身上	shen1shang5
+21	Body and health	手	shou3
+21	Body and health	口	kou3
+21	Body and health	病	bing4
+21	Body and health	看病	kan4bing4
+21	Body and health	生病	sheng1bing4
+21	Body and health	累	lei4
+21	Body and health	睡	shui4
+21	Body and health	睡觉	shui4jiao4
+21	Body and health	饿	e4
+21	Body and health	渴	ke3
+22	Phones and fun	电	dian4
+22	Phones and fun	电话	dian4hua4
+22	Phones and fun	电脑	dian4nao3
+22	Phones and fun	电视	dian4shi4
+22	Phones and fun	电视机	dian4shi4ji1
+22	Phones and fun	电影	dian4ying3
+22	Phones and fun	手机	shou3ji1
+22	Phones and fun	打电话	da3dian4hua4
+22	Phones and fun	上网	shang4wang3
+22	Phones and fun	网上	wang3shang4
+22	Phones and fun	歌	ge1
+22	Phones and fun	玩儿	wan2r5
+22	Phones and fun	好玩儿	hao3wan2r5
+22	Phones and fun	开玩笑	kai1wan2xiao4
+22	Phones and fun	球	qiu2
+22	Phones and fun	打球	da3qiu2
+23	Places and countries	国	guo2
+23	Places and countries	国家	guo2jia1
+23	Places and countries	国外	guo2wai4
+23	Places and countries	外国	wai4guo2
+23	Places and countries	中国	Zhong1guo2
+23	Places and countries	北京	Bei3jing1
+23	Places and countries	商店	shang1dian4
+23	Places and countries	商场	shang1chang3
+23	Places and countries	医院	yi1yuan4
+23	Places and countries	电影院	dian4ying3yuan4
+23	Places and countries	地	di4
+23	Places and countries	地方	di4fang5
+23	Places and countries	地点	di4dian3
+23	Places and countries	地上	di4shang5
+23	Places and countries	地图	di4tu2
+23	Places and countries	饭店	fan4dian4
+23	Places and countries	书店	shu1dian4
+23	Places and countries	图书馆	tu2shu1guan3
+24	Travel and transport	车	che1
+24	Travel and transport	汽车	qi4che1
+24	Travel and transport	火车	huo3che1
+24	Travel and transport	飞机	fei1ji1
+24	Travel and transport	飞	fei1
+24	Travel and transport	车站	che1zhan4
+24	Travel and transport	车上	che1shang5
+24	Travel and transport	车票	che1piao4
+24	Travel and transport	机场	ji1chang3
+24	Travel and transport	机票	ji1piao4
+24	Travel and transport	票	piao4
+24	Travel and transport	门票	men2piao4
+24	Travel and transport	上车	shang4che1
+24	Travel and transport	下车	xia4che1
+24	Travel and transport	路	lu4
+24	Travel and transport	路口	lu4kou3
+24	Travel and transport	路上	lu4shang5
+24	Travel and transport	马路	ma3lu4
+24	Travel and transport	开车	kai1che1
+24	Travel and transport	打车	da3che1
+25	Clothes, weather, nature	衣服	yi1fu5
+25	Clothes, weather, nature	穿	chuan1
+25	Clothes, weather, nature	洗	xi3
+25	Clothes, weather, nature	天气	tian1qi4
+25	Clothes, weather, nature	雨	yu3
+25	Clothes, weather, nature	下雨	xia4yu3
+25	Clothes, weather, nature	风	feng1
+25	Clothes, weather, nature	山	shan1
+25	Clothes, weather, nature	树	shu4
+25	Clothes, weather, nature	花	hua1
+25	Clothes, weather, nature	热	re4
+25	Clothes, weather, nature	冷	leng3
+26	Work and plans	上班	shang4ban1
+26	Work and plans	下班	xia4ban1
+26	Work and plans	工作	gong1zuo4
+26	Work and plans	开会	kai1hui4
+26	Work and plans	事	shi4
+26	Work and plans	没事儿	mei2shi4r5
+26	Work and plans	忙	mang2
+26	Work and plans	准备	zhun3bei4
+26	Work and plans	休息	xiu1xi5
+26	Work and plans	放假	fang4jia4
+26	Work and plans	请假	qing3jia4
+26	Work and plans	帮	bang1
+26	Work and plans	帮忙	bang1mang2
+27	Thinking and finding	知道	zhi1dao4
+27	Thinking and finding	认识	ren4shi5
+27	Thinking and finding	记	ji4
+27	Thinking and finding	记得	ji4de5
+27	Thinking and finding	记住	ji4zhu5
+27	Thinking and finding	忘	wang4
+27	Thinking and finding	忘记	wang4ji4
+27	Thinking and finding	明白	ming2bai5
+27	Thinking and finding	知识	zhi1shi5
+27	Thinking and finding	等	deng3
+27	Thinking and finding	找	zhao3
+27	Thinking and finding	找到	zhao3dao4
+28	Little grammar words 2	和	he2
+28	Little grammar words 2	跟	gen1
+28	Little grammar words 2	从	cong2
+28	Little grammar words 2	比	bi3
+28	Little grammar words 2	给	gei3
+28	Little grammar words 2	一起	yi1qi3
+28	Little grammar words 2	一样	yi1yang4
+28	Little grammar words 2	最后	zui4hou4
+28	Little grammar words 2	还是	hai2shi5
+28	Little grammar words 2	还有	hai2you3
+28	Little grammar words 2	最	zui4
+28	Little grammar words 2	最好	zui4hao3
+28	Little grammar words 2	别的	bie2de5

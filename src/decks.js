@@ -20,19 +20,28 @@ export const READY_MADE_LISTS = [
   { id: 'tocfl', name: 'TOCFL', levels: ['Novice 1', 'Novice 2', '1', '2', '3', '4', '5'] },
 ];
 
-// The deck record for a ready-made list ('hsk-3.0') or one of its levels
-// ('hsk-3.0/1', see listTag in words.js), or null if the ID is neither.
-// The ID decides everything, so every device makes the same record.
+// The deck record for a ready-made list ('hsk-3.0'), one of its levels
+// ('hsk-3.0/1') or a group of words inside a level ('tocfl/1/03 Education
+// 教育'; see listTag in words.js), or null if the ID is none of these.
+// The ID decides everything, so every device makes the same record. A
+// group's ID holds its number, which is its place among the level's groups,
+// and its name.
 export function readyMadeDeck(deckId) {
   for (const [position, list] of READY_MADE_LISTS.entries()) {
     if (deckId === list.id) {
       return { id: list.id, name: list.name, parentId: null, order: position };
     }
-    const level = list.levels.find((entry) => deckId === `${list.id}/${entry}`);
-    if (level !== undefined) {
-      // TOCFL has two levels with names of their own before its level 1.
-      const name = /^\d/.test(level) ? `Level ${level}` : level;
-      return { id: deckId, name, parentId: list.id, order: list.levels.indexOf(level) };
+    for (const level of list.levels) {
+      const levelId = `${list.id}/${level}`;
+      if (deckId === levelId) {
+        // TOCFL has two levels with names of their own before its level 1.
+        const name = /^\d/.test(level) ? `Level ${level}` : level;
+        return { id: deckId, name, parentId: list.id, order: list.levels.indexOf(level) };
+      }
+      const group = deckId.startsWith(`${levelId}/`) && deckId.slice(levelId.length + 1).match(/^(\d+) (.+)$/);
+      if (group) {
+        return { id: deckId, name: group[2], parentId: levelId, order: Number(group[1]) };
+      }
     }
   }
   return null;
@@ -48,10 +57,15 @@ export function missingReadyMadeDecks(words, decks) {
   const missing = new Map();
   for (const word of words) {
     for (const deckId of word.decks || []) {
-      const deck = readyMadeDeck(deckId);
-      for (const needed of deck ? [readyMadeDeck(deck.parentId), deck] : []) {
-        if (needed && !stored.has(needed.id)) {
-          missing.set(needed.id, needed);
+      // The deck itself and each deck it is inside (a group's level, a
+      // level's list), outermost first.
+      const chain = [];
+      for (let deck = readyMadeDeck(deckId); deck; deck = deck.parentId && readyMadeDeck(deck.parentId)) {
+        chain.unshift(deck);
+      }
+      for (const deck of chain) {
+        if (!stored.has(deck.id)) {
+          missing.set(deck.id, deck);
         }
       }
     }

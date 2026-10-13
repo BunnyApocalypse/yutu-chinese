@@ -60,9 +60,11 @@ const inDictionary = (traditional, pinyin) =>
     (entry) => entry.traditional === traditional && entry.pinyin === pinyin,
   );
 
-// Writes one list. words: [{ level, simplified, traditional, pinyin, meaning }].
-// A word listed twice (at two levels, or as two variants that come to the
-// same thing) is kept at its first, lower level.
+// Writes one list. words: [{ level, simplified, traditional, pinyin, meaning }]
+// and, for a word in a group inside its level, `group`: the group's number
+// within the level and its name ("03 Education 教育"), which goes in a sixth
+// column. A word listed twice (at two levels, or as two variants that come to
+// the same thing) is kept at its first, lower level.
 function writeList(file, title, source, words, folder = FOLDER) {
   const seen = new Set();
   const lines = [];
@@ -73,15 +75,67 @@ function writeList(file, title, source, words, folder = FOLDER) {
     }
     seen.add(id);
     const meaning = inDictionary(word.traditional, word.pinyin) ? '' : word.meaning || '';
-    lines.push([word.level, word.simplified, word.traditional, word.pinyin, meaning].join('\t').trimEnd());
+    lines.push([word.level, word.simplified, word.traditional, word.pinyin, meaning, word.group || ''].join('\t').trimEnd());
   }
   fs.writeFileSync(`${folder}/${file}`, `# ${title}\n# Source: ${source}\n${lines.join('\n')}\n`);
   const noMeaning = words.filter((word) => !word.meaning && !inDictionary(word.traditional, word.pinyin));
   if (noMeaning.length > 0) {
     console.log(`  Without a meaning (add them to extra-meanings.tsv): ${noMeaning.map((word) => `${word.simplified} ${word.pinyin}`).join(', ')}`);
   }
-  const own = lines.filter((line) => line.split('\t').length === 5).length;
+  const own = lines.filter((line) => (line.split('\t')[4] || '') !== '').length;
   console.log(`Wrote ${folder}/${file}: ${lines.length} words, ${own} with a meaning of their own.`);
+}
+
+// ---- Groups inside a level ----
+//
+// The HSK lists are alphabetical inside each level, which is no order to
+// learn words in. For the lower levels there is a file per level in
+// data/wordlists/hsk/groups/ ("hsk-3.0-1.tsv") that sorts the level's words
+// into small themed groups, in an order for learning: one word per line with
+// the columns group number, group name, simplified, pinyin. These files were
+// written for this project (see the README there), not taken from the HSK.
+
+const GROUPS_FOLDER = `${FOLDER}/groups`;
+
+// Returns `words` with those of each level that has a groups file put in
+// that file's order and given their `group`. Levels keep their places in
+// the list.
+function withGroups(words, listId) {
+  const result = [...words];
+  for (const level of new Set(words.map((word) => word.level))) {
+    const file = `${GROUPS_FOLDER}/${listId}-${level}.tsv`;
+    if (!fs.existsSync(file)) {
+      continue;
+    }
+    // Where each word comes in the file, and its group: "simplified pinyin" → { place, group }.
+    const placed = new Map();
+    for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
+      if (line.trim() === '' || line.startsWith('#')) {
+        continue;
+      }
+      const [number, name, simplified, pinyin] = line.split('\t');
+      placed.set(`${simplified} ${pinyin}`, { place: placed.size, group: `${number.padStart(2, '0')} ${name}` });
+    }
+    const keyOf = (word) => `${word.simplified} ${word.pinyin}`;
+    const places = result.flatMap((word, index) => (word.level === level ? [index] : []));
+    const missing = places.map((index) => result[index]).filter((word) => !placed.has(keyOf(word)));
+    // A word the file lacks goes last, in no group. That is as it should be
+    // for a word also listed at a lower level, which writeList leaves out
+    // here; a test checks that no word that is written is without a group.
+    if (missing.length > 0) {
+      console.log(`  Not in ${file}: ${missing.map(keyOf).join(', ')}`);
+    }
+    const placeOf = (word) => placed.get(keyOf(word))?.place ?? Infinity;
+    const inOrder = places
+      .map((index) => result[index])
+      // sort() keeps words with the same key (two traditional forms) as they were.
+      .sort((a, b) => placeOf(a) - placeOf(b) || 0);
+    places.forEach((index, position) => {
+      result[index] = { ...inOrder[position], group: placed.get(keyOf(inOrder[position]))?.group };
+    });
+    console.log(`  ${listId} level ${level}: ${new Set([...placed.values()].map((entry) => entry.group)).size} groups`);
+  }
+  return result;
 }
 
 // ---- Matching a listed word to the dictionary ----
@@ -164,7 +218,7 @@ for (const row of rows) {
   }
   hsk3.push({ level: column(row, 'Level'), simplified, ...word });
 }
-writeList('hsk-3.0.tsv', 'HSK 3.0 (2021): levels 1 to 6 and 7-9', `ivankra/hsk30 at ${HSK3_VERSION}`, hsk3);
+writeList('hsk-3.0.tsv', 'HSK 3.0 (2021): levels 1 to 6 and 7-9', `ivankra/hsk30 at ${HSK3_VERSION}`, withGroups(hsk3, 'hsk-3.0'));
 if (hsk3LeftOut.length > 0) {
   console.log(`  Left out, for want of a reading: ${hsk3LeftOut.join(' ')}`);
 }
@@ -221,7 +275,7 @@ for (const level of [1, 2, 3, 4, 5, 6]) {
     }
   }
 }
-writeList('hsk-2.0.tsv', 'HSK 2.0 (2012): levels 1 to 6', `glxxyz/hskhsk.com at ${HSK2_VERSION}`, hsk2);
+writeList('hsk-2.0.tsv', 'HSK 2.0 (2012): levels 1 to 6', `glxxyz/hskhsk.com at ${HSK2_VERSION}`, withGroups(hsk2, 'hsk-2.0'));
 if (hsk2AsInSource > 0) {
   console.log(`  ${hsk2AsInSource} taken as the source has them: add them to extra-meanings.tsv.`);
 }
@@ -374,6 +428,24 @@ function tocflMatch(traditional, pinyins) {
   return Array.from(traditional).length > 1 && words.length === 1 ? words[0] : null;
 }
 
+// The lower four levels sort their words under twelve topics ("contexts",
+// 任務領域), the same in each. The app makes a deck of each topic inside its
+// level, named in English (Claude's translation) and in the list's own words.
+const TOCFL_TOPICS = {
+  個人資料: 'Personal information',
+  工作: 'Work',
+  教育: 'Education',
+  '房屋與家庭、環境': 'Home and surroundings',
+  日常生活: 'Daily life',
+  '閒暇時間、娛樂': 'Free time',
+  與他人的關係: 'Other people',
+  旅行: 'Travel',
+  健康及身體照護: 'Health',
+  購物: 'Shopping',
+  飲食: 'Food and drink',
+  其他: 'Other',
+};
+
 // The sheets that are levels, in order, and what the app calls each level.
 const TOCFL_LEVELS = ['Novice 1', 'Novice 2', 'Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'];
 
@@ -387,11 +459,20 @@ for (const levelName of TOCFL_LEVELS) {
   // topic in front of the word.
   const [captions, ...rows] = sheet.rows;
   const wordColumn = captions.findIndex((caption) => caption.includes('Vocabulary'));
+  // The topics of this level, numbered in the order the sheet has them.
+  const groups = new Map();
   for (const row of rows) {
     const listed = (row[wordColumn] || '').trim();
     const pinyin = (row[wordColumn + 1] || '').trim();
     if (listed === '' || pinyin === '') {
       continue;
+    }
+    const topic = wordColumn > 0 ? row[0].trim() : '';
+    if (topic !== '' && !groups.has(topic)) {
+      if (!TOCFL_TOPICS[topic]) {
+        throw new Error(`TOCFL has a topic this script does not know: ${topic}`);
+      }
+      groups.set(topic, `${String(groups.size + 1).padStart(2, '0')} ${TOCFL_TOPICS[topic]} ${topic}`);
     }
     const pinyins = formsOf(pinyin);
     for (const traditional of formsOf(listed)) {
@@ -403,6 +484,7 @@ for (const levelName of TOCFL_LEVELS) {
           simplified: match.simplified,
           traditional,
           pinyin: match.pinyin,
+          group: groups.get(topic),
         });
       } else {
         tocflLeftOut.push(`${traditional} ${pinyin}`);

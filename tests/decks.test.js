@@ -27,6 +27,14 @@ test('a ready-made list and its levels have decks with fixed IDs', () => {
   assert.deepEqual(readyMadeDeck('hsk-3.0'), { id: 'hsk-3.0', name: 'HSK 3.0', parentId: null, order: 0 });
   assert.deepEqual(readyMadeDeck('hsk-3.0/7-9'), { id: 'hsk-3.0/7-9', name: 'Level 7-9', parentId: 'hsk-3.0', order: 6 });
   assert.deepEqual(readyMadeDeck('tocfl/Novice 2'), { id: 'tocfl/Novice 2', name: 'Novice 2', parentId: 'tocfl', order: 1 });
+  // A group of words inside a level: its number is its place, the rest its name.
+  assert.deepEqual(readyMadeDeck('tocfl/Novice 2/03 Education 教育'), {
+    id: 'tocfl/Novice 2/03 Education 教育',
+    name: 'Education 教育',
+    parentId: 'tocfl/Novice 2',
+    order: 3,
+  });
+  assert.equal(readyMadeDeck('tocfl/Novice 2/Education'), null);
   assert.equal(readyMadeDeck('hsk-3.0/12'), null);
   assert.equal(readyMadeDeck('my textbook'), null);
 });
@@ -41,6 +49,15 @@ test('the levels listed for the decks are those in the list files', () => {
     for (const level of list.levels) {
       assert.equal(readyMadeDeck(listTag(list.id, level)).parentId, list.id);
     }
+    // So has every group's, inside its level and in the order of the file.
+    const seen = new Map();
+    for (const entry of entries.filter((candidate) => candidate.group !== '')) {
+      const deck = readyMadeDeck(listTag(list.id, entry.level, entry.group));
+      assert.equal(deck.parentId, listTag(list.id, entry.level), entry.group);
+      const last = seen.get(entry.level) ?? 0;
+      assert.ok(deck.order === last || deck.order === last + 1, `${list.id} ${entry.level}: ${entry.group} is out of order`);
+      seen.set(entry.level, deck.order);
+    }
   }
 });
 
@@ -52,6 +69,11 @@ test('only the decks that are not stored yet are made, with the list they are in
   ];
   assert.deepEqual(missingReadyMadeDecks(words, []).map((deck) => deck.id), ['hsk-3.0', 'hsk-3.0/1', 'hsk-2.0', 'hsk-2.0/2']);
   assert.deepEqual(missingReadyMadeDecks(words, [{ id: 'hsk-3.0' }, { id: 'hsk-3.0/1' }]).map((deck) => deck.id), ['hsk-2.0', 'hsk-2.0/2']);
+  // A word in a group brings the group, its level and its list.
+  assert.deepEqual(
+    missingReadyMadeDecks([{ id: 'd', decks: ['tocfl/1/02 Work 工作'] }], [{ id: 'tocfl' }]).map((deck) => deck.id),
+    ['tocfl/1', 'tocfl/1/02 Work 工作'],
+  );
 });
 
 test('the list tags of words added before there were decks become their decks', () => {

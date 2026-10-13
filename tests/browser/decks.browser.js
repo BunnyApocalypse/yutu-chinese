@@ -268,4 +268,27 @@ describe('decks', { concurrency: false }, () => {
     assert.deepEqual((await stored(page, 'decks')).map((deck) => deck.id), ['chinese']);
     assert.deepEqual(await stored(page, 'words'), []);
   });
+
+  it('makes a deck of each group of words inside a ready-made level', { timeout: 60000 }, async () => {
+    await tap(page, 'ready-decks-button');
+    await page.evaluate(`document.querySelector('#ready-list button[data-list="tocfl"]').click()`);
+    await waitUntil(page, `document.querySelector('#ready-levels label')?.textContent.trim().startsWith('Novice 1:')`, 'the levels of TOCFL');
+    await page.evaluate(`document.querySelector('#ready-levels input[value="Novice 1"]').click()`);
+    await tap(page, 'add-ready-button');
+    // Reading the dictionary and adding the words takes a few seconds.
+    await waitUntil(page, `document.getElementById('ready-report').textContent.startsWith('Added 182 words')`, 'the words added');
+
+    // The list, its level, and the level's eleven topics, in the list's order.
+    const decks = await stored(page, 'decks');
+    const topics = decks.filter((deck) => deck.parentId === 'tocfl/Novice 1').sort((a, b) => a.order - b.order);
+    assert.equal(decks.find((deck) => deck.id === 'tocfl/Novice 1').parentId, 'tocfl');
+    assert.equal(topics.length, 11);
+    assert.deepEqual(topics.slice(0, 2).map((deck) => deck.name), ['Personal information 個人資料', 'Work 工作']);
+    // A word is in its topic's deck, and so counts for the level and the list.
+    const me = (await stored(page, 'words')).find((word) => word.id === '我|wo3');
+    assert.deepEqual(me.decks, ['tocfl/Novice 1/01 Personal information 個人資料']);
+    await tap(page, 'my-decks-button');
+    await waitUntil(page, deckRows(2), 'the two decks');
+    assert.match(await textOf(page, '#deck-list li:last-child'), /^TOCFL182 words · 0 learned \(0%\) · 12 decks inside$/);
+  });
 });

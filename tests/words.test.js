@@ -221,13 +221,17 @@ test('a word whose ID changes remembers the IDs it had', () => {
 
 test('a ready-made list is read, and its levels counted against the words there are', () => {
   const entries = parseReadyList('# a comment\n1\t爱\t愛\tai4\n1\t车上\t車上\tche1shang5\tin the car\n2\t爱好\t愛好\tai4hao4\n');
-  assert.deepEqual(entries[0], { level: '1', simplified: '爱', traditional: '愛', pinyin: 'ai4', meaning: '' });
+  assert.deepEqual(entries[0], { level: '1', simplified: '爱', traditional: '愛', pinyin: 'ai4', meaning: '', group: '' });
   assert.equal(entries[1].meaning, 'in the car');
   assert.deepEqual(levelsOfReadyList(entries, [{ id: '愛|ai4' }]), [
     { level: '1', count: 2, newCount: 1 },
     { level: '2', count: 1, newCount: 1 },
   ]);
   assert.equal(listTag('hsk-3.0', '7-9'), 'hsk-3.0/7-9');
+  // A word in a group of its level, without and with a meaning of its own.
+  const grouped = parseReadyList('1\t爱\t愛\tai4\t\t02 Feelings\n1\t车上\t車上\tche1shang5\tin the car\t05 Travel\n');
+  assert.deepEqual(grouped.map((entry) => [entry.meaning, entry.group]), [['', '02 Feelings'], ['in the car', '05 Travel']]);
+  assert.equal(listTag('hsk-3.0', '1', grouped[0].group), 'hsk-3.0/1/02 Feelings');
 });
 
 test('the ready-made lists are well formed, and every word can get a meaning', async () => {

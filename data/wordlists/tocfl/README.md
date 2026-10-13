@@ -4,6 +4,8 @@ The word list of the TOCFL (Test of Chinese as a Foreign Language, 華語文能�
 
 `tocfl.tsv` has 7431 words in seven levels: Novice 1 and 2 (準備級), then levels 1 to 5 (入門級, 基礎級, 進階級, 高階級, 流利級). One word per line with tabs between the columns: level, simplified, traditional, pinyin, meaning (always empty: the app proposes a meaning from its dictionary).
 
+The four lower levels (Novice 1 to Level 2) have a sixth column, the word's topic. The committee's sheets for those levels sort the words under twelve topics (任務領域, "contexts"), the same in each; the higher levels have none. The app makes a deck of each topic inside its level. The column holds the topic's number within the level and its name, as in `03 Education 教育`. The English names are this project's translations (`TOCFL_TOPICS` in the build script), not the committee's.
+
 ## Source
 
 The 華語八千詞表 of July 2023, published by the test's Steering Committee (國家華語測驗推動工作委員會): `8000zhuyin_202307.zip` from <https://tocfl.edu.tw/>, which holds a spreadsheet with one sheet per level. `scripts/build-word-lists.js` downloads and reads it.
