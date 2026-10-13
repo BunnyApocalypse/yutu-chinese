@@ -20,7 +20,7 @@
 //                  page in the background (offline.js) and kept from one
 //                  version of the app to the next.
 //   offline-audio  the recordings of words that have been played (speech.js),
-//                  or all of them (43 MB) if that was asked for in Settings.
+//                  or all of them (125 MB) if that was asked for in Settings.
 //                  Kept from one version to the next as well.
 
 /* global VERSION, APP_FILES */

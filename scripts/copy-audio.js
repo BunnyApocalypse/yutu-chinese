@@ -21,7 +21,7 @@ const SOURCE = 'data/audio-cmn';
 const TARGET = 'public/audio';
 // Raise this when the script changes what it writes, or existing copies
 // will not be made again.
-const AUDIO_VERSION = 1;
+const AUDIO_VERSION = 2;
 
 // The name of a word's file, without ".mp3". The same function is in
 // src/speech.js; the two must agree.

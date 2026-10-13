@@ -9,7 +9,7 @@ Spoken Mandarin for the app's "Listen" button: one recording for each of about 8
 
 ## Source
 
-[hugolpz/audio-cmn](https://github.com/hugolpz/audio-cmn) at commit `ff9ed3d`: the folders `18k-abr/hsk` and `18k-abr/syllabs`, copied unchanged. That is the project's smallest version (about 43 MB); it also has better-sounding ones several times the size. The word recordings come from the Shtooka project's collection `cmn-caen-tan`.
+[hugolpz/audio-cmn](https://github.com/hugolpz/audio-cmn) at commit `ff9ed3d`: the folders `64k/hsk` and `64k/syllabs`, copied unchanged (about 125 MB). The project also has smaller versions, down to 43 MB (`18k-abr`); the app used that one for a day in October 2026, and the owner found it audibly compressed, the 24k one too. The word recordings come from the Shtooka project's collection `cmn-caen-tan`.
 
 ## License
 

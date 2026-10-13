@@ -65,12 +65,12 @@ const bigFiles = filesUnder('assets').filter((file) => file.endsWith('.tsv') || 
 
 // ---- The recordings ----
 //
-// About 10,000 small sound files (see scripts/copy-audio.js), 43 MB together.
+// About 10,000 small sound files (see scripts/copy-audio.js), 125 MB together.
 // They are not saved on the device by themselves: each is kept once it has
 // been played, and all of them only if asked for in Settings. For that they
 // are packed like the stroke data, but as they are (sound is not text): a
 // pack is the files one after another, and the list says how long each is.
-const FILES_PER_AUDIO_PACK = 800;
+const FILES_PER_AUDIO_PACK = 400;
 const audioFiles = filesUnder('audio').filter((file) => file.endsWith('.mp3'));
 const audioPacks = [];
 for (let start = 0; start < audioFiles.length; start += FILES_PER_AUDIO_PACK) {
