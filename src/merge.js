@@ -15,6 +15,8 @@
 //             The marks themselves are all kept.
 //   settings  The one saved later is kept, setting by setting; those that
 //             belong to the device stay as they are on this device.
+//   A word's `learnedAt` is the earlier of the two sides', and each time in
+//   its `startedOverAt` the later, whichever record is kept.
 //   cards     Not combined, but worked out afresh from the combined reviews
 //             (replay in scheduler.js), unless one side already has every
 //             review of the card: then its card is kept as stored.
@@ -25,6 +27,7 @@
 
 import { replay } from './scheduler.js';
 import { cardIdFor } from './session.js';
+import { countedFrom } from './cardManager.js';
 
 // Settings that say something about the device, not about the learner.
 const DEVICE_SETTINGS = [
@@ -103,10 +106,17 @@ function mergeWords(mine, theirs, currentId, removedAt) {
   // on either side, whichever record is kept.
   const learnedAt = new Map();
   const formerIds = new Map();
+  // When each kind of card of a word was last started over, on either side:
+  // the later time, whichever record is kept.
+  const startedOverAt = new Map();
   for (const word of [...mine, ...theirs]) {
     const id = currentId(word.id);
     if (word.learnedAt !== undefined) {
       learnedAt.set(id, Math.min(word.learnedAt, learnedAt.get(id) ?? Infinity));
+    }
+    for (const [type, time] of Object.entries(word.startedOverAt || {})) {
+      const known = startedOverAt.get(id) || {};
+      startedOverAt.set(id, { ...known, [type]: Math.max(time, known[type] ?? -1) });
     }
     formerIds.set(id, [...(formerIds.get(id) || []), ...(word.formerIds || [])]);
   }
@@ -124,6 +134,9 @@ function mergeWords(mine, theirs, currentId, removedAt) {
     const merged = { ...word };
     if (learnedAt.has(id)) {
       merged.learnedAt = learnedAt.get(id);
+    }
+    if (startedOverAt.has(id)) {
+      merged.startedOverAt = startedOverAt.get(id);
     }
     const former = [...new Set(formerIds.get(id))].filter((formerId) => formerId !== id);
     if (former.length > 0) {
@@ -165,8 +178,9 @@ function mergeCards(words, reviews, sides, removedAt) {
   for (const [group, all] of reviewsOf) {
     const word = words.get(all[0].wordId);
     // Reviews made before the word was removed belong to the word as it was
-    // then. Added again, it starts from scratch.
-    const removed = removedAt.get(word.id) ?? -1;
+    // then. Added again, it starts from scratch. So does a kind of card that
+    // was started over (cardManager.js).
+    const removed = Math.max(removedAt.get(word.id) ?? -1, countedFrom(word, all[0].type));
     const counted = all.filter((review) => review.time > removed);
 
     // A side that has made or already taken in every one of these reviews

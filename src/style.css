@@ -723,6 +723,40 @@ button.word-entry {
   color: #6b6557;
 }
 
+/* The fold-outs of a pop-up panel, one under the other. */
+.settings-panel .add-list {
+  margin-bottom: 8px;
+}
+
+/* A word's cards in its pop-up panel: one line each, the button at the end. */
+.card-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+}
+
+.card-rows li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-rows li span {
+  flex: 1;
+  color: #6b6557;
+}
+
+/* A word picked while several are being selected. */
+button.word-entry.selected {
+  border-color: #3b6fb6;
+  box-shadow: inset 0 0 0 2px #3b6fb6;
+}
+
 /* In the list of leeches: what is forgotten about the word, on a line of its own. */
 .entry-leech {
   grid-column: 1 / -1;

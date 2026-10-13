@@ -12,6 +12,8 @@ import { allCardIds } from './session.js';
 import { fileCardsByScript } from './scriptCards.js';
 import { missingReadyMadeDecks, deckTree, deckWithInside, isInDecks, withDeck } from './decks.js';
 import { createDecksPanel } from './decksPanel.js';
+import { createCardsPanel } from './cardsPanel.js';
+import { lapsesOf } from './leeches.js';
 import { findLeeches, describeLeech, describeSuspended, leechList, leechPrompt } from './leeches.js';
 import {
   checkWord,
@@ -95,6 +97,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   const countElement = byId('word-count');
   const searchInput = byId('word-search');
   const filterSelect = byId('word-filter');
+  const sortSelect = byId('word-sort');
   const listElement = byId('word-list');
   const listNote = byId('word-list-note');
   const editDecks = byId('edit-decks');
@@ -121,6 +124,9 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   let reviews = null;
   // The leeches in the list as it is shown, for the two export buttons.
   let shownLeeches = [];
+  // The words in the list as it is shown (all of them, not only the rows
+  // that fit), for "Select all listed".
+  let listedWords = [];
   // The ID of the deck whose page is open; null on the front page, and
   // undefined until the tab is first shown (see show()).
   let openDeckId;
@@ -188,6 +194,32 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     const inside = deck ? deckWithInside(decks, deck.id) : null;
     byId('add-word-fold').open = Boolean(deck) && !words.some((word) => isInDecks(word, inside));
   }
+
+  // Managing cards (cardsPanel.js): the "Cards" fold-out of a word's panel
+  // and the bar for several words at once.
+  const cardsPanel = createCardsPanel({
+    getWords: () => words,
+    getCards: () => cards,
+    getDecks: () => decks,
+    getSettings,
+    // The reviews are only read when wanted, since there can be very many.
+    getReviews: async () => {
+      reviews = reviews || (await getAll('reviews'));
+      return reviews;
+    },
+    scriptOf: (word) => scriptFor(word, getSettings()),
+    getListed: () => listedWords,
+    showList: () => renderList(),
+    afterChange: () => afterChange(),
+    // The word open in the pop-up panel was changed from the fold-out: the
+    // panel goes on with the new record, and reports a change when closed.
+    onWordChanged: (word) => {
+      openWord = word;
+      dialogResult = { changed: true, word };
+      studyNextButton.hidden = studiedWordIds.has(word.id);
+      showDialogStatus(word);
+    },
+  });
 
   // Shows the decks, and the forms for adding words if a deck's page is open.
   function renderDecks() {
@@ -329,11 +361,26 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       leechesOf.set(leech.word.id, [...(leechesOf.get(leech.word.id) || []), leech]);
     }
     const onlySuspended = filterSelect.value === 'suspended';
-    const matching = onlyLeeches
+    const filtered = onlyLeeches
       ? [...new Set(shownLeeches.map((leech) => leech.word))]
       : onlySuspended
         ? searched.filter((word) => describeSuspended(word) !== '')
         : searched;
+    // The order: as the words are learned, by which has a card due soonest
+    // (words with no card studied last), or by which was forgotten most.
+    const cardsOf = new Map();
+    for (const card of sortSelect.value === '' ? [] : cards) {
+      cardsOf.set(card.wordId, [...(cardsOf.get(card.wordId) || []), card]);
+    }
+    const nextDue = (word) => Math.min(Infinity, ...(cardsOf.get(word.id) || []).map((card) => card.due));
+    const mostLapses = (word) => Math.max(0, ...(cardsOf.get(word.id) || []).map(lapsesOf));
+    const matching =
+      sortSelect.value === 'due'
+        ? [...filtered].sort((a, b) => nextDue(a) - nextDue(b) || a.order - b.order)
+        : sortSelect.value === 'lapses'
+          ? [...filtered].sort((a, b) => mostLapses(b) - mostLapses(a) || a.order - b.order)
+          : filtered;
+    listedWords = matching;
     byId('leech-export').hidden = shownLeeches.length === 0;
     listNote.textContent =
       matching.length > MAX_ROWS
@@ -378,7 +425,17 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       if (!onlyLeeches && describeSuspended(word) !== '') {
         button.append(span('entry-leech', describeSuspended(word)));
       }
-      button.addEventListener('click', () => openDialog(word));
+      // While words are being selected, a tap picks the word instead of
+      // opening its panel.
+      button.classList.toggle('selected', cardsPanel.selecting() && cardsPanel.isSelected(word));
+      button.addEventListener('click', () => {
+        if (cardsPanel.selecting()) {
+          cardsPanel.toggle(word);
+          button.classList.toggle('selected', cardsPanel.isSelected(word));
+        } else {
+          openDialog(word);
+        }
+      });
       const row = document.createElement('li');
       row.append(button);
       return row;
@@ -388,6 +445,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
 
   searchInput.addEventListener('input', renderList);
   filterSelect.addEventListener('change', renderList);
+  sortSelect.addEventListener('change', renderList);
 
   // ---- Taking the leeches elsewhere ----
 
@@ -856,6 +914,13 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
 
   // ---- One word: change, study next, remove ----
 
+  // Says at the top of the pop-up panel whether the word has been learned.
+  function showDialogStatus(word) {
+    dialogStatus.textContent = studiedWordIds.has(word.id)
+      ? 'You have learned this word; its cards come up in Review.'
+      : 'Waiting: you have not learned this word yet. It comes up in the Learn tab.';
+  }
+
   // The checkboxes for suspending a word's cards, one per kind.
   const suspendedBoxes = [...document.querySelectorAll('#edit-suspended input')];
   // Says on the closed fold-out how many are ticked.
@@ -872,9 +937,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     dialogResult = { changed: false, word };
     const studied = studiedWordIds.has(word.id);
     dialogTitle.textContent = `${word[scriptFor(word, getSettings())]} ${formatPinyin(word.pinyin)}`;
-    dialogStatus.textContent = studied
-      ? 'You have learned this word; its cards come up in Review.'
-      : 'Waiting: you have not learned this word yet. It comes up in the Learn tab.';
+    showDialogStatus(word);
     editDefinition.value = word.definition;
     editTraditional.value = word.traditional;
     editSimplified.value = word.simplified;
@@ -904,6 +967,8 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     }
     byId('edit-suspended-row').open = suspendedBoxes.some((box) => box.checked);
     showSuspendedCount();
+    byId('edit-cards-row').open = false;
+    cardsPanel.showCardsOf(word);
     dialogNote.textContent = '';
     // Only a word still waiting can be moved to the front of the line.
     studyNextButton.hidden = studied;
@@ -962,6 +1027,9 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     }
     if (openWord.learnedAt !== undefined) {
       saved.learnedAt = openWord.learnedAt;
+    }
+    if (openWord.startedOverAt) {
+      saved.startedOverAt = openWord.startedOverAt;
     }
     const suspended = suspendedBoxes.filter((box) => box.checked).map((box) => box.value);
     if (suspended.length > 0) {

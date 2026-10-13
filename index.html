@@ -212,6 +212,34 @@
               <option value="suspended">Words with a suspended card</option>
             </select>
           </label>
+          <label class="setting">
+            Order
+            <select id="word-sort">
+              <option value="">Learning order</option>
+              <option value="due">Next due first</option>
+              <option value="lapses">Most forgotten first</option>
+            </select>
+          </label>
+          <!-- Doing one thing to several words at once (cardsPanel.js). -->
+          <div class="buttons">
+            <button id="select-words-button" class="small" type="button">Select words</button>
+          </div>
+          <div id="bulk-bar" class="add-list" hidden>
+            <p id="bulk-count" class="hint"></p>
+            <div class="buttons">
+              <button id="bulk-all-button" class="small" type="button">Select all listed</button>
+              <button id="bulk-know-button" class="small" type="button" data-needs-selection>I know these</button>
+              <button id="bulk-suspend-button" class="small" type="button" data-needs-selection>Suspend</button>
+              <button id="bulk-unsuspend-button" class="small" type="button" data-needs-selection>Switch back on</button>
+              <button id="bulk-start-over-button" class="small" type="button" data-needs-selection>Start over</button>
+              <button id="bulk-remove-button" class="small" type="button" data-needs-selection>Remove</button>
+            </div>
+            <div class="buttons">
+              <select id="bulk-deck" aria-label="Deck to put the selected words in"></select>
+              <button id="bulk-deck-button" class="small" type="button" data-needs-selection>Add to this deck</button>
+            </div>
+            <p id="bulk-note" class="note"></p>
+          </div>
           <!-- Only with the leeches listed: two ways to take them elsewhere. -->
           <div id="leech-export" class="buttons" hidden>
             <button id="leech-list-button" class="small" type="button">Download list</button>
@@ -335,6 +363,18 @@
           <details id="edit-decks-row" class="add-list" hidden>
             <summary id="edit-decks-summary">Decks</summary>
             <fieldset id="edit-decks" class="setting"><legend>This word is in</legend></fieldset>
+          </details>
+          <!-- How each of the word's cards stands (cardsPanel.js). -->
+          <details id="edit-cards-row" class="add-list">
+            <summary>Cards</summary>
+            <ul id="edit-cards" class="card-rows"></ul>
+            <div class="buttons">
+              <button id="know-word-button" class="small" type="button">I know this word already</button>
+            </div>
+            <p class="hint">
+              <b>Start over</b> makes a card new again. <b>I know this word already</b> answers its new cards "Easy",
+              so the word skips its lesson and the cards come up in Review in some days.
+            </p>
           </details>
           <!-- One checkbox per kind of card: ticked ones do not come up in Review. -->
           <details id="edit-suspended-row" class="add-list">

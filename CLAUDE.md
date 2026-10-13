@@ -72,6 +72,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `src/welcome.js`, `src/storageAdvice.js`: the introduction shown on first use, and what it says about long-term storage in each browser (see that section).
 - `src/scriptCards.js`: files writing cards under the script they were learned in (see "Switching script").
 - `src/backup.js`: build, check and restore a backup file.
+- `src/cardManager.js`, `src/cardsPanel.js`: managing cards by hand (see "Managing cards"): the plain calculation, and its page side in the Decks tab.
 - `src/leeches.js`: which cards are leeches, suspended cards, and the two leech exports (see "Leeches and suspended cards"). Plain calculation.
 - `src/merge.js`: combines what is on the device with a backup from another device (see "Combining backups"). Plain calculation.
 - `src/wordList.js`: parses the four-column TSV word list format (same as Skritter's export) and converts numbered pinyin to tone marks.
@@ -96,6 +97,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `tests/browser/database.browser.js`: a database from before brought up to date, and what is kept for merging (removal marks, `changedAt`, `formerIds`).
 - `tests/decks.test.js`: tests for `src/decks.js`.
 - `tests/browser/decks.browser.js`: decks from making one to deleting it, and studying one in Learn.
+- `tests/cardManager.test.js`, `tests/browser/cards.browser.js`: managing cards, as a calculation and in the app.
 - `tests/leeches.test.js`, `tests/browser/leeches.browser.js`: leeches and suspending, as a calculation and in the app.
 - `tests/merge.test.js`, `tests/browser/merge.browser.js`: combining backups, as a calculation and in the app.
 - `tests/words.test.js`, `tests/dictionary.test.js`: tests for `src/words.js` and `src/dictionary.js`; the second also checks every line of the real dictionary.
@@ -226,6 +228,19 @@ Built on 2026-10-13 to a plan the owner agreed to; number 4 of the order of work
 - **Suspended cards are on the word**: `suspended`, a list of card kinds, because cards are rebuilt from reviews when backups are combined and a mark on a card would be lost. A word's writing cards in both scripts are suspended together. `hasCardType` in `src/review.js` keeps a suspended kind out of Review; the card keeps its history and schedule. Like `decks` and `formerIds`, the field has to be carried over by hand where a word is rebuilt from a form (the pop-up panel does).
 - **Switching a card off or back on:** the "Suspended cards" fold-out in the word's pop-up panel, a checkbox per kind.
 - **With `suspend`, a card is suspended at the review that makes it a leech** (`becameLeech`: forgotten once more, and now at or over the number). A card switched back on is therefore suspended again the next time it is forgotten. A line above the next card says so (`review-notice`; the owner asked for it), until that card is graded.
+
+## Managing cards
+
+Built on 2026-10-13, the second half of number 4 of the order of work. The owner agreed to the outline and to the two choices marked "owner"; they have not tried it.
+
+- **Inside the Decks tab, not a tab of its own** (owner). Three parts: the "Cards" fold-out in a word's pop-up panel, the "Order" list above the words, and "Select words".
+- **The Cards fold-out** lists the word's cards in the script it is studied in (and a writing card that exists only in the other script): when it is next due, how many reviews, how often forgotten, whether suspended; with "Start over" on each studied card and "I know this word already" under them (`cardsOfWord` in `src/cardManager.js`, `showCardsOf` in `src/cardsPanel.js`). Both act at once, without Save, and the panel goes on with the changed word (`onWordChanged`).
+- **Start over** makes a card new again: the card is removed and the word notes the time in `startedOverAt`, by kind of card (`withStartedOver`; `startCardsOver` in `src/db.js` does both together). Reviews are never deleted, so this time is what keeps the old ones from counting: `mergeCards` leaves out reviews of that kind made before it (`countedFrom`), and combining keeps the later time of the two sides whichever word record wins. A word's writing cards in both scripts are started over together. `startedOverAt` is one more field the pop-up panel has to carry over by hand when it saves.
+- **"I know this word" is an ordinary review graded Easy** on each card of the word that is still new, of the kinds switched on (owner: wanted for adding a list one already half knows; `markedKnown`, `saveKnown`). The word counts as learned without its lesson. The reviews carry `markedKnown: true` and otherwise combine and replay like any other. With the default scheduler an Easy first answer brings a card back in about 8 days, so the claim is checked.
+- **Setting the next due date by hand was left out** (owner, on Claude's advice): it works against the scheduler, would need a mark of its own to survive combining, and suspending covers "not now".
+- **Order:** learning order, next due first (words without a studied card last), most forgotten first.
+- **Select words** turns taps on rows into picking them (a blue edge), and shows a bar: Select all listed (every word the list has, not only the 200 rows shown), I know these, Suspend, Switch back on, Start over, Remove, and Add to a deck. Start over and Remove ask first. The selection is kept after an action, less any words removed.
+- **Not built:** a row per card instead of per word; taking a word out of a deck for several words at once; undo.
 
 ## How the must-haves are implemented
 
@@ -433,8 +448,9 @@ Written on 2026-10-13 for whichever session picks the work up next (the owner wo
 - **Done later that day: combining backups**, number 3 in the order of work (see "Combining backups"). The owner has not tried it yet.
 - **Done later that day: groups inside the lower levels** of the ready-made lists (TOCFL's topics; HSK 3.0 and 2.0 levels 1 to 3 in a teaching order), each a deck inside its level. See "Ready-made word lists". The owner saw and approved HSK 3.0 level 1; the other five HSK levels were read by Claude only.
 - **Done later that day: leeches** with their two exports, and suspending a card (see "Leeches and suspended cards"). The owner has not tried it.
-- **Next: the rest of the card manager**, agreed in outline with the owner: a "Cards" section in the word's pop-up panel (per card: next due, interval, reviews, lapses, with "Start over"), sorting the word list by next due or by lapses, and selecting several words to suspend, start over, move to a deck or remove. "Start over" needs a `startedOverAt` per card kind on the word, which `replay` and the merge must honor as they do removal marks. Open with the owner: whether to add "mark as known" and "set the next due date by hand" (Claude advised the first, as an ordinary Easy review, and against the second).
-- **Asked about by the owner, not decided:** learning notes for each word of the lower levels, shown on a word's page as in Skritter (a breakdown, a usage point, an example sentence), written by AI models in the background. Claude's estimate and advice were given in the session of 2026-10-13; Skritter's own notes must not be copied.
+- **Done later that day: the card manager** (see "Managing cards"). The owner has not tried it.
+- **Next in the order of work: sentences and audio**, number 5. Propose a plan to the owner before writing code.
+- **Under way: a pilot of learning notes.** The owner asked for notes on each word's page as in Skritter (a breakdown, a usage point, an example sentence), for the levels up to about B2. A Sonnet subagent was writing them for HSK 3.0 level 1 (509 words) as a trial of quality; the owner is to read a sample and decide whether to go on. The app has no page to show them on yet. Skritter's own notes must not be copied.
 - **The owner has only tried the Decks tab briefly.** They asked for the Back button after their first look; expect more remarks on it.
 - **Deploying:** if the deploy step fails with "Fetching artifact metadata failed", do not re-run the failed run (the re-run uploads a second copy of the site and fails on that); start a fresh one with `gh workflow run deploy.yml --ref main`.
 - **The repository's address** is `BunnyApocalypse/hanzi-trainer`, with capitals; the lowercase one still works but git says it has moved.

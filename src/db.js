@@ -8,7 +8,11 @@
 //   words     key: id      { id, traditional, simplified, pinyin, definition,
 //                            order, addedAt, changedAt } and, for some,
 //                          pinyinTaiwan, pinyinAlso, cardScript, learnedAt,
-//                          decks, formerIds.
+//                          decks, formerIds, suspended, startedOverAt.
+//                          `suspended` lists the kinds of card that are not
+//                          to come up (leeches.js); `startedOverAt` has, by
+//                          kind of card, when it was last started over
+//                          (cardManager.js).
 //                          New words are introduced in the order of `order`,
 //                          lowest first; it may be negative.
 //                          `decks` lists the IDs of the decks the word is in.
@@ -207,6 +211,35 @@ export function renameWord(oldId, word) {
         reviews.put({ ...review, cardId: renamed(review.cardId), wordId: word.id });
       }
     };
+  });
+}
+
+// Starts cards over: removes them and saves their word, which carries the
+// time (see withStartedOver in cardManager.js), together. Their reviews stay.
+export function startCardsOver(word, cardIds) {
+  return transaction(['words', 'cards'], 'readwrite', (tx) => {
+    tx.objectStore('words').put({ ...word, changedAt: Date.now() });
+    for (const id of cardIds) {
+      tx.objectStore('cards').delete(id);
+    }
+  });
+}
+
+// Saves words marked as known with the cards and reviews that go with it
+// (see markedKnown in cardManager.js), all together.
+// entries: [{ word, cards, reviews }]
+export function saveKnown(entries) {
+  const changedAt = Date.now();
+  return transaction(['words', 'cards', 'reviews'], 'readwrite', (tx) => {
+    for (const { word, cards, reviews } of entries) {
+      tx.objectStore('words').put({ ...word, changedAt });
+      for (const card of cards) {
+        tx.objectStore('cards').put(card);
+      }
+      for (const review of reviews) {
+        tx.objectStore('reviews').put(review);
+      }
+    }
   });
 }
 
