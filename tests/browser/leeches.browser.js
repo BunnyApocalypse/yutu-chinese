@@ -140,16 +140,19 @@ describe('leeches', { concurrency: false }, () => {
     assert.doesNotMatch(await textOf(page, 'card-type'), /meaning/i);
   });
 
-  it('lists suspended cards, and switches one back on in the word\'s panel', async () => {
-    await tap(page, 'decks-tab');
+  it('lists suspended cards, and switches one back on from the word\'s page', async () => {
+    await tap(page, 'words-tab');
     await choose(page, 'word-filter', 'suspended');
     await waitUntil(page, rows(1), 'the word with a suspended card');
     assert.match(await textOf(page, '#word-list li'), /suspended: meaning$/);
-    await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
+    // The word's page has its cards; unticking takes effect at once.
+    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await waitUntil(page, `document.getElementById('word-page').dataset.shown === '愛|ai4'`, 'the word\'s page');
     assert.equal(await textOf(page, 'edit-suspended-summary'), 'Suspended cards (1)');
     await page.evaluate(`document.querySelector('#edit-suspended input[value="meaning"]').click()`);
-    await page.evaluate(`document.getElementById('word-dialog-form').requestSubmit()`);
     await waitUntil(page, rows(0), 'no suspended cards');
+    assert.equal(await textOf(page, 'edit-suspended-summary'), 'Suspended cards');
+    await tap(page, 'word-page-close');
     const love = (await stored(page, 'words')).find((word) => word.id === '愛|ai4');
     assert.equal(love.suspended, undefined);
     // Among the leeches it is still listed, no longer as suspended.

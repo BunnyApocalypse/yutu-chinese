@@ -286,6 +286,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, goToWords) {
     addSentence: (sentence, deckId) => addSentence(sentence, deckId),
     // "Practice" on a word's page: Free practice with that word, which is a
     // text box and a button of the page (main.js).
+    showCards: (word) => showCardsOnPage(word),
     practice: (word) => {
       byId('word-input').value = word[scriptFor(word, getSettings())];
       byId('practice-tab').click();
@@ -1080,8 +1081,39 @@ export function createWordsPanel(onChange, getSettings, studyDeck, goToWords) {
     const count = suspendedBoxes.filter((box) => box.checked).length;
     byId('edit-suspended-summary').textContent = count > 0 ? `Suspended cards (${count})` : 'Suspended cards';
   }
+  // The word whose cards the word page is showing.
+  let cardsWord = null;
+  // Fills in the cards part of a word's page: how its cards stand, and the
+  // boxes for suspending them.
+  function showCardsOnPage(word) {
+    cardsWord = word;
+    for (const box of suspendedBoxes) {
+      box.checked = (word.suspended || []).includes(box.value);
+      // A sentence has no pinyin or tone card to suspend.
+      box.closest('label').hidden = isSentence(word) && (box.value === 'pinyin' || box.value === 'tone');
+    }
+    byId('edit-suspended-row').open = suspendedBoxes.some((box) => box.checked);
+    showSuspendedCount();
+    byId('edit-cards-row').open = false;
+    return cardsPanel.showCardsOf(word);
+  }
+  // Ticking a box suspends that kind of card there and then.
   for (const box of suspendedBoxes) {
-    box.addEventListener('change', showSuspendedCount);
+    box.addEventListener('change', async () => {
+      showSuspendedCount();
+      const { changedAt, suspended: unused, ...rest } = cardsWord;
+      const off = suspendedBoxes.filter((entry) => entry.checked).map((entry) => entry.value);
+      const changed = off.length > 0 ? { ...rest, suspended: off } : rest;
+      await putAll('words', [changed]);
+      await afterChange();
+      cardsWord = words.find((word) => word.id === changed.id) || changed;
+      // If the word's pop-up panel is open too, it goes on with the changed word.
+      if (openWord && openWord.id === cardsWord.id) {
+        openWord = cardsWord;
+        dialogResult = { changed: true, word: cardsWord };
+      }
+      cardsPanel.showCardsOf(cardsWord);
+    });
   }
 
   function openDialog(word) {
@@ -1127,14 +1159,6 @@ export function createWordsPanel(onChange, getSettings, studyDeck, goToWords) {
     byId('edit-decks-row').hidden = false;
     byId('edit-decks-row').open = false;
     showDeckCount();
-    // The suspended kinds of card are ticked; the fold-out is open if any is.
-    for (const box of suspendedBoxes) {
-      box.checked = (word.suspended || []).includes(box.value);
-    }
-    byId('edit-suspended-row').open = suspendedBoxes.some((box) => box.checked);
-    showSuspendedCount();
-    byId('edit-cards-row').open = false;
-    cardsPanel.showCardsOf(word);
     dialogNote.textContent = '';
     // Only a word still waiting can be moved to the front of the line.
     studyNextButton.hidden = studied;
@@ -1203,9 +1227,9 @@ export function createWordsPanel(onChange, getSettings, studyDeck, goToWords) {
             ? { traditional: cloze.own, simplified: cloze.other }
             : { traditional: cloze.other, simplified: cloze.own };
       }
-      const off = suspendedBoxes.filter((box) => box.checked).map((box) => box.value);
-      if (off.length > 0) {
-        sentence.suspended = off;
+      // Which cards are suspended is changed on the word's page, not here.
+      if (wasSuspended) {
+        sentence.suspended = wasSuspended;
       }
       if (sentence.id === openWord.id) {
         await putAll('words', [sentence]);
@@ -1262,9 +1286,9 @@ export function createWordsPanel(onChange, getSettings, studyDeck, goToWords) {
     if (openWord.startedOverAt) {
       saved.startedOverAt = openWord.startedOverAt;
     }
-    const suspended = suspendedBoxes.filter((box) => box.checked).map((box) => box.value);
-    if (suspended.length > 0) {
-      saved.suspended = suspended;
+    // Which cards are suspended is changed on the word's page, not here.
+    if (openWord.suspended) {
+      saved.suspended = openWord.suspended;
     }
     if (saved.id === openWord.id) {
       await putAll('words', [saved]);

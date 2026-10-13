@@ -50,11 +50,17 @@ function element(tag, className, text) {
 //                     for 'added', 'put in deck' or 'already there'
 // defaultDeckId():    the deck first offered for that
 // practice(word):     opens Free practice with the word
+// showCards(word):    fills in the part of the page that has the word's
+//                     cards and which of them are suspended
 //
 // Returns { open(word), openText(characters) }.
-export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, addSentence, defaultDeckId, practice }) {
+export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, addSentence, defaultDeckId, practice, showCards }) {
   const dialog = byId('word-page');
-  const body = byId('word-page-body');
+  // The part that scrolls, and inside it what this file fills in. (Under
+  // that, for one of the learner's words, are its cards: showCards.)
+  const scroller = byId('word-page-body');
+  const body = byId('word-page-content');
+  const cardsPart = byId('word-page-cards');
   const backButton = byId('word-page-back');
   const editButton = byId('word-page-edit');
   const practiceButton = byId('word-page-practice');
@@ -328,7 +334,11 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
     }
 
     body.replaceChildren(...parts);
-    body.scrollTop = 0;
+    scroller.scrollTop = 0;
+    cardsPart.hidden = !shown.word;
+    if (shown.word) {
+      showCards(shown.word);
+    }
     backButton.hidden = trail.length < 2;
     editButton.hidden = !shown.word;
     practiceButton.hidden = !shown.word;
@@ -373,6 +383,10 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
     practiceButton.hidden = !target.word;
     backButton.hidden = true;
     body.replaceChildren();
+    cardsPart.hidden = !target.word;
+    if (target.word) {
+      showCards(target.word);
+    }
     delete dialog.dataset.shown;
     if (!dialog.open) {
       dialog.showModal();

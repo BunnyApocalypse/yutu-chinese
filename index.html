@@ -423,6 +423,25 @@
             <summary id="edit-decks-summary">Decks</summary>
             <fieldset id="edit-decks" class="setting"><legend>This word is in</legend></fieldset>
           </details>
+          <p class="hint">Pinyin is written with tone numbers, like xue2xi2. Your progress with the word is kept whatever you change.</p>
+          <p id="word-dialog-note" class="note"></p>
+          <div class="buttons">
+            <button type="submit" class="small primary">Save</button>
+            <button id="study-next-button" class="small" type="button">Study next</button>
+            <button id="remove-word-button" class="small" type="button">Remove</button>
+            <button id="word-dialog-close" class="small" type="button">Close</button>
+          </div>
+        </form>
+      </dialog>
+
+      <!-- Everything about one word or character, to read: wordPage.js fills it in. -->
+      <dialog id="word-page" class="settings-panel word-page">
+        <div id="word-page-body" class="word-page-body">
+          <!-- Filled in by wordPage.js. -->
+          <div id="word-page-content"></div>
+          <!-- For one of the learner's own words: its cards. What is done
+               here takes effect at once (cardsPanel.js, wordsPanel.js). -->
+          <div id="word-page-cards" hidden>
           <!-- How each of the word's cards stands (cardsPanel.js). -->
           <details id="edit-cards-row" class="add-list">
             <summary>Cards</summary>
@@ -445,22 +464,10 @@
               <label><input type="checkbox" value="tone" /> tone card</label>
               <label><input type="checkbox" value="writing" /> writing card</label>
             </fieldset>
-            <p class="hint">A suspended card keeps its history and its schedule; it just does not come up until you untick it here.</p>
+            <p class="hint">A suspended card keeps its history and its schedule; it just does not come up until you untick it here. Ticking or unticking takes effect at once.</p>
           </details>
-          <p class="hint">Pinyin is written with tone numbers, like xue2xi2. Your progress with the word is kept whatever you change.</p>
-          <p id="word-dialog-note" class="note"></p>
-          <div class="buttons">
-            <button type="submit" class="small primary">Save</button>
-            <button id="study-next-button" class="small" type="button">Study next</button>
-            <button id="remove-word-button" class="small" type="button">Remove</button>
-            <button id="word-dialog-close" class="small" type="button">Close</button>
           </div>
-        </form>
-      </dialog>
-
-      <!-- Everything about one word or character, to read: wordPage.js fills it in. -->
-      <dialog id="word-page" class="settings-panel word-page">
-        <div id="word-page-body" class="word-page-body"></div>
+        </div>
         <div class="buttons">
           <button id="word-page-back" class="small" type="button" hidden>‹ Back</button>
           <button id="word-page-practice" class="small" type="button" hidden>Practice</button>
