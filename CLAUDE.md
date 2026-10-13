@@ -555,6 +555,16 @@ A review by Claude on 2026-10-13 of what having testers changes; the decisions a
 
 ## Where the work stands
 
+**For the session after 2026-10-13, first of all:**
+
+- **Remind the owner about the app's address and name** (they asked to be reminded): everyone's words and progress are stored under the address, so it should be settled before anyone else is given the app. See "Before other people use it".
+- **The owner is testing the app themselves before giving it to anyone** (their decision at the end of that session). Ask how it went, and expect remarks on the layout around the writing area, which was reworked late that day and which they had only tried on a desktop.
+- **No new features until that testing and a first round with testers are done** (agreed that day). Fixing what the owner finds is the work.
+- The owner's list of things to try is below; the testers' documents are in `docs/alpha/`, with two blanks (the address, and where feedback goes: an email alias the owner will make, plus the issue tracker).
+- Everything was pushed at the end of that session to `main` (the test copy) and to a new `stable` branch (the copy at the main address). That was the first run of the two-copy deploy.
+
+The rest of this section was written earlier that day, oldest first.
+
 Written on 2026-10-13 for whichever session picks the work up next (the owner works from more than one computer; everything is on `main` and published).
 
 - **To do, the owner's: try what was built on 2026-10-13.** None of it has been tested by them (asked to be put on the list that day). Ask how it went before building further on any of it:
