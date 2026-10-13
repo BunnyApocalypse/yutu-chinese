@@ -10,18 +10,23 @@
 #                      so trying it never touches the words and progress in
 #                      the stable copy.
 #
-# GitHub runs this on its own computers whenever either branch changes. Pages
-# publishes one folder for the whole site, so both copies are built every
-# time: the stable one into dist/, the test one into dist/test/. Nothing is
-# published if either copy's unit tests fail.
+# GitHub runs this on its own computers whenever main changes, or when it is
+# started by hand. Pages publishes one folder for the whole site, so both
+# copies are built every time: the stable one into dist/, the test one into
+# dist/test/. Nothing is published if either copy's unit tests fail.
 #
-# To release what is on main:  git push origin main:stable
+# To release what is on main, move the stable branch and start this by hand:
+#   git push origin main:stable
+#   gh workflow run deploy.yml --ref main
+# (A push to stable does not start it by itself: the repository only lets
+# the main branch publish to Pages, and a run started from stable is turned
+# away. That is a setting of the "github-pages" environment on GitHub.)
 
 name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main, stable]
+    branches: [main]
   # Also allows starting it by hand from the repository's Actions tab.
   workflow_dispatch:
 
