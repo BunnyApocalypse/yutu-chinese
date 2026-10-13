@@ -51,7 +51,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 ## Layout
 
 - `index.html`: the single page.
-- `src/main.js`: entry point; the four tabs (Review, Learn, Free practice, Decks), backup buttons.
+- `src/main.js`: entry point; the four tabs (Review, Learn, Decks, Words) and Free practice, backup buttons.
 - `src/wordsPanel.js`: the Decks tab (called the Words tab until 2026-10-13): its two sections, the words of the deck whose page is open (add a word, add a list, search), the ready-made decks, and a pop-up panel per word to change it, study it next or remove it.
 - `src/words.js`: the plain calculation behind the Decks tab: checking a typed word, reading a TSV or CSV list, working out which words are new, searching.
 - `src/dictionary.js`: looks a word up in the dictionary and proposes a meaning. Plain calculation.
@@ -75,6 +75,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `src/backup.js`: build, check and restore a backup file.
 - `src/wordPage.js`: the page of a word or character (see "The word page"); `src/notes.js` and `src/characters.js` are the plain calculation behind it (learning notes and example sentences; the parts of characters).
 - `data/notes/`: learning notes and example sentences per level, CC BY-SA 4.0. `local/`: development-only downloads, git-ignored.
+- `src/confirm.js`: the app's own panel for asking before something that cannot be undone.
 - `src/sentences.js`: sentences as things to study (see "Sentences"). Plain calculation.
 - `src/speechPlan.js`, `src/speech.js`: speaking a word (see "Hearing a word"): which recordings to play, as plain calculation, and playing them.
 - `scripts/copy-audio.js`, `data/audio-cmn/`: the recordings, and the script that puts them in the git-ignored `public/audio/` under plain file names with an `index.json` listing them.
@@ -106,6 +107,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `tests/browser/decks.browser.js`: decks from making one to deleting it, and studying one in Learn.
 - `tests/cardManager.test.js`, `tests/browser/cards.browser.js`: managing cards, as a calculation and in the app.
 - `tests/leeches.test.js`, `tests/browser/leeches.browser.js`: leeches and suspending, as a calculation and in the app.
+- `tests/browser/tabs.browser.js`: what the Decks tab and the Words tab each show; `wordPage.browser.js`, `sentences.browser.js`, `sound.browser.js`: the word page, sentences, and hearing a word.
 - `tests/merge.test.js`, `tests/browser/merge.browser.js`: combining backups, as a calculation and in the app.
 - `tests/words.test.js`, `tests/dictionary.test.js`: tests for `src/words.js` and `src/dictionary.js`; the second also checks every line of the real dictionary.
 
@@ -401,6 +403,15 @@ Asked for by the owner on 2026-10-13; the screens' wording and the extras noted 
 - **Beyond what was asked:** pronunciation is chosen on the same screen as the script, and the kinds of card can be switched off where they are explained.
 - **It is opened before the first tab is shown** (`startUp` in `src/main.js`), which the browser tests rely on: `startBrowsers` skips it as soon as the app has started, since a `<dialog>` lies over the page and would catch the strokes. `{ keepWelcome: true }` leaves it, for `tests/browser/welcome.browser.js`.
 - **Settings is a cog wheel in the upper right corner of the page** (`settings-cog`; the owner, 2026-10-13: the button at the bottom center looked bad), placed against `main`, so it scrolls with the page. On a phone the tabs sit at the left and are a little smaller to leave it room. The footer only holds the "New version ready" button now. Above the list of words, "Show", "Order" and "Select words" share one row (`list-tools`).
+- **What the review led to, built the same day at the owner's request** (they have not seen it):
+  - **Four tabs: Review, Learn, Decks, Words.** The Decks tab shows the decks (choosing, adding to, studying one); the Words tab shows the words (a deck chooser, search, Show, Order, Select words, the list). Both are the one panel of `src/wordsPanel.js`, told which `view` it is (`show('decks')` or `show('words')`; modes `'words'` and `'browse'` in `src/main.js`, the first name being older than the split). The part the other tab shows is put out of view with the class `view-hidden`, not the `hidden` attribute, and is still kept up to date: on the Decks tab the list follows the open deck (`listDeck`). **Most browser tests read the list of words while the Decks tab is open**, which works for that reason; `tests/browser/tabs.browser.js` checks what is actually in view. "Its words" on a deck's page opens the Words tab on that deck.
+  - **Free practice is no longer a tab.** Its button (still `practice-tab`, which the test harness taps) is in the Words tab, and a word's page has "Practice".
+  - **Settings is in five groups that fold away** (`settings-group`): What you are learning (open), Studying, Meanings and sound, Your data and backups, Help. The data group says when a backup was last made (`lastBackupAt`, a setting that belongs to the device) and opens by itself, with a dot on the cog wheel, when there are words and no backup for two weeks (`showBackupStatus` in `src/main.js`).
+  - **A word's cards are on its page**: the "Cards" and "Suspended cards" fold-outs moved there from the pop-up panel, and ticking a suspended box takes effect at once (`showCardsOnPage` in `src/wordsPanel.js`). The panel is now only a form with Save. It keeps a word's `suspended` as stored.
+  - **The app asks in its own panel** before removing, starting over or replacing (`ask` and `tell` in `src/confirm.js`, `confirm-dialog`), with buttons that say what they do. Tests answer it with `ANSWER_YES` from the harness.
+  - **"I know this word" sits beside the lesson's note**, so a lesson's writing step fits a phone screen again; and a leech's note in Review has "Suspend this card", which takes the card out ungraded.
+  - **Opening one of "Add a word", "Add a list of words", "Add a sentence" closes the others.**
+  - **Not done:** one place for every message (each form still reports in its own spot); merging the pop-up panel into the word's page as an editing mode.
 - **A review of the app's structure was done on 2026-10-13** (by Claude, from screenshots at phone size and counts; nobody else has reviewed it). Its findings, for whoever restructures:
   - The Decks tab does five jobs: moving between decks, adding things (three forms), finding words, managing cards (filters, order, selecting several) and the ready-made lists. A deck's page is over ten screens long with a hundred words on it.
   - Settings is one list of 27 controls, 2.7 phone screens long, under three headings; Export and Import backup are near its bottom although the data exists nowhere else.
