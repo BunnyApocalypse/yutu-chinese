@@ -401,6 +401,7 @@ async function startUp() {
       leechInput: byId('leech-input'),
       leechActionSelect: byId('leech-action-select'),
       soundSelect: byId('sound-select'),
+      volumeInput: byId('volume-input'),
       typeCheckboxes: [...document.querySelectorAll('#settings-panel [data-card-type]')],
     },
     onSettingsChange,

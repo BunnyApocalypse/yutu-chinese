@@ -205,6 +205,7 @@ export function createReview(elements, flows, settings, editWord) {
       word,
       readingOf(word).primary,
       settings.pronunciation === 'taiwan' ? 'taiwan' : 'mainland',
+      settings.volume,
     );
     // How it was spoken is noted on the button for the browser tests; and
     // the button says so if the word could not be spoken at all.

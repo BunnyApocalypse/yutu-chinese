@@ -80,6 +80,28 @@ describe('hearing a word', { concurrency: false }, () => {
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('xīngqí')`, 'the Taiwan reading');
     await waitUntil(page, `${spoken} === '星期|xing1qi1 syllables'`, 'the word spoken syllable by syllable');
     assert.deepEqual(await page.evaluate(fetched), ['s/qi2.mp3', 's/xing1.mp3', 'w/5b66-4e60.mp3']);
+
+  });
+
+  it('keeps the volume chosen with the slider', async () => {
+    await tap(page, 'settings-button');
+    assert.equal(await page.evaluate(`document.getElementById('volume-input').value`), '100');
+    await page.evaluate(`(() => {
+      const slider = document.getElementById('volume-input');
+      slider.value = 40;
+      slider.dispatchEvent(new Event('change', { bubbles: true }));
+    })()`);
+    // Letting go of the slider speaks a sample: 中文, which has a recording.
+    await waitUntil(page, `${fetched}.includes('w/4e2d-6587.mp3')`, 'the sample spoken');
+    await tap(page, 'settings-close');
+    const saved = await page.evaluate(`new Promise((resolve) => {
+      const request = indexedDB.open('hanzi-trainer');
+      request.onsuccess = () => {
+        const get = request.result.transaction(['settings']).objectStore('settings').get('volume');
+        get.onsuccess = () => { request.result.close(); resolve(get.result.value); };
+      };
+    })`);
+    assert.equal(saved, 0.4);
   });
 
   it('has no Listen button with sound switched off', async () => {

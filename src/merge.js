@@ -38,6 +38,7 @@ const DEVICE_SETTINGS = [
   'builtInListVersion',
   'studyDeck',
   'audioOffline',
+  'volume',
 ];
 
 const changedAt = (record) => (record && record.changedAt) || 0;

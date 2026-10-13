@@ -635,6 +635,13 @@
         </label>
 
         <label class="setting">
+          Volume
+          <!-- A slider from silent to full; letting go of it speaks 中文 as a sample (settings.js). -->
+          <input id="volume-input" type="range" min="0" max="100" step="5" aria-label="Volume of the spoken words" />
+          <span class="hint">How loud words are spoken, beside whatever else your device is playing.</span>
+        </label>
+
+        <label class="setting">
           A card is a leech after
           <input id="leech-input" type="number" min="2" max="30" inputmode="numeric" aria-label="Times forgotten before a card is a leech" />
           <span class="hint">

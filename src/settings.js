@@ -5,6 +5,7 @@ import { getSetting, setSetting } from './db.js';
 import { DEFAULT_MEANING_DETAIL } from './dictionary.js';
 import { CARD_TYPES, DEFAULT_NEW_WORDS_PER_DAY } from './session.js';
 import { DEFAULT_LEECH_LAPSES, MIN_LEECH_LAPSES, MAX_LEECH_LAPSES } from './leeches.js';
+import { speak } from './speech.js';
 
 const MAX_NEW_WORDS_PER_DAY = 50;
 
@@ -44,6 +45,8 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //                   its answer shows and when the loudspeaker is tapped,
 //                   'tap' for the loudspeaker only, 'off' for no sound and
 //                   no loudspeaker (see speech.js)
+//   volume:         how loud words are spoken, from 0 (silent) to 1 (as loud
+//                   as the device is set); belongs to the device
 //   leechLapses:    how many times a card has to be forgotten to be pointed
 //                   out as a leech (see leeches.js)
 //   leechAction:    'flag' to only point a leech out, 'suspend' to also
@@ -68,6 +71,7 @@ export async function createSettings(elements, onChange) {
     leechInput,
     leechActionSelect,
     soundSelect,
+    volumeInput,
     typeCheckboxes,
   } = elements;
 
@@ -84,6 +88,7 @@ export async function createSettings(elements, onChange) {
     leechLapses: await getSetting('leechLapses', DEFAULT_LEECH_LAPSES),
     leechAction: await getSetting('leechAction', 'flag'),
     sound: await getSetting('sound', 'auto'),
+    volume: await getSetting('volume', 1),
     enabledTypes: await getSetting('enabledTypes', CARD_TYPES),
     studyDeck: await getSetting('studyDeck', ''),
   };
@@ -100,6 +105,7 @@ export async function createSettings(elements, onChange) {
     leechInput.value = settings.leechLapses;
     leechActionSelect.value = settings.leechAction;
     soundSelect.value = settings.sound;
+    volumeInput.value = Math.round(settings.volume * 100);
     for (const checkbox of typeCheckboxes) {
       checkbox.checked = settings.enabledTypes.includes(checkbox.dataset.cardType);
     }
@@ -171,6 +177,12 @@ export async function createSettings(elements, onChange) {
 
   leechActionSelect.addEventListener('change', () => change('leechAction', leechActionSelect.value));
   soundSelect.addEventListener('change', () => change('sound', soundSelect.value));
+  // "change" comes when the slider is let go of. A word is spoken then, so
+  // the new volume can be heard against whatever else is playing.
+  volumeInput.addEventListener('change', async () => {
+    await change('volume', Number(volumeInput.value) / 100);
+    speak({ simplified: '中文', traditional: '中文', pinyin: 'Zhong1wen2' }, 'Zhong1wen2', 'mainland', settings.volume);
+  });
 
   leechInput.addEventListener('change', () => {
     const typed = Math.round(Number(leechInput.value));

@@ -76,8 +76,11 @@ function soundSpan(buffer) {
   return { start, duration: Math.max(0.05, end - start) };
 }
 
-// Plays recordings one after another. files: as planSpeech gives them.
-async function playRecordings(files) {
+// Plays recordings one after another.
+//
+// files:  as planSpeech gives them
+// volume: from 0 (silent) to 1 (as recorded)
+async function playRecordings(files, volume) {
   audioContext = audioContext || new AudioContext();
   // A browser keeps the context asleep until the page has been tapped, and
   // resume() then waits for that tap. It is given a moment and no more, so
@@ -86,11 +89,18 @@ async function playRecordings(files) {
   const buffers = await Promise.all(
     files.map(async (file) => audioContext.decodeAudioData(await fetchRecording(file))),
   );
+  // A "gain node" sits between the recordings and the loudspeaker and
+  // turns them down. Loudness is heard in proportions, not in steps, so the
+  // slider's value is squared: half-way on the slider then sounds about
+  // half as loud.
+  const gain = audioContext.createGain();
+  gain.gain.value = volume * volume;
+  gain.connect(audioContext.destination);
   let time = audioContext.currentTime + 0.05;
   for (const buffer of buffers) {
     const source = audioContext.createBufferSource();
     source.buffer = buffer;
-    source.connect(audioContext.destination);
+    source.connect(gain);
     // A single recording is played whole; syllables are trimmed and joined.
     const span = buffers.length > 1 ? soundSpan(buffer) : { start: 0, duration: buffer.duration };
     source.start(time, span.start, span.duration);
@@ -110,7 +120,7 @@ function deviceVoice(region) {
   return voices.find((voice) => voice.lang.toLowerCase().replace('_', '-').endsWith(wanted)) || voices[0] || null;
 }
 
-function speakWithVoice(text, region) {
+function speakWithVoice(text, region, volume) {
   const voice = deviceVoice(region);
   if (!voice) {
     return false;
@@ -118,6 +128,7 @@ function speakWithVoice(text, region) {
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.voice = voice;
   utterance.lang = voice.lang;
+  utterance.volume = volume;
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(utterance);
   return true;
@@ -128,21 +139,22 @@ function speakWithVoice(text, region) {
 // word:    the word record
 // reading: the reading shown for it, as stored (see readingsFor in tones.js)
 // region:  'taiwan' or 'mainland', for the device's voice
+// volume:  from 0 (silent) to 1 (full), as the Volume setting has it
 //
 // Returns how it was spoken: 'word', 'syllables' or 'voice'; or null if it
 // could not be (no recording that can be fetched, and no Chinese voice).
-export async function speak(word, reading, region) {
+export async function speak(word, reading, region, volume = 1) {
   const plan = planSpeech(word, reading, await loadIndex());
   if (plan.kind !== 'voice') {
     try {
-      await playRecordings(plan.kind === 'word' ? [plan.file] : plan.files);
+      await playRecordings(plan.kind === 'word' ? [plan.file] : plan.files, volume);
       return plan.kind;
     } catch {
       // No connection and not played before, or the browser would not play
       // it: the device's voice is tried instead.
     }
   }
-  return speakWithVoice(word.simplified === word.traditional ? word.simplified : word[region === 'taiwan' ? 'traditional' : 'simplified'], region)
+  return speakWithVoice(word.simplified === word.traditional ? word.simplified : word[region === 'taiwan' ? 'traditional' : 'simplified'], region, volume)
     ? 'voice'
     : null;
 }
