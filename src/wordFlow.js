@@ -19,11 +19,13 @@ const TAP_TO_CONTINUE_DELAY_MS = 600;
 function chooseSize() {
   // 32 for the page's margins, 64 for the arrows on either side of the area.
   const fitsWidth = window.innerWidth - 32 - 64;
-  // 560 is about what everything else on the screen takes in height during
-  // a new word's lesson, which is when there is most of it (measured on
-  // 2026-10-13: 543 with a meaning of one line, 596 with a long one and
-  // "Show all"). Measure again when a row is added to the screen.
-  const fitsHeight = window.innerHeight - 560;
+  // 500 is what is set aside for everything else on the screen. That is not
+  // enough during a new word's lesson (measured on 2026-10-13: the rest
+  // takes 543 with a meaning of one line, 596 with a long one), so the
+  // buttons under the area can end up below the screen. The owner would
+  // rather that than a smaller writing area: the room has to be found in
+  // the rows around it, not here.
+  const fitsHeight = window.innerHeight - 500;
   return Math.max(200, Math.min(fitsWidth, fitsHeight, 640));
 }
 
