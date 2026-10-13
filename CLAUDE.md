@@ -388,6 +388,16 @@ Agreed with the owner on 2026-10-13, in the conversation that had been put first
 - **Consequences for the data model**, as Claude sees them: a removed word or card must leave a mark, or a merge brings it back; records need the time they were last changed; a corrected word's old ID must be remembered; and a card's schedule should be recomputable from its reviews, which also serves changed scheduling, leeches and statistics.
 - **Sharing raises the bar on licensing.** The TOCFL list has no stated license (see "Ready-made word lists").
 
+## Where the work stands
+
+Written on 2026-10-13 for whichever session picks the work up next (the owner works from more than one computer; everything is on `main` and published).
+
+- **Done that day:** the conversation about long-term goals, the database made ready for merging, and decks with the Decks tab in place of the Words tab (see "Long-term goals", "Ready for merging", "Decks").
+- **Next: merging backups**, number 3 in the order of work. Propose a plan to the owner before writing code. "Ready for merging" lists what is in place and the points still to settle, the main one being that a word removed and added again must not get its old schedule back from the reviews that were kept.
+- **The owner has only tried the Decks tab briefly.** They asked for the Back button after their first look; expect more remarks on it. One thing offered and not answered: folding "Add a word" away on a deck's page, so that the deck's words are not so far down.
+- **Deploying:** if the deploy step fails with "Fetching artifact metadata failed", do not re-run the failed run (the re-run uploads a second copy of the site and fails on that); start a fresh one with `gh workflow run deploy.yml --ref main`.
+- **The repository's address** is `BunnyApocalypse/hanzi-trainer`, with capitals; the lowercase one still works but git says it has moved.
+
 ## Settled with the owner on 2026-10-13
 
 - The Script and Pronunciation settings suit them as built.
