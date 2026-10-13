@@ -322,6 +322,15 @@ The owner wants to bring their Skritter data across eventually rather than start
 
 ## To discuss with the owner at the start of the next session
 
+**First, before any further building** (asked for by the owner on 2026-10-13): a conversation about the long-term goals for the app, what the owner wants it to do, and whether that calls for architectural changes or for putting things in a different order. Do not start a new feature until it has been had. Things it should cover, as far as Claude can see them:
+
+- Who the app is for. It began as "one user, their own devices"; since then it has gained an introduction for newcomers, defaults chosen for "the largest userbase", and a public address. Is it becoming an app for other learners too, and if so what does that change (support, wording, what is promised about data)?
+- What "done" looks like against Skritter: which of its features matter (decks, sentence or example study, listening, statistics, sync between devices) and which do not.
+- Data: everything is in one browser's IndexedDB with manual backups. Is sync between the owner's devices wanted, and would that be allowed to break the "no backend" rule?
+- The pieces already promised that touch the data model: decks and sub-decks, merging backups, the Skritter import, the 繁/簡 helper mode. In what order, and should the model be settled for all of them at once?
+- The hard constraints at the top of this file (vanilla JavaScript, no dependencies to speak of, Hanzi Writer for grading): still right for where the app is going? `src/review.js`, `src/wordsPanel.js` and `src/quiz.js` have each grown large.
+- Smaller things waiting: dark mode, collapsing long meanings, TBCL, browser tests for grading.
+
 1. The Script and Pronunciation settings were built without the owner at the keyboard (see "Fitting the interface to what is learned"). Ask whether the two lists, their wording and the choices listed there suit them.
 2. Whether the installed app works on the phone and tablet, offline too, and whether the backup was moved across from the old address.
 
@@ -338,6 +347,7 @@ The owner wants to bring their Skritter data across eventually rather than start
 9. Import the Skritter scheduling data, if the GDPR request (sent 2026-10-12) yields it. The word list itself can be added in the Words tab since 2026-10-12; the owner had said they did not want it imported without scheduling data, so when to do that is theirs to decide.
 10. Merge backups between devices instead of replacing; a settings screen (new words per day, target retention).
 11. **To do, asked for by the owner:**
+    - **First of all: the conversation about long-term goals** (see "To discuss with the owner at the start of the next session"). Nothing below is to be started before it.
     - **Done on 2026-10-13:** fit the interface to the script and pronunciation being learned (see "Fitting the interface to what is learned"). The owner has not seen it yet.
     - **Done for writing:** a browser test suite that lives in the repo and runs in parallel (see "Browser tests"). Still open: browser tests for grading in Review and for most of the settings panel.
     - **Done on 2026-10-13:** the browser grid's remaining failures (half-size second or third stroke; 學 in the mainland order shifted right). See "Following where a character is written" and "Two accepted stroke orders".
