@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import { gradeOptions, AGAIN, HARD, GOOD, EASY } from '../src/scheduler.js';
 import {
   planSession,
+  nextToLearn,
   startOfStudyDay,
   suggestGrade,
   judgeChar,
@@ -16,6 +17,7 @@ import {
   cardId,
   cardIdFor,
   allCardIds,
+  lessonSteps,
   CARD_TYPES,
   SIBLING_GAP_MS,
 } from '../src/session.js';
@@ -84,15 +86,27 @@ function studied(wordId, type, { due, first, last }) {
   return [cardId(wordId, type), { due, firstReviewedAt: first, lastReviewedAt: last ?? first }];
 }
 
-test('with nothing studied, the first word in list order is next, meaning card first', () => {
+test('words that have not been learned are never reviewed; the Learn tab takes them in order', () => {
   const words = makeWords(30).reverse();
-  const plan = planSession(words, new Map(), at('2026-10-12T10:00:00'), ALL_TYPES);
-  assert.equal(plan.next.word.id, 'w0');
-  assert.equal(plan.next.type, 'meaning');
-  assert.equal(plan.next.card, null);
-  assert.equal(plan.dueCount, 0);
-  assert.equal(plan.newWordsLeftToday, 5);
-  assert.equal(plan.nextDueAt, null);
+  const now = at('2026-10-12T10:00:00');
+  const plan = planSession(words, new Map(), now, ALL_TYPES);
+  assert.equal(plan.next, null);
+  assert.equal(plan.waitingCount, 30);
+  assert.equal(plan.learnedToday, 0);
+  assert.equal(nextToLearn(words, new Map()).id, 'w0');
+
+  // Once learned, a word's cards come up as new ones, the first kind first.
+  const learned = words.map((word) => (word.id === 'w0' ? { ...word, learnedAt: now - MINUTE } : word));
+  const after = planSession(learned, new Map(), now, ALL_TYPES);
+  assert.deepEqual([after.next.word.id, after.next.type, after.next.card], ['w0', 'meaning', null]);
+  assert.equal(after.newCardCount, 4);
+  assert.equal(after.waitingCount, 29);
+  assert.equal(after.learnedToday, 1);
+  assert.equal(nextToLearn(learned, new Map()).id, 'w1');
+  // A word from before there was a Learn tab counts as learned by its cards.
+  const cards = new Map([studied('w1', 'writing', { due: now + DAY, first: now - 3 * DAY })]);
+  assert.equal(nextToLearn(learned, cards).id, 'w2');
+  assert.equal(nextToLearn([], new Map()), null);
 });
 
 test('due cards come before new ones, longest overdue first', () => {
@@ -110,36 +124,14 @@ test('due cards come before new ones, longest overdue first', () => {
   assert.equal(plan.nextDueAt, now + 30 * MINUTE);
 });
 
-test('no more than the daily limit of new words is introduced', () => {
+test('the words learned today are counted by the study day', () => {
   const now = at('2026-10-12T10:00:00');
-  const cards = new Map();
-  for (let i = 0; i < 5; i++) {
-    cards.set(...studied(`w${i}`, 'writing', { due: now + 2 * DAY, first: now - 10 * MINUTE }));
-  }
-  const words = makeWords(30);
-  const today = planSession(words, cards, now, WRITING_ONLY);
-  assert.equal(today.newWordsLeftToday, 0);
-  assert.equal(today.next, null);
-  assert.equal(today.nextDueAt, now + 2 * DAY);
-
-  // A higher setting allows more the same day.
-  const more = planSession(words, cards, now, { ...WRITING_ONLY, newWordsPerDay: 8 });
-  assert.equal(more.newWordsLeftToday, 3);
-  assert.equal(more.next.word.id, 'w5');
-
-  // The next morning the limit resets, even though nothing is due yet.
-  const tomorrow = planSession(words, cards, at('2026-10-13T08:00:00'), WRITING_ONLY);
-  assert.equal(tomorrow.newWordsLeftToday, 5);
-  assert.equal(tomorrow.next.word.id, 'w5');
-
+  const words = makeWords(30).map((word, index) => (index < 5 ? { ...word, learnedAt: now - 10 * MINUTE } : word));
+  assert.equal(planSession(words, new Map(), now, WRITING_ONLY).learnedToday, 5);
+  // The next morning the count starts again.
+  assert.equal(planSession(words, new Map(), at('2026-10-13T08:00:00'), WRITING_ONLY).learnedToday, 0);
   // A session that runs past midnight still belongs to the same study day.
-  const lateNight = planSession(words, cards, at('2026-10-13T01:00:00'), WRITING_ONLY);
-  assert.equal(lateNight.newWordsLeftToday, 0);
-});
-
-test('new words left never exceeds the words that exist', () => {
-  const plan = planSession(makeWords(3), new Map(), at('2026-10-12T10:00:00'), ALL_TYPES);
-  assert.equal(plan.newWordsLeftToday, 3);
+  assert.equal(planSession(words, new Map(), at('2026-10-13T01:00:00'), WRITING_ONLY).learnedToday, 5);
 });
 
 test("a word's cards are introduced in order and kept apart", () => {
@@ -237,6 +229,16 @@ test('a neutral tone is accepted where the dictionary or the owner allows it', (
   assert.deepEqual(toneAnswers(['知', '道'], 'zhi1dao4', null, oldTable)[1].variantTones, []);
 });
 
+test('the lesson for a new word starts with its tones only where that makes sense', () => {
+  assert.deepEqual(lessonSteps({ toneCardsOn: true, canHaveToneCard: true }), ['tone', 'trace', 'outline', 'test']);
+  assert.deepEqual(lessonSteps({ toneCardsOn: false, canHaveToneCard: true }), ['trace', 'outline', 'test']);
+  assert.deepEqual(lessonSteps({ toneCardsOn: true, canHaveToneCard: false }), ['trace', 'outline', 'test']);
+  // A word that is new altogether is looked at first.
+  assert.deepEqual(lessonSteps({ newWord: true, toneCardsOn: true, canHaveToneCard: true }), ['meet', 'tone', 'trace', 'outline', 'test']);
+  // Without writing cards the lesson ends before the writing.
+  assert.deepEqual(lessonSteps({ newWord: true, toneCardsOn: true, canHaveToneCard: true, canBeWritten: false }), ['meet', 'tone']);
+});
+
 // ---- Writing cards per script ----
 
 // Words written differently in the two scripts, and one written the same.
@@ -272,17 +274,19 @@ test('after switching script, writing is learned again and the rest carries over
   const inSimplified = { ...ALL_TYPES, scriptOf: () => 'simplified' };
   const inTraditional = { ...ALL_TYPES, scriptOf: () => 'traditional' };
 
-  // In simplified nothing is due, and the one new word is next.
+  // In simplified nothing is due. (樹 has not been learned at all; that is
+  // for the Learn tab.)
   const before = planSession(words, cards, now, inSimplified);
-  assert.equal(before.next.word, TREE);
-  assert.equal(before.newWordsLeftToday, 1);
+  assert.equal(before.next, null);
+  assert.equal(before.newWordsLeftToday, 0);
+  assert.equal(before.waitingCount, 1);
 
   // In traditional the two words that differ are to be written again, the
   // one learned first coming first and both before the word never seen.
   const after = planSession(words, cards, now, inTraditional);
   assert.equal(after.dueCount, 0); // meaning, pinyin and tone keep their schedule
   assert.deepEqual([after.next.word, after.next.type, after.next.card], [BOOK, 'writing', null]);
-  assert.equal(after.newWordsLeftToday, 3);
+  assert.equal(after.newWordsLeftToday, 2);
   assert.equal(after.newCardCount, 0);
 
   // They count toward the day's new words: with a limit of 1, one written
@@ -294,10 +298,10 @@ test('after switching script, writing is learned again and the rest carries over
   // With room left, 學習 follows.
   const more = planSession(words, cards, now, inTraditional);
   assert.deepEqual([more.next.word, more.next.type], [STUDY, 'writing']);
-  assert.equal(more.newWordsLeftToday, 2);
+  assert.equal(more.newWordsLeftToday, 1);
 
   // Back in simplified, the old progress is all still there.
-  assert.equal(planSession(words, cards, now, inSimplified).next.word, TREE);
+  assert.equal(planSession(words, cards, now, inSimplified).next, null);
 });
 
 test('a word can be studied in a script of its own', () => {

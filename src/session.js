@@ -81,14 +81,36 @@ function lastReviewOf(card) {
   return card.lastReviewedAt ?? Date.parse(card.fsrsState.last_review);
 }
 
-// Looks at all words and their cards and reports what there is to do.
+// A word in the app is either waiting or learned. It is learned once it has
+// been through the Learn tab (which sets its `learnedAt`), or has any studied
+// card (words from before there was a Learn tab). Only learned words are
+// reviewed.
+function isLearned(word, studiedCards) {
+  return word.learnedAt !== undefined || studiedCards.length > 0;
+}
+
+// The word the Learn tab teaches next: the first one waiting, in the order
+// of `order`. Returns null if none is waiting.
+//
+// cards: a Map from card ID to card, as for planSession
+export function nextToLearn(words, cards) {
+  const waiting = words.filter(
+    (word) => !isLearned(word, allCardIds(word).map((id) => cards.get(id)).filter(Boolean)),
+  );
+  return waiting.sort((a, b) => a.order - b.order)[0] || null;
+}
+
+// Looks at the learned words and their cards and reports what there is to
+// review.
 //
 // words: list of word records, each with an `id` and an `order`
 // cards: a Map from card ID (see cardIdFor above) to card. A card that isn't
 //        in the map has never been studied.
 // now:   the current time
 // options:
-//   newWordsPerDay: how many words may be introduced per day
+//   newWordsPerDay: how many cards may be started again in another script
+//                   per day (see below). For new words it is only a goal,
+//                   which the Learn tab shows; nothing here enforces it.
 //   enabledTypes:   the card types switched on, e.g. ['meaning', 'writing']
 //   hasCardType(word, type): optional; return false for a word that can't
 //                   have that kind of card
@@ -97,18 +119,19 @@ function lastReviewOf(card) {
 //
 // A card that was learned in the other script only (see PER_SCRIPT_TYPES) is
 // learned again in this one, as if new: after someone who studied simplified
-// switches to traditional, say. Such cards count toward the daily limit of
-// new words and come before words never seen, in the order they were first
-// learned.
+// switches to traditional, say. Such cards are limited to newWordsPerDay a
+// day (less the words learned that day) and come in the order they were
+// first learned.
 //
 // Returns:
 //   next:         { word, type, card } to review now (card is null for a card
 //                 never studied), or null if there is nothing to do right now
 //   dueCount:     how many studied cards are due now
-//   newCardCount: how many never-studied cards are waiting for words already
-//                 introduced
-//   newWordsLeftToday: how many more words can be introduced today,
-//                 counting cards to be learned again in another script
+//   newCardCount: how many never-studied cards are waiting for learned words
+//   newWordsLeftToday: how many cards to be learned again in another script
+//                 can still be started today
+//   learnedToday: how many words were learned (or first studied) today
+//   waitingCount: how many words are waiting to be learned
 //   nextDueAt:    when something next becomes available, or null
 export function planSession(words, cards, now, options) {
   const {
@@ -125,7 +148,7 @@ export function planSession(words, cards, now, options) {
   const due = [];
   const newForKnownWords = [];
   const toLearnAgain = [];
-  const unseenWords = [];
+  let waitingCount = 0;
   let nextDueAt = null;
   let introducedToday = 0;
   let newCardCount = 0;
@@ -151,10 +174,8 @@ export function planSession(words, cards, now, options) {
     const otherCardOf = (type) =>
       isPerScript(word, type) ? cards.get(cardIdFor(word, type, otherScript)) : undefined;
 
-    if (studied.length === 0) {
-      if (wanted.length > 0) {
-        unseenWords.push({ word, type: wanted[0], card: null });
-      }
+    if (!isLearned(word, studied)) {
+      waitingCount += 1;
       continue;
     }
     // A card begun today in this script, of a word known in the other one,
@@ -166,7 +187,9 @@ export function planSession(words, cards, now, options) {
         card && other && card.firstReviewedAt >= dayStart && other.firstReviewedAt < card.firstReviewedAt
       );
     });
-    if (Math.min(...studied.map((card) => card.firstReviewedAt)) >= dayStart || learnedAgainToday) {
+    // A word counts for the day it was learned, or first studied.
+    const firstSeen = Math.min(word.learnedAt ?? Infinity, ...studied.map((card) => card.firstReviewedAt));
+    if (firstSeen >= dayStart || learnedAgainToday) {
       introducedToday += 1;
     }
 
@@ -212,7 +235,7 @@ export function planSession(words, cards, now, options) {
   due.sort((a, b) => a.card.due - b.card.due);
 
   const newWordsLeftToday = Math.min(
-    unseenWords.length + toLearnAgain.length,
+    toLearnAgain.length,
     Math.max(0, newWordsPerDay - introducedToday),
   );
 
@@ -233,11 +256,39 @@ export function planSession(words, cards, now, options) {
     next = newForKnownWords[0];
   } else if (newWordsLeftToday > 0 && againNow.length > 0) {
     next = { word: againNow[0].word, type: againNow[0].type, card: null };
-  } else if (newWordsLeftToday > 0 && unseenWords.length > 0) {
-    next = unseenWords[0];
   }
 
-  return { next, dueCount: due.length, newCardCount, newWordsLeftToday, nextDueAt };
+  return {
+    next,
+    dueCount: due.length,
+    newCardCount,
+    newWordsLeftToday,
+    learnedToday: introducedToday,
+    waitingCount,
+    nextDueAt,
+  };
+}
+
+// The steps of the lesson a word is taught by (see "The lesson for a new
+// word" in review.js):
+//   'meet':    look at the word: its characters, reading and meaning. Only
+//              when the word is new altogether (the Learn tab), not when just
+//              its writing card is.
+//   'tone':    give each character's tone, as practice. Left out if tone
+//              cards are switched off or the word cannot have one.
+//   'trace':   write over the outline, each stroke being shown until it is
+//              written
+//   'outline': write over the outline, without the strokes being shown
+//   'test':    write it from memory. This is the writing card proper, and the
+//              only step that is graded.
+// The three writing steps are left out if writing cards are switched off or
+// the word cannot be written.
+export function lessonSteps({ newWord = false, toneCardsOn, canHaveToneCard, canBeWritten = true }) {
+  return [
+    ...(newWord ? ['meet'] : []),
+    ...(toneCardsOn && canHaveToneCard ? ['tone'] : []),
+    ...(canBeWritten ? ['trace', 'outline', 'test'] : []),
+  ];
 }
 
 // A character counts as missed when its mistakes exceed this share of its

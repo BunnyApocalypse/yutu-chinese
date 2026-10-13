@@ -9,9 +9,17 @@
 // What they share lives here: choosing the next card, the grade buttons, and
 // saving.
 
-import { getAll, saveReview, randomId } from './db.js';
+import { getAll, putAll, saveReview, randomId } from './db.js';
 import { gradeOptions, GRADES, AGAIN, GOOD } from './scheduler.js';
-import { planSession, suggestGrade, judgeChar, formatInterval, cardIdFor } from './session.js';
+import {
+  planSession,
+  suggestGrade,
+  judgeChar,
+  formatInterval,
+  cardIdFor,
+  lessonSteps,
+  nextToLearn,
+} from './session.js';
 import { toneAnswers, readingsFor, describeReading } from './tones.js';
 import { scriptFor, scriptFlagFor } from './words.js';
 
@@ -28,6 +36,7 @@ const RECHECK_MS = 15 * 1000;
 // elements: the page elements review controls:
 //   countsElement, typeElement, meaningElement, pinyinElement, pinyinButton,
 //   gradeRow, editWordButton, donePanel, doneMessage, studyArea, scriptFlag,
+//   lessonNote, skipLessonButton, lessonNextButton, learnNextButton,
 //   and the parts of the study area that differ per kind of card:
 //   wordRow, statusRow, verdictRow, writingRow, writingButtons, cardFace,
 //   toneButtonRow, orderNote
@@ -50,6 +59,10 @@ export function createReview(elements, flows, settings, editWord) {
     doneMessage,
     studyArea,
     scriptFlag,
+    lessonNote,
+    skipLessonButton,
+    lessonNextButton,
+    learnNextButton,
     wordRow,
     statusRow,
     verdictRow,
@@ -66,12 +79,17 @@ export function createReview(elements, flows, settings, editWord) {
   // The tone table (see data/cedict/README.md), loaded at startup. Supplies
   // Taiwan readings and tone variants.
   let toneTable = null;
+  // The reading of words and cards that is under way or was last done (see load).
+  let loading = Promise.resolve();
   // Words whose characters turned out to have no stroke data. They can't have
   // a writing card; left out for this session.
   const unwritable = new Set();
 
-  // True while Review is the mode on screen.
+  // True while Review or Learn is the mode on screen, and which of the two:
+  // 'review' shows the cards of learned words that are due; 'learn' teaches
+  // the words that are waiting (see "Learning new words" below).
   let active = false;
+  let mode = 'review';
   // True while a card is being shown for Free practice: it is not scheduled,
   // gets no grade buttons, and nothing is saved.
   let practicing = false;
@@ -220,6 +238,11 @@ export function createReview(elements, flows, settings, editWord) {
     };
     await saveReview(newCard, review);
     cards.set(newCard.id, newCard);
+    if (current.learning) {
+      // That was the last step of a new word's lesson.
+      await finishLearning();
+      return;
+    }
     showNext();
   }
 
@@ -349,6 +372,7 @@ export function createReview(elements, flows, settings, editWord) {
     }
     practicing = true;
     current = { word, type, card: null };
+    endLesson();
     showScriptFlag(word);
     showPartsFor(type);
     if (type === 'tone') {
@@ -357,6 +381,245 @@ export function createReview(elements, flows, settings, editWord) {
       showRecallCard(type);
     }
     return true;
+  }
+
+  // ---- The lesson for a new word ----
+  //
+  // A word is taught before it is tested. In the Learn tab a word that is new
+  // altogether goes through the whole lesson: a look at the word, its tones,
+  // writing it stroke by stroke as each stroke is shown, writing over the
+  // bare outline, and only then writing it from memory. That last step is the
+  // writing card as it always was: the only step that is graded, and what
+  // starts the card's schedule. In Review, a writing card that is new for a
+  // word already learned (a word from before there was a Learn tab, or one
+  // to be written again in another script) gets the same lesson without the
+  // first look.
+
+  // The lesson in progress: { steps, index }, or null.
+  let lesson = null;
+
+  const LESSON_NOTES = {
+    meet: 'A new word. Have a look, then go on.',
+    tone: 'First the tones: give the tone of each character.',
+    trace: 'Write each stroke as it is shown.',
+    outline: 'Once more over the outline, without the strokes being shown.',
+    test: 'Now from memory. This is the one that counts.',
+  };
+
+  function endLesson() {
+    lesson = null;
+    lessonNote.hidden = true;
+    skipLessonButton.hidden = true;
+    lessonNextButton.hidden = true;
+  }
+
+  // The steps for the word on screen.
+  function stepsFor(word, newWord) {
+    return lessonSteps({
+      newWord,
+      toneCardsOn: settings.enabledTypes.includes('tone'),
+      canHaveToneCard: toneAnswersOf(word) !== null,
+      canBeWritten: settings.enabledTypes.includes('writing') && !unwritable.has(word.id),
+    });
+  }
+
+  // Shows the lesson's current step. Returns false if the word turns out to
+  // have no stroke data, so that it cannot be written at all.
+  async function showLessonStep() {
+    const { word } = current;
+    const step = lesson.steps[lesson.index];
+    typeElement.textContent = `New word · step ${lesson.index + 1} of ${lesson.steps.length}`;
+    lessonNote.textContent = LESSON_NOTES[step];
+    lessonNote.hidden = false;
+    // "I know this one" goes straight to the last step.
+    skipLessonButton.hidden = lesson.index === lesson.steps.length - 1;
+    lessonNextButton.hidden = true;
+    stopFlows();
+    hideGrades();
+
+    if (step === 'test') {
+      pinyinElement.hidden = true;
+      showPartsFor('writing');
+      return showWritingCard();
+    }
+
+    const script = scriptFor(word, settings);
+    if (step === 'meet') {
+      // The word, its reading and its meaning, on the card's face.
+      meaningElement.textContent = '';
+      pinyinElement.hidden = true;
+      pinyinButton.hidden = true;
+      showPartsFor('meaning');
+      const face = (className, text) => {
+        const element = document.createElement('p');
+        element.className = className;
+        element.textContent = text;
+        return element;
+      };
+      const characters = face('face-word', word[script]);
+      // Tells the browser which regional font to use for the characters.
+      characters.lang = script === 'traditional' ? 'zh-Hant-TW' : 'zh-Hans-CN';
+      const described = describeReading(readingOf(word));
+      cardFace.replaceChildren(
+        characters,
+        face('face-pinyin', described.main),
+        ...(described.other ? [face('face-hint', described.other)] : []),
+        face('face-meaning', word.definition),
+      );
+      lessonNextButton.hidden = false;
+      return true;
+    }
+
+    // While it is being learned, the word's meaning and reading are in view.
+    meaningElement.textContent = word.definition;
+    pinyinButton.hidden = true;
+    showPinyin();
+    if (step === 'tone') {
+      showPartsFor('tone');
+      flows.tone.start({
+        word,
+        script,
+        reading: readingOf(word),
+        answers: toneAnswersOf(word),
+        // Practice: nothing is saved, and the tone card comes by itself later.
+        onDone() {
+          lessonNextButton.hidden = false;
+        },
+        onContinue: () => nextLessonStep(),
+      });
+      return true;
+    }
+    showPartsFor('writing');
+    return flows.writing.start(word[script], {
+      script,
+      rawInput: settings.rawInput,
+      showOutline: true,
+      demoStrokes: step === 'trace',
+      continueLabel: 'Next step',
+      onContinue: () => nextLessonStep(),
+    });
+  }
+
+  async function nextLessonStep(toIndex = lesson.index + 1) {
+    const shown = current;
+    if (toIndex >= lesson.steps.length) {
+      // A lesson without writing (writing cards are off, or the word has no
+      // stroke data) ends here; with writing it ends when the test is graded.
+      await finishLearning();
+      return;
+    }
+    lesson.index = toIndex;
+    if (!(await showLessonStep()) && current === shown) {
+      unwritable.add(current.word.id);
+      showNext();
+    }
+  }
+
+  lessonNextButton.addEventListener('click', () => {
+    if (lesson) {
+      nextLessonStep();
+    }
+  });
+
+  skipLessonButton.addEventListener('click', () => {
+    if (lesson) {
+      nextLessonStep(lesson.steps.length - 1);
+    }
+  });
+
+  // ---- Learning new words (the Learn tab) ----
+  //
+  // A word added to the app waits until it is learned here; only then do its
+  // cards come up in Review. Learn takes the waiting words one at a time, in
+  // the order of the queue, and teaches each with the lesson above. The
+  // "new words per day" setting is a goal, shown as progress; one can go on
+  // past it.
+
+  // The word just learned, for the screen between two words; null otherwise.
+  let justLearned = null;
+
+  // The word on screen has been through its lesson: mark it as learned.
+  async function finishLearning() {
+    const learned = { ...current.word, learnedAt: Date.now() };
+    await putAll('words', [learned]);
+    words = words.map((word) => (word.id === learned.id ? learned : word));
+    justLearned = learned;
+    showNext();
+  }
+
+  function learnCounts() {
+    const plan = planSession(words, cards, Date.now(), {
+      newWordsPerDay: settings.newWordsPerDay,
+      enabledTypes: settings.enabledTypes,
+      hasCardType,
+      scriptOf: (word) => scriptFor(word, settings),
+    });
+    return { learnedToday: plan.learnedToday, waiting: plan.waitingCount };
+  }
+
+  // Shows a message where the card would be, and optionally the button that
+  // goes on to the next word.
+  function showLearnMessage(message, canGoOn) {
+    current = null;
+    studyArea.hidden = true;
+    typeElement.textContent = '';
+    doneMessage.textContent = message;
+    learnNextButton.hidden = !canGoOn;
+    donePanel.hidden = false;
+  }
+
+  async function startNextWord() {
+    justLearned = null;
+    const word = nextToLearn(words, cards);
+    if (!word) {
+      showNextToLearn();
+      return;
+    }
+    current = { word, type: 'writing', card: null, learning: true };
+    lesson = { steps: stepsFor(word, true), index: 0 };
+    donePanel.hidden = true;
+    studyArea.hidden = false;
+    showScriptFlag(word);
+    const shown = current;
+    if (!(await showLessonStep()) && current === shown) {
+      // No stroke data after all: the lesson starts again without writing.
+      unwritable.add(word.id);
+      startNextWord();
+    }
+  }
+
+  learnNextButton.addEventListener('click', startNextWord);
+
+  // What the Learn tab shows: the next word's lesson or, between two words
+  // and when there is nothing to learn, a message.
+  function showNextToLearn() {
+    const { learnedToday, waiting } = learnCounts();
+    const goal = settings.newWordsPerDay;
+    countsElement.textContent = `Learned today ${learnedToday} of ${goal} · ${waiting} waiting`;
+    const progress =
+      learnedToday >= goal && goal > 0
+        ? `That is today's goal: ${learnedToday} of ${goal}. Stop here, or go on if you like.`
+        : `${learnedToday} of ${goal} today.`;
+
+    if (justLearned) {
+      const name = justLearned[scriptFor(justLearned, settings)];
+      showLearnMessage(
+        `${name} is learned: its cards will come up in Review. ${progress}` +
+          (waiting === 0 ? ' No more words are waiting.' : ''),
+        waiting > 0,
+      );
+    } else if (waiting === 0) {
+      showLearnMessage(
+        words.length === 0
+          ? 'You have no words yet. Add some in the Words tab.'
+          : 'No words are waiting to be learned. Add more in the Words tab.',
+        false,
+      );
+    } else if (learnedToday >= goal) {
+      showLearnMessage(progress, true);
+    } else {
+      startNextWord();
+    }
   }
 
   // ---- Choosing the next card ----
@@ -396,6 +659,17 @@ export function createReview(elements, flows, settings, editWord) {
     }
     practicing = false;
     stopFlows();
+    endLesson();
+    hideGrades();
+    learnNextButton.hidden = true;
+    meaningElement.textContent = '';
+    pinyinElement.hidden = true;
+    pinyinButton.hidden = true;
+    if (mode === 'learn') {
+      showNextToLearn();
+      return;
+    }
+    justLearned = null;
     const now = Date.now();
     const plan = planSession(words, cards, now, {
       newWordsPerDay: settings.newWordsPerDay,
@@ -404,21 +678,26 @@ export function createReview(elements, flows, settings, editWord) {
       scriptOf: (word) => scriptFor(word, settings),
     });
     countsElement.textContent =
-      `Due ${plan.dueCount} · New cards ${plan.newCardCount} · New words ${plan.newWordsLeftToday}`;
-    hideGrades();
-    meaningElement.textContent = '';
-    pinyinElement.hidden = true;
-    pinyinButton.hidden = true;
+      `Due ${plan.dueCount} · New cards ${plan.newCardCount}` +
+      // Writing cards to be learned again after a change of script.
+      (plan.newWordsLeftToday > 0 ? ` · To write again ${plan.newWordsLeftToday}` : '');
 
     if (!plan.next) {
       current = null;
       studyArea.hidden = true;
       typeElement.textContent = '';
-      // The app starts with no words at all.
-      doneMessage.textContent =
-        words.length === 0
-          ? 'You have no words yet. Add some in the Words tab.'
-          : `All done for now. ${describeWait(plan.nextDueAt, now)}`;
+      // The app starts with no words at all, and words wait to be learned.
+      const waiting =
+        plan.waitingCount > 0
+          ? ` ${plan.waitingCount} ${plan.waitingCount === 1 ? 'word is' : 'words are'} waiting in the Learn tab.`
+          : '';
+      if (words.length === 0) {
+        doneMessage.textContent = 'You have no words yet. Add some in the Words tab.';
+      } else if (plan.waitingCount === words.length) {
+        doneMessage.textContent = `Nothing to review yet.${waiting}`;
+      } else {
+        doneMessage.textContent = `All done for now. ${describeWait(plan.nextDueAt, now)}${waiting}`;
+      }
       donePanel.hidden = false;
       // Cards come back after a few minutes, so keep checking.
       recheckTimer = setTimeout(showNext, RECHECK_MS);
@@ -433,7 +712,11 @@ export function createReview(elements, flows, settings, editWord) {
     showPartsFor(current.type);
 
     if (current.type === 'writing') {
-      const started = await showWritingCard();
+      // A writing card that is new starts with its lesson.
+      if (settings.lessons && !current.card) {
+        lesson = { steps: stepsFor(current.word, false), index: 0 };
+      }
+      const started = lesson ? await showLessonStep() : await showWritingCard();
       if (!started) {
         unwritable.add(current.word.id);
         showNext();
@@ -447,24 +730,43 @@ export function createReview(elements, flows, settings, editWord) {
 
   return {
     // Reads words and cards from the database. Call once at startup.
-    async load() {
-      words = await getAll('words');
-      // import() fetches the table as its own file, so it doesn't make the
-      // main program bigger. If it can't be loaded, tones are judged against
-      // the word list alone.
-      try {
-        toneTable = (await import('../data/cedict/tones.json')).default;
-      } catch {
-        toneTable = null;
-      }
-      cards.clear();
-      for (const card of await getAll('cards')) {
-        cards.set(card.id, card);
-      }
+    // Reads words and cards from the database: at startup, and again whenever
+    // the Words tab has changed them.
+    load() {
+      loading = (async () => {
+        // Everything is read first and put in place together, so that nothing
+        // sees new words beside old cards.
+        const newWords = await getAll('words');
+        const newCards = await getAll('cards');
+        // import() fetches the table as its own file, so it doesn't make the
+        // main program bigger. If it can't be loaded, tones are judged
+        // against the word list alone.
+        let table = null;
+        try {
+          table = (await import('../data/cedict/tones.json')).default;
+        } catch {
+          // left as null
+        }
+        words = newWords;
+        toneTable = table;
+        cards.clear();
+        for (const card of newCards) {
+          cards.set(card.id, card);
+        }
+      })();
+      return loading;
     },
 
-    activate() {
+    // Shows Review. If the words are being read afresh just now (a word was
+    // changed a moment ago), that is waited for, or the card shown would be
+    // chosen from what was there before.
+    //
+    // newMode: 'review', or 'learn' for the Learn tab
+    async activate(newMode = 'review') {
       active = true;
+      mode = newMode;
+      justLearned = null;
+      await loading;
       return showNext();
     },
 
@@ -475,7 +777,9 @@ export function createReview(elements, flows, settings, editWord) {
       clearTimeout(recheckTimer);
       stopFlows();
       donePanel.hidden = true;
+      learnNextButton.hidden = true;
       studyArea.hidden = false;
+      endLesson();
       showScriptFlag(null);
       showPartsFor('writing');
       hideGrades();

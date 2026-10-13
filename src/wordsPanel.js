@@ -17,12 +17,23 @@ import {
   matchesSearch,
   charactersShown,
   scriptFor,
+  parseReadyList,
+  levelsOfReadyList,
+  listTag,
   tidyPinyin,
 } from './words.js';
 import { readDictionary, lookUp, proposeMeaning, otherScriptForm } from './dictionary.js';
 // "?url" makes Vite hand us the file's address instead of its contents, so
 // the dictionary stays a separate file that is only fetched when needed.
 import dictionaryUrl from '../data/cedict/dictionary.tsv?url';
+// The ready-made lists are separate files in the same way (data/wordlists/).
+import hsk3Url from '../data/wordlists/hsk/hsk-3.0.tsv?url';
+import hsk2Url from '../data/wordlists/hsk/hsk-2.0.tsv?url';
+import tocflUrl from '../data/wordlists/tocfl/tocfl.tsv?url';
+
+// Where each ready-made list is fetched from, by the value of its entry in
+// the List drop-down (index.html).
+const READY_LIST_URLS = { 'hsk-3.0': hsk3Url, 'hsk-2.0': hsk2Url, tocfl: tocflUrl };
 
 // With thousands of words, building a row for each would make the page slow,
 // so only this many are shown at a time; the search box narrows them down.
@@ -92,7 +103,7 @@ export function createWordsPanel(onChange, getSettings) {
   const studyNextButton = byId('study-next-button');
 
   let words = [];
-  // The IDs of words that have at least one studied card.
+  // The IDs of the words that have been learned.
   let studiedWordIds = new Set();
   // The checked words of a pasted list, waiting for "Add".
   let listToAdd = [];
@@ -103,7 +114,12 @@ export function createWordsPanel(onChange, getSettings) {
 
   async function load() {
     words = (await getAll('words')).sort((a, b) => a.order - b.order);
-    studiedWordIds = new Set((await getAll('cards')).map((card) => card.wordId));
+    // A word is learned once it has been through the Learn tab, or has a card
+    // (see isLearned in session.js).
+    studiedWordIds = new Set([
+      ...(await getAll('cards')).map((card) => card.wordId),
+      ...words.filter((word) => word.learnedAt !== undefined).map((word) => word.id),
+    ]);
   }
 
   // Reads the list afresh, shows it, and tells the rest of the app.
@@ -213,7 +229,7 @@ export function createWordsPanel(onChange, getSettings) {
         span('entry-definition', word.definition),
       );
       if (!studiedWordIds.has(word.id)) {
-        button.append(span('entry-new', 'new'));
+        button.append(span('entry-new', 'waiting'));
       }
       button.addEventListener('click', () => openDialog(word));
       const row = document.createElement('li');
@@ -413,7 +429,7 @@ export function createWordsPanel(onChange, getSettings) {
 
     pinyinPreview.textContent = '';
     suggestions.replaceChildren();
-    addNote.textContent = `Added ${charactersOf(toAdd[0])}. It is last in line among the new words.`;
+    addNote.textContent = `Added ${charactersOf(toAdd[0])}. It waits in the Learn tab, last in line.`;
     await afterChange();
     lookedUpField.focus();
   });
@@ -489,8 +505,124 @@ export function createWordsPanel(onChange, getSettings) {
     await putAll('words', toAdd);
     forgetCheckedList();
     listText.value = '';
-    listReport.textContent = `Added ${plural(toAdd.length, 'word')}.`;
+    listReport.textContent = `Added ${plural(toAdd.length, 'word')}. They wait in the Learn tab.`;
     await afterChange();
+  });
+
+  // ---- Adding a ready-made list ----
+
+  const readyDetails = byId('ready-list');
+  const readySelect = byId('ready-list-select');
+  const readyLevels = byId('ready-levels');
+  const addReadyButton = byId('add-ready-button');
+  const readyReport = byId('ready-report');
+
+  // The lists fetched so far: list ID → its entries (see parseReadyList).
+  const readyLists = new Map();
+
+  async function readyEntries() {
+    const listId = readySelect.value;
+    if (!readyLists.has(listId)) {
+      const response = await fetch(READY_LIST_URLS[listId]);
+      readyLists.set(listId, parseReadyList(await response.text()));
+    }
+    return readyLists.get(listId);
+  }
+
+  const chosenLevels = () =>
+    [...readyLevels.querySelectorAll('input:checked')].map((box) => box.value);
+
+  // Says on the button how many words the chosen levels would add.
+  function showReadyCount() {
+    const count = [...readyLevels.querySelectorAll('input:checked')].reduce(
+      (total, box) => total + Number(box.dataset.newCount),
+      0,
+    );
+    addReadyButton.textContent = `Add ${plural(count, 'word')}`;
+    addReadyButton.disabled = chosenLevels().length === 0;
+  }
+
+  // Lists the levels of the chosen list, each with a checkbox.
+  async function showReadyLevels() {
+    let entries;
+    try {
+      entries = await readyEntries();
+    } catch {
+      readyReport.textContent = 'The list could not be fetched. It needs a connection the first time.';
+      return;
+    }
+    const boxes = levelsOfReadyList(entries, words).map(({ level, count, newCount }) => {
+      const box = document.createElement('input');
+      box.type = 'checkbox';
+      box.value = level;
+      box.dataset.newCount = newCount;
+      box.addEventListener('change', showReadyCount);
+      const label = document.createElement('label');
+      label.append(
+        box,
+        // TOCFL has two levels with names of their own before its level 1.
+        ` ${/^\d/.test(level) ? `Level ${level}` : level}: ${plural(count, 'word')}` +
+          (newCount === count ? '' : newCount === 0 ? ', all in your words already' : `, ${newCount} new`),
+      );
+      return label;
+    });
+    // The first child is the fieldset's caption, which stays.
+    readyLevels.replaceChildren(readyLevels.firstElementChild, ...boxes);
+    showReadyCount();
+  }
+
+  // "toggle" is announced when a <details> is opened or closed.
+  readyDetails.addEventListener('toggle', () => {
+    if (readyDetails.open) {
+      readyReport.textContent = '';
+      showReadyLevels();
+    }
+  });
+  readySelect.addEventListener('change', () => {
+    readyReport.textContent = '';
+    showReadyLevels();
+  });
+
+  addReadyButton.addEventListener('click', async () => {
+    const listId = readySelect.value;
+    const levels = new Set(chosenLevels());
+    const entries = (await readyEntries()).filter((entry) => levels.has(entry.level));
+    addReadyButton.disabled = true;
+    readyReport.textContent = 'Adding…';
+    // Meanings come from the dictionary, as for a word typed by hand.
+    await loadDictionary();
+    const { meaningDetail } = getSettings();
+    const candidates = [];
+    const tags = new Map(); // word ID → the tag for this list and level
+    let noMeaning = 0;
+    for (const entry of entries) {
+      const inDictionary = dictionary ? lookUp(dictionary, entry.traditional) : [];
+      const sameWord = inDictionary.find(
+        (found) => found.traditional === entry.traditional && found.pinyin === entry.pinyin,
+      );
+      const definition = sameWord
+        ? proposeMeaning(sameWord.meanings, meaningDetail)
+        : entry.meaning || (inDictionary[0] ? proposeMeaning(inDictionary[0].meanings, meaningDetail) : '');
+      const checked = checkWord({ ...entry, definition });
+      if (!checked.word) {
+        noMeaning += 1; // only without the dictionary, for want of a meaning
+        continue;
+      }
+      candidates.push(checked.word);
+      tags.set(wordId(checked.word), listTag(listId, entry.level));
+    }
+    const withTag = (word) => ({ ...word, lists: [...new Set([...(word.lists || []), tags.get(word.id)])] });
+    const { toAdd, alreadyHave } = newWordRecords(candidates, words, Date.now());
+    // Words that were there already are marked as belonging to the list too.
+    const marked = words.filter((word) => tags.has(word.id) && !(word.lists || []).includes(tags.get(word.id)));
+    await putAll('words', [...toAdd, ...marked].map(withTag));
+    await afterChange();
+    await showReadyLevels();
+    readyReport.textContent =
+      `Added ${plural(toAdd.length, 'word')}` +
+      (alreadyHave > 0 ? `; ${alreadyHave} you already had` : '') +
+      (noMeaning > 0 ? `; ${noMeaning} left out because the dictionary could not be fetched for their meaning` : '') +
+      '. They wait in the Learn tab, last in line, lowest level first.';
   });
 
   // ---- One word: change, study next, remove ----
@@ -501,8 +633,8 @@ export function createWordsPanel(onChange, getSettings) {
     const studied = studiedWordIds.has(word.id);
     dialogTitle.textContent = `${word[scriptFor(word, getSettings())]} ${formatPinyin(word.pinyin)}`;
     dialogStatus.textContent = studied
-      ? 'You are studying this word.'
-      : 'New: you have not studied this word yet.';
+      ? 'You have learned this word; its cards come up in Review.'
+      : 'Waiting: you have not learned this word yet. It comes up in the Learn tab.';
     editDefinition.value = word.definition;
     editTraditional.value = word.traditional;
     editSimplified.value = word.simplified;
@@ -511,7 +643,7 @@ export function createWordsPanel(onChange, getSettings) {
     editPinyinAlso.value = word.pinyinAlso || '';
     editCardScript.value = word.cardScript || '';
     dialogNote.textContent = '';
-    // Only a word not yet started can be moved to the front of the new words.
+    // Only a word still waiting can be moved to the front of the line.
     studyNextButton.hidden = studied;
     // showModal() opens a <dialog> on top of the page and dims the rest.
     dialog.showModal();
@@ -544,6 +676,13 @@ export function createWordsPanel(onChange, getSettings) {
       order: openWord.order,
       addedAt: openWord.addedAt,
     };
+    // Which ready-made lists the word came from is kept (see listTag).
+    if (openWord.lists) {
+      saved.lists = openWord.lists;
+    }
+    if (openWord.learnedAt !== undefined) {
+      saved.learnedAt = openWord.learnedAt;
+    }
     if (saved.id === openWord.id) {
       await putAll('words', [saved]);
     } else if (words.some((word) => word.id === saved.id)) {

@@ -65,8 +65,12 @@ if (!response.ok) {
 const text = zlib.gunzipSync(Buffer.from(await response.arrayBuffer())).toString('utf8');
 
 let date = 'unknown';
-const lines = [];
 let leftOut = 0;
+
+// Every usable entry, in the file's order. An entry that only points to
+// another one ("erhua variant of 一點", "variant of 詞典", "see 未可厚非") has
+// no meanings of its own yet; `pointsTo` is the word and reading it names.
+const entries = [];
 
 for (const line of text.split('\n')) {
   if (line.startsWith('#! date=')) {
@@ -81,17 +85,49 @@ for (const line of text.split('\n')) {
   // tidyPinyin refuses readings with anything but syllables in them
   // (CC-CEDICT also has entries with Latin letters, digits and punctuation).
   const pinyin = tidyPinyin(rawPinyin);
-  const meanings = cleanMeanings(definitions);
-  if (pinyin === null || pinyin.includes(',') || meanings.length === 0 || /[|#]/.test(traditional)) {
+  if (pinyin === null || pinyin.includes(',') || /[|#]/.test(traditional)) {
     leftOut += 1;
     continue;
   }
+  const pointer = definitions.match(/(?:variant of|see(?: also)?) ([^\s|[\]]+)(?:\|[^\s|[\]]+)?\[([^\]]+)\]/);
   const taiwan = [...definitions.matchAll(/Taiwan pr\. \[([^\]]+)\]/g)]
     .map((note) => tidyPinyin(note[1]))
     .filter((reading) => reading !== null && reading !== pinyin)
     .join(', ');
+  entries.push({
+    traditional,
+    simplified,
+    pinyin,
+    meanings: cleanMeanings(definitions),
+    taiwan,
+    pointsTo: pointer ? `${pointer[1]}|${tidyPinyin(pointer[2])}` : null,
+  });
+}
+
+// An entry that only points to another takes that one's meanings, so that
+// 一點兒 or 辭典 can be looked up and filled in like any other word. One step
+// only: an entry whose target has no meanings either is left out.
+const byWord = new Map(entries.map((entry) => [`${entry.traditional}|${entry.pinyin}`, entry]));
+let borrowed = 0;
+const lines = [];
+for (const entry of entries) {
+  let { meanings } = entry;
+  if (meanings.length === 0 && entry.pointsTo && byWord.get(entry.pointsTo)?.meanings.length > 0) {
+    meanings = byWord.get(entry.pointsTo).meanings;
+    borrowed += 1;
+  }
+  if (meanings.length === 0) {
+    leftOut += 1;
+    continue;
+  }
   lines.push(
-    [traditional, simplified === traditional ? '' : simplified, pinyin, meanings.join('/'), taiwan]
+    [
+      entry.traditional,
+      entry.simplified === entry.traditional ? '' : entry.simplified,
+      entry.pinyin,
+      meanings.join('/'),
+      entry.taiwan,
+    ]
       .join('\t')
       .trimEnd(),
   );
@@ -99,4 +135,7 @@ for (const line of text.split('\n')) {
 
 fs.mkdirSync('data/cedict', { recursive: true });
 fs.writeFileSync(TARGET, `# CC-CEDICT ${date}\n${lines.join('\n')}\n`);
-console.log(`Wrote ${TARGET} from CC-CEDICT dated ${date}: ${lines.length} entries, ${leftOut} left out.`);
+console.log(
+  `Wrote ${TARGET} from CC-CEDICT dated ${date}: ${lines.length} entries ` +
+    `(${borrowed} with the meanings of the entry they point to), ${leftOut} left out.`,
+);

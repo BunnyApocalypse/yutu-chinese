@@ -22,6 +22,17 @@ main {
   gap: 8px;
 }
 
+/* Four tabs have to fit across a phone, each on one line. */
+.tabs {
+  gap: 6px;
+}
+
+.tabs button {
+  padding: 0 10px;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
 .tabs button.selected {
   border-color: #222;
   background: #222;
@@ -77,6 +88,40 @@ main {
   flex-direction: column;
   align-items: center;
   gap: 12px;
+}
+
+/* The lesson's demonstration of the next stroke (see showDemo in quiz.js): a
+   thick line along the stroke, cut to the stroke's shape, drawn again and
+   again. The line counts as having length 1 (its pathLength), so a dash of 1
+   with a gap of 1 covers it exactly; sliding the dash in from before the
+   start makes the stroke grow the way it is written. */
+.stroke-demo-line {
+  fill: none;
+  stroke: #3b6fb6;
+  stroke-width: 200;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 1;
+  animation: stroke-demo 1.5s ease-in-out infinite;
+}
+
+@keyframes stroke-demo {
+  0% {
+    stroke-dashoffset: 1;
+    opacity: 1;
+  }
+  60% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  85% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
 }
 
 /* Links inside explanations, in the app's blue. */

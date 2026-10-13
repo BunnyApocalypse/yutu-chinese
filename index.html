@@ -16,6 +16,7 @@
     <main>
       <nav class="tabs">
         <button id="review-tab" class="selected" type="button">Review</button>
+        <button id="learn-tab" type="button">Learn</button>
         <button id="practice-tab" type="button">Free practice</button>
         <button id="words-tab" type="button">Words</button>
       </nav>
@@ -28,6 +29,8 @@
         <p id="prompt-meaning" class="meaning"></p>
         <p id="prompt-pinyin" class="pinyin" hidden></p>
         <button id="pinyin-button" class="small" type="button" hidden>Show pinyin</button>
+        <!-- The lesson for a new word: what this step asks for (review.js). -->
+        <p id="lesson-note" class="hint" hidden></p>
       </section>
 
       <!-- Free practice mode: type a character or word and choose a kind of card -->
@@ -57,6 +60,8 @@
       <!-- Review mode, when nothing is due -->
       <div id="done-panel" class="done-panel" hidden>
         <p id="done-message"></p>
+        <!-- The Learn tab, between two words: on to the next one (review.js). -->
+        <button id="learn-next-button" class="primary" type="button" hidden>Learn the next word</button>
       </div>
 
       <!-- The Words tab: add words and look after the list. Run by wordsPanel.js. -->
@@ -100,6 +105,39 @@
           </div>
           <p id="list-report" class="note"></p>
           <ul id="list-problems" class="list-problems"></ul>
+        </details>
+
+        <details id="ready-list" class="add-list">
+          <summary>Add a ready-made list</summary>
+          <p class="hint">
+            These are the word lists of the two official tests of Chinese for learners. They are a common answer to
+            "which words should I learn first?", and many textbooks and courses follow them. The lowest level is the easiest.
+          </p>
+          <p class="hint">
+            The <a href="https://en.wikipedia.org/wiki/Hanyu_Shuiping_Kaoshi" target="_blank" rel="noopener">HSK</a>
+            is mainland China's test. <b>HSK 3.0</b> is its current standard, with levels 1 to 6 and an advanced band 7-9.
+            <b>HSK 2.0</b> is the older six-level standard it replaces, which a lot of teaching material still uses.
+          </p>
+          <p class="hint">
+            The <a href="https://en.wikipedia.org/wiki/Test_of_Chinese_as_a_Foreign_Language" target="_blank" rel="noopener">TOCFL</a>
+            is Taiwan's test, with two Novice levels and then levels 1 to 5. Its words are the ones used in Taiwan,
+            so it suits someone learning traditional characters there.
+          </p>
+          <p class="hint">Not sure? Start with HSK 3.0, level 1.</p>
+          <label class="setting">
+            List
+            <select id="ready-list-select">
+              <option value="hsk-3.0">HSK 3.0</option>
+              <option value="hsk-2.0">HSK 2.0 (older)</option>
+              <option value="tocfl">TOCFL (Taiwan)</option>
+            </select>
+          </label>
+          <!-- One checkbox per level, with how many of its words are new. Filled in by wordsPanel.js. -->
+          <fieldset id="ready-levels" class="setting"><legend>Levels</legend></fieldset>
+          <div class="buttons">
+            <button id="add-ready-button" class="small primary" type="button" disabled>Add</button>
+          </div>
+          <p id="ready-report" class="note"></p>
         </details>
 
         <h2>Your words (<span id="word-count">0</span>)</h2>
@@ -155,6 +193,11 @@
 
         <!-- Review mode: the four grades, shown once the word is written. Filled in by review.js. -->
         <div id="grade-row" class="grade-row" hidden></div>
+
+        <!-- During the lesson for a new word: on to its next step, where nothing
+             else leads there; and straight to its last step. -->
+        <button id="lesson-next-button" class="primary" type="button" hidden>Next step</button>
+        <button id="skip-lesson-button" class="small" type="button" hidden>I know this one: skip to the end</button>
 
         <!-- Review mode, with the grades: opens the word's panel to correct it (review.js). -->
         <button id="edit-word-button" class="small" type="button" hidden>Edit word</button>
@@ -271,16 +314,16 @@
 
         <section data-step hidden>
           <h2>How it works</h2>
-          <p><b>Review</b> shows the card that is due next. After you answer, you grade yourself: Again, Hard, Good or Easy. Each button says when the card would come back, and where the app can check your answer it suggests a grade.</p>
-          <p><b>New words</b> arrive a few per day (5 to begin with), so that reviews don't pile up.</p>
+          <p><b>Learn</b> teaches you the words that are waiting, one at a time: you look at the word, practice its tones, write it stroke by stroke as each stroke is shown, and then write it from memory. A few a day is plenty (the goal is 5 to begin with), so that reviews don't pile up.</p>
+          <p><b>Review</b> brings back the words you have learned. It shows the card that is due next; after you answer, you grade yourself: Again, Hard, Good or Easy. Each button says when the card would come back, and where the app can check your answer it suggests a grade.</p>
           <p><b>Writing:</b> write anywhere in the box, at any size. Your own strokes stay on screen, and two strokes joined the way handwriting joins them are accepted.</p>
           <p><b>Free practice</b> lets you try any card, or write any characters at all. Nothing there is recorded.</p>
         </section>
 
         <section data-step hidden>
           <h2>Your words</h2>
-          <p>The app starts with no words. You add the ones you want to learn in the <b>Words</b> tab.</p>
-          <p>Type a word's characters and tap its dictionary entry to fill in the reading and meaning, or paste a whole list at once.</p>
+          <p>The app starts with no words. You add the ones you want to learn in the <b>Words</b> tab; they then wait in the <b>Learn</b> tab until you learn them.</p>
+          <p>Type a word's characters and tap its dictionary entry to fill in the reading and meaning, paste a list of your own, or add a ready-made list such as the words of HSK level 1.</p>
           <p>If something about a word is wrong, correct it in the Words tab, or tap <b>Edit word</b> after answering one of its cards.</p>
         </section>
 
@@ -349,6 +392,11 @@
         </label>
 
         <div class="setting">
+          <label><input id="lessons-checkbox" type="checkbox" /> In Review, teach before testing</label>
+          <p class="hint">When a word you already know is to be written for the first time (after changing script, say): its tones, then each stroke shown, then the outline, then from memory. Words in the Learn tab are always taught this way.</p>
+        </div>
+
+        <div class="setting">
           <span>
             <label for="meaning-detail-select">Dictionary meanings</label>
             <button id="meaning-detail-help" class="help-button" type="button" aria-label="What does this setting do?" aria-expanded="false" aria-controls="meaning-detail-hint">?</button>
@@ -367,7 +415,7 @@
         </div>
 
         <label class="setting">
-          New words per day
+          New words per day (goal)
           <input id="new-words-input" type="number" min="0" max="50" inputmode="numeric" />
         </label>
 

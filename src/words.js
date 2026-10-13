@@ -247,6 +247,50 @@ export function readWordList(text, completeForms) {
   return { words, problems };
 }
 
+// ---- Ready-made lists ----
+
+// Reads a ready-made word list (data/wordlists/, built by
+// scripts/build-word-lists.js): one word per line with the columns level,
+// simplified, traditional, pinyin and, for the few words the dictionary does
+// not have, a meaning. Lines starting with # are comments.
+//
+// Returns [{ level, simplified, traditional, pinyin, meaning }], in the
+// file's order; meaning is '' where the dictionary is to supply it.
+export function parseReadyList(text) {
+  return text
+    .split('\n')
+    .filter((line) => line.trim() !== '' && !line.startsWith('#'))
+    .map((line) => {
+      const [level, simplified, traditional, pinyin, meaning = ''] = line.trim().split('\t');
+      return { level, simplified, traditional, pinyin, meaning };
+    });
+}
+
+// The levels of a ready-made list, in the list's order, with how many of
+// each level's words are new.
+//
+// entries:  from parseReadyList
+// existing: the word records already stored
+//
+// Returns [{ level, count, newCount }].
+export function levelsOfReadyList(entries, existing) {
+  const known = new Set(existing.map((word) => word.id));
+  const levels = new Map();
+  for (const entry of entries) {
+    const tally = levels.get(entry.level) || { level: entry.level, count: 0, newCount: 0 };
+    tally.count += 1;
+    tally.newCount += known.has(wordId(entry)) ? 0 : 1;
+    levels.set(entry.level, tally);
+  }
+  return [...levels.values()];
+}
+
+// The tag a word carries for a list and level it belongs to, in its `lists`
+// field: 'hsk-3.0/1'. Decks, once there are any, can be made from these.
+export function listTag(listId, level) {
+  return `${listId}/${level}`;
+}
+
 // Works out which of `candidates` (tidied words) are new to the list.
 //
 // existing: the word records already stored

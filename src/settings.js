@@ -9,16 +9,17 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 
 // elements: the panel's parts:
 //   panel, openButton, closeButton, scriptSelect, pronunciationSelect,
-//   handwritingSelect, newWordsInput,
+//   handwritingSelect, lessonsCheckbox, newWordsInput,
 //   meaningDetailSelect,
 //   typeCheckboxes (a list of the four checkboxes; each has a
 //   data-card-type attribute saying which type it is)
 // onChange: called after any setting changes
 //
 // Returns an object whose properties are the current settings:
-// A new device starts out learning simplified only, with both pronunciations
-// and the mainland one first: the owner's choice (2026-10-13) of what suits
-// most learners. The introduction asks about all of it straight away.
+// A new device starts out learning simplified only, with mainland
+// pronunciation only: the owner's choice (2026-10-13) of what suits most
+// learners, to whom a "Taiwan reading" box would only be confusing. The
+// introduction asks about all of it straight away.
 //
 //   script:         'traditional' or 'simplified': the script cards are
 //                   shown and written in
@@ -35,6 +36,8 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //   meaningDetail:  'first', 'everyday' or 'all': how much of a dictionary
 //                   entry is filled in as a word's meaning (see
 //                   proposeMeaning in dictionary.js)
+//   lessons:        true to teach a word before it is first written from
+//                   memory (tones, tracing; see review.js)
 //   newWordsPerDay: a number
 //   enabledTypes:   the card types switched on, e.g. ['meaning', 'writing']
 // and one function, for setting them from elsewhere (the introduction):
@@ -47,6 +50,7 @@ export async function createSettings(elements, onChange) {
     scriptSelect,
     pronunciationSelect,
     handwritingSelect,
+    lessonsCheckbox,
     meaningDetailSelect,
     newWordsInput,
     typeCheckboxes,
@@ -55,10 +59,11 @@ export async function createSettings(elements, onChange) {
   const settings = {
     script: await getSetting('script', 'simplified'),
     bothScripts: await getSetting('bothScripts', false),
-    pronunciation: await getSetting('pronunciation', 'mainland'),
+    pronunciation: await getSetting('pronunciation', 'mainlandOnly'),
     // Saved as 'rawSquigs' before the setting was renamed; a device that still
     // has it under the old name keeps its choice.
     rawInput: await getSetting('rawInput', await getSetting('rawSquigs', true)),
+    lessons: await getSetting('lessons', true),
     meaningDetail: await getSetting('meaningDetail', DEFAULT_MEANING_DETAIL),
     newWordsPerDay: await getSetting('newWordsPerDay', DEFAULT_NEW_WORDS_PER_DAY),
     enabledTypes: await getSetting('enabledTypes', CARD_TYPES),
@@ -70,6 +75,7 @@ export async function createSettings(elements, onChange) {
     scriptSelect.value = settings.bothScripts ? `both-${settings.script}` : settings.script;
     pronunciationSelect.value = settings.pronunciation;
     handwritingSelect.value = settings.rawInput ? 'raw' : 'snap';
+    lessonsCheckbox.checked = settings.lessons;
     meaningDetailSelect.value = settings.meaningDetail;
     newWordsInput.value = settings.newWordsPerDay;
     for (const checkbox of typeCheckboxes) {
@@ -99,6 +105,8 @@ export async function createSettings(elements, onChange) {
   handwritingSelect.addEventListener('change', () =>
     change('rawInput', handwritingSelect.value === 'raw'),
   );
+
+  lessonsCheckbox.addEventListener('change', () => change('lessons', lessonsCheckbox.checked));
 
   meaningDetailSelect.addEventListener('change', () =>
     change('meaningDetail', meaningDetailSelect.value),

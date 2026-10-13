@@ -373,8 +373,9 @@ export function createWordFlow(elements) {
     quiz.setOutlineVisible(outlineVisible);
   }
 
-  function showCurrentCharacter() {
+  async function showCurrentCharacter() {
     carriedMistakes = 0;
+    quiz.setDemoStrokes(Boolean(options.demoStrokes));
     return quiz.showCharacter(chars[position], options.script, options.rawInput !== false);
   }
 
@@ -452,6 +453,9 @@ export function createWordFlow(elements) {
     //   continueLabel: text for the Next button once the word is finished, or
     //                  null to leave it hidden
     //   hideOutline:   true to switch the outline off first
+    //   showOutline:   true to switch the outline on first
+    //   demoStrokes:   true to show each stroke, over and over, until it is
+    //                  written (the lesson for a new word, see review.js)
     //   judgeChar({ mistakes, strokes, hintShown, peeked }):
     //                  returns true if the character counts as passed. Leave
     //                  it out for no verdicts at all (Free practice).
@@ -495,6 +499,8 @@ export function createWordFlow(elements) {
       finishedPerChar = [];
       if (options.hideOutline) {
         setOutlineVisible(false);
+      } else if (options.showOutline) {
+        setOutlineVisible(true);
       }
       await showCurrentCharacter();
       return true;

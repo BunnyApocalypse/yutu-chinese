@@ -11,6 +11,9 @@ import {
   charactersShown,
   scriptFor,
   scriptFlagFor,
+  parseReadyList,
+  levelsOfReadyList,
+  listTag,
   newWordRecords,
   wordsWithSameCharacters,
   orderForStudyingNext,
@@ -203,4 +206,44 @@ test('search finds characters, meaning and pinyin however it is written', () => 
   assert.equal(matchesSearch(study, 'place'), false);
   assert.equal(matchesSearch(place, 'difang1'.slice(0, 6)), true);
   assert.equal(matchesSearch(place, 'dìfāng'), true); // the Taiwan reading
+});
+
+// ---- Ready-made lists ----
+
+test('a ready-made list is read, and its levels counted against the words there are', () => {
+  const entries = parseReadyList('# a comment\n1\t爱\t愛\tai4\n1\t车上\t車上\tche1shang5\tin the car\n2\t爱好\t愛好\tai4hao4\n');
+  assert.deepEqual(entries[0], { level: '1', simplified: '爱', traditional: '愛', pinyin: 'ai4', meaning: '' });
+  assert.equal(entries[1].meaning, 'in the car');
+  assert.deepEqual(levelsOfReadyList(entries, [{ id: '愛|ai4' }]), [
+    { level: '1', count: 2, newCount: 1 },
+    { level: '2', count: 1, newCount: 1 },
+  ]);
+  assert.equal(listTag('hsk-3.0', '7-9'), 'hsk-3.0/7-9');
+});
+
+test('the ready-made lists are well formed, and every word can get a meaning', async () => {
+  const fs = await import('node:fs');
+  const { readDictionary, lookUp } = await import('../src/dictionary.js');
+  const dictionary = readDictionary(fs.readFileSync('data/cedict/dictionary.tsv', 'utf8'));
+  for (const [file, count, levels] of [['hsk/hsk-3.0.tsv', 11054, 7], ['hsk/hsk-2.0.tsv', 5008, 6], ['tocfl/tocfl.tsv', 7431, 7]]) {
+    const entries = parseReadyList(fs.readFileSync(`data/wordlists/${file}`, 'utf8'));
+    assert.equal(entries.length, count, file);
+    assert.equal(levelsOfReadyList(entries, []).length, levels, file);
+    const ids = new Set();
+    for (const entry of entries) {
+      const where = `${file}: ${entry.simplified}`;
+      assert.equal(tidyPinyin(entry.pinyin), entry.pinyin, where);
+      assert.equal(Array.from(entry.simplified).length, Array.from(entry.traditional).length, where);
+      const id = `${entry.traditional}|${entry.pinyin}`;
+      assert.ok(!ids.has(id), `${where} is listed twice`);
+      ids.add(id);
+      // Its meaning is either its own or the dictionary's for this very word.
+      const inDictionary = lookUp(dictionary, entry.traditional).some(
+        (found) => found.traditional === entry.traditional && found.pinyin === entry.pinyin,
+      );
+      assert.ok(entry.meaning !== '' || inDictionary, `${where} has no meaning`);
+      // And it passes as a word.
+      assert.equal(checkWord({ ...entry, definition: entry.meaning || 'x' }).problem, undefined, where);
+    }
+  }
 });

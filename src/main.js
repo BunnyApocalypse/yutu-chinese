@@ -19,6 +19,7 @@ import { buildBackup, checkBackup, describeBackup, restoreBackup } from './backu
 const byId = (id) => document.getElementById(id);
 
 const reviewTab = byId('review-tab');
+const learnTab = byId('learn-tab');
 const practiceTab = byId('practice-tab');
 const wordsTab = byId('words-tab');
 const wordsPanelElement = byId('words-panel');
@@ -157,8 +158,10 @@ practiceType.addEventListener('change', startFreePractice);
 
 function setMode(newMode) {
   mode = newMode;
-  const reviewing = mode === 'review';
-  reviewTab.classList.toggle('selected', reviewing);
+  // Review and Learn share the top of the page and the study area.
+  const reviewing = mode === 'review' || mode === 'learn';
+  reviewTab.classList.toggle('selected', mode === 'review');
+  learnTab.classList.toggle('selected', mode === 'learn');
   practiceTab.classList.toggle('selected', mode === 'practice');
   wordsTab.classList.toggle('selected', mode === 'words');
   reviewHeader.hidden = !reviewing;
@@ -171,7 +174,7 @@ function setMode(newMode) {
     return undefined;
   }
   if (reviewing) {
-    return review.activate();
+    return review.activate(mode);
   }
   // Stops any card being shown and brings the study area back for writing.
   review.deactivate();
@@ -184,6 +187,7 @@ function setMode(newMode) {
 }
 
 reviewTab.addEventListener('click', () => setMode('review'));
+learnTab.addEventListener('click', () => setMode('learn'));
 practiceTab.addEventListener('click', () => setMode('practice'));
 wordsTab.addEventListener('click', () => setMode('words'));
 
@@ -202,7 +206,7 @@ function onSettingsChange() {
   loadWordList(); // the suggestions are in the script being learned
   if (mode === 'words') {
     wordsPanel.show();
-  } else if (mode === 'review') {
+  } else if (mode === 'review' || mode === 'learn') {
     review.refresh();
   } else if (mode === 'practice') {
     startFreePractice();
@@ -282,14 +286,19 @@ window.addEventListener('resize', () => {
 
 // ---- Startup ----
 
-// Until 2026-10-13 a device that had never touched the Script setting was
-// learning both scripts with cards in traditional, without that being saved
-// anywhere. Now that a new device starts with simplified only, a device from
-// before has what it had written down here, so that it does not change. A
-// device that has stored any setting at all is one from before.
-async function keepOldScriptDefaults() {
+// Until 2026-10-13 a device that had never touched the Script and
+// Pronunciation settings was learning both scripts with cards in traditional,
+// and both pronunciations with the mainland one first, without that being
+// saved anywhere. Now that a new device starts with simplified and mainland
+// only, a device from before has what it had written down here, so that it
+// does not change. A device that has stored any setting at all is one from
+// before.
+async function keepOldDefaults() {
   if ((await getAll('settings')).length === 0) {
     return; // a new device
+  }
+  if ((await getSetting('pronunciation', null)) === null) {
+    await setSetting('pronunciation', 'mainland');
   }
   if ((await getSetting('script', null)) === null) {
     await setSetting('script', 'traditional');
@@ -300,7 +309,7 @@ async function keepOldScriptDefaults() {
 }
 
 async function startUp() {
-  await keepOldScriptDefaults();
+  await keepOldDefaults();
   await removeOldBuiltInWords();
   // Once per device (and again after an older backup is restored): cards
   // studied before writing cards were kept per script are filed under the
@@ -318,6 +327,7 @@ async function startUp() {
       scriptSelect: byId('script-select'),
       pronunciationSelect: byId('pronunciation-select'),
       handwritingSelect: byId('handwriting-select'),
+      lessonsCheckbox: byId('lessons-checkbox'),
       meaningDetailSelect: byId('meaning-detail-select'),
       newWordsInput: byId('new-words-input'),
       typeCheckboxes: [...document.querySelectorAll('#settings-panel [data-card-type]')],
@@ -338,6 +348,10 @@ async function startUp() {
       doneMessage: byId('done-message'),
       studyArea: byId('study-area'),
       scriptFlag: byId('script-flag'),
+      lessonNote: byId('lesson-note'),
+      skipLessonButton: byId('skip-lesson-button'),
+      lessonNextButton: byId('lesson-next-button'),
+      learnNextButton: byId('learn-next-button'),
       wordRow: byId('word-row'),
       statusRow: byId('status-row'),
       verdictRow: byId('verdict-row'),

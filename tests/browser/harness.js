@@ -236,8 +236,9 @@ async function launchBrowser() {
 // spread themselves over the browsers.
 //
 // The app opens with its introduction the first time, learning simplified
-// only. Here the introduction is skipped and the script set to both, with
-// cards in traditional, unless `keepWelcome` is true (for the test of the
+// and mainland pronunciation only. Here the introduction is skipped and the
+// settings are both scripts with cards in traditional, and both
+// pronunciations with the mainland one first, unless `keepWelcome` is true (for the test of the
 // introduction itself).
 export async function startBrowsers(appUrl, count = BROWSER_COUNT, { keepWelcome = false } = {}) {
   const pages = await Promise.all(Array.from({ length: count }, launchBrowser));
@@ -332,13 +333,20 @@ async function openFreePractice(page, appUrl, keepWelcome = false) {
         if (started && !${keepWelcome} && document.getElementById('welcome').open) {
           document.getElementById('welcome-skip').click();
         }
-        // A new device learns simplified only. The tests were written for
+        // A new device learns simplified and mainland pronunciation only. The tests were written for
         // both scripts with cards in traditional (the Taiwan stroke data and
         // its two stroke orders), so that is chosen here.
         const script = document.getElementById('script-select');
         if (started && !${keepWelcome} && script.value !== 'both-traditional') {
           script.value = 'both-traditional';
           script.dispatchEvent(new Event('change', { bubbles: true }));
+          return '';
+        }
+        // Likewise both pronunciations, the mainland one first.
+        const pronunciation = document.getElementById('pronunciation-select');
+        if (started && !${keepWelcome} && pronunciation.value !== 'mainland') {
+          pronunciation.value = 'mainland';
+          pronunciation.dispatchEvent(new Event('change', { bubbles: true }));
           return '';
         }
         const tab = document.getElementById('practice-tab');

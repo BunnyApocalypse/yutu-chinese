@@ -14,10 +14,12 @@ Stroke display and grading are done by [Hanzi Writer](https://hanziwriter.org/).
   - **Pinyin** and **Meaning:** you are shown the word, recall its reading or meaning, and reveal the answer.
 
   After each card you grade yourself; where the app can check your answer it suggests a grade.
+- **Learn:** words you add wait until you learn them. Each is taught in a short lesson: a look at the word, its tones, each stroke shown until you write it, the outline, then from memory. Only then does it come up in Review.
 - **Free practice:** try any kind of card for a word, or write any characters at all. Nothing is recorded.
 - Traditional, simplified or both: learning one script, you are only asked for and shown that one. You can switch later and keep your words: writing the ones that differ is learned again in the new script, and what you knew in the old one is kept. Traditional uses Taiwan-standard forms and stroke order; where the mainland stroke order uses the same strokes, that is accepted too.
 - Two strokes written without lifting the pen (such as the hook of 子) are accepted where one runs into the next.
 - A short introduction the first time, which sets up the script, pronunciation and kinds of card, and explains why the app asks to store its data for the long term.
+- Ready-made word lists to start from: HSK 3.0, HSK 2.0 and TOCFL, added level by level.
 - A **Words** tab to add your words (the app starts with none): one at a time, with the fields filled in from a built-in dictionary as you type the characters, or as a list from a TSV or CSV file. Words can be searched, changed, moved to the front of the queue, and removed. A word can also be corrected from the answer page of a review.
 - A choice between keeping your own handwriting on screen ("raw input") and having each correct stroke snap to the printed one.
 - Settings for new words per day, which kinds of card you want, how much of a dictionary entry is filled in as a word's meaning, and pronunciation: mainland only, or both mainland and Taiwan with either one first. With both, tone cards accept both regions' tones.
@@ -66,6 +68,8 @@ The stroke data is **not** covered by the GPL. It is separate material under the
 
 - `data/animcjk/` (see the README in that folder)
 - the `hanzi-writer-data` package, downloaded by `npm install`
+
+The HSK word lists in `data/wordlists/hsk/` are built from [ivankra/hsk30](https://github.com/ivankra/hsk30) and [glxxyz/hskhsk.com](https://github.com/glxxyz/hskhsk.com), both under the MIT License (see the README in that folder). The TOCFL word list in `data/wordlists/tocfl/` is built from the file published by the test's committee, which states no license (see the README there).
 
 The tone table and the dictionary in `data/cedict/` are adapted from [CC-CEDICT](https://cc-cedict.org/wiki/) and are under the Creative Commons Attribution-ShareAlike 4.0 license (see the README in that folder).
 

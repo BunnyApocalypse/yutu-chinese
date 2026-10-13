@@ -52,11 +52,11 @@ describe('the introduction', { concurrency: false }, () => {
       ['Simplified_Chinese_characters', 'Traditional_Chinese_characters', 'Taiwanese_Mandarin'],
     );
     // It starts from the settings as they are: a new device learns simplified
-    // only, with both pronunciations and the mainland one first.
+    // and mainland pronunciation only.
     assert.equal(await page.evaluate(`document.querySelector('input[name="welcome-script"]:checked').value`), 'simplified');
-    assert.equal(await page.evaluate(`document.querySelector('input[name="welcome-pronunciation"]:checked').value`), 'mainland');
+    assert.equal(await page.evaluate(`document.querySelector('input[name="welcome-pronunciation"]:checked').value`), 'mainlandOnly');
     await click('input[name="welcome-script"][value="traditional"]');
-    await click('input[name="welcome-pronunciation"][value="mainlandOnly"]');
+    await click('input[name="welcome-pronunciation"][value="taiwan"]');
 
     await tap(page, 'welcome-next');
     assert.equal(await heading(), 'Four kinds of card');
@@ -109,13 +109,13 @@ describe('the introduction', { concurrency: false }, () => {
     assert.equal(await textOf(page, 'welcome-next'), 'Add my first words');
     await tap(page, 'welcome-next');
     await waitUntil(page, `!${welcomeOpen} && document.getElementById('words-tab').classList.contains('selected')`, 'the Words tab');
-    // One box for the word, in traditional, and no Taiwan reading.
+    // One box for the word, in traditional, and one for the Taiwan reading.
     assert.equal(await isShown(page, 'add-simplified'), false);
     assert.equal(await isShown(page, 'add-traditional'), true);
-    assert.equal(await isShown(page, 'add-pinyin-taiwan'), false);
+    assert.equal(await isShown(page, 'add-pinyin-taiwan'), true);
     await tap(page, 'settings-button');
     assert.equal(await page.evaluate(`document.getElementById('script-select').value`), 'traditional');
-    assert.equal(await page.evaluate(`document.getElementById('pronunciation-select').value`), 'mainlandOnly');
+    assert.equal(await page.evaluate(`document.getElementById('pronunciation-select').value`), 'taiwan');
     // Settings explains the two settings too, behind their "?" buttons.
     assert.equal(await textOf(page, 'script-hint'), '');
     await page.evaluate(`document.querySelector('[aria-controls="script-hint"]').click()`);
@@ -183,7 +183,7 @@ describe('the introduction', { concurrency: false }, () => {
     assert.deepEqual(later.words.sort(), ['今天|jin1tian1', '貓頭鷹|mao1tou2ying1']);
   });
 
-  it('leaves a device from before on both scripts with cards in traditional', async () => {
+  it('leaves a device from before on both scripts and both pronunciations', async () => {
     // Such a device has settings stored, but may never have had the Script
     // setting touched: what it had then was not written down anywhere.
     await page.evaluate(`new Promise((resolve, reject) => {
@@ -192,6 +192,7 @@ describe('the introduction', { concurrency: false }, () => {
         const tx = opening.result.transaction(['settings'], 'readwrite');
         tx.objectStore('settings').delete('script');
         tx.objectStore('settings').delete('bothScripts');
+        tx.objectStore('settings').delete('pronunciation');
         tx.oncomplete = () => resolve();
         tx.onerror = () => reject(tx.error);
       };
@@ -199,6 +200,7 @@ describe('the introduction', { concurrency: false }, () => {
     await reloadApp(page);
     await tap(page, 'settings-button');
     assert.equal(await page.evaluate(`document.getElementById('script-select').value`), 'both-traditional');
+    assert.equal(await page.evaluate(`document.getElementById('pronunciation-select').value`), 'mainland');
     await tap(page, 'settings-close');
   });
 });

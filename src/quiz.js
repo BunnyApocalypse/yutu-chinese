@@ -64,6 +64,9 @@ const OTHER_ORDER_MISFIT_MARGIN = 15;
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
+// The empty margin around the character, as a share of the writing area's size.
+const PADDING_SHARE = 0.06;
+
 // target:   the <svg> element to draw into
 // size:     width and height of the writing area in pixels
 // handlers: functions called as the quiz progresses
@@ -140,6 +143,57 @@ export function createQuiz(target, size, handlers) {
   const drawnLayer = document.createElementNS(SVG_NAMESPACE, 'g');
   drawnLayer.setAttribute('class', 'drawn-strokes');
 
+  // ---- Showing the next stroke ----
+  //
+  // In the lesson for a new word (see review.js) the stroke to write next is
+  // shown over and over, in color, until it has been written; then the one
+  // after it. Hanzi Writer can animate a stroke, but not while its quiz is
+  // running, so this is drawn here, the way Hanzi Writer does it: a thick
+  // line along the stroke's middle line, cut to the stroke's printed shape,
+  // that grows from the stroke's start to its end. The growing and repeating
+  // is done by the style sheet (.stroke-demo-line in style.css).
+  let demoStrokes = false;
+  const demoLayer = document.createElementNS(SVG_NAMESPACE, 'g');
+  demoLayer.setAttribute('class', 'stroke-demo');
+  // Where Hanzi Writer draws the character: stroke data is 1024 units across
+  // with y running upward from -124, inside the padding given to Hanzi Writer.
+  const padding = size * PADDING_SHARE;
+  const unit = (size - 2 * padding) / 1024;
+  demoLayer.setAttribute(
+    'transform',
+    `translate(${padding}, ${size - padding - 124 * unit}) scale(${unit}, ${-unit})`,
+  );
+
+  // Shows the stroke that comes after `strokesDone` strokes, or nothing if
+  // this is switched off or the character is finished.
+  function showDemo(strokesDone) {
+    demoLayer.replaceChildren();
+    if (!demoStrokes || strokesDone >= sequence.length) {
+      return;
+    }
+    const strokeNum = sequence[strokesDone];
+    // A clipPath is a shape that cuts whatever refers to it: here the
+    // stroke's printed outline.
+    const clip = document.createElementNS(SVG_NAMESPACE, 'clipPath');
+    clip.id = 'stroke-demo-shape';
+    const shape = document.createElementNS(SVG_NAMESPACE, 'path');
+    shape.setAttribute('d', framedData.strokes[strokeNum]);
+    clip.appendChild(shape);
+    const line = document.createElementNS(SVG_NAMESPACE, 'path');
+    line.setAttribute('d', `M ${framedData.medians[strokeNum].map(([x, y]) => `${x} ${y}`).join(' L ')}`);
+    line.setAttribute('class', 'stroke-demo-line');
+    line.setAttribute('clip-path', 'url(#stroke-demo-shape)');
+    // Lets the style sheet treat the line as being of length 1, however long it is.
+    line.setAttribute('pathLength', '1');
+    demoLayer.append(clip, line);
+  }
+
+  // Tells the flow how far the character has got, and shows the next stroke.
+  function reportProgress(progress) {
+    handlers.onProgress(progress);
+    showDemo(progress.strokesDone);
+  }
+
   // pathString is the stroke exactly as drawn, in the SVG's own pixel coordinates.
   function keepDrawnStroke(pathString) {
     if (!rawInput) {
@@ -199,7 +253,7 @@ export function createQuiz(target, size, handlers) {
     // Setting a character rebuilds Hanzi Writer's layers. Later elements in an
     // SVG are drawn on top, so (re)adding ours puts your strokes above the
     // printed character. It also resets the outline to hidden.
-    target.appendChild(drawnLayer);
+    target.append(demoLayer, drawnLayer);
     if (outlineVisible) {
       writer.showOutline({ duration: 0 });
     }
@@ -551,7 +605,7 @@ export function createQuiz(target, size, handlers) {
     }
     noteAccepted(stroke.strokeNum, [reading.strokeNum], stroke.drawnPath.points);
     refitFrame();
-    handlers.onProgress({ strokesDone: written, totalStrokes, totalMistakes: mistakes });
+    reportProgress({ strokesDone: written, totalStrokes, totalMistakes: mistakes });
     // This never happens at the last stroke, so there is always more to come.
     resume(written);
   }
@@ -567,11 +621,12 @@ export function createQuiz(target, size, handlers) {
     try {
       await useOriginalData();
       await setPrintedColor(colorWhileWriting());
-      target.appendChild(drawnLayer);
+      target.append(demoLayer, drawnLayer);
       if (outlineVisible) {
         writer.showOutline({ duration: 0 });
       }
       runQuiz(0);
+      showDemo(0);
     } finally {
       setBusy(false);
     }
@@ -614,7 +669,7 @@ export function createQuiz(target, size, handlers) {
           writer.skipQuizStroke();
         }
         noteAccepted(stroke.strokeNum, baseStrokes, stroke.drawnPath.points);
-        handlers.onProgress({ strokesDone, totalStrokes, totalMistakes: mistakes });
+        reportProgress({ strokesDone, totalStrokes, totalMistakes: mistakes });
         // Unless that was the last stroke, see whether the frame has moved.
         if (strokesDone < totalStrokes && refitFrame()) {
           resume(strokesDone);
@@ -632,7 +687,7 @@ export function createQuiz(target, size, handlers) {
             stroke.drawnPath.points,
           );
           const strokesDone = stroke.strokeNum + 2;
-          handlers.onProgress({ strokesDone, totalStrokes, totalMistakes: mistakes });
+          reportProgress({ strokesDone, totalStrokes, totalMistakes: mistakes });
           // One drawn stroke covered two textbook strokes.
           writer.skipQuizStroke();
           writer.skipQuizStroke();
@@ -652,7 +707,7 @@ export function createQuiz(target, size, handlers) {
         if (isFirstStrokeAnywhere(stroke)) {
           keepDrawnStroke(stroke.drawnPath.pathString);
           noteAccepted(0, [sequence[0]], stroke.drawnPath.points);
-          handlers.onProgress({ strokesDone: 1, totalStrokes, totalMistakes: mistakes });
+          reportProgress({ strokesDone: 1, totalStrokes, totalMistakes: mistakes });
           writer.skipQuizStroke();
           if (totalStrokes > 1 && refitFrame()) {
             resume(1);
@@ -665,7 +720,7 @@ export function createQuiz(target, size, handlers) {
           keepDrawnStroke(stroke.drawnPath.pathString);
           noteAccepted(stroke.strokeNum, [sequence[stroke.strokeNum]], stroke.drawnPath.points);
           const strokesDone = stroke.strokeNum + 1;
-          handlers.onProgress({ strokesDone, totalStrokes, totalMistakes: mistakes });
+          reportProgress({ strokesDone, totalStrokes, totalMistakes: mistakes });
           writer.skipQuizStroke();
           if (strokesDone < totalStrokes && refitFrame()) {
             resume(strokesDone);
@@ -677,7 +732,7 @@ export function createQuiz(target, size, handlers) {
         if (stroke.mistakesOnStroke >= HINT_AFTER_MISSES) {
           hintShown = true;
         }
-        handlers.onProgress({
+        reportProgress({
           strokesDone: stroke.strokeNum,
           totalStrokes,
           totalMistakes: mistakes,
@@ -688,6 +743,7 @@ export function createQuiz(target, size, handlers) {
         if (baseData.altOrder) {
           order = isStandardOrder(sequence) ? 'moe' : 'mainland';
         }
+        showDemo(sequence.length); // nothing left to show
         const passed = handlers.onComplete({ totalMistakes: mistakes, hintShown, order });
         setPrintedColor(referenceColor(passed));
       },
@@ -719,7 +775,7 @@ export function createQuiz(target, size, handlers) {
         writer = HanziWriter.create(target, char, {
           width: size,
           height: size,
-          padding: size * 0.06,
+          padding,
           showCharacter: false,
           showOutline: false,
           strokeColor: INVISIBLE,
@@ -745,6 +801,12 @@ export function createQuiz(target, size, handlers) {
     },
 
     restart: start,
+
+    // Switches showing the next stroke on or off; see showDemo. It takes
+    // effect from the next character or restart.
+    setDemoStrokes(on) {
+      demoStrokes = on;
+    },
 
     setOutlineVisible(visible) {
       outlineVisible = visible;
@@ -779,6 +841,7 @@ export function createQuiz(target, size, handlers) {
       clearTimeout(afterAnimationTimer);
       writer.cancelQuiz();
       drawnLayer.replaceChildren();
+      demoLayer.replaceChildren();
       handlers.onAnimateStart();
       await useOriginalData();
       await writer.hideCharacter({ duration: 0 });
@@ -801,6 +864,7 @@ export function createQuiz(target, size, handlers) {
         writer.cancelQuiz();
       }
       drawnLayer.remove();
+      demoLayer.remove();
     },
   };
 }

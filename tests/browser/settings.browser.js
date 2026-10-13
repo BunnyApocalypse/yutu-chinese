@@ -146,7 +146,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     await waitUntil(page, `document.getElementById('list-report').textContent !== ''`, 'the list report');
     assert.equal(await textOf(page, 'list-report'), "2 new words, 0 you already have, 0 lines that can't be read.");
     await tap(page, 'add-list-button');
-    await waitUntil(page, `document.getElementById('list-report').textContent === 'Added 2 words.'`);
+    await waitUntil(page, `document.getElementById('list-report').textContent === 'Added 2 words. They wait in the Learn tab.'`);
 
     // With both scripts learned, both are shown: the traditional forms were stored.
     await choose(page, 'script-select', 'both-traditional');
@@ -280,8 +280,8 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     await type(page, 'edit-traditional', '書蟲們');
     await page.evaluate(`document.getElementById('word-dialog-form').requestSubmit()`);
     await waitUntil(page, `document.querySelector('#word-list li').textContent.startsWith('書蟲們 · 书虫们')`, 'the corrected word');
-    // Still a word that has been studied, not a new one.
-    assert.doesNotMatch(await textOf(page, '#word-list li'), /new$/);
+    // Still a word that has been learned, not one that is waiting.
+    assert.doesNotMatch(await textOf(page, '#word-list li'), /waiting$/);
 
     const stored = await inDatabase(`
       stores.words.getAll().onsuccess = (event) => { result.words = event.target.result.filter((word) => word.definition === 'bookworms').map((word) => word.id); };
@@ -334,7 +334,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     await waitUntil(page, gradesShown, 'the grades');
     assert.match(await textOf(page, 'card-face'), /a corrected meaning/);
 
-    // Graded, the card is filed under the corrected word: it is no longer new.
+    // Graded, the card is filed under the corrected word, which counts as learned.
     await page.evaluate(`document.querySelector('#grade-row button.primary').click()`);
     // The grades go once the review is saved and the next card is up.
     await waitUntil(page, `!${gradesShown}`, 'the review to be saved');
@@ -342,7 +342,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     await type(page, 'word-search', 'a corrected meaning');
     await waitUntil(page, rows(1));
     const row = await textOf(page, '#word-list li');
-    assert.doesNotMatch(row, /new$/);
+    assert.doesNotMatch(row, /waiting$/);
     assert.doesNotMatch(row, new RegExp(pinyin));
   });
 

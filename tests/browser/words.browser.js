@@ -80,7 +80,7 @@ describe('the Words tab', { concurrency: false }, () => {
     const row = await textOf(page, '#word-list li');
     assert.match(row, /貓頭鷹 · 猫头鹰/);
     assert.match(row, /māotóuyīng/);
-    assert.match(row, /new$/);
+    assert.match(row, /waiting$/);
   });
 
   it('changes the meaning and moves the word to the front', async () => {
@@ -95,10 +95,10 @@ describe('the Words tab', { concurrency: false }, () => {
     await waitUntil(page, `document.querySelector('#word-list li').textContent.includes('貓頭鷹')`, 'the word at the top of the list');
   });
 
-  it('brings the word up as the next new card in Review', async () => {
-    await tap(page, 'review-tab');
-    // A new word starts with its meaning card, which shows the characters.
-    await waitUntil(page, `document.getElementById('card-face').textContent.includes('貓頭鷹')`, 'the card for the new word');
+  it('brings the word up as the next one in the Learn tab', async () => {
+    await tap(page, 'learn-tab');
+    // A lesson starts with a look at the word.
+    await waitUntil(page, `document.getElementById('card-face').textContent.includes('貓頭鷹')`, 'the lesson for the new word');
     assert.equal(await textOf(page, 'words-panel'), '');
   });
 
@@ -171,6 +171,51 @@ describe('the Words tab', { concurrency: false }, () => {
     assert.match(await textOf(page, '#word-list li'), /penguin, the bird/);
   });
 
+  it('adds a ready-made list by level', { timeout: 60000 }, async () => {
+    const before = await wordCount(page);
+    await page.evaluate(`document.getElementById('ready-list').open = true`);
+    // HSK 3.0 is offered first; its levels appear with their word counts.
+    await waitUntil(page, `document.querySelectorAll('#ready-levels input').length === 7`, 'the levels of HSK 3.0');
+    assert.match(await textOf(page, '#ready-levels label'), /^Level 1: 512 words, \d+ new$/);
+    assert.equal(await page.evaluate(`document.getElementById('add-ready-button').disabled`), true);
+    // Taiwan's list has two levels with names of their own, then five.
+    await choose(page, 'ready-list-select', 'tocfl');
+    await waitUntil(page, `document.querySelector('#ready-levels label')?.textContent.trim().startsWith('Novice 1:')`, 'the levels of TOCFL');
+    assert.equal(await page.evaluate(`document.querySelectorAll('#ready-levels input').length`), 7);
+    // The older list has six.
+    await choose(page, 'ready-list-select', 'hsk-2.0');
+    await waitUntil(page, `document.querySelectorAll('#ready-levels input').length === 6`, 'the levels of HSK 2.0');
+    await page.evaluate(`document.querySelector('#ready-levels input[value="1"]').click()`);
+    const button = await textOf(page, 'add-ready-button');
+    assert.match(button, /^Add \d+ words$/);
+    const adding = Number(button.match(/\d+/)[0]);
+    // Some of the 150 are among the test words already.
+    assert.ok(adding > 50 && adding < 150, button);
+
+    await tap(page, 'add-ready-button');
+    // Reading the dictionary and adding the words takes a few seconds.
+    let report = '';
+    for (let attempt = 0; attempt < 120 && !report.startsWith('Added'); attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      report = await textOf(page, 'ready-report');
+    }
+    assert.match(report, new RegExp(`^Added ${adding} words`));
+    assert.equal(await wordCount(page), before + adding);
+    // The steps after this one count from the start; they count these in too.
+    countAtStart += adding;
+    assert.match(await textOf(page, '#ready-levels label'), /^Level 1: 150 words, all in your words already$/);
+    // A word from the list has both scripts, and its meaning from the dictionary.
+    await type(page, 'word-search', '不客气');
+    await waitUntil(page, rows(1));
+    const row = await textOf(page, '#word-list li');
+    assert.match(row, /^不客氣 · 不客气/);
+    assert.match(row, /you're welcome/);
+    // Back to the search the next step expects.
+    await type(page, 'word-search', 'penguin');
+    await waitUntil(page, rows(1));
+    await page.evaluate(`document.getElementById('ready-list').open = false`);
+  });
+
   it('removes a word', async () => {
     await page.evaluate(`document.querySelector('#word-list li button').click()`);
     await tap(page, 'remove-word-button');
@@ -180,7 +225,8 @@ describe('the Words tab', { concurrency: false }, () => {
 
   it('keeps it all when the app is opened again', async () => {
     await reloadApp(page);
-    assert.match(await textOf(page, 'card-face'), /貓頭鷹/);
+    await tap(page, 'learn-tab');
+    await waitUntil(page, `document.getElementById('card-face').textContent.includes('貓頭鷹')`, 'the word still first in line');
     await tap(page, 'words-tab');
     await waitUntil(page, `document.getElementById('word-count').textContent === '${countAtStart + 3}'`);
     await type(page, 'word-search', 'peacock');
