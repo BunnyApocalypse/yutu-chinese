@@ -591,6 +591,10 @@
         <h2>Settings</h2>
 
         <!-- A "?" beside a setting shows the explanation named in its aria-controls (settings.js). -->
+        <!-- The settings are in groups that fold away, so the panel is short and each
+             thing can be found under a heading. <details> is the browser's own fold-out. -->
+        <details id="settings-learning" class="settings-group" open>
+          <summary>What you are learning</summary>
         <div class="setting">
           <span>
             <label for="script-select">Script</label>
@@ -622,6 +626,44 @@
             Some words are read differently in Taiwan: 星期 is xīngqī on the mainland and xīngqí in Taiwan (more on <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">Taiwan's Mandarin</a>). With both, a card shows both readings and accepts both tones. The one named first is the reading a card expects. With mainland only, Taiwan readings are never shown or asked for.
           </p>
         </div>
+        </details>
+
+        <details id="settings-studying" class="settings-group">
+          <summary>Studying</summary>
+        <label class="setting">
+          New words per day (goal)
+          <input id="new-words-input" type="number" min="0" max="50" inputmode="numeric" />
+        </label>
+
+        <fieldset class="setting">
+          <legend>Card types</legend>
+          <label><input type="checkbox" data-card-type="meaning" /> Meaning: see the word, recall what it means</label>
+          <label><input type="checkbox" data-card-type="pinyin" /> Pinyin: see the word, recall how it is read</label>
+          <label><input type="checkbox" data-card-type="tone" /> Tone: see the word, give each tone</label>
+          <label><input type="checkbox" data-card-type="writing" /> Writing: see the meaning, write the word</label>
+        </fieldset>
+
+        <fieldset class="setting">
+          <legend>Sentences</legend>
+          <label><input id="sentence-reading-checkbox" type="checkbox" /> Reading: see the sentence, recall what it means</label>
+          <label class="setting">
+            Writing
+            <select id="sentence-writing-select">
+              <option value="word">Fill in the missing word</option>
+              <option value="sentence">Write the whole sentence</option>
+              <option value="off">No writing cards for sentences</option>
+            </select>
+          </label>
+          <span class="hint">
+            Sentences are added from a word's page (its example sentence) or on a deck's page. A sentence added
+            without a word to fill in is written whole.
+          </span>
+        </fieldset>
+
+        <div class="setting">
+          <label><input id="lessons-checkbox" type="checkbox" /> In Review, teach before testing</label>
+          <p class="hint">When a word you already know is to be written for the first time (after changing script, say): its tones, then each stroke shown, then the outline, then from memory. Words in the Learn tab are always taught this way.</p>
+        </div>
 
         <label class="setting">
           Handwriting
@@ -629,54 +671,6 @@
             <option value="raw">Keep my own strokes (raw input)</option>
             <option value="snap">Snap to the printed strokes</option>
           </select>
-        </label>
-
-        <div class="setting">
-          <label><input id="lessons-checkbox" type="checkbox" /> In Review, teach before testing</label>
-          <p class="hint">When a word you already know is to be written for the first time (after changing script, say): its tones, then each stroke shown, then the outline, then from memory. Words in the Learn tab are always taught this way.</p>
-        </div>
-
-        <div class="setting">
-          <span>
-            <label for="meaning-detail-select">Dictionary meanings</label>
-            <button id="meaning-detail-help" class="help-button" type="button" aria-label="What does this setting do?" aria-expanded="false" aria-controls="meaning-detail-hint">?</button>
-          </span>
-          <select id="meaning-detail-select">
-            <option value="first">First only</option>
-            <option value="everyday">Everyday</option>
-            <option value="all">All</option>
-          </select>
-          <p id="meaning-detail-hint" class="hint" hidden>
-            How much of a dictionary entry is filled in as the meaning when you add a word. You can still edit it before saving.<br />
-            <b>First only:</b> just the first meaning.<br />
-            <b>Everyday:</b> every meaning except those marked for a specialist field, such as "(math.)" or "(law)".<br />
-            <b>All:</b> everything the dictionary lists.
-          </p>
-        </div>
-
-        <label class="setting">
-          New words per day (goal)
-          <input id="new-words-input" type="number" min="0" max="50" inputmode="numeric" />
-        </label>
-
-        <label class="setting">
-          Sound
-          <select id="sound-select">
-            <option value="auto">By itself when the answer shows, and when I tap the loudspeaker</option>
-            <option value="tap">Only when I tap the loudspeaker</option>
-            <option value="off">Off</option>
-          </select>
-          <span class="hint">
-            Most words are spoken from a recording; others are put together from recorded syllables, or read by
-            your device's own Chinese voice if it has one. A recording needs a connection the first time it is played.
-          </span>
-        </label>
-
-        <label class="setting">
-          Volume
-          <!-- A slider from silent to full; letting go of it speaks 中文 as a sample (settings.js). -->
-          <input id="volume-input" type="range" min="0" max="100" step="5" aria-label="Volume of the spoken words" />
-          <span class="hint">How loud words are spoken, beside whatever else your device is playing.</span>
         </label>
 
         <label class="setting">
@@ -698,32 +692,53 @@
             A suspended card no longer comes up in Review, until you switch it back on in the word's panel (Decks tab).
           </span>
         </label>
+        </details>
 
-        <fieldset class="setting">
-          <legend>Sentences</legend>
-          <label><input id="sentence-reading-checkbox" type="checkbox" /> Reading: see the sentence, recall what it means</label>
-          <label class="setting">
-            Writing
-            <select id="sentence-writing-select">
-              <option value="word">Fill in the missing word</option>
-              <option value="sentence">Write the whole sentence</option>
-              <option value="off">No writing cards for sentences</option>
-            </select>
-          </label>
-          <span class="hint">
-            Sentences are added from a word's page (its example sentence) or on a deck's page. A sentence added
-            without a word to fill in is written whole.
+        <details id="settings-words" class="settings-group">
+          <summary>Meanings and sound</summary>
+        <div class="setting">
+          <span>
+            <label for="meaning-detail-select">Dictionary meanings</label>
+            <button id="meaning-detail-help" class="help-button" type="button" aria-label="What does this setting do?" aria-expanded="false" aria-controls="meaning-detail-hint">?</button>
           </span>
-        </fieldset>
+          <select id="meaning-detail-select">
+            <option value="first">First only</option>
+            <option value="everyday">Everyday</option>
+            <option value="all">All</option>
+          </select>
+          <p id="meaning-detail-hint" class="hint" hidden>
+            How much of a dictionary entry is filled in as the meaning when you add a word. You can still edit it before saving.<br />
+            <b>First only:</b> just the first meaning.<br />
+            <b>Everyday:</b> every meaning except those marked for a specialist field, such as "(math.)" or "(law)".<br />
+            <b>All:</b> everything the dictionary lists.
+          </p>
+        </div>
 
-        <fieldset class="setting">
-          <legend>Card types</legend>
-          <label><input type="checkbox" data-card-type="meaning" /> Meaning: see the word, recall what it means</label>
-          <label><input type="checkbox" data-card-type="pinyin" /> Pinyin: see the word, recall how it is read</label>
-          <label><input type="checkbox" data-card-type="tone" /> Tone: see the word, give each tone</label>
-          <label><input type="checkbox" data-card-type="writing" /> Writing: see the meaning, write the word</label>
-        </fieldset>
+        <label class="setting">
+          Sound
+          <select id="sound-select">
+            <option value="auto">By itself when the answer shows, and when I tap the loudspeaker</option>
+            <option value="tap">Only when I tap the loudspeaker</option>
+            <option value="off">Off</option>
+          </select>
+          <span class="hint">
+            Most words are spoken from a recording; others are put together from recorded syllables, or read by
+            your device's own Chinese voice if it has one. A recording needs a connection the first time it is played.
+          </span>
+        </label>
 
+        <label class="setting">
+          Volume
+          <!-- A slider from silent to full; letting go of it speaks 中文 as a sample (settings.js). -->
+          <input id="volume-input" type="range" min="0" max="100" step="5" aria-label="Volume of the spoken words" />
+          <span class="hint">How loud words are spoken, beside whatever else your device is playing.</span>
+        </label>
+        </details>
+
+        <details id="settings-data" class="settings-group">
+          <summary>Your data and backups</summary>
+          <!-- How long ago the last backup was made (main.js). -->
+          <p id="backup-status" class="hint"></p>
         <div class="setting">
           <button id="export-button" class="small" type="button">Export backup</button>
           <button id="import-button" class="small" type="button">Import backup</button>
@@ -740,10 +755,15 @@
           <!-- Saves every recording on the device (offline.js); they are otherwise kept one by one as they are played. -->
           <button id="save-audio-button" class="small" type="button" hidden>Save all recordings for offline use (about 125 MB)</button>
         </div>
+        </details>
 
+        <details id="settings-help" class="settings-group">
+          <summary>Help</summary>
         <div class="setting">
           <button id="welcome-again-button" class="small" type="button">Show the introduction again</button>
         </div>
+        </details>
+
 
         <button id="settings-close" class="primary" type="button">Done</button>
       </dialog>

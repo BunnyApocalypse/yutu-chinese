@@ -39,6 +39,7 @@ const DEVICE_SETTINGS = [
   'studyDeck',
   'audioOffline',
   'volume',
+  'lastBackupAt',
 ];
 
 const changedAt = (record) => (record && record.changedAt) || 0;

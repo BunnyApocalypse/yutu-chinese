@@ -95,6 +95,7 @@ let wordList = [];
 // Free practice's text box.
 async function loadWordList() {
   wordList = await getAll('words');
+  showBackupStatus();
   byId('word-suggestions').replaceChildren(
     ...wordList.map((word) => {
       const option = document.createElement('option');
@@ -243,7 +244,29 @@ function downloadBackup(backup, label = '') {
   URL.revokeObjectURL(link.href);
 }
 
-exportButton.addEventListener('click', async () => downloadBackup(await buildBackup()));
+exportButton.addEventListener('click', async () => {
+  downloadBackup(await buildBackup());
+  // When a backup was last made on this device, for the reminder below.
+  await setSetting('lastBackupAt', Date.now());
+  showBackupStatus();
+});
+
+// Everything the learner has is in this one browser. Settings says when a
+// backup was last made, and the cog wheel gets a dot when it is time for
+// another: there are words, and no backup was made in the last two weeks.
+const BACKUP_DUE_AFTER_MS = 14 * 24 * 60 * 60 * 1000;
+async function showBackupStatus() {
+  const last = await getSetting('lastBackupAt', null);
+  const days = last === null ? null : Math.floor((Date.now() - last) / (24 * 60 * 60 * 1000));
+  const due = wordList.length > 0 && (last === null || Date.now() - last > BACKUP_DUE_AFTER_MS);
+  byId('backup-status').textContent =
+    (last === null
+      ? 'No backup has been made on this device yet.'
+      : `Last backup: ${days === 0 ? 'today' : days === 1 ? 'yesterday' : `${days} days ago`}.`) +
+    (due ? ' Your words and progress are kept only in this browser: export a backup now and then.' : '');
+  byId('settings-button').classList.toggle('reminder', due);
+  byId('settings-data').open = due || byId('settings-data').open;
+}
 
 // The real file chooser is a hidden <input type="file">; the visible button opens it.
 importButton.addEventListener('click', () => importFile.click());
