@@ -319,8 +319,6 @@ async function startUp() {
       pronunciationSelect: byId('pronunciation-select'),
       handwritingSelect: byId('handwriting-select'),
       meaningDetailSelect: byId('meaning-detail-select'),
-      meaningDetailHelp: byId('meaning-detail-help'),
-      meaningDetailHint: byId('meaning-detail-hint'),
       newWordsInput: byId('new-words-input'),
       typeCheckboxes: [...document.querySelectorAll('#settings-panel [data-card-type]')],
     },

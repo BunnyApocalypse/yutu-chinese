@@ -10,8 +10,7 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 // elements: the panel's parts:
 //   panel, openButton, closeButton, scriptSelect, pronunciationSelect,
 //   handwritingSelect, newWordsInput,
-//   meaningDetailSelect, and its meaningDetailHelp (the "?" button) and
-//   meaningDetailHint (the explanation the button shows),
+//   meaningDetailSelect,
 //   typeCheckboxes (a list of the four checkboxes; each has a
 //   data-card-type attribute saying which type it is)
 // onChange: called after any setting changes
@@ -49,8 +48,6 @@ export async function createSettings(elements, onChange) {
     pronunciationSelect,
     handwritingSelect,
     meaningDetailSelect,
-    meaningDetailHelp,
-    meaningDetailHint,
     newWordsInput,
     typeCheckboxes,
   } = elements;
@@ -107,28 +104,32 @@ export async function createSettings(elements, onChange) {
     change('meaningDetail', meaningDetailSelect.value),
   );
 
-  // The "?" beside that setting shows its explanation: while a mouse is over
-  // it, and on a tap or click until the next one (a finger cannot hover).
-  let hintPinned = false;
-  const showHint = (shown) => {
-    meaningDetailHint.hidden = !shown;
-    meaningDetailHelp.setAttribute('aria-expanded', String(shown));
-  };
-  meaningDetailHelp.addEventListener('click', () => {
-    hintPinned = !hintPinned;
-    showHint(hintPinned);
-  });
-  // Pointer events cover mouse, finger and pen; pointerType says which.
-  meaningDetailHelp.addEventListener('pointerenter', (event) => {
-    if (event.pointerType === 'mouse') {
-      showHint(true);
-    }
-  });
-  meaningDetailHelp.addEventListener('pointerleave', (event) => {
-    if (event.pointerType === 'mouse') {
-      showHint(hintPinned);
-    }
-  });
+  // A "?" beside a setting shows its explanation: while a mouse is over it,
+  // and on a tap or click until the next one (a finger cannot hover). Which
+  // explanation is the button's, its aria-controls attribute says.
+  for (const helpButton of panel.querySelectorAll('.help-button')) {
+    const hint = document.getElementById(helpButton.getAttribute('aria-controls'));
+    let pinned = false;
+    const showHint = (shown) => {
+      hint.hidden = !shown;
+      helpButton.setAttribute('aria-expanded', String(shown));
+    };
+    helpButton.addEventListener('click', () => {
+      pinned = !pinned;
+      showHint(pinned);
+    });
+    // Pointer events cover mouse, finger and pen; pointerType says which.
+    helpButton.addEventListener('pointerenter', (event) => {
+      if (event.pointerType === 'mouse') {
+        showHint(true);
+      }
+    });
+    helpButton.addEventListener('pointerleave', (event) => {
+      if (event.pointerType === 'mouse') {
+        showHint(pinned);
+      }
+    });
+  }
 
   newWordsInput.addEventListener('change', () => {
     // Whatever was typed, end up with a whole number in the allowed range.

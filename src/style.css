@@ -79,6 +79,11 @@ main {
   gap: 12px;
 }
 
+/* Links inside explanations, in the app's blue. */
+.hint a {
+  color: #3b6fb6;
+}
+
 .script-flag {
   margin: 0;
   font-size: 0.9rem;

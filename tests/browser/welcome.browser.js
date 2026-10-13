@@ -46,6 +46,11 @@ describe('the introduction', { concurrency: false }, () => {
   it('sets the script, the pronunciation and the kinds of card', async () => {
     await tap(page, 'welcome-next');
     assert.equal(await heading(), 'Which characters are you learning?');
+    // The two scripts are explained, with a link to read more about each.
+    assert.deepEqual(
+      await page.evaluate(`[...document.querySelectorAll('#welcome [data-step]:not([hidden]) a')].map((link) => link.getAttribute('href').split('/wiki/')[1])`),
+      ['Simplified_Chinese_characters', 'Traditional_Chinese_characters', 'Taiwanese_Mandarin'],
+    );
     // It starts from the settings as they are: a new device learns simplified
     // only, with both pronunciations and the mainland one first.
     assert.equal(await page.evaluate(`document.querySelector('input[name="welcome-script"]:checked').value`), 'simplified');
@@ -111,6 +116,12 @@ describe('the introduction', { concurrency: false }, () => {
     await tap(page, 'settings-button');
     assert.equal(await page.evaluate(`document.getElementById('script-select').value`), 'traditional');
     assert.equal(await page.evaluate(`document.getElementById('pronunciation-select').value`), 'mainlandOnly');
+    // Settings explains the two settings too, behind their "?" buttons.
+    assert.equal(await textOf(page, 'script-hint'), '');
+    await page.evaluate(`document.querySelector('[aria-controls="script-hint"]').click()`);
+    assert.match(await textOf(page, 'script-hint'), /Simplified characters are used in mainland China/);
+    await page.evaluate(`document.querySelector('[aria-controls="pronunciation-hint"]').click()`);
+    assert.match(await textOf(page, 'pronunciation-hint'), /read differently in Taiwan/);
     assert.deepEqual(
       await page.evaluate(`[...document.querySelectorAll('#settings-panel [data-card-type]')].filter((box) => box.checked).map((box) => box.dataset.cardType)`),
       ['meaning', 'pinyin', 'writing'],

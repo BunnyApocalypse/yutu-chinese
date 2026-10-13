@@ -242,6 +242,8 @@
             <label><input type="radio" name="welcome-script" value="both-simplified" /> Both, mostly simplified</label>
             <label><input type="radio" name="welcome-script" value="both-traditional" /> Both, mostly traditional</label>
           </fieldset>
+          <!-- The names link to Wikipedia; a link someone taps is fine under the offline rule. -->
+          <p class="hint"><a href="https://en.wikipedia.org/wiki/Simplified_Chinese_characters" target="_blank" rel="noopener">Simplified</a> characters are used in mainland China, Singapore and Malaysia. <a href="https://en.wikipedia.org/wiki/Traditional_Chinese_characters" target="_blank" rel="noopener">Traditional</a> characters are used in Taiwan, Hong Kong and Macau. Many characters are the same in both; others differ, like 学 and 學. If you are not sure, pick the one used where you plan to read or speak Chinese.</p>
           <p class="hint">With both, your cards are in the script you mostly use, and you can pick the other one for single words.</p>
           <fieldset class="setting">
             <legend>Pronunciation</legend>
@@ -249,7 +251,7 @@
             <label><input type="radio" name="welcome-pronunciation" value="mainland" /> Both, mainland first</label>
             <label><input type="radio" name="welcome-pronunciation" value="taiwan" /> Both, Taiwan first</label>
           </fieldset>
-          <p class="hint">Some words are read differently in Taiwan: 星期 is xīngqī on the mainland and xīngqí in Taiwan. With both, a card shows both readings and accepts both tones.</p>
+          <p class="hint">Some words are read differently in Taiwan: 星期 is xīngqī on the mainland and xīngqí in Taiwan (more on <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">Taiwan's Mandarin</a>). With both, a card shows both readings and accepts both tones.</p>
           <p class="hint">You can change all of this later in Settings.</p>
         </section>
 
@@ -305,24 +307,38 @@
       <dialog id="settings-panel" class="settings-panel">
         <h2>Settings</h2>
 
-        <label class="setting">
-          Script
+        <!-- A "?" beside a setting shows the explanation named in its aria-controls (settings.js). -->
+        <div class="setting">
+          <span>
+            <label for="script-select">Script</label>
+            <button class="help-button" type="button" aria-label="What does this setting do?" aria-expanded="false" aria-controls="script-hint">?</button>
+          </span>
           <select id="script-select">
             <option value="simplified">Simplified only 简体</option>
             <option value="traditional">Traditional only 繁體</option>
             <option value="both-simplified">Both, cards in simplified</option>
             <option value="both-traditional">Both, cards in traditional</option>
           </select>
-        </label>
+          <p id="script-hint" class="hint" hidden>
+            <a href="https://en.wikipedia.org/wiki/Simplified_Chinese_characters" target="_blank" rel="noopener">Simplified</a> characters are used in mainland China, Singapore and Malaysia. <a href="https://en.wikipedia.org/wiki/Traditional_Chinese_characters" target="_blank" rel="noopener">Traditional</a> characters are used in Taiwan, Hong Kong and Macau. Many characters are the same in both; others differ, like 学 and 學. If you are not sure, pick the one used where you plan to read or speak Chinese.<br />
+            With one script, you are only asked for and shown that one. With both, cards are in the script named, and single words can be given the other.
+          </p>
+        </div>
 
-        <label class="setting">
-          Pronunciation
+        <div class="setting">
+          <span>
+            <label for="pronunciation-select">Pronunciation</label>
+            <button class="help-button" type="button" aria-label="What does this setting do?" aria-expanded="false" aria-controls="pronunciation-hint">?</button>
+          </span>
           <select id="pronunciation-select">
             <option value="mainlandOnly">Mainland only</option>
             <option value="mainland">Both, mainland first</option>
             <option value="taiwan">Both, Taiwan first</option>
           </select>
-        </label>
+          <p id="pronunciation-hint" class="hint" hidden>
+            Some words are read differently in Taiwan: 星期 is xīngqī on the mainland and xīngqí in Taiwan (more on <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">Taiwan's Mandarin</a>). With both, a card shows both readings and accepts both tones. The one named first is the reading a card expects. With mainland only, Taiwan readings are never shown or asked for.
+          </p>
+        </div>
 
         <label class="setting">
           Handwriting
