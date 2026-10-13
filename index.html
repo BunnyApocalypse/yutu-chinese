@@ -14,6 +14,14 @@
   </head>
   <body>
     <main>
+      <!-- Settings: a cog wheel in the upper right corner of the page, on every tab. -->
+      <button id="settings-button" class="icon-button settings-cog" type="button" aria-label="Settings" title="Settings">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor">
+          <!-- Eight teeth around a ring. -->
+          <rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(0 12 12)" /><rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(45 12 12)" /><rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(90 12 12)" /><rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(135 12 12)" /><rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(180 12 12)" /><rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(225 12 12)" /><rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(270 12 12)" /><rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(315 12 12)" />
+          <path fill-rule="evenodd" d="M12 5.2a6.800 6.800 0 1 0 0 13.600 6.800 6.800 0 0 0 0-13.600Zm0 3.900a2.900 2.900 0 1 1 0 5.800 2.900 2.900 0 0 1 0-5.800Z" />
+        </svg>
+      </button>
       <nav class="tabs">
         <button id="review-tab" class="selected" type="button">Review</button>
         <button id="learn-tab" type="button">Learn</button>
@@ -226,8 +234,10 @@
 
           <h2><span id="word-list-title">All your words</span> (<span id="word-count">0</span>)</h2>
           <input id="word-search" type="search" placeholder="Search characters, pinyin or meaning" aria-label="Search your words" autocomplete="off" autocapitalize="off" />
-          <!-- Which of the words are listed (wordsPanel.js). -->
-          <label class="setting">
+          <!-- Which of the words are listed, in what order, and picking several
+               of them: side by side in one row (wordsPanel.js, cardsPanel.js). -->
+          <div class="list-tools">
+          <label>
             Show
             <select id="word-filter">
               <option value="">All words</option>
@@ -235,7 +245,7 @@
               <option value="suspended">Words with a suspended card</option>
             </select>
           </label>
-          <label class="setting">
+          <label>
             Order
             <select id="word-sort">
               <option value="">Learning order</option>
@@ -243,8 +253,6 @@
               <option value="lapses">Most forgotten first</option>
             </select>
           </label>
-          <!-- Doing one thing to several words at once (cardsPanel.js). -->
-          <div class="buttons">
             <button id="select-words-button" class="small" type="button">Select words</button>
           </div>
           <div id="bulk-bar" class="add-list" hidden>
@@ -342,7 +350,6 @@
       </div>
 
       <footer>
-        <button id="settings-button" class="small" type="button">Settings</button>
         <!-- Shown when a newer version of the app has been fetched (offline.js). -->
         <button id="update-button" class="small primary" type="button" hidden>New version ready: tap to reload</button>
       </footer>
