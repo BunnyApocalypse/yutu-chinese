@@ -13,12 +13,15 @@
 // Browsers only allow service workers over https or on localhost, so the app
 // does not use one under `npm run dev` (see offline.js).
 //
-// There are two stores ("caches"):
+// There are three stores ("caches"):
 //   app-<VERSION>  the app's own files. A new version of the app gets a new
 //                  one, and the old one is deleted once the new takes over.
 //   offline-data   stroke data and the dictionary, about 60 MB. Filled by the
 //                  page in the background (offline.js) and kept from one
 //                  version of the app to the next.
+//   offline-audio  the recordings of words that have been played (speech.js),
+//                  or all of them (43 MB) if that was asked for in Settings.
+//                  Kept from one version to the next as well.
 
 /* global VERSION, APP_FILES */
 
@@ -74,7 +77,7 @@ self.addEventListener('fetch', (event) => {
           return page;
         }
       }
-      // caches.match looks in both stores.
+      // caches.match looks in every store.
       return (await caches.match(request)) || fetch(request);
     })(),
   );

@@ -25,6 +25,7 @@ import {
 import { toneAnswers, readingsFor, describeReading } from './tones.js';
 import { scriptFor, scriptFlagFor } from './words.js';
 import { isLeech, lapsesOf, isSuspended, withSuspended, becameLeech } from './leeches.js';
+import { speak } from './speech.js';
 
 const TYPE_LABELS = {
   writing: 'Writing',
@@ -63,6 +64,7 @@ export function createReview(elements, flows, settings, editWord) {
     gradeRow,
     editWordButton,
     leechNote,
+    listenButton,
     noticeElement,
     donePanel,
     doneMessage,
@@ -175,9 +177,40 @@ export function createReview(elements, flows, settings, editWord) {
   function hideGrades() {
     gradeRow.hidden = true;
     editWordButton.hidden = true;
+    listenButton.hidden = true;
     leechNote.hidden = true;
     options = null;
   }
+
+  // ---- Hearing the word ----
+
+  // The Listen button is there whenever the word's reading is in view: with
+  // the grades, and at a new word's first look.
+  function offerListen() {
+    listenButton.textContent = 'Listen';
+    listenButton.hidden = settings.sound === 'off';
+  }
+
+  // Speaks the word of the card on screen, in the reading shown for it.
+  async function speakCurrent() {
+    if (!current) {
+      return;
+    }
+    const { word } = current;
+    const spoken = await speak(
+      word,
+      readingOf(word).primary,
+      settings.pronunciation === 'taiwan' ? 'taiwan' : 'mainland',
+    );
+    // How it was spoken is noted on the button for the browser tests; and
+    // the button says so if the word could not be spoken at all.
+    listenButton.dataset.spoken = `${word.id} ${spoken}`;
+    if (!spoken && current && current.word === word) {
+      listenButton.textContent = 'No sound for this word';
+    }
+  }
+
+  listenButton.addEventListener('click', speakCurrent);
 
   // "Edit word", shown with the grades: a mistake in a word is usually
   // noticed when its answer is on screen. Opens the word's panel.
@@ -302,6 +335,7 @@ export function createReview(elements, flows, settings, editWord) {
     }
     gradeRow.hidden = false;
     editWordButton.hidden = false;
+    offerListen();
     // A card that keeps being forgotten is pointed out, now that its answer
     // is in view: the moment to think of a way to remember it.
     const lapses = lapsesOf(current.card);
@@ -320,6 +354,9 @@ export function createReview(elements, flows, settings, editWord) {
     suggested = suggestedGrade;
     answerDetails = details;
     renderGrades();
+    if (settings.sound === 'auto') {
+      speakCurrent();
+    }
   }
 
   // ---- The four kinds of card ----
@@ -511,6 +548,10 @@ export function createReview(elements, flows, settings, editWord) {
         face('face-meaning', word.definition),
       );
       lessonNextButton.hidden = false;
+      offerListen();
+      if (settings.sound === 'auto') {
+        speakCurrent();
+      }
       return true;
     }
 

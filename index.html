@@ -304,6 +304,8 @@
         <button id="skip-lesson-button" class="small" type="button" hidden>I know this one: skip to the end</button>
 
         <!-- Review mode, with the grades: opens the word's panel to correct it (review.js). -->
+        <!-- Speaks the word, once its reading is in view (review.js, speech.js). -->
+        <button id="listen-button" class="small" type="button" hidden>Listen</button>
         <button id="edit-word-button" class="small" type="button" hidden>Edit word</button>
         <!-- With the grades, on a card that keeps being forgotten (review.js). -->
         <p id="leech-note" class="order-note" hidden></p>
@@ -613,6 +615,19 @@
         </label>
 
         <label class="setting">
+          Sound
+          <select id="sound-select">
+            <option value="tap">When I tap Listen</option>
+            <option value="auto">By itself when the answer shows, and with Listen</option>
+            <option value="off">Off</option>
+          </select>
+          <span class="hint">
+            Most words are spoken from a recording; others are put together from recorded syllables, or read by
+            your device's own Chinese voice if it has one. A recording needs a connection the first time it is played.
+          </span>
+        </label>
+
+        <label class="setting">
           A card is a leech after
           <input id="leech-input" type="number" min="2" max="30" inputmode="numeric" aria-label="Times forgotten before a card is a leech" />
           <span class="hint">
@@ -653,6 +668,8 @@
           <!-- Shown while the browser has not agreed to keep the app's data (offline.js). -->
           <button id="install-button" class="small" type="button" hidden>Install the app</button>
           <button id="keep-data-button" class="small" type="button" hidden>Allow long-term storage</button>
+          <!-- Saves every recording on the device (offline.js); they are otherwise kept one by one as they are played. -->
+          <button id="save-audio-button" class="small" type="button" hidden>Save all recordings for offline use (about 43 MB)</button>
         </div>
 
         <div class="setting">

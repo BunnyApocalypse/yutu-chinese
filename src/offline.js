@@ -14,6 +14,8 @@ const baseAddress = new URL(BASE, window.location.href);
 
 // The store the stroke data and dictionary are saved in (see serviceWorker.js).
 const DATA_CACHE = 'offline-data';
+// The store the recordings of words are saved in (see speech.js).
+const AUDIO_CACHE = 'offline-audio';
 // Where the list of what there is to save is kept, for when there is no
 // connection to ask for it. (Not under its own address: the service worker
 // would then answer with the saved copy and a new list would never be seen.)
@@ -119,6 +121,54 @@ async function saveOfflineData(report) {
   return complete;
 }
 
+// Saves every recording on the device (see speech.js for how they are used
+// and scripts/build-offline.js for the packs). Like saveOfflineData, it
+// picks up where it left off and can be called again.
+//
+// report({ done, total }): called as it goes; counts packs
+//
+// Returns true if everything is saved.
+async function saveAudio(report) {
+  // The recordings have a store of their own. In with the stroke data, their
+  // ten thousand files made looking through that store (as saveOfflineData
+  // does when it clears out old data) take minutes.
+  const cache = await caches.open(AUDIO_CACHE);
+  // The list was kept by saveOfflineData, which runs first.
+  const saved = await (await caches.open(DATA_CACHE)).match(address(SAVED_INDEX));
+  const packs = saved ? (await saved.json()).audioPacks || [] : [];
+  let done = 0;
+  let complete = packs.length > 0;
+  report({ done, total: packs.length });
+  for (const pack of packs) {
+    if (!(await cache.match(address(markFor(pack.file))))) {
+      try {
+        const response = await fetch(address(pack.file));
+        if (!response.ok) {
+          throw new Error(`${pack.file}: ${response.status}`);
+        }
+        // A pack is its files one after another; each is cut out by its
+        // length and goes into the store under its own address.
+        const bytes = await response.arrayBuffer();
+        let offset = 0;
+        for (const [file, length] of pack.entries) {
+          await cache.put(
+            address(file),
+            new Response(bytes.slice(offset, offset + length), { headers: { 'Content-Type': 'audio/mpeg' } }),
+          );
+          offset += length;
+        }
+        await cache.put(address(markFor(pack.file)), new Response('done'));
+      } catch {
+        complete = false;
+        continue;
+      }
+    }
+    done += 1;
+    report({ done, total: packs.length });
+  }
+  return complete;
+}
+
 // ---- Keeping your data ----
 //
 // Browsers may clear a site's stored data when the device runs short of
@@ -205,11 +255,12 @@ window.addEventListener('appinstalled', async () => {
 //   updateButton:  shown when a new version of the app is ready
 //   keepButton:    asks the browser for long-term storage
 //   installButton: installs the app, where the browser lets the app offer that
-export async function setUpOffline({ statusElement, updateButton, keepButton, installButton }) {
+//   audioButton:   saves every recording for offline use
+export async function setUpOffline({ statusElement, updateButton, keepButton, installButton, audioButton }) {
   // What is known so far, shown as one short paragraph.
-  const state = { app: '', data: '', kept: '' };
+  const state = { app: '', data: '', audio: '', kept: '' };
   const show = () => {
-    statusElement.textContent = [state.app, state.data, state.kept].filter(Boolean).join(' ');
+    statusElement.textContent = [state.app, state.data, state.audio, state.kept].filter(Boolean).join(' ');
   };
 
   // Long-term storage: say how it stands and what to do about it.
@@ -300,5 +351,38 @@ export async function setUpOffline({ statusElement, updateButton, keepButton, in
   if (!complete) {
     state.data += ' Not finished; it continues the next time the app is opened with a connection.';
     show();
+  }
+
+  // ---- The recordings ----
+  //
+  // Only on request: they more than double what the app keeps on the
+  // device. Once asked for (the `audioOffline` setting, which belongs to the
+  // device), they are saved at every start, which fetches only what is new.
+  const saveRecordings = async () => {
+    audioButton.hidden = true;
+    const all = await saveAudio(({ done, total }) => {
+      state.audio =
+        total === 0
+          ? ''
+          : done === total
+            ? 'All recordings are saved too.'
+            : `Saving recordings: ${Math.round((done / total) * 100)}%.`;
+      show();
+    });
+    if (!all && state.audio !== '') {
+      state.audio += ' Not finished; it continues the next time the app is opened with a connection.';
+      show();
+    }
+  };
+  if (await getSetting('audioOffline', false)) {
+    await saveRecordings();
+  } else {
+    state.audio = 'Recordings of words are kept once played.';
+    show();
+    audioButton.hidden = false;
+    audioButton.addEventListener('click', async () => {
+      await setSetting('audioOffline', true);
+      await saveRecordings();
+    });
   }
 }

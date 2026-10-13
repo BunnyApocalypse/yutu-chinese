@@ -8,5 +8,12 @@ dist/
 public/char-data/
 public/char-data-tw/
 
+# Recordings copied from data/audio-cmn by scripts/copy-audio.js
+public/audio/
+
 # Personal data exports (e.g. from Skritter) never belong in the repo
 exports/
+
+# Large files fetched for development only, never shipped (see local/README.md)
+local/*
+!local/README.md

@@ -37,6 +37,7 @@ const DEVICE_SETTINGS = [
   'oldBuiltInWordsRemoved',
   'builtInListVersion',
   'studyDeck',
+  'audioOffline',
 ];
 
 const changedAt = (record) => (record && record.changedAt) || 0;

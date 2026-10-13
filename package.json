@@ -6,14 +6,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "predev": "node scripts/copy-char-data.js",
+    "predev": "node scripts/copy-char-data.js && node scripts/copy-audio.js",
     "dev": "vite",
-    "prebuild": "node scripts/copy-char-data.js",
+    "prebuild": "node scripts/copy-char-data.js && node scripts/copy-audio.js",
     "build": "vite build",
     "postbuild": "node scripts/build-offline.js",
     "preview": "vite preview",
     "test": "node --test",
-    "pretest:browser": "node scripts/copy-char-data.js",
+    "pretest:browser": "node scripts/copy-char-data.js && node scripts/copy-audio.js",
     "test:browser": "node --test tests/browser/*.browser.js"
   },
   "dependencies": {

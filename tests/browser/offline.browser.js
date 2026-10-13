@@ -72,6 +72,27 @@ describe('offline use', { concurrency: false }, () => {
     assert.equal(await page.evaluate(`document.getElementById('update-button').hidden`), true);
   });
 
+  it('keeps the recordings out of that, and saves them all when asked', { timeout: 180000 }, async () => {
+    const saved = (file) =>
+      page.evaluate(`caches.open('offline-audio').then((cache) => cache.match(new URL('${file}', location.href).href)).then((found) => Boolean(found))`);
+    await waitUntil(page, `document.getElementById('offline-status').textContent.includes('Recordings of words are kept once played.')`, 'the line about recordings');
+    assert.equal(await saved('audio/w/5b66-4e60.mp3'), false);
+    await tap(page, 'save-audio-button');
+    let status = '';
+    for (let attempt = 0; attempt < 600 && !/All recordings are saved too/.test(status); attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      status = await page.evaluate(`document.getElementById('offline-status').textContent`);
+    }
+    assert.match(status, /All recordings are saved too\./);
+    // A word's recording and a syllable's are there, as sound.
+    assert.equal(await saved('audio/w/5b66-4e60.mp3'), true);
+    assert.equal(await saved('audio/s/ma1.mp3'), true);
+    assert.equal(
+      await page.evaluate(`caches.match(new URL('audio/s/ma1.mp3', location.href).href).then((found) => found.headers.get('Content-Type'))`),
+      'audio/mpeg',
+    );
+  });
+
   it('offers a new version of the app and switches to it when asked', { timeout: 60000 }, async () => {
     const appCaches = () =>
       page.evaluate(`caches.keys().then((names) => names.filter((name) => name.startsWith('app-')).join(','))`);
@@ -126,5 +147,13 @@ describe('offline use', { concurrency: false }, () => {
     await waitUntil(page, `document.getElementById('status').textContent === 'All tones right'`, 'the Taiwan tone accepted');
     // And it says how things stand.
     assert.match(await textOf(page, 'offline-status'), /saved too/);
+    // The recordings were asked for on this device, so they still are.
+    // (Looking through everything that is saved takes the app a while first.)
+    let status = '';
+    for (let attempt = 0; attempt < 240 && !/recordings/i.test(status); attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      status = await textOf(page, 'offline-status');
+    }
+    assert.match(status, /All recordings are saved too\./);
   });
 });

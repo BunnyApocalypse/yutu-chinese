@@ -62,12 +62,33 @@ for (let start = 0; start < strokeFiles.length; start += CHARS_PER_PACK) {
 // a fingerprint in its name too.
 const bigFiles = filesUnder('assets').filter((file) => file.endsWith('.tsv'));
 
-fs.writeFileSync(path.join(DIST, 'offline/index.json'), JSON.stringify({ packs, files: bigFiles }));
+// ---- The recordings ----
+//
+// About 10,000 small sound files (see scripts/copy-audio.js), 43 MB together.
+// They are not saved on the device by themselves: each is kept once it has
+// been played, and all of them only if asked for in Settings. For that they
+// are packed like the stroke data, but as they are (sound is not text): a
+// pack is the files one after another, and the list says how long each is.
+const FILES_PER_AUDIO_PACK = 800;
+const audioFiles = filesUnder('audio').filter((file) => file.endsWith('.mp3'));
+const audioPacks = [];
+for (let start = 0; start < audioFiles.length; start += FILES_PER_AUDIO_PACK) {
+  const files = audioFiles.slice(start, start + FILES_PER_AUDIO_PACK);
+  const contents = files.map((file) => fs.readFileSync(path.join(DIST, file)));
+  const joined = Buffer.concat(contents);
+  const name = `offline/audio-${String(audioPacks.length).padStart(2, '0')}.${fingerprint(joined)}.bin`;
+  fs.writeFileSync(path.join(DIST, name), joined);
+  // entries: each file's path and its length in bytes, in the pack's order.
+  audioPacks.push({ file: name, entries: files.map((file, index) => [file, contents[index].length]) });
+}
+
+fs.writeFileSync(path.join(DIST, 'offline/index.json'), JSON.stringify({ packs, files: bigFiles, audioPacks }));
 
 // ---- The service worker ----
 
-// The app's own files: everything except the stroke data, the packs, the
-// dictionary, and the service worker itself.
+// The app's own files: everything except the stroke data, the recordings
+// (but the list of them is one), the packs, the dictionary, and the service
+// worker itself.
 const appFiles = fs
   .readdirSync(DIST, { recursive: true, withFileTypes: true })
   .filter((entry) => entry.isFile())
@@ -76,6 +97,7 @@ const appFiles = fs
     (file) =>
       file !== 'sw.js' &&
       !file.startsWith('offline/') &&
+      !(file.startsWith('audio/') && file !== 'audio/index.json') &&
       !STROKE_FOLDERS.some((folder) => file.startsWith(`${folder}/`)) &&
       !bigFiles.includes(file),
   )
@@ -93,5 +115,6 @@ fs.writeFileSync(
 console.log(
   `Offline: version ${version}, ${appFiles.length} app files, ` +
     `${strokeFiles.length} stroke data files in ${packs.length} packs, ` +
-    `${bigFiles.length} other big file${bigFiles.length === 1 ? '' : 's'}.`,
+    `${bigFiles.length} other big file${bigFiles.length === 1 ? '' : 's'}, ` +
+    `${audioFiles.length} recordings in ${audioPacks.length} packs.`,
 );

@@ -400,6 +400,7 @@ async function startUp() {
       newWordsInput: byId('new-words-input'),
       leechInput: byId('leech-input'),
       leechActionSelect: byId('leech-action-select'),
+      soundSelect: byId('sound-select'),
       typeCheckboxes: [...document.querySelectorAll('#settings-panel [data-card-type]')],
     },
     onSettingsChange,
@@ -416,6 +417,7 @@ async function startUp() {
       gradeRow: byId('grade-row'),
       editWordButton: byId('edit-word-button'),
       leechNote: byId('leech-note'),
+      listenButton: byId('listen-button'),
       noticeElement: byId('review-notice'),
       donePanel: byId('done-panel'),
       doneMessage: byId('done-message'),
@@ -476,6 +478,7 @@ async function startUp() {
     updateButton: byId('update-button'),
     keepButton: byId('keep-data-button'),
     installButton: byId('install-button'),
+    audioButton: byId('save-audio-button'),
   });
 }
 

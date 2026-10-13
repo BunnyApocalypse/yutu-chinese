@@ -35,6 +35,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - Keep code simple and direct. Prefer a few small, plainly named files over abstractions.
 - Comment anything non-obvious, and explain new concepts (browser APIs, tooling, PWA mechanics) in plain language when they first come up.
 - Ask before adding any dependency. The bar is high. Approved so far: `hanzi-writer`, `hanzi-writer-data`, `ts-fsrs`, and `vite` for development.
+- **Fetch bulk data once and read it locally** instead of sending many requests to someone's server (the owner, 2026-10-13), as long as the file is not prohibitively large. Development-only downloads go in the git-ignored `local/` folder, with the source and the fetch command in `local/README.md`.
 - Work one milestone at a time. Propose a plan before writing code for a new milestone, and don't build ahead.
 
 ## Commands
@@ -72,6 +73,9 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `src/welcome.js`, `src/storageAdvice.js`: the introduction shown on first use, and what it says about long-term storage in each browser (see that section).
 - `src/scriptCards.js`: files writing cards under the script they were learned in (see "Switching script").
 - `src/backup.js`: build, check and restore a backup file.
+- `src/speechPlan.js`, `src/speech.js`: speaking a word (see "Hearing a word"): which recordings to play, as plain calculation, and playing them.
+- `scripts/copy-audio.js`, `data/audio-cmn/`: the recordings, and the script that puts them in the git-ignored `public/audio/` under plain file names with an `index.json` listing them.
+- `data/makemeahanzi/`: how each character is built (parts, radical, meaning part and sound part), LGPL-3.0. Not used by the app yet; it is for the word page.
 - `src/cardManager.js`, `src/cardsPanel.js`: managing cards by hand (see "Managing cards"): the plain calculation, and its page side in the Decks tab.
 - `src/leeches.js`: which cards are leeches, suspended cards, and the two leech exports (see "Leeches and suspended cards"). Plain calculation.
 - `src/merge.js`: combines what is on the device with a backup from another device (see "Combining backups"). Plain calculation.
@@ -146,7 +150,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - **Cards of one word are kept apart** (`SIBLING_GAP_MS`, 3 minutes), because each gives away the others' answers: a writing card ends by showing the pinyin, the others show the characters. With few words in play this makes the app say "next review in N minutes" although cards exist. That is intended.
 - **New words per day counts words, not cards** (setting, default 5). A word is introduced when its first card of any type is studied. New cards of words already introduced are not limited.
 - **Free practice shows any of the four card kinds without recording anything**, mainly so cards can be tried and tested. Writing works for any typed characters (`startFreePractice` in `src/main.js`); tone, pinyin and meaning need the word's reading and meaning, so the typed word must be in the word list (`practice` in `src/review.js`). A practice card gets no grade buttons, and continuing shows it again.
-- **Settings** (`settings` store): `script`, `pronunciation`, `rawInput`, `newWordsPerDay`, `enabledTypes`, `leechLapses`, `leechAction`. A type switched off never appears but keeps its cards and history. At least one type stays on.
+- **Settings** (`settings` store): `script`, `pronunciation`, `rawInput`, `newWordsPerDay`, `enabledTypes`, `leechLapses`, `leechAction`, `sound`. A type switched off never appears but keeps its cards and history. At least one type stays on.
 - **Writing prompts show the meaning only.** The owner decided pinyin must not be given. A "Show pinyin" button reveals it for near-synonyms and does not affect the grade; the pinyin is shown once the word is finished. Glosses in word lists must therefore be distinguishable from each other.
 - **One writing card per word.** A setting chooses the script written (traditional or simplified); the schedule is shared.
 - **FSRS** with default parameters (90% target retention, learning steps of 1 and 10 minutes, fuzz on).
@@ -209,7 +213,7 @@ Built on 2026-10-13 to a plan the owner agreed to. It is number 3 of the order o
   - Words, decks, settings: the record saved later (`changedAt`), whole; this device's if neither is later. A word's earliest `learnedAt` is kept whichever record wins.
   - A removal counts unless the record was saved after it. All marks are kept.
   - A word corrected on one device (`formerIds`) takes the place of the record still under the old ID on the other, and that side's cards and reviews are filed under the new ID. If the device that corrected it also has a word under the old ID, that is a word of its own.
-  - Settings that belong to the device are never taken from the backup (`DEVICE_SETTINGS`: `welcomeDone`, `keepDataWanted`, `cardsFiledByScript`, `oldBuiltInWordsRemoved`, `builtInListVersion`, `studyDeck`). A new setting of that kind must be added there.
+  - Settings that belong to the device are never taken from the backup (`DEVICE_SETTINGS`: `welcomeDone`, `keepDataWanted`, `cardsFiledByScript`, `oldBuiltInWordsRemoved`, `builtInListVersion`, `studyDeck`, `audioOffline`). A new setting of that kind must be added there.
 - **Cards are not combined but worked out from the reviews** (`replay`), with one exception that Claude added to the plan: where one side already has every review of a word's cards of one kind, its cards are kept as stored. So combining never changes a schedule that only one device contributed to, and a device's cards that do not come out of `replay` exactly as stored (anything from before 2026-10-13 that was moved by `fileCardsByScript`) are left alone.
 - **Which card a review belongs to** goes by its word, kind and `script`, not its `cardId` (reviews from before 2026-10-13 can carry a plain ID of a card since moved).
 - **A word removed and added again starts from scratch:** reviews made before the removal mark do not count toward its cards, on either device's side.
@@ -241,6 +245,23 @@ Built on 2026-10-13, the second half of number 4 of the order of work. The owner
 - **Order:** learning order, next due first (words without a studied card last), most forgotten first.
 - **Select words** turns taps on rows into picking them (a blue edge), and shows a bar: Select all listed (every word the list has, not only the 200 rows shown), I know these, Suspend, Switch back on, Start over, Remove, and Add to a deck. Start over and Remove ask first. The selection is kept after an action, less any words removed.
 - **Not built:** a row per card instead of per word; taking a word out of a deck for several words at once; undo.
+
+## Hearing a word
+
+Built on 2026-10-13, step 1 of "sentences and audio" (number 5 of the order of work). The owner chose the sources; nobody has listened to the result yet, Claude cannot.
+
+- **Three ways to speak a word, tried in order** (`planSpeech` in `src/speechPlan.js`):
+  1. A recording of the word itself: about 8,500 words and characters of the HSK list of 2000 (`data/audio-cmn/words`). They are named by characters, so a recording speaks the usual reading. It is only used when the reading asked for is the word's listed `pinyin`, and that is a single reading.
+  2. Recordings of its syllables played back to back (the owner's idea): 1,679 syllables with tone (`data/audio-cmn/syllables`). This speaks exactly the reading asked for, so a Taiwan reading shown on a card is what is heard. `spokenSyllables` applies the tone changes dictionaries do not write: third tone before third, 不 before a fourth tone, 一 except where it is a number read out. The silence at either end of each recording is cut (`soundSpan` in `src/speech.js`).
+  3. The device's own Chinese voice (`speechSynthesis`), where it has one that works without a connection. It reads the characters and cannot be told the reading. This is what is left for a word with a neutral-tone syllable and no recording: only 19 neutral syllables are recorded.
+- **Coverage**, measured that day: 80 to 95% of each level up to HSK 3.0 level 5, HSK 2.0 level 6 and TOCFL level 4 has a recording of its own, and nearly all the rest can be put together from syllables.
+- **The recordings are CC BY-SA** (`hugolpz/audio-cmn`, its smallest version, 43 MB in the repository), kept as separate files with their README.
+- **Where it is heard:** a "Listen" button with the grades in Review and at a new word's first look. The `sound` setting: `tap` (the default), `auto` (also by itself when the answer shows) or `off` (no button). The button's `data-spoken` says how the last word was spoken (`word`, `syllables`, `voice` or `null`), for the browser tests, which cannot hear.
+- **Offline, the recordings are an exception to "everything is saved by itself"** (agreed with the owner): a recording is fetched from the app's own address when first played and kept from then on, in a store of its own (`offline-audio`). "Save all recordings for offline use" under Offline use in Settings fetches all of them, in 13 packs (`audioPacks` in `offline/index.json`; `saveAudio` in `src/offline.js`), and the `audioOffline` setting, which belongs to the device, has later versions fetched at each start.
+- **Recordings must not go in the `offline-data` store.** With their ten thousand files in it, `saveOfflineData`'s clearing out of old data (which lists everything in the store) no longer finished within a minute.
+- **The service worker's list of app files leaves the recordings out** (`scripts/build-offline.js`), or installing the app would fetch all 43 MB; `audio/index.json` is an app file.
+- **A browser keeps sound asleep until the page has been tapped.** `playRecordings` waits 300 ms for that and goes on, so nothing hangs; with `auto` the first card's sound can be lost if nothing was tapped yet.
+- **Not built:** Listen in Free practice and in the word's pop-up panel; a speed setting; a choice of voice; sentences (which will use the device's voice).
 
 ## How the must-haves are implemented
 
@@ -449,6 +470,7 @@ Written on 2026-10-13 for whichever session picks the work up next (the owner wo
   - The Import backup panel and the ready-made lists' rows on a phone.
   - Percent learned and its bar; "Add a word" folded away.
   - The groups inside the lower HSK and TOCFL levels: only HSK 3.0 level 1 was seen by the owner.
+  - Sound: nobody has listened yet. Whether the recordings are good enough at their smallest size, how words put together from syllables sound, and what the phone's and tablet's own voices do.
   - Leeches: the two settings, the note in Review, the lists in the Decks tab, both exports, and the notice when a card is suspended.
   - The card manager: the Cards fold-out, Start over, "I know this word", the order of the list, and Select words.
 - **Done that day:** the conversation about long-term goals, the database made ready for merging, and decks with the Decks tab in place of the Words tab (see "Long-term goals", "Ready for merging", "Decks").
@@ -456,12 +478,10 @@ Written on 2026-10-13 for whichever session picks the work up next (the owner wo
 - **Done later that day: groups inside the lower levels** of the ready-made lists (TOCFL's topics; HSK 3.0 and 2.0 levels 1 to 3 in a teaching order), each a deck inside its level. See "Ready-made word lists". The owner saw and approved HSK 3.0 level 1; the other five HSK levels were read by Claude only.
 - **Done later that day: leeches** with their two exports, and suspending a card (see "Leeches and suspended cards"). The owner has not tried it.
 - **Done later that day: the card manager** (see "Managing cards"). The owner has not tried it.
-- **Next in the order of work: sentences and audio**, number 5. A plan was put to the owner on 2026-10-13 and these parts are agreed: the order (hearing a word; a page for each word; sentences as items of their own; then listening cards and ready-made sentences), a read-only word page with an Edit button, and all three kinds of sentence card as options (reading; fill in the missing word, written like a writing card; write the whole sentence). Sentences are to be stored as word records marked as sentences. **Not yet agreed: where the sound comes from.** Candidates Claude looked up that day:
-  - `hugolpz/audio-cmn` on GitHub: recordings of 1,707 Mandarin syllables (Chen Wang) and about 8,000 HSK words and characters (Yue Tan, from the Shtooka project), CC BY-SA, under 40 MB in its smallest version. Files are named by characters, so one reading per word. Nobody has listened to it yet.
-  - Stitching the syllable recordings for words that have no recording (the owner's idea), which also speaks exactly the card's pinyin, Taiwan readings included; tone changes (third tones, 不, 一) by rule.
-  - The device's own voice (`speechSynthesis`) for sentences. It reads from characters and cannot be told the pinyin.
-  - Also raised by the owner: eSpeak NG (robotic) or a small neural model such as Piper in the browser. Not looked into.
+- **Sentences and audio**, number 5 of the order of work, agreed with the owner on 2026-10-13 in four steps: hearing a word (**done**, see "Hearing a word"); a read-only page for each word with an Edit button (**next**); sentences as items of their own, stored as word records marked as sentences, with all three kinds of card as options (reading; fill in the missing word, written like a writing card; write the whole sentence); then listening cards and ready-made sentences. Also raised by the owner and not looked into: eSpeak NG or a small neural voice model in the browser.
 - **Wanted by the owner for the word page (2026-10-13):** the parts that make up each character, each clickable, saying which gives the meaning and which the sound; and the characters and words of an example sentence clickable, leading to their definitions. Make Me a Hanzi's `dictionary.txt` (LGPL-3.0, 9,574 characters; the same project the big stroke set comes from) has for each character its decomposition, radical, and for sound-meaning compounds the semantic and phonetic parts. Wiktionary's data is available as JSON from kaikki.org (CC BY-SA and GFDL) and has glyph-origin text; it could be handed to the model that writes notes instead of letting it recall etymology.
+- **Wiktionary's data is kept locally for development** (owner, 2026-10-13: no asking kaikki.org's server character by character): `local/` is git-ignored except its README, which says how to fetch the 155 MB file. `scripts/wiktionary-glyph-origins.js` makes a small file of glyph origins from it, and `scripts/character-facts.js <list file> <level>` prints, for a level's characters, their parts (Make Me a Hanzi) and glyph origin (Wiktionary) as reference material for writing notes. None of it is shipped. Each computer needs its own copy.
+- **A second run of the notes pilot** was started with that material and a tighter brief (parts of characters from the sources only, with meaning part and sound part; no needless "do not confuse"; no filler). The first run is `data/notes/hsk-3.0-1.tsv`. Notes that lean on Wiktionary are to be CC BY-SA 4.0.
 - **Before the session ends, commit and push** (the owner's instruction): `data/notes/hsk-3.0-1.tsv`, the pilot notes, is uncommitted and has no README or license yet (MIT or CC BY-SA was the open question).
 - **Under way: a pilot of learning notes.** The owner asked for notes on each word's page as in Skritter (a breakdown, a usage point, an example sentence), for the levels up to about B2. A Sonnet subagent was writing them for HSK 3.0 level 1 (509 words) as a trial of quality; it came back with 509 notes for about 198,000 tokens. The owner read a sample and found it fine, with two wishes for a next round: no "do not confuse X with Y" unless the pair is really confusable, and more on each character's parts, for meaning and for sound, which is better taken from data than from the model's memory. The app has no page to show them on yet. Skritter's own notes must not be copied.
 - **The owner has only tried the Decks tab briefly.** They asked for the Back button after their first look; expect more remarks on it.
