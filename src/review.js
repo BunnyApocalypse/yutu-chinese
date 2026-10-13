@@ -137,8 +137,18 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     writingButtons.hidden = !writing;
     cardFace.hidden = writing;
     toneButtonRow.hidden = !tone;
-    wordRow.hidden = !(writing || tone);
-    statusRow.hidden = !(writing || tone);
+    // The row of slots and the status line belong to writing and tone cards.
+    // On the other kinds they keep their room and are only made invisible
+    // ("ghost"), so that the card sits at the same height whatever kind it
+    // is: going from one step of a lesson to the next must not make it jump.
+    wordRow.hidden = false;
+    statusRow.hidden = false;
+    wordRow.classList.toggle('ghost', !(writing || tone));
+    statusRow.classList.toggle('ghost', !(writing || tone));
+    // A word of one character has no row of slots on any of its cards.
+    if (current) {
+      wordRow.classList.toggle('single', Array.from(current.word[scriptFor(current.word, settings)]).length === 1);
+    }
     // These two belong to the writing card and may be left over from the last one.
     verdictRow.hidden = true;
     orderNote.hidden = true;

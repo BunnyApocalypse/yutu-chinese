@@ -176,9 +176,10 @@ main.focused:not(.show-nav) .focus-exit {
 }
 
 /* A word of one character needs no row of slots: there is nothing to keep
-   track of, and the row's room is better spent on the writing area. */
+   track of. The row keeps its room all the same, so that the writing area
+   is at the same height for a word of one character as for a longer one. */
 .word-row.single {
-  display: none;
+  visibility: hidden;
 }
 
 .review-header .link-button {
@@ -189,12 +190,20 @@ main.focused:not(.show-nav) .focus-exit {
 
 /* On a writing card the pinyin only shows once the word is written (or when
    asked for). Its line keeps its room meanwhile, so that the writing area
-   does not move down when it appears. (:has picks the page out while the
-   writing area's row is in view.) */
-main:has(#writing-row:not([hidden])) #prompt-pinyin[hidden] {
-  display: block;
+   does not move down when it appears. */
+#prompt-pinyin[hidden] {
+  /* !important, to hold against the rule at the end of this file that
+     takes everything hidden off the page. */
+  display: block !important;
   visibility: hidden;
-  /* An empty line has no height by itself. */
+}
+
+/* The lines for the meaning and the pinyin keep their room whether or not
+   there is anything on them (a new word's first look has both on the card
+   instead), so that the card below is at the same height on every kind of
+   card and at every step of a lesson. An empty line has no height by itself. */
+#prompt-meaning,
+#prompt-pinyin {
   min-height: 1.5em;
 }
 
@@ -495,12 +504,21 @@ button.verdict.selected.missed {
 
 /* Stands in for the writing area on tone, pinyin and meaning cards, at the
    same size. wordFlow.js sets --area-size when it sizes the writing area. */
+/* A row that keeps its room but is not to be seen (see showPartsFor in
+   review.js). */
+.ghost {
+  visibility: hidden;
+}
+
 .card-face {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  /* Exactly as big as the writing area, edge and padding included, so that
+     the two take the same place on the page. */
+  box-sizing: border-box;
   width: var(--area-size, 300px);
   height: var(--area-size, 300px);
   padding: 12px;
@@ -520,6 +538,11 @@ button.verdict.selected.missed {
    scroll the page instead. */
 .card-face.drawable {
   touch-action: none;
+  /* A tone card is drawn on, so it looks like the writing area: the same
+     guide lines (two diagonals and a cross, dashed), here as a picture
+     stretched over the card. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300' preserveAspectRatio='none'%3E%3Cg stroke='%23e3ded2' stroke-dasharray='6 6'%3E%3Cline x1='0' y1='0' x2='300' y2='300'/%3E%3Cline x1='300' y1='0' x2='0' y2='300'/%3E%3Cline x1='150' y1='0' x2='150' y2='300'/%3E%3Cline x1='0' y1='150' x2='300' y2='150'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 100% 100%;
 }
 
 /* The layer the tone mark is drawn on. It covers the card and lets touches
@@ -801,10 +824,9 @@ button:active {
   color: #6b6557;
 }
 
-.order-note[hidden] {
-  display: block !important;
-  visibility: hidden;
-}
+/* (These notes used to keep their room while hidden. They are the last
+   things on the page, so nothing moves when they appear, and their room was
+   being taken from the writing area: see chooseSize in wordFlow.js.) */
 
 .order-note a {
   color: #3b6fb6;

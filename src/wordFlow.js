@@ -22,16 +22,19 @@ const TAP_TO_CONTINUE_DELAY_MS = 200;
 function chooseSize() {
   // 32 for the page's margins, 64 for the arrows on either side of the area.
   const fitsWidth = window.innerWidth - 32 - 64;
-  // 410 is what is set aside for everything else on the screen while a card
-  // is up: measured on 2026-10-13, the rows above the area and the buttons
-  // under it take 264 for a word of one character and 320 for a longer one
-  // (which has its row of slots), and the four grade buttons that come once
-  // the word is written need about 70 more, with the page's margin. The
-  // tabs and the deck line are not counted: they are put away while a card
-  // is up (see "Focus" in review.js). The writing area is the point of the
-  // app, so room is found by trimming the rows around it, never by raising
-  // this number.
-  const fitsHeight = window.innerHeight - 410;
+  // The writing area has one size, and everything else has fixed room
+  // above and below it, so that the area never moves or changes size from
+  // one card or one step of a lesson to the next (the owner's rule,
+  // 2026-10-13). 420 is that room, measured that day with the tabs put away
+  // (see "Focus" in review.js):
+  //   above: the kind of card, the meaning (one line), the pinyin, a
+  //          lesson's note, the row of slots (words of several characters)
+  //          and the status line: 265. Each keeps its room when empty.
+  //   below: the three buttons and the four grade buttons, with the
+  //          margins: about 155.
+  // The area is the point of the app: if a row is added, find its room in
+  // the rows there are, do not raise this number.
+  const fitsHeight = window.innerHeight - 420;
   return Math.max(200, Math.min(fitsWidth, fitsHeight, 640));
 }
 
