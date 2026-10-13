@@ -97,6 +97,13 @@ button.icon-button.no-sound {
   font-size: 1.25rem;
 }
 
+/* On a sentence's writing card: the sentence with its gap, under the meaning. */
+.cloze-sentence {
+  display: block;
+  margin-top: 4px;
+  font-size: 1.5rem;
+}
+
 .pinyin {
   font-size: 1.1rem;
   color: #3b6fb6;
@@ -419,6 +426,12 @@ button.verdict.selected.missed {
 .face-word {
   font-size: 3.2rem;
   line-height: 1.2;
+}
+
+/* A sentence on a card's face. */
+.face-word.long {
+  font-size: 1.8rem;
+  line-height: 1.4;
 }
 
 .face-word.single {
@@ -771,6 +784,15 @@ button.word-entry {
   margin: 0;
   font-size: 3rem;
   line-height: 1.2;
+}
+
+.page-word.long {
+  font-size: 1.6rem;
+  line-height: 1.4;
+}
+
+.page-word.second.long {
+  font-size: 1.2rem;
 }
 
 /* The word in the other script, under the first. */

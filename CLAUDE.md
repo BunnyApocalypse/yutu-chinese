@@ -75,6 +75,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `src/backup.js`: build, check and restore a backup file.
 - `src/wordPage.js`: the page of a word or character (see "The word page"); `src/notes.js` and `src/characters.js` are the plain calculation behind it (learning notes and example sentences; the parts of characters).
 - `data/notes/`: learning notes and example sentences per level, CC BY-SA 4.0. `local/`: development-only downloads, git-ignored.
+- `src/sentences.js`: sentences as things to study (see "Sentences"). Plain calculation.
 - `src/speechPlan.js`, `src/speech.js`: speaking a word (see "Hearing a word"): which recordings to play, as plain calculation, and playing them.
 - `scripts/copy-audio.js`, `data/audio-cmn/`: the recordings, and the script that puts them in the git-ignored `public/audio/` under plain file names with an `index.json` listing them.
 - `data/makemeahanzi/`: how each character is built (parts, radical, meaning part and sound part), LGPL-3.0. Not used by the app yet; it is for the word page.
@@ -152,7 +153,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - **Cards of one word are kept apart** (`SIBLING_GAP_MS`, 3 minutes), because each gives away the others' answers: a writing card ends by showing the pinyin, the others show the characters. With few words in play this makes the app say "next review in N minutes" although cards exist. That is intended.
 - **New words per day counts words, not cards** (setting, default 5). A word is introduced when its first card of any type is studied. New cards of words already introduced are not limited.
 - **Free practice shows any of the four card kinds without recording anything**, mainly so cards can be tried and tested. Writing works for any typed characters (`startFreePractice` in `src/main.js`); tone, pinyin and meaning need the word's reading and meaning, so the typed word must be in the word list (`practice` in `src/review.js`). A practice card gets no grade buttons, and continuing shows it again.
-- **Settings** (`settings` store): `script`, `pronunciation`, `rawInput`, `newWordsPerDay`, `enabledTypes`, `leechLapses`, `leechAction`, `sound`. A type switched off never appears but keeps its cards and history. At least one type stays on.
+- **Settings** (`settings` store): `script`, `pronunciation`, `rawInput`, `newWordsPerDay`, `enabledTypes`, `leechLapses`, `leechAction`, `sound`, `sentenceReading`, `sentenceWriting`. A type switched off never appears but keeps its cards and history. At least one type stays on.
 - **Writing prompts show the meaning only.** The owner decided pinyin must not be given. A "Show pinyin" button reveals it for near-synonyms and does not affect the grade; the pinyin is shown once the word is finished. Glosses in word lists must therefore be distinguishable from each other.
 - **One writing card per word.** A setting chooses the script written (traditional or simplified); the schedule is shared.
 - **FSRS** with default parameters (90% target retention, learning steps of 1 and 10 minutes, fuzz on).
@@ -261,6 +262,23 @@ Built on 2026-10-13, step 2 of "sentences and audio". The owner asked for it aft
 - **The two big files** (the notes, and `data/makemeahanzi/dictionary.txt`, 2.5 MB) are fetched when a page is first opened, like the dictionary, and saved for offline use with it (`scripts/build-offline.js` saves `.tsv` and `.txt` files among the build's assets).
 - **The page's buttons work before its contents are there** (`start`), which the browser tests rely on: they tap a row and the Edit button in one go. `data-shown` on the dialog says what the filled-in page is about.
 - **Not built yet:** adding the example sentence to a deck (needs sentences as items, step 3); adding a word that is not in the learner's words; the word's cards and statistics on the page (they are in the pop-up panel); stroke order of a character; words that contain a character.
+
+## Sentences
+
+Built on 2026-10-13, step 3 of "sentences and audio". The owner agreed the outline (a sentence stored as a word record; all three kinds of card possible); the details below are Claude's and theirs to change. They have not tried it.
+
+- **A sentence is a word record with `kind: 'sentence'`** (`src/sentences.js`), so decks, scheduling, leeches, suspending, the card manager and combining backups need nothing new. Its ID is `<traditional>|sentence`. Its `pinyin` is for reading only: tone marks, spaces between words, punctuation, or empty. Code that takes a word's pinyin apart (`splitSyllables`) finds no syllables in it, which is what keeps tone cards and recordings away from it; `formatPinyin` leaves it as it is. **Anything new that reads `word.pinyin` has to cope with that.**
+- **Two cards, three things asked** (`sentenceCardTypes`, `sentenceWriting`):
+  - the `meaning` card is "reading": the sentence is shown, its meaning recalled (`sentenceReading` setting, on by default);
+  - the `writing` card asks for the sentence's `cloze` word, written into a gap shown under the meaning ("我們是＿＿。"), or for the whole sentence (`sentenceWriting` setting: `word`, the default, `sentence` or `off`). A sentence without a cloze word is written whole. The two share one schedule: the owner wanted all three possible, and this was the way that needed no new kind of card.
+  - Review labels them "Sentence · reading" and "Sentence · writing".
+- **Sentences have their own settings, apart from "Card types"**, which is why `planSession` is now given every kind of card and `hasCardType` in `src/review.js` decides which are switched on, for words and for sentences.
+- **A sentence is not taught**: it has `learnedAt` from the moment it is added, never waits in the Learn tab, gets no lesson before its first writing card, and does not count in "Learned today".
+- **Where they come from:** "Add this sentence to the deck" under the example sentence on a word's page (the page's word becomes the cloze word; the sentence is stored in both scripts, as the notes have it), and "Add a sentence" on a deck's page (the sentence in the script studied, in the other one too while both are learned, optional pinyin, the meaning, an optional word to fill in). Adding one that is there puts it in the deck as well.
+- **Writing a sentence leaves out what is not a character**: the writing flow already skips anything without stroke data, punctuation included.
+- **The pop-up panel for a sentence** shows only its meaning, decks, cards and suspended cards; its characters cannot be changed (remove it and add it again).
+- **Its sound is the device's own voice**, the only thing that can read a sentence; a device without a Chinese voice has none.
+- **Not built:** sentences in a pasted list; ready-made sentences; choosing the cloze word by tapping it; a filter for sentences in the word list; more than one cloze word per sentence; listening cards (step 4).
 
 ## Hearing a word
 
@@ -488,6 +506,7 @@ Written on 2026-10-13 for whichever session picks the work up next (the owner wo
   - The Import backup panel and the ready-made lists' rows on a phone.
   - Percent learned and its bar; "Add a word" folded away.
   - The groups inside the lower HSK and TOCFL levels: only HSK 3.0 level 1 was seen by the owner.
+  - Sentences: adding one from a word's page and by hand, the reading card, the gap on the writing card, writing a whole sentence on a phone.
   - The word page: its layout on a phone, whether the notes read well there, and the taps from part to part.
   - Sound: nobody has listened yet. Whether the recordings are good enough at their smallest size, how words put together from syllables sound, and what the phone's and tablet's own voices do.
   - Leeches: the two settings, the note in Review, the lists in the Decks tab, both exports, and the notice when a card is suspended.
@@ -497,7 +516,7 @@ Written on 2026-10-13 for whichever session picks the work up next (the owner wo
 - **Done later that day: groups inside the lower levels** of the ready-made lists (TOCFL's topics; HSK 3.0 and 2.0 levels 1 to 3 in a teaching order), each a deck inside its level. See "Ready-made word lists". The owner saw and approved HSK 3.0 level 1; the other five HSK levels were read by Claude only.
 - **Done later that day: leeches** with their two exports, and suspending a card (see "Leeches and suspended cards"). The owner has not tried it.
 - **Done later that day: the card manager** (see "Managing cards"). The owner has not tried it.
-- **Sentences and audio**, number 5 of the order of work, agreed with the owner on 2026-10-13 in four steps: hearing a word (**done**, see "Hearing a word"); a read-only page for each word with an Edit button (**done**, see "The word page"); sentences as items of their own, stored as word records marked as sentences, with all three kinds of card as options (reading; fill in the missing word, written like a writing card; write the whole sentence); then listening cards and ready-made sentences. Also raised by the owner and not looked into: eSpeak NG or a small neural voice model in the browser.
+- **Sentences and audio**, number 5 of the order of work, agreed with the owner on 2026-10-13 in four steps: hearing a word (**done**, see "Hearing a word"); a read-only page for each word with an Edit button (**done**, see "The word page"); sentences as items of their own (**done**, see "Sentences"); then listening cards and ready-made sentences (**next**). Also raised by the owner and not looked into: eSpeak NG or a small neural voice model in the browser.
 - **Wanted by the owner for the word page (2026-10-13):** the parts that make up each character, each clickable, saying which gives the meaning and which the sound; and the characters and words of an example sentence clickable, leading to their definitions. Make Me a Hanzi's `dictionary.txt` (LGPL-3.0, 9,574 characters; the same project the big stroke set comes from) has for each character its decomposition, radical, and for sound-meaning compounds the semantic and phonetic parts. Wiktionary's data is available as JSON from kaikki.org (CC BY-SA and GFDL) and has glyph-origin text; it could be handed to the model that writes notes instead of letting it recall etymology.
 - **Wiktionary's data is kept locally for development** (owner, 2026-10-13: no asking kaikki.org's server character by character): `local/` is git-ignored except its README, which says how to fetch the 155 MB file. `scripts/wiktionary-glyph-origins.js` makes a small file of glyph origins from it, and `scripts/character-facts.js <list file> <level>` prints, for a level's characters, their parts (Make Me a Hanzi) and glyph origin (Wiktionary) as reference material for writing notes. None of it is shipped. Each computer needs its own copy.
 - **A second run of the notes pilot** was started with that material and a tighter brief (parts of characters from the sources only, with meaning part and sound part; no needless "do not confuse"; no filler). The first run is `data/notes/hsk-3.0-1.tsv`. Notes that lean on Wiktionary are to be CC BY-SA 4.0.

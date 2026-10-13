@@ -208,6 +208,20 @@
               <p id="list-report" class="note"></p>
               <ul id="list-problems" class="list-problems"></ul>
             </details>
+
+            <!-- A sentence to study (sentences.js). Which boxes show follows the Script setting (wordsPanel.js). -->
+            <details id="add-sentence-fold" class="add-list">
+              <summary>Add a sentence</summary>
+              <form id="add-sentence-form" class="add-word-form">
+                <input id="sentence-characters" type="text" placeholder="The sentence 句子" aria-label="The sentence" autocomplete="off" autocapitalize="off" />
+                <input id="sentence-other" type="text" placeholder="In the other script (if different)" aria-label="The sentence in the other script, if different" autocomplete="off" autocapitalize="off" />
+                <input id="sentence-pinyin" type="text" placeholder="Pinyin, as you like to read it (optional)" aria-label="Pinyin, optional" autocomplete="off" autocapitalize="off" spellcheck="false" />
+                <input id="sentence-meaning" type="text" placeholder="What it means" aria-label="What it means" autocomplete="off" />
+                <input id="sentence-cloze" type="text" placeholder="Word to fill in when writing (optional)" aria-label="Word of the sentence to fill in when writing, optional" autocomplete="off" autocapitalize="off" />
+                <button type="submit" class="primary">Add sentence</button>
+                <p id="add-sentence-note" class="note"></p>
+              </form>
+            </details>
           </div>
 
           <h2><span id="word-list-title">All your words</span> (<span id="word-count">0</span>)</h2>
@@ -672,6 +686,23 @@
             A suspended card no longer comes up in Review, until you switch it back on in the word's panel (Decks tab).
           </span>
         </label>
+
+        <fieldset class="setting">
+          <legend>Sentences</legend>
+          <label><input id="sentence-reading-checkbox" type="checkbox" /> Reading: see the sentence, recall what it means</label>
+          <label class="setting">
+            Writing
+            <select id="sentence-writing-select">
+              <option value="word">Fill in the missing word</option>
+              <option value="sentence">Write the whole sentence</option>
+              <option value="off">No writing cards for sentences</option>
+            </select>
+          </label>
+          <span class="hint">
+            Sentences are added from a word's page (its example sentence) or on a deck's page. A sentence added
+            without a word to fill in is written whole.
+          </span>
+        </fieldset>
 
         <fieldset class="setting">
           <legend>Card types</legend>

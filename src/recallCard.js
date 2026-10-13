@@ -77,7 +77,8 @@ export function createRecallCard(cardFace) {
       current = options;
       revealed = false;
       const text = options.word[options.script];
-      const wordElement = paragraph('face-word', text);
+      // A sentence is shown smaller than a word, so that it fits.
+      const wordElement = paragraph(Array.from(text).length > 6 ? 'face-word long' : 'face-word', text);
       // Tells the browser which regional font to use for the characters.
       wordElement.lang = options.script === 'traditional' ? 'zh-Hant-TW' : 'zh-Hans-CN';
       cardFace.replaceChildren(wordElement, paragraph('face-hint', HINTS[options.ask]));

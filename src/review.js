@@ -21,12 +21,20 @@ import {
   cardIdFor,
   lessonSteps,
   nextToLearn,
+  CARD_TYPES,
 } from './session.js';
 import { toneAnswers, readingsFor, describeReading } from './tones.js';
 import { scriptFor, scriptFlagFor } from './words.js';
 import { isLeech, lapsesOf, isSuspended, withSuspended, becameLeech } from './leeches.js';
 import { speak } from './speech.js';
 import { markedKnown } from './cardManager.js';
+import { isSentence, sentenceCardTypes, sentenceWriting } from './sentences.js';
+
+// The same for a sentence, which has two kinds of card (see sentences.js).
+const SENTENCE_LABELS = {
+  writing: 'Sentence · writing',
+  meaning: 'Sentence · reading',
+};
 
 const TYPE_LABELS = {
   writing: 'Writing',
@@ -381,7 +389,23 @@ export function createReview(elements, flows, settings, editWord, showWord) {
   // Returns false if the word can't be written (no stroke data).
   async function showWritingCard() {
     const { word } = current;
-    meaningElement.textContent = word.definition;
+    const script = scriptFor(word, settings);
+    // What is written: the word; or for a sentence its missing word, with
+    // the sentence and its gap shown under the meaning, or all of it.
+    const asked = isSentence(word)
+      ? sentenceWriting(word, script, settings.sentenceWriting)
+      : { text: word[script], prompt: null };
+    const showPrompt = (sentence) => {
+      meaningElement.textContent = word.definition;
+      if (sentence) {
+        const line = document.createElement('span');
+        line.className = 'cloze-sentence';
+        line.lang = script === 'traditional' ? 'zh-Hant-TW' : 'zh-Hans-CN';
+        line.textContent = sentence;
+        meaningElement.append(line);
+      }
+    };
+    showPrompt(asked.prompt);
     pinyinButton.hidden = false;
 
     // What to save about a written word.
@@ -398,8 +422,8 @@ export function createReview(elements, flows, settings, editWord, showWord) {
       skippedPerChar: result.skippedPerChar,
     });
 
-    return flows.writing.start(word[scriptFor(word, settings)], {
-      script: scriptFor(word, settings),
+    return flows.writing.start(asked.text, {
+      script,
       rawInput: settings.rawInput,
       continueLabel: null,
       hideOutline: true,
@@ -409,6 +433,10 @@ export function createReview(elements, flows, settings, editWord, showWord) {
       onCharStart: hideGrades,
       onWordDone(result) {
         showPinyin();
+        // The gap is filled in: the whole sentence is shown.
+        if (asked.prompt) {
+          showPrompt(word[script]);
+        }
         offerGrades(suggestGrade(result), details(result));
       },
       // The last character's verdict was overruled, which can change the suggestion.
@@ -639,7 +667,7 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     const known = markedKnown(
       word,
       [...cards.values()],
-      settings.enabledTypes.filter((type) => hasCardType(word, type)),
+      CARD_TYPES.filter((type) => hasCardType(word, type)),
       scriptFor(word, settings),
       Date.now(),
       randomId,
@@ -682,9 +710,12 @@ export function createReview(elements, flows, settings, editWord, showWord) {
   }
 
   function learnCounts() {
-    const plan = planSession(studyWords(), cards, Date.now(), {
+    // (Sentences are not learned here and do not count toward the day's words.)
+    const plan = planSession(studyWords().filter((word) => !isSentence(word)), cards, Date.now(), {
       newWordsPerDay: goalForToday(),
-      enabledTypes: settings.enabledTypes,
+      // Every kind: hasCardType says which are switched on, since
+      // sentences have settings of their own.
+      enabledTypes: CARD_TYPES,
       hasCardType,
       scriptOf: (word) => scriptFor(word, settings),
     });
@@ -802,6 +833,11 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     if (isSuspended(word, type)) {
       return false;
     }
+    // Which kinds are switched on: sentences have settings of their own.
+    const wanted = isSentence(word) ? sentenceCardTypes(settings) : settings.enabledTypes;
+    if (!wanted.includes(type)) {
+      return false;
+    }
     if (type === 'writing') {
       return !unwritable.has(word.id);
     }
@@ -851,7 +887,9 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     const studied = studyWords();
     const plan = planSession(studied, cards, now, {
       newWordsPerDay: goalForToday(),
-      enabledTypes: settings.enabledTypes,
+      // Every kind: hasCardType says which are switched on, since
+      // sentences have settings of their own.
+      enabledTypes: CARD_TYPES,
       hasCardType,
       scriptOf: (word) => scriptFor(word, settings),
     });
@@ -888,14 +926,17 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     current = plan.next;
     donePanel.hidden = true;
     studyArea.hidden = false;
-    typeElement.textContent = TYPE_LABELS[current.type];
+    typeElement.textContent = isSentence(current.word)
+      ? SENTENCE_LABELS[current.type]
+      : TYPE_LABELS[current.type];
     showScriptFlag(current.word);
     showPartsFor(current.type);
     offerListen(current.type === 'writing' || current.type === 'meaning');
 
     if (current.type === 'writing') {
       // A writing card that is new starts with its lesson.
-      if (settings.lessons && !current.card) {
+      // (Not a sentence: tracing its characters would teach little.)
+      if (settings.lessons && !current.card && !isSentence(current.word)) {
         lesson = { steps: stepsFor(current.word, false), index: 0 };
       }
       const started = lesson ? await showLessonStep() : await showWritingCard();

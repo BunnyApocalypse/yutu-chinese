@@ -47,6 +47,9 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //                   no loudspeaker (see speech.js)
 //   volume:         how loud words are spoken, from 0 (silent) to 1 (as loud
 //                   as the device is set); belongs to the device
+//   sentenceReading, sentenceWriting: which cards sentences have (see
+//                   sentences.js): true or false, and 'word', 'sentence'
+//                   or 'off'
 //   leechLapses:    how many times a card has to be forgotten to be pointed
 //                   out as a leech (see leeches.js)
 //   leechAction:    'flag' to only point a leech out, 'suspend' to also
@@ -72,6 +75,8 @@ export async function createSettings(elements, onChange) {
     leechActionSelect,
     soundSelect,
     volumeInput,
+    sentenceReadingCheckbox,
+    sentenceWritingSelect,
     typeCheckboxes,
   } = elements;
 
@@ -89,6 +94,8 @@ export async function createSettings(elements, onChange) {
     leechAction: await getSetting('leechAction', 'flag'),
     sound: await getSetting('sound', 'auto'),
     volume: await getSetting('volume', 1),
+    sentenceReading: await getSetting('sentenceReading', true),
+    sentenceWriting: await getSetting('sentenceWriting', 'word'),
     enabledTypes: await getSetting('enabledTypes', CARD_TYPES),
     studyDeck: await getSetting('studyDeck', ''),
   };
@@ -106,6 +113,8 @@ export async function createSettings(elements, onChange) {
     leechActionSelect.value = settings.leechAction;
     soundSelect.value = settings.sound;
     volumeInput.value = Math.round(settings.volume * 100);
+    sentenceReadingCheckbox.checked = settings.sentenceReading;
+    sentenceWritingSelect.value = settings.sentenceWriting;
     for (const checkbox of typeCheckboxes) {
       checkbox.checked = settings.enabledTypes.includes(checkbox.dataset.cardType);
     }
@@ -177,6 +186,8 @@ export async function createSettings(elements, onChange) {
 
   leechActionSelect.addEventListener('change', () => change('leechAction', leechActionSelect.value));
   soundSelect.addEventListener('change', () => change('sound', soundSelect.value));
+  sentenceReadingCheckbox.addEventListener('change', () => change('sentenceReading', sentenceReadingCheckbox.checked));
+  sentenceWritingSelect.addEventListener('change', () => change('sentenceWriting', sentenceWritingSelect.value));
   // "change" comes when the slider is let go of. A word is spoken then, so
   // the new volume can be heard against whatever else is playing.
   volumeInput.addEventListener('change', async () => {

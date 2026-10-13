@@ -14,6 +14,7 @@ import { missingReadyMadeDecks, deckTree, deckWithInside, isInDecks, withDeck } 
 import { createDecksPanel } from './decksPanel.js';
 import { createCardsPanel } from './cardsPanel.js';
 import { createWordPage } from './wordPage.js';
+import { isSentence, sentenceId, sentenceRecord } from './sentences.js';
 import { lapsesOf } from './leeches.js';
 import { findLeeches, describeLeech, describeSuspended, leechList, leechPrompt } from './leeches.js';
 import {
@@ -233,6 +234,91 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       return dictionary ? lookUp(dictionary, text) : [];
     },
     edit: (word) => openDialog(words.find((entry) => entry.id === word.id) || word),
+    addSentence: (sentence, deckId) => addSentence(sentence, deckId),
+    // The deck a sentence added from a page goes into unless another is
+    // chosen: the one whose page is open, else the first.
+    defaultDeckId: () => (openDeck() || decks[0] || {}).id,
+  });
+
+  // ---- Sentences ----
+
+  // Adds a sentence to a deck (see sentenceRecord in sentences.js for what
+  // `sentence` holds). One that is there already is put in the deck as well.
+  // Returns 'added', 'put in deck' or 'already there'.
+  async function addSentence(sentence, deckId) {
+    const existing = words.find((word) => word.id === sentenceId(sentence.traditional));
+    if (existing) {
+      if ((existing.decks || []).includes(deckId)) {
+        return 'already there';
+      }
+      await putAll('words', [withDeck(existing, deckId)]);
+      await afterChange();
+      return 'put in deck';
+    }
+    const order = words.reduce((highest, word) => Math.max(highest, word.order), -1) + 1;
+    await putAll('words', [sentenceRecord(sentence, order, deckId, Date.now())]);
+    await afterChange();
+    return 'added';
+  }
+
+  // The form on a deck's page. The first box is the sentence in the script
+  // that cards are shown in; the second, only there while both scripts are
+  // learned, the same sentence in the other one.
+  const sentenceFields = {
+    characters: byId('sentence-characters'),
+    other: byId('sentence-other'),
+    pinyin: byId('sentence-pinyin'),
+    meaning: byId('sentence-meaning'),
+    cloze: byId('sentence-cloze'),
+  };
+  const sentenceNote = byId('add-sentence-note');
+  byId('add-sentence-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const settings = getSettings();
+    const own = sentenceFields.characters.value.trim();
+    const other = sentenceFields.other.value.trim() || own;
+    const meaning = sentenceFields.meaning.value.trim();
+    const clozeOwn = sentenceFields.cloze.value.trim();
+    if (own === '' || meaning === '') {
+      sentenceNote.textContent = 'A sentence needs its characters and what it means.';
+      return;
+    }
+    if (clozeOwn !== '' && !own.includes(clozeOwn)) {
+      sentenceNote.textContent = `"${clozeOwn}" is not in the sentence.`;
+      return;
+    }
+    // The word to fill in, in the other script: the characters at the same
+    // place, if the two sentences are of the same length.
+    const at = Array.from(own).join('').indexOf(clozeOwn);
+    const place = Array.from(own.slice(0, at)).length;
+    const clozeOther =
+      Array.from(own).length === Array.from(other).length
+        ? Array.from(other).slice(place, place + Array.from(clozeOwn).length).join('')
+        : clozeOwn;
+    const inScript = (ownForm, otherForm) =>
+      settings.script === 'traditional'
+        ? { traditional: ownForm, simplified: otherForm }
+        : { traditional: otherForm, simplified: ownForm };
+    const result = await addSentence(
+      {
+        ...inScript(own, other),
+        pinyin: sentenceFields.pinyin.value.trim(),
+        definition: meaning,
+        ...(clozeOwn === '' ? {} : { cloze: inScript(clozeOwn, clozeOther) }),
+      },
+      openDeck().id,
+    );
+    sentenceNote.textContent =
+      result === 'added'
+        ? `Added: ${own} Its cards come up in Review.`
+        : result === 'put in deck'
+          ? 'You had this sentence already. It is in this deck now too.'
+          : 'This sentence is already in this deck.';
+    if (result === 'added') {
+      for (const field of Object.values(sentenceFields)) {
+        field.value = '';
+      }
+    }
   });
 
   // Shows the decks, and the forms for adding words if a deck's page is open.
@@ -330,6 +416,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     editTraditional.closest('label').hidden = !asks.traditional;
     editSimplified.closest('label').hidden = !asks.simplified;
     editPinyinTaiwan.closest('label').hidden = !asks.taiwan;
+    sentenceFields.other.hidden = !both;
     // A word can only have a script of its own while both are being learned.
     byId('add-card-script-row').hidden = !both;
     editCardScript.closest('label').hidden = !both;
@@ -947,6 +1034,17 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   }
 
   function openDialog(word) {
+    // A sentence has fewer things to change: its meaning, its decks and its
+    // cards. The rest of its boxes are put out of sight.
+    applySettings();
+    if (isSentence(word)) {
+      for (const box of [editTraditional, editSimplified, editPinyin, editPinyinTaiwan, editPinyinAlso, editCardScript]) {
+        box.closest('label').hidden = true;
+      }
+    } else {
+      editPinyin.closest('label').hidden = false;
+      editPinyinAlso.closest('label').hidden = false;
+    }
     openWord = word;
     dialogResult = { changed: false, word };
     const studied = studiedWordIds.has(word.id);
@@ -1006,6 +1104,30 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     // cards and review history are filed under; when either is corrected,
     // those are filed under the new ID (renameWord).
     // What is not asked for (see applySettings) stays as it was stored.
+    if (isSentence(openWord)) {
+      // Only a sentence's meaning, decks and suspended cards are changed here.
+      if (tickedDecks().length === 0) {
+        byId('edit-decks-row').open = true;
+        dialogNote.textContent = 'A sentence has to be in at least one deck. To be rid of it, use Remove.';
+        return;
+      }
+      const there = new Set(decks.map((deck) => deck.id));
+      const { changedAt, suspended: unused, ...kept } = openWord;
+      const sentence = {
+        ...kept,
+        definition: editDefinition.value.trim() || openWord.definition,
+        decks: [...(openWord.decks || []).filter((id) => !there.has(id)), ...tickedDecks()],
+      };
+      const off = suspendedBoxes.filter((box) => box.checked).map((box) => box.value);
+      if (off.length > 0) {
+        sentence.suspended = off;
+      }
+      await putAll('words', [sentence]);
+      await afterChange();
+      dialogResult = { changed: true, word: sentence };
+      dialog.close();
+      return;
+    }
     const asks = asksFor();
     const checked = checkWord({
       traditional: asks.traditional ? editTraditional.value : openWord.traditional,

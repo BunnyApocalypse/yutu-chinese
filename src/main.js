@@ -402,6 +402,8 @@ async function startUp() {
       leechActionSelect: byId('leech-action-select'),
       soundSelect: byId('sound-select'),
       volumeInput: byId('volume-input'),
+      sentenceReadingCheckbox: byId('sentence-reading-checkbox'),
+      sentenceWritingSelect: byId('sentence-writing-select'),
       typeCheckboxes: [...document.querySelectorAll('#settings-panel [data-card-type]')],
     },
     onSettingsChange,

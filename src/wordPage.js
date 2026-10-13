@@ -17,6 +17,7 @@ import { readingsFor, describeReading } from './tones.js';
 import { parseNotes, noteFor, sentenceWords } from './notes.js';
 import { parseCharacters, structureOf } from './characters.js';
 import { deckTree } from './decks.js';
+import { fillDeckSelect } from './decksPanel.js';
 import { speak } from './speech.js';
 // "?url" makes Vite hand us each file's address instead of its contents.
 import charactersUrl from '../data/makemeahanzi/dictionary.txt?url';
@@ -44,9 +45,13 @@ function element(tag, className, text) {
 // lookUp(characters): a promise for the dictionary's entries for some
 //                     characters (see lookUp in dictionary.js); [] if none
 // edit(word):         opens the word's pop-up panel, to change it
+// addSentence(sentence, deckId): adds an example sentence to a deck as a
+//                     thing to study (see sentences.js); returns a promise
+//                     for 'added', 'put in deck' or 'already there'
+// defaultDeckId():    the deck first offered for that
 //
 // Returns { open(word), openText(characters) }.
-export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit }) {
+export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, addSentence, defaultDeckId }) {
   const dialog = byId('word-page');
   const body = byId('word-page-body');
   const backButton = byId('word-page-back');
@@ -121,6 +126,8 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit }
       : [forms.own];
     shownForms.forEach((form, index) => {
       const characters = element('p', index === 0 ? 'page-word' : 'page-word second', form);
+      // A sentence is shown smaller than a word, so that it fits.
+      characters.classList.toggle('long', Array.from(form).length > 6);
       // Tells the browser which regional font to use.
       characters.lang = form === forms.traditional ? 'zh-Hant-TW' : 'zh-Hans-CN';
       heading.append(characters);
@@ -137,8 +144,9 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit }
     return heading;
   }
 
-  // The learning note and the example sentence.
-  function showNote(note) {
+  // The learning note and the example sentence. `forms`: the page's word in
+  // both scripts, which is the word to fill in if the sentence is studied.
+  function showNote(note, forms) {
     const settings = getSettings();
     const section = element('section', 'page-section');
     section.append(element('h3', '', 'Learning tips'), element('p', 'page-note', note.note));
@@ -164,6 +172,38 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit }
       section.append(line);
     });
     section.append(element('p', 'page-pinyin', note.example.pinyin), element('p', 'page-english', note.example.english));
+
+    // The sentence can be studied too: it goes into a deck, in both scripts.
+    const adding = element('div', 'buttons page-add-sentence');
+    const deckSelect = element('select');
+    deckSelect.setAttribute('aria-label', 'Deck to add the sentence to');
+    fillDeckSelect(deckSelect, getDecks(), []);
+    if (defaultDeckId()) {
+      deckSelect.value = defaultDeckId();
+    }
+    const addButton = element('button', 'small', 'Add this sentence to the deck');
+    addButton.type = 'button';
+    const said = element('p', 'note');
+    addButton.addEventListener('click', async () => {
+      const result = await addSentence(
+        {
+          traditional: note.example.traditional,
+          simplified: note.example.simplified,
+          pinyin: note.example.pinyin,
+          definition: note.example.english,
+          cloze: { traditional: forms.traditional, simplified: forms.simplified },
+        },
+        deckSelect.value,
+      );
+      said.textContent =
+        result === 'added'
+          ? 'Added. Its cards come up in Review.'
+          : result === 'put in deck'
+            ? 'You had this sentence already. It is in that deck now too.'
+            : 'This sentence is already in that deck.';
+    });
+    adding.append(deckSelect, addButton);
+    section.append(adding, said);
     return section;
   }
 
@@ -272,7 +312,7 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit }
     const notes = await loadNotes();
     const note = noteFor(notes, word || { simplified: forms.simplified, pinyin: shown.entries?.[0]?.pinyin || '' });
     if (note) {
-      parts.push(showNote(note));
+      parts.push(showNote(note, forms));
     }
     const characters = await loadCharacters();
     const built = showCharacters(characters, chars, chars.length === 1 && Array.from(forms.own).length === 1);
