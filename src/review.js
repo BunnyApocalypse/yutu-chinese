@@ -9,7 +9,7 @@
 // What they share lives here: choosing the next card, the grade buttons, and
 // saving.
 
-import { getAll, putAll, saveReview, randomId } from './db.js';
+import { getAll, putAll, saveReview, saveKnown, randomId } from './db.js';
 import { gradeOptions, GRADES, AGAIN, GOOD } from './scheduler.js';
 import { deckWithInside, isInDecks, dailyGoal } from './decks.js';
 import { fillDeckSelect } from './decksPanel.js';
@@ -26,6 +26,7 @@ import { toneAnswers, readingsFor, describeReading } from './tones.js';
 import { scriptFor, scriptFlagFor } from './words.js';
 import { isLeech, lapsesOf, isSuspended, withSuspended, becameLeech } from './leeches.js';
 import { speak } from './speech.js';
+import { markedKnown } from './cardManager.js';
 
 const TYPE_LABELS = {
   writing: 'Writing',
@@ -177,18 +178,21 @@ export function createReview(elements, flows, settings, editWord) {
   function hideGrades() {
     gradeRow.hidden = true;
     editWordButton.hidden = true;
-    listenButton.hidden = true;
     leechNote.hidden = true;
     options = null;
   }
 
   // ---- Hearing the word ----
 
-  // The Listen button is there whenever the word's reading is in view: with
-  // the grades, and at a new word's first look.
-  function offerListen() {
-    listenButton.textContent = 'Listen';
-    listenButton.hidden = settings.sound === 'off';
+  // The loudspeaker beside the kind of card. It is there whenever hearing
+  // the word does not give the answer away: all through a new word's lesson;
+  // from the start on a meaning card (which shows the word) and on a writing
+  // card (whose pinyin can be shown at any time without it counting); and on
+  // a pinyin or tone card once the answer is given.
+  function offerListen(wanted) {
+    listenButton.classList.remove('no-sound');
+    listenButton.title = 'Hear the word';
+    listenButton.hidden = !wanted || settings.sound === 'off';
   }
 
   // Speaks the word of the card on screen, in the reading shown for it.
@@ -206,7 +210,8 @@ export function createReview(elements, flows, settings, editWord) {
     // the button says so if the word could not be spoken at all.
     listenButton.dataset.spoken = `${word.id} ${spoken}`;
     if (!spoken && current && current.word === word) {
-      listenButton.textContent = 'No sound for this word';
+      listenButton.classList.add('no-sound');
+      listenButton.title = 'No sound for this word on this device';
     }
   }
 
@@ -335,7 +340,7 @@ export function createReview(elements, flows, settings, editWord) {
     }
     gradeRow.hidden = false;
     editWordButton.hidden = false;
-    offerListen();
+    offerListen(true);
     // A card that keeps being forgotten is pointed out, now that its answer
     // is in view: the moment to think of a way to remember it.
     const lapses = lapsesOf(current.card);
@@ -453,6 +458,7 @@ export function createReview(elements, flows, settings, editWord) {
     }
     practicing = true;
     current = { word, type, card: null };
+    offerListen(false);
     endLesson();
     showScriptFlag(word);
     showPartsFor(type);
@@ -512,11 +518,13 @@ export function createReview(elements, flows, settings, editWord) {
     typeElement.textContent = `New word · step ${lesson.index + 1} of ${lesson.steps.length}`;
     lessonNote.textContent = LESSON_NOTES[step];
     lessonNote.hidden = false;
-    // "I know this one" goes straight to the last step.
-    skipLessonButton.hidden = lesson.index === lesson.steps.length - 1;
+    // "I know this word" is offered at every step.
+    skipLessonButton.hidden = false;
     lessonNextButton.hidden = true;
     stopFlows();
     hideGrades();
+    // A word being learned can be heard at every step.
+    offerListen(true);
 
     if (step === 'test') {
       pinyinElement.hidden = true;
@@ -548,7 +556,6 @@ export function createReview(elements, flows, settings, editWord) {
         face('face-meaning', word.definition),
       );
       lessonNextButton.hidden = false;
-      offerListen();
       if (settings.sound === 'auto') {
         speakCurrent();
       }
@@ -606,9 +613,39 @@ export function createReview(elements, flows, settings, editWord) {
     }
   });
 
-  skipLessonButton.addEventListener('click', () => {
-    if (lesson) {
-      nextLessonStep(lesson.steps.length - 1);
+  // "I know this word": the lesson is skipped altogether. Each of the word's
+  // cards that is still new is answered "Easy" (markedKnown in
+  // cardManager.js), the word counts as learned, and the next one comes. In
+  // the Learn tab the next word starts at once, without the stop that says
+  // how the day stands: someone going through a list they half know would
+  // otherwise be stopped at every word.
+  skipLessonButton.addEventListener('click', async () => {
+    if (!lesson || !current) {
+      return;
+    }
+    const { word, learning } = current;
+    const known = markedKnown(
+      word,
+      [...cards.values()],
+      settings.enabledTypes.filter((type) => hasCardType(word, type)),
+      scriptFor(word, settings),
+      Date.now(),
+      randomId,
+    );
+    await saveKnown([known]);
+    for (const card of known.cards) {
+      cards.set(card.id, card);
+    }
+    words = words.map((entry) => (entry.id === word.id ? known.word : entry));
+    stopFlows();
+    endLesson();
+    if (learning) {
+      justLearned = null;
+      const { learnedToday, waiting } = learnCounts();
+      countsElement.textContent = `Learned today ${learnedToday} of ${goalForToday()} · ${waiting} waiting`;
+      startNextWord();
+    } else {
+      showNext();
     }
   });
 
@@ -646,6 +683,7 @@ export function createReview(elements, flows, settings, editWord) {
   // goes on to the next word.
   function showLearnMessage(message, canGoOn) {
     current = null;
+    offerListen(false);
     studyArea.hidden = true;
     typeElement.textContent = '';
     doneMessage.textContent = message;
@@ -812,6 +850,7 @@ export function createReview(elements, flows, settings, editWord) {
 
     if (!plan.next) {
       current = null;
+      offerListen(false);
       studyArea.hidden = true;
       typeElement.textContent = '';
       // The app starts with no words at all, and words wait to be learned.
@@ -840,6 +879,7 @@ export function createReview(elements, flows, settings, editWord) {
     typeElement.textContent = TYPE_LABELS[current.type];
     showScriptFlag(current.word);
     showPartsFor(current.type);
+    offerListen(current.type === 'writing' || current.type === 'meaning');
 
     if (current.type === 'writing') {
       // A writing card that is new starts with its lesson.
@@ -907,6 +947,7 @@ export function createReview(elements, flows, settings, editWord) {
     // Leaves the page ready for Free practice, which uses the writing parts.
     deactivate() {
       showNotice('');
+      offerListen(false);
       active = false;
       practicing = false;
       clearTimeout(recheckTimer);

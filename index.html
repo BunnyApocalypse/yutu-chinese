@@ -31,7 +31,16 @@
         <!-- Says so when the card just graded was suspended as a leech (review.js). -->
         <p id="review-notice" class="note" hidden></p>
         <!-- Which kind of card this is: Writing, Tone, Pinyin or Meaning -->
-        <p id="card-type" class="card-type"></p>
+        <div class="type-row">
+          <p id="card-type" class="card-type"></p>
+          <!-- Speaks the word (review.js, speech.js). The picture is a loudspeaker. -->
+          <button id="listen-button" class="icon-button" type="button" aria-label="Hear the word" title="Hear the word" hidden>
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+              <path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor" />
+              <path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
         <p id="prompt-meaning" class="meaning"></p>
         <p id="prompt-pinyin" class="pinyin" hidden></p>
         <button id="pinyin-button" class="small" type="button" hidden>Show pinyin</button>
@@ -301,11 +310,9 @@
         <!-- During the lesson for a new word: on to its next step, where nothing
              else leads there; and straight to its last step. -->
         <button id="lesson-next-button" class="primary" type="button" hidden>Next step</button>
-        <button id="skip-lesson-button" class="small" type="button" hidden>I know this one: skip to the end</button>
+        <button id="skip-lesson-button" class="small" type="button" hidden>I know this word: skip its lesson</button>
 
         <!-- Review mode, with the grades: opens the word's panel to correct it (review.js). -->
-        <!-- Speaks the word, once its reading is in view (review.js, speech.js). -->
-        <button id="listen-button" class="small" type="button" hidden>Listen</button>
         <button id="edit-word-button" class="small" type="button" hidden>Edit word</button>
         <!-- With the grades, on a card that keeps being forgotten (review.js). -->
         <p id="leech-note" class="order-note" hidden></p>
@@ -617,8 +624,8 @@
         <label class="setting">
           Sound
           <select id="sound-select">
-            <option value="tap">When I tap Listen</option>
-            <option value="auto">By itself when the answer shows, and with Listen</option>
+            <option value="auto">By itself when the answer shows, and when I tap the loudspeaker</option>
+            <option value="tap">Only when I tap the loudspeaker</option>
             <option value="off">Off</option>
           </select>
           <span class="hint">

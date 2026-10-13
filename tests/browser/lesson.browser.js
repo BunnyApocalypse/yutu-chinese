@@ -65,8 +65,13 @@ describe('learning new words', { concurrency: false }, () => {
     page.evaluate(`new Promise((resolve, reject) => {
       const opening = indexedDB.open('hanzi-trainer');
       opening.onsuccess = () => {
-        const tx = opening.result.transaction(['words', 'cards', 'settings'], 'readwrite');
-        const stores = { words: tx.objectStore('words'), cards: tx.objectStore('cards'), settings: tx.objectStore('settings') };
+        const tx = opening.result.transaction(['words', 'cards', 'reviews', 'settings'], 'readwrite');
+        const stores = {
+          words: tx.objectStore('words'),
+          cards: tx.objectStore('cards'),
+          reviews: tx.objectStore('reviews'),
+          settings: tx.objectStore('settings'),
+        };
         const result = {};
         ${body}
         tx.oncomplete = () => resolve(JSON.stringify(result));
@@ -157,9 +162,9 @@ describe('learning new words', { concurrency: false }, () => {
     await waitForFirstStroke();
     assert.match(await textOf(page, 'lesson-note'), /from memory/);
     assert.equal(await outlineButton(), 'Show outline');
-    // The reading is hidden again, and there is nothing left to skip.
+    // The reading is hidden again. The lesson can still be skipped.
     assert.equal(await isShown(page, 'prompt-pinyin'), false);
-    assert.equal(await isShown(page, 'skip-lesson-button'), false);
+    assert.equal(await isShown(page, 'skip-lesson-button'), true);
     await passTest('大');
   });
 
@@ -182,16 +187,26 @@ describe('learning new words', { concurrency: false }, () => {
     assert.match(await textOf(page, 'done-message'), /2 words are waiting in the Learn tab\.$/);
   });
 
-  it('lets a known word skip to the end of its lesson', { timeout: 60000 }, async () => {
+  it('lets a known word skip its lesson altogether', { timeout: 60000 }, async () => {
     await tap(page, 'learn-tab');
     await waitUntil(page, `${stepIs('step 1 of 5')} && document.getElementById('card-face').textContent.startsWith('小')`, 'the next word');
-    assert.equal(await isShown(page, 'skip-lesson-button'), true);
+    assert.equal(await textOf(page, 'skip-lesson-button'), 'I know this word: skip its lesson');
     await tap(page, 'skip-lesson-button');
-    await waitUntil(page, stepIs('step 5 of 5'), 'the last step');
-    await waitForFirstStroke();
-    assert.equal(await outlineButton(), 'Show outline');
-    await passTest('小');
-    await waitUntil(page, `document.getElementById('done-message').textContent.startsWith('小 is learned')`, 'the word learned');
+    // Nothing is written: the next word comes at once.
+    await waitUntil(page, `${stepIs('step 1 of 5')} && document.getElementById('card-face').textContent.startsWith('上')`, 'the word after it');
+    assert.equal(await textOf(page, 'review-counts'), 'Learned today 2 of 5 · 1 waiting');
+    // The word is learned, and each of its cards was answered "Easy".
+    const stored = await inDatabase(`
+      stores.words.get('小|xiao3').onsuccess = (event) => { result.learned = typeof event.target.result.learnedAt; };
+      stores.cards.getAllKeys().onsuccess = (event) => { result.cards = event.target.result.filter((id) => id.startsWith('小')); };
+      stores.reviews.getAll().onsuccess = (event) => {
+        result.reviews = event.target.result.filter((review) => review.wordId === '小|xiao3').map((review) => [review.grade, review.markedKnown]);
+      };
+    `);
+    assert.equal(stored.learned, 'number');
+    // (Only tone and writing cards are switched on here.)
+    assert.deepEqual(stored.cards.sort(), ['小|xiao3#tone', '小|xiao3#writing']);
+    assert.deepEqual(stored.reviews, Array(2).fill([4, true]));
   });
 
   it('says when the goal for the day is reached, and lets one go on', async () => {

@@ -66,6 +66,33 @@ main {
   color: #3b6fb6;
 }
 
+/* The kind of card with the loudspeaker beside it. The row is as tall as
+   the button whether the button is there or not, so the page does not jump. */
+.type-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 32px;
+}
+
+/* A round button with only a picture on it. */
+button.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  color: #3b6fb6;
+}
+
+/* The loudspeaker when the word could not be spoken. */
+button.icon-button.no-sound {
+  color: #b9b2a3;
+}
+
 .meaning {
   font-size: 1.25rem;
 }

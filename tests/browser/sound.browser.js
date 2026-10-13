@@ -10,11 +10,12 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, type, choose, textOf, waitUntil, openDeckPage, isShown } from './harness.js';
+import { startApp, startBrowsers, tap, type, choose, waitUntil, openDeckPage, isShown } from './harness.js';
 
 const spoken = `document.getElementById('listen-button').dataset.spoken`;
 // The addresses of the recordings the page has fetched so far.
-const fetched = `performance.getEntriesByType('resource').map((entry) => entry.name).filter((name) => name.includes('/audio/') && name.endsWith('.mp3')).map((name) => name.split('/audio/')[1])`;
+// (Each once: a word spoken twice in quick succession may be fetched twice.)
+const fetched = `[...new Set(performance.getEntriesByType('resource').map((entry) => entry.name).filter((name) => name.includes('/audio/') && name.endsWith('.mp3')).map((name) => name.split('/audio/')[1]))].sort()`;
 
 // One browser, and the steps in order: each builds on the one before.
 describe('hearing a word', { concurrency: false }, () => {
@@ -55,8 +56,13 @@ describe('hearing a word', { concurrency: false }, () => {
     await tap(page, 'learn-tab');
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('學習')`, 'the first look at the word');
     assert.equal(await isShown(page, 'listen-button'), true);
-    await tap(page, 'listen-button');
+    // It is spoken by itself, as the Sound setting has it to begin with.
     await waitUntil(page, `${spoken} === '學習|xue2xi2 word'`, 'the word spoken from its recording');
+    assert.equal(await page.evaluate(`document.getElementById('sound-select').value`), 'auto');
+    // And again when the loudspeaker is tapped.
+    await page.evaluate(`delete document.getElementById('listen-button').dataset.spoken`);
+    await tap(page, 'listen-button');
+    await waitUntil(page, `${spoken} === '學習|xue2xi2 word'`, 'the word spoken again');
     assert.deepEqual(await page.evaluate(fetched), ['w/5b66-4e60.mp3']);
   });
 
@@ -72,9 +78,8 @@ describe('hearing a word', { concurrency: false }, () => {
     await waitUntil(page, `document.querySelectorAll('#word-list li').length === 1`, 'one word left');
     await tap(page, 'learn-tab');
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('xīngqí')`, 'the Taiwan reading');
-    await tap(page, 'listen-button');
     await waitUntil(page, `${spoken} === '星期|xing1qi1 syllables'`, 'the word spoken syllable by syllable');
-    assert.deepEqual((await page.evaluate(fetched)).slice(1).sort(), ['s/qi2.mp3', 's/xing1.mp3']);
+    assert.deepEqual(await page.evaluate(fetched), ['s/qi2.mp3', 's/xing1.mp3', 'w/5b66-4e60.mp3']);
   });
 
   it('has no Listen button with sound switched off', async () => {
@@ -83,6 +88,20 @@ describe('hearing a word', { concurrency: false }, () => {
     await tap(page, 'settings-close');
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('星期')`, 'the first look again');
     assert.equal(await isShown(page, 'listen-button'), false);
-    assert.equal(await textOf(page, 'listen-button'), '');
+  });
+
+  it('offers the loudspeaker all through a lesson, and in Review only where it gives nothing away', async () => {
+    await tap(page, 'settings-button');
+    await choose(page, 'sound-select', 'tap');
+    await tap(page, 'settings-close');
+    await waitUntil(page, `!document.getElementById('listen-button').hidden`, 'the loudspeaker back');
+    // On to the lesson's next step: it is still there.
+    await tap(page, 'lesson-next-button');
+    await waitUntil(page, `document.getElementById('card-type').textContent.includes('step 2')`, 'step 2');
+    assert.equal(await isShown(page, 'listen-button'), true);
+    // The word is known: its cards go to Review, some days ahead.
+    await tap(page, 'skip-lesson-button');
+    await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'nothing left to learn');
+    assert.equal(await isShown(page, 'listen-button'), false);
   });
 });

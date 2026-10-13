@@ -40,9 +40,10 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //   lessons:        true to teach a word before it is first written from
 //                   memory (tones, tracing; see review.js)
 //   newWordsPerDay: a number
-//   sound:          'tap' to speak a word when Listen is tapped, 'auto' to
-//                   speak it as well when its answer shows, 'off' for no
-//                   Listen button at all (see speech.js)
+//   sound:          'auto' (the default) to speak a word by itself when
+//                   its answer shows and when the loudspeaker is tapped,
+//                   'tap' for the loudspeaker only, 'off' for no sound and
+//                   no loudspeaker (see speech.js)
 //   leechLapses:    how many times a card has to be forgotten to be pointed
 //                   out as a leech (see leeches.js)
 //   leechAction:    'flag' to only point a leech out, 'suspend' to also
@@ -82,7 +83,7 @@ export async function createSettings(elements, onChange) {
     newWordsPerDay: await getSetting('newWordsPerDay', DEFAULT_NEW_WORDS_PER_DAY),
     leechLapses: await getSetting('leechLapses', DEFAULT_LEECH_LAPSES),
     leechAction: await getSetting('leechAction', 'flag'),
-    sound: await getSetting('sound', 'tap'),
+    sound: await getSetting('sound', 'auto'),
     enabledTypes: await getSetting('enabledTypes', CARD_TYPES),
     studyDeck: await getSetting('studyDeck', ''),
   };
