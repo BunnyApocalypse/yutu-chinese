@@ -23,9 +23,17 @@
 //                  or all of them (125 MB) if that was asked for in Settings.
 //                  Kept from one version to the next as well.
 
-/* global VERSION, APP_FILES */
+/* global VERSION, APP_FILES, CHANNEL */
 
-const APP_CACHE = `app-${VERSION}`;
+// CHANNEL is '' for the stable copy of the app and 'test' for the copy
+// published under test/ (see db.js). Each has its own store of app files, so
+// that one copy's new version does not clear out the other's.
+const APP_PREFIX = CHANNEL ? `${CHANNEL}-app-` : 'app-';
+const APP_CACHE = `${APP_PREFIX}${VERSION}`;
+// The stable copy's service worker is asked about everything under its
+// folder, the test copy's folder included, until that copy has installed a
+// service worker of its own. It leaves those requests alone.
+const OTHER_COPY = CHANNEL ? null : new URL('test/', self.registration.scope).href;
 
 // "install" runs once for each new version: save the app's files. If any of
 // them cannot be fetched, the version is not installed and the browser tries
@@ -44,7 +52,7 @@ self.addEventListener('activate', (event) => {
       const names = await caches.keys();
       await Promise.all(
         names
-          .filter((name) => name.startsWith('app-') && name !== APP_CACHE)
+          .filter((name) => name.startsWith(APP_PREFIX) && name !== APP_CACHE)
           .map((name) => caches.delete(name)),
       );
       // Take charge of pages that are already open, not only future ones.
@@ -67,6 +75,9 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) {
     return; // not ours to answer: the browser handles it as usual
+  }
+  if (OTHER_COPY && request.url.startsWith(OTHER_COPY)) {
+    return; // the test copy's business
   }
   event.respondWith(
     (async () => {

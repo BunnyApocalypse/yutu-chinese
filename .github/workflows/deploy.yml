@@ -1,15 +1,27 @@
-# Publishes the app to GitHub Pages whenever main changes.
+# Publishes the app to GitHub Pages: two copies of it, at one address.
 #
-# GitHub runs this on its own computers: it builds the app exactly as
-# `npm run build` does at home and puts the result (dist/) online at
-# https://bunnyapocalypse.github.io/hanzi-trainer/. Nothing is published if
-# the unit tests fail.
+#   stable branch  ->  https://bunnyapocalypse.github.io/hanzi-trainer/
+#                      The copy people use. It only changes when the stable
+#                      branch does, which is moved forward by hand once what
+#                      is on main has been tried.
+#   main branch    ->  https://bunnyapocalypse.github.io/hanzi-trainer/test/
+#                      The test copy: every change, as soon as it is pushed.
+#                      It keeps its own database (see CHANNEL in src/db.js),
+#                      so trying it never touches the words and progress in
+#                      the stable copy.
+#
+# GitHub runs this on its own computers whenever either branch changes. Pages
+# publishes one folder for the whole site, so both copies are built every
+# time: the stable one into dist/, the test one into dist/test/. Nothing is
+# published if either copy's unit tests fail.
+#
+# To release what is on main:  git push origin main:stable
 
 name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, stable]
   # Also allows starting it by hand from the repository's Actions tab.
   workflow_dispatch:
 
@@ -31,18 +43,47 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # Each branch into a folder of its own.
       - uses: actions/checkout@v7
+        with:
+          ref: stable
+          path: stable
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          path: test
       - uses: actions/setup-node@v7
         with:
           # The current long-term-support release of Node.js.
           node-version: 24
           cache: npm
-      # "npm ci" installs exactly what package-lock.json lists.
-      - run: npm ci
-      - run: npm test
-      - run: npm run build
+          cache-dependency-path: |
+            stable/package-lock.json
+            test/package-lock.json
+
+      # The stable copy. "npm ci" installs exactly what package-lock.json lists.
+      - name: Build the stable copy
+        working-directory: stable
+        run: |
+          npm ci
+          npm test
+          npm run build
+
+      # The test copy. VITE_CHANNEL tells the build which copy it is.
+      - name: Build the test copy
+        working-directory: test
+        env:
+          VITE_CHANNEL: test
+        run: |
+          npm ci
+          npm test
+          npm run build
+
+      - name: Put the test copy inside the stable one
+        run: mv test/dist stable/dist/test
+
       - uses: actions/upload-pages-artifact@v5
         with:
-          path: dist
+          path: stable/dist
       - id: deployment
         uses: actions/deploy-pages@v5

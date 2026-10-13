@@ -63,7 +63,15 @@
 // IndexedDB's own interface is built on callbacks and is awkward to use. The
 // functions below wrap it so the rest of the app can simply "await" results.
 
-const DATABASE_NAME = 'hanzi-trainer';
+// The app is published twice at one site: a stable copy, and under test/ a
+// copy that gets every change first. A browser keeps one set of databases
+// for the whole site, so the test copy has a database of its own name; it
+// could otherwise change the stable copy's database in ways that copy does
+// not yet understand. (__CHANNEL__ is put in by Vite, see vite.config.js;
+// it is not there when the tests run this file in Node.)
+/* global __CHANNEL__ */
+const CHANNEL = typeof __CHANNEL__ === 'undefined' ? '' : __CHANNEL__;
+const DATABASE_NAME = CHANNEL ? `hanzi-trainer-${CHANNEL}` : 'hanzi-trainer';
 
 // Raise this number when the stores themselves change (a new store, a new
 // key). The browser then runs the upgrade code below on existing databases.

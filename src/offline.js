@@ -379,7 +379,10 @@ export async function setUpOffline({ statusElement, updateButton, keepButton, in
   } else {
     state.audio = 'Recordings of words are kept once played.';
     show();
-    audioButton.hidden = false;
+    // The test copy of the app has no packs of recordings to save (see
+    // scripts/build-offline.js), so it does not offer to.
+    const index = await (await caches.open(DATA_CACHE)).match(address(SAVED_INDEX));
+    audioButton.hidden = !index || ((await index.json()).audioPacks || []).length === 0;
     audioButton.addEventListener('click', async () => {
       await setSetting('audioOffline', true);
       await saveRecordings();

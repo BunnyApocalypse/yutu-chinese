@@ -23,6 +23,10 @@ export default defineConfig(({ command }) => ({
   // Vite puts these values in place of the names wherever the program uses them.
   define: {
     __APP_VERSION__: JSON.stringify(appVersion()),
+    // Which of the two published copies of the app this is: '' for the
+    // stable one, 'test' for the one that gets every change first (see
+    // .github/workflows/deploy.yml). The test copy keeps its own database.
+    __CHANNEL__: JSON.stringify(process.env.VITE_CHANNEL || ''),
   },
   server: {
     // By default the dev server only answers requests from this computer.

@@ -71,7 +71,11 @@ const bigFiles = filesUnder('assets').filter((file) => file.endsWith('.tsv') || 
 // are packed like the stroke data, but as they are (sound is not text): a
 // pack is the files one after another, and the list says how long each is.
 const FILES_PER_AUDIO_PACK = 400;
-const audioFiles = filesUnder('audio').filter((file) => file.endsWith('.mp3'));
+// The test copy of the app (see db.js) goes without the packs: it would put
+// another 125 MB on the site for something that is tried on the stable copy.
+// There a recording is still kept once it has been played.
+const CHANNEL = process.env.VITE_CHANNEL || '';
+const audioFiles = CHANNEL ? [] : filesUnder('audio').filter((file) => file.endsWith('.mp3'));
 const audioPacks = [];
 for (let start = 0; start < audioFiles.length; start += FILES_PER_AUDIO_PACK) {
   const files = audioFiles.slice(start, start + FILES_PER_AUDIO_PACK);
@@ -107,10 +111,20 @@ const appFiles = fs
 const version = fingerprint(
   appFiles.map((file) => file + fingerprint(fs.readFileSync(path.join(DIST, file)))).join('\n'),
 );
+// The test copy is named as such where the phone shows an installed app's name.
+if (CHANNEL) {
+  const manifestFile = path.join(DIST, 'manifest.webmanifest');
+  const manifest = JSON.parse(fs.readFileSync(manifestFile, 'utf8'));
+  manifest.name = `${manifest.name} (${CHANNEL})`;
+  manifest.short_name = `${manifest.short_name} ${CHANNEL}`;
+  fs.writeFileSync(manifestFile, JSON.stringify(manifest, null, 2));
+}
+
 const worker = fs.readFileSync('src/serviceWorker.js', 'utf8');
 fs.writeFileSync(
   path.join(DIST, 'sw.js'),
-  `const VERSION = ${JSON.stringify(version)};\nconst APP_FILES = ${JSON.stringify(appFiles)};\n\n${worker}`,
+  `const VERSION = ${JSON.stringify(version)};\nconst APP_FILES = ${JSON.stringify(appFiles)};\n` +
+    `const CHANNEL = ${JSON.stringify(CHANNEL)};\n\n${worker}`,
 );
 
 console.log(

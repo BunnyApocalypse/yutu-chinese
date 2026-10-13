@@ -6,10 +6,11 @@
 // copy into a message: the app's version, the browser, and what failed. No
 // words and nothing about the person's studying is in them.
 
-/* global __APP_VERSION__ */
+/* global __APP_VERSION__, __CHANNEL__ */
 
 // The app's version (see vite.config.js).
-export const APP_VERSION = __APP_VERSION__;
+// The test copy of the app says that it is one (see db.js).
+export const APP_VERSION = __APP_VERSION__ + (__CHANNEL__ ? `, ${__CHANNEL__} version` : '');
 
 const byId = (id) => document.getElementById(id);
 
@@ -70,4 +71,7 @@ export function watchForErrors({ banner, detailsButton, dialog, textElement, cop
 // Fills in the line in Settings that says which version this is.
 export function showVersion() {
   byId('app-version').textContent = `Version ${APP_VERSION}`;
+  if (__CHANNEL__) {
+    document.title = `${document.title} (${__CHANNEL__})`;
+  }
 }
