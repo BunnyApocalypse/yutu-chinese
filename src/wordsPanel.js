@@ -14,8 +14,10 @@ import {
   wordsWithSameCharacters,
   orderForStudyingNext,
   matchesSearch,
+  charactersShown,
+  tidyPinyin,
 } from './words.js';
-import { readDictionary, lookUp, proposeMeaning } from './dictionary.js';
+import { readDictionary, lookUp, proposeMeaning, otherScriptForm } from './dictionary.js';
 // "?url" makes Vite hand us the file's address instead of its contents, so
 // the dictionary stays a separate file that is only fetched when needed.
 import dictionaryUrl from '../data/cedict/dictionary.tsv?url';
@@ -34,12 +36,17 @@ const byId = (id) => document.getElementById(id);
 
 // onChange: called after the word list has changed, so the rest of the app
 //           can read it afresh
-// getMeaningDetail: returns the "Dictionary meanings" setting (see
-//           proposeMeaning in dictionary.js). A function, because the
-//           settings are only read after this panel is set up.
+// getSettings: returns the current settings (see settings.js). A function,
+//           because the settings are only read after this panel is set up.
 //
-// Returns { show() }; call show() whenever the tab is opened.
-export function createWordsPanel(onChange, getMeaningDetail) {
+// Someone learning one script is only asked for and shown that script, and
+// someone who chose mainland pronunciation only is not asked for Taiwan
+// readings (see applySettings). Every word still has both scripts stored,
+// since its ID is made from the traditional form.
+//
+// Returns { show() }; call show() whenever the tab is opened or a setting
+// has changed.
+export function createWordsPanel(onChange, getSettings) {
   const addForm = byId('add-word-form');
   const addFields = {
     traditional: byId('add-traditional'),
@@ -52,6 +59,7 @@ export function createWordsPanel(onChange, getMeaningDetail) {
   const suggestions = byId('add-suggestions');
   const addNote = byId('add-word-note');
 
+  const listHint = byId('list-hint');
   const listText = byId('list-text');
   const listFileButton = byId('list-file-button');
   const listFile = byId('list-file');
@@ -94,11 +102,49 @@ export function createWordsPanel(onChange, getMeaningDetail) {
     onChange();
   }
 
-  // "學習" or, where the scripts differ, "學習 · 学习".
+  // The word's characters in the script being learned: "學習" or, with both
+  // scripts, "學習 · 学习".
   function charactersOf(word) {
-    return word.traditional === word.simplified
-      ? word.traditional
-      : `${word.traditional} · ${word.simplified}`;
+    const { script, bothScripts } = getSettings();
+    return charactersShown(word, script, bothScripts);
+  }
+
+  // Which of the two scripts and of the Taiwan readings are asked for.
+  function asksFor() {
+    const { script, bothScripts, pronunciation } = getSettings();
+    return {
+      traditional: bothScripts || script === 'traditional',
+      simplified: bothScripts || script === 'simplified',
+      taiwan: pronunciation !== 'mainlandOnly',
+    };
+  }
+
+  // Fits the forms and their wording to the settings.
+  function applySettings() {
+    const asks = asksFor();
+    const both = asks.traditional && asks.simplified;
+    // A box that is out of sight is also emptied, so nothing stale is used.
+    const showBox = (box, shown) => {
+      box.hidden = !shown;
+      if (!shown) {
+        box.value = '';
+      }
+    };
+    showBox(addFields.traditional, asks.traditional);
+    showBox(addFields.simplified, asks.simplified);
+    showBox(addFields.pinyinTaiwan, asks.taiwan);
+    addFields.simplified.placeholder = both ? 'Simplified 简体 (if different)' : 'Simplified 简体';
+    if (!lookedUpField || lookedUpField.hidden) {
+      lookedUpField = asks.traditional ? addFields.traditional : addFields.simplified;
+    }
+    // In the pop-up panel each box sits in a <label>, which holds its caption.
+    editSimplified.closest('label').hidden = !asks.simplified;
+    editPinyinTaiwan.closest('label').hidden = !asks.taiwan;
+
+    const taiwanColumn = asks.taiwan ? ', and optionally the Taiwan reading' : '';
+    listHint.textContent = both
+      ? `One word per line, as in a TSV or CSV file: simplified, traditional, pinyin with tone numbers, meaning${taiwanColumn}, separated by tabs or commas. With one column of characters instead of two, the other script is looked up in the dictionary.`
+      : `One word per line, as in a TSV or CSV file: characters, pinyin with tone numbers, meaning${taiwanColumn}, separated by tabs or commas. A list with two columns of characters (simplified, then traditional) works too.`;
   }
 
   // ---- The list of words ----
@@ -157,8 +203,12 @@ export function createWordsPanel(onChange, getMeaningDetail) {
   let dictionary = null;
   let dictionaryLoading = null;
   // The characters field last typed in, which is what gets looked up.
-  let lookedUpField = addFields.traditional;
+  let lookedUpField = null;
+  // The dictionary entry last tapped to fill in the fields.
+  let filledEntry = null;
 
+  // Returns a promise that is done once the dictionary is there, or could
+  // not be fetched.
   function loadDictionary() {
     if (!dictionaryLoading) {
       dictionaryLoading = fetch(dictionaryUrl)
@@ -172,6 +222,27 @@ export function createWordsPanel(onChange, getMeaningDetail) {
           dictionaryLoading = null;
         });
     }
+    return dictionaryLoading;
+  }
+
+  // How a word typed in one script is written in both, for someone who is
+  // only asked for one: from `tapped`, the dictionary entry that was tapped to
+  // fill in the fields (if one was) or, failing that, from the dictionary's
+  // entries for those characters. Where the dictionary cannot tell, both are
+  // taken to be the same.
+  //
+  // Returns { traditional, simplified }.
+  function completeForms(characters, pinyin, tapped = null) {
+    const { script } = getSettings();
+    const other = script === 'traditional' ? 'simplified' : 'traditional';
+    const entries = [
+      ...(tapped ? [tapped] : []),
+      ...(dictionary ? lookUp(dictionary, characters) : []),
+    ];
+    return {
+      [script]: characters,
+      [other]: otherScriptForm(entries, script, characters, pinyin),
+    };
   }
 
   const paragraph = (className, text) => {
@@ -183,11 +254,18 @@ export function createWordsPanel(onChange, getMeaningDetail) {
 
   // Puts a dictionary entry into the fields, ready to be edited.
   function fillIn(entry) {
-    addFields.traditional.value = entry.traditional;
-    addFields.simplified.value = entry.simplified === entry.traditional ? '' : entry.simplified;
+    const asks = asksFor();
+    filledEntry = entry;
+    if (asks.traditional && asks.simplified) {
+      addFields.traditional.value = entry.traditional;
+      addFields.simplified.value = entry.simplified === entry.traditional ? '' : entry.simplified;
+    } else {
+      // The other script is worked out when the word is added (completeForms).
+      lookedUpField.value = entry[getSettings().script];
+    }
     addFields.pinyin.value = entry.pinyin;
-    addFields.pinyinTaiwan.value = entry.pinyinTaiwan || '';
-    addFields.definition.value = proposeMeaning(entry.meanings, getMeaningDetail());
+    addFields.pinyinTaiwan.value = asks.taiwan ? entry.pinyinTaiwan || '' : '';
+    addFields.definition.value = proposeMeaning(entry.meanings, getSettings().meaningDetail);
     showPinyinPreview();
     addNote.textContent = '';
     // The meaning is the part most likely to want changing.
@@ -253,6 +331,13 @@ export function createWordsPanel(onChange, getMeaningDetail) {
     const typed = Object.fromEntries(
       Object.entries(addFields).map(([name, input]) => [name, input.value]),
     );
+    const asks = asksFor();
+    if (!(asks.traditional && asks.simplified)) {
+      // Only one script was typed; the dictionary supplies the other.
+      await loadDictionary();
+      const characters = typed[getSettings().script].trim();
+      Object.assign(typed, completeForms(characters, tidyPinyin(typed.pinyin.trim()) || '', filledEntry));
+    }
     const checked = checkWord(typed);
     if (checked.problem) {
       addNote.textContent = checked.problem;
@@ -261,16 +346,17 @@ export function createWordsPanel(onChange, getMeaningDetail) {
     const { toAdd } = newWordRecords([checked.word], words, Date.now());
     if (toAdd.length === 0) {
       addNote.textContent =
-        `${checked.word.traditional} (${formatPinyin(checked.word.pinyin)}) is already in your words.`;
+        `${charactersOf(checked.word)} (${formatPinyin(checked.word.pinyin)}) is already in your words.`;
       return;
     }
     await putAll('words', toAdd);
     addForm.reset();
+    filledEntry = null;
     pinyinPreview.textContent = '';
     suggestions.replaceChildren();
     addNote.textContent = `Added ${charactersOf(toAdd[0])}. It is last in line among the new words.`;
     await afterChange();
-    addFields.traditional.focus();
+    lookedUpField.focus();
   });
 
   // ---- Adding a list ----
@@ -298,9 +384,13 @@ export function createWordsPanel(onChange, getMeaningDetail) {
 
   const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`;
 
-  checkListButton.addEventListener('click', () => {
+  checkListButton.addEventListener('click', async () => {
     forgetCheckedList();
-    const { words: readable, problems } = readWordList(listText.value);
+    // A line with one column of characters has its other script looked up.
+    await loadDictionary();
+    const { words: readable, problems } = readWordList(listText.value, (characters, pinyin) =>
+      completeForms(characters, pinyin),
+    );
     const { toAdd, alreadyHave } = newWordRecords(readable, words, Date.now());
     if (readable.length === 0 && problems.length === 0) {
       listReport.textContent = 'There is nothing in the box yet.';
@@ -314,7 +404,7 @@ export function createWordsPanel(onChange, getMeaningDetail) {
       (sameCharacters.length > 0
         ? ` Of the new words, ${sameCharacters.length} ${sameCharacters.length === 1 ? 'has' : 'have'} the same` +
           ` characters as a word you already have, with another reading:` +
-          ` ${sameCharacters.slice(0, 10).map((word) => word.traditional).join(', ')}` +
+          ` ${sameCharacters.slice(0, 10).map((word) => word[getSettings().script]).join(', ')}` +
           `${sameCharacters.length > 10 ? ', …' : ''}.`
         : '');
     const shown = problems.slice(0, MAX_PROBLEMS_SHOWN).map(({ lineNumber, text, problem }) => {
@@ -349,7 +439,7 @@ export function createWordsPanel(onChange, getMeaningDetail) {
   function openDialog(word) {
     openWord = word;
     const studied = studiedWordIds.has(word.id);
-    dialogTitle.textContent = `${word.traditional} ${formatPinyin(word.pinyin)}`;
+    dialogTitle.textContent = `${word[getSettings().script]} ${formatPinyin(word.pinyin)}`;
     dialogStatus.textContent = studied
       ? 'You are studying this word.'
       : 'New: you have not studied this word yet.';
@@ -367,12 +457,14 @@ export function createWordsPanel(onChange, getMeaningDetail) {
     event.preventDefault();
     // The characters and pinyin stay as they are: they make up the word's ID,
     // which its cards and review history are filed under.
+    // What is not asked for (see applySettings) stays as it was stored.
+    const asks = asksFor();
     const checked = checkWord({
       traditional: openWord.traditional,
       pinyin: openWord.pinyin,
-      simplified: editSimplified.value,
+      simplified: asks.simplified ? editSimplified.value : openWord.simplified,
       definition: editDefinition.value,
-      pinyinTaiwan: editPinyinTaiwan.value,
+      pinyinTaiwan: asks.taiwan ? editPinyinTaiwan.value : openWord.pinyinTaiwan,
     });
     if (checked.problem) {
       dialogNote.textContent = checked.problem;
@@ -394,7 +486,7 @@ export function createWordsPanel(onChange, getMeaningDetail) {
 
   byId('remove-word-button').addEventListener('click', async () => {
     const confirmed = window.confirm(
-      `Remove ${openWord.traditional} (${formatPinyin(openWord.pinyin)}) from your words?\n\n` +
+      `Remove ${charactersOf(openWord)} (${formatPinyin(openWord.pinyin)}) from your words?\n\n` +
         'Its cards and their schedule are removed too. Your review history is kept.',
     );
     if (!confirmed) {
@@ -409,8 +501,10 @@ export function createWordsPanel(onChange, getMeaningDetail) {
 
   return {
     async show() {
+      applySettings();
       await load();
       renderList();
+      showSuggestions();
     },
   };
 }

@@ -32,7 +32,8 @@ const toneOf = (syllable) => Number(syllable.slice(-1));
 // Works out which readings of a word to show and expect.
 //
 // word:          the word record
-// pronunciation: 'mainland' or 'taiwan' (the setting)
+// pronunciation: 'mainlandOnly', 'mainland' or 'taiwan' (the setting). With
+//                'mainlandOnly' a Taiwan reading is never shown or expected.
 // table:         the tone table, or null if it isn't available
 //
 // Returns:
@@ -42,7 +43,7 @@ const toneOf = (syllable) => Number(syllable.slice(-1));
 //   otherLabel: 'Taiwan' or 'mainland', saying which region `other` is
 export function readingsFor(word, pronunciation, table) {
   const taiwan = word.pinyinTaiwan || (table && table.taiwanWords[word.traditional]) || null;
-  if (!taiwan || taiwan === word.pinyin) {
+  if (pronunciation === 'mainlandOnly' || !taiwan || taiwan === word.pinyin) {
     return { primary: word.pinyin, other: null, otherLabel: null };
   }
   return pronunciation === 'taiwan'
@@ -77,6 +78,9 @@ function fittingReadings(pinyinField, charCount) {
 // primary: the reading to expect (from readingsFor)
 // other:   the other region's reading, or null
 // table:   the tone table, or null
+// regional: false to leave out the tones that are only accepted because the
+//          other region uses them (for someone who learns one region's
+//          pronunciation only)
 //
 // Returns one entry per character:
 //   syllable:     the syllable of the first listed reading, e.g. "xue2"
@@ -92,7 +96,7 @@ function fittingReadings(pinyinField, charCount) {
 //                 neither standard says, which is why they are pointed out.
 // Returns null if no listed reading has exactly one syllable per character.
 // Such a word can't have a tone card.
-export function toneAnswers(chars, primary, other, table) {
+export function toneAnswers(chars, primary, other, table, regional = true) {
   const readings = fittingReadings(primary, chars.length);
   if (readings.length === 0) {
     return null;
@@ -106,7 +110,7 @@ export function toneAnswers(chars, primary, other, table) {
 
     if (table) {
       for (const syllable of listed) {
-        for (const [mainland, taiwan] of table.regional[char] || []) {
+        for (const [mainland, taiwan] of regional ? table.regional[char] || [] : []) {
           const samePair = lettersOf(mainland) === lettersOf(syllable);
           if (samePair && (mainland === syllable || taiwan === syllable)) {
             variants.add(toneOf(mainland));

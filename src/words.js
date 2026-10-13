@@ -148,7 +148,8 @@ function columnsFromCsv(fields) {
   };
 }
 
-const COLUMNS_HELP = 'It needs four columns: simplified, traditional, pinyin, meaning.';
+const COLUMNS_HELP =
+  'It needs four columns: simplified, traditional, pinyin, meaning. Or three: characters, pinyin, meaning.';
 
 // Reads the text of a word list: one word per line, with the columns
 // simplified, traditional, pinyin, meaning and optionally the Taiwan reading
@@ -157,10 +158,16 @@ const COLUMNS_HELP = 'It needs four columns: simplified, traditional, pinyin, me
 // wordList.js, every line is checked, and lines that can't be used are
 // reported.
 //
+// A line may also have a single column of characters: characters, pinyin,
+// meaning. It is told apart by its second column being pinyin.
+// completeForms(characters, pinyin), if given, is then asked how the word is
+// written in both scripts and returns { traditional, simplified }; without
+// it both are taken to be the same.
+//
 // Returns:
 //   words:    the tidied words
 //   problems: [{ lineNumber, text, problem }] for the lines left out
-export function readWordList(text) {
+export function readWordList(text, completeForms) {
   const words = [];
   const problems = [];
   // Windows ends lines with \r\n; the \r is dropped along with other spaces.
@@ -169,15 +176,25 @@ export function readWordList(text) {
     if (line === '') {
       return;
     }
+    const isTsv = line.includes('\t');
+    let fields = isTsv ? line.split('\t') : splitCsvLine(line);
+    // One column of characters: read it as if it were written out twice.
+    const oneScript = fields.length > 1 && tidyPinyin(fields[1].trim()) !== null;
+    if (oneScript) {
+      fields = [fields[0], ...fields];
+    }
     let columns;
-    if (line.includes('\t')) {
-      const [simplified, traditional, pinyin, definition, pinyinTaiwan] = line.split('\t');
+    if (isTsv) {
+      const [simplified, traditional, pinyin, definition, pinyinTaiwan] = fields;
       columns = { simplified, traditional, pinyin, definition, pinyinTaiwan };
     } else {
-      columns = columnsFromCsv(splitCsvLine(line));
+      columns = columnsFromCsv(fields);
     }
     const result =
       columns.definition === undefined ? { problem: COLUMNS_HELP } : checkWord(columns);
+    if (result.word && oneScript && completeForms) {
+      Object.assign(result.word, completeForms(result.word.traditional, result.word.pinyin));
+    }
     if (result.word) {
       words.push(result.word);
     } else {
@@ -224,6 +241,19 @@ export function wordsWithSameCharacters(word, words) {
   return words.filter(
     (other) => other.traditional === word.traditional || other.simplified === word.simplified,
   );
+}
+
+// A word's characters as shown in lists and messages: in the script being
+// learned, or in both where they differ, the cards' script first
+// ("學習 · 学习").
+//
+// script:      'traditional' or 'simplified' (the setting)
+// bothScripts: true if both scripts are being learned (the setting)
+export function charactersShown(word, script, bothScripts) {
+  const other = script === 'traditional' ? 'simplified' : 'traditional';
+  return bothScripts && word[other] !== word[script]
+    ? `${word[script]} · ${word[other]}`
+    : word[script];
 }
 
 // The `order` that puts a word ahead of every other word, so that it is the

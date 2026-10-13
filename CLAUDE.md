@@ -83,6 +83,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `tests/browser/harness.js`: what the browser tests share: serving the app, starting the browsers, drawing strokes, reading the status line.
 - `tests/browser/writing-grid.browser.js`: writes 15 characters in both stroke orders at seven positions and sizes.
 - `tests/browser/words.browser.js`: the Words tab from adding a word to finding it in Review.
+- `tests/browser/settings.browser.js`: the Script and Pronunciation settings, on cards and on the Words tab.
 - `tests/words.test.js`, `tests/dictionary.test.js`: tests for `src/words.js` and `src/dictionary.js`; the second also checks every line of the real dictionary.
 
 ## Browser tests
@@ -98,7 +99,8 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - **Known failures on 2026-10-12** (159 of 165 runs pass, 10 skipped). The command exits with an error while any remain. None is at the first stroke any more:
   - At half size, the second or third stroke is rejected for 學 (MOE order, both half-size positions), and at the bottom right for 覺, 麼 and 謝 (MOE order). The size is not yet known that early, so the stroke is expected at full size.
   - 學 in the mainland order, shifted right so its left ノ lands on the 爻: the third stroke is rejected.
-- **Not covered yet:** tone, pinyin and meaning cards, grading in Review, the settings panel. Use the same harness.
+- **Not covered yet:** grading in Review, drawn tone marks, the rest of the settings panel. Tone and pinyin cards are only touched by `settings.browser.js`. Use the same harness.
+- **A setting is saved before it takes effect** (`change` in `src/settings.js` awaits the database), so after `choose(...)` a test waits for the effect instead of checking at once.
 - **Each test file starts its own server and browsers**, and Node runs the files side by side. A file whose steps build on each other (`words.browser.js`) uses one browser and `concurrency: false`.
 
 ## The word list
@@ -153,9 +155,22 @@ The owner reads Python and JavaScript comfortably but is not a developer.
   - **Out of scope so far:** three or more strokes in one go, and shortcuts that reorder or drop strokes (口 in 2, 艹 in 3, 糸's lower part).
 - **Leniency:** the `LENIENCY` constant in `src/quiz.js`.
 
+## Fitting the interface to what is learned
+
+Built on 2026-10-13, at the owner's request, without them at the keyboard; the choices below are Claude's and are theirs to change.
+
+- **Two lists in Settings, three stored settings.** Script: "Traditional only", "Simplified only", "Both, cards in traditional", "Both, cards in simplified" (`script` plus `bothScripts`). Pronunciation: "Mainland only", "Both, mainland first", "Both, Taiwan first" (`pronunciation`: `mainlandOnly`, `mainland`, `taiwan`). A device that had the old settings keeps what it had: `bothScripts` starts as true, and the old `mainland` and `taiwan` mean what they did.
+- **`script` is still the one script cards are shown and written in**, so cards, Review and Free practice did not change for scripts. `bothScripts` only decides what the Words tab asks for and shows.
+- **One script learned:** the Add a word form has one characters box, list rows, the pop-up panel's title and messages show that script only (`charactersShown` in `src/words.js`), and the pop-up panel has no Simplified box for a traditional-only learner. Search still matches both scripts.
+- **Every word still stores both scripts**, because the ID is `<traditional>|<pinyin>`. For a word typed in one script the other comes from the dictionary (`completeForms` in `src/wordsPanel.js`, `otherScriptForm` in `src/dictionary.js`): the entry that was tapped, else the entry with the same characters and reading (so 头发 fà becomes 頭髮, not 頭發), else the dictionary's form if all its entries agree, else the characters as typed. So a simplified-only learner's word that is not in the dictionary gets its simplified form as its "traditional" one and as its ID. That is harmless until they switch to both scripts, when such words show one form.
+- **A list may have one column of characters** (characters, pinyin, meaning), whatever the setting; `readWordList` tells it by its second column being pinyin, and the other script is looked up the same way, in the script of the `script` setting. Checking a list therefore fetches the dictionary first. The hint above the box is worded to suit the settings.
+- **Mainland only:** no Taiwan reading box when adding or changing a word, no "Taiwan:" reading on cards (`readingsFor` returns no other reading, even for a word that has one stored), and tone cards do not accept the Taiwan tone, neither the word's own nor the character-level pairs from the tone table (`toneAnswers`' `regional` argument). The neutral-tone variant is still accepted. A dictionary entry's Taiwan reading is not stored when the box is hidden; nothing is lost, since `readingsFor` also reads the tone table, which has the same notes.
+- **What is out of sight is kept:** saving a word in the pop-up panel keeps a simplified form or Taiwan reading that is not shown. A list's Taiwan column is stored whatever the setting.
+- **There is no "Taiwan only".** A word's `pinyin` is its mainland reading and part of its ID, so it has to be asked for anyway.
+
 ## Taiwan and mainland pronunciation
 
-- **A word's `pinyin` is its mainland reading; `pinyinTaiwan`, if present, its Taiwan reading** (the optional fifth column of a word list). The `pronunciation` setting (`mainland` by default, or `taiwan`) decides which is shown as the answer and expected on tone cards; the other is shown next to it, labeled. A word with no Taiwan reading is the same under both settings. `readingsFor` in `src/tones.js` is the one place that decides this.
+- **A word's `pinyin` is its mainland reading; `pinyinTaiwan`, if present, its Taiwan reading** (the optional fifth column of a word list). The `pronunciation` setting (`mainland` by default, or `taiwan`) decides which is shown as the answer and expected on tone cards; the other is shown next to it, labeled. (With `mainlandOnly` there is no other; see the section above.) A word with no Taiwan reading is the same under both settings. `readingsFor` in `src/tones.js` is the one place that decides this.
 - **Shown readings are never guessed.** The owner chose this. A Taiwan reading comes only from the word's own fifth column or from a whole-word "Taiwan pr." note in CC-CEDICT (`taiwanWords` in the tone table). The built-in list's 13 Taiwan readings were checked against Taiwan's MOE dictionary (moedict.tw). Readings recalled from memory turned out wrong for several words, so always check.
 - **Accepted tones are wider than shown readings** (`toneAnswers` in `src/tones.js`). Besides the listed tones, a tone card accepts, as a *variant*: the other region's tone for the word; a tone CC-CEDICT links to the listed one as a mainland and Taiwan reading of the character; and the character's own full tone where the list says neutral. The last two are approximations that accept some things neither standard says (yìnggāi for 應該, háizǐ for 孩子), so an answer accepted only as a variant is pointed out on the card together with the listed reading.
 - **Not accepted:** neutral where the list has a full tone (xīngqi for 星期), unless listed as an extra reading. Adding a reading to a word's `pinyin` would change the word's ID (`<traditional>|<pinyin>`), so that needs a different mechanism first.
@@ -228,7 +243,8 @@ The owner wants to bring their Skritter data across eventually rather than start
 
 ## To discuss with the owner at the start of the next session
 
-1. What to do next: the interface settings for script and Taiwan pronunciation (to-do list), or the PWA milestone, which waits on two answers from the owner (roadmap item 8).
+1. The Script and Pronunciation settings were built without the owner at the keyboard (see "Fitting the interface to what is learned"). Ask whether the two lists, their wording and the choices listed there suit them.
+2. What to do next: the PWA milestone, which waits on two answers from the owner (roadmap item 8).
 
 ## Roadmap
 
@@ -243,7 +259,7 @@ The owner wants to bring their Skritter data across eventually rather than start
 9. Import the Skritter scheduling data, if the GDPR request (sent 2026-10-12) yields it. The word list itself can be added in the Words tab since 2026-10-12; the owner had said they did not want it imported without scheduling data, so when to do that is theirs to decide.
 10. Merge backups between devices instead of replacing; a settings screen (new words per day, target retention).
 11. **To do, asked for by the owner:**
-    - Fit the interface to what the learner cares about (asked for on 2026-10-12). Two settings: which script is being learned (simplified, traditional, or both), and whether Taiwan pronunciation matters (yes or no). Someone learning only simplified should not be asked for traditional characters or a Taiwan reading when adding a word; someone learning only traditional should not see simplified. This reaches beyond the Add a word form: the word list's rows, the word's pop-up panel, the list import's columns, the "Taiwan:" or "mainland:" reading shown on cards, and tone cards accepting the other region's tone. It replaces or extends today's `script` and `pronunciation` settings. To settle first: a word's ID is `<traditional>|<pinyin>` and every word stores both scripts, so a simplified-only learner still needs a traditional form stored (from the dictionary where it has the word, otherwise the simplified form itself).
+    - **Done on 2026-10-13:** fit the interface to the script and pronunciation being learned (see "Fitting the interface to what is learned"). The owner has not seen it yet.
     - **Done for writing:** a browser test suite that lives in the repo and runs in parallel (see "Browser tests"). Still open: its known failures, and browser tests for the cards and settings, which are still only checked by hand.
     - The browser grid's remaining failures (listed under "Browser tests"): at half size the second or third stroke of some characters is rejected, because the size is not yet known after one short stroke; and 學 in the mainland order shifted right. The owner chose on 2026-10-12 to leave these for later. Fixing the first means estimating the size earlier than `MIN_SPAN_FOR_SCALE` allows.
     - Tapping "Free practice" before the app has finished starting throws an error in `setMode` (`src/main.js`), because `review` is not created yet. The app recovers once start-up finishes.

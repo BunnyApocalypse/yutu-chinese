@@ -146,3 +146,25 @@ export function lookUp(dictionary, characters) {
   // sort() keeps the file's order among entries that compare equal.
   return entries.sort((a, b) => Number(isName(a)) - Number(isName(b)));
 }
+
+// How a word is written in the other script, for someone who only types one.
+//
+// entries:    dictionary entries to look in (from lookUp)
+// script:     'traditional' or 'simplified': the script `characters` is in
+// characters: the word as typed
+// pinyin:     its reading, tidied
+//
+// Several words can be written alike in one script and differently in the
+// other (发 is both 發 fā and 髮 fà), so the entry with the same reading is
+// used; failing that, the dictionary's answer if all its entries agree.
+// Returns `characters` itself if the dictionary cannot tell.
+export function otherScriptForm(entries, script, characters, pinyin) {
+  const other = script === 'traditional' ? 'simplified' : 'traditional';
+  const written = entries.filter((entry) => entry[script] === characters);
+  const sameReading = written.find((entry) => entry.pinyin === pinyin);
+  if (sameReading) {
+    return sameReading[other];
+  }
+  const forms = new Set(written.map((entry) => entry[other]));
+  return forms.size === 1 ? [...forms][0] : characters;
+}

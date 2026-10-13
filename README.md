@@ -13,11 +13,11 @@ Stroke display and grading are done by [Hanzi Writer](https://hanziwriter.org/).
 
   After each card you grade yourself; where the app can check your answer it suggests a grade.
 - **Free practice:** try any kind of card for a word, or write any characters at all. Nothing is recorded.
-- Traditional or simplified, chosen with a switch. Traditional uses Taiwan-standard forms and stroke order; where the mainland stroke order uses the same strokes, that is accepted too.
+- Traditional, simplified or both: learning one script, you are only asked for and shown that one. Traditional uses Taiwan-standard forms and stroke order; where the mainland stroke order uses the same strokes, that is accepted too.
 - Two strokes written without lifting the pen (such as the hook of 子) are accepted where one runs into the next.
 - A built-in list of about 100 common words to start from, and a **Words** tab to add your own: one at a time, with the fields filled in from a built-in dictionary as you type the characters, or as a list from a TSV or CSV file. Words can be searched, changed, moved to the front of the queue, and removed.
 - A choice between keeping your own handwriting on screen ("raw input") and having each correct stroke snap to the printed one.
-- Settings for new words per day, which kinds of card you want, and Taiwan or mainland pronunciation. Tone cards accept both regions' tones.
+- Settings for new words per day, which kinds of card you want, how much of a dictionary entry is filled in as a word's meaning, and pronunciation: mainland only, or both mainland and Taiwan with either one first. With both, tone cards accept both regions' tones.
 
 ## Your data
 

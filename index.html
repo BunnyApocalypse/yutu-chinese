@@ -75,10 +75,8 @@
         <!-- <details> is the browser's built-in fold-out: closed until its summary is tapped. -->
         <details class="add-list">
           <summary>Add a list of words</summary>
-          <p class="hint">
-            One word per line, as in a TSV or CSV file: simplified, traditional, pinyin with
-            tone numbers, meaning, and optionally the Taiwan reading, separated by tabs or commas.
-          </p>
+          <!-- Which columns a list has; worded by wordsPanel.js to suit the settings. -->
+          <p id="list-hint" class="hint"></p>
           <textarea id="list-text" rows="6" aria-label="Word list" spellcheck="false"></textarea>
           <div class="buttons">
             <button id="list-file-button" class="small" type="button">Choose a file</button>
@@ -189,16 +187,19 @@
         <label class="setting">
           Script
           <select id="script-select">
-            <option value="traditional">Traditional 繁體</option>
-            <option value="simplified">Simplified 简体</option>
+            <option value="traditional">Traditional only 繁體</option>
+            <option value="simplified">Simplified only 简体</option>
+            <option value="both-traditional">Both, cards in traditional</option>
+            <option value="both-simplified">Both, cards in simplified</option>
           </select>
         </label>
 
         <label class="setting">
           Pronunciation
           <select id="pronunciation-select">
-            <option value="mainland">Mainland</option>
-            <option value="taiwan">Taiwan</option>
+            <option value="mainlandOnly">Mainland only</option>
+            <option value="mainland">Both, mainland first</option>
+            <option value="taiwan">Both, Taiwan first</option>
           </select>
         </label>
 

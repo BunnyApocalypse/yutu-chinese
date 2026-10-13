@@ -111,7 +111,13 @@ export function createReview(elements, flows, settings) {
   // tone table is keyed by traditional characters, whatever script is shown.
   function toneAnswersOf(word) {
     const reading = readingOf(word);
-    return toneAnswers(Array.from(word.traditional), reading.primary, reading.other, toneTable);
+    return toneAnswers(
+      Array.from(word.traditional),
+      reading.primary,
+      reading.other,
+      toneTable,
+      settings.pronunciation !== 'mainlandOnly',
+    );
   }
 
   function showPinyin() {

@@ -257,6 +257,9 @@ test('the pronunciation setting decides which reading is expected', () => {
   const garbage = { traditional: '垃圾', pinyin: 'la1ji1' };
   assert.equal(readingsFor(garbage, 'taiwan', toneTable).primary, 'le4se4');
   assert.equal(readingsFor(garbage, 'mainland', toneTable).other, 'le4se4');
+  // Someone learning mainland pronunciation only is never shown a Taiwan reading.
+  assert.deepEqual(readingsFor(week, 'mainlandOnly', toneTable), { primary: 'xing1qi1', other: null, otherLabel: null });
+  assert.equal(readingsFor(garbage, 'mainlandOnly', toneTable).other, null);
 });
 
 test("the other region's tone is accepted as a variant", () => {
@@ -281,6 +284,8 @@ test('the tone table adds regional and neutral-tone variants', () => {
   // 期 is qī on the mainland and qí in Taiwan, even where the word itself
   // lists no Taiwan reading.
   assert.deepEqual(toneAnswers(['日', '期'], 'ri4qi1', null, toneTable)[1].variantTones, [2]);
+  // ... unless only one region's pronunciation is being learned.
+  assert.deepEqual(toneAnswers(['日', '期'], 'ri4qi1', null, toneTable, false)[1].variantTones, []);
   // Where the list says neutral, the character's own tone is accepted too.
   assert.deepEqual(toneAnswers(['朋', '友'], 'peng2you5', null, toneTable)[1], {
     syllable: 'you5',

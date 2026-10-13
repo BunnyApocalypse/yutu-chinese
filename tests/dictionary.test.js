@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-import { readDictionary, lookUp, proposeMeaning } from '../src/dictionary.js';
+import { readDictionary, lookUp, proposeMeaning, otherScriptForm } from '../src/dictionary.js';
 import { checkWord, tidyPinyin } from '../src/words.js';
 
 const SMALL = [
@@ -78,6 +78,22 @@ test('grammar and style labels are dropped, except when everything is asked for'
 });
 
 const realText = fs.readFileSync('data/cedict/dictionary.tsv', 'utf8');
+
+test('the other script is taken from the entry with the same reading', () => {
+  const dictionary = readDictionary(realText);
+  const other = (script, characters, pinyin) =>
+    otherScriptForm(lookUp(dictionary, characters), script, characters, pinyin);
+  assert.equal(other('simplified', '学习', 'xue2xi2'), '學習');
+  assert.equal(other('traditional', '學習', 'xue2xi2'), '学习');
+  // 发 is two words, written differently in traditional.
+  assert.equal(other('simplified', '发', 'fa1'), '發');
+  assert.equal(other('simplified', '发', 'fa4'), '髮');
+  // Another reading than the dictionary's still finds the word if there is only one way to write it.
+  assert.equal(other('simplified', '学习', 'xue2xi5'), '學習');
+  // Where the dictionary cannot tell, the characters stay as they are.
+  assert.equal(other('simplified', '发', 'fa3'), '发');
+  assert.equal(other('simplified', '不在词典里的词', 'bu4'), '不在词典里的词');
+});
 
 test('the real dictionary is well formed', () => {
   const lines = realText.split('\n').filter((line) => line !== '' && !line.startsWith('#'));

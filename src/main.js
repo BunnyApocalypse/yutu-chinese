@@ -109,7 +109,7 @@ async function loadWordList() {
   byId('word-suggestions').replaceChildren(
     ...wordList.map((word) => {
       const option = document.createElement('option');
-      option.value = word.traditional;
+      option.value = word[settings.script];
       return option;
     }),
   );
@@ -122,7 +122,7 @@ const wordsPanel = createWordsPanel(
     await review.load();
     await loadWordList();
   },
-  () => settings.meaningDetail,
+  () => settings,
 );
 
 // Free practice: any kind of card for what is in the text box. Nothing is
@@ -199,7 +199,10 @@ wordForm.addEventListener('submit', (event) => {
 
 // Called whenever a setting changes: show the current card or word afresh.
 function onSettingsChange() {
-  if (mode === 'review') {
+  loadWordList(); // the suggestions are in the script being learned
+  if (mode === 'words') {
+    wordsPanel.show();
+  } else if (mode === 'review') {
     review.refresh();
   } else if (mode === 'practice') {
     startFreePractice();

@@ -17,9 +17,16 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 // onChange: called after any setting changes
 //
 // Returns an object whose properties are the current settings:
-//   script:         'traditional' or 'simplified'
-//   pronunciation:  'mainland' or 'taiwan': which reading is shown and
-//                   expected where a word is pronounced differently
+//   script:         'traditional' or 'simplified': the script cards are
+//                   shown and written in
+//   bothScripts:    true if both scripts are being learned; false if only
+//                   `script` is, and the other one is kept out of sight
+//   pronunciation:  which reading is shown and expected where a word is
+//                   pronounced differently in Taiwan:
+//                   'mainland' or 'taiwan': that one, with the other shown
+//                   beside it and its tones accepted too
+//                   'mainlandOnly': the mainland one, and Taiwan readings
+//                   are kept out of sight
 //   rawInput:      true to keep your own strokes on screen when writing,
 //                   false to replace each correct stroke with the printed one
 //   meaningDetail:  'first', 'everyday' or 'all': how much of a dictionary
@@ -44,6 +51,7 @@ export async function createSettings(elements, onChange) {
 
   const settings = {
     script: await getSetting('script', 'traditional'),
+    bothScripts: await getSetting('bothScripts', true),
     pronunciation: await getSetting('pronunciation', 'mainland'),
     // Saved as 'rawSquigs' before the setting was renamed; a device that still
     // has it under the old name keeps its choice.
@@ -55,7 +63,8 @@ export async function createSettings(elements, onChange) {
 
   // Shows the current settings in the panel's controls.
   function fillPanel() {
-    scriptSelect.value = settings.script;
+    // The Script list has four choices, for the two settings together.
+    scriptSelect.value = settings.bothScripts ? `both-${settings.script}` : settings.script;
     pronunciationSelect.value = settings.pronunciation;
     handwritingSelect.value = settings.rawInput ? 'raw' : 'snap';
     meaningDetailSelect.value = settings.meaningDetail;
@@ -71,7 +80,12 @@ export async function createSettings(elements, onChange) {
     onChange();
   }
 
-  scriptSelect.addEventListener('change', () => change('script', scriptSelect.value));
+  scriptSelect.addEventListener('change', async () => {
+    const both = scriptSelect.value.startsWith('both-');
+    settings.bothScripts = both;
+    await setSetting('bothScripts', both);
+    await change('script', scriptSelect.value.replace('both-', ''));
+  });
   pronunciationSelect.addEventListener('change', () =>
     change('pronunciation', pronunciationSelect.value),
   );

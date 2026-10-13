@@ -8,6 +8,7 @@ import {
   checkWord,
   splitCsvLine,
   readWordList,
+  charactersShown,
   newWordRecords,
   wordsWithSameCharacters,
   orderForStudyingNext,
@@ -105,6 +106,32 @@ test('lines that cannot be used are reported with their line number', () => {
   assert.deepEqual(problems.map((problem) => problem.lineNumber), [3, 4]);
   assert.ok(problems[0].problem); // a header line is not a word
   assert.match(problems[1].problem, /four columns/);
+});
+
+test('a list with one column of characters is read too', () => {
+  // The second column being pinyin is what gives it away.
+  const toBoth = (characters, pinyin) => ({ simplified: characters, traditional: `${characters}(${pinyin})` });
+  const tsv = readWordList('学习\txue2 xi2\tto study\n垃圾\tla1ji1\ttrash\tle4se4\n', toBoth);
+  assert.equal(tsv.problems.length, 0);
+  assert.deepEqual(tsv.words[0], { simplified: '学习', traditional: '学习(xue2xi2)', pinyin: 'xue2xi2', definition: 'to study' });
+  assert.equal(tsv.words[1].pinyinTaiwan, 'le4se4');
+  // Skritter-style CSV, without quotes around the commas.
+  const csv = readWordList('地方,di4fang5, di4fang1,place, region, part\n', toBoth);
+  assert.equal(csv.words[0].pinyin, 'di4fang5, di4fang1');
+  assert.equal(csv.words[0].definition, 'place, region, part');
+  // Without anything to ask, both scripts are taken to be the same.
+  assert.equal(readWordList('学习\txue2xi2\tto study\n').words[0].traditional, '学习');
+  // Two columns of characters are left as they are.
+  assert.equal(readWordList('学习\t學習\txue2xi2\tto study\n', toBoth).words[0].traditional, '學習');
+});
+
+test('characters are shown in the script being learned', () => {
+  const study = { traditional: '學習', simplified: '学习' };
+  assert.equal(charactersShown(study, 'traditional', false), '學習');
+  assert.equal(charactersShown(study, 'simplified', false), '学习');
+  assert.equal(charactersShown(study, 'traditional', true), '學習 · 学习');
+  assert.equal(charactersShown(study, 'simplified', true), '学习 · 學習');
+  assert.equal(charactersShown({ traditional: '好', simplified: '好' }, 'simplified', true), '好');
 });
 
 const stored = [
