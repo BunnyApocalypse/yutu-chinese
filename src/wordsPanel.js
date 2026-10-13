@@ -10,7 +10,7 @@ import { getAll, putAll, removeWord, renameWord } from './db.js';
 import { formatPinyin, wordId } from './wordList.js';
 import { allCardIds } from './session.js';
 import { fileCardsByScript } from './scriptCards.js';
-import { missingReadyMadeDecks, deckTree, deckWithInside, isInDecks, withDeck } from './decks.js';
+import { missingReadyMadeDecks, deckTree, deckWithInside, isInDecks, withDeck, DEFAULT_DECK } from './decks.js';
 import { createDecksPanel } from './decksPanel.js';
 import { createCardsPanel } from './cardsPanel.js';
 import { createWordPage } from './wordPage.js';
@@ -237,8 +237,10 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     edit: (word) => openDialog(words.find((entry) => entry.id === word.id) || word),
     addSentence: (sentence, deckId) => addSentence(sentence, deckId),
     // The deck a sentence added from a page goes into unless another is
-    // chosen: the one whose page is open, else the first.
-    defaultDeckId: () => (openDeck() || decks[0] || {}).id,
+    // chosen: the one whose page is open, else the deck the app starts
+    // with, else the first there is.
+    defaultDeckId: () =>
+      (openDeck() || decks.find((deck) => deck.id === DEFAULT_DECK.id) || deckTree(decks)[0]?.deck || {}).id,
   });
 
   // ---- Sentences ----

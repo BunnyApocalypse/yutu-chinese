@@ -773,7 +773,27 @@ button.word-entry {
 .word-page-body {
   max-height: 72vh;
   overflow-y: auto;
+  /* Nothing on the page is wider than it; without this a long line can
+     still bring up a bar for scrolling sideways. */
+  overflow-x: hidden;
   margin-bottom: 12px;
+}
+
+/* Under the example sentence: "Study this sentence in [deck] [Add sentence]". */
+.page-add-sentence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin-top: 6px;
+  font-size: 0.9rem;
+  color: #6b6557;
+}
+
+.page-add-sentence select {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 55%;
 }
 
 .page-heading {

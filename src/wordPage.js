@@ -16,7 +16,7 @@ import { scriptFor } from './words.js';
 import { readingsFor, describeReading } from './tones.js';
 import { parseNotes, noteFor, sentenceWords } from './notes.js';
 import { parseCharacters, structureOf } from './characters.js';
-import { deckTree } from './decks.js';
+import { deckTree, readyMadeDeck } from './decks.js';
 import { fillDeckSelect } from './decksPanel.js';
 import { speak } from './speech.js';
 // "?url" makes Vite hand us each file's address instead of its contents.
@@ -174,14 +174,19 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
     section.append(element('p', 'page-pinyin', note.example.pinyin), element('p', 'page-english', note.example.english));
 
     // The sentence can be studied too: it goes into a deck, in both scripts.
-    const adding = element('div', 'buttons page-add-sentence');
-    const deckSelect = element('select');
+    const adding = element('div', 'page-add-sentence');
+    const deckSelect = element('select', 'deck-select');
     deckSelect.setAttribute('aria-label', 'Deck to add the sentence to');
-    fillDeckSelect(deckSelect, getDecks(), []);
-    if (defaultDeckId()) {
-      deckSelect.value = defaultDeckId();
+    // Only the learner's own decks are offered: the decks of the ready-made
+    // lists are those lists' words, and there are hundreds of them. (All of
+    // them, if there are no others.)
+    const own = getDecks().filter((deck) => !readyMadeDeck(deck.id));
+    fillDeckSelect(deckSelect, own.length > 0 ? own : getDecks(), []);
+    const preferred = defaultDeckId();
+    if ([...deckSelect.options].some((option) => option.value === preferred)) {
+      deckSelect.value = preferred;
     }
-    const addButton = element('button', 'small', 'Add this sentence to the deck');
+    const addButton = element('button', 'small', 'Add sentence');
     addButton.type = 'button';
     const said = element('p', 'note');
     addButton.addEventListener('click', async () => {
@@ -202,7 +207,7 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
             ? 'You had this sentence already. It is in that deck now too.'
             : 'This sentence is already in that deck.';
     });
-    adding.append(deckSelect, addButton);
+    adding.append(element('span', '', 'Study this sentence in'), deckSelect, addButton);
     section.append(adding, said);
     return section;
   }
