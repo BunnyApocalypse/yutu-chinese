@@ -536,6 +536,13 @@ button.verdict.selected.missed {
   background: rgba(0, 0, 0, 0.4);
 }
 
+/* A list with a long choice in it must not push the panel wider than the
+   screen: it is cut short with "…" instead (the open list shows it whole). */
+.settings-panel select {
+  max-width: 100%;
+  text-overflow: ellipsis;
+}
+
 .settings-panel h2 {
   margin: 0 0 12px;
   font-size: 1.2rem;
