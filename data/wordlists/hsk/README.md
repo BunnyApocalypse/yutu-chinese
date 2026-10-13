@@ -9,7 +9,7 @@ The word lists of the HSK (Hanyu Shuiping Kaoshi, 汉语水平考试), mainland 
 
 Both are built by `scripts/build-word-lists.js`, one word per line with tabs between the columns: level, simplified, traditional, pinyin, meaning. The meaning is empty wherever the app's dictionary has the word with that reading (nearly always); the app then proposes one from the dictionary.
 
-The lower levels (HSK 3.0 levels 1 to 3, HSK 2.0 levels 1 to 3) have a sixth column, the word's group, and are in an order for learning instead of alphabetical: see `groups/README.md`.
+The lower levels (HSK 3.0 levels 1 to 6, HSK 2.0 levels 1 to 5) have a sixth column, the word's group, and are in an order for learning instead of alphabetical: see `groups/README.md`.
 
 ## Sources
 
