@@ -32,6 +32,15 @@ test('an example sentence is split into its words by its pinyin', () => {
   ]);
 });
 
+test('a note is found by the word and its reading, or by the character alone for a part', () => {
+  const notes = parseNotes('我们\two3men5\tA note.\t我们是同学。\t我們是同學。\tWǒmen shì tóngxué.\tWe are classmates.\n氵\t\tThe water radical.\n');
+  assert.equal(noteFor(notes, { simplified: '我们', pinyin: 'wo3men5' }).example.english, 'We are classmates.');
+  assert.equal(noteFor(notes, { simplified: '我们', pinyin: 'wo3men2' }), null);
+  // A part of a character: whatever reading the dictionary gives it, and no sentence.
+  assert.deepEqual(noteFor(notes, { simplified: '氵', pinyin: 'shui3' }), { note: 'The water radical.', example: null });
+  assert.deepEqual(noteFor(notes, { simplified: '氵', pinyin: '' }), { note: 'The water radical.', example: null });
+});
+
 test('a character\'s parts are listed, with the one for meaning and the one for sound', () => {
   const characters = parseCharacters(fs.readFileSync('data/makemeahanzi/dictionary.txt', 'utf8'));
   assert.ok(characters.size > 9000);

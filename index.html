@@ -437,6 +437,79 @@
         </form>
       </dialog>
 
+      <!-- Says when something has gone wrong, and offers the details to copy (errors.js). -->
+      <p id="error-banner" class="error-banner" hidden>
+        Something went wrong.
+        <button id="error-details-button" class="link-button" type="button">Details</button>
+      </p>
+      <dialog id="error-dialog" class="settings-panel">
+        <h2>Something went wrong</h2>
+        <p class="hint">
+          The app may still work; if it does not, close it and open it again. Your words and progress are not
+          touched by this. If you report it, these details help. They hold nothing about your words or your studying.
+        </p>
+        <textarea id="error-text" rows="8" readonly aria-label="Details of what went wrong"></textarea>
+        <div class="buttons">
+          <button id="error-copy-button" class="small primary" type="button">Copy</button>
+          <button id="error-close-button" class="small" type="button">Close</button>
+        </div>
+      </dialog>
+
+      <!-- Whose work the app is built on. Each of these asks to be credited where it is used. -->
+      <dialog id="credits-dialog" class="settings-panel">
+        <h2>Credits and licenses</h2>
+        <div class="word-page-body credits">
+          <p>
+            <b>Hanzi Trainer</b> is free software under the GNU General Public License, version 3. Its source is at
+            <a href="https://github.com/BunnyApocalypse/hanzi-trainer" target="_blank" rel="noopener">github.com/BunnyApocalypse/hanzi-trainer</a>.
+            It comes with no warranty.
+          </p>
+          <p>It is built on the work of others, each under its own license:</p>
+          <ul>
+            <li>
+              <b>Stroke data:</b> <a href="https://github.com/skishore/makemeahanzi" target="_blank" rel="noopener">Make Me a Hanzi</a>
+              (by way of hanzi-writer-data) and <a href="https://github.com/parsimonhi/animCJK" target="_blank" rel="noopener">AnimCJK</a>
+              for Taiwan's forms, both derived from fonts by Arphic Technology. Arphic Public License.
+            </li>
+            <li>
+              <b>Showing and checking strokes:</b> <a href="https://hanziwriter.org" target="_blank" rel="noopener">Hanzi Writer</a> by David Chanin. MIT License.
+            </li>
+            <li>
+              <b>Scheduling:</b> the FSRS method, in <a href="https://github.com/open-spaced-repetition/ts-fsrs" target="_blank" rel="noopener">ts-fsrs</a>. MIT License.
+            </li>
+            <li>
+              <b>Dictionary and tones:</b> <a href="https://cc-cedict.org" target="_blank" rel="noopener">CC-CEDICT</a>.
+              Creative Commons Attribution-ShareAlike 4.0.
+            </li>
+            <li>
+              <b>Recordings:</b> <a href="https://github.com/hugolpz/audio-cmn" target="_blank" rel="noopener">audio-cmn</a>:
+              syllables spoken by Chen Wang, words spoken by Yue Tan (Shtooka project), collected by Hugo Lopez.
+              Creative Commons Attribution-ShareAlike.
+            </li>
+            <li>
+              <b>How characters are built:</b> the dictionary of Make Me a Hanzi (from Unihan and CJKlib). GNU Lesser General Public License.
+            </li>
+            <li>
+              <b>Learning tips and example sentences:</b> written for this app by an AI model (Anthropic's Claude), drawing on
+              <a href="https://en.wiktionary.org" target="_blank" rel="noopener">Wiktionary</a> for the origins of characters.
+              Creative Commons Attribution-ShareAlike 4.0. No fluent speaker has checked them line by line: they may be wrong.
+            </li>
+            <li>
+              <b>HSK word lists:</b> from <a href="https://github.com/ivankra/hsk30" target="_blank" rel="noopener">ivankra/hsk30</a>
+              and <a href="https://github.com/glxxyz/hskhsk.com" target="_blank" rel="noopener">glxxyz/hskhsk.com</a>. MIT License.
+              Their grouping into themes was made for this app by AI models. MIT License.
+            </li>
+            <li>
+              <b>TOCFL word list:</b> the 華語八千詞表 published by Taiwan's Steering Committee for the Test of Proficiency-Huayu.
+              The committee states no license for it.
+            </li>
+          </ul>
+        </div>
+        <div class="buttons">
+          <button id="credits-close" class="small primary" type="button">Close</button>
+        </div>
+      </dialog>
+
       <!-- Asks before something that cannot be undone (confirm.js). -->
       <dialog id="confirm-dialog" class="settings-panel">
         <h2 id="confirm-question"></h2>
@@ -804,7 +877,10 @@
           <summary>Help</summary>
         <div class="setting">
           <button id="welcome-again-button" class="small" type="button">Show the introduction again</button>
+          <button id="credits-button" class="small" type="button">Credits and licenses</button>
         </div>
+        <!-- Which version of the app this is (errors.js). -->
+        <p id="app-version" class="hint"></p>
         </details>
 
 

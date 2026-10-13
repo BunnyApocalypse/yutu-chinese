@@ -19,6 +19,7 @@ import { buildBackup, checkBackup, describeBackup, restoreBackup } from './backu
 import { mergeBackups, describeMerge } from './merge.js';
 import { ask, tell } from './confirm.js';
 import { clampWithToggle } from './clamp.js';
+import { watchForErrors, showVersion } from './errors.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -87,6 +88,22 @@ async function removeOldBuiltInWords() {
   }
   await setSetting('oldBuiltInWordsRemoved', true);
 }
+
+// Errors that nothing else catches are said on the page, with details to
+// copy. Set up first of all, so that a failure while starting is caught too.
+watchForErrors({
+  banner: byId('error-banner'),
+  detailsButton: byId('error-details-button'),
+  dialog: byId('error-dialog'),
+  textElement: byId('error-text'),
+  copyButton: byId('error-copy-button'),
+  closeButton: byId('error-close-button'),
+});
+showVersion();
+
+// "Credits and licenses", under Help in Settings.
+byId('credits-button').addEventListener('click', () => byId('credits-dialog').showModal());
+byId('credits-close').addEventListener('click', () => byId('credits-dialog').close());
 
 // A long meaning in the prompt above a card is cut off after two lines.
 clampWithToggle(byId('prompt-meaning'), byId('meaning-more'));

@@ -103,4 +103,26 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     assert.equal(await page.evaluate(`document.getElementById('word-page').open`), false);
     assert.equal(await inView(page, 'word-list'), false);
   });
+
+  it('says which version it is, whose work it is built on, and when something goes wrong', async () => {
+    await tap(page, 'settings-button');
+    assert.match(await textOf(page, 'app-version'), /^Version \d+\.\d+\.\d+ \(/);
+    await tap(page, 'credits-button');
+    assert.equal(await page.evaluate(`document.getElementById('credits-dialog').open`), true);
+    assert.match(await textOf(page, '#credits-dialog .credits'), /CC-CEDICT[\s\S]*Chen Wang[\s\S]*Arphic/);
+    await tap(page, 'credits-close');
+    await tap(page, 'settings-close');
+
+    // An error nothing caught, as the browser would announce it.
+    assert.equal(await page.evaluate(`document.getElementById('error-banner').hidden`), true);
+    await page.evaluate(`window.dispatchEvent(new ErrorEvent('error', { message: 'boom', filename: 'somewhere.js', lineno: 7 }))`);
+    assert.equal(await page.evaluate(`document.getElementById('error-banner').hidden`), false);
+    await tap(page, 'error-details-button');
+    const details = await page.evaluate(`document.getElementById('error-text').value`);
+    assert.match(details, /^Hanzi Trainer \d+\.\d+\.\d+ \(/);
+    assert.match(details, /Browser: /);
+    assert.match(details, /boom \(somewhere\.js:7\)/);
+    await tap(page, 'error-close-button');
+    assert.equal(await page.evaluate(`document.getElementById('error-banner').hidden`), true);
+  });
 });

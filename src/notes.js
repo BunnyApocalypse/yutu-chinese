@@ -5,8 +5,13 @@
 //   simplified, pinyin, note, example (simplified), example (traditional),
 //   example pinyin (tone marks, a space between words), example in English
 //
+// A file of notes about parts of characters (the radicals) has the part in
+// the first column, nothing in the second, and no example sentence: such a
+// note is found by the character alone.
+//
 // Returns a Map from "simplified pinyin" (pinyin as stored, with tone
-// numbers) to { note, example: { simplified, traditional, pinyin, english } }.
+// numbers) to { note, example }, where example is { simplified,
+// traditional, pinyin, english } or null.
 export function parseNotes(text) {
   const notes = new Map();
   for (const line of text.split('\n')) {
@@ -16,15 +21,20 @@ export function parseNotes(text) {
     const [simplified, pinyin, note, exampleSimplified, exampleTraditional, examplePinyin, english] = line.split('\t');
     notes.set(`${simplified} ${pinyin}`, {
       note,
-      example: { simplified: exampleSimplified, traditional: exampleTraditional, pinyin: examplePinyin, english },
+      // A note about a part of a character (see below) has no sentence.
+      example: exampleSimplified
+        ? { simplified: exampleSimplified, traditional: exampleTraditional, pinyin: examplePinyin, english }
+        : null,
     });
   }
   return notes;
 }
 
-// The note for a word record, or null.
+// The note for a word record, or null: the one for the word in this
+// reading, else one for its characters whatever the reading (a part of a
+// character).
 export function noteFor(notes, word) {
-  return notes.get(`${word.simplified} ${word.pinyin}`) || null;
+  return notes.get(`${word.simplified} ${word.pinyin}`) || notes.get(`${word.simplified} `) || null;
 }
 
 const VOWELS = 'aeiouüāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ';

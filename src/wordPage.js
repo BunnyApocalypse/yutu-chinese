@@ -159,6 +159,11 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
     const section = element('section', 'page-section');
     section.append(element('h3', '', 'Learning tips'), element('p', 'page-note', note.note));
 
+    // A note about a part of a character has no example sentence.
+    if (!note.example) {
+      return section;
+    }
+
     const scripts = settings.bothScripts
       ? [settings.script, settings.script === 'traditional' ? 'simplified' : 'traditional']
       : [settings.script];
