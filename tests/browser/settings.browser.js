@@ -147,4 +147,27 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     await type(page, 'word-search', 'building');
     await waitUntil(page, `${rows(1)} && document.querySelector('#word-list li').textContent.startsWith('图书馆 · 圖書館')`);
   });
+
+  it('opens a tab that was tapped before the app had started', async () => {
+    // Makes every page loaded from now on tap Free practice as soon as it has
+    // been read, which is before the app has opened its database.
+    // Page.enable switches on the part of the DevTools protocol the next command belongs to.
+    await page.send('Page.enable');
+    await page.send('Page.addScriptToEvaluateOnNewDocument', {
+      source: `document.addEventListener('DOMContentLoaded', () => document.getElementById('practice-tab').click())`,
+    });
+    await page.evaluate('window.loadedBefore = true');
+    await page.send('Page.reload');
+    // The page is briefly gone while it loads, so asking it can fail; keep trying.
+    let started = false;
+    for (let attempt = 0; attempt < 100 && !started; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      started = await page
+        .evaluate(`!window.loadedBefore &&
+          document.getElementById('practice-tab').classList.contains('selected') &&
+          document.getElementById('status').textContent.startsWith('Stroke 1 of')`)
+        .catch(() => false);
+    }
+    assert.ok(started, 'Free practice did not open');
+  });
 });

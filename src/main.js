@@ -170,6 +170,11 @@ function setMode(newMode) {
   wordForm.hidden = mode !== 'practice';
   wordsPanelElement.hidden = mode !== 'words';
   noteElement.textContent = '';
+  if (!review) {
+    // A tab was tapped before the app finished starting. The tab is marked;
+    // startUp() opens it once the database has been read.
+    return undefined;
+  }
   if (reviewing) {
     return review.activate();
   }
@@ -332,7 +337,8 @@ async function startUp() {
 
   await loadWordList();
 
-  await setMode('review');
+  // Review, unless another tab was tapped in the meantime.
+  await setMode(mode);
 }
 
 startUp();

@@ -15,7 +15,7 @@
 import HanziWriter from 'hanzi-writer';
 import { loadCharData } from './charData.js';
 import { isShortcutStroke, joinedLine } from './shortcuts.js';
-import { fitFrame, applyFrame, framesDiffer, NO_FRAME } from './frame.js';
+import { fitFrame, applyFrame, framesDiffer, sizeIsKnown, NO_FRAME } from './frame.js';
 import { toPoints, resample, averageDistance } from './lines.js';
 import {
   fitsStroke,
@@ -379,9 +379,18 @@ export function createQuiz(target, size, handlers) {
       return null;
     }
     const points = stroke.drawnPath.points;
+    const reference = toPoints(baseData.medians[reading.strokeNum]);
     // Read differently, the strokes say something different about where the
-    // character is being written.
-    const otherFrame = reading.sinceSync > 0 && canFollow() ? fitFrame(reading.accepted) : frame;
+    // character is being written. If they are too few to say how big (see
+    // isExpectedStrokeAtAnotherSize), the stroke just drawn is counted in.
+    let otherFrame = frame;
+    if (reading.sinceSync > 0 && canFollow()) {
+      otherFrame = fitFrame(
+        sizeIsKnown(reading.accepted)
+          ? reading.accepted
+          : [...reading.accepted, { reference, drawn: points }],
+      );
+    }
     const fits = (drawn, reference, leniency, isFirstStroke = false) =>
       // fitsStroke takes a middle line as [x, y] pairs.
       fitsStroke(
@@ -394,7 +403,6 @@ export function createQuiz(target, size, handlers) {
     // With nothing written yet, nobody knows where the character will be.
     const nothingWritten = acceptedStrokes.length === 0 && canFollow();
     const leniency = nothingWritten ? LENIENCY * FIRST_STROKE_EXTRA_LENIENCY : LENIENCY;
-    const reference = toPoints(baseData.medians[reading.strokeNum]);
     if (!fits(points, reference, leniency, nothingWritten)) {
       return null;
     }
@@ -428,6 +436,17 @@ export function createQuiz(target, size, handlers) {
       }
     }
     return { ...reading, frame: otherFrame };
+  }
+
+  // A rejected stroke can pass both as a shortcut (the next two strokes
+  // joined) and as the next stroke of the other order: written to the right,
+  // the left-hand 丨 of 學 runs alongside the 丶 and ノ of the 爻 joined up.
+  // True if it sits closer to the other order's stroke than to the joined pair.
+  function otherOrderIsCloser(stroke, reading) {
+    const drawn = resample(stroke.drawnPath.points);
+    const asOtherOrder = moved(toPoints(baseData.medians[reading.strokeNum]), reading.frame);
+    const asShortcut = joinedLine(charData, stroke.strokeNum);
+    return averageDistance(drawn, resample(asOtherOrder)) < averageDistance(drawn, resample(asShortcut));
   }
 
   // For a stroke Hanzi Writer has accepted: returns how to carry on in the
@@ -479,6 +498,44 @@ export function createQuiz(target, size, handlers) {
         LENIENCY * FIRST_STROKE_EXTRA_LENIENCY,
         true,
       )
+    );
+  }
+
+  // True if the rejected stroke is the expected one after all, written at a
+  // size nobody could know yet.
+  //
+  // One short stroke says where a character is being written but not how big
+  // (see MIN_SPAN_FOR_SCALE in frame.js), so the second or third stroke is
+  // still expected at full size. Written at half size it lands too close to
+  // the first and is rejected. So we ask: taking this stroke as the expected
+  // one, is there a size at which it and every stroke before it sit on their
+  // references? If so, that is the size being written.
+  function isExpectedStrokeAtAnotherSize(stroke) {
+    if (!canFollow() || acceptedStrokes.length === 0 || sizeIsKnown(acceptedStrokes)) {
+      return false;
+    }
+    const pairs = [
+      ...acceptedStrokes,
+      {
+        reference: toPoints(baseData.medians[sequence[stroke.strokeNum]]),
+        drawn: stroke.drawnPath.points,
+      },
+    ];
+    if (!sizeIsKnown(pairs)) {
+      return false;
+    }
+    const withSize = fitFrame(pairs);
+    // What fitsStroke allows is measured for a full-size character. In a
+    // small one the strokes lie closer together, so less is allowed, or a
+    // neighboring stroke of the same shape would pass too.
+    const leniency = LENIENCY * Math.min(1, withSize.scale);
+    return pairs.every((pair) =>
+      // fitsStroke takes a middle line as [x, y] pairs.
+      fitsStroke(
+        pair.drawn,
+        moved(pair.reference, withSize).map((point) => [point.x, point.y]),
+        leniency,
+      ),
     );
   }
 
@@ -566,7 +623,8 @@ export function createQuiz(target, size, handlers) {
       // Hanzi Writer rejected the stroke. It may still be a shortcut, or the
       // next stroke of the character's other accepted order.
       onMistake: (stroke) => {
-        if (drewShortcut(stroke)) {
+        const otherReading = otherOrderFor(stroke);
+        if (drewShortcut(stroke) && !(otherReading && otherOrderIsCloser(stroke, otherReading))) {
           keepDrawnStroke(stroke.drawnPath.pathString);
           noteAccepted(
             stroke.strokeNum,
@@ -583,7 +641,6 @@ export function createQuiz(target, size, handlers) {
           }
           return;
         }
-        const otherReading = otherOrderFor(stroke);
         if (otherReading) {
           keepDrawnStroke(stroke.drawnPath.pathString);
           switchToOtherOrder(stroke, otherReading, totalStrokes);
@@ -599,6 +656,19 @@ export function createQuiz(target, size, handlers) {
           writer.skipQuizStroke();
           if (totalStrokes > 1 && refitFrame()) {
             resume(1);
+          }
+          return;
+        }
+        // The expected stroke, written at a size that was not known yet:
+        // accept it, and let the frame take on that size.
+        if (isExpectedStrokeAtAnotherSize(stroke)) {
+          keepDrawnStroke(stroke.drawnPath.pathString);
+          noteAccepted(stroke.strokeNum, [sequence[stroke.strokeNum]], stroke.drawnPath.points);
+          const strokesDone = stroke.strokeNum + 1;
+          handlers.onProgress({ strokesDone, totalStrokes, totalMistakes: mistakes });
+          writer.skipQuizStroke();
+          if (strokesDone < totalStrokes && refitFrame()) {
+            resume(strokesDone);
           }
           return;
         }

@@ -279,7 +279,7 @@ async function openFreePractice(page, appUrl) {
     try {
       const status = await page.evaluate(`(() => {
         // The app has started once Review shows a card or says nothing is due.
-        // (Tapping a tab before that fails: main.js is still opening the database.)
+        // (A tab tapped before that is only opened once the app has started.)
         const started =
           document.getElementById('card-type').textContent !== '' ||
           !document.getElementById('done-panel').hidden;

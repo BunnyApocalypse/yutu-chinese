@@ -40,6 +40,23 @@ function centerOf(points) {
   return { x: sum.x / points.length, y: sum.y / points.length };
 }
 
+// How much room the reference strokes take up, across or down, whichever is
+// more. `reference` is all their points together.
+function spanOf(reference) {
+  const xs = reference.map((point) => point.x);
+  const ys = reference.map((point) => point.y);
+  return Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+}
+
+// True if these strokes (pairs as for fitFrame) are enough to tell how big
+// the character is being written. Until then fitFrame only says where.
+export function sizeIsKnown(pairs) {
+  return (
+    pairs.length > 0 &&
+    spanOf(pairs.flatMap((pair) => resample(pair.reference, POINTS_PER_STROKE))) >= MIN_SPAN_FOR_SCALE
+  );
+}
+
 // Finds the frame that best maps reference strokes onto the strokes drawn.
 //
 // pairs: a list of { reference, drawn }, one per accepted stroke. Both are
@@ -59,10 +76,7 @@ export function fitFrame(pairs) {
   // The size that fits best, by least squares: compare how the points are
   // spread around their centers in the reference and in the drawing.
   let scale = 1;
-  const xs = reference.map((point) => point.x);
-  const ys = reference.map((point) => point.y);
-  const span = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
-  if (span >= MIN_SPAN_FOR_SCALE) {
+  if (spanOf(reference) >= MIN_SPAN_FOR_SCALE) {
     let spread = 0;
     let together = 0;
     reference.forEach((point, index) => {
