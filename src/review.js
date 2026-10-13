@@ -11,8 +11,9 @@
 
 import { getAll, saveReview, randomId } from './db.js';
 import { gradeOptions, GRADES, AGAIN, GOOD } from './scheduler.js';
-import { planSession, suggestGrade, judgeChar, formatInterval, cardId } from './session.js';
+import { planSession, suggestGrade, judgeChar, formatInterval, cardIdFor } from './session.js';
 import { toneAnswers, readingsFor, describeReading } from './tones.js';
+import { scriptFor, scriptFlagFor } from './words.js';
 
 const TYPE_LABELS = {
   writing: 'Writing',
@@ -26,7 +27,7 @@ const RECHECK_MS = 15 * 1000;
 
 // elements: the page elements review controls:
 //   countsElement, typeElement, meaningElement, pinyinElement, pinyinButton,
-//   gradeRow, donePanel, doneMessage, studyArea,
+//   gradeRow, donePanel, doneMessage, studyArea, scriptFlag,
 //   and the parts of the study area that differ per kind of card:
 //   wordRow, statusRow, verdictRow, writingRow, writingButtons, cardFace,
 //   toneButtonRow, orderNote
@@ -45,6 +46,7 @@ export function createReview(elements, flows, settings) {
     donePanel,
     doneMessage,
     studyArea,
+    scriptFlag,
     wordRow,
     statusRow,
     verdictRow,
@@ -95,6 +97,13 @@ export function createReview(elements, flows, settings) {
     // These two belong to the writing card and may be left over from the last one.
     verdictRow.hidden = true;
     orderNote.hidden = true;
+  }
+
+  // Above the card: a note if this word is in another script than the rest
+  // of the deck. Pass null to take it away.
+  function showScriptFlag(word) {
+    scriptFlag.textContent = word ? scriptFlagFor(word, settings) : '';
+    scriptFlag.hidden = scriptFlag.textContent === '';
   }
 
   function stopFlows() {
@@ -152,7 +161,8 @@ export function createReview(elements, flows, settings) {
     const time = finishedAt.getTime();
 
     const newCard = {
-      id: cardId(word.id, type),
+      // Writing cards are kept per script (see cardIdFor).
+      id: cardIdFor(word, type, scriptFor(word, settings)),
       wordId: word.id,
       type,
       due: chosen.due,
@@ -168,7 +178,7 @@ export function createReview(elements, flows, settings) {
       time,
       grade: value,
       suggestedGrade: suggested,
-      script: settings.script,
+      script: scriptFor(current.word, settings),
       log: chosen.log,
       // What was answered; the fields depend on the kind of card.
       ...answerDetails,
@@ -231,8 +241,8 @@ export function createReview(elements, flows, settings) {
       skippedPerChar: result.skippedPerChar,
     });
 
-    return flows.writing.start(word[settings.script], {
-      script: settings.script,
+    return flows.writing.start(word[scriptFor(word, settings)], {
+      script: scriptFor(word, settings),
       rawInput: settings.rawInput,
       continueLabel: null,
       hideOutline: true,
@@ -261,7 +271,7 @@ export function createReview(elements, flows, settings) {
     const { word } = current;
     flows.tone.start({
       word,
-      script: settings.script,
+      script: scriptFor(word, settings),
       reading: readingOf(word),
       answers: toneAnswersOf(word),
       onDone({ givenTones, passedPerChar, variantPerChar }) {
@@ -284,7 +294,7 @@ export function createReview(elements, flows, settings) {
   function showRecallCard(ask) {
     flows.recall.start({
       word: current.word,
-      script: settings.script,
+      script: scriptFor(current.word, settings),
       reading: readingOf(current.word),
       ask,
       onReveal: () => offerGrades(GOOD, {}),
@@ -303,6 +313,7 @@ export function createReview(elements, flows, settings) {
     }
     practicing = true;
     current = { word, type, card: null };
+    showScriptFlag(word);
     showPartsFor(type);
     if (type === 'tone') {
       showToneCard();
@@ -354,6 +365,7 @@ export function createReview(elements, flows, settings) {
       newWordsPerDay: settings.newWordsPerDay,
       enabledTypes: settings.enabledTypes,
       hasCardType,
+      scriptOf: (word) => scriptFor(word, settings),
     });
     countsElement.textContent =
       `Due ${plan.dueCount} · New cards ${plan.newCardCount} · New words ${plan.newWordsLeftToday}`;
@@ -377,6 +389,7 @@ export function createReview(elements, flows, settings) {
     donePanel.hidden = true;
     studyArea.hidden = false;
     typeElement.textContent = TYPE_LABELS[current.type];
+    showScriptFlag(current.word);
     showPartsFor(current.type);
 
     if (current.type === 'writing') {
@@ -423,6 +436,7 @@ export function createReview(elements, flows, settings) {
       stopFlows();
       donePanel.hidden = true;
       studyArea.hidden = false;
+      showScriptFlag(null);
       showPartsFor('writing');
       hideGrades();
     },

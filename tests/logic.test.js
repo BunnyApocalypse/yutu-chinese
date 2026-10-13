@@ -14,6 +14,8 @@ import {
   judgeChar,
   formatInterval,
   cardId,
+  cardIdFor,
+  allCardIds,
   CARD_TYPES,
   SIBLING_GAP_MS,
 } from '../src/session.js';
@@ -23,6 +25,7 @@ import { splitSyllables, toneAnswers, readingsFor } from '../src/tones.js';
 const toneTable = JSON.parse(fs.readFileSync('data/cedict/tones.json', 'utf8'));
 import { parseWordList, wordId, formatPinyin } from '../src/wordList.js';
 import { checkBackup } from '../src/backup.js';
+import { cardsLearnedInSimplified } from '../src/scriptCards.js';
 
 const MINUTE = 60 * 1000;
 const DAY = 24 * 60 * MINUTE;
@@ -210,6 +213,101 @@ test('cards saved before lastReviewedAt existed still hold their siblings back',
   const plan = planSession(makeWords(1), cards, now, ALL_TYPES);
   assert.equal(plan.next, null);
   assert.equal(plan.nextDueAt, now - MINUTE + SIBLING_GAP_MS);
+});
+
+// ---- Writing cards per script ----
+
+// Words written differently in the two scripts, and one written the same.
+const STUDY = { id: '學習|xue2xi2', traditional: '學習', simplified: '学习', order: 0 };
+const BOOK = { id: '書|shu1', traditional: '書', simplified: '书', order: 1 };
+const HELLO = { id: '你好|ni3hao3', traditional: '你好', simplified: '你好', order: 2 };
+const TREE = { id: '樹|shu4', traditional: '樹', simplified: '树', order: 3 };
+
+test('only the writing card of a word that differs is kept per script', () => {
+  assert.equal(cardIdFor(STUDY, 'writing', 'traditional'), '學習|xue2xi2#writing');
+  assert.equal(cardIdFor(STUDY, 'writing', 'simplified'), '學習|xue2xi2#writing#simplified');
+  assert.equal(cardIdFor(STUDY, 'meaning', 'simplified'), '學習|xue2xi2#meaning');
+  assert.equal(cardIdFor(HELLO, 'writing', 'simplified'), '你好|ni3hao3#writing');
+  assert.equal(allCardIds(STUDY).length, 5);
+  assert.equal(allCardIds(HELLO).length, 4);
+});
+
+test('after switching script, writing is learned again and the rest carries over', () => {
+  const now = at('2026-10-12T10:00:00');
+  const old = now - 30 * DAY;
+  const later = now + 30 * DAY;
+  // Everything was studied in simplified; 書 was learned before 學習.
+  const known = (word, type, first) => [
+    cardIdFor(word, type, 'simplified'),
+    { due: later, firstReviewedAt: first, lastReviewedAt: first },
+  ];
+  const cards = new Map(
+    [[STUDY, old], [BOOK, old - DAY], [HELLO, old]].flatMap(([word, first]) =>
+      CARD_TYPES.map((type) => known(word, type, first)),
+    ),
+  );
+  const words = [STUDY, BOOK, HELLO, TREE];
+  const inSimplified = { ...ALL_TYPES, scriptOf: () => 'simplified' };
+  const inTraditional = { ...ALL_TYPES, scriptOf: () => 'traditional' };
+
+  // In simplified nothing is due, and the one new word is next.
+  const before = planSession(words, cards, now, inSimplified);
+  assert.equal(before.next.word, TREE);
+  assert.equal(before.newWordsLeftToday, 1);
+
+  // In traditional the two words that differ are to be written again, the
+  // one learned first coming first and both before the word never seen.
+  const after = planSession(words, cards, now, inTraditional);
+  assert.equal(after.dueCount, 0); // meaning, pinyin and tone keep their schedule
+  assert.deepEqual([after.next.word, after.next.type, after.next.card], [BOOK, 'writing', null]);
+  assert.equal(after.newWordsLeftToday, 3);
+  assert.equal(after.newCardCount, 0);
+
+  // They count toward the day's new words: with a limit of 1, one written
+  // today leaves nothing more for today.
+  cards.set(cardIdFor(BOOK, 'writing', 'traditional'), { due: later, firstReviewedAt: now - MINUTE, lastReviewedAt: now - MINUTE });
+  const limited = planSession(words, cards, now, { ...inTraditional, newWordsPerDay: 1 });
+  assert.equal(limited.next, null);
+  assert.equal(limited.newWordsLeftToday, 0);
+  // With room left, 學習 follows.
+  const more = planSession(words, cards, now, inTraditional);
+  assert.deepEqual([more.next.word, more.next.type], [STUDY, 'writing']);
+  assert.equal(more.newWordsLeftToday, 2);
+
+  // Back in simplified, the old progress is all still there.
+  assert.equal(planSession(words, cards, now, inSimplified).next.word, TREE);
+});
+
+test('a word can be studied in a script of its own', () => {
+  const now = at('2026-10-12T10:00:00');
+  const cards = new Map([
+    [cardIdFor(STUDY, 'writing', 'simplified'), { due: now - MINUTE, firstReviewedAt: now - DAY, lastReviewedAt: now - DAY }],
+  ]);
+  const scriptOf = (word) => (word === STUDY ? 'simplified' : 'traditional');
+  const plan = planSession([STUDY, BOOK], cards, now, { ...WRITING_ONLY, scriptOf });
+  assert.equal(plan.next.card, cards.get(cardIdFor(STUDY, 'writing', 'simplified')));
+});
+
+test('cards under a plain ID that were learned in simplified are found', () => {
+  const card = (id) => ({ id });
+  const review = (cardId, time, script) => ({ cardId, time, script });
+  const cards = [card('學習|xue2xi2#writing'), card('學習|xue2xi2#meaning'), card('書|shu1#writing'), card('你好|ni3hao3#writing')];
+  const reviews = [
+    // Latest review in simplified: to be moved.
+    review('學習|xue2xi2#writing', 1, 'traditional'),
+    review('學習|xue2xi2#writing', 2, 'simplified'),
+    review('學習|xue2xi2#meaning', 2, 'simplified'),
+    // Latest review in traditional: stays.
+    review('書|shu1#writing', 5, 'simplified'),
+    review('書|shu1#writing', 9, 'traditional'),
+    review('你好|ni3hao3#writing', 2, 'simplified'),
+  ];
+  assert.deepEqual(cardsLearnedInSimplified([STUDY, BOOK, HELLO], cards, reviews), [
+    { from: '學習|xue2xi2#writing', to: '學習|xue2xi2#writing#simplified' },
+  ]);
+  // Not if there is a simplified card already.
+  cards.push(card('學習|xue2xi2#writing#simplified'));
+  assert.deepEqual(cardsLearnedInSimplified([STUDY, BOOK, HELLO], cards, reviews), []);
 });
 
 // ---- Tones ----

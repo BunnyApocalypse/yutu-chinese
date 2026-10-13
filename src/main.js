@@ -10,6 +10,8 @@ import { createRecallCard } from './recallCard.js';
 import { createReview } from './review.js';
 import { createSettings } from './settings.js';
 import { createWordsPanel } from './wordsPanel.js';
+import { scriptFor, scriptFlagFor } from './words.js';
+import { fileCardsByScript } from './scriptCards.js';
 import { buildBackup, checkBackup, describeBackup, restoreBackup } from './backup.js';
 
 const byId = (id) => document.getElementById(id);
@@ -109,7 +111,7 @@ async function loadWordList() {
   byId('word-suggestions').replaceChildren(
     ...wordList.map((word) => {
       const option = document.createElement('option');
-      option.value = word[settings.script];
+      option.value = word[scriptFor(word, settings)];
       return option;
     }),
   );
@@ -133,10 +135,20 @@ function startFreePractice() {
   // Puts the page back to the writing parts and stops any card being shown.
   review.deactivate();
 
+  // Either script may be typed.
+  const word = wordList.find((entry) => entry.traditional === text || entry.simplified === text);
+
   if (type === 'writing') {
-    // Writing works for any characters, in the word list or not.
+    // Writing works for any characters, in the word list or not, and what
+    // was typed is what gets written. If that is a word in its own script
+    // (see scriptFor), it is written and pointed out as on its other cards
+    // (review.js does that for those).
+    const ownScript = word && text === word[scriptFor(word, settings)];
+    const scriptFlag = byId('script-flag');
+    scriptFlag.textContent = ownScript ? scriptFlagFor(word, settings) : '';
+    scriptFlag.hidden = scriptFlag.textContent === '';
     return flow.start(text, {
-      script: settings.script,
+      script: ownScript ? scriptFor(word, settings) : settings.script,
       rawInput: settings.rawInput,
       continueLabel: 'Again',
       onContinue: startFreePractice,
@@ -144,8 +156,7 @@ function startFreePractice() {
   }
 
   // The other kinds need the word's reading and meaning, so it has to be in
-  // the word list. Either script may be typed.
-  const word = wordList.find((entry) => entry.traditional === text || entry.simplified === text);
+  // the word list.
   if (!word) {
     noteElement.textContent = `"${text}" is not in the word list, so only Writing can be practiced with it.`;
     return undefined;
@@ -289,6 +300,13 @@ window.addEventListener('resize', () => {
 
 async function startUp() {
   await addOrUpdateBuiltInWords();
+  // Once per device (and again after an older backup is restored): cards
+  // studied before writing cards were kept per script are filed under the
+  // script they were learned in.
+  if (!(await getSetting('cardsFiledByScript', false))) {
+    await fileCardsByScript(await getAll('words'));
+    await setSetting('cardsFiledByScript', true);
+  }
 
   settings = await createSettings(
     {
@@ -318,6 +336,7 @@ async function startUp() {
       donePanel: byId('done-panel'),
       doneMessage: byId('done-message'),
       studyArea: byId('study-area'),
+      scriptFlag: byId('script-flag'),
       wordRow: byId('word-row'),
       statusRow: byId('status-row'),
       verdictRow: byId('verdict-row'),

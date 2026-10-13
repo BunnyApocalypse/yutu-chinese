@@ -79,6 +79,12 @@ main {
   gap: 12px;
 }
 
+.script-flag {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6b6557;
+}
+
 footer {
   display: flex;
   flex-wrap: wrap;

@@ -36,7 +36,7 @@ export function tidyPinyin(text) {
 }
 
 // Checks the fields of one word as typed or read from a list:
-//   { traditional, simplified, pinyin, definition, pinyinTaiwan }
+//   { traditional, simplified, pinyin, definition, pinyinTaiwan, cardScript }
 // Either of traditional and simplified may be left empty if they are the same.
 //
 // Returns { word } with the tidied word, or { problem } with a sentence
@@ -84,7 +84,37 @@ export function checkWord(fields) {
       word.pinyinTaiwan = pinyinTaiwan;
     }
   }
+  // The word's own script, if it has one (see scriptFor).
+  if (fields.cardScript === 'traditional' || fields.cardScript === 'simplified') {
+    word.cardScript = fields.cardScript;
+  }
   return { word };
+}
+
+// The script a word's cards are shown and written in: 'traditional' or
+// 'simplified'.
+//
+// A word may have its own, `cardScript`, for a deck that mixes the two: mostly
+// traditional, say, with a few words learned in simplified. It only counts
+// while both scripts are being learned; otherwise, and for a word without
+// one, the Script setting decides.
+//
+// settings: the current settings (see settings.js); `script` and
+//           `bothScripts` are used
+export function scriptFor(word, settings) {
+  return settings.bothScripts && word.cardScript ? word.cardScript : settings.script;
+}
+
+// The note shown above a card whose word is in another script than the rest
+// of the deck (see scriptFor), so that a simplified word among traditional
+// ones is not taken for the traditional form: "simp. 简体" or "trad. 繁體".
+// '' for every other word, and for one written the same in both scripts.
+export function scriptFlagFor(word, settings) {
+  const script = scriptFor(word, settings);
+  if (script === settings.script || word.traditional === word.simplified) {
+    return '';
+  }
+  return script === 'simplified' ? 'simp. 简体' : 'trad. 繁體';
 }
 
 // ---- Reading a list of words ----
@@ -244,12 +274,13 @@ export function wordsWithSameCharacters(word, words) {
 }
 
 // A word's characters as shown in lists and messages: in the script being
-// learned, or in both where they differ, the cards' script first
+// learned, or in both where they differ, the script of the word's cards first
 // ("學習 · 学习").
 //
-// script:      'traditional' or 'simplified' (the setting)
-// bothScripts: true if both scripts are being learned (the setting)
-export function charactersShown(word, script, bothScripts) {
+// settings: the current settings; `script` and `bothScripts` are used
+export function charactersShown(word, settings) {
+  const script = scriptFor(word, settings);
+  const { bothScripts } = settings;
   const other = script === 'traditional' ? 'simplified' : 'traditional';
   return bothScripts && word[other] !== word[script]
     ? `${word[script]} · ${word[other]}`

@@ -10,13 +10,20 @@
 //                          New words are introduced in the order of `order`,
 //                          lowest first; it may be negative.
 //   cards     key: id      { id, wordId, type, due, firstReviewedAt, fsrsState }
-//                          One per word and card type. `type` is 'writing' for
-//                          now; 'tone', 'pinyin' and 'meaning' will follow.
-//                          The id is "<wordId>#<type>".
+//                          One per word and card type ('meaning', 'pinyin',
+//                          'tone', 'writing'). The id is "<wordId>#<type>".
+//                          A writing card is kept per script where the word
+//                          is written differently in the two: the simplified
+//                          one's id ends in "#simplified" (see cardIdFor in
+//                          session.js).
 //   reviews   key: id      { id, cardId, wordId, type, time, grade,
 //                            suggestedGrade, mistakesPerChar, passedPerChar,
 //                            suggestedPerChar, orderPerChar, script, log }
-//                          One per review, never deleted.
+//                          One per review, never deleted. `script` is the
+//                          script the card was shown or written in. The
+//                          cardId of a review made before 2026-10-13 may be
+//                          the plain id of a card since moved to its
+//                          "#simplified" id (see scriptCards.js).
 //   settings  key: key     { key, value }
 //
 // IndexedDB's own interface is built on callbacks and is awkward to use. The
@@ -90,6 +97,48 @@ export function removeWord(wordId, cardIds) {
     tx.objectStore('words').delete(wordId);
     for (const id of cardIds) {
       tx.objectStore('cards').delete(id);
+    }
+  });
+}
+
+// Gives a word a new ID (its traditional form was corrected) and files its
+// cards and reviews under it, all together. `word` is the complete new
+// record. Card IDs begin with the word's ID, so they change with it.
+export function renameWord(oldId, word) {
+  const renamed = (id) => word.id + id.slice(oldId.length);
+  return transaction(['words', 'cards', 'reviews'], 'readwrite', (tx) => {
+    const words = tx.objectStore('words');
+    words.delete(oldId);
+    words.put(word);
+    // getAll() answers later, through onsuccess; the transaction stays open
+    // until the work started there is done.
+    const cards = tx.objectStore('cards');
+    cards.getAll().onsuccess = (event) => {
+      for (const card of event.target.result.filter((entry) => entry.wordId === oldId)) {
+        cards.delete(card.id);
+        cards.put({ ...card, id: renamed(card.id), wordId: word.id });
+      }
+    };
+    const reviews = tx.objectStore('reviews');
+    reviews.getAll().onsuccess = (event) => {
+      for (const review of event.target.result.filter((entry) => entry.wordId === oldId)) {
+        reviews.put({ ...review, cardId: renamed(review.cardId), wordId: word.id });
+      }
+    };
+  });
+}
+
+// Gives cards new IDs. moves: [{ from, to }], card IDs.
+export function moveCards(moves) {
+  return transaction(['cards'], 'readwrite', (tx) => {
+    const cards = tx.objectStore('cards');
+    for (const { from, to } of moves) {
+      cards.get(from).onsuccess = (event) => {
+        if (event.target.result) {
+          cards.delete(from);
+          cards.put({ ...event.target.result, id: to });
+        }
+      };
     }
   });
 }

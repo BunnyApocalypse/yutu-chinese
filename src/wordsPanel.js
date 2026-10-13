@@ -4,9 +4,10 @@
 // What is typed is checked by the plain-calculation code in words.js; this
 // file is the page side, and saves the results in the database.
 
-import { getAll, putAll, removeWord } from './db.js';
-import { formatPinyin } from './wordList.js';
-import { CARD_TYPES, cardId } from './session.js';
+import { getAll, putAll, removeWord, renameWord } from './db.js';
+import { formatPinyin, wordId } from './wordList.js';
+import { allCardIds } from './session.js';
+import { fileCardsByScript } from './scriptCards.js';
 import {
   checkWord,
   readWordList,
@@ -15,6 +16,7 @@ import {
   orderForStudyingNext,
   matchesSearch,
   charactersShown,
+  scriptFor,
   tidyPinyin,
 } from './words.js';
 import { readDictionary, lookUp, proposeMeaning, otherScriptForm } from './dictionary.js';
@@ -42,7 +44,8 @@ const byId = (id) => document.getElementById(id);
 // Someone learning one script is only asked for and shown that script, and
 // someone who chose mainland pronunciation only is not asked for Taiwan
 // readings (see applySettings). Every word still has both scripts stored,
-// since its ID is made from the traditional form.
+// since its ID is made from the traditional form. Someone learning both can
+// give a word a script of its own ("Cards in"; see scriptFor in words.js).
 //
 // Returns { show() }; call show() whenever the tab is opened or a setting
 // has changed.
@@ -54,6 +57,7 @@ export function createWordsPanel(onChange, getSettings) {
     pinyin: byId('add-pinyin'),
     pinyinTaiwan: byId('add-pinyin-taiwan'),
     definition: byId('add-definition'),
+    cardScript: byId('add-card-script'),
   };
   const pinyinPreview = byId('add-pinyin-preview');
   const suggestions = byId('add-suggestions');
@@ -77,8 +81,11 @@ export function createWordsPanel(onChange, getSettings) {
   const dialogTitle = byId('word-dialog-title');
   const dialogStatus = byId('word-dialog-status');
   const editDefinition = byId('edit-definition');
+  const editTraditional = byId('edit-traditional');
   const editSimplified = byId('edit-simplified');
+  const editSimplifiedCaption = byId('edit-simplified-caption');
   const editPinyinTaiwan = byId('edit-pinyin-taiwan');
+  const editCardScript = byId('edit-card-script');
   const dialogNote = byId('word-dialog-note');
   const studyNextButton = byId('study-next-button');
 
@@ -105,8 +112,7 @@ export function createWordsPanel(onChange, getSettings) {
   // The word's characters in the script being learned: "學習" or, with both
   // scripts, "學習 · 学习".
   function charactersOf(word) {
-    const { script, bothScripts } = getSettings();
-    return charactersShown(word, script, bothScripts);
+    return charactersShown(word, getSettings());
   }
 
   // Which of the two scripts and of the Taiwan readings are asked for.
@@ -119,10 +125,19 @@ export function createWordsPanel(onChange, getSettings) {
     };
   }
 
+  // The one script the Add a word form asks for: 'traditional' or
+  // 'simplified'; null if it asks for both. That is the script being learned
+  // or, with both learned, the one chosen for this word under "Cards in".
+  function scriptAsked() {
+    const { script, bothScripts } = getSettings();
+    return bothScripts ? addFields.cardScript.value || null : script;
+  }
+
   // Fits the forms and their wording to the settings.
   function applySettings() {
     const asks = asksFor();
     const both = asks.traditional && asks.simplified;
+    const asked = scriptAsked();
     // A box that is out of sight is also emptied, so nothing stale is used.
     const showBox = (box, shown) => {
       box.hidden = !shown;
@@ -130,16 +145,34 @@ export function createWordsPanel(onChange, getSettings) {
         box.value = '';
       }
     };
-    showBox(addFields.traditional, asks.traditional);
-    showBox(addFields.simplified, asks.simplified);
+    showBox(addFields.traditional, asked !== 'simplified');
+    showBox(addFields.simplified, asked !== 'traditional');
     showBox(addFields.pinyinTaiwan, asks.taiwan);
-    addFields.simplified.placeholder = both ? 'Simplified 简体 (if different)' : 'Simplified 简体';
+    // With one script learned there is nothing to tell apart, so its box is
+    // simply where the word goes.
+    const caption = (box, text) => {
+      box.placeholder = text;
+      box.setAttribute('aria-label', text); // what a screen reader calls the box
+    };
+    caption(addFields.traditional, both ? 'Traditional 繁體' : 'Word or phrase 漢字');
+    caption(
+      addFields.simplified,
+      both ? `Simplified 简体${asked ? '' : ' (if different)'}` : 'Word or phrase 汉字',
+    );
+    editSimplifiedCaption.textContent = both ? 'Simplified' : 'Characters';
     if (!lookedUpField || lookedUpField.hidden) {
-      lookedUpField = asks.traditional ? addFields.traditional : addFields.simplified;
+      lookedUpField = asked === 'simplified' ? addFields.simplified : addFields.traditional;
     }
     // In the pop-up panel each box sits in a <label>, which holds its caption.
+    editTraditional.closest('label').hidden = !asks.traditional;
     editSimplified.closest('label').hidden = !asks.simplified;
     editPinyinTaiwan.closest('label').hidden = !asks.taiwan;
+    // A word can only have a script of its own while both are being learned.
+    byId('add-card-script-row').hidden = !both;
+    editCardScript.closest('label').hidden = !both;
+    if (!both) {
+      addFields.cardScript.value = '';
+    }
 
     const taiwanColumn = asks.taiwan ? ', and optionally the Taiwan reading' : '';
     listHint.textContent = both
@@ -204,7 +237,8 @@ export function createWordsPanel(onChange, getSettings) {
   let dictionaryLoading = null;
   // The characters field last typed in, which is what gets looked up.
   let lookedUpField = null;
-  // The dictionary entry last tapped to fill in the fields.
+  // The dictionary entry last tapped to fill in the fields, until the
+  // characters are typed over.
   let filledEntry = null;
 
   // Returns a promise that is done once the dictionary is there, or could
@@ -226,14 +260,13 @@ export function createWordsPanel(onChange, getSettings) {
   }
 
   // How a word typed in one script is written in both, for someone who is
-  // only asked for one: from `tapped`, the dictionary entry that was tapped to
+  // only asked for one (`script` says which): from `tapped`, the dictionary entry that was tapped to
   // fill in the fields (if one was) or, failing that, from the dictionary's
   // entries for those characters. Where the dictionary cannot tell, both are
   // taken to be the same.
   //
   // Returns { traditional, simplified }.
-  function completeForms(characters, pinyin, tapped = null) {
-    const { script } = getSettings();
+  function completeForms(script, characters, pinyin, tapped = null) {
     const other = script === 'traditional' ? 'simplified' : 'traditional';
     const entries = [
       ...(tapped ? [tapped] : []),
@@ -253,16 +286,22 @@ export function createWordsPanel(onChange, getSettings) {
   };
 
   // Puts a dictionary entry into the fields, ready to be edited.
+  // Puts a dictionary entry's characters into the box or boxes on show.
+  function fillInCharacters(entry) {
+    const asked = scriptAsked();
+    if (asked) {
+      // The other script is worked out when the word is added (completeForms).
+      addFields[asked].value = entry[asked];
+    } else {
+      addFields.traditional.value = entry.traditional;
+      addFields.simplified.value = entry.simplified === entry.traditional ? '' : entry.simplified;
+    }
+  }
+
   function fillIn(entry) {
     const asks = asksFor();
     filledEntry = entry;
-    if (asks.traditional && asks.simplified) {
-      addFields.traditional.value = entry.traditional;
-      addFields.simplified.value = entry.simplified === entry.traditional ? '' : entry.simplified;
-    } else {
-      // The other script is worked out when the word is added (completeForms).
-      lookedUpField.value = entry[getSettings().script];
-    }
+    fillInCharacters(entry);
     addFields.pinyin.value = entry.pinyin;
     addFields.pinyinTaiwan.value = asks.taiwan ? entry.pinyinTaiwan || '' : '';
     addFields.definition.value = proposeMeaning(entry.meanings, getSettings().meaningDetail);
@@ -320,23 +359,37 @@ export function createWordsPanel(onChange, getSettings) {
     // usually there by the time the characters are.
     field.addEventListener('focus', loadDictionary);
     field.addEventListener('input', () => {
+      filledEntry = null; // the characters are no longer the tapped entry's
       lookedUpField = field;
       loadDictionary(); // in case the text arrived without the box being tapped
       showSuggestions();
     });
   }
 
+  // Choosing a script for the word leaves only that script's box. What was
+  // typed in the other box goes with it; characters that came from a
+  // dictionary entry are put back in the script now asked for.
+  addFields.cardScript.addEventListener('change', () => {
+    applySettings();
+    if (filledEntry) {
+      fillInCharacters(filledEntry);
+    }
+    showSuggestions();
+  });
+
   addForm.addEventListener('submit', async (event) => {
     event.preventDefault(); // or the browser would reload the page
     const typed = Object.fromEntries(
       Object.entries(addFields).map(([name, input]) => [name, input.value]),
     );
-    const asks = asksFor();
-    if (!(asks.traditional && asks.simplified)) {
+    const asked = scriptAsked();
+    if (asked) {
       // Only one script was typed; the dictionary supplies the other.
       await loadDictionary();
-      const characters = typed[getSettings().script].trim();
-      Object.assign(typed, completeForms(characters, tidyPinyin(typed.pinyin.trim()) || '', filledEntry));
+      Object.assign(
+        typed,
+        completeForms(asked, typed[asked].trim(), tidyPinyin(typed.pinyin.trim()) || '', filledEntry),
+      );
     }
     const checked = checkWord(typed);
     if (checked.problem) {
@@ -352,6 +405,8 @@ export function createWordsPanel(onChange, getSettings) {
     await putAll('words', toAdd);
     addForm.reset();
     filledEntry = null;
+    applySettings(); // "Cards in" is back to "As in Settings", so both boxes are
+
     pinyinPreview.textContent = '';
     suggestions.replaceChildren();
     addNote.textContent = `Added ${charactersOf(toAdd[0])}. It is last in line among the new words.`;
@@ -389,7 +444,7 @@ export function createWordsPanel(onChange, getSettings) {
     // A line with one column of characters has its other script looked up.
     await loadDictionary();
     const { words: readable, problems } = readWordList(listText.value, (characters, pinyin) =>
-      completeForms(characters, pinyin),
+      completeForms(getSettings().script, characters, pinyin),
     );
     const { toAdd, alreadyHave } = newWordRecords(readable, words, Date.now());
     if (readable.length === 0 && problems.length === 0) {
@@ -404,7 +459,7 @@ export function createWordsPanel(onChange, getSettings) {
       (sameCharacters.length > 0
         ? ` Of the new words, ${sameCharacters.length} ${sameCharacters.length === 1 ? 'has' : 'have'} the same` +
           ` characters as a word you already have, with another reading:` +
-          ` ${sameCharacters.slice(0, 10).map((word) => word[getSettings().script]).join(', ')}` +
+          ` ${sameCharacters.slice(0, 10).map((word) => word[scriptFor(word, getSettings())]).join(', ')}` +
           `${sameCharacters.length > 10 ? ', …' : ''}.`
         : '');
     const shown = problems.slice(0, MAX_PROBLEMS_SHOWN).map(({ lineNumber, text, problem }) => {
@@ -439,13 +494,15 @@ export function createWordsPanel(onChange, getSettings) {
   function openDialog(word) {
     openWord = word;
     const studied = studiedWordIds.has(word.id);
-    dialogTitle.textContent = `${word[getSettings().script]} ${formatPinyin(word.pinyin)}`;
+    dialogTitle.textContent = `${word[scriptFor(word, getSettings())]} ${formatPinyin(word.pinyin)}`;
     dialogStatus.textContent = studied
       ? 'You are studying this word.'
       : 'New: you have not studied this word yet.';
     editDefinition.value = word.definition;
+    editTraditional.value = word.traditional;
     editSimplified.value = word.simplified;
     editPinyinTaiwan.value = word.pinyinTaiwan || '';
+    editCardScript.value = word.cardScript || '';
     dialogNote.textContent = '';
     // Only a word not yet started can be moved to the front of the new words.
     studyNextButton.hidden = studied;
@@ -455,25 +512,42 @@ export function createWordsPanel(onChange, getSettings) {
 
   byId('word-dialog-form').addEventListener('submit', async (event) => {
     event.preventDefault();
-    // The characters and pinyin stay as they are: they make up the word's ID,
-    // which its cards and review history are filed under.
+    // The pinyin stays as it is. It and the traditional form make up the
+    // word's ID, which its cards and review history are filed under; when the
+    // traditional form is corrected, those are filed under the new ID.
     // What is not asked for (see applySettings) stays as it was stored.
     const asks = asksFor();
     const checked = checkWord({
-      traditional: openWord.traditional,
+      traditional: asks.traditional ? editTraditional.value : openWord.traditional,
       pinyin: openWord.pinyin,
       simplified: asks.simplified ? editSimplified.value : openWord.simplified,
       definition: editDefinition.value,
       pinyinTaiwan: asks.taiwan ? editPinyinTaiwan.value : openWord.pinyinTaiwan,
+      cardScript: asks.traditional && asks.simplified ? editCardScript.value : openWord.cardScript,
     });
     if (checked.problem) {
       dialogNote.textContent = checked.problem;
       return;
     }
     // Start from the tidied word, so a Taiwan reading that was cleared is gone.
-    await putAll('words', [
-      { ...checked.word, id: openWord.id, order: openWord.order, addedAt: openWord.addedAt },
-    ]);
+    const saved = {
+      ...checked.word,
+      id: wordId(checked.word),
+      order: openWord.order,
+      addedAt: openWord.addedAt,
+    };
+    if (saved.id === openWord.id) {
+      await putAll('words', [saved]);
+    } else if (words.some((word) => word.id === saved.id)) {
+      dialogNote.textContent =
+        `${charactersOf(saved)} (${formatPinyin(saved.pinyin)}) is already in your words.`;
+      return;
+    } else {
+      await renameWord(openWord.id, saved);
+    }
+    // If the two scripts now differ where they were the same, a writing card
+    // learned in simplified goes under the simplified form (scriptCards.js).
+    await fileCardsByScript([saved]);
     dialog.close();
     await afterChange();
   });
@@ -492,7 +566,7 @@ export function createWordsPanel(onChange, getSettings) {
     if (!confirmed) {
       return;
     }
-    await removeWord(openWord.id, CARD_TYPES.map((type) => cardId(openWord.id, type)));
+    await removeWord(openWord.id, allCardIds(openWord));
     dialog.close();
     await afterChange();
   });

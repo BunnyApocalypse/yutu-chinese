@@ -9,6 +9,8 @@ import {
   splitCsvLine,
   readWordList,
   charactersShown,
+  scriptFor,
+  scriptFlagFor,
   newWordRecords,
   wordsWithSameCharacters,
   orderForStudyingNext,
@@ -127,11 +129,32 @@ test('a list with one column of characters is read too', () => {
 
 test('characters are shown in the script being learned', () => {
   const study = { traditional: '學習', simplified: '学习' };
-  assert.equal(charactersShown(study, 'traditional', false), '學習');
-  assert.equal(charactersShown(study, 'simplified', false), '学习');
-  assert.equal(charactersShown(study, 'traditional', true), '學習 · 学习');
-  assert.equal(charactersShown(study, 'simplified', true), '学习 · 學習');
-  assert.equal(charactersShown({ traditional: '好', simplified: '好' }, 'simplified', true), '好');
+  const settings = (script, bothScripts) => ({ script, bothScripts });
+  assert.equal(charactersShown(study, settings('traditional', false)), '學習');
+  assert.equal(charactersShown(study, settings('simplified', false)), '学习');
+  assert.equal(charactersShown(study, settings('traditional', true)), '學習 · 学习');
+  assert.equal(charactersShown(study, settings('simplified', true)), '学习 · 學習');
+  assert.equal(charactersShown({ traditional: '好', simplified: '好' }, settings('simplified', true)), '好');
+});
+
+test("a word's own script counts only while both scripts are learned", () => {
+  const plain = { traditional: '學習', simplified: '学习' };
+  const own = { ...plain, cardScript: 'simplified' };
+  assert.equal(scriptFor(plain, { script: 'traditional', bothScripts: true }), 'traditional');
+  assert.equal(scriptFor(own, { script: 'traditional', bothScripts: true }), 'simplified');
+  assert.equal(scriptFor(own, { script: 'traditional', bothScripts: false }), 'traditional');
+  assert.equal(charactersShown(own, { script: 'traditional', bothScripts: true }), '学习 · 學習');
+  // Such a word is flagged on its cards, unless it is written the same either way.
+  assert.equal(scriptFlagFor(own, { script: 'traditional', bothScripts: true }), 'simp. 简体');
+  assert.equal(scriptFlagFor({ ...plain, cardScript: 'traditional' }, { script: 'simplified', bothScripts: true }), 'trad. 繁體');
+  assert.equal(scriptFlagFor(plain, { script: 'traditional', bothScripts: true }), '');
+  assert.equal(scriptFlagFor(own, { script: 'simplified', bothScripts: true }), '');
+  assert.equal(scriptFlagFor(own, { script: 'traditional', bothScripts: false }), '');
+  assert.equal(scriptFlagFor({ traditional: '好', simplified: '好', cardScript: 'simplified' }, { script: 'traditional', bothScripts: true }), '');
+  // checkWord keeps it, and drops anything else.
+  const fields = { traditional: '學習', simplified: '学习', pinyin: 'xue2xi2', definition: 'to study' };
+  assert.equal(checkWord({ ...fields, cardScript: 'simplified' }).word.cardScript, 'simplified');
+  assert.equal('cardScript' in checkWord({ ...fields, cardScript: '' }).word, false);
 });
 
 const stored = [

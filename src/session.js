@@ -28,6 +28,39 @@ export function cardId(wordId, type) {
   return `${wordId}#${type}`;
 }
 
+// The kinds of card that are learned separately in each script. Writing 学习
+// says little about writing 學習, so each has a card and a schedule of its
+// own. The other kinds ask for a meaning or a reading, which is the same
+// whichever script the word is shown in, so they have one card.
+export const PER_SCRIPT_TYPES = ['writing'];
+
+// True if this kind of card differs between the scripts for this word. A
+// word written the same in both has one card of every kind.
+function isPerScript(word, type) {
+  return PER_SCRIPT_TYPES.includes(type) && word.traditional !== word.simplified;
+}
+
+// The ID of a word's card of one kind in one script ('traditional' or
+// 'simplified'). The traditional card has the plain ID, just as a word's own
+// ID is built on its traditional form; the simplified one, where it is a
+// separate card, has "#simplified" added.
+export function cardIdFor(word, type, script) {
+  const plain = cardId(word.id, type);
+  return script === 'simplified' && isPerScript(word, type) ? `${plain}#simplified` : plain;
+}
+
+// Every card ID a word can have, in both scripts.
+export function allCardIds(word) {
+  return [
+    ...new Set(
+      CARD_TYPES.flatMap((type) => [
+        cardIdFor(word, type, 'traditional'),
+        cardIdFor(word, type, 'simplified'),
+      ]),
+    ),
+  ];
+}
+
 // The study day starts at 4:00 in the morning rather than midnight (as in
 // Anki), so a late-night session still counts toward the same day.
 const DAY_START_HOUR = 4;
@@ -51,14 +84,22 @@ function lastReviewOf(card) {
 // Looks at all words and their cards and reports what there is to do.
 //
 // words: list of word records, each with an `id` and an `order`
-// cards: a Map from card ID (see cardId above) to card. A card that isn't in
-//        the map has never been studied.
+// cards: a Map from card ID (see cardIdFor above) to card. A card that isn't
+//        in the map has never been studied.
 // now:   the current time
 // options:
 //   newWordsPerDay: how many words may be introduced per day
 //   enabledTypes:   the card types switched on, e.g. ['meaning', 'writing']
 //   hasCardType(word, type): optional; return false for a word that can't
 //                   have that kind of card
+//   scriptOf(word): optional; the script the word is studied in,
+//                   'traditional' (the default) or 'simplified'
+//
+// A card that was learned in the other script only (see PER_SCRIPT_TYPES) is
+// learned again in this one, as if new: after someone who studied simplified
+// switches to traditional, say. Such cards count toward the daily limit of
+// new words and come before words never seen, in the order they were first
+// learned.
 //
 // Returns:
 //   next:         { word, type, card } to review now (card is null for a card
@@ -66,10 +107,16 @@ function lastReviewOf(card) {
 //   dueCount:     how many studied cards are due now
 //   newCardCount: how many never-studied cards are waiting for words already
 //                 introduced
-//   newWordsLeftToday: how many more words can be introduced today
+//   newWordsLeftToday: how many more words can be introduced today,
+//                 counting cards to be learned again in another script
 //   nextDueAt:    when something next becomes available, or null
 export function planSession(words, cards, now, options) {
-  const { newWordsPerDay, enabledTypes, hasCardType = () => true } = options;
+  const {
+    newWordsPerDay,
+    enabledTypes,
+    hasCardType = () => true,
+    scriptOf = () => 'traditional',
+  } = options;
   const dayStart = startOfStudyDay(now);
   // Introduce a word's cards in the standard order, whatever order the
   // enabled types were given in.
@@ -77,6 +124,7 @@ export function planSession(words, cards, now, options) {
 
   const due = [];
   const newForKnownWords = [];
+  const toLearnAgain = [];
   const unseenWords = [];
   let nextDueAt = null;
   let introducedToday = 0;
@@ -92,8 +140,16 @@ export function planSession(words, cards, now, options) {
   for (const word of inListOrder) {
     // All of the word's studied cards, including types now switched off:
     // they still count for when the word was introduced and last seen.
-    const studied = CARD_TYPES.map((type) => cards.get(cardId(word.id, type))).filter(Boolean);
+    // That goes for cards in the other script too.
+    const studied = allCardIds(word).map((id) => cards.get(id)).filter(Boolean);
     const wanted = types.filter((type) => hasCardType(word, type));
+    const script = scriptOf(word);
+    const otherScript = script === 'traditional' ? 'simplified' : 'traditional';
+    // The word's card of a kind in the script studied, and in the other one
+    // if that is a separate card.
+    const cardOf = (type) => cards.get(cardIdFor(word, type, script));
+    const otherCardOf = (type) =>
+      isPerScript(word, type) ? cards.get(cardIdFor(word, type, otherScript)) : undefined;
 
     if (studied.length === 0) {
       if (wanted.length > 0) {
@@ -101,13 +157,22 @@ export function planSession(words, cards, now, options) {
       }
       continue;
     }
-    if (Math.min(...studied.map((card) => card.firstReviewedAt)) >= dayStart) {
+    // A card begun today in this script, of a word known in the other one,
+    // uses up one of the day's new words just as a new word does.
+    const learnedAgainToday = CARD_TYPES.some((type) => {
+      const card = cardOf(type);
+      const other = otherCardOf(type);
+      return (
+        card && other && card.firstReviewedAt >= dayStart && other.firstReviewedAt < card.firstReviewedAt
+      );
+    });
+    if (Math.min(...studied.map((card) => card.firstReviewedAt)) >= dayStart || learnedAgainToday) {
       introducedToday += 1;
     }
 
     let offeredNewCard = false;
     for (const type of wanted) {
-      const card = cards.get(cardId(word.id, type));
+      const card = cardOf(type);
       // The word's other cards hold this one back for a while after a review.
       const siblings = studied.filter((other) => other !== card);
       const heldUntil =
@@ -120,6 +185,13 @@ export function planSession(words, cards, now, options) {
         } else {
           noteAvailableAt(availableAt);
         }
+      } else if (otherCardOf(type)) {
+        toLearnAgain.push({
+          word,
+          type,
+          heldUntil,
+          learnedAt: otherCardOf(type).firstReviewedAt,
+        });
       } else {
         newCardCount += 1;
         // Only the word's next new card is on offer; the rest wait their turn.
@@ -140,16 +212,28 @@ export function planSession(words, cards, now, options) {
   due.sort((a, b) => a.card.due - b.card.due);
 
   const newWordsLeftToday = Math.min(
-    unseenWords.length,
+    unseenWords.length + toLearnAgain.length,
     Math.max(0, newWordsPerDay - introducedToday),
   );
+
+  // Cards to learn again in this script: in the order first learned, leaving
+  // out those held back just now by another card of their word.
+  toLearnAgain.sort((a, b) => a.learnedAt - b.learnedAt);
+  const againNow = toLearnAgain.filter((entry) => entry.heldUntil <= now);
+  if (newWordsLeftToday > 0) {
+    for (const entry of toLearnAgain.filter((held) => held.heldUntil > now)) {
+      noteAvailableAt(entry.heldUntil);
+    }
+  }
 
   let next = null;
   if (due.length > 0) {
     next = due[0];
   } else if (newForKnownWords.length > 0) {
     next = newForKnownWords[0];
-  } else if (newWordsLeftToday > 0) {
+  } else if (newWordsLeftToday > 0 && againNow.length > 0) {
+    next = { word: againNow[0].word, type: againNow[0].type, card: null };
+  } else if (newWordsLeftToday > 0 && unseenWords.length > 0) {
     next = unseenWords[0];
   }
 

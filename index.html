@@ -68,6 +68,15 @@
           <p id="add-pinyin-preview" class="pinyin-preview"></p>
           <input id="add-pinyin-taiwan" type="text" placeholder="Taiwan reading (if different)" aria-label="Taiwan reading, if different" autocomplete="off" autocapitalize="off" spellcheck="false" />
           <input id="add-definition" type="text" placeholder="Meaning" aria-label="Meaning" autocomplete="off" />
+          <!-- Only shown while both scripts are being learned (wordsPanel.js). -->
+          <label id="add-card-script-row" class="setting">
+            Cards in
+            <select id="add-card-script">
+              <option value="">As in Settings</option>
+              <option value="traditional">Traditional 繁體</option>
+              <option value="simplified">Simplified 简体</option>
+            </select>
+          </label>
           <button type="submit" class="primary">Add word</button>
           <p id="add-word-note" class="note"></p>
         </form>
@@ -95,6 +104,8 @@
       </section>
 
       <div id="study-area" class="study-area">
+        <!-- Says so when this word is in another script than the rest of the deck: "simp. 简体". -->
+        <p id="script-flag" class="script-flag" hidden></p>
         <!-- One slot per character of the word. Filled in by wordFlow.js. -->
         <div id="word-row" class="word-row"></div>
 
@@ -162,14 +173,26 @@
             <input id="edit-definition" type="text" autocomplete="off" />
           </label>
           <label class="setting stacked">
-            Simplified
+            Traditional
+            <input id="edit-traditional" type="text" lang="zh-Hant-TW" autocomplete="off" autocapitalize="off" />
+          </label>
+          <label class="setting stacked">
+            <span id="edit-simplified-caption">Simplified</span>
             <input id="edit-simplified" type="text" lang="zh-Hans-CN" autocomplete="off" autocapitalize="off" />
           </label>
           <label class="setting stacked">
             Taiwan reading (if different)
             <input id="edit-pinyin-taiwan" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" />
           </label>
-          <p class="hint">To change the characters or the pinyin, remove the word and add it again.</p>
+          <label class="setting">
+            Cards in
+            <select id="edit-card-script">
+              <option value="">As in Settings</option>
+              <option value="traditional">Traditional 繁體</option>
+              <option value="simplified">Simplified 简体</option>
+            </select>
+          </label>
+          <p class="hint">To change the pinyin, remove the word and add it again.</p>
           <p id="word-dialog-note" class="note"></p>
           <div class="buttons">
             <button type="submit" class="small primary">Save</button>

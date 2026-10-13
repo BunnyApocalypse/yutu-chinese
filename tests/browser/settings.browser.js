@@ -81,6 +81,8 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     assert.equal(await isShown(page, 'add-traditional'), false);
     assert.equal(await isShown(page, 'add-simplified'), true);
     assert.equal(await isShown(page, 'add-pinyin-taiwan'), false);
+    // The one box left is not labeled with a script.
+    assert.equal(await page.evaluate(`document.getElementById('add-simplified').placeholder`), 'Word or phrase 汉字');
     assert.doesNotMatch(await textOf(page, 'list-hint'), /traditional, pinyin|Taiwan/);
 
     await type(page, 'add-simplified', '图书馆');
@@ -128,6 +130,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
       await waitUntil(page, `${rows(1)} && document.querySelector('#word-list li').textContent.startsWith('${characters}')`, characters);
     }
     assert.equal(await isShown(page, 'add-traditional'), true);
+    assert.equal(await page.evaluate(`document.getElementById('add-traditional').placeholder`), 'Traditional 繁體');
     assert.match(await textOf(page, 'list-hint'), /simplified, traditional, pinyin/);
   });
 
@@ -135,6 +138,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     await choose(page, 'script-select', 'traditional');
     // A setting is saved before it takes effect, which takes a moment.
     await waitUntil(page, `document.getElementById('add-simplified').hidden`, 'the simplified box to go');
+    assert.equal(await page.evaluate(`document.getElementById('add-traditional').placeholder`), 'Word or phrase 漢字');
     await type(page, 'word-search', 'library');
     await waitUntil(page, `${rows(1)} && document.querySelector('#word-list li').textContent.startsWith('圖書館')`);
     assert.doesNotMatch(await textOf(page, '#word-list li'), /图书馆/);
@@ -146,6 +150,127 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     await choose(page, 'script-select', 'both-simplified');
     await type(page, 'word-search', 'building');
     await waitUntil(page, `${rows(1)} && document.querySelector('#word-list li').textContent.startsWith('图书馆 · 圖書館')`);
+  });
+
+  it('lets a word have a script of its own while both are learned', async () => {
+    await choose(page, 'script-select', 'both-traditional');
+    await type(page, 'word-search', 'building');
+    await waitUntil(page, `${rows(1)} && document.querySelector('#word-list li').textContent.startsWith('圖書館 · 图书馆')`);
+    assert.equal(await isShown(page, 'add-card-script-row'), true);
+
+    // Choosing a script when adding a word leaves only that script's box.
+    await type(page, 'add-traditional', '鍵盤');
+    await waitUntil(page, `document.querySelector('#add-suggestions button') !== null`, 'a dictionary entry');
+    await page.evaluate(`document.querySelector('#add-suggestions button').click()`);
+    await choose(page, 'add-card-script', 'simplified');
+    assert.equal(await isShown(page, 'add-traditional'), false);
+    assert.equal(await page.evaluate(`document.getElementById('add-simplified').value`), '键盘');
+    await choose(page, 'add-card-script', 'traditional');
+    assert.equal(await isShown(page, 'add-simplified'), false);
+    assert.equal(await page.evaluate(`document.getElementById('add-traditional').value`), '鍵盤');
+    await choose(page, 'add-card-script', '');
+    assert.equal(await isShown(page, 'add-simplified'), true);
+    // Typed by hand in simplified: the traditional form is looked up.
+    await choose(page, 'add-card-script', 'simplified');
+    await type(page, 'add-simplified', '键盘');
+    await page.evaluate(`document.getElementById('add-word-form').requestSubmit()`);
+    await waitUntil(page, `document.getElementById('add-word-note').textContent.startsWith('Added 键盘 · 鍵盤.')`, 'the word added');
+    assert.equal(await isShown(page, 'add-traditional'), true);
+    assert.equal(await page.evaluate(`document.getElementById('add-card-script').value`), '');
+
+    // This one word in simplified, in a deck that is otherwise traditional.
+    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await choose(page, 'edit-card-script', 'simplified');
+    await page.evaluate(`document.getElementById('word-dialog-form').requestSubmit()`);
+    await waitUntil(page, `document.querySelector('#word-list li').textContent.startsWith('图书馆 · 圖書館')`, 'simplified first');
+    await practice('圖書館', 'meaning');
+    assert.match(await textOf(page, 'card-face'), /^图书馆/);
+    // The card says it is the odd one out, on every kind of card.
+    assert.equal(await textOf(page, 'script-flag'), 'simp. 简体');
+    // Free practice writes what was typed, so there only the simplified form is flagged.
+    await choose(page, 'practice-type', 'writing');
+    await waitUntil(page, `document.getElementById('status').textContent.startsWith('Stroke 1 of')`, 'the writing card');
+    assert.equal(await textOf(page, 'script-flag'), '');
+    await type(page, 'word-input', '图书馆');
+    await page.evaluate(`document.getElementById('word-form').requestSubmit()`);
+    await waitUntil(page, `!document.getElementById('script-flag').hidden`, 'the flag');
+    assert.equal(await textOf(page, 'script-flag'), 'simp. 简体');
+    await practice('星期', 'meaning');
+    assert.match(await textOf(page, 'card-face'), /^星期/);
+    assert.equal(await textOf(page, 'script-flag'), '');
+
+    // With one script learned there is no such choice, and the word follows the setting.
+    await choose(page, 'script-select', 'traditional');
+    await practice('圖書館', 'meaning');
+    await waitUntil(page, `document.getElementById('card-face').textContent.startsWith('圖書館')`, 'the card in traditional');
+    assert.equal(await textOf(page, 'script-flag'), '');
+    await tap(page, 'words-tab');
+    await waitUntil(page, `document.getElementById('add-card-script-row').hidden`, 'the choice to go');
+    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    assert.equal(await page.evaluate(`document.getElementById('edit-card-script').closest('label').hidden`), true);
+    await tap(page, 'word-dialog-close');
+  });
+
+  it('files cards and reviews under a corrected traditional form', async () => {
+    // Runs JavaScript in the page with `stores`: the database's stores, by name, open for writing.
+    // Returns what `body` leaves in `result`, once the changes are saved.
+    const inDatabase = (body) =>
+      page.evaluate(`new Promise((resolve, reject) => {
+        const opening = indexedDB.open('hanzi-trainer');
+        opening.onsuccess = () => {
+          const tx = opening.result.transaction(['words', 'cards', 'reviews'], 'readwrite');
+          const stores = { words: tx.objectStore('words'), cards: tx.objectStore('cards'), reviews: tx.objectStore('reviews') };
+          const result = {};
+          ${body}
+          tx.oncomplete = () => resolve(JSON.stringify(result));
+          tx.onerror = () => reject(tx.error);
+        };
+      })`).then(JSON.parse);
+
+    // A simplified-only learner adds a word the dictionary does not have,
+    // so its traditional form is stored as the simplified one.
+    await choose(page, 'script-select', 'simplified');
+    await tap(page, 'words-tab');
+    await waitUntil(page, `document.getElementById('add-traditional').hidden`, 'the traditional box to go');
+    await type(page, 'add-simplified', '书虫们');
+    await type(page, 'add-pinyin', 'shu1chong2men5');
+    await type(page, 'add-definition', 'bookworms');
+    await page.evaluate(`document.getElementById('add-word-form').requestSubmit()`);
+    await waitUntil(page, `document.getElementById('add-word-note').textContent.startsWith('Added 书虫们.')`);
+    // ... and has studied it: a writing and a meaning card, reviewed in simplified.
+    await inDatabase(`
+      const id = '书虫们|shu1chong2men5';
+      for (const type of ['writing', 'meaning']) {
+        stores.cards.put({ id: id + '#' + type, wordId: id, type, due: Date.now() + 1e9, firstReviewedAt: 1, lastReviewedAt: 1, fsrsState: {} });
+        stores.reviews.put({ id: 'test-' + type, cardId: id + '#' + type, wordId: id, type, time: 1, grade: 3, script: 'simplified' });
+      }
+    `);
+
+    // Switching to traditional, they correct the traditional form.
+    await choose(page, 'script-select', 'both-traditional');
+    await type(page, 'word-search', 'bookworms');
+    await waitUntil(page, `${rows(1)} && !document.getElementById('edit-traditional').closest('label').hidden`);
+    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    assert.equal(await page.evaluate(`document.getElementById('edit-traditional').value`), '书虫们');
+    await type(page, 'edit-traditional', '書蟲們');
+    await page.evaluate(`document.getElementById('word-dialog-form').requestSubmit()`);
+    await waitUntil(page, `document.querySelector('#word-list li').textContent.startsWith('書蟲們 · 书虫们')`, 'the corrected word');
+    // Still a word that has been studied, not a new one.
+    assert.doesNotMatch(await textOf(page, '#word-list li'), /new$/);
+
+    const stored = await inDatabase(`
+      stores.words.getAll().onsuccess = (event) => { result.words = event.target.result.filter((word) => word.definition === 'bookworms').map((word) => word.id); };
+      stores.cards.getAll().onsuccess = (event) => { result.cards = event.target.result.filter((card) => card.wordId.includes('shu1chong2men5')).map((card) => card.id).sort(); };
+      stores.reviews.getAll().onsuccess = (event) => { result.reviews = event.target.result.filter((review) => review.id.startsWith('test-')).map((review) => review.wordId + ' ' + review.cardId).sort(); };
+    `);
+    assert.deepEqual(stored.words, ['書蟲們|shu1chong2men5']);
+    // The writing card was learned in simplified, so that is where it is filed;
+    // the traditional one is still to be learned.
+    assert.deepEqual(stored.cards, ['書蟲們|shu1chong2men5#meaning', '書蟲們|shu1chong2men5#writing#simplified']);
+    assert.deepEqual(stored.reviews, [
+      '書蟲們|shu1chong2men5 書蟲們|shu1chong2men5#meaning',
+      '書蟲們|shu1chong2men5 書蟲們|shu1chong2men5#writing',
+    ]);
   });
 
   it('opens a tab that was tapped before the app had started', async () => {
