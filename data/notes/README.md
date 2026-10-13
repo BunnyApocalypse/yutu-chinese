@@ -14,6 +14,8 @@ One file per level, named like the level's group file (`hsk-3.0-1.tsv` is HSK 3.
 
 So far there are two levels: HSK 3.0 level 1 (509 words, written as a trial) and level 2 (755 words).
 
+`radicals.tsv` is of another kind: notes about parts of characters, the 60 radicals that occur most often in the lower levels' words. It has the radical in the first column, nothing in the second, and the note in the third, with no example sentence. The app shows such a note on the page of a part of a character, whatever reading the part has. These notes were written from what Make Me a Hanzi says of the characters each radical occurs in, and from Wiktionary for the radical's own origin.
+
 ## How they were made, and how far to trust them
 
 They were written in October 2026 by an AI model (Anthropic's Claude Sonnet) working to a brief, for this project. For what it says about how characters are built, the model was given two sources and told to use nothing else: the character dictionary of Make Me a Hanzi (`data/makemeahanzi/`) and the glyph-origin sections of the English Wiktionary's entries for the characters. Usage remarks and example sentences are the model's own.
