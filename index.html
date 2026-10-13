@@ -151,6 +151,9 @@
         <!-- Review mode: the four grades, shown once the word is written. Filled in by review.js. -->
         <div id="grade-row" class="grade-row" hidden></div>
 
+        <!-- Review mode, with the grades: opens the word's panel to correct it (review.js). -->
+        <button id="edit-word-button" class="small" type="button" hidden>Edit word</button>
+
         <!-- Shown when a character with two accepted stroke orders was written in the mainland one. -->
         <p id="order-note" class="order-note" hidden>
           Accepted. You used the mainland stroke order; the
@@ -181,6 +184,10 @@
             <input id="edit-simplified" type="text" lang="zh-Hans-CN" autocomplete="off" autocapitalize="off" />
           </label>
           <label class="setting stacked">
+            Pinyin
+            <input id="edit-pinyin" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" />
+          </label>
+          <label class="setting stacked">
             Taiwan reading (if different)
             <input id="edit-pinyin-taiwan" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" />
           </label>
@@ -196,7 +203,7 @@
               <option value="simplified">Simplified 简体</option>
             </select>
           </label>
-          <p class="hint">To change the pinyin, remove the word and add it again.</p>
+          <p class="hint">Pinyin is written with tone numbers, like xue2xi2. Your progress with the word is kept whatever you change.</p>
           <p id="word-dialog-note" class="note"></p>
           <div class="buttons">
             <button type="submit" class="small primary">Save</button>

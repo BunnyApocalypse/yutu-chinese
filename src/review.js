@@ -27,15 +27,17 @@ const RECHECK_MS = 15 * 1000;
 
 // elements: the page elements review controls:
 //   countsElement, typeElement, meaningElement, pinyinElement, pinyinButton,
-//   gradeRow, donePanel, doneMessage, studyArea, scriptFlag,
+//   gradeRow, editWordButton, donePanel, doneMessage, studyArea, scriptFlag,
 //   and the parts of the study area that differ per kind of card:
 //   wordRow, statusRow, verdictRow, writingRow, writingButtons, cardFace,
 //   toneButtonRow, orderNote
 // flows:    { writing, tone, recall }: the three pieces of code named above
 // settings: the current settings (see settings.js)
+// editWord(word): opens the word's panel to change it; returns a promise for
+//           { changed, word } (see edit() in wordsPanel.js)
 //
 // Returns { load, activate, deactivate, practice, refresh }.
-export function createReview(elements, flows, settings) {
+export function createReview(elements, flows, settings, editWord) {
   const {
     countsElement,
     typeElement,
@@ -43,6 +45,7 @@ export function createReview(elements, flows, settings) {
     pinyinElement,
     pinyinButton,
     gradeRow,
+    editWordButton,
     donePanel,
     doneMessage,
     studyArea,
@@ -143,8 +146,39 @@ export function createReview(elements, flows, settings) {
 
   function hideGrades() {
     gradeRow.hidden = true;
+    editWordButton.hidden = true;
     options = null;
   }
+
+  // "Edit word", shown with the grades: a mistake in a word is usually
+  // noticed when its answer is on screen. Opens the word's panel.
+  editWordButton.addEventListener('click', async () => {
+    const shown = current;
+    const before = current.word;
+    const result = await editWord(before);
+    // Nothing saved, or the card moved on in the meantime.
+    if (!result.changed || current !== shown) {
+      return;
+    }
+    const after = result.word;
+    // The Words tab has had Review read the words and cards afresh (load()).
+    const fields = new Set([...Object.keys(before), ...Object.keys(after || {})]);
+    fields.delete('definition');
+    const onlyMeaningChanged = after && [...fields].every((field) => before[field] === after[field]);
+    if (onlyMeaningChanged) {
+      // The answer stays up with the corrected meaning, still to be graded.
+      current.word = after;
+      if (current.type === 'writing') {
+        meaningElement.textContent = after.definition;
+      }
+      flows.recall.update(after);
+      flows.tone.update(after);
+    } else {
+      // Anything else changes what the card asks or which answers are right,
+      // so the card is shown again (or the next one, if the word is gone).
+      showNext();
+    }
+  });
 
   // Saves the review with the chosen grade and moves on.
   async function grade(value) {
@@ -205,6 +239,7 @@ export function createReview(elements, flows, settings) {
       gradeRow.appendChild(button);
     }
     gradeRow.hidden = false;
+    editWordButton.hidden = false;
   }
 
   // The card has been answered: work out what each grade would do and offer

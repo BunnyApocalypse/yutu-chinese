@@ -119,11 +119,8 @@ export function createToneFlow(elements) {
       chars.length > 1 ? `Tone of character ${position + 1} of ${chars.length}` : 'Which tone?';
   }
 
-  function finish() {
-    state = 'done';
-    tapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
-    nextButton.hidden = true;
-    renderWordRow();
+  // Shows the word with its reading and meaning, and how it was answered.
+  function showResult() {
     const wrong = passedPerChar.filter((passed) => !passed).length;
     statusElement.textContent = wrong === 0 ? 'All tones right' : `${wrong} wrong`;
     const described = describeReading(current.reading);
@@ -150,6 +147,14 @@ export function createToneFlow(elements) {
       );
     }
     cardFace.replaceChildren(...parts);
+  }
+
+  function finish() {
+    state = 'done';
+    tapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
+    nextButton.hidden = true;
+    renderWordRow();
+    showResult();
     current.onDone({
       givenTones: [...givenTones],
       passedPerChar: [...passedPerChar],
@@ -284,6 +289,16 @@ export function createToneFlow(elements) {
       passedPerChar = [];
       variantPerChar = [];
       ask();
+    },
+
+    // The word's meaning was corrected while its card is showing.
+    update(word) {
+      if (current) {
+        current.word = word;
+        if (state === 'done') {
+          showResult();
+        }
+      }
     },
 
     stop() {

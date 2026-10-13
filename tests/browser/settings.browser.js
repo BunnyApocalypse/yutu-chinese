@@ -296,6 +296,54 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     ]);
   });
 
+  it('corrects a word from the answer page in Review', async () => {
+    const dialogOpen = `document.getElementById('word-dialog').open`;
+    const gradesShown = `!document.getElementById('grade-row').hidden`;
+    const save = async () => {
+      await page.evaluate(`document.getElementById('word-dialog-form').requestSubmit()`);
+      await waitUntil(page, `!${dialogOpen}`, 'the panel to close');
+    };
+
+    // The next card is a meaning or pinyin card: tap to see the answer.
+    await tap(page, 'review-tab');
+    await waitUntil(page, `document.getElementById('card-face').textContent.includes('Tap to show')`, 'a card to reveal');
+    assert.equal(await isShown(page, 'edit-word-button'), false);
+    await tapCard();
+    await waitUntil(page, gradesShown, 'the grades');
+
+    // The meaning is corrected: the answer stays up, still to be graded.
+    await tap(page, 'edit-word-button');
+    await waitUntil(page, dialogOpen, 'the panel');
+    await type(page, 'edit-definition', 'a corrected meaning');
+    await save();
+    // (The card hears of the panel closing a moment after it has closed.)
+    await waitUntil(page, `document.getElementById('card-face').textContent.includes('a corrected meaning')`, 'the corrected meaning on the card');
+    assert.equal(await page.evaluate(gradesShown), true);
+
+    // The pinyin is corrected: the card is asked again, with the new reading.
+    await tap(page, 'edit-word-button');
+    await waitUntil(page, dialogOpen, 'the panel');
+    const pinyin = await page.evaluate(`document.getElementById('edit-pinyin').value`);
+    await type(page, 'edit-pinyin', pinyin.slice(0, -1) + (pinyin.endsWith('2') ? '3' : '2'));
+    await save();
+    await waitUntil(page, `!${gradesShown} && document.getElementById('card-face').textContent.includes('Tap to show')`, 'the card again');
+    assert.equal(await isShown(page, 'edit-word-button'), false);
+    await tapCard();
+    await waitUntil(page, gradesShown, 'the grades');
+    assert.match(await textOf(page, 'card-face'), /a corrected meaning/);
+
+    // Graded, the card is filed under the corrected word: it is no longer new.
+    await page.evaluate(`document.querySelector('#grade-row button.primary').click()`);
+    // The grades go once the review is saved and the next card is up.
+    await waitUntil(page, `!${gradesShown}`, 'the review to be saved');
+    await tap(page, 'words-tab');
+    await type(page, 'word-search', 'a corrected meaning');
+    await waitUntil(page, rows(1));
+    const row = await textOf(page, '#word-list li');
+    assert.doesNotMatch(row, /new$/);
+    assert.doesNotMatch(row, new RegExp(pinyin));
+  });
+
   it('opens a tab that was tapped before the app had started', async () => {
     // Makes every page loaded from now on tap Free practice as soon as it has
     // been read, which is before the app has opened its database.

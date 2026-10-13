@@ -28,9 +28,8 @@ export function createRecallCard(cardFace) {
   let revealed = false;
   let tapAllowedFrom = 0;
 
-  function reveal() {
-    revealed = true;
-    tapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
+  // Shows the answer under the word.
+  function showAnswer() {
     const { word, ask, reading } = current;
     const described = describeReading(reading);
     const pinyin = [paragraph('face-pinyin', described.main)];
@@ -38,10 +37,17 @@ export function createRecallCard(cardFace) {
       pinyin.push(paragraph('face-hint', described.other));
     }
     const meaning = paragraph('face-meaning', word.definition);
-    // The thing that was asked for comes first.
-    cardFace
-      .querySelector('.face-hint')
-      .replaceWith(...(ask === 'meaning' ? [meaning, ...pinyin] : [...pinyin, meaning]));
+    // The word stays at the top; the thing that was asked for comes first.
+    cardFace.replaceChildren(
+      cardFace.firstElementChild,
+      ...(ask === 'meaning' ? [meaning, ...pinyin] : [...pinyin, meaning]),
+    );
+  }
+
+  function reveal() {
+    revealed = true;
+    tapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
+    showAnswer();
     current.onReveal();
   }
 
@@ -75,6 +81,16 @@ export function createRecallCard(cardFace) {
       // Tells the browser which regional font to use for the characters.
       wordElement.lang = options.script === 'traditional' ? 'zh-Hant-TW' : 'zh-Hans-CN';
       cardFace.replaceChildren(wordElement, paragraph('face-hint', HINTS[options.ask]));
+    },
+
+    // The word's meaning was corrected while its card is showing.
+    update(word) {
+      if (current) {
+        current.word = word;
+        if (revealed) {
+          showAnswer();
+        }
+      }
     },
 
     stop() {

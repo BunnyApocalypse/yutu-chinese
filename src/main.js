@@ -333,6 +333,7 @@ async function startUp() {
       pinyinElement: byId('prompt-pinyin'),
       pinyinButton: byId('pinyin-button'),
       gradeRow: byId('grade-row'),
+      editWordButton: byId('edit-word-button'),
       donePanel: byId('done-panel'),
       doneMessage: byId('done-message'),
       studyArea: byId('study-area'),
@@ -350,6 +351,7 @@ async function startUp() {
     },
     { writing: flow, tone: toneFlow, recall: recallCard },
     settings,
+    (word) => wordsPanel.edit(word),
   );
 
   await review.load();

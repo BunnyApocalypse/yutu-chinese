@@ -47,8 +47,8 @@ const byId = (id) => document.getElementById(id);
 // since its ID is made from the traditional form. Someone learning both can
 // give a word a script of its own ("Cards in"; see scriptFor in words.js).
 //
-// Returns { show() }; call show() whenever the tab is opened or a setting
-// has changed.
+// Returns { show(), edit(word) }; call show() whenever the tab is opened or a
+// setting has changed.
 export function createWordsPanel(onChange, getSettings) {
   const addForm = byId('add-word-form');
   const addFields = {
@@ -84,6 +84,7 @@ export function createWordsPanel(onChange, getSettings) {
   const editTraditional = byId('edit-traditional');
   const editSimplified = byId('edit-simplified');
   const editSimplifiedCaption = byId('edit-simplified-caption');
+  const editPinyin = byId('edit-pinyin');
   const editPinyinTaiwan = byId('edit-pinyin-taiwan');
   const editPinyinAlso = byId('edit-pinyin-also');
   const editCardScript = byId('edit-card-script');
@@ -97,6 +98,8 @@ export function createWordsPanel(onChange, getSettings) {
   let listToAdd = [];
   // The word open in the dialog.
   let openWord = null;
+  // What became of it, for edit(): see there.
+  let dialogResult = null;
 
   async function load() {
     words = (await getAll('words')).sort((a, b) => a.order - b.order);
@@ -494,6 +497,7 @@ export function createWordsPanel(onChange, getSettings) {
 
   function openDialog(word) {
     openWord = word;
+    dialogResult = { changed: false, word };
     const studied = studiedWordIds.has(word.id);
     dialogTitle.textContent = `${word[scriptFor(word, getSettings())]} ${formatPinyin(word.pinyin)}`;
     dialogStatus.textContent = studied
@@ -502,6 +506,7 @@ export function createWordsPanel(onChange, getSettings) {
     editDefinition.value = word.definition;
     editTraditional.value = word.traditional;
     editSimplified.value = word.simplified;
+    editPinyin.value = word.pinyin;
     editPinyinTaiwan.value = word.pinyinTaiwan || '';
     editPinyinAlso.value = word.pinyinAlso || '';
     editCardScript.value = word.cardScript || '';
@@ -514,14 +519,14 @@ export function createWordsPanel(onChange, getSettings) {
 
   byId('word-dialog-form').addEventListener('submit', async (event) => {
     event.preventDefault();
-    // The pinyin stays as it is. It and the traditional form make up the
-    // word's ID, which its cards and review history are filed under; when the
-    // traditional form is corrected, those are filed under the new ID.
+    // The traditional form and the pinyin make up the word's ID, which its
+    // cards and review history are filed under; when either is corrected,
+    // those are filed under the new ID (renameWord).
     // What is not asked for (see applySettings) stays as it was stored.
     const asks = asksFor();
     const checked = checkWord({
       traditional: asks.traditional ? editTraditional.value : openWord.traditional,
-      pinyin: openWord.pinyin,
+      pinyin: editPinyin.value,
       simplified: asks.simplified ? editSimplified.value : openWord.simplified,
       definition: editDefinition.value,
       pinyinTaiwan: asks.taiwan ? editPinyinTaiwan.value : openWord.pinyinTaiwan,
@@ -553,13 +558,16 @@ export function createWordsPanel(onChange, getSettings) {
     await fileCardsByScript([saved]);
     // The panel closes once the rest of the app has the changed word too.
     await afterChange();
+    dialogResult = { changed: true, word: saved };
     dialog.close();
   });
 
   studyNextButton.addEventListener('click', async () => {
-    await putAll('words', [{ ...openWord, order: orderForStudyingNext(words) }]);
-    dialog.close();
+    const moved = { ...openWord, order: orderForStudyingNext(words) };
+    await putAll('words', [moved]);
     await afterChange();
+    dialogResult = { changed: true, word: moved };
+    dialog.close();
   });
 
   byId('remove-word-button').addEventListener('click', async () => {
@@ -571,13 +579,28 @@ export function createWordsPanel(onChange, getSettings) {
       return;
     }
     await removeWord(openWord.id, allCardIds(openWord));
-    dialog.close();
     await afterChange();
+    dialogResult = { changed: true, word: null };
+    dialog.close();
   });
 
   byId('word-dialog-close').addEventListener('click', () => dialog.close());
 
   return {
+    // Opens a word's panel from elsewhere in the app (Review's "Edit word").
+    // Returns a promise for what became of the word once the panel is closed:
+    //   changed: true if anything was saved
+    //   word:    the word record as it is now; null if it was removed
+    async edit(word) {
+      applySettings();
+      await load();
+      openDialog(words.find((entry) => entry.id === word.id) || word);
+      // A <dialog> announces "close" however it was closed, the Esc key included.
+      return new Promise((resolve) => {
+        dialog.addEventListener('close', () => resolve(dialogResult), { once: true });
+      });
+    },
+
     async show() {
       applySettings();
       await load();
