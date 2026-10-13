@@ -444,6 +444,7 @@ async function startUp() {
       editWordButton: byId('edit-word-button'),
       aboutWordButton: byId('about-word-button'),
       leechNote: byId('leech-note'),
+      leechSuspendButton: byId('leech-suspend-button'),
       listenButton: byId('listen-button'),
       noticeElement: byId('review-notice'),
       donePanel: byId('done-panel'),

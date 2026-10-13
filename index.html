@@ -53,7 +53,12 @@
         <p id="prompt-pinyin" class="pinyin" hidden></p>
         <button id="pinyin-button" class="small" type="button" hidden>Show pinyin</button>
         <!-- The lesson for a new word: what this step asks for (review.js). -->
-        <p id="lesson-note" class="hint" hidden></p>
+        <div class="lesson-row">
+          <p id="lesson-note" class="hint" hidden></p>
+          <!-- Skips the lesson: the word is known (review.js). Beside the note,
+               so that it takes no room of its own on a phone. -->
+          <button id="skip-lesson-button" class="link-button" type="button" title="Skip this word's lesson: its cards are answered Easy" hidden>I know this word</button>
+        </div>
       </section>
 
       <!-- Free practice mode: type a character or word and choose a kind of card -->
@@ -332,7 +337,6 @@
         <!-- During the lesson for a new word: on to its next step, where nothing
              else leads there; and straight to its last step. -->
         <button id="lesson-next-button" class="primary" type="button" hidden>Next step</button>
-        <button id="skip-lesson-button" class="small" type="button" hidden>I know this word: skip its lesson</button>
 
         <!-- Review mode, with the grades: opens the word's panel to correct it (review.js). -->
         <!-- With the grades: the word's page, and its panel to correct it (review.js). -->
@@ -340,6 +344,8 @@
         <button id="edit-word-button" class="small" type="button" hidden>Edit word</button>
         <!-- With the grades, on a card that keeps being forgotten (review.js). -->
         <p id="leech-note" class="order-note" hidden></p>
+        <!-- With the note: takes the card out of Review there and then. -->
+        <button id="leech-suspend-button" class="small" type="button" hidden>Suspend this card</button>
 
         <!-- Shown when a character with two accepted stroke orders was written in the mainland one. -->
         <p id="order-note" class="order-note" hidden>

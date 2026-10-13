@@ -246,6 +246,21 @@ button.icon-button.no-sound {
   text-decoration: underline;
 }
 
+/* The lesson's note with "I know this word" beside it. */
+.lesson-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px 10px;
+}
+
+.lesson-row .link-button {
+  display: inline;
+  margin: 0;
+  padding: 0 2px;
+}
+
 footer {
   display: flex;
   flex-wrap: wrap;

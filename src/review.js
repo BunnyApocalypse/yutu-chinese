@@ -74,6 +74,7 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     editWordButton,
     aboutWordButton,
     leechNote,
+    leechSuspendButton,
     listenButton,
     noticeElement,
     donePanel,
@@ -189,6 +190,7 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     editWordButton.hidden = true;
     aboutWordButton.hidden = true;
     leechNote.hidden = true;
+    leechSuspendButton.hidden = true;
     options = null;
   }
 
@@ -275,6 +277,22 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     noticeElement.textContent = text;
     noticeElement.hidden = text === '';
   }
+
+  // "Suspend this card", offered with the note on a leech: the card is taken
+  // out of Review there and then, ungraded, and the next one comes.
+  leechSuspendButton.addEventListener('click', async () => {
+    if (!current || !options) {
+      return;
+    }
+    const { word, type, card } = current;
+    options = null;
+    await suspend(word, type);
+    showNotice(
+      `Suspended: the ${type} card of ${word[scriptFor(word, settings)]}, forgotten ${lapsesOf(card)} times. ` +
+        'Switch it back on from the word\'s page (Words tab).',
+    );
+    showNext();
+  });
 
   // Suspends one kind of card of a word, here and in the database.
   async function suspend(word, type) {
@@ -366,6 +384,7 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     const lapses = lapsesOf(current.card);
     leechNote.textContent = `Leech: you have forgotten this card ${lapses} times. The Decks tab lists your leeches.`;
     leechNote.hidden = !isLeech(current.card, settings.leechLapses);
+    leechSuspendButton.hidden = leechNote.hidden;
   }
 
   // The card has been answered: work out what each grade would do and offer

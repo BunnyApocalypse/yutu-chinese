@@ -190,7 +190,7 @@ describe('learning new words', { concurrency: false }, () => {
   it('lets a known word skip its lesson altogether', { timeout: 60000 }, async () => {
     await tap(page, 'learn-tab');
     await waitUntil(page, `${stepIs('step 1 of 5')} && document.getElementById('card-face').textContent.startsWith('小')`, 'the next word');
-    assert.equal(await textOf(page, 'skip-lesson-button'), 'I know this word: skip its lesson');
+    assert.equal(await textOf(page, 'skip-lesson-button'), 'I know this word');
     await tap(page, 'skip-lesson-button');
     // Nothing is written: the next word comes at once.
     await waitUntil(page, `${stepIs('step 1 of 5')} && document.getElementById('card-face').textContent.startsWith('上')`, 'the word after it');
