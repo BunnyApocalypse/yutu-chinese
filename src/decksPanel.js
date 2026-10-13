@@ -86,16 +86,39 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
     return getWords().filter((word) => isInDecks(word, ids));
   }
 
-  // "120 words · 35 learned · 8 due"
+  // How a deck stands: { text, percent }.
+  //   text:    "120 words · 35 learned (29%) · 8 due"
+  //   percent: how many of its words are learned, out of 100; null for a
+  //            deck without words
+  // "Learned" is the Learn tab's meaning of the word: the word has been
+  // through its lesson or has a studied card (isLearned in session.js).
   function countsOf(deck) {
     const inDeck = wordsIn(deck);
     const wordIds = new Set(inDeck.map((word) => word.id));
     const now = Date.now();
     const due = getCards().filter((card) => wordIds.has(card.wordId) && card.due <= now).length;
-    return (
-      `${plural(inDeck.length, 'word')} · ${inDeck.filter(isLearned).length} learned` +
-      (due > 0 ? ` · ${due} due` : '')
-    );
+    const learned = inDeck.filter(isLearned).length;
+    // Rounded down, so that 100% is only said when every word is learned.
+    const percent = inDeck.length > 0 ? Math.floor((100 * learned) / inDeck.length) : null;
+    return {
+      text:
+        `${plural(inDeck.length, 'word')} · ${learned} learned` +
+        (percent === null ? '' : ` (${percent}%)`) +
+        (due > 0 ? ` · ${due} due` : ''),
+      percent,
+    };
+  }
+
+  // A bar filled as far as a deck's words are learned, to go under its
+  // counts. Only decoration: the counts say the same in words.
+  function fillBar(bar, percent) {
+    bar.hidden = percent === null;
+    bar.replaceChildren();
+    if (percent !== null) {
+      const filled = document.createElement('span');
+      filled.style.width = `${percent}%`;
+      bar.append(filled);
+    }
   }
 
   // The deck a deck is inside, or null (also if that one is not there).
@@ -136,7 +159,9 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
     byId('decks-hint').hidden = Boolean(current);
     if (current) {
       byId('deck-title').textContent = current.name;
-      byId('deck-counts').textContent = countsOf(current);
+      const counts = countsOf(current);
+      byId('deck-counts').textContent = counts.text;
+      fillBar(byId('deck-progress'), counts.percent);
     }
 
     // The decks right inside the one that is open; on the front page, those
@@ -156,9 +181,13 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'word-entry deck-entry';
+      const counts = countsOf(deck);
+      const bar = span('deck-progress', '');
+      fillBar(bar, counts.percent);
       button.append(
         span('entry-characters', deck.name),
-        span('entry-definition', countsOf(deck) + (inside > 0 ? ` · ${plural(inside, 'deck')} inside` : '')),
+        span('entry-definition', counts.text + (inside > 0 ? ` · ${plural(inside, 'deck')} inside` : '')),
+        bar,
       );
       button.addEventListener('click', () => open(deck.id));
       const row = document.createElement('li');
