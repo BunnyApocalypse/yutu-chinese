@@ -396,13 +396,25 @@ export const type = (page, id, text) =>
     box.dispatchEvent(new Event('input', { bubbles: true }));
   })()`);
 
+// Opens the Decks tab on the page of a deck, where words are added: the page
+// it is on if it is on one (the first time, that of the deck the app starts
+// with), otherwise that of the first deck listed.
+export async function openDeckPage(page) {
+  await tap(page, 'decks-tab');
+  await waitUntil(page, `document.querySelectorAll('#deck-list li').length > 0 || !document.getElementById('deck-adding').hidden`, 'the Decks tab');
+  if (await page.evaluate(`document.getElementById('deck-adding').hidden`)) {
+    await page.evaluate(`document.querySelector('#deck-list button').click()`);
+  }
+  await waitUntil(page, `!document.getElementById('deck-adding').hidden`, 'a deck\'s page');
+}
+
 // The app starts with no words. This gives it the test word list
-// (tests/words.tsv, 109 common words) through the Words tab's "Add a list",
+// (tests/words.tsv, 109 common words) through the Decks tab's "Add a list",
 // and goes back to Free practice.
 export async function addTestWords(page) {
   const list = fs.readFileSync('tests/words.tsv', 'utf8');
   const count = list.split('\n').filter((line) => line.trim() !== '').length;
-  await tap(page, 'words-tab');
+  await openDeckPage(page);
   await type(page, 'list-text', list);
   await tap(page, 'check-list-button');
   await waitUntil(page, `!document.getElementById('add-list-button').hidden`, 'the list to be checked');

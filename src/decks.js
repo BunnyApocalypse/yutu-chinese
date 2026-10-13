@@ -6,8 +6,10 @@
 // several and still has one schedule: studying a deck only narrows down
 // which words come up. A deck may have a `newWordsPerDay` of its own.
 //
-// The page side is decksPanel.js (the Decks section of the Words tab) and
-// the deck chooser in review.js.
+// Every word is in at least one deck (see homeForEveryWord).
+//
+// The page side is the Decks tab (wordsPanel.js and decksPanel.js) and the
+// deck chooser in review.js.
 
 // The ready-made lists and their levels, in order. The IDs are the values of
 // the List drop-down in index.html, and the levels are those in the first
@@ -163,4 +165,26 @@ export function withoutDecks(word, deckIds) {
 // the ones that deleting those decks would leave without any.
 export function wordsOnlyIn(words, deckIds) {
   return words.filter((word) => isInDecks(word, deckIds) && word.decks.every((id) => deckIds.has(id)));
+}
+
+// ---- Every word is in a deck ----
+
+// The deck the app starts with, and where words go that would otherwise be
+// in no deck. Its ID is fixed, so every device has the same one; it can be
+// renamed like any other deck.
+export const DEFAULT_DECK = { id: 'chinese', name: 'Chinese 中文', parentId: null, order: -1 };
+
+// Sees to it that there is a deck and that every word is in one.
+//
+// Returns { words, decks }: the word records to save (those that were in no
+// deck that exists, now in the default deck) and the deck records to save
+// (the default deck, if it is needed and not there). Both are usually empty.
+export function homeForEveryWord(words, decks) {
+  const there = new Set(decks.map((deck) => deck.id));
+  const homeless = words.filter((word) => !isInDecks(word, there));
+  const needed = (homeless.length > 0 || decks.length === 0) && !there.has(DEFAULT_DECK.id);
+  return {
+    words: homeless.map((word) => ({ ...word, decks: [DEFAULT_DECK.id] })),
+    decks: needed ? [DEFAULT_DECK] : [],
+  };
 }

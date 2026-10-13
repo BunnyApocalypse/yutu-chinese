@@ -105,10 +105,10 @@ describe('the introduction', { concurrency: false }, () => {
     }
   });
 
-  it('ends in the Words tab with the choices saved', async () => {
+  it('ends in the Decks tab with the choices saved', async () => {
     assert.equal(await textOf(page, 'welcome-next'), 'Add my first words');
     await tap(page, 'welcome-next');
-    await waitUntil(page, `!${welcomeOpen} && document.getElementById('words-tab').classList.contains('selected')`, 'the Words tab');
+    await waitUntil(page, `!${welcomeOpen} && document.getElementById('decks-tab').classList.contains('selected')`, 'the Decks tab');
     // One box for the word, in traditional, and one for the Taiwan reading.
     assert.equal(await isShown(page, 'add-simplified'), false);
     assert.equal(await isShown(page, 'add-traditional'), true);

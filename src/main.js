@@ -12,7 +12,7 @@ import { createSettings } from './settings.js';
 import { createWordsPanel } from './wordsPanel.js';
 import { scriptFor, scriptFlagFor } from './words.js';
 import { fileCardsByScript } from './scriptCards.js';
-import { missingReadyMadeDecks, wordsWithListsAsDecks } from './decks.js';
+import { missingReadyMadeDecks, wordsWithListsAsDecks, homeForEveryWord } from './decks.js';
 import { setUpOffline, keepData } from './offline.js';
 import { createWelcome } from './welcome.js';
 import { buildBackup, checkBackup, describeBackup, restoreBackup } from './backup.js';
@@ -22,7 +22,7 @@ const byId = (id) => document.getElementById(id);
 const reviewTab = byId('review-tab');
 const learnTab = byId('learn-tab');
 const practiceTab = byId('practice-tab');
-const wordsTab = byId('words-tab');
+const wordsTab = byId('decks-tab');
 const wordsPanelElement = byId('words-panel');
 const reviewHeader = byId('review-header');
 const wordForm = byId('word-form');
@@ -103,14 +103,19 @@ async function loadWordList() {
   );
 }
 
-// The Words tab. After it changes the list, Review and Free practice read
-// the words afresh.
+// The Decks tab. After it changes anything, Review and Free practice read
+// the words afresh. Its "Review this deck" and "Learn this deck" buttons
+// choose the deck and open that tab.
 const wordsPanel = createWordsPanel(
   async () => {
     await review.load();
     await loadWordList();
   },
   () => settings,
+  async (deckId, newMode) => {
+    await settings.change('studyDeck', deckId);
+    await setMode(newMode);
+  },
 );
 
 // Free practice: any kind of card for what is in the text box. Nothing is
@@ -180,7 +185,7 @@ function setMode(newMode) {
   // Stops any card being shown and brings the study area back for writing.
   review.deactivate();
   if (mode === 'words') {
-    // The Words tab has the page to itself.
+    // The Decks tab has the page to itself.
     byId('study-area').hidden = true;
     return wordsPanel.show();
   }
@@ -323,6 +328,15 @@ async function fileListWordsInDecks() {
   if (missing.length > 0) {
     await putAll('decks', missing);
   }
+  // Every word is in a deck, and there is always a deck: a new device gets
+  // "Chinese 中文", and words from before there were decks are put in it.
+  const home = homeForEveryWord(await getAll('words'), await getAll('decks'));
+  if (home.decks.length > 0) {
+    await putAll('decks', home.decks);
+  }
+  if (home.words.length > 0) {
+    await putAll('words', home.words, { stamp: false });
+  }
 }
 
 async function startUp() {
@@ -392,7 +406,7 @@ async function startUp() {
   await loadWordList();
 
   // The introduction, the first time the app is opened on a device. It ends
-  // in the Words tab if there are no words yet.
+  // in the Decks tab if there are no words yet.
   const welcome = createWelcome({
     settings,
     keepData,

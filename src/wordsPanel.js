@@ -1,5 +1,7 @@
-// The Words tab: add a word, add a list of words, and look through the words
-// you have, changing or removing them.
+// The Decks tab: the decks (decksPanel.js), and in each deck its words: add a
+// word, add a list of words, look through them, change or remove them. Every
+// word is in at least one deck, so words are added on a deck's page. The
+// tab's other section adds the ready-made decks (HSK, TOCFL).
 //
 // What is typed is checked by the plain-calculation code in words.js; this
 // file is the page side, and saves the results in the database.
@@ -9,7 +11,7 @@ import { formatPinyin, wordId } from './wordList.js';
 import { allCardIds } from './session.js';
 import { fileCardsByScript } from './scriptCards.js';
 import { missingReadyMadeDecks, deckTree, deckWithInside, isInDecks, withDeck } from './decks.js';
-import { createDecksPanel, fillDeckSelect } from './decksPanel.js';
+import { createDecksPanel } from './decksPanel.js';
 import {
   checkWord,
   readWordList,
@@ -61,9 +63,12 @@ const byId = (id) => document.getElementById(id);
 // since its ID is made from the traditional form. Someone learning both can
 // give a word a script of its own ("Cards in"; see scriptFor in words.js).
 //
+// studyDeck(deckId, mode): shows Review ('review') or Learn ('learn') with
+//           that deck chosen
+//
 // Returns { show(), edit(word) }; call show() whenever the tab is opened or a
 // setting has changed.
-export function createWordsPanel(onChange, getSettings) {
+export function createWordsPanel(onChange, getSettings, studyDeck) {
   const addForm = byId('add-word-form');
   const addFields = {
     traditional: byId('add-traditional'),
@@ -90,9 +95,6 @@ export function createWordsPanel(onChange, getSettings) {
   const searchInput = byId('word-search');
   const listElement = byId('word-list');
   const listNote = byId('word-list-note');
-  const deckFilter = byId('word-deck-filter');
-  const addDeckSelect = byId('add-deck');
-  const listDeckSelect = byId('list-deck');
   const editDecks = byId('edit-decks');
 
   const dialog = byId('word-dialog');
@@ -112,6 +114,9 @@ export function createWordsPanel(onChange, getSettings) {
   let words = [];
   let decks = [];
   let cards = [];
+  // The ID of the deck whose page is open; null on the front page, and
+  // undefined until the tab is first shown (see show()).
+  let openDeckId;
   // The IDs of the words that have been learned.
   let studiedWordIds = new Set();
   // The checked words of a pasted list, waiting for "Add", and every word
@@ -135,31 +140,57 @@ export function createWordsPanel(onChange, getSettings) {
     ]);
   }
 
-  // The Decks section (decksPanel.js). It saves its own changes and then
+  // The deck whose page is open, or null on the front page (also if the
+  // deck has since been deleted).
+  function openDeck() {
+    return decks.find((deck) => deck.id === openDeckId) || null;
+  }
+
+  // Opens a deck's page, or the front page (null), at its top.
+  function openDeckPage(deckId) {
+    openDeckId = deckId;
+    searchInput.value = '';
+    forgetCheckedList();
+    addNote.textContent = '';
+    renderDecks();
+    renderList();
+    byId('words-panel').scrollIntoView();
+  }
+
+  // The decks themselves (decksPanel.js). It saves its own changes and then
   // calls afterChange, like everything else here.
   const decksPanel = createDecksPanel({
     getWords: () => words,
     getDecks: () => decks,
     getCards: () => cards,
     isLearned: (word) => studiedWordIds.has(word.id),
+    getOpenDeck: openDeck,
+    open: openDeckPage,
+    study: studyDeck,
     afterChange: () => afterChange(),
   });
 
-  // Shows the decks: their section, and the lists of decks to choose from
-  // elsewhere in the tab, which are only there once there is a deck.
+  // Shows the decks, and the forms for adding words if a deck's page is open.
   function renderDecks() {
     decksPanel.render();
-    const none = decks.length === 0;
-    fillDeckSelect(deckFilter, decks, [
-      { value: '', label: 'All words' },
-      { value: 'none', label: 'Words in no deck' },
-    ]);
-    byId('word-deck-filter-row').hidden = none;
-    for (const select of [addDeckSelect, listDeckSelect]) {
-      fillDeckSelect(select, decks, [{ value: '', label: 'No deck' }]);
-      select.closest('label').hidden = none;
+    byId('deck-adding').hidden = !openDeck();
+    byId('word-list-title').textContent = openDeck() ? 'Words in this deck' : 'All your words';
+  }
+
+  // ---- The tab's two sections ----
+
+  function showSection(readyMade) {
+    byId('my-decks-button').classList.toggle('selected', !readyMade);
+    byId('ready-decks-button').classList.toggle('selected', readyMade);
+    byId('my-decks-section').hidden = readyMade;
+    byId('ready-decks-section').hidden = !readyMade;
+    if (readyMade) {
+      readyReport.textContent = '';
+      showReadyLevels();
     }
   }
+  byId('my-decks-button').addEventListener('click', () => showSection(false));
+  byId('ready-decks-button').addEventListener('click', () => showSection(true));
 
   // Reads the list afresh, shows it, and tells the rest of the app.
   async function afterChange() {
@@ -243,15 +274,14 @@ export function createWordsPanel(onChange, getSettings) {
   // ---- The list of words ----
 
   function renderList() {
-    // The deck chosen under "Show", with the decks inside it; or the words
-    // in no deck at all.
-    const shownDecks = decks.some((deck) => deck.id === deckFilter.value)
-      ? deckWithInside(decks, deckFilter.value)
-      : null;
-    const inShownDecks = (word) =>
-      deckFilter.value === 'none' ? !(word.decks || []).length : !shownDecks || isInDecks(word, shownDecks);
-    const matching = words.filter((word) => inShownDecks(word) && matchesSearch(word, searchInput.value));
-    countElement.textContent = words.length;
+    // On a deck's page: its words and those of the decks inside it. On the
+    // front page: all words.
+    const deck = openDeck();
+    const inside = deck ? deckWithInside(decks, deck.id) : null;
+    const listed = inside ? words.filter((word) => isInDecks(word, inside)) : words;
+    const matching = listed.filter((word) => matchesSearch(word, searchInput.value));
+    countElement.textContent = listed.length;
+    const nameOf = new Map(decks.map((entry) => [entry.id, entry.name]));
     listNote.textContent =
       matching.length > MAX_ROWS
         ? `Showing the first ${MAX_ROWS} of ${matching.length}. Search to narrow them down.`
@@ -275,8 +305,14 @@ export function createWordsPanel(onChange, getSettings) {
         span('entry-pinyin', formatPinyin(word.pinyin)),
         span('entry-definition', word.definition),
       );
-      if (!studiedWordIds.has(word.id)) {
-        button.append(span('entry-new', 'waiting'));
+      // A word that is in a deck inside this one is marked with that deck.
+      const where =
+        deck && !word.decks.includes(deck.id)
+          ? `in ${nameOf.get(word.decks.find((id) => inside.has(id)))}`
+          : '';
+      const waiting = studiedWordIds.has(word.id) ? '' : 'waiting';
+      if (where || waiting) {
+        button.append(span('entry-new', [where, waiting].filter(Boolean).join(' · ')));
       }
       button.addEventListener('click', () => openDialog(word));
       const row = document.createElement('li');
@@ -287,7 +323,6 @@ export function createWordsPanel(onChange, getSettings) {
   }
 
   searchInput.addEventListener('input', renderList);
-  deckFilter.addEventListener('change', renderList);
 
   // ---- Adding one word ----
 
@@ -464,23 +499,26 @@ export function createWordsPanel(onChange, getSettings) {
       addNote.textContent = checked.problem;
       return;
     }
+    // The word goes into the deck whose page is open.
+    const deck = openDeck();
     const { toAdd } = newWordRecords([checked.word], words, Date.now());
-    if (toAdd.length === 0) {
-      addNote.textContent =
-        `${charactersOf(checked.word)} (${formatPinyin(checked.word.pinyin)}) is already in your words.`;
+    const name = `${charactersOf(checked.word)} (${formatPinyin(checked.word.pinyin)})`;
+    // A word that is there already is put in this deck as well.
+    const existing = toAdd.length === 0 ? words.find((word) => word.id === wordId(checked.word)) : null;
+    if (existing && existing.decks.includes(deck.id)) {
+      addNote.textContent = `${name} is already in this deck.`;
       return;
     }
-    // The deck stays chosen for the next word: a chapter is typed in a row.
-    const deckId = addDeckSelect.value;
-    await putAll('words', deckId ? toAdd.map((word) => withDeck(word, deckId)) : toAdd);
+    await putAll('words', [withDeck(existing || toAdd[0], deck.id)]);
     addForm.reset();
-    addDeckSelect.value = deckId;
     filledEntry = null;
     applySettings(); // "Cards in" is back to "As in Settings", so both boxes are
 
     pinyinPreview.textContent = '';
     suggestions.replaceChildren();
-    addNote.textContent = `Added ${charactersOf(toAdd[0])}. It waits in the Learn tab, last in line.`;
+    addNote.textContent = existing
+      ? `${name} was already in your words, as you had it. It is in this deck now too.`
+      : `Added ${charactersOf(toAdd[0])}. It waits in the Learn tab, last in line.`;
     await afterChange();
     lookedUpField.focus();
   });
@@ -551,40 +589,44 @@ export function createWordsPanel(onChange, getSettings) {
     showAddListButton();
   });
 
-  // With a deck chosen, a list is worth adding even if every word in it is
-  // there already: they are put in the deck.
-  function showAddListButton() {
-    const intoDeck = listDeckSelect.value !== '' && listRead.length > 0;
-    addListButton.textContent =
-      listToAdd.length > 0 || !intoDeck
-        ? `Add ${plural(listToAdd.length, 'word')}`
-        : `Put ${plural(listRead.length, 'word')} in the deck`;
-    addListButton.hidden = listToAdd.length === 0 && !intoDeck;
+  // The words of the checked list that are in your words already, but not
+  // in the deck whose page is open. Adding the list puts them in it too.
+  function listedButNotInDeck() {
+    const deckId = openDeck().id;
+    const listed = new Set(listRead.map((word) => wordId(word)));
+    return words.filter((word) => listed.has(word.id) && !word.decks.includes(deckId));
   }
-  listDeckSelect.addEventListener('change', showAddListButton);
+
+  // A list is worth adding even if every word in it is there already: they
+  // are put in this deck.
+  function showAddListButton() {
+    const toFile = listedButNotInDeck().length;
+    addListButton.textContent =
+      listToAdd.length > 0 || toFile === 0
+        ? `Add ${plural(listToAdd.length, 'word')}`
+        : `Put ${plural(toFile, 'word')} in this deck`;
+    addListButton.hidden = listToAdd.length === 0 && toFile === 0;
+  }
 
   addListButton.addEventListener('click', async () => {
     // Worked out again here, in case the list of words changed since the check.
     const { toAdd } = newWordRecords(listToAdd, words, Date.now());
-    const deckId = listDeckSelect.value;
-    // Words of the list that were there already are put in the deck too.
-    const listed = new Set(listRead.map((word) => wordId(word)));
-    const alreadyThere = deckId
-      ? words.filter((word) => listed.has(word.id) && !(word.decks || []).includes(deckId))
-      : [];
-    await putAll('words', deckId ? [...toAdd, ...alreadyThere].map((word) => withDeck(word, deckId)) : toAdd);
+    // Everything goes into the deck whose page is open, the words of the
+    // list that were there already too.
+    const deckId = openDeck().id;
+    const alreadyThere = listedButNotInDeck();
+    await putAll('words', [...toAdd, ...alreadyThere].map((word) => withDeck(word, deckId)));
     forgetCheckedList();
     listText.value = '';
     listReport.textContent =
       `Added ${plural(toAdd.length, 'word')}.` +
       (toAdd.length > 0 ? ' They wait in the Learn tab.' : '') +
-      (alreadyThere.length > 0 ? ` ${plural(alreadyThere.length, 'word')} you already had went into the deck.` : '');
+      (alreadyThere.length > 0 ? ` ${plural(alreadyThere.length, 'word')} you already had went into this deck.` : '');
     await afterChange();
   });
 
   // ---- Adding a ready-made list ----
 
-  const readyDetails = byId('ready-list');
   const readySelect = byId('ready-list-select');
   const readyLevels = byId('ready-levels');
   const addReadyButton = byId('add-ready-button');
@@ -644,13 +686,6 @@ export function createWordsPanel(onChange, getSettings) {
     showReadyCount();
   }
 
-  // "toggle" is announced when a <details> is opened or closed.
-  readyDetails.addEventListener('toggle', () => {
-    if (readyDetails.open) {
-      readyReport.textContent = '';
-      showReadyLevels();
-    }
-  });
   readySelect.addEventListener('change', () => {
     readyReport.textContent = '';
     showReadyLevels();
@@ -698,7 +733,7 @@ export function createWordsPanel(onChange, getSettings) {
       `Added ${plural(toAdd.length, 'word')}` +
       (alreadyHave > 0 ? `; ${alreadyHave} you already had` : '') +
       (noMeaning > 0 ? `; ${noMeaning} left out because the dictionary could not be fetched for their meaning` : '') +
-      '. They wait in the Learn tab, last in line, lowest level first.';
+      '. They are under My decks, a deck for each level, and wait in the Learn tab, last in line, lowest level first.';
   });
 
   // ---- One word: change, study next, remove ----
@@ -731,7 +766,7 @@ export function createWordsPanel(onChange, getSettings) {
     });
     // The first child is the fieldset's caption, which stays.
     editDecks.replaceChildren(editDecks.firstElementChild, ...boxes);
-    byId('edit-decks-row').hidden = decks.length === 0;
+    byId('edit-decks-row').hidden = false;
     byId('edit-decks-row').open = false;
     showDeckCount();
     dialogNote.textContent = '';
@@ -781,10 +816,12 @@ export function createWordsPanel(onChange, getSettings) {
     // The decks ticked, and any the word is in that are not there to tick
     // (which should not happen). The IDs it had before are kept.
     const known = new Set(decks.map((deck) => deck.id));
-    const inDecks = [...(openWord.decks || []).filter((id) => !known.has(id)), ...tickedDecks()];
-    if (inDecks.length > 0) {
-      saved.decks = inDecks;
+    if (tickedDecks().length === 0) {
+      byId('edit-decks-row').open = true;
+      dialogNote.textContent = 'A word has to be in at least one deck. To be rid of the word, use Remove.';
+      return;
     }
+    saved.decks = [...(openWord.decks || []).filter((id) => !known.has(id)), ...tickedDecks()];
     if (openWord.formerIds) {
       saved.formerIds = openWord.formerIds;
     }
@@ -852,6 +889,11 @@ export function createWordsPanel(onChange, getSettings) {
     async show() {
       applySettings();
       await load();
+      // The first time, with only the deck the app starts with, that deck's
+      // page is opened: it is where the first words go.
+      if (openDeckId === undefined) {
+        openDeckId = decks.length === 1 ? decks[0].id : null;
+      }
       renderDecks();
       renderList();
       showSuggestions();

@@ -50,9 +50,9 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 ## Layout
 
 - `index.html`: the single page.
-- `src/main.js`: entry point; the four tabs (Review, Learn, Free practice, Words), backup buttons.
-- `src/wordsPanel.js`: the Words tab: add a word, add a list, search the words, and a pop-up panel per word to change it, study it next or remove it.
-- `src/words.js`: the plain calculation behind the Words tab: checking a typed word, reading a TSV or CSV list, working out which words are new, searching.
+- `src/main.js`: entry point; the four tabs (Review, Learn, Free practice, Decks), backup buttons.
+- `src/wordsPanel.js`: the Decks tab (called the Words tab until 2026-10-13): its two sections, the words of the deck whose page is open (add a word, add a list, search), the ready-made decks, and a pop-up panel per word to change it, study it next or remove it.
+- `src/words.js`: the plain calculation behind the Decks tab: checking a typed word, reading a TSV or CSV list, working out which words are new, searching.
 - `src/dictionary.js`: looks a word up in the dictionary and proposes a meaning. Plain calculation.
 - `scripts/build-dictionary.js`, `data/cedict/dictionary.tsv`: the dictionary made from CC-CEDICT (run by hand, uses the internet, like the tone table script). About 124,000 entries, 8.4 MB.
 - `src/review.js`: Review and Learn. Picks the next card or the next word to learn, hands it to the code for its kind, runs the lesson, shows the grade buttons, saves the result.
@@ -67,13 +67,13 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `src/session.js`: plain calculation, no page or database: which card is next (`planSession`), the suggested grade for writing (`suggestGrade`, `judgeChar`), the 4:00 day boundary, the daily new-word limit, the hold between cards of one word.
 - `src/db.js`: small promise wrapper around IndexedDB. The store layout is documented at the top of the file.
 - `src/decks.js`: the plain calculation behind decks: the tree, which words are in a deck, a deck's daily goal, the decks of the ready-made lists.
-- `src/decksPanel.js`: the Decks section of the Words tab and the pop-up panel per deck. Set up by `src/wordsPanel.js`. Also `fillDeckSelect`, which every list of decks to choose from is filled with.
+- `src/decksPanel.js`: the decks in the Decks tab: the front page and a deck's page (the line saying where you are, the decks inside, adding one) and Deck settings (rename, move, daily goal, delete). Set up by `src/wordsPanel.js`. Also `fillDeckSelect`, which every list of decks to choose from is filled with.
 - `src/offline.js`, `src/serviceWorker.js`, `scripts/build-offline.js`, `public/manifest.webmanifest`, `.github/workflows/deploy.yml`: offline use and deployment (see that section).
 - `src/welcome.js`, `src/storageAdvice.js`: the introduction shown on first use, and what it says about long-term storage in each browser (see that section).
 - `src/scriptCards.js`: files writing cards under the script they were learned in (see "Switching script").
 - `src/backup.js`: build, check and restore a backup file.
 - `src/wordList.js`: parses the four-column TSV word list format (same as Skritter's export) and converts numbered pinyin to tone marks.
-- `tests/words.tsv`: 109 common words, hand-written, for the tests only. The app itself starts with no words (the owner's decision, 2026-10-13: this list had been loaded into every new database, and they did not want test words in their app). Browser tests that need words add it through the Words tab (`addTestWords` in the harness).
+- `tests/words.tsv`: 109 common words, hand-written, for the tests only. The app itself starts with no words (the owner's decision, 2026-10-13: this list had been loaded into every new database, and they did not want test words in their app). Browser tests that need words add it through the Decks tab (`addTestWords` in the harness).
 - `src/charData.js`: the only place stroke data is loaded from. `loadCharData(char, script)` returns `null` when a character has no data. For `'traditional'` it uses the Taiwan set where that has the character and the big set otherwise; for `'simplified'` only the big set.
 - `src/shortcuts.js`: recognizes handwriting shortcuts (two textbook strokes written as one). Plain calculation, no page or Hanzi Writer.
 - `src/strokeMatch.js`: judges whether a drawn stroke fits a given textbook stroke, and keeps track of two stroke orders. Plain calculation.
@@ -88,8 +88,8 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `tests/logic.test.js`, `tests/shortcuts.test.js`, `tests/strokeOrder.test.js`, `tests/toneMark.test.js`, `tests/frame.test.js`, `tests/storageAdvice.test.js`: tests for the plain-calculation code.
 - `tests/browser/harness.js`: what the browser tests share: serving the app, starting the browsers, drawing strokes, reading the status line.
 - `tests/browser/writing-grid.browser.js`: writes 15 characters in both stroke orders at seven positions and sizes.
-- `tests/browser/words.browser.js`: the Words tab from adding a word to finding it in Review.
-- `tests/browser/settings.browser.js`: the Script and Pronunciation settings, on cards and on the Words tab.
+- `tests/browser/words.browser.js`: the Decks tab from adding a word to finding it in Review.
+- `tests/browser/settings.browser.js`: the Script and Pronunciation settings, on cards and on the Decks tab.
 - `tests/browser/lesson.browser.js`, `tests/browser/welcome.browser.js`, `tests/browser/offline.browser.js`: the Learn tab and its lesson, the introduction, and offline use.
 - `tests/browser/database.browser.js`: a database from before brought up to date, and what is kept for merging (removal marks, `changedAt`, `formerIds`).
 - `tests/decks.test.js`: tests for `src/decks.js`.
@@ -114,7 +114,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 
 ## The word list
 
-- **Words are added in the Words tab**, one at a time or as a list pasted or chosen as a file. A device starts with none.
+- **Words are added in the Decks tab**, one at a time or as a list pasted or chosen as a file. A device starts with none.
 - **Dictionary lookup when adding one word:** as the characters are typed (either script), the entries CC-CEDICT has for them are listed under the box, one per reading, names last. Tapping one fills in every field, with a proposed meaning (`proposeMeaning`). How much of the entry that is depends on the "Dictionary meanings" setting (`meaningDetail`): `first` (the first meaning), `everyday` (the default: every meaning except those whose label names a specialist field, such as "(math.)"; the fields are listed in `SPECIALIST_FIELDS`) or `all`. The owner chose this on 2026-10-13, because CC-CEDICT separates near-synonyms with slashes as often as with semicolons, so cutting at the first slash lost shades of meaning. A word with only specialist meanings keeps them. Only a label at the start of a meaning counts. Nothing is filled in without a tap, and everything stays editable: writing prompts show only the meaning, so the owner words it.
 - **The dictionary is a separate 8.4 MB file, fetched only when a word is about to be typed** (`loadDictionary` in `src/wordsPanel.js`, through a `?url` import so Vite keeps it out of the program). Its lines are indexed by word and only taken apart on lookup. If it can't be fetched, the fields are filled in by hand as before. The app saves it for offline use (see "Offline use and deployment").
 - **A word typed that is already in the list under any reading is pointed out** ("Already in your words"), and the list check counts new words that share their characters with an existing one (`wordsWithSameCharacters`). Dictionaries disagree on neutral tones, so the same word can arrive as two readings (péngyou, péngyǒu); since the ID includes the pinyin, nothing else would catch that.
@@ -125,7 +125,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - **Lists are read as TSV or CSV**, line by line; a line with a tab is TSV. Skritter's CSV export does not put quotes around fields with commas, so `columnsFromCsv` works out which fields are pinyin and which are the meaning. Both of the owner's exports read to the same 2,298 words; the 40 lines left out are zhuyin symbols and patterns like "yue4 ... yue4".
 - **New words go to the end of the queue** (`order` one above the highest). "Study next" gives a word an `order` below every other, so `order` can be negative.
 - **Removing a word deletes its cards but never its reviews** (`removeWord` in `src/db.js`).
-- **After the Words tab changes anything**, Review and Free practice read the words afresh (`createWordsPanel`'s callback in `src/main.js`).
+- **After the Decks tab changes anything**, Review and Free practice read the words afresh (`createWordsPanel`'s callback in `src/main.js`).
 - **The word list on screen shows at most 200 rows** and relies on the search box beyond that.
 - **Content from Skritter stays on the owner's devices.** The meanings in a Skritter export may be Skritter's own text. Never commit an export, a list derived from one, or test data copied from one. `exports/` is git-ignored; when checking an import against the real files, print counts, not words.
 
@@ -157,18 +157,23 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 
 ## Decks
 
-Built on 2026-10-13. The answers marked "owner" were given to questions put to them.
+Built on 2026-10-13, first as a section of a Words tab, then the same day, at the owner's request, as the tab itself. The answers marked "owner" were given to questions put to them. (This file said "Words tab" throughout until then; `src/wordsPanel.js`, `words-panel` and the mode name `'words'` in `src/main.js` still carry the old name.)
 
+- **The Decks tab replaces the Words tab** (owner), and has two sections, chosen with the buttons at its top: "My decks" and "Ready-made decks" (owner: two sections of one tab, not a tab of its own). The ready-made section has the HSK and TOCFL lists; what is added from it appears under My decks, a deck per list with a deck per level inside.
+- **Every word is in at least one deck** (owner). The app starts with one deck, "Chinese 中文" (`DEFAULT_DECK` in `src/decks.js`, fixed ID `chinese`, so every device has the same one; it can be renamed). `homeForEveryWord` puts words that are in no deck that exists into it, at every start (`fileListWordsInDecks` in `src/main.js`), and makes it if there is no deck at all. Code may therefore rely on `word.decks` being there for words read after start-up.
+- **My decks has a front page and a page per deck** (owner: tapping a deck brings up a page with it and the decks inside it, where words are added and removed). `openDeckId` in `src/wordsPanel.js` says which is open; it is kept while the app is open, and the first time, with only one deck, that deck's page is opened, since that is where the first words go.
+  - **The front page:** the decks inside no other, a form to add one, and all words with the search box. No forms for adding words.
+  - **A deck's page:** a line saying where you are ("Decks › Textbook › Chapter 2", each part a button; `renderPath`), the deck's counts, "Review this deck", "Learn this deck" and "Deck settings", the decks right inside it and a form to add one there, Add a word and Add a list, and its words. Words of the decks inside it are listed too, marked "in Chapter 1".
+- **Words are added into the deck whose page is open.** A word that is there already is put in this deck as well ("was already in your words"), and keeps its meaning as it was; so are the words of a list that were there already, and a list with nothing new can still be "put in this deck".
+- **A word's pop-up panel has a checkbox per deck** in a fold-out, and at least one has to stay ticked. "Remove" there removes the word altogether.
 - **A word can be in several decks and has one schedule** (owner). A word's `decks` field lists deck IDs; studying a deck only narrows down which words come up. A deck includes the decks inside it (`deckWithInside`), to any depth.
-- **The Decks section of the Words tab** lists the decks as a tree (`deckTree`), each with its words, how many are learned and how many cards are due, and has a form to add one. "Inside" keeps its choice from one new deck to the next, for adding chapters in a row. Tapping a deck opens its pop-up panel: name, the deck it is inside, a daily goal, Delete.
-- **Putting words in decks:** "Add to deck" in the Add a word form (it stays chosen for the next word) and in Add a list (words of the list that were there already go into the deck too, and a list with nothing new can still be "put in the deck"); a fold-out of checkboxes in the word's pop-up panel; and the ready-made lists file their words by level. All lists of decks are only shown once there is a deck.
-- **"Show" above the word list** narrows it to a deck, or to the words in no deck.
-- **Studying a deck:** the chooser at the top of Review and Learn (`deck-select`, the `studyDeck` setting; `studyWords` in `src/review.js`). Review plans and Learn picks from the deck's words only. "All words" keeps the queue's order (owner). If the deck studied is deleted, all words are studied again.
+- **Studying a deck:** the chooser at the top of Review and Learn (`deck-select`, the `studyDeck` setting; `studyWords` in `src/review.js`), which is left out while there is only one deck, or the two buttons on a deck's page, which choose the deck and open the tab (`studyDeck` callback in `src/main.js`). "All words" keeps the queue's order (owner). If the deck studied is deleted, all words are studied again.
 - **A deck can have its own "New words per day"** (owner: a deck *can* have its own number, otherwise the one in Settings is the default); `dailyGoal`. It is the goal Learn shows while that deck is studied, counting the words of that deck learned today, and the limit Review uses for cards to be written again. A deck inside another does not take its number from the one it is inside.
-- **Deleting a deck asks what becomes of its words** (owner: ask each time). The panel then offers "Delete the deck, keep the words" and, if any of its words are in no other deck, "Delete the deck and remove N words". The decks inside it go too. Kept words are taken out of the decks before the decks are removed, and a deleted deck leaves a mark in `removed` with `kind: 'deck'`.
-- **A deck cannot be put inside itself or a deck inside it** (`canBeInside`); the panel does not offer those.
+- **Deleting a deck asks what becomes of its words** (owner: ask each time), in Deck settings. The decks inside it go too. Words that are in another deck as well just stay there. For those that are in no other, the panel offers "Delete the deck, keep the words", which moves them to the deck it was inside or, for a deck inside no other, to "Chinese 中文" (made again if it was deleted); and "Delete the deck and remove N words". If the deck being deleted is the only place left for them (it is or contains "Chinese 中文" and is inside no other), they can only be removed, or moved by hand first. Deleting the last deck leaves "Chinese 中文", empty. A deleted deck leaves a mark in `removed` with `kind: 'deck'`.
+- **A deck cannot be put inside itself or a deck inside it** (`canBeInside`); Deck settings does not offer those.
 - **The chooser shares a line with the counts** in Review and Learn, and wraps onto a line of its own when they do not fit (on a phone, with a long deck name). `chooseSize` in `src/wordFlow.js` was not changed for it.
-- **Not built:** changing the order of decks (they go by when they were made, the ready-made ones first), exporting or sharing a deck, per-deck card kinds, putting many words in a deck at once from the word list, and deck counts that take the hold between cards of one word into account ("due" there is simply cards past their time).
+- **Browser tests:** `openDeckPage` in the harness opens the Decks tab on a deck's page, for tests that add words.
+- **Not built:** the browser's back button does not step back through deck pages; changing the order of decks (they go by when they were made, "Chinese 中文" first); exporting or sharing a deck; per-deck card kinds; moving many words at once; and deck counts that take the hold between cards of one word into account ("due" there is simply cards past their time).
 - **For the merge:** `studyDeck` is a setting that belongs to the device.
 
 ## Ready for merging
@@ -205,7 +210,7 @@ Built on 2026-10-13 as the first step of the order of work in "Long-term goals".
 Built on 2026-10-13, at the owner's request, without them at the keyboard; the choices below are Claude's and are theirs to change.
 
 - **Two lists in Settings, three stored settings.** Script: "Traditional only", "Simplified only", "Both, cards in traditional", "Both, cards in simplified" (`script` plus `bothScripts`). Pronunciation: "Mainland only", "Both, mainland first", "Both, Taiwan first" (`pronunciation`: `mainlandOnly`, `mainland`, `taiwan`). **A new device starts with simplified only and mainland pronunciation only** (the owner's choice on 2026-10-13, as what suits most learners: a "Taiwan reading" box would only confuse a beginner); the introduction asks straight away. A device from before keeps what it had: `keepOldDefaults` in `src/main.js` writes down the old defaults (both scripts with cards in traditional; both pronunciations, mainland first) on any device that has settings stored but none for these. The browser tests choose those old defaults when they start (`openFreePractice` in the harness), since they were written for that.
-- **`script` is the script cards are shown and written in**, unless the word has its own (below). `bothScripts` only decides what the Words tab asks for and shows.
+- **`script` is the script cards are shown and written in**, unless the word has its own (below). `bothScripts` only decides what the Decks tab asks for and shows.
 - **One script learned:** the Add a word form has one characters box, captioned "Word or phrase 漢字" (or 汉字) instead of with the script's name (the owner asked for that on 2026-10-13), list rows, the pop-up panel's title and messages show that script only (`charactersShown` in `src/words.js`), and the pop-up panel has no Simplified box for a traditional-only learner. Search still matches both scripts.
 - **Every word still stores both scripts**, because the ID is `<traditional>|<pinyin>`. For a word typed in one script the other comes from the dictionary (`completeForms` in `src/wordsPanel.js`, `otherScriptForm` in `src/dictionary.js`): the entry that was tapped, else the entry with the same characters and reading (so 头发 fà becomes 頭髮, not 頭發), else the dictionary's form if all its entries agree, else the characters as typed. So a simplified-only learner's word that is not in the dictionary gets its simplified form as its "traditional" one and as its ID. After a switch to traditional such a word still shows its simplified form, until its traditional form is corrected in the pop-up panel (see "Switching script").
 - **A list may have one column of characters** (characters, pinyin, meaning), whatever the setting; `readWordList` tells it by its second column being pinyin, and the other script is looked up the same way, in the script of the `script` setting. Checking a list therefore fetches the dictionary first. The hint above the box is worded to suit the settings.
@@ -262,7 +267,7 @@ Built on 2026-10-13. The owner chose: all stroke data saved on the device, and a
 
 Asked for by the owner on 2026-10-13: HSK 3.0 first, 2.0 supported too, and TOCFL from the official files.
 
-- **Where:** "Add a ready-made list" in the Words tab. A list is chosen (HSK 3.0, HSK 2.0 marked "older", or TOCFL), its levels appear with checkboxes and counts ("Level 1: 512 words, 480 new"), and the button adds the chosen levels' new words at the end of the queue, lowest level first. A paragraph above explains what the HSK is and which list to pick, with a link to Wikipedia, for someone new to it.
+- **Where:** the "Ready-made decks" section of the Decks tab (see "Decks"). A list is chosen (HSK 3.0, HSK 2.0 marked "older", or TOCFL), its levels appear with checkboxes and counts ("Level 1: 512 words, 480 new"), and the button adds the chosen levels' new words at the end of the queue, lowest level first. A paragraph above explains what the HSK is and which list to pick, with a link to Wikipedia, for someone new to it.
 - **The files** are `data/wordlists/hsk/hsk-3.0.tsv` (11,054 words) and `hsk-2.0.tsv` (5,008), built by `scripts/build-word-lists.js` from two MIT-licensed projects at fixed versions; the folder's README has the sources and the license notice. Columns: level, simplified, traditional, pinyin, meaning. They are separate files (`?url` imports in `src/wordsPanel.js`), fetched when the section is opened and saved for offline use with the dictionary (`scripts/build-offline.js` saves every `.tsv` among the build's files).
 - **Meanings come from the app's dictionary** when a list is added, like for a word typed by hand, so the "Dictionary meanings" setting applies. A list only carries a meaning for the few words the dictionary lacks (31 in HSK 3.0); those, with their readings, are hand-written in `data/wordlists/hsk/extra-meanings.tsv`. A test checks that every listed word can get a meaning.
 - **Every listed word is matched to the dictionary** by its simplified form and reading (`bestMatch` in the build script) and takes its traditional form and reading from there, so that its ID is the same as when the word is typed by hand, and the same in both lists. The sources could not be used as they are: the HSK 3.0 source was matched to an older CC-CEDICT, and the HSK 2.0 source has character-by-character traditional forms (后面 for 後面) and tones as spoken (yi4qi3).
@@ -275,7 +280,7 @@ Asked for by the owner on 2026-10-13: HSK 3.0 first, 2.0 supported too, and TOCF
 
 Asked for by the owner on 2026-10-13; the screens' wording and the extras noted below are Claude's.
 
-- **Six screens in one `<dialog>`** (`welcome` in `index.html`, run by `src/welcome.js`): welcome; script and pronunciation; the four kinds of card, with a checkbox each; how it works; your words; keeping your data. Next and Back move between them; the last button ends in the Words tab if there are no words yet.
+- **Six screens in one `<dialog>`** (`welcome` in `index.html`, run by `src/welcome.js`): welcome; script and pronunciation; the four kinds of card, with a checkbox each; how it works; your words; keeping your data. Next and Back move between them; the last button ends in the Decks tab if there are no words yet.
 - **It opens by itself once per device**, while the `welcomeDone` setting is missing, so every existing device sees it once too. It starts from the settings as they are. Choices are saved only when the last screen is finished; "Skip the introduction" and Esc change nothing. "Show the introduction again" in Settings reopens it.
 - **Long-term storage is only asked for after it has been explained.** The last screen says why, and its button calls `keepData.ask()` (`navigator.storage.persist()`, in `src/offline.js`). Settings has the same button under "Offline use" while the answer is no.
 - **What the app says depends on the browser** (the owner asked for this on 2026-10-13): `browserKind` and `storageAdvice` in `src/storageAdvice.js`, plain calculation with tests. Firefox asks the person, so the app says to expect the question and, after a refusal, how to undo it. Chromium browsers never ask and say yes for an installed app, so the app says to install first, and after a no, that it will ask again by itself. Safari decides by itself and on an iPhone or iPad deletes a site's data after about a week unless the app is on the Home Screen, so the app says to put it there. Every refusal ends with "use Export backup".
@@ -373,7 +378,7 @@ Agreed with the owner on 2026-10-13, in the conversation that had been put first
 - **The hard constraints are open to change** (vanilla JavaScript, no framework, few dependencies) if a change makes the app easier to grow or to contribute to. Nothing planned needs one yet, so they stand until a concrete case comes up; each change is still asked for first.
 - **Order of work:**
   1. **Done on 2026-10-13:** settle the data model for decks and merging (see "Ready for merging"). The Skritter scheduling data has not arrived, so the import was not looked at.
-  2. **Done on 2026-10-13:** decks (see "Decks"). Swapped with merging that day: the owner is only testing for now, so decks were of more use to them first.
+  2. **Done on 2026-10-13:** decks, with the Decks tab in place of the Words tab (see "Decks"). Swapped with merging that day: the owner is only testing for now, so decks were of more use to them first.
   3. Merge backups.
   4. Leeches with their export, and a card manager.
   5. Sentences and audio.
@@ -398,7 +403,7 @@ Agreed with the owner on 2026-10-13, in the conversation that had been put first
 6. **Done:** the other card types (meaning, pinyin, tone with buttons or a drawn mark), scheduling across types, the settings panel, the pronunciation setting and Taiwan/mainland tone variants. Later: zhuyin as an alternative to pinyin.
 7. **Done:** two consecutive strokes joined, for every character. Still open: longer runs, and shortcuts that reorder or drop strokes.
 8. **Done:** PWA: manifest, service worker, all stroke data and the dictionary saved offline, deployed to GitHub Pages on every push to `main` (see "Offline use and deployment"). Still open: the owner trying it installed on the phone and tablet.
-9. Import the Skritter scheduling data, if the GDPR request (sent 2026-10-12) yields it. The word list itself can be added in the Words tab since 2026-10-12; the owner had said they did not want it imported without scheduling data, so when to do that is theirs to decide.
+9. Import the Skritter scheduling data, if the GDPR request (sent 2026-10-12) yields it. The word list itself can be added in the Decks tab since 2026-10-12; the owner had said they did not want it imported without scheduling data, so when to do that is theirs to decide.
 10. Merge backups between devices instead of replacing; a settings screen (new words per day, target retention).
 11. **To do, asked for by the owner:**
     - **Done on 2026-10-13:** the conversation about long-term goals (see "Long-term goals", which also has the order of work).

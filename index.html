@@ -18,7 +18,7 @@
         <button id="review-tab" class="selected" type="button">Review</button>
         <button id="learn-tab" type="button">Learn</button>
         <button id="practice-tab" type="button">Free practice</button>
-        <button id="words-tab" type="button">Words</button>
+        <button id="decks-tab" type="button">Decks</button>
       </nav>
 
       <!-- Review mode: what is left to do, and the prompt for the current word -->
@@ -68,60 +68,17 @@
         <button id="learn-next-button" class="primary" type="button" hidden>Learn the next word</button>
       </div>
 
-      <!-- The Words tab: add words and look after the list. Run by wordsPanel.js. -->
+      <!-- The Decks tab: the decks, the words in them, and the ready-made
+           decks to add. Run by wordsPanel.js and decksPanel.js. -->
       <section id="words-panel" class="words-panel" hidden>
-        <form id="add-word-form" class="add-word-form">
-          <h2>Add a word</h2>
-          <input id="add-traditional" type="text" placeholder="Traditional 繁體" aria-label="Traditional characters" lang="zh-Hant-TW" autocomplete="off" autocapitalize="off" />
-          <input id="add-simplified" type="text" placeholder="Simplified 简体 (if different)" aria-label="Simplified characters, if different" lang="zh-Hans-CN" autocomplete="off" autocapitalize="off" />
-          <!-- What the dictionary has for the characters typed, and whether the
-               word is in the list already. Filled in by wordsPanel.js. -->
-          <div id="add-suggestions" class="suggestions"></div>
-          <input id="add-pinyin" type="text" placeholder="Pinyin with tone numbers: xue2xi2" aria-label="Pinyin with tone numbers" autocomplete="off" autocapitalize="off" spellcheck="false" />
-          <!-- The pinyin with tone marks, as a check on what was typed. -->
-          <p id="add-pinyin-preview" class="pinyin-preview"></p>
-          <input id="add-pinyin-taiwan" type="text" placeholder="Taiwan reading (if different)" aria-label="Taiwan reading, if different" autocomplete="off" autocapitalize="off" spellcheck="false" />
-          <input id="add-definition" type="text" placeholder="Meaning" aria-label="Meaning" autocomplete="off" />
-          <!-- Only shown while both scripts are being learned (wordsPanel.js). -->
-          <label id="add-card-script-row" class="setting">
-            Cards in
-            <select id="add-card-script">
-              <option value="">As in Settings</option>
-              <option value="traditional">Traditional 繁體</option>
-              <option value="simplified">Simplified 简体</option>
-            </select>
-          </label>
-          <!-- Only shown once there are decks (wordsPanel.js). -->
-          <label id="add-deck-row" class="setting" hidden>
-            Add to deck
-            <select id="add-deck"></select>
-          </label>
-          <button type="submit" class="primary">Add word</button>
-          <p id="add-word-note" class="note"></p>
-        </form>
+        <!-- The tab's two sections. -->
+        <nav class="tabs">
+          <button id="my-decks-button" class="selected" type="button">My decks</button>
+          <button id="ready-decks-button" type="button">Ready-made decks</button>
+        </nav>
 
-        <!-- <details> is the browser's built-in fold-out: closed until its summary is tapped. -->
-        <details class="add-list">
-          <summary>Add a list of words</summary>
-          <!-- Which columns a list has; worded by wordsPanel.js to suit the settings. -->
-          <p id="list-hint" class="hint"></p>
-          <textarea id="list-text" rows="6" aria-label="Word list" spellcheck="false"></textarea>
-          <label id="list-deck-row" class="setting" hidden>
-            Add to deck
-            <select id="list-deck"></select>
-          </label>
-          <div class="buttons">
-            <button id="list-file-button" class="small" type="button">Choose a file</button>
-            <input id="list-file" type="file" accept=".tsv,.csv,.txt,text/plain,text/csv,text/tab-separated-values" hidden />
-            <button id="check-list-button" class="small" type="button">Check list</button>
-            <button id="add-list-button" class="small primary" type="button" hidden>Add</button>
-          </div>
-          <p id="list-report" class="note"></p>
-          <ul id="list-problems" class="list-problems"></ul>
-        </details>
-
-        <details id="ready-list" class="add-list">
-          <summary>Add a ready-made list</summary>
+        <!-- Ready-made decks: the word lists of the official tests. -->
+        <section id="ready-decks-section" class="words-panel" hidden>
           <p class="hint">
             These are the word lists of the two official tests of Chinese for learners. They are a common answer to
             "which words should I learn first?", and many textbooks and courses follow them. The lowest level is the easiest.
@@ -136,7 +93,7 @@
             is Taiwan's test, with two Novice levels and then levels 1 to 5. Its words are the ones used in Taiwan,
             so it suits someone learning traditional characters there.
           </p>
-          <p class="hint">Not sure? Start with HSK 3.0, level 1.</p>
+          <p class="hint">Not sure? Start with HSK 3.0, level 1. What you add appears under My decks, a deck for each level.</p>
           <label class="setting">
             List
             <select id="ready-list-select">
@@ -151,34 +108,85 @@
             <button id="add-ready-button" class="small primary" type="button" disabled>Add</button>
           </div>
           <p id="ready-report" class="note"></p>
-        </details>
+        </section>
 
-        <!-- The decks, as a tree. Run by decksPanel.js. -->
-        <h2>Decks</h2>
-        <p class="hint">
-          A deck groups words: a textbook and its chapters, say. A word can be in several decks and is still
-          scheduled once. Once you have a deck, you choose which to study at the top of Review and Learn.
-        </p>
-        <ul id="deck-list" class="word-list"></ul>
-        <form id="add-deck-form" class="add-word-form">
-          <input id="add-deck-name" type="text" placeholder="Name of a new deck" aria-label="Name of a new deck" autocomplete="off" />
-          <label id="add-deck-parent-row" class="setting" hidden>
-            Inside
-            <select id="add-deck-parent"></select>
-          </label>
-          <div class="buttons">
-            <button type="submit" class="small">Add deck</button>
+        <!-- My decks: either the front page, with the decks that are inside no
+             other, or one deck's page. -->
+        <section id="my-decks-section" class="words-panel">
+          <!-- Where you are: Decks › Textbook › Chapter 2. Each part is a button. -->
+          <nav id="deck-path" class="deck-path" aria-label="Where you are"></nav>
+          <!-- Only on a deck's page. -->
+          <div id="deck-head" hidden>
+            <h2 id="deck-title"></h2>
+            <p id="deck-counts" class="hint"></p>
+            <div class="buttons">
+              <button id="deck-review-button" class="small" type="button">Review this deck</button>
+              <button id="deck-learn-button" class="small" type="button">Learn this deck</button>
+              <button id="deck-settings-button" class="small" type="button">Deck settings</button>
+            </div>
           </div>
-        </form>
+          <!-- Only on the front page. -->
+          <p id="decks-hint" class="hint">
+            A deck is a group of words: a textbook, say, with a deck inside it for each chapter. Tap a deck to see its
+            words and add to them. A word can be in several decks and is still scheduled once.
+          </p>
 
-        <h2>Your words (<span id="word-count">0</span>)</h2>
-        <input id="word-search" type="search" placeholder="Search characters, pinyin or meaning" aria-label="Search your words" autocomplete="off" autocapitalize="off" />
-        <label id="word-deck-filter-row" class="setting" hidden>
-          Show
-          <select id="word-deck-filter"></select>
-        </label>
-        <p id="word-list-note" class="note"></p>
-        <ul id="word-list" class="word-list"></ul>
+          <h2 id="deck-list-title">Decks</h2>
+          <ul id="deck-list" class="word-list"></ul>
+          <form id="add-deck-form" class="add-deck-form">
+            <input id="add-deck-name" type="text" placeholder="Name of a new deck" aria-label="Name of a new deck" autocomplete="off" />
+            <button type="submit" class="small">Add deck</button>
+          </form>
+
+          <!-- Adding words: only on a deck's page, since every word is in a deck. -->
+          <div id="deck-adding" class="words-panel" hidden>
+            <form id="add-word-form" class="add-word-form">
+              <h2>Add a word</h2>
+              <input id="add-traditional" type="text" placeholder="Traditional 繁體" aria-label="Traditional characters" lang="zh-Hant-TW" autocomplete="off" autocapitalize="off" />
+              <input id="add-simplified" type="text" placeholder="Simplified 简体 (if different)" aria-label="Simplified characters, if different" lang="zh-Hans-CN" autocomplete="off" autocapitalize="off" />
+              <!-- What the dictionary has for the characters typed, and whether the
+                   word is in the list already. Filled in by wordsPanel.js. -->
+              <div id="add-suggestions" class="suggestions"></div>
+              <input id="add-pinyin" type="text" placeholder="Pinyin with tone numbers: xue2xi2" aria-label="Pinyin with tone numbers" autocomplete="off" autocapitalize="off" spellcheck="false" />
+              <!-- The pinyin with tone marks, as a check on what was typed. -->
+              <p id="add-pinyin-preview" class="pinyin-preview"></p>
+              <input id="add-pinyin-taiwan" type="text" placeholder="Taiwan reading (if different)" aria-label="Taiwan reading, if different" autocomplete="off" autocapitalize="off" spellcheck="false" />
+              <input id="add-definition" type="text" placeholder="Meaning" aria-label="Meaning" autocomplete="off" />
+              <!-- Only shown while both scripts are being learned (wordsPanel.js). -->
+              <label id="add-card-script-row" class="setting">
+                Cards in
+                <select id="add-card-script">
+                  <option value="">As in Settings</option>
+                  <option value="traditional">Traditional 繁體</option>
+                  <option value="simplified">Simplified 简体</option>
+                </select>
+              </label>
+              <button type="submit" class="primary">Add word</button>
+              <p id="add-word-note" class="note"></p>
+            </form>
+
+            <!-- <details> is the browser's built-in fold-out: closed until its summary is tapped. -->
+            <details class="add-list">
+              <summary>Add a list of words</summary>
+              <!-- Which columns a list has; worded by wordsPanel.js to suit the settings. -->
+              <p id="list-hint" class="hint"></p>
+              <textarea id="list-text" rows="6" aria-label="Word list" spellcheck="false"></textarea>
+              <div class="buttons">
+                <button id="list-file-button" class="small" type="button">Choose a file</button>
+                <input id="list-file" type="file" accept=".tsv,.csv,.txt,text/plain,text/csv,text/tab-separated-values" hidden />
+                <button id="check-list-button" class="small" type="button">Check list</button>
+                <button id="add-list-button" class="small primary" type="button" hidden>Add</button>
+              </div>
+              <p id="list-report" class="note"></p>
+              <ul id="list-problems" class="list-problems"></ul>
+            </details>
+          </div>
+
+          <h2><span id="word-list-title">All your words</span> (<span id="word-count">0</span>)</h2>
+          <input id="word-search" type="search" placeholder="Search characters, pinyin or meaning" aria-label="Search your words" autocomplete="off" autocapitalize="off" />
+          <p id="word-list-note" class="note"></p>
+          <ul id="word-list" class="word-list"></ul>
+        </section>
       </section>
 
       <div id="study-area" class="study-area">
@@ -251,7 +259,7 @@
         <button id="update-button" class="small primary" type="button" hidden>New version ready: tap to reload</button>
       </footer>
 
-      <!-- One word from the Words tab: change it, study it next, or remove it. -->
+      <!-- One word from the Decks tab: change it, study it next, or remove it. -->
       <dialog id="word-dialog" class="settings-panel">
         <form id="word-dialog-form">
           <h2 id="word-dialog-title"></h2>
@@ -304,7 +312,7 @@
         </form>
       </dialog>
 
-      <!-- One deck from the Words tab: rename it, move it, give it a daily goal, or delete it. -->
+      <!-- One deck from the Decks tab: rename it, move it, give it a daily goal, or delete it. -->
       <dialog id="deck-dialog" class="settings-panel">
         <form id="deck-dialog-form">
           <h2 id="deck-dialog-title"></h2>
@@ -400,9 +408,9 @@
 
         <section data-step hidden>
           <h2>Your words</h2>
-          <p>The app starts with no words. You add the ones you want to learn in the <b>Words</b> tab; they then wait in the <b>Learn</b> tab until you learn them.</p>
+          <p>The app starts with no words. You add the ones you want to learn in the <b>Decks</b> tab; they then wait in the <b>Learn</b> tab until you learn them.</p>
           <p>Type a word's characters and tap its dictionary entry to fill in the reading and meaning, paste a list of your own, or add a ready-made list such as the words of HSK level 1.</p>
-          <p>If something about a word is wrong, correct it in the Words tab, or tap <b>Edit word</b> after answering one of its cards.</p>
+          <p>If something about a word is wrong, correct it in the Decks tab, or tap <b>Edit word</b> after answering one of its cards.</p>
         </section>
 
         <section data-step hidden>

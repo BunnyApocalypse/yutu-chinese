@@ -1,5 +1,5 @@
 // Looking words up in the dictionary, to fill in the fields when a word is
-// added in the Words tab.
+// added in the Decks tab.
 //
 // The dictionary is data/cedict/dictionary.tsv, made from CC-CEDICT by
 // scripts/build-dictionary.js; the format is described there. It is a big

@@ -8,7 +8,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, reloadApp, tap, type, waitUntil } from './harness.js';
+import { startApp, startBrowsers, reloadApp, tap, type, waitUntil, openDeckPage } from './harness.js';
 
 const rows = (count) => `document.querySelectorAll('#word-list li').length === ${count}`;
 
@@ -94,7 +94,7 @@ describe('the database', { concurrency: false }, () => {
     };
     await putBackOldDatabase(page, [oldWord], await stored(page, 'settings'));
     await reloadApp(page);
-    await tap(page, 'words-tab');
+    await tap(page, 'decks-tab');
     await waitUntil(page, `document.getElementById('word-count').textContent === '1'`, 'the word from before');
 
     // The word is in its lists' decks, and is otherwise as it was: not even
@@ -151,6 +151,8 @@ describe('the database', { concurrency: false }, () => {
     assert.deepEqual(removed.map((mark) => mark.id), ['愛|ai3']);
     assert.ok(removed[0].removedAt >= before);
 
+    // Words are added on a deck's page.
+    await openDeckPage(page);
     await type(page, 'add-traditional', '愛');
     await type(page, 'add-simplified', '爱');
     await type(page, 'add-pinyin', 'ai3');

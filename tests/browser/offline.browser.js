@@ -21,7 +21,7 @@ import {
   textOf,
   waitUntil,
   addTestWords,
-} from './harness.js';
+ openDeckPage } from './harness.js';
 
 // One browser, and the steps in order: each builds on the one before.
 describe('offline use', { concurrency: false }, () => {
@@ -107,7 +107,7 @@ describe('offline use', { concurrency: false }, () => {
     assert.match(await writeFirstStroke('學'), /^Stroke 2 of 16/);
     assert.match(await writeFirstStroke('学'), /^Stroke 2 of 8/);
     // The dictionary is there too.
-    await tap(page, 'words-tab');
+    await openDeckPage(page);
     await type(page, 'add-traditional', '圖書館');
     await waitUntil(page, `document.querySelector('#add-suggestions button') !== null`, 'a dictionary entry');
     assert.match(await textOf(page, '#add-suggestions button'), /library/);

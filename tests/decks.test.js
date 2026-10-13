@@ -18,6 +18,8 @@ import {
   withDeck,
   withoutDecks,
   wordsOnlyIn,
+  DEFAULT_DECK,
+  homeForEveryWord,
 } from '../src/decks.js';
 import { parseReadyList, levelsOfReadyList, listTag } from '../src/words.js';
 
@@ -35,7 +37,7 @@ test('the levels listed for the decks are those in the list files', () => {
   for (const list of READY_MADE_LISTS) {
     const entries = parseReadyList(fs.readFileSync(`data/wordlists/${files[list.id]}`, 'utf8'));
     assert.deepEqual(levelsOfReadyList(entries, []).map((entry) => entry.level), list.levels, list.id);
-    // Every level's tag, as the Words tab makes it, has a deck.
+    // Every level's tag, as the Decks tab makes it, has a deck.
     for (const level of list.levels) {
       assert.equal(readyMadeDeck(listTag(list.id, level)).parentId, list.id);
     }
@@ -124,4 +126,19 @@ test('the words a deck\'s deletion would leave without a deck are found', () => 
     { id: 'e' },
   ];
   assert.deepEqual(wordsOnlyIn(words, deckWithInside(DECKS, 'book')).map((word) => word.id), ['a', 'b']);
+});
+
+test('every word gets a deck, and there is always one deck', () => {
+  // A new device: no words, no decks.
+  assert.deepEqual(homeForEveryWord([], []), { words: [], decks: [DEFAULT_DECK] });
+  // Words in no deck, or only in a deck that is gone, go into the default one.
+  const words = [{ id: 'a' }, { id: 'b', decks: ['gone'] }, { id: 'c', decks: ['ch1', 'gone'] }];
+  const result = homeForEveryWord(words, DECKS);
+  assert.deepEqual(result.words, [{ id: 'a', decks: ['chinese'] }, { id: 'b', decks: ['chinese'] }]);
+  assert.deepEqual(result.decks, [DEFAULT_DECK]);
+  // Nothing to do: the default deck is not made again once it was deleted.
+  assert.deepEqual(homeForEveryWord([words[2]], DECKS), { words: [], decks: [] });
+  // It is there already (renamed, even).
+  const renamed = { ...DEFAULT_DECK, name: 'Mandarin' };
+  assert.deepEqual(homeForEveryWord([{ id: 'a' }], [renamed]).decks, []);
 });

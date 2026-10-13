@@ -599,7 +599,7 @@ button.primary:active {
   background: #315d99;
 }
 
-/* ---- The Words tab ---- */
+/* ---- The Decks tab ---- */
 
 .words-panel {
   display: flex;
@@ -748,10 +748,46 @@ button.word-entry {
   font-size: 0.9rem;
 }
 
-/* One deck in the Words tab: its name, and its counts below. */
+/* One deck in the Decks tab: its name, and its counts below. */
 button.deck-entry {
   grid-template-columns: 1fr;
-  width: auto;
+}
+
+/* Where you are, above a deck's page: Decks › Textbook › Chapter 2. */
+.deck-path {
+  font-size: 0.95rem;
+  color: #6b6557;
+}
+
+/* A part of it that can be tapped: it looks like a link, not a button. */
+button.path-part {
+  min-height: 32px;
+  padding: 0 2px;
+  border: none;
+  background: none;
+  font: inherit;
+  color: #3b6fb6;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+#deck-head h2 {
+  font-size: 1.4rem;
+}
+
+#deck-head .buttons {
+  gap: 8px;
+}
+
+/* The name of a new deck with its button beside it. */
+.add-deck-form {
+  display: flex;
+  gap: 8px;
+}
+
+.add-deck-form input {
+  flex: 1;
+  min-width: 0;
 }
 
 .deck-entry .entry-characters {

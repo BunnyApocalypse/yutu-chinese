@@ -1,6 +1,6 @@
 // The Script and Pronunciation settings in a real browser: someone learning
 // one script, or mainland pronunciation only, is not asked for or shown the
-// rest, on the Words tab and on cards.
+// rest, on the Decks tab and on cards.
 //
 // Run with: npm run test:browser
 
@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 
 import { startApp, startBrowsers, tap, type, choose, textOf, isShown, waitUntil, addTestWords } from './harness.js';
 
-// Text for "the Words tab's list has this many rows".
+// Text for "the Decks tab's list has this many rows".
 const rows = (count) => `document.querySelectorAll('#word-list li').length === ${count}`;
 
 // One browser, and the steps in order: each builds on the one before.
@@ -85,7 +85,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     await practice('星期', 'tone');
     assert.match(await giveTones([1, 5]), /^Not a\b/);
     // ... so that is added to the word.
-    await tap(page, 'words-tab');
+    await tap(page, 'decks-tab');
     await type(page, 'word-search', '星期');
     await waitUntil(page, `document.querySelectorAll('#word-list li').length >= 1`);
     await page.evaluate(`document.querySelector('#word-list li button').click()`);
@@ -100,7 +100,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
 
   it('asks only for simplified characters when only those are learned', async () => {
     await choose(page, 'script-select', 'simplified');
-    await tap(page, 'words-tab');
+    await tap(page, 'decks-tab');
     await waitUntil(page, `document.getElementById('word-count').textContent !== '0'`, 'the word list');
     // A setting is saved before it takes effect, which takes a moment.
     await waitUntil(page, `document.getElementById('add-traditional').hidden`, 'the traditional box to go');
@@ -229,7 +229,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     await practice('圖書館', 'meaning');
     await waitUntil(page, `document.getElementById('card-face').textContent.startsWith('圖書館')`, 'the card in traditional');
     assert.equal(await textOf(page, 'script-flag'), '');
-    await tap(page, 'words-tab');
+    await tap(page, 'decks-tab');
     await waitUntil(page, `document.getElementById('add-card-script-row').hidden`, 'the choice to go');
     await page.evaluate(`document.querySelector('#word-list li button').click()`);
     assert.equal(await page.evaluate(`document.getElementById('edit-card-script').closest('label').hidden`), true);
@@ -255,7 +255,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     // A simplified-only learner adds a word the dictionary does not have,
     // so its traditional form is stored as the simplified one.
     await choose(page, 'script-select', 'simplified');
-    await tap(page, 'words-tab');
+    await tap(page, 'decks-tab');
     await waitUntil(page, `document.getElementById('add-traditional').hidden`, 'the traditional box to go');
     await type(page, 'add-simplified', '书虫们');
     await type(page, 'add-pinyin', 'shu1chong2men5');
@@ -338,7 +338,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     await page.evaluate(`document.querySelector('#grade-row button.primary').click()`);
     // The grades go once the review is saved and the next card is up.
     await waitUntil(page, `!${gradesShown}`, 'the review to be saved');
-    await tap(page, 'words-tab');
+    await tap(page, 'decks-tab');
     await type(page, 'word-search', 'a corrected meaning');
     await waitUntil(page, rows(1));
     const row = await textOf(page, '#word-list li');

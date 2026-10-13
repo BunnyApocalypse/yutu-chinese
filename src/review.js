@@ -186,7 +186,7 @@ export function createReview(elements, flows, settings, editWord) {
       return;
     }
     const after = result.word;
-    // The Words tab has had Review read the words and cards afresh (load()).
+    // The Decks tab has had Review read the words and cards afresh (load()).
     const fields = new Set([...Object.keys(before), ...Object.keys(after || {})]);
     fields.delete('definition');
     // When the word was saved is filled in by the database, and always differs.
@@ -622,10 +622,10 @@ export function createReview(elements, flows, settings, editWord) {
     } else if (waiting === 0) {
       showLearnMessage(
         words.length === 0
-          ? 'You have no words yet. Add some in the Words tab.'
+          ? 'You have no words yet. Add some in the Decks tab.'
           : studyDeck()
             ? 'No words of this deck are waiting to be learned.'
-            : 'No words are waiting to be learned. Add more in the Words tab.',
+            : 'No words are waiting to be learned. Add more in the Decks tab.',
         false,
       );
     } else if (learnedToday >= goal) {
@@ -660,11 +660,12 @@ export function createReview(elements, flows, settings, editWord) {
     return dailyGoal(studyDeck(), settings.newWordsPerDay);
   }
 
-  // The list of decks to choose from, which is only there once there is one.
+  // The list of decks to choose from. With only the deck the app starts
+  // with there is nothing to choose, and it is left out.
   function showDeckChoice() {
     fillDeckSelect(deckSelect, decks, [{ value: '', label: 'All words' }]);
     deckSelect.value = studyDeck() ? settings.studyDeck : '';
-    deckSelect.hidden = decks.length === 0;
+    deckSelect.hidden = decks.length < 2;
   }
 
   // Saving the setting has the next card worked out afresh (see refresh).
@@ -741,9 +742,9 @@ export function createReview(elements, flows, settings, editWord) {
           ? ` ${plan.waitingCount} ${plan.waitingCount === 1 ? 'word is' : 'words are'} waiting in the Learn tab.`
           : '';
       if (words.length === 0) {
-        doneMessage.textContent = 'You have no words yet. Add some in the Words tab.';
+        doneMessage.textContent = 'You have no words yet. Add some in the Decks tab.';
       } else if (studied.length === 0) {
-        doneMessage.textContent = 'This deck has no words yet. Put some in it in the Words tab.';
+        doneMessage.textContent = 'This deck has no words yet. Put some in it in the Decks tab.';
       } else if (plan.waitingCount === studied.length) {
         doneMessage.textContent = `Nothing to review yet.${waiting}`;
       } else {
@@ -782,7 +783,7 @@ export function createReview(elements, flows, settings, editWord) {
   return {
     // Reads words and cards from the database. Call once at startup.
     // Reads words and cards from the database: at startup, and again whenever
-    // the Words tab has changed them.
+    // the Decks tab has changed them.
     load() {
       loading = (async () => {
         // Everything is read first and put in place together, so that nothing
@@ -821,6 +822,7 @@ export function createReview(elements, flows, settings, editWord) {
       mode = newMode;
       justLearned = null;
       await loading;
+      showDeckChoice(); // the deck studied may have been chosen on its page
       return showNext();
     },
 
@@ -844,6 +846,7 @@ export function createReview(elements, flows, settings, editWord) {
 
     // Works out the next card afresh, e.g. after a setting changed.
     refresh() {
+      showDeckChoice(); // the deck studied may have been chosen elsewhere
       return showNext();
     },
   };

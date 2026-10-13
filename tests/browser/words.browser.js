@@ -1,4 +1,4 @@
-// The Words tab in a real browser: add a word, find it, have it come up in
+// The Decks tab in a real browser: add a word, find it, have it come up in
 // Review, change it, add a list, remove a word, and check that it all
 // survives closing and reopening the app.
 //
@@ -9,12 +9,12 @@ import assert from 'node:assert/strict';
 
 import { startApp, startBrowsers, reloadApp, tap, type, choose, textOf, waitUntil, addTestWords } from './harness.js';
 
-// Text for "the Words tab's list has this many rows".
+// Text for "the Decks tab's list has this many rows".
 const rows = (count) => `document.querySelectorAll('#word-list li').length === ${count}`;
 const wordCount = (page) => textOf(page, 'word-count').then(Number);
 
 // One browser, and the steps in order: each builds on the one before.
-describe('the Words tab', { concurrency: false }, () => {
+describe('the Decks tab', { concurrency: false }, () => {
   let app;
   let browsers;
   let page;
@@ -30,15 +30,15 @@ describe('the Words tab', { concurrency: false }, () => {
     await tap(page, 'review-tab');
     await waitUntil(
       page,
-      `document.getElementById('done-message').textContent === 'You have no words yet. Add some in the Words tab.'`,
+      `document.getElementById('done-message').textContent === 'You have no words yet. Add some in the Decks tab.'`,
       'the note that there are no words',
     );
-    await tap(page, 'words-tab');
+    await tap(page, 'decks-tab');
     assert.equal(await textOf(page, 'word-count'), '0');
     await addTestWords(page);
     // The pop-up that asks before a word is removed: answer OK.
     await page.evaluate('window.confirm = () => true');
-    await tap(page, 'words-tab');
+    await tap(page, 'decks-tab');
     await waitUntil(page, `document.getElementById('word-count').textContent !== '0'`, 'the word list');
     countAtStart = await wordCount(page);
   });
@@ -103,7 +103,7 @@ describe('the Words tab', { concurrency: false }, () => {
   });
 
   it('fills in a word from the dictionary', async () => {
-    await tap(page, 'words-tab');
+    await tap(page, 'decks-tab');
     await type(page, 'add-simplified', '图书馆');
     await waitUntil(page, `document.querySelector('#add-suggestions button') !== null`, 'a dictionary entry');
     assert.match(await textOf(page, '#add-suggestions button'), /圖書館 · 图书馆.*túshūguǎn.*library/);
@@ -173,7 +173,7 @@ describe('the Words tab', { concurrency: false }, () => {
 
   it('adds a ready-made list by level', { timeout: 60000 }, async () => {
     const before = await wordCount(page);
-    await page.evaluate(`document.getElementById('ready-list').open = true`);
+    await tap(page, 'ready-decks-button');
     // HSK 3.0 is offered first; its levels appear with their word counts.
     await waitUntil(page, `document.querySelectorAll('#ready-levels input').length === 7`, 'the levels of HSK 3.0');
     assert.match(await textOf(page, '#ready-levels label'), /^Level 1: 512 words, \d+ new$/);
@@ -200,10 +200,16 @@ describe('the Words tab', { concurrency: false }, () => {
       report = await textOf(page, 'ready-report');
     }
     assert.match(report, new RegExp(`^Added ${adding} words`));
+    assert.match(await textOf(page, '#ready-levels label'), /^Level 1: 150 words, all in your words already$/);
+    // They are under My decks, in a deck of their own: the front page has
+    // the list's deck beside the one the app started with, and all words.
+    await tap(page, 'my-decks-button');
+    await page.evaluate(`document.querySelector('#deck-path button').click()`);
+    await waitUntil(page, `document.querySelectorAll('#deck-list li').length === 2`, 'the two decks');
+    assert.match(await textOf(page, '#deck-list li:last-child'), /^HSK 2\.0150 words · 0 learned · 1 deck inside$/);
     assert.equal(await wordCount(page), before + adding);
     // The steps after this one count from the start; they count these in too.
     countAtStart += adding;
-    assert.match(await textOf(page, '#ready-levels label'), /^Level 1: 150 words, all in your words already$/);
     // A word from the list has both scripts, and its meaning from the dictionary.
     await type(page, 'word-search', '不客气');
     await waitUntil(page, rows(1));
@@ -213,7 +219,6 @@ describe('the Words tab', { concurrency: false }, () => {
     // Back to the search the next step expects.
     await type(page, 'word-search', 'penguin');
     await waitUntil(page, rows(1));
-    await page.evaluate(`document.getElementById('ready-list').open = false`);
   });
 
   it('removes a word', async () => {
@@ -227,7 +232,7 @@ describe('the Words tab', { concurrency: false }, () => {
     await reloadApp(page);
     await tap(page, 'learn-tab');
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('貓頭鷹')`, 'the word still first in line');
-    await tap(page, 'words-tab');
+    await tap(page, 'decks-tab');
     await waitUntil(page, `document.getElementById('word-count').textContent === '${countAtStart + 3}'`);
     await type(page, 'word-search', 'peacock');
     await waitUntil(page, rows(1));

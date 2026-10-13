@@ -1,11 +1,12 @@
-// The Decks section of the Words tab: the decks as a tree, a form to add
-// one, and a pop-up panel per deck to rename it, move it, give it a daily
-// goal of its own or delete it.
+// The decks in the Decks tab: the front page with the decks that are inside
+// no other, a page per deck with the decks inside it, the form to add a
+// deck, and the pop-up panel ("Deck settings") to rename a deck, move it,
+// give it a daily goal of its own or delete it.
 //
 // The tree itself is worked out by the plain-calculation code in decks.js;
 // this file is the page side, and saves the results in the database. It is
-// set up by wordsPanel.js, which reads the words and decks and hands them
-// over through the functions below.
+// set up by wordsPanel.js, which shows the words of the deck that is open,
+// reads the words and decks and hands them over through the functions below.
 
 import { putAll, removeDecks, removeWords, randomId } from './db.js';
 import { allCardIds } from './session.js';
@@ -15,8 +16,10 @@ import {
   canBeInside,
   newDeckRecord,
   isInDecks,
+  withDeck,
   withoutDecks,
   wordsOnlyIn,
+  DEFAULT_DECK,
 } from './decks.js';
 
 const byId = (id) => document.getElementById(id);
@@ -50,15 +53,18 @@ export function fillDeckSelect(select, decks, first, skip = () => false) {
 // getWords, getDecks, getCards: return the word, deck and card records as
 //              last read from the database
 // isLearned(word): whether a word has been learned
+// getOpenDeck: returns the deck whose page is open, or null on the front page
+// open(deckId): opens a deck's page; null for the front page
+// study(deckId, mode): shows Review ('review') or Learn ('learn') for a deck
 // afterChange: called after anything was saved, to read it all afresh and
 //              show it (which calls render() here)
 //
 // Returns { render() }.
-export function createDecksPanel({ getWords, getDecks, getCards, isLearned, afterChange }) {
+export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getOpenDeck, open, study, afterChange }) {
   const listElement = byId('deck-list');
+  const pathElement = byId('deck-path');
   const addForm = byId('add-deck-form');
   const addName = byId('add-deck-name');
-  const addParent = byId('add-deck-parent');
   const dialog = byId('deck-dialog');
   const nameInput = byId('deck-name');
   const parentSelect = byId('deck-parent');
@@ -66,6 +72,7 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, afte
   const note = byId('deck-dialog-note');
   const buttons = byId('deck-buttons');
   const deleteChoice = byId('deck-delete-choice');
+  const deleteKeepButton = byId('deck-delete-keep');
   const deleteWordsButton = byId('deck-delete-words');
 
   // The deck open in the dialog.
@@ -91,33 +98,75 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, afte
     );
   }
 
+  // The deck a deck is inside, or null (also if that one is not there).
+  const parentOf = (deck) => getDecks().find((other) => other.id === deck.parentId) || null;
+
+  // The line saying where you are: "Decks › Textbook › Chapter 2". Every
+  // part but the last is a button that goes there.
+  function renderPath(current) {
+    const above = [];
+    for (let deck = current && parentOf(current); deck && !above.includes(deck); deck = parentOf(deck)) {
+      above.unshift(deck);
+    }
+    const link = (text, deckId) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'path-part';
+      button.textContent = text;
+      button.addEventListener('click', () => open(deckId));
+      return button;
+    };
+    const parts = current ? [link('Decks', null), ...above.map((deck) => link(deck.name, deck.id))] : [];
+    pathElement.replaceChildren(...parts.flatMap((part) => [part, ' › ']), ...(current ? [current.name] : []));
+    pathElement.hidden = !current;
+  }
+
   function render() {
     const decks = getDecks();
-    const rows = deckTree(decks).map(({ deck, depth }) => {
+    const current = getOpenDeck();
+    renderPath(current);
+    byId('deck-head').hidden = !current;
+    byId('decks-hint').hidden = Boolean(current);
+    if (current) {
+      byId('deck-title').textContent = current.name;
+      byId('deck-counts').textContent = countsOf(current);
+    }
+
+    // The decks right inside the one that is open; on the front page, those
+    // inside no other.
+    const shown = deckTree(decks).filter(({ deck, depth }) =>
+      current ? deck.parentId === current.id : depth === 0,
+    );
+    const rows = shown.map(({ deck }) => {
       const span = (className, text) => {
         const element = document.createElement('span');
         element.className = className;
         element.textContent = text;
         return element;
       };
+      const inside = deckWithInside(decks, deck.id).size - 1;
+      // Each row is a button, so it can be tapped and reached by keyboard.
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'word-entry deck-entry';
-      // A deck inside another is set in from the left, further for each level.
-      button.style.marginLeft = `${Math.min(depth, 4) * 20}px`;
-      button.append(span('entry-characters', deck.name), span('entry-definition', countsOf(deck)));
-      button.addEventListener('click', () => openDialog(deck));
+      button.append(
+        span('entry-characters', deck.name),
+        span('entry-definition', countsOf(deck) + (inside > 0 ? ` · ${plural(inside, 'deck')} inside` : '')),
+      );
+      button.addEventListener('click', () => open(deck.id));
       const row = document.createElement('li');
       row.append(button);
       return row;
     });
     listElement.replaceChildren(...rows);
-    fillDeckSelect(addParent, decks, NO_PARENT);
-    byId('add-deck-parent-row').hidden = decks.length === 0;
+    byId('deck-list-title').textContent = current ? 'Decks inside this one' : 'Decks';
+    byId('deck-list-title').hidden = Boolean(current) && rows.length === 0;
+    addName.placeholder = current ? `Name of a new deck inside ${current.name}` : 'Name of a new deck';
   }
 
   // ---- Adding a deck ----
 
+  // A new deck goes inside the deck whose page is open.
   addForm.addEventListener('submit', async (event) => {
     event.preventDefault(); // or the browser would reload the page
     const name = addName.value.trim();
@@ -125,12 +174,19 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, afte
       addName.focus();
       return;
     }
-    await putAll('decks', [newDeckRecord(randomId(), name, addParent.value || null, getDecks())]);
+    const current = getOpenDeck();
+    await putAll('decks', [newDeckRecord(randomId(), name, current ? current.id : null, getDecks())]);
     addName.value = '';
     await afterChange();
   });
 
-  // ---- One deck: rename, move, daily goal, delete ----
+  // ---- A deck's page ----
+
+  byId('deck-review-button').addEventListener('click', () => study(getOpenDeck().id, 'review'));
+  byId('deck-learn-button').addEventListener('click', () => study(getOpenDeck().id, 'learn'));
+  byId('deck-settings-button').addEventListener('click', () => openDialog(getOpenDeck()));
+
+  // ---- Deck settings: rename, move, daily goal, delete ----
 
   function showDeleteChoice(shown) {
     buttons.hidden = shown;
@@ -144,7 +200,7 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, afte
     nameInput.value = deck.name;
     // A deck cannot go inside itself or inside a deck that is inside it.
     fillDeckSelect(parentSelect, getDecks(), NO_PARENT, (other) => !canBeInside(getDecks(), deck.id, other.id));
-    parentSelect.value = getDecks().some((other) => other.id === deck.parentId) ? deck.parentId : '';
+    parentSelect.value = parentOf(deck) ? deck.parentId : '';
     goalInput.value = Number.isInteger(deck.newWordsPerDay) ? deck.newWordsPerDay : '';
     note.textContent = '';
     showDeleteChoice(false);
@@ -175,23 +231,44 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, afte
     dialog.close();
   });
 
+  // Where the words go that deleting the open deck would leave in no deck,
+  // if they are kept: the deck it is inside, or the deck the app started
+  // with. null if that one is being deleted too, so there is nowhere.
+  function homeAfterDelete() {
+    const going = deckWithInside(getDecks(), openDeck.id);
+    const parent = parentOf(openDeck);
+    if (parent) {
+      return parent;
+    }
+    return going.has(DEFAULT_DECK.id)
+      ? null
+      : getDecks().find((deck) => deck.id === DEFAULT_DECK.id) || DEFAULT_DECK;
+  }
+
   // Delete asks first what is to become of the deck's words.
   byId('deck-delete-button').addEventListener('click', () => {
     const ids = deckWithInside(getDecks(), openDeck.id);
     const inDeck = wordsIn(openDeck);
     const onlyHere = wordsOnlyIn(getWords(), ids);
+    const home = homeAfterDelete();
     const inside = ids.size - 1;
+    const these = onlyHere.length === inDeck.length ? 'They' : `${onlyHere.length} of them`;
     byId('deck-delete-text').textContent =
       `Delete "${openDeck.name}"` +
       (inside > 0 ? ` and the ${plural(inside, 'deck')} inside it` : '') +
       '? ' +
       (inDeck.length === 0
         ? 'It has no words.'
-        : `Its ${plural(inDeck.length, 'word')} can stay in your words. ` +
-          (onlyHere.length > 0
-            ? `${onlyHere.length} of them ${onlyHere.length === 1 ? 'is' : 'are'} in no other deck; ` +
-              'you can remove those too, with their cards. Your review history is kept either way.'
-            : 'All of them are in another deck too.'));
+        : `It has ${plural(inDeck.length, 'word')}. ` +
+          (onlyHere.length === 0
+            ? 'All of them are in another deck too, and stay there.'
+            : `${these} ${onlyHere.length === 1 && these !== 'They' ? 'is' : 'are'} in no other deck. ` +
+              (home
+                ? `Keep them, and they move to "${home.name}"; or remove them, with their cards. `
+                : 'There is no other deck for them to move to: put them in another deck first, or remove them, with their cards. ') +
+              'Your review history is kept either way.'));
+    deleteKeepButton.textContent = onlyHere.length > 0 ? 'Delete the deck, keep the words' : 'Delete the deck';
+    deleteKeepButton.hidden = onlyHere.length > 0 && !home;
     deleteWordsButton.textContent = `Delete the deck and remove ${plural(onlyHere.length, 'word')}`;
     deleteWordsButton.hidden = onlyHere.length === 0;
     showDeleteChoice(true);
@@ -201,22 +278,43 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, afte
 
   // Deletes the open deck and the decks inside it.
   //
-  // removeWordsToo: true to also remove the words that are in no other deck
+  // removeWordsToo: true to also remove the words that are in no other deck;
+  //                 false to move them (see homeAfterDelete)
   async function deleteDeck(removeWordsToo) {
     const ids = deckWithInside(getDecks(), openDeck.id);
-    const onlyHere = removeWordsToo ? wordsOnlyIn(getWords(), ids) : [];
-    const going = new Set(onlyHere.map((word) => word.id));
+    const onlyHere = wordsOnlyIn(getWords(), ids);
+    const going = new Set(removeWordsToo ? onlyHere.map((word) => word.id) : []);
+    const home = homeAfterDelete();
+    const parent = parentOf(openDeck);
     // The words that stay are taken out of the decks first, so that no word
-    // is ever left in a deck that is not there.
-    const staying = getWords().filter((word) => isInDecks(word, ids) && !going.has(word.id));
-    await putAll('words', staying.map((word) => withoutDecks(word, ids)));
-    await removeWords(onlyHere.map((word) => ({ wordId: word.id, cardIds: allCardIds(word) })));
+    // is ever left in a deck that is not there; one left in no deck moves.
+    const staying = getWords()
+      .filter((word) => isInDecks(word, ids) && !going.has(word.id))
+      .map((word) => withoutDecks(word, ids))
+      .map((word) => (word.decks ? word : withDeck(word, home.id)));
+    const decksLeft = getDecks().filter((deck) => !ids.has(deck.id));
+    // The deck the app started with is made again if words move to it and it
+    // is gone, or if no deck would be left at all.
+    const needsDefault =
+      !decksLeft.some((deck) => deck.id === DEFAULT_DECK.id) &&
+      (decksLeft.length === 0 || staying.some((word) => word.decks.includes(DEFAULT_DECK.id)));
+    await putAll('words', staying);
+    await removeWords(
+      onlyHere
+        .filter((word) => going.has(word.id))
+        .map((word) => ({ wordId: word.id, cardIds: allCardIds(word) })),
+    );
     await removeDecks([...ids]);
-    await afterChange();
+    if (needsDefault) {
+      await putAll('decks', [DEFAULT_DECK]);
+    }
     dialog.close();
+    // Its page is gone: on to the deck it was inside, or the front page.
+    await open(parent ? parent.id : null);
+    await afterChange();
   }
 
-  byId('deck-delete-keep').addEventListener('click', () => deleteDeck(false));
+  deleteKeepButton.addEventListener('click', () => deleteDeck(false));
   deleteWordsButton.addEventListener('click', () => deleteDeck(true));
 
   byId('deck-dialog-close').addEventListener('click', () => dialog.close());
