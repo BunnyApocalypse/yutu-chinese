@@ -46,6 +46,10 @@ function cleanMeanings(definitions) {
     .split('/')
     .map((meaning) =>
       meaning
+        // A note on pronunciation inside a meaning: "conduct (Taiwan pr. [xing4])"
+        .replace(/\s*\((?:Taiwan|also) pr\. \[[^\]]*\]\)/g, '')
+        // The Taiwanese reading in "(from Taiwanese 烘, Tai-lo pr. [hang])"
+        .replace(/,? ?Tai-lo pr\. \[[^\]]*\]/g, '')
         .replace(/([^\s|[\]]+)\|[^\s|[\]]+/g, '$1') // 學習|学习 → 學習
         .replace(/\[[^\]]*\]/g, '') // [xue2 xi2]
         .replace(/\s+/g, ' ')

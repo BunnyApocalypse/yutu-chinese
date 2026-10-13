@@ -215,6 +215,28 @@ test('cards saved before lastReviewedAt existed still hold their siblings back',
   assert.equal(plan.nextDueAt, now - MINUTE + SIBLING_GAP_MS);
 });
 
+test('a neutral tone is accepted where the dictionary or the owner allows it', () => {
+  // The dictionary also has zhi1dao5 for 知道: accepted, as a variant.
+  assert.deepEqual(toneAnswers(['知', '道'], 'zhi1dao4', null, toneTable)[1], {
+    syllable: 'dao4',
+    tones: [4],
+    variantTones: [5],
+  });
+  assert.deepEqual(toneAnswers(['知', '道'], 'zhi1dao4', null, toneTable)[0].variantTones, []);
+  // It has none for 學校 or 星期, so neutral is wrong there ...
+  assert.ok(!toneAnswers(['學', '校'], 'xue2xiao4', null, toneTable)[1].variantTones.includes(5));
+  assert.ok(!toneAnswers(['星', '期'], 'xing1qi1', null, toneTable)[1].variantTones.includes(5));
+  // ... until the owner adds the reading to the word; then it is simply right.
+  const week = toneAnswers(['星', '期'], 'xing1qi1', null, toneTable, true, 'xing1qi5');
+  assert.deepEqual(week[1].tones, [1, 5]);
+  assert.equal(week[1].syllable, 'qi1');
+  // A reading that does not fit the characters is ignored.
+  assert.deepEqual(toneAnswers(['星', '期'], 'xing1qi1', null, toneTable, true, 'xing1')[1].tones, [1]);
+  // A table from before neutralWords existed still works.
+  const { neutralWords, ...oldTable } = toneTable;
+  assert.deepEqual(toneAnswers(['知', '道'], 'zhi1dao4', null, oldTable)[1].variantTones, []);
+});
+
 // ---- Writing cards per script ----
 
 // Words written differently in the two scripts, and one written the same.

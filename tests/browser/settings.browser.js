@@ -74,6 +74,29 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     assert.match(await giveTones([1, 2]), /^Not á/);
   });
 
+  it('accepts a neutral tone the dictionary has, and one added to the word', async () => {
+    await choose(page, 'pronunciation-select', 'mainland');
+    // 知道 is zhīdào in the list; the dictionary also has zhīdao.
+    await practice('知道', 'tone');
+    assert.equal(await giveTones([1, 5]), 'All tones right');
+    assert.match(await textOf(page, 'card-face'), /accepted as a regional or neutral-tone variant of zhīdào/);
+    // It has no xīngqi for 星期 ...
+    await practice('星期', 'tone');
+    assert.match(await giveTones([1, 5]), /^Not a\b/);
+    // ... so that is added to the word.
+    await tap(page, 'words-tab');
+    await type(page, 'word-search', '星期');
+    await waitUntil(page, `document.querySelectorAll('#word-list li').length >= 1`);
+    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await type(page, 'edit-pinyin-also', 'xing1 qi5');
+    await page.evaluate(`document.getElementById('word-dialog-form').requestSubmit()`);
+    await waitUntil(page, `!document.getElementById('word-dialog').open`, 'the word saved');
+    await type(page, 'word-search', '');
+    await practice('星期', 'tone');
+    assert.equal(await giveTones([1, 5]), 'All tones right');
+    await choose(page, 'pronunciation-select', 'mainlandOnly');
+  });
+
   it('asks only for simplified characters when only those are learned', async () => {
     await choose(page, 'script-select', 'simplified');
     await tap(page, 'words-tab');

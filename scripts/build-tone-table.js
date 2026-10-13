@@ -17,6 +17,10 @@
 //       pairs of [mainland reading, Taiwan reading]
 //   readings:    { "友": ["you3"], ... }
 //       every reading CC-CEDICT lists for each single character
+//   neutralWords: { "知道": ["zhi1dao5"], "東西": ["dong1xi5"], ... }
+//       words CC-CEDICT also gives a reading with a neutral tone for, where
+//       another of its readings has a full tone: either as an entry of its
+//       own (東西 dong1xi1 and dong1xi5) or in an "also pr." note (知道)
 //
 // Pinyin is written as in the word lists: lowercase, tone numbers, "v" for ü.
 
@@ -38,6 +42,24 @@ if (!response.ok) {
   throw new Error(`Could not download CC-CEDICT: ${response.status}`);
 }
 const text = zlib.gunzipSync(Buffer.from(await response.arrayBuffer())).toString('utf8');
+
+// True if `neutral` is `full` with one or more of its tones made neutral:
+// ["zhi1", "dao5"] and ["zhi1", "dao4"].
+function isNeutralVariant(neutral, full) {
+  return (
+    neutral.length === full.length &&
+    neutral.join('') !== full.join('') &&
+    neutral.every(
+      (syllable, index) =>
+        syllable === full[index] ||
+        (syllable.endsWith('5') && syllable.slice(0, -1) === full[index].slice(0, -1)),
+    )
+  );
+}
+
+// For neutralWords: every reading given for each word of two or more
+// characters, as lists of syllables. `noted` are those from "also pr." notes.
+const wordReadings = {};
 
 const taiwanWords = {};
 const regional = {};
@@ -63,6 +85,15 @@ for (const line of text.split('\n')) {
     .map((note) => syllablesOf(note[1]))
     .filter((noted) => noted && noted.length === charCount);
 
+  // Names (pinyin with a capital) are left out: 東方 the surname is not 東方 "east".
+  if (charCount > 1 && pinyin === pinyin.toLowerCase()) {
+    // An "also pr." note may be written without spaces: [zhi1dao5].
+    const alsoNotes = [...definitions.matchAll(/also pr\. \[([^\]]+)\]/g)]
+      .map((note) => note[1].toLowerCase().replaceAll('u:', 'v').match(/[a-z]+[1-5]/g) || [])
+      .filter((noted) => noted.length === charCount);
+    wordReadings[traditional] = [...(wordReadings[traditional] || []), syllables, ...alsoNotes];
+  }
+
   if (charCount === 1) {
     const reading = syllables[0];
     readings[traditional] = [...new Set([...(readings[traditional] || []), reading])];
@@ -77,11 +108,25 @@ for (const line of text.split('\n')) {
   }
 }
 
+const neutralWords = {};
+for (const [word, given] of Object.entries(wordReadings)) {
+  const neutral = given
+    .filter((reading) => given.some((other) => isNeutralVariant(reading, other)))
+    .map((reading) => reading.join(''));
+  if (neutral.length > 0) {
+    neutralWords[word] = [...new Set(neutral)];
+  }
+}
+
 fs.mkdirSync('data/cedict', { recursive: true });
-fs.writeFileSync(TARGET, JSON.stringify({ source: 'CC-CEDICT', date, taiwanWords, regional, readings }));
+fs.writeFileSync(
+  TARGET,
+  JSON.stringify({ source: 'CC-CEDICT', date, taiwanWords, regional, readings, neutralWords }),
+);
 console.log(
   `Wrote ${TARGET} from CC-CEDICT dated ${date}: ` +
     `${Object.keys(taiwanWords).length} words with a Taiwan reading, ` +
     `${Object.keys(regional).length} characters with a regional tone variant, ` +
-    `${Object.keys(readings).length} characters with readings.`,
+    `${Object.keys(readings).length} characters with readings, ` +
+    `${Object.keys(neutralWords).length} words with a neutral-tone reading besides a full one.`,
 );

@@ -36,7 +36,8 @@ export function tidyPinyin(text) {
 }
 
 // Checks the fields of one word as typed or read from a list:
-//   { traditional, simplified, pinyin, definition, pinyinTaiwan, cardScript }
+//   { traditional, simplified, pinyin, definition, pinyinTaiwan, pinyinAlso,
+//     cardScript }
 // Either of traditional and simplified may be left empty if they are the same.
 //
 // Returns { word } with the tidied word, or { problem } with a sentence
@@ -82,6 +83,18 @@ export function checkWord(fields) {
     // Only kept if it really differs.
     if (pinyinTaiwan !== pinyin) {
       word.pinyinTaiwan = pinyinTaiwan;
+    }
+  }
+  // Readings that are accepted on tone cards besides the listed one, such as
+  // xing1qi5 for 星期. They are not part of the word's ID.
+  if (clean(fields.pinyinAlso) !== '') {
+    const pinyinAlso = tidyPinyin(clean(fields.pinyinAlso));
+    if (pinyinAlso === null) {
+      return { problem: `The readings also accepted are not pinyin the app can read. ${PINYIN_HELP}` };
+    }
+    const extra = pinyinAlso.split(', ').filter((reading) => !pinyin.split(', ').includes(reading));
+    if (extra.length > 0) {
+      word.pinyinAlso = extra.join(', ');
     }
   }
   // The word's own script, if it has one (see scriptFor).
@@ -301,7 +314,7 @@ export function matchesSearch(word, search) {
   if (wanted === '') {
     return true;
   }
-  const readings = `${word.pinyin} ${word.pinyinTaiwan || ''}`.toLowerCase();
+  const readings = `${word.pinyin} ${word.pinyinTaiwan || ''} ${word.pinyinAlso || ''}`.toLowerCase();
   const haystack = [
     word.traditional,
     word.simplified,

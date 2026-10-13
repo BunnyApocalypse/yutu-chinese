@@ -126,6 +126,7 @@ export function createReview(elements, flows, settings) {
       reading.other,
       toneTable,
       settings.pronunciation !== 'mainlandOnly',
+      word.pinyinAlso,
     );
   }
 

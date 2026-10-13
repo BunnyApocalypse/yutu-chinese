@@ -155,6 +155,10 @@ test("a word's own script counts only while both scripts are learned", () => {
   const fields = { traditional: '學習', simplified: '学习', pinyin: 'xue2xi2', definition: 'to study' };
   assert.equal(checkWord({ ...fields, cardScript: 'simplified' }).word.cardScript, 'simplified');
   assert.equal('cardScript' in checkWord({ ...fields, cardScript: '' }).word, false);
+  // Readings also accepted are tidied, and those already listed are dropped.
+  assert.equal(checkWord({ ...fields, pinyinAlso: 'Xue2 xi5, xue2xi2' }).word.pinyinAlso, 'Xue2xi5');
+  assert.equal('pinyinAlso' in checkWord({ ...fields, pinyinAlso: 'xue2xi2' }).word, false);
+  assert.match(checkWord({ ...fields, pinyinAlso: 'xuéxi' }).problem, /also accepted/);
 });
 
 const stored = [

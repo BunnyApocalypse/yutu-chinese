@@ -85,6 +85,7 @@ export function createWordsPanel(onChange, getSettings) {
   const editSimplified = byId('edit-simplified');
   const editSimplifiedCaption = byId('edit-simplified-caption');
   const editPinyinTaiwan = byId('edit-pinyin-taiwan');
+  const editPinyinAlso = byId('edit-pinyin-also');
   const editCardScript = byId('edit-card-script');
   const dialogNote = byId('word-dialog-note');
   const studyNextButton = byId('study-next-button');
@@ -106,7 +107,7 @@ export function createWordsPanel(onChange, getSettings) {
   async function afterChange() {
     await load();
     renderList();
-    onChange();
+    await onChange();
   }
 
   // The word's characters in the script being learned: "學習" or, with both
@@ -502,6 +503,7 @@ export function createWordsPanel(onChange, getSettings) {
     editTraditional.value = word.traditional;
     editSimplified.value = word.simplified;
     editPinyinTaiwan.value = word.pinyinTaiwan || '';
+    editPinyinAlso.value = word.pinyinAlso || '';
     editCardScript.value = word.cardScript || '';
     dialogNote.textContent = '';
     // Only a word not yet started can be moved to the front of the new words.
@@ -523,6 +525,7 @@ export function createWordsPanel(onChange, getSettings) {
       simplified: asks.simplified ? editSimplified.value : openWord.simplified,
       definition: editDefinition.value,
       pinyinTaiwan: asks.taiwan ? editPinyinTaiwan.value : openWord.pinyinTaiwan,
+      pinyinAlso: editPinyinAlso.value,
       cardScript: asks.traditional && asks.simplified ? editCardScript.value : openWord.cardScript,
     });
     if (checked.problem) {
@@ -548,8 +551,9 @@ export function createWordsPanel(onChange, getSettings) {
     // If the two scripts now differ where they were the same, a writing card
     // learned in simplified goes under the simplified form (scriptCards.js).
     await fileCardsByScript([saved]);
-    dialog.close();
+    // The panel closes once the rest of the app has the changed word too.
     await afterChange();
+    dialog.close();
   });
 
   studyNextButton.addEventListener('click', async () => {

@@ -77,6 +77,8 @@ function fittingReadings(pinyinField, charCount) {
 //          the tone table is keyed by)
 // primary: the reading to expect (from readingsFor)
 // other:   the other region's reading, or null
+// also:    readings the owner added to the word as accepted too (its
+//          `pinyinAlso`), or null. Their tones are simply right.
 // table:   the tone table, or null
 // regional: false to leave out the tones that are only accepted because the
 //          other region uses them (for someone who learns one region's
@@ -92,21 +94,39 @@ function fittingReadings(pinyinField, charCount) {
 //                   and Taiwan reading of this character (期: qī and qí)
 //                 - the character's own full tone where the list says neutral
 //                   (友 in 朋友: péngyou, or péngyǒu as in Taiwan)
-//                 The last two are approximations and accept some things
+//                 - the neutral tone where the dictionary also gives the word
+//                   a reading with it (道 in 知道: zhīdào, also zhīdao); see
+//                   neutralWords in scripts/build-tone-table.js
+//                 The second and third are approximations and accept some things
 //                 neither standard says, which is why they are pointed out.
 // Returns null if no listed reading has exactly one syllable per character.
 // Such a word can't have a tone card.
-export function toneAnswers(chars, primary, other, table, regional = true) {
-  const readings = fittingReadings(primary, chars.length);
-  if (readings.length === 0) {
+export function toneAnswers(chars, primary, other, table, regional = true, also = null) {
+  const listedReadings = fittingReadings(primary, chars.length);
+  if (listedReadings.length === 0) {
     return null;
   }
+  const readings = [...listedReadings, ...fittingReadings(also, chars.length)];
   const otherReadings = fittingReadings(other, chars.length);
+  // The dictionary's neutral-tone readings of this word that are a listed
+  // reading with some of its tones made neutral.
+  const sameButNeutral = (neutral, full) =>
+    neutral.every(
+      (syllable, index) =>
+        syllable === full[index] ||
+        (toneOf(syllable) === 5 && lettersOf(syllable) === lettersOf(full[index])),
+    );
+  const neutralReadings = fittingReadings(
+    ((table && table.neutralWords && table.neutralWords[chars.join('')]) || []).join(','),
+    chars.length,
+  ).filter((neutral) => listedReadings.some((full) => sameButNeutral(neutral, full)));
 
   return chars.map((char, position) => {
     const listed = readings.map((reading) => reading[position]);
     const tones = new Set(listed.map(toneOf));
-    const variants = new Set(otherReadings.map((reading) => toneOf(reading[position])));
+    const variants = new Set(
+      [...otherReadings, ...neutralReadings].map((reading) => toneOf(reading[position])),
+    );
 
     if (table) {
       for (const syllable of listed) {
