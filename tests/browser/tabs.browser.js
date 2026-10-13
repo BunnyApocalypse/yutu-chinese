@@ -88,8 +88,14 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     await page.evaluate(`[...document.querySelectorAll('#deck-list button')].find((button) => button.textContent.includes('Animals')).click()`);
     await waitUntil(page, `document.getElementById('deck-title').textContent === 'Animals'`, 'the deck\'s page');
     await tap(page, 'deck-words-button');
-    await waitUntil(page, `document.getElementById('words-tab').classList.contains('selected') && ${rows(1)}`, 'the Words tab with the deck\'s word');
-    assert.equal(await page.evaluate(`document.getElementById('words-deck-select').value`), animals);
+    // (Wait for the tab itself to be showing that deck: the row count alone
+    // is already right while the list is still out of view.)
+    await waitUntil(
+      page,
+      `document.getElementById('word-list').offsetParent !== null && document.getElementById('words-deck-select').value === '${animals}' && ${rows(1)}`,
+      'the Words tab with the deck\'s word',
+    );
+    assert.equal(await page.evaluate(`document.getElementById('words-tab').classList.contains('selected')`), true);
     assert.equal(await inView(page, 'word-list'), true);
   });
 

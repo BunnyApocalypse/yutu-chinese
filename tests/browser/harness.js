@@ -129,6 +129,9 @@ async function launchBrowser() {
       '--headless=new',
       '--disable-gpu',
       '--no-first-run',
+      // The tests make the app speak words; the browser plays them as usual
+      // but with its sound switched off, so nothing is heard while they run.
+      '--mute-audio',
       `--user-data-dir=${profile}`,
       `--window-size=${SCREEN.width + 30},${SCREEN.height + 100}`,
       // Port 0 lets the browser pick a free port; it reports which below.

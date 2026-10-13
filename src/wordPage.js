@@ -281,8 +281,18 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
   // Shows a page. target: { word } or { text }.
   async function show(target) {
     const settings = getSettings();
-    const word = target.word || wordWritten(target.text);
+    // The word as it is stored now: what this was called with may be a copy
+    // from before something on the page changed it.
+    const given = target.word || wordWritten(target.text);
+    const word = given ? getWords().find((entry) => entry.id === given.id) || given : null;
     const parts = [];
+    // The word's cards are shown at once, before the files below are waited
+    // for: by then the word may have been changed from this very page, and
+    // the copy held here must not be handed on as if it were current.
+    cardsPart.hidden = !word;
+    if (word) {
+      showCards(word);
+    }
     let forms;
     let chars;
 
@@ -340,10 +350,6 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
 
     body.replaceChildren(...parts);
     scroller.scrollTop = 0;
-    cardsPart.hidden = !shown.word;
-    if (shown.word) {
-      showCards(shown.word);
-    }
     backButton.hidden = trail.length < 2;
     editButton.hidden = !shown.word;
     practiceButton.hidden = !shown.word;
@@ -388,10 +394,6 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
     practiceButton.hidden = !target.word;
     backButton.hidden = true;
     body.replaceChildren();
-    cardsPart.hidden = !target.word;
-    if (target.word) {
-      showCards(target.word);
-    }
     delete dialog.dataset.shown;
     if (!dialog.open) {
       dialog.showModal();

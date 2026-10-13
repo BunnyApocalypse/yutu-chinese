@@ -5,7 +5,10 @@ import { describeReading } from './tones.js';
 
 // A tap right after the answer appears is probably the same tap that revealed
 // it; ignore taps for this long.
-const TAP_TO_CONTINUE_DELAY_MS = 600;
+// (200 since 2026-10-13, down from 600: the owner found the wait in the way
+// when moving on quickly. It is still enough for the tap that finished the
+// step not to count as the tap that moves on.)
+const TAP_TO_CONTINUE_DELAY_MS = 200;
 
 const HINTS = {
   meaning: 'Tap to show the meaning',

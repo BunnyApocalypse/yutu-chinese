@@ -10,7 +10,10 @@ const MOVE_ON_AFTER_MS = 500;
 
 // After a wrong answer or at the end, tapping the card continues. Taps are
 // ignored for this long first, so a stray touch doesn't skip the answer.
-const TAP_TO_CONTINUE_DELAY_MS = 600;
+// (200 since 2026-10-13, down from 600: the owner found the wait in the way
+// when moving on quickly. It is still enough for the tap that finished the
+// step not to count as the tap that moves on.)
+const TAP_TO_CONTINUE_DELAY_MS = 200;
 
 // A new character ignores touches for this long, so the tap that brought it up
 // isn't taken for a neutral-tone dot.

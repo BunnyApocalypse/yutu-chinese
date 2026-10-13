@@ -13,7 +13,10 @@ import { loadCharData } from './charData.js';
 // After a character is finished, tapping the writing area moves on, like the
 // Next button. Taps are ignored for this long first, so that a stray touch
 // right after the last stroke doesn't skip the comparison.
-const TAP_TO_CONTINUE_DELAY_MS = 600;
+// (200 since 2026-10-13, down from 600: the owner found the wait in the way
+// when moving on quickly. It is still enough for the tap that finished the
+// step not to count as the tap that moves on.)
+const TAP_TO_CONTINUE_DELAY_MS = 200;
 
 // As big as fits on the screen, leaving room for everything above and below.
 function chooseSize() {
