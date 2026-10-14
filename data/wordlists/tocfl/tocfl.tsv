@@ -155,7 +155,7 @@ Novice 1	哪里	哪裏	na3li3		08 Travel 旅行
 Novice 1	哪儿	哪兒	na3r5		08 Travel 旅行
 Novice 1	开车	開車	kai1che1		09 Shopping 購物
 Novice 1	钱	錢	qian2		09 Shopping 購物
-Novice 1	多少	多少	duo1shao3		09 Shopping 購物
+Novice 1	多少	多少	duo1shao5		09 Shopping 購物
 Novice 1	给	給	gei3		09 Shopping 購物
 Novice 1	贵	貴	gui4		09 Shopping 購物
 Novice 1	便宜	便宜	pian2yi5		09 Shopping 購物
@@ -261,7 +261,7 @@ Novice 2	念	念	nian4		03 Education 教育
 Novice 2	念	唸	nian4		03 Education 教育
 Novice 2	课	課	ke4		03 Education 教育
 Novice 2	教	教	jiao1		03 Education 教育
-Novice 2	告诉	告訴	gao4su4		03 Education 教育
+Novice 2	告诉	告訴	gao4su5		03 Education 教育
 Novice 2	错	錯	cuo4		03 Education 教育
 Novice 2	门口	門口	men2kou3		03 Education 教育
 Novice 2	枝	枝	zhi1		03 Education 教育
@@ -834,7 +834,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 1	这么	這麼	zhe4me5		12 Other 其他
 1	本来	本來	ben3lai2		12 Other 其他
 1	啦	啦	la5		12 Other 其他
-1	呀	呀	ya1		12 Other 其他
+1	呀	呀	ya5		12 Other 其他
 1	以为	以為	yi3wei2		12 Other 其他
 1	有的	有的	you3de5		12 Other 其他
 1	替	替	ti4		12 Other 其他
@@ -1192,7 +1192,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 2	精神	精神	jing1shen2		09 Health 健康及身體照護
 2	正常	正常	zheng4chang2		09 Health 健康及身體照護
 2	有钱	有錢	you3qian2		10 Shopping 購物
-2	生意	生意	sheng1yi4		10 Shopping 購物
+2	生意	生意	sheng1yi5		10 Shopping 購物
 2	商人	商人	shang1ren2		10 Shopping 購物
 2	老板娘	老闆娘	lao3ban3niang2		10 Shopping 購物
 2	店员	店員	dian4yuan2		10 Shopping 購物
@@ -1363,7 +1363,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 3	青年	青年	qing1nian2		01 Family and people
 3	女士	女士	nv3shi4		01 Family and people
 3	新生	新生	xin1sheng1		01 Family and people
-3	人家	人家	ren2jia1		01 Family and people
+3	人家	人家	ren2jia5		01 Family and people
 3	爱情	愛情	ai4qing2		02 Love and marriage
 3	恋爱	戀愛	lian4'ai4		02 Love and marriage
 3	情人	情人	qing2ren2		02 Love and marriage
@@ -1863,7 +1863,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 3	乖	乖	guai1		35 Good character
 3	懂事	懂事	dong3shi4		35 Good character
 3	谦虚	謙虛	qian1xu1		35 Good character
-3	大方	大方	da4fang1		35 Good character
+3	大方	大方	da4fang5		35 Good character
 3	幽默	幽默	you1mo4		35 Good character
 3	单纯	單純	dan1chun2		35 Good character
 3	开朗	開朗	kai1lang3		35 Good character
@@ -3531,7 +3531,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 4	例外	例外	li4wai4
 4	利息	利息	li4xi1
 4	理由	理由	li3you2
-4	喽	嘍	lou2
+4	喽	嘍	lou5
 4	搂	摟	lou3
 4	露	露	lu4
 4	路灯	路燈	lu4deng1
@@ -3725,7 +3725,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 4	旗	旗	qi2
 4	旗子	旗子	qi2zi5
 4	妻	妻	qi1
-4	妻子	妻子	qi1zi3
+4	妻子	妻子	qi1zi5
 4	欠	欠	qian4
 4	牵	牽	qian1
 4	迁	遷	qian1
@@ -4746,7 +4746,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 5	八卦	八卦	ba1gua4
 5	八字	八字	ba1zi4
 5	把持	把持	ba3chi2
-5	把手	把手	ba3shou3
+5	把手	把手	ba3shou5
 5	白皮书	白皮書	bai2pi2shu1
 5	拜会	拜會	bai4hui4
 5	颁发	頒發	ban1fa1
@@ -4787,7 +4787,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 5	倍数	倍數	bei4shu4
 5	背诵	背誦	bei4song4
 5	奔腾	奔騰	ben1teng2
-5	本事	本事	ben3shi4
+5	本事	本事	ben3shi5
 5	本位	本位	ben3wei4
 5	本性	本性	ben3xing4
 5	本质	本質	ben3zhi4
@@ -4886,7 +4886,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 5	猜测	猜測	cai1ce4
 5	猜忌	猜忌	cai1ji4
 5	猜想	猜想	cai1xiang3
-5	裁缝	裁縫	cai2feng2
+5	裁缝	裁縫	cai2feng5
 5	裁减	裁減	cai2jian3
 5	财团	財團	cai2tuan2
 5	财政	財政	cai2zheng4
@@ -5288,7 +5288,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 5	坟	墳	fen2
 5	墓	墓	mu4
 5	粉刷	粉刷	fen3shua1
-5	分量	分量	fen4liang4
+5	分量	分量	fen4liang5
 5	粪	糞	fen4
 5	封闭	封閉	feng1bi4
 5	封锁	封鎖	feng1suo3
@@ -5923,7 +5923,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 5	冷汗	冷汗	leng3han4
 5	冷清	冷清	leng3qing1
 5	勒索	勒索	le4suo3
-5	哩	哩	li3
+5	哩	哩	li5
 5	黎明	黎明	li2ming2
 5	罹难	罹難	li2nan4
 5	里程	里程	li3cheng2
@@ -7165,7 +7165,7 @@ Novice 2	着	著	zhe5		12 Other 其他
 5	赃物	贓物	zang1wu4
 5	遭	遭	zao1
 5	造反	造反	zao4fan3
-5	造化	造化	zao4hua4
+5	造化	造化	zao4hua5
 5	造物主	造物主	Zao4wu4zhu3
 5	造型	造型	zao4xing2
 5	责备	責備	ze2bei4

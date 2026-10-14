@@ -13,6 +13,10 @@
 // changed. (The TOCFL file has no versions; its name carries its date.) See
 // the README in each folder of data/wordlists/ for the sources and licenses.
 //
+// Each source is downloaded once and kept in local/word-list-sources/
+// (git-ignored, see local/README.md); later runs read it from there. Delete
+// a file there to fetch it again.
+//
 // Each list is one file with tabs between the columns:
 //
 //     level, simplified, traditional, pinyin, meaning
@@ -45,13 +49,26 @@ const FOLDER = 'data/wordlists/hsk';
 const TOCFL_SOURCE = 'https://tocfl.edu.tw/assets/files/vocabulary/8000zhuyin_202307.zip';
 const TOCFL_FOLDER = 'data/wordlists/tocfl';
 
-async function download(address) {
+// The file at `address`, from local/word-list-sources/ if it was fetched
+// before, otherwise from the internet (and then kept there).
+const SOURCES = 'local/word-list-sources';
+async function downloadBytes(address) {
+  const kept = `${SOURCES}/${decodeURIComponent(address.split('/').pop())}`;
+  if (fs.existsSync(kept)) {
+    return fs.readFileSync(kept);
+  }
+  console.log(`Downloading ${address}`);
   const response = await fetch(address);
   if (!response.ok) {
     throw new Error(`Could not download ${address}: ${response.status}`);
   }
-  return response.text();
+  const bytes = Buffer.from(await response.arrayBuffer());
+  fs.mkdirSync(SOURCES, { recursive: true });
+  fs.writeFileSync(kept, bytes);
+  return bytes;
 }
+
+const download = async (address) => (await downloadBytes(address)).toString('utf8');
 
 const dictionary = readDictionary(fs.readFileSync('data/cedict/dictionary.tsv', 'utf8'));
 // True if the app's dictionary has this word with this reading.
@@ -166,6 +183,39 @@ function bestMatch(candidates, pinyin, traditional = null) {
 const dictionaryEntries = (simplified) =>
   lookUp(dictionary, simplified).filter((entry) => entry.simplified === simplified);
 
+// ---- Readings put right by hand ----
+//
+// Matching by tones sometimes picks a rarer dictionary entry than the word
+// the list means (说法 "to expound Buddhist teachings" for shuōfǎ). The
+// corrections are in data/wordlists/reading-fixes.tsv, which says more.
+const readingFixes = fs
+  .readFileSync('data/wordlists/reading-fixes.tsv', 'utf8')
+  .split('\n')
+  .filter((line) => line !== '' && !line.startsWith('#'))
+  .map((line) => {
+    const [list, simplified, wrong, right] = line.split('\t');
+    return { list, simplified, wrong, right, used: false };
+  });
+
+// `words` of the list `listId`, with each correction applied: the word takes
+// the traditional form and reading of the dictionary entry meant.
+function corrected(listId, words) {
+  return words.map((word) => {
+    const fix = readingFixes.find(
+      (candidate) => candidate.list === listId && candidate.simplified === word.simplified && candidate.wrong === word.pinyin,
+    );
+    if (!fix) {
+      return word;
+    }
+    const entry = dictionaryEntries(word.simplified).find((candidate) => candidate.pinyin === fix.right);
+    if (!entry) {
+      throw new Error(`reading-fixes.tsv: the dictionary has no ${word.simplified} ${fix.right}`);
+    }
+    fix.used = true;
+    return { ...word, traditional: entry.traditional, pinyin: entry.pinyin };
+  });
+}
+
 
 
 // ---- HSK 3.0 ----
@@ -218,6 +268,8 @@ for (const row of rows) {
   }
   hsk3.push({ level: column(row, 'Level'), simplified, ...word });
 }
+// Before the HSK 2.0 and TOCFL lists below take readings from this one.
+hsk3.splice(0, hsk3.length, ...corrected('hsk-3.0', hsk3));
 writeList('hsk-3.0.tsv', 'HSK 3.0 (2021): levels 1 to 6 and 7-9', `ivankra/hsk30 at ${HSK3_VERSION}`, withGroups(hsk3, 'hsk-3.0'));
 if (hsk3LeftOut.length > 0) {
   console.log(`  Left out, for want of a reading: ${hsk3LeftOut.join(' ')}`);
@@ -275,7 +327,7 @@ for (const level of [1, 2, 3, 4, 5, 6]) {
     }
   }
 }
-writeList('hsk-2.0.tsv', 'HSK 2.0 (2012): levels 1 to 6', `glxxyz/hskhsk.com at ${HSK2_VERSION}`, withGroups(hsk2, 'hsk-2.0'));
+writeList('hsk-2.0.tsv', 'HSK 2.0 (2012): levels 1 to 6', `glxxyz/hskhsk.com at ${HSK2_VERSION}`, withGroups(corrected('hsk-2.0', hsk2), 'hsk-2.0'));
 if (hsk2AsInSource > 0) {
   console.log(`  ${hsk2AsInSource} taken as the source has them: add them to extra-meanings.tsv.`);
 }
@@ -459,12 +511,9 @@ const TOCFL_TOPICS = {
 // The sheets that are levels, in order, and what the app calls each level.
 const TOCFL_LEVELS = ['Novice 1', 'Novice 2', 'Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'];
 
-// The committee's server is slow (the 10 MB file can take minutes). With a
-// copy of the zip file at hand, give its place in TOCFL_ZIP to use that:
-//   TOCFL_ZIP=~/Downloads/8000zhuyin_202307.zip node scripts/build-word-lists.js
-const tocflZip = process.env.TOCFL_ZIP
-  ? fs.readFileSync(process.env.TOCFL_ZIP)
-  : Buffer.from(await (await fetch(TOCFL_SOURCE)).arrayBuffer());
+// The committee's server is slow (the 10 MB file can take minutes), which
+// is why the file is kept after the first run (see downloadBytes).
+const tocflZip = await downloadBytes(TOCFL_SOURCE);
 const tocflSheets = sheetsOf(filesInZip(tocflZip).find((file) => file.name.endsWith('.xlsx')).read());
 const tocfl = [];
 const tocflLeftOut = [];
@@ -508,5 +557,12 @@ for (const levelName of TOCFL_LEVELS) {
   }
 }
 fs.mkdirSync(TOCFL_FOLDER, { recursive: true });
-writeList('tocfl.tsv', 'TOCFL (2023): Novice 1 and 2, levels 1 to 5', TOCFL_SOURCE, withGroups(tocfl, 'tocfl', TOCFL_FOLDER), TOCFL_FOLDER);
+writeList('tocfl.tsv', 'TOCFL (2023): Novice 1 and 2, levels 1 to 5', TOCFL_SOURCE, withGroups(corrected('tocfl', tocfl), 'tocfl', TOCFL_FOLDER), TOCFL_FOLDER);
 console.log(`  ${tocflLeftOut.length} left out, not being in the dictionary with that reading: ${tocflLeftOut.join(', ')}`);
+
+// A correction that matched nothing is out of date: the source or the
+// dictionary changed. Look at it rather than carry it along.
+const unused = readingFixes.filter((fix) => !fix.used);
+if (unused.length > 0) {
+  throw new Error(`reading-fixes.tsv: no word matched ${unused.map((fix) => `${fix.list} ${fix.simplified} ${fix.wrong}`).join(', ')}`);
+}

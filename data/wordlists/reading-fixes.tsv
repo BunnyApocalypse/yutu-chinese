@@ -1,0 +1,33 @@
+# Readings the build script (scripts/build-word-lists.js) gets wrong, put right by hand.
+#
+# The script matches each listed word to a dictionary entry by its tones. Where the
+# source writes a full tone that the everyday word reads neutral (the HSK source's
+# shuōfǎ for 说法), or Taiwan's full tone (the TOCFL's gàosù for 告訴), it can pick a
+# rarer entry that happens to have those tones: 说法 "to expound Buddhist teachings",
+# 告诉 "to press charges". Found on 2026-10-14 by comparing each list word with the
+# dictionary's other entries of the same letters; decided by Claude, from the
+# entries' meanings. The word's Taiwan reading still comes from the dictionary.
+#
+# Columns: list, simplified, reading the script picks, reading meant, what the wrong entry means.
+# The script stops if a line no longer matches anything, so a stale line is noticed.
+hsk-3.0	说法	shuo1fa3	shuo1fa5	to expound Buddhist teachings
+hsk-3.0	标致	Biao1zhi4	biao1zhi5	Peugeot (car brand)
+hsk-3.0	口音	kou3yin1	kou3yin5	(linguistics) oral speech sounds
+hsk-3.0	得罪	de2zui4	de2zui5	to violate the law
+hsk-3.0	买卖	mai3mai4	mai3mai5	to buy and sell (the list means "business")
+hsk-3.0	下场	xia4chang3	xia4chang5	to leave the stage (the list means "fate, end")
+hsk-2.0	嗯	en1	en4	a groaning sound
+tocfl	多少	duo1shao3	duo1shao5	number; amount; somewhat
+tocfl	告诉	gao4su4	gao4su5	to press charges
+tocfl	生意	sheng1yi4	sheng1yi5	life force
+tocfl	大方	da4fang1	da4fang5	expert; a type of green tea
+tocfl	人家	ren2jia1	ren2jia5	household
+tocfl	妻子	qi1zi3	qi1zi5	wife and children
+tocfl	喽	lou2	lou5	subordinates in a gang of bandits
+tocfl	本事	ben3shi4	ben3shi5	source material
+tocfl	把手	ba3shou3	ba3shou5	to shake hands
+tocfl	裁缝	cai2feng2	cai2feng5	to tailor (the verb)
+tocfl	哩	li3	li5	mile
+tocfl	分量	fen4liang4	fen4liang5	(food) portion size
+tocfl	造化	zao4hua4	zao4hua5	(literary) Nature; the Creator
+tocfl	呀	ya1	ya5	ah (the list means the particle)
