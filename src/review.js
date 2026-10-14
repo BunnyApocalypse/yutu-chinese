@@ -11,7 +11,7 @@
 
 import { getAll, putAll, saveReview, saveKnown, randomId } from './db.js';
 import { gradeOptions, GRADES, AGAIN, GOOD } from './scheduler.js';
-import { deckWithInside, isInDecks, dailyGoal } from './decks.js';
+import { isReadyMadeGroup, deckWithInside, isInDecks, dailyGoal } from './decks.js';
 import { fillDeckSelect } from './decksPanel.js';
 import {
   planSession,
@@ -954,7 +954,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // The list of decks to choose from. With only the deck the app starts
   // with there is nothing to choose, and it is left out.
   function showDeckChoice() {
-    fillDeckSelect(deckSelect, decks, [{ value: '', label: 'All words' }]);
+    // (The groups inside the ready-made levels are left out, unless one is
+    // the deck studied: see isReadyMadeGroup.)
+    fillDeckSelect(deckSelect, decks, [{ value: '', label: 'All words' }], (deck) =>
+      isReadyMadeGroup(deck.id) && deck.id !== settings.studyDeck,
+    );
     deckSelect.value = studyDeck() ? settings.studyDeck : '';
     deckSelect.hidden = decks.length < 2;
   }

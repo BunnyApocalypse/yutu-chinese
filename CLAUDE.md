@@ -627,6 +627,13 @@ Written on 2026-10-13 for whichever session picks the work up next (the owner wo
 - **Deploying:** if the deploy step fails with "Fetching artifact metadata failed", do not re-run the failed run (the re-run uploads a second copy of the site and fails on that); start a fresh one with `gh workflow run deploy.yml --ref main`.
 - **The repository's address** is `BunnyApocalypse/hanzi-trainer`, with capitals; the lowercase one still works but git says it has moved.
 
+## The first testing session (2026-10-14)
+
+The owner watched a tester (an absolute beginner, simplified, an Anki user, on an Android phone in Chrome) and wrote the session up in `local/testing/`, which is git-ignored on purpose. **Nothing that identifies a tester goes into a file in the repository** (names, contacts, quotes that would identify them): in code, comments, commits and this file, say "a tester".
+
+- **Fixed the same day:** a word needs Chinese characters (an English word and "word1" had gone in, `checkWord`); the deck choosers of Review, Learn and Words leave out the groups inside ready-made levels unless one is chosen (`isReadyMadeGroup`; one HSK level brought a dozen); search matches the start of a syllable or of a word of the meaning, so "ta" no longer brings words without "ta" (`matchesSearch`); a tip is moved into a pop-up panel that opens over it, since everything outside a modal panel is out of reach (`placeCard` in `src/tips.js`); the introduction's "Nothing for now" says what it means; the backup reminder can be switched off, after a warning (`backupReminderOff`, a setting of the device).
+- **Seen, not yet acted on (to discuss with the owner):** the tips were not read and dismissed late; a beginner without a Chinese keyboard could not add a word (wanted: finding a word by its pinyin, with a list to choose from); too many buttons, the Learn screen busy; why Free practice is under Words; tone buttons always show "a" (showing the syllable would give the reading away); words of an example sentence tapped by accident (ideas: a small popup with pinyin and meaning first, or a sentence that has to be tapped before its words can be); a beginner did not know 的 in a note (pinyin in beginners' notes?); a separate indicator for long-term storage permission; a stroke counter as a hint; dark mode (already wanted).
+
 ## Settled with the owner on 2026-10-13
 
 - The Script and Pronunciation settings suit them as built.

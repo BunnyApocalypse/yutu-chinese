@@ -22,6 +22,7 @@ import {
   homeForEveryWord,
   flattenedReadyMadeDecks,
   lastActivity,
+  isReadyMadeGroup,
 } from '../src/decks.js';
 import { parseReadyList, levelsOfReadyList, listTag } from '../src/words.js';
 
@@ -249,4 +250,12 @@ test('a deck\'s last activity is the latest change to it, its words and their re
   assert.equal(times.get('other'), 50);
   // A deck where nothing happened.
   assert.equal(lastActivity([{ id: 'x', parentId: null }], [], []).get('x'), 0);
+});
+
+test('the groups inside ready-made levels are told apart from other decks', () => {
+  assert.equal(isReadyMadeGroup('tocfl/1/03'), true);
+  assert.equal(isReadyMadeGroup('hsk-3.0/1/01'), true);
+  assert.equal(isReadyMadeGroup('hsk-3.0/1'), false);
+  assert.equal(isReadyMadeGroup('radicals/Common'), false);
+  assert.equal(isReadyMadeGroup('a1b2c3'), false);
 });

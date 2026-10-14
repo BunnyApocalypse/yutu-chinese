@@ -74,6 +74,12 @@ export function readyMadeDeck(deckId, names = new Map()) {
   return null;
 }
 
+// True for a group of words inside a level of a ready-made list
+// ('tocfl/1/03'). The deck choosers leave these out, unless one is the deck
+// chosen: one HSK or TOCFL level brings a dozen of them, and a tester was
+// faced with a list of every one (2026-10-14). They stay on the Decks tab.
+export const isReadyMadeGroup = (deckId) => deckId.split('/').length === 3 && readyMadeDeck(deckId) !== null;
+
 // The ready-made decks that `words` are in but that are not stored yet,
 // together with the decks those are inside.
 //

@@ -264,3 +264,27 @@ test('the ready-made lists are well formed, and every word can get a meaning', a
     }
   }
 });
+
+test('a word needs Chinese characters', () => {
+  assert.match(checkWord({ traditional: 'word', pinyin: 'wo3', definition: 'a word' }).problem, /Chinese characters/);
+  assert.match(checkWord({ traditional: 'word1', pinyin: 'wo3', definition: 'a word' }).problem, /Chinese characters/);
+  assert.equal(checkWord({ traditional: 'AA制', pinyin: 'AA zhi4', definition: 'splitting the bill' }).problem?.includes('Chinese characters') ?? false, false);
+});
+
+test('search matches the start of a syllable or of a word of the meaning', () => {
+  const ta = { traditional: '他', simplified: '他', pinyin: 'ta1', definition: 'he; him' };
+  const station = { traditional: '車站', simplified: '车站', pinyin: 'che1zhan4', definition: 'station' };
+  const work = { traditional: '上班', simplified: '上班', pinyin: 'shang4ban1', definition: 'to go to work' };
+  assert.equal(matchesSearch(ta, 'ta'), true);
+  // Not inside a word of the meaning, nor inside a syllable.
+  assert.equal(matchesSearch(station, 'ta'), false);
+  assert.equal(matchesSearch(work, 'angba'), false);
+  // From a syllable's start, across syllables, however the tones are written.
+  for (const search of ['shangba', 'shang4ban1', 'ban', 'shàngbān', 'work', 'to go']) {
+    assert.equal(matchesSearch(work, search), true, search);
+  }
+  const green = { traditional: '綠', simplified: '绿', pinyin: 'lv4', definition: 'green' };
+  for (const search of ['lv', 'lu', 'lǜ']) {
+    assert.equal(matchesSearch(green, search), true, search);
+  }
+});

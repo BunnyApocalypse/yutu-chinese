@@ -52,6 +52,12 @@ export function checkWord(fields) {
   if (traditional === '') {
     return { problem: 'Type the characters of the word.' };
   }
+  // A word has at least one Chinese character: a tester typed an English
+  // word, and "word1", which went in (2026-10-14). (AA制 and X光 still do.)
+  const hasHan = (text) => /\p{Script=Han}/u.test(text);
+  if (!hasHan(traditional) || !hasHan(simplified)) {
+    return { problem: 'Type the word in Chinese characters, not in pinyin or English.' };
+  }
   // A space would hide a typing slip; | and # are used inside the IDs of
   // words and cards.
   if (/[\s|#]/.test(traditional + simplified)) {
@@ -390,14 +396,33 @@ export function matchesSearch(word, search) {
   if (wanted === '') {
     return true;
   }
-  const readings = `${word.pinyin} ${word.pinyinTaiwan || ''} ${word.pinyinAlso || ''}`.toLowerCase();
-  const haystack = [
-    word.traditional,
-    word.simplified,
-    word.definition.toLowerCase(),
-    readings,
-    readings.replace(/[1-5']/g, ''),
-    formatPinyin(readings),
+  if (word.traditional.includes(wanted) || word.simplified.includes(wanted)) {
+    return true;
+  }
+  // The meaning, at the start of one of its words: "ta" finds "table" but
+  // not "station" (a tester typing pinyin got a list of words without "ta"
+  // in them, 2026-10-14).
+  const definition = word.definition.toLowerCase();
+  for (let at = definition.indexOf(wanted); at !== -1; at = definition.indexOf(wanted, at + 1)) {
+    if (at === 0 || !/[\p{L}\p{N}]/u.test(definition[at - 1])) {
+      return true;
+    }
+  }
+  // The readings, from the start of a syllable, running on into the next
+  // ones if the search does ("shangba" finds shàngbān), with or without tone
+  // numbers or tone marks.
+  const typed = wanted.replace(/[\s']/g, '');
+  const readings = [word.pinyin, word.pinyinTaiwan, ...(word.pinyinAlso || '').split(', ')].filter(Boolean);
+  const ways = [
+    (syllable) => syllable,
+    (syllable) => syllable.replace(/[1-5]/, ''),
+    (syllable) => syllable.replace(/[1-5]/, '').replace(/v/g, 'u'),
+    (syllable) => formatPinyin(syllable),
   ];
-  return haystack.some((text) => text.includes(wanted));
+  return readings.some((reading) => {
+    const syllables = reading.toLowerCase().match(/[a-zv:]+[1-5]?/g) || [];
+    return syllables.some((unused, start) =>
+      ways.some((way) => syllables.slice(start).map(way).join('').startsWith(typed)),
+    );
+  });
 }

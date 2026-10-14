@@ -131,4 +131,21 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     await tap(page, 'error-close-button');
     assert.equal(await page.evaluate(`document.getElementById('error-banner').hidden`), true);
   });
+
+  it('reminds of a backup with a dot, which can be switched off and on', async () => {
+    // Words and no backup: the dot is on the menu button and on Settings.
+    const dot = `document.getElementById('menu-button').classList.contains('reminder')`;
+    await waitUntil(page, dot, 'the reminder');
+    assert.equal(await page.evaluate(`document.getElementById('settings-button').classList.contains('reminder')`), true);
+    // Switching it off asks first.
+    await tap(page, 'settings-button');
+    await tap(page, 'backup-reminder-button');
+    await waitUntil(page, `document.getElementById('confirm-dialog').open`, 'the question');
+    await tap(page, 'confirm-yes');
+    await waitUntil(page, `!${dot}`, 'the dot gone');
+    assert.equal(await textOf(page, 'backup-reminder-button'), 'Remind me about backups again');
+    await tap(page, 'backup-reminder-button');
+    await waitUntil(page, dot, 'the reminder back');
+    await tap(page, 'settings-close');
+  });
 });

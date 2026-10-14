@@ -41,6 +41,7 @@ const DEVICE_SETTINGS = [
   'volume',
   'lastBackupAt',
   'tipsSeen',
+  'backupReminderOff',
   'tipsOn',
 ];
 

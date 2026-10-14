@@ -315,11 +315,17 @@ exportButton.addEventListener('click', async () => {
 // Everything the learner has is in this one browser. Settings says when a
 // backup was last made, and the menu button gets a dot when it is time for
 // another: there are words, and no backup was made in the last two weeks.
+// The reminder can be switched off, at the learner's own risk (a tester
+// had it there all the time and nothing to do about it, 2026-10-14):
+// `backupReminderOff`, a setting of the device.
 const BACKUP_DUE_AFTER_MS = 14 * 24 * 60 * 60 * 1000;
 async function showBackupStatus() {
   const last = await getSetting('lastBackupAt', null);
+  const off = await getSetting('backupReminderOff', false);
   const days = last === null ? null : Math.floor((Date.now() - last) / (24 * 60 * 60 * 1000));
-  const due = wordList.length > 0 && (last === null || Date.now() - last > BACKUP_DUE_AFTER_MS);
+  const due = !off && wordList.length > 0 && (last === null || Date.now() - last > BACKUP_DUE_AFTER_MS);
+  byId('backup-reminder-button').textContent = off ? 'Remind me about backups again' : 'Stop reminding me';
+  byId('backup-reminder-button').hidden = !off && !due;
   byId('backup-status').textContent =
     (last === null
       ? 'No backup has been made on this device yet.'
@@ -327,7 +333,8 @@ async function showBackupStatus() {
     (due
       ? ' Your words and progress are kept only in this browser, so export a backup now and then. ' +
         'The red dot on the menu button is this reminder; it goes away once you have exported one.'
-      : '');
+      : '') +
+    (off ? ' Backup reminders are off.' : '');
   // The dot says why it is there to anyone who rests the mouse on the menu
   // button or uses a screen reader, and in Settings the same dot is on the
   // heading of the group it is about, which is opened.
@@ -341,6 +348,23 @@ async function showBackupStatus() {
   byId('settings-data').classList.toggle('reminder', due);
   byId('settings-data').open = due || byId('settings-data').open;
 }
+
+byId('backup-reminder-button').addEventListener('click', async () => {
+  const off = await getSetting('backupReminderOff', false);
+  if (!off) {
+    const sure = await ask({
+      question: 'Stop the backup reminders?',
+      detail:
+        'Your words and progress are kept only in this browser. If it loses them (a cleared browser, a lost phone) and you have no backup, they are gone.',
+      yes: 'I understand, stop them',
+    });
+    if (!sure) {
+      return;
+    }
+  }
+  await setSetting('backupReminderOff', !off);
+  showBackupStatus();
+});
 
 // The real file chooser is a hidden <input type="file">; the visible button opens it.
 importButton.addEventListener('click', () => importFile.click());

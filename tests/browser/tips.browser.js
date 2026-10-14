@@ -56,9 +56,25 @@ describe('tips', { concurrency: false }, () => {
     await tap(page, 'tip-dismiss');
   });
 
+  it('keeps a tip on top of a pop-up panel opened after it', async () => {
+    // Review's tip is up (not seen yet); then a panel opens over the page.
+    await tap(page, 'review-tab');
+    await waitUntil(page, tipSays('Cards come here'), 'the Review tip');
+    await tap(page, 'settings-button');
+    // The tip is still the topmost thing where its button is.
+    assert.equal(
+      await page.evaluate(`(() => {
+        const button = document.getElementById('tip-dismiss').getBoundingClientRect();
+        return document.elementFromPoint(button.x + button.width / 2, button.y + button.height / 2)?.id;
+      })()`),
+      'tip-dismiss',
+    );
+    await tap(page, 'tip-dismiss');
+    await tap(page, 'settings-close');
+  });
+
   it('remembers which were seen, and can be switched off', async () => {
-    // (The harness switches tips off again when the app is reloaded, maybe
-    // after Review, where the app starts, has put its tip up.)
+    // (The harness switches tips off again when the app is reloaded.)
     await reloadApp(page);
     await tap(page, 'settings-button');
     await page.evaluate(`(() => {
@@ -71,10 +87,11 @@ describe('tips', { concurrency: false }, () => {
     // Screens whose tips were seen before the reload show none.
     await tap(page, 'decks-tab');
     await tap(page, 'words-tab');
-    assert.equal(await page.evaluate(`!${tipOpen} || ${tipSays('Cards come here')}`), true);
-    // One not seen yet does.
-    await tap(page, 'review-tab');
-    await waitUntil(page, tipSays('Cards come here'), 'the Review tip');
+    assert.equal(await page.evaluate(tipOpen), false);
+    // One not seen yet does (Free practice writes a character).
+    await tap(page, 'words-tab');
+    await tap(page, 'practice-tab');
+    await waitUntil(page, tipSays('Write anywhere'), 'the writing tip');
     // Switching tips off takes away the one on screen.
     await tap(page, 'settings-button');
     await page.evaluate(`document.getElementById('tips-checkbox').click()`);

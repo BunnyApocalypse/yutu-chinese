@@ -10,7 +10,17 @@ import { getAll, putAll, removeWord, renameWord } from './db.js';
 import { formatPinyin, wordId } from './wordList.js';
 import { allCardIds } from './session.js';
 import { fileCardsByScript } from './scriptCards.js';
-import { READY_MADE_LISTS, missingReadyMadeDecks, readyMadeDeck, deckTree, deckWithInside, isInDecks, withDeck, DEFAULT_DECK } from './decks.js';
+import {
+  READY_MADE_LISTS,
+  isReadyMadeGroup,
+  missingReadyMadeDecks,
+  readyMadeDeck,
+  deckTree,
+  deckWithInside,
+  isInDecks,
+  withDeck,
+  DEFAULT_DECK,
+} from './decks.js';
 import { createDecksPanel, fillDeckSelect } from './decksPanel.js';
 import { createCardsPanel } from './cardsPanel.js';
 import { createWordPage } from './wordPage.js';
@@ -205,7 +215,9 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       byId('my-decks-section').hidden = readyMade;
       byId('ready-decks-section').hidden = !readyMade;
     }
-    fillDeckSelect(listDeckSelect, decks, [{ value: '', label: 'All decks' }]);
+    fillDeckSelect(listDeckSelect, decks, [{ value: '', label: 'All decks' }], (deck) =>
+      isReadyMadeGroup(deck.id) && deck.id !== listDeckId,
+    );
     listDeckSelect.value = decks.some((deck) => deck.id === listDeckId) ? listDeckId : '';
   }
   listDeckSelect.addEventListener('change', () => {
