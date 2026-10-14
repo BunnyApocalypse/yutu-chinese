@@ -10,4 +10,4 @@ What the project's owner needs to run a first round of testing with other people
 | `feedback-questions.md` | Testers | The questions to answer after a week |
 | `observation-sheet.md` | The owner | What to write down while watching someone use the app |
 
-Places marked **[TO FILL IN]** depend on decisions the owner has not made yet (the app's final address, and how feedback is sent).
+The address and the feedback channel were filled in on 2026-10-14.

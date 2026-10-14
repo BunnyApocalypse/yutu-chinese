@@ -6,7 +6,7 @@ This is an early test version made by one person. I am asking you to use it for 
 
 ## Getting it
 
-Open this address in the browser on your phone or tablet: **[TO FILL IN: address]**
+Open this address in the browser on your phone or tablet: **https://bunnyapocalypse.github.io/hanzi-trainer/**
 
 It then works without a connection. You can add it to your home screen from the browser's menu, and it will behave like any other app. **On an iPhone or iPad, please do add it to the Home Screen:** otherwise the browser may delete the app's data after a week without use.
 
@@ -24,7 +24,7 @@ I am deliberately not explaining how the app works. If you cannot work something
 
 ## Telling me what you find
 
-**[TO FILL IN: where to send feedback]**
+Email **hanzifeedback.veggie892@passmail.com**, or, if you have a GitHub account, open an issue at https://github.com/BunnyApocalypse/hanzi-trainer/issues. The same address is in the app: the cog wheel, then "Help".
 
 The most useful reports say three things: what you were trying to do, what you did, and what happened. A screenshot helps a lot. Please say which device and browser you use.
 

@@ -547,8 +547,8 @@ A review by Claude on 2026-10-13 of what having testers changes; the decisions a
 - **Done on 2026-10-13: the IDs of the group decks no longer hold the groups' names** (see "Ready-made word lists").
 - **Done on 2026-10-13: "Credits and licenses"** under Help in Settings (`credits-dialog` in `index.html`). **A new source of data or code has to be added there** as well as getting its README.
 - **The TOCFL list has no stated license.** The owner takes that risk for the testers' round (2026-10-13) and wants it **considered again before the app goes to a larger audience**.
-- **The address and the name: the owner is thinking about them and asked to be reminded at the start of the next session.** Until it is decided, testers' data is tied to the GitHub Pages address.
-- **Feedback:** the owner will set up an email alias for it and use the repository's issue tracker. (They asked about a form in Proton Drive; Claude knew of no forms in Proton's products and said so, unverified.) When the alias exists: put it in `docs/alpha/` and add "Send feedback" under Help.
+- **The address and the name stay as they are for now** (the owner, 2026-10-14): testers use https://bunnyapocalypse.github.io/hanzi-trainer/, and their data is tied to it. GitHub Pages' limits (1 GB per published site, a soft 100 GB of traffic a month) are the thing to watch; the two copies come to about 565 MB.
+- **Feedback** (2026-10-14): the email alias hanzifeedback.veggie892@passmail.com and the repository's issue tracker. Both are in `docs/alpha/` and under Help in Settings.
 - **Reconsider refactoring the code once the testers' round is over** (the owner, 2026-10-13); see the note on the code below.
 - **What does not need deciding now:** scheduling settings (cards can be rebuilt from reviews), looks, and the database's layout, which has version numbers and upgrade code already.
 - **The code** (asked about by the owner the same day): works and is tested, but `src/wordsPanel.js` (about 1,400 lines) now serves two tabs, three forms and a pop-up panel; some names are behind the times (the mode `'words'` is the Decks tab, `practice-tab` is no longer a tab, `edit-cards` is on the word's page); most browser tests read the word list while it is out of view; and colors and sizes are written out all over `src/style.css`. Claude's advice: leave it until the testers' feedback has settled the structure, then split `wordsPanel.js` by what the screen shows and rename, in one go with the pass over the looks.
@@ -557,10 +557,9 @@ A review by Claude on 2026-10-13 of what having testers changes; the decisions a
 
 **For the session after 2026-10-13, first of all:**
 
-- **Remind the owner about the app's address and name** (they asked to be reminded): everyone's words and progress are stored under the address, so it should be settled before anyone else is given the app. See "Before other people use it".
 - **The owner is testing the app themselves before giving it to anyone** (their decision at the end of that session). Ask how it went, and expect remarks on the layout around the writing area, which was reworked late that day and which they had only tried on a desktop.
 - **No new features until that testing and a first round with testers are done** (agreed that day). Fixing what the owner finds is the work.
-- The owner's list of things to try is below; the testers' documents are in `docs/alpha/`, with two blanks (the address, and where feedback goes: an email alias the owner will make, plus the issue tracker).
+- The owner's list of things to try is below; the testers' documents are in `docs/alpha/`, complete since 2026-10-14.
 - Everything was pushed at the end of that session to `main` (the test copy) and to a new `stable` branch (the copy at the main address). That was the first run of the two-copy deploy.
 
 The rest of this section was written earlier that day, oldest first.
