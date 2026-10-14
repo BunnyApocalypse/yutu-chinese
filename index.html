@@ -139,6 +139,12 @@
                 <span class="entry-definition">Taiwan's test: two Novice levels, then levels 1 to 5. Its words are the ones used in Taiwan, so it suits someone learning traditional characters there.</span>
               </button>
             </li>
+            <li>
+              <button class="word-entry deck-entry ready-entry" type="button" data-list="radicals">
+                <span class="entry-characters">Radicals 部首</span>
+                <span class="entry-definition">The parts characters are built from, such as 氵 "water" in 洗 and 河. Knowing them makes new characters easier to remember. Start with Common: its 80 radicals are the radical of nearly 9 in 10 characters in the lists above, most useful first. Uncommon has the other 134, rare in modern characters and mostly of use for looking characters up in a paper dictionary.</span>
+              </button>
+            </li>
           </ul>
           <!-- One checkbox per level, with how many of its words are new. Filled in by wordsPanel.js. -->
           <fieldset id="ready-levels" class="setting"><legend id="ready-levels-title">Levels</legend></fieldset>
@@ -169,7 +175,6 @@
             <div class="buttons">
               <button id="deck-review-button" class="small" type="button">Review this deck</button>
               <button id="deck-learn-button" class="small" type="button">Learn this deck</button>
-              <button id="deck-words-button" class="small" type="button">Its words</button>
               <button id="deck-settings-button" class="small" type="button">Deck settings</button>
             </div>
           </div>
@@ -250,9 +255,11 @@
           </div>
 
           <!-- What the Words tab shows of it: the words, to find and to manage.
-               (Out of view on the Decks tab, where it still follows the open deck.) -->
+               The Decks tab shows it too under a deck's page, for that deck's
+               words, without the first row; on its front page it is out of
+               view, and still follows the open deck. -->
           <div id="words-part" class="words-panel view-hidden">
-            <div class="list-tools">
+            <div id="words-tab-tools" class="list-tools">
               <label>
                 Deck
                 <select id="words-deck-select" class="deck-select" aria-label="Deck whose words are listed"></select>
@@ -502,6 +509,10 @@
             <li>
               <b>TOCFL word list:</b> the 華語八千詞表 published by Taiwan's Steering Committee for the Test of Proficiency-Huayu.
               The committee states no license for it.
+            </li>
+            <li>
+              <b>Radicals:</b> the 214 Kangxi radicals as listed by the Unicode Consortium (CJKRadicals.txt, Unicode License),
+              ranked by how often they occur, from Make Me a Hanzi; their meanings were written for this app. MIT License.
             </li>
           </ul>
         </div>

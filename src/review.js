@@ -29,11 +29,17 @@ import { isLeech, lapsesOf, isSuspended, withSuspended, becameLeech } from './le
 import { speak } from './speech.js';
 import { markedKnown } from './cardManager.js';
 import { isSentence, sentenceCardTypes, sentenceWriting } from './sentences.js';
+import { isRadical, RADICAL_CARD_TYPES } from './radicals.js';
 
 // The same for a sentence, which has two kinds of card (see sentences.js).
 const SENTENCE_LABELS = {
   writing: 'Sentence · writing',
   meaning: 'Sentence · reading',
+};
+
+const RADICAL_LABELS = {
+  writing: 'Radical · writing',
+  meaning: 'Radical · meaning',
 };
 
 const TYPE_LABELS = {
@@ -230,12 +236,13 @@ export function createReview(elements, flows, settings, editWord, showWord) {
   function offerListen(wanted) {
     listenButton.classList.remove('no-sound');
     listenButton.title = 'Hear the word';
-    listenButton.hidden = !wanted || settings.sound === 'off';
+    // A radical with no reading is not said aloud (see radicals.js).
+    listenButton.hidden = !wanted || settings.sound === 'off' || (current !== null && isRadical(current.word));
   }
 
   // Speaks the word of the card on screen, in the reading shown for it.
   async function speakCurrent() {
-    if (!current) {
+    if (!current || isRadical(current.word)) {
       return;
     }
     const { word } = current;
@@ -620,7 +627,8 @@ export function createReview(elements, flows, settings, editWord, showWord) {
   async function showLessonStep() {
     const { word } = current;
     const step = lesson.steps[lesson.index];
-    typeElement.textContent = `New word · step ${lesson.index + 1} of ${lesson.steps.length}`;
+    const kind = isRadical(word) ? 'New radical' : 'New word';
+    typeElement.textContent = `${kind} · step ${lesson.index + 1} of ${lesson.steps.length}`;
     lessonNote.textContent = LESSON_NOTES[step];
     lessonNote.hidden = false;
     // "I know this word" is offered at every step.
@@ -933,6 +941,10 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     if (!wanted.includes(type)) {
       return false;
     }
+    // A radical with no reading has meaning and writing cards only.
+    if (isRadical(word) && !RADICAL_CARD_TYPES.includes(type)) {
+      return false;
+    }
     if (type === 'writing') {
       return !unwritable.has(word.id);
     }
@@ -1025,7 +1037,9 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     studyArea.hidden = false;
     typeElement.textContent = isSentence(current.word)
       ? SENTENCE_LABELS[current.type]
-      : TYPE_LABELS[current.type];
+      : isRadical(current.word)
+        ? RADICAL_LABELS[current.type]
+        : TYPE_LABELS[current.type];
     showScriptFlag(current.word);
     showPartsFor(current.type);
     offerListen(current.type === 'writing' || current.type === 'meaning');

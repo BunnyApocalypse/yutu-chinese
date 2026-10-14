@@ -14,6 +14,6 @@ Wiktionary's Chinese entries as machine-readable data, from [kaikki.org](https:/
 
 ## `word-list-sources/`
 
-The files `scripts/build-word-lists.js` builds the HSK and TOCFL lists from, kept so that a rebuild does not download them again (the owner's wish, 2026-10-14; the TOCFL committee's server can take minutes for its 10 MB zip). The script fetches whatever is missing by itself, from the addresses at its top, so there is nothing to do by hand. Delete a file to have it fetched again.
+The files `scripts/build-word-lists.js` builds the HSK and TOCFL lists from (and Unicode's `CJKRadicals.txt`, which `scripts/build-radicals.js` builds the deck of radicals from), kept so that a rebuild does not download them again (the owner's wish, 2026-10-14; the TOCFL committee's server can take minutes for its 10 MB zip). The script fetches whatever is missing by itself, from the addresses at its top, so there is nothing to do by hand. Delete a file to have it fetched again.
 
 The app itself uses none of this. What is written with its help (the learning notes) has to carry Wiktionary's license, CC BY-SA.

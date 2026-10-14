@@ -1027,13 +1027,31 @@ button.word-entry {
 
 /* ---- The word page ---- */
 
+/* While a pop-up panel is open, the page under it does not scroll. A swipe
+   that reached the end of the panel's own scrolling used to scroll the page
+   instead, and on a phone that brings the browser's address bar in and out,
+   which moves the panel (seen in Firefox on Android). */
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
 .word-page-body {
   max-height: 72vh;
+  /* "dvh" follows the visible height as the address bar comes and goes;
+     browsers without it keep the line above. */
+  max-height: 72dvh;
   overflow-y: auto;
+  /* Scrolling stops at the end of the page instead of passing on. */
+  overscroll-behavior: contain;
   /* Nothing on the page is wider than it; without this a long line can
      still bring up a bar for scrolling sideways. */
   overflow-x: hidden;
   margin-bottom: 12px;
+  /* A thin bar in the page's own colors instead of the browser's wide gray
+     one, with a little room between it and the text. */
+  scrollbar-width: thin;
+  scrollbar-color: #c9c1ae transparent;
+  padding-right: 6px;
 }
 
 /* Under the example sentence: "Study this sentence in [deck] [Add sentence]". */
@@ -1202,7 +1220,9 @@ button.part.sound .part-role {
 /* A part of the Decks and Words tabs that the other of the two shows. (A
    class, not the "hidden" attribute: the part is still kept up to date.) */
 .view-hidden {
-  display: none;
+  /* Wins over a rule of the same weight that shows the element as a row
+     (.list-tools), wherever that rule is in this file. */
+  display: none !important;
 }
 
 /* Above the list of words: what is shown, in what order, and "Select

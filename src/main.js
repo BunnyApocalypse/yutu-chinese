@@ -147,9 +147,6 @@ const wordsPanel = createWordsPanel(
     await settings.change('studyDeck', deckId);
     await setMode(newMode);
   },
-  // "Its words" on a deck's page: the Words tab, which the panel has told
-  // which deck to list.
-  () => setMode('browse'),
 );
 
 // Free practice: any kind of card for what is in the text box. Nothing is

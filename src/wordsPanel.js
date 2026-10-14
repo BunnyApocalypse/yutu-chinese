@@ -16,6 +16,7 @@ import { createCardsPanel } from './cardsPanel.js';
 import { createWordPage } from './wordPage.js';
 import { ask } from './confirm.js';
 import { isSentence, sentenceId, sentenceRecord, clozeInBoth } from './sentences.js';
+import { isRadical, radicalRecord } from './radicals.js';
 import { lapsesOf } from './leeches.js';
 import { findLeeches, describeLeech, describeSuspended, leechList, leechPrompt } from './leeches.js';
 import {
@@ -42,10 +43,11 @@ import dictionaryUrl from '../data/cedict/dictionary.tsv?url';
 import hsk3Url from '../data/wordlists/hsk/hsk-3.0.tsv?url';
 import hsk2Url from '../data/wordlists/hsk/hsk-2.0.tsv?url';
 import tocflUrl from '../data/wordlists/tocfl/tocfl.tsv?url';
+import radicalsUrl from '../data/wordlists/radicals/radicals.tsv?url';
 
 // Where each ready-made list is fetched from, by the `data-list` of its row
 // in the Ready-made decks section (index.html).
-const READY_LIST_URLS = { 'hsk-3.0': hsk3Url, 'hsk-2.0': hsk2Url, tocfl: tocflUrl };
+const READY_LIST_URLS = { 'hsk-3.0': hsk3Url, 'hsk-2.0': hsk2Url, tocfl: tocflUrl, radicals: radicalsUrl };
 
 // With thousands of words, building a row for each would make the page slow,
 // so only this many are shown at a time; the search box narrows them down.
@@ -72,7 +74,6 @@ const byId = (id) => document.getElementById(id);
 //
 // studyDeck(deckId, mode): shows Review ('review') or Learn ('learn') with
 //           that deck chosen
-// goToWords(): opens the Words tab
 //
 // The panel serves two tabs. The Decks tab shows the decks: choosing one,
 // adding to it, studying it. The Words tab shows the words: finding them,
@@ -81,7 +82,7 @@ const byId = (id) => document.getElementById(id);
 // Returns { show(view), edit(word), showWord(word) }; call show() whenever
 // one of the two tabs is opened ('decks' or 'words') or a setting has
 // changed (without a view: the one that was showing).
-export function createWordsPanel(onChange, getSettings, studyDeck, goToWords) {
+export function createWordsPanel(onChange, getSettings, studyDeck) {
   const addForm = byId('add-word-form');
   const addFields = {
     traditional: byId('add-traditional'),
@@ -188,7 +189,11 @@ export function createWordsPanel(onChange, getSettings, studyDeck, goToWords) {
   function showView() {
     const onWords = view === 'words';
     byId('decks-part').classList.toggle('view-hidden', onWords);
-    byId('words-part').classList.toggle('view-hidden', !onWords);
+    // A deck's page lists its words under it (the owner, 2026-10-14: it felt
+    // strange to open a deck and not see them); the front page does not.
+    byId('words-part').classList.toggle('view-hidden', !onWords && !openDeckId);
+    // The deck chooser and Free practice belong to the Words tab.
+    byId('words-tab-tools').classList.toggle('view-hidden', !onWords);
     // "My decks" and "Ready-made decks" belong to the Decks tab.
     byId('my-decks-button').parentElement.classList.toggle('view-hidden', onWords);
     if (onWords) {
@@ -207,11 +212,6 @@ export function createWordsPanel(onChange, getSettings, studyDeck, goToWords) {
     listDeckId = listDeckSelect.value;
     renderList();
   });
-  // "Its words" on a deck's page.
-  byId('deck-words-button').addEventListener('click', () => {
-    listDeckId = openDeckId;
-    goToWords();
-  });
 
   // Opens a deck's page, or the front page (null), at its top.
   function openDeckPage(deckId) {
@@ -222,6 +222,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, goToWords) {
     foldAddWord();
     renderDecks();
     renderList();
+    showView();
     byId('words-panel').scrollIntoView();
   }
 
@@ -1050,6 +1051,14 @@ export function createWordsPanel(onChange, getSettings, studyDeck, goToWords) {
     const groupNames = new Map(); // a group's deck ID → its name
     let noMeaning = 0;
     for (const entry of entries) {
+      // A line with no reading is a radical of its own, with its meaning in
+      // the list (see radicals.js).
+      if (entry.pinyin === '') {
+        const radical = radicalRecord(entry);
+        candidates.push(radical);
+        tags.set(radical.id, listTag(listId, entry.level, entry.group));
+        continue;
+      }
       const inDictionary = dictionary ? lookUp(dictionary, entry.traditional) : [];
       const sameWord = inDictionary.find(
         (found) => found.traditional === entry.traditional && found.pinyin === entry.pinyin,
@@ -1110,8 +1119,9 @@ export function createWordsPanel(onChange, getSettings, studyDeck, goToWords) {
     cardsWord = word;
     for (const box of suspendedBoxes) {
       box.checked = (word.suspended || []).includes(box.value);
-      // A sentence has no pinyin or tone card to suspend.
-      box.closest('label').hidden = isSentence(word) && (box.value === 'pinyin' || box.value === 'tone');
+      // A sentence or a radical has no pinyin or tone card to suspend.
+      box.closest('label').hidden =
+        (isSentence(word) || isRadical(word)) && (box.value === 'pinyin' || box.value === 'tone');
     }
     byId('edit-suspended-row').open = suspendedBoxes.some((box) => box.checked);
     showSuspendedCount();
@@ -1148,6 +1158,16 @@ export function createWordsPanel(onChange, getSettings, studyDeck, goToWords) {
       }
     } else {
       editPinyinAlso.closest('label').hidden = false;
+    }
+    // A radical from the ready-made deck has only its meaning and decks to
+    // change: its forms are its ID, and it has no reading (radicals.js).
+    // applySettings shows the other boxes again for the next word, all but
+    // the pinyin, which is shown again here.
+    editPinyin.closest('label').hidden = false;
+    if (isRadical(word)) {
+      for (const box of [editTraditional, editSimplified, editPinyin, editPinyinTaiwan, editPinyinAlso, editCardScript]) {
+        box.closest('label').hidden = true;
+      }
     }
     editCloze.closest('label').hidden = !sentence;
     // The word to fill in is shown in the script the sentence is studied in.
@@ -1265,6 +1285,30 @@ export function createWordsPanel(onChange, getSettings, studyDeck, goToWords) {
       await fileCardsByScript([sentence]);
       await afterChange();
       dialogResult = { changed: true, word: sentence };
+      dialog.close();
+      return;
+    }
+    if (isRadical(openWord)) {
+      const definition = editDefinition.value.trim();
+      if (definition === '') {
+        dialogNote.textContent = 'A radical needs its meaning.';
+        return;
+      }
+      if (tickedDecks().length === 0) {
+        byId('edit-decks-row').open = true;
+        dialogNote.textContent = 'A radical has to be in at least one deck. To be rid of it, use Remove.';
+        return;
+      }
+      const there = new Set(decks.map((deck) => deck.id));
+      const { changedAt, ...kept } = openWord;
+      const radical = {
+        ...kept,
+        definition,
+        decks: [...(openWord.decks || []).filter((id) => !there.has(id)), ...tickedDecks()],
+      };
+      await putAll('words', [radical]);
+      await afterChange();
+      dialogResult = { changed: true, word: radical };
       dialog.close();
       return;
     }

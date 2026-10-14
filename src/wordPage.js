@@ -19,6 +19,7 @@ import { parseCharacters, structureOf } from './characters.js';
 import { deckTree, readyMadeDeck } from './decks.js';
 import { fillDeckSelect } from './decksPanel.js';
 import { speak } from './speech.js';
+import { isRadical } from './radicals.js';
 // "?url" makes Vite hand us each file's address instead of its contents.
 import charactersUrl from '../data/makemeahanzi/dictionary.txt?url';
 
@@ -142,7 +143,8 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
     });
     const line = element('div', 'page-reading');
     line.append(element('span', 'entry-pinyin', reading));
-    if (settings.sound !== 'off') {
+    // (A radical with no reading has nothing to speak: see radicals.js.)
+    if (settings.sound !== 'off' && speakable) {
       line.append(loudspeaker(speakable.word, speakable.reading));
     }
     heading.append(line);
@@ -302,10 +304,12 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
       forms = { simplified: word.simplified, traditional: word.traditional, own: word[script] };
       const described = describeReading(readingsFor(word, settings.pronunciation, null));
       parts.push(
-        showHeading(forms, described.main, described.other, {
-          word,
-          reading: readingsFor(word, settings.pronunciation, null).primary,
-        }),
+        showHeading(
+          forms,
+          described.main,
+          described.other,
+          isRadical(word) ? null : { word, reading: readingsFor(word, settings.pronunciation, null).primary },
+        ),
       );
       // The decks it is in, as "HSK 3.0 › Level 1 › Family".
       const labels = deckTree(getDecks())

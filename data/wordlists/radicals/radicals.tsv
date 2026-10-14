@@ -1,0 +1,236 @@
+# The 214 Kangxi radicals (部首), in two levels: Common, the radicals of at least
+# 10 characters of the HSK and TOCFL lists, and Uncommon, the rest; each most
+# useful first. Built by scripts/build-radicals.js; see the README in this folder.
+# Columns: level, simplified, traditional, reading, meaning. A radical that is a word
+# has its reading and takes its meaning from the dictionary; one with no reading is
+# a radical only (src/radicals.js) and has its meaning here.
+Common	手	手	shou3	
+Common	扌	扌		hand (side form of 手)
+Common	水	水	shui3	
+Common	氵	氵		water (side form of 水)
+Common	口	口	kou3	
+Common	人	人	ren2	
+Common	亻	亻		person (side form of 人)
+Common	木	木	mu4	
+Common	讠	言		speech, words
+Common	糸	糸		silk, thread
+Common	纟	糹		silk, thread (side form of 糸)
+Common	心	心	xin1	
+Common	忄	忄		heart, feelings (side form of 心)
+Common	艹	艹		grass, plants (top form)
+Common	金	金	jin1	
+Common	钅	釒		metal, gold (side form of 金)
+Common	贝	貝		shell; money
+Common	辶	辶		walk, movement
+Common	肉	肉	rou4	
+Common	⺼	⺼		flesh, body (side form of 肉)
+Common	火	火	huo3	
+Common	灬	灬		fire (bottom form of 火)
+Common	土	土	tu3	
+Common	日	日	ri4	
+Common	女	女	nv3	
+Common	阝	阝		mound (on the left); town (on the right)
+Common	刀	刀	dao1	
+Common	刂	刂		knife (side form of 刀)
+Common	宀	宀		roof
+Common	页	頁	ye4	
+Common	竹	竹	zhu2	
+Common	⺮	⺮		bamboo (top form of 竹)
+Common	车	車	che1	
+Common	食	食		eat, food
+Common	饣	飠		eat, food (side form of 食)
+Common	马	馬	ma3	
+Common	禾	禾		grain, crops
+Common	目	目		eye
+Common	犬	犬	quan3	
+Common	犭	犭		dog, animal (side form of 犬)
+Common	石	石	shi2	
+Common	门	門	men2	
+Common	疒	疒		sickness
+Common	广	广		shelter, building
+Common	虫	虫		insect, bug
+Common	衣	衣	yi1	
+Common	衤	衤		clothing (side form of 衣)
+Common	山	山	shan1	
+Common	足	足	zu2	
+Common	力	力	li4	
+Common	大	大	da4	
+Common	巾	巾		cloth, towel
+Common	彳	彳		step, walking
+Common	一	一	yi1	
+Common	尸	尸		body, corpse
+Common	攵	攵		strike, tap (side form)
+Common	穴	穴		cave, hole
+Common	田	田	tian2	
+Common	玉	玉	yu4	
+Common	王	王	wang2	
+Common	酉	酉		wine jar, alcohol
+Common	示	示		spirit, altar
+Common	礻	礻		spirit, worship (side form of 示)
+Common	囗	囗		enclosure
+Common	耳	耳		ear
+Common	冫	冫		ice
+Common	弓	弓	gong1	
+Common	鸟	鳥	niao3	
+Common	儿	儿		legs (at the bottom)
+Common	十	十	shi2	
+Common	皿	皿		dish, vessel
+Common	米	米	mi3	
+Common	雨	雨	yu3	
+Common	厂	厂		cliff
+Common	又	又	you4	
+Common	子	子		child
+Common	八	八	ba1	
+Common	丷	丷		eight (top form of 八)
+Common	欠	欠	qian4	
+Common	罒	罒		net (top form)
+Common	隹	隹		short-tailed bird
+Common	戈	戈		halberd, spear
+Common	见	見	jian4	
+Common	丿	丿		slash (a stroke)
+Common	寸	寸	cun4	
+Common	立	立	li4	
+Common	羽	羽		feather, wings
+Common	舟	舟	zhou1	
+Common	走	走	zou3	
+Common	鱼	魚	yu2	
+Common	月	月	yue4	
+Common	牛	牛	niu2	
+Common	止	止	zhi3	
+Common	殳	殳		weapon; striking
+Common	虍	虍		tiger (top form)
+Common	辛	辛		bitter, hardship
+Uncommon	乙	乙	yi3	
+Uncommon	二	二	er4	
+Uncommon	亠	亠		lid
+Uncommon	卩	卩		seal; kneeling person
+Uncommon	小	小	xiao3	
+Uncommon	曰	曰	yue1	
+Uncommon	歹	歹		death, bad
+Uncommon	几	几		small table
+Uncommon	士	士		scholar, soldier
+Uncommon	夕	夕		evening
+Uncommon	户	戶	hu4	
+Uncommon	斤	斤	jin1	
+Uncommon	方	方	fang1	
+Uncommon	矢	矢		arrow
+Uncommon	风	風	feng1	
+Uncommon	丨	丨		line (a stroke)
+Uncommon	凵	凵		open box
+Uncommon	勹	勹		wrap
+Uncommon	羊	羊	yang2	
+Uncommon	行	行	xing2	
+Uncommon	革	革		leather
+Uncommon	丶	丶		dot (a stroke)
+Uncommon	冖	冖		cover
+Uncommon	匸	匸		hiding enclosure
+Uncommon	尢	尢		lame
+Uncommon	工	工		work, tool
+Uncommon	廾	廾		two hands
+Uncommon	彐	彐		snout
+Uncommon	彡	彡		bristles, decoration
+Uncommon	爪	爪		claw
+Uncommon	白	白	bai2	
+Uncommon	舌	舌	she2	
+Uncommon	身	身		body
+Uncommon	鬼	鬼	gui3	
+Uncommon	入	入	ru4	
+Uncommon	冂	冂		down box, border
+Uncommon	卜	卜		divination
+Uncommon	幺	幺		tiny, short thread
+Uncommon	父	父		father
+Uncommon	豆	豆		bean; food vessel
+Uncommon	里	里	li3	
+Uncommon	骨	骨	gu3	
+Uncommon	髟	髟		long hair
+Uncommon	龙	龍	long2	
+Uncommon	亅	亅		hook (a stroke)
+Uncommon	匚	匚		box
+Uncommon	厶	厶		private
+Uncommon	夂	夂		go (from behind)
+Uncommon	巛	巛		river
+Uncommon	己	己		self
+Uncommon	干	干		shield; dry
+Uncommon	斗	斗		dipper, measure
+Uncommon	气	气		steam, air
+Uncommon	聿	聿		brush
+Uncommon	臣	臣		minister, official
+Uncommon	臼	臼		mortar
+Uncommon	角	角	jiao3	
+Uncommon	豕	豕		pig
+Uncommon	音	音	yin1	
+Uncommon	黑	黑	hei1	
+Uncommon	齿	齒		teeth
+Uncommon	匕	匕		spoon, dagger
+Uncommon	廴	廴		long stride
+Uncommon	毋	毋		do not
+Uncommon	比	比	bi3	
+Uncommon	毛	毛	mao2	
+Uncommon	氏	氏		clan
+Uncommon	片	片	pian4	
+Uncommon	瓦	瓦	wa3	
+Uncommon	甘	甘		sweet
+Uncommon	生	生	sheng1	
+Uncommon	用	用	yong4	
+Uncommon	皮	皮	pi2	
+Uncommon	缶	缶		earthen jar
+Uncommon	老	老	lao3	
+Uncommon	而	而	er2	
+Uncommon	至	至	zhi4	
+Uncommon	色	色	se4	
+Uncommon	覀	覀		cover (top form)
+Uncommon	豸	豸		legless beast
+Uncommon	辰	辰		morning; time
+Uncommon	釆	釆		distinguish
+Uncommon	青	青	qing1	
+Uncommon	非	非	fei1	
+Uncommon	鬥	鬥		fight
+Uncommon	卤	鹵		salt
+Uncommon	麦	麥	mai4	
+Uncommon	夊	夊		go slowly
+Uncommon	文	文	wen2	
+Uncommon	无	无		not have
+Uncommon	爻	爻		crisscross
+Uncommon	丬	爿		split wood
+Uncommon	玄	玄	xuan2	
+Uncommon	瓜	瓜	gua1	
+Uncommon	疋	疋		bolt of cloth
+Uncommon	癶	癶		footsteps
+Uncommon	禸	禸		track, footprint
+Uncommon	耒	耒		plow
+Uncommon	自	自	zi4	
+Uncommon	艮	艮		stopping, tough
+Uncommon	血	血	xue4	
+Uncommon	谷	谷		valley
+Uncommon	赤	赤		red
+Uncommon	长	長	zhang3	
+Uncommon	隶	隶		reach, servant
+Uncommon	韦	韋		tanned leather
+Uncommon	飞	飛	fei1	
+Uncommon	香	香	xiang1	
+Uncommon	鹿	鹿	lu4	
+Uncommon	麻	麻	ma2	
+Uncommon	黄	黃	huang2	
+Uncommon	黍	黍		millet
+Uncommon	齐	齊	qi2	
+Uncommon	龟	龜	gui1	
+Uncommon	屮	屮		sprout
+Uncommon	弋	弋		tethered arrow
+Uncommon	支	支	zhi1	
+Uncommon	牙	牙	ya2	
+Uncommon	矛	矛		spear
+Uncommon	舛	舛		oppose
+Uncommon	面	面	mian4	
+Uncommon	首	首	shou3	
+Uncommon	高	高	gao1	
+Uncommon	鬯	鬯		sacrificial wine
+Uncommon	鬲	鬲		cauldron
+Uncommon	鼎	鼎		tripod vessel
+Uncommon	鼓	鼓	gu3	
+Uncommon	鼠	鼠	shu3	
+Uncommon	鼻	鼻	bi2	
+Uncommon	邑	邑		city
+Uncommon	韭	韭		leek
+Uncommon	黹	黹		embroidery
+Uncommon	黾	黽		frog
+Uncommon	龠	龠		flute

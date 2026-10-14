@@ -5,6 +5,7 @@
 // The page side is in wordsPanel.js.
 
 import { wordId, formatPinyin } from './wordList.js';
+import { radicalId } from './radicals.js';
 
 // One reading in numbered pinyin: syllables of letters each followed by a
 // tone number, with an optional apostrophe between them (nv3'er2).
@@ -282,11 +283,15 @@ export function levelsOfReadyList(entries, existing) {
   for (const entry of entries) {
     const tally = levels.get(entry.level) || { level: entry.level, count: 0, newCount: 0 };
     tally.count += 1;
-    tally.newCount += known.has(wordId(entry)) ? 0 : 1;
+    tally.newCount += known.has(entryId(entry)) ? 0 : 1;
     levels.set(entry.level, tally);
   }
   return [...levels.values()];
 }
+
+// The ID of the word or radical a line of a ready-made list becomes: a line
+// with no reading is a radical of its own (see radicals.js).
+export const entryId = (entry) => (entry.pinyin === '' ? radicalId(entry.traditional) : wordId(entry));
 
 // The ID of the deck for one level of a ready-made list ('hsk-3.0/1'), or,
 // given a group as parseReadyList reads it ("03 Education 教育"), for that
@@ -333,7 +338,8 @@ export function newWordRecords(candidates, existing, now) {
   const toAdd = [];
   let alreadyHave = 0;
   for (const word of candidates) {
-    const id = wordId(word);
+    // A radical (radicals.js) comes with its ID; a word's is worked out.
+    const id = word.id || wordId(word);
     if (known.has(id)) {
       alreadyHave += 1;
       continue;

@@ -291,4 +291,42 @@ describe('decks', { concurrency: false }, () => {
     await waitUntil(page, deckRows(2), 'the two decks');
     assert.match(await textOf(page, '#deck-list li:last-child'), /^TOCFL182 words · 0 learned \(0%\) · 12 decks inside$/);
   });
+
+  it('adds the common radicals, and teaches one that is not a word', { timeout: 60000 }, async () => {
+    await tap(page, 'ready-decks-button');
+    await page.evaluate(`document.querySelector('#ready-list button[data-list="radicals"]').click()`);
+    await waitUntil(page, `document.querySelector('#ready-levels label')?.textContent.trim().startsWith('Common:')`, 'the levels of the radicals');
+    await page.evaluate(`document.querySelector('#ready-levels input[value="Common"]').click()`);
+    await tap(page, 'add-ready-button');
+    await waitUntil(page, `document.getElementById('ready-report').textContent.startsWith('Added')`, 'the radicals added');
+
+    const words = await stored(page, 'words');
+    // A radical that is a word is the word TOCFL brought, now in both decks.
+    const water = words.find((word) => word.id === '水|shui3');
+    assert.deepEqual(water.decks, ['tocfl/Novice 1/04', 'radicals/Common']);
+    // One that is not a word is a radical of its own, with its meaning.
+    const side = words.find((word) => word.id === '氵|radical');
+    assert.equal(side.kind, 'radical');
+    assert.equal(side.pinyin, '');
+    assert.equal(side.definition, 'water (side form of 水)');
+    assert.deepEqual(side.decks, ['radicals/Common']);
+
+    // Learning the radicals' deck, the words TOCFL brought come first (they
+    // were in line already); past them, a radical's lesson is a first look
+    // and three writing steps, with no tones and nothing to hear.
+    await tap(page, 'learn-tab');
+    await choose(page, 'deck-select', 'radicals/Common');
+    const typeShown = `document.getElementById('card-type').textContent`;
+    await waitUntil(page, `${typeShown}.startsWith('New ')`, 'a lesson');
+    for (let skipped = 0; (await page.evaluate(typeShown)).startsWith('New word'); skipped += 1) {
+      assert.ok(skipped < 40, 'no radical came up');
+      const before = await page.evaluate(`document.getElementById('study-area').textContent`);
+      await tap(page, 'skip-lesson-button');
+      await waitUntil(page, `document.getElementById('study-area').textContent !== ${JSON.stringify(before)}`, 'the next lesson');
+    }
+    assert.match(await page.evaluate(typeShown), /^New radical · step 1 of 4/);
+    assert.equal(await page.evaluate(`document.getElementById('listen-button').hidden`), true);
+    await choose(page, 'deck-select', '');
+    await tap(page, 'decks-tab');
+  });
 });

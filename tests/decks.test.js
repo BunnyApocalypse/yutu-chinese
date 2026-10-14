@@ -43,7 +43,12 @@ test('a ready-made list and its levels have decks with fixed IDs', () => {
 });
 
 test('the levels listed for the decks are those in the list files', () => {
-  const files = { 'hsk-3.0': 'hsk/hsk-3.0.tsv', 'hsk-2.0': 'hsk/hsk-2.0.tsv', tocfl: 'tocfl/tocfl.tsv' };
+  const files = {
+    'hsk-3.0': 'hsk/hsk-3.0.tsv',
+    'hsk-2.0': 'hsk/hsk-2.0.tsv',
+    tocfl: 'tocfl/tocfl.tsv',
+    radicals: 'radicals/radicals.tsv',
+  };
   assert.deepEqual(READY_MADE_LISTS.map((list) => list.id), Object.keys(files));
   for (const list of READY_MADE_LISTS) {
     const entries = parseReadyList(fs.readFileSync(`data/wordlists/${files[list.id]}`, 'utf8'));

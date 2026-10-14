@@ -6,6 +6,7 @@ import { gradeOptions, EASY } from './scheduler.js';
 import { CARD_TYPES, cardIdFor } from './session.js';
 import { lapsesOf } from './leeches.js';
 import { isSentence, SENTENCE_CARD_TYPES } from './sentences.js';
+import { isRadical, RADICAL_CARD_TYPES } from './radicals.js';
 
 // ---- Starting a card over ----
 //
@@ -18,6 +19,11 @@ import { isSentence, SENTENCE_CARD_TYPES } from './sentences.js';
 // scripts are started over together.
 
 // The word with one kind of card marked as started over at `now`.
+// The kinds of card a word can have: a sentence (sentences.js) or a radical
+// with no reading (radicals.js) has no pinyin or tone card.
+const kindsOf = (word) =>
+  isSentence(word) ? SENTENCE_CARD_TYPES : isRadical(word) ? RADICAL_CARD_TYPES : CARD_TYPES;
+
 export function withStartedOver(word, type, now) {
   return { ...word, startedOverAt: { ...(word.startedOverAt || {}), [type]: now } };
 }
@@ -44,8 +50,8 @@ export function cardsOfWord(word, cards, reviews, script) {
   const byId = new Map(cards.filter((card) => card.wordId === word.id).map((card) => [card.id, card]));
   const otherScript = script === 'traditional' ? 'simplified' : 'traditional';
   const rows = [];
-  // A sentence has no pinyin or tone card.
-  for (const type of isSentence(word) ? SENTENCE_CARD_TYPES : CARD_TYPES) {
+  // A sentence or a radical has no pinyin or tone card.
+  for (const type of kindsOf(word)) {
     const ids = [[cardIdFor(word, type, script), script]];
     const otherId = cardIdFor(word, type, otherScript);
     if (otherId !== ids[0][0] && byId.has(otherId)) {
@@ -97,7 +103,7 @@ export function markedKnown(word, cards, types, script, now, randomId) {
   const studied = new Set(cards.filter((card) => card.wordId === word.id).map((card) => card.id));
   const newCards = [];
   const reviews = [];
-  const kinds = isSentence(word) ? SENTENCE_CARD_TYPES : CARD_TYPES;
+  const kinds = kindsOf(word);
   for (const type of kinds.filter((kind) => types.includes(kind))) {
     const id = cardIdFor(word, type, script);
     if (studied.has(id)) {

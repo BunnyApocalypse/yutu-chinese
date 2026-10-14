@@ -51,7 +51,7 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     await page.evaluate(`document.getElementById('add-deck-form').requestSubmit()`);
     await waitUntil(page, `document.querySelectorAll('#deck-list li').length === 2`, 'the new deck');
 
-    // The Decks tab: decks in view, no list of words.
+    // The Decks tab's front page: decks in view, no list of words.
     assert.equal(await inView(page, 'deck-list'), true);
     assert.equal(await inView(page, 'word-search'), false);
     assert.equal(await inView(page, 'word-list'), false);
@@ -69,7 +69,7 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     assert.equal(await textOf(page, 'word-list-title'), 'All your words');
   });
 
-  it('lists one deck\'s words when that deck is chosen, or its "Its words" is tapped', async () => {
+  it('lists one deck\'s words when that deck is chosen, or under its page', async () => {
     // Put 貓 into Animals from its panel.
     await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
     await page.evaluate(`[...document.querySelectorAll('#edit-decks label')].find((label) => label.textContent.includes('Animals')).querySelector('input').click()`);
@@ -87,20 +87,19 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     await tap(page, 'decks-tab');
     await page.evaluate(`[...document.querySelectorAll('#deck-list button')].find((button) => button.textContent.includes('Animals')).click()`);
     await waitUntil(page, `document.getElementById('deck-title').textContent === 'Animals'`, 'the deck\'s page');
-    await tap(page, 'deck-words-button');
-    // (Wait for the tab itself to be showing that deck: the row count alone
-    // is already right while the list is still out of view.)
-    await waitUntil(
-      page,
-      `document.getElementById('word-list').offsetParent !== null && document.getElementById('words-deck-select').value === '${animals}' && ${rows(1)}`,
-      'the Words tab with the deck\'s word',
-    );
-    assert.equal(await page.evaluate(`document.getElementById('words-tab').classList.contains('selected')`), true);
-    assert.equal(await inView(page, 'word-list'), true);
+    // Its words are listed under its page, without the Words tab's deck
+    // chooser; the front page has none.
+    await waitUntil(page, `document.getElementById('word-list').offsetParent !== null && ${rows(1)}`, 'the deck\'s word under its page');
+    assert.equal(await inView(page, 'word-search'), true);
+    assert.equal(await inView(page, 'words-deck-select'), false);
+    assert.equal(await inView(page, 'practice-tab'), false);
+    await tap(page, 'my-decks-button');
+    await waitUntil(page, `document.getElementById('word-list').offsetParent === null`, 'no words on the front page');
   });
 
   it('reaches Free practice from the Words tab and from a word\'s page', async () => {
-    assert.equal(await inView(page, 'practice-tab'), true);
+    await tap(page, 'words-tab');
+    await waitUntil(page, `document.getElementById('practice-tab').offsetParent !== null`, 'the Words tab');
     await page.evaluate(`document.querySelector('#word-list li button').click()`);
     await waitUntil(page, `document.getElementById('word-page').dataset.shown === '貓|mao1'`, 'the word\'s page');
     await tap(page, 'word-page-practice');

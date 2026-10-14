@@ -18,6 +18,7 @@ export const READY_MADE_LISTS = [
   { id: 'hsk-3.0', name: 'HSK 3.0', levels: ['1', '2', '3', '4', '5', '6', '7-9'] },
   { id: 'hsk-2.0', name: 'HSK 2.0', levels: ['1', '2', '3', '4', '5', '6'] },
   { id: 'tocfl', name: 'TOCFL', levels: ['Novice 1', 'Novice 2', '1', '2', '3', '4', '5'] },
+  { id: 'radicals', name: 'Radicals 部首', levels: ['Common', 'Uncommon'] },
 ];
 
 // The deck record for a ready-made list ('hsk-3.0'), one of its levels

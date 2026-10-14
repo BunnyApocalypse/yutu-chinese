@@ -43,7 +43,8 @@ const toneOf = (syllable) => Number(syllable.slice(-1));
 //   otherLabel: 'Taiwan' or 'mainland', saying which region `other` is
 export function readingsFor(word, pronunciation, table) {
   const taiwan = word.pinyinTaiwan || (table && table.taiwanWords[word.traditional]) || null;
-  if (pronunciation === 'mainlandOnly' || !taiwan || taiwan === word.pinyin) {
+  // A radical with no reading (radicals.js) has none in either region.
+  if (pronunciation === 'mainlandOnly' || !taiwan || taiwan === word.pinyin || word.pinyin === '') {
     return { primary: word.pinyin, other: null, otherLabel: null };
   }
   return pronunciation === 'taiwan'
