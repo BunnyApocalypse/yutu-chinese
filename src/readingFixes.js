@@ -60,8 +60,11 @@ export function wordsToCorrect(fixes, words) {
 // The meaning is replaced only if it is still what the app proposed from the
 // wrong entry, under any setting; a meaning the learner wrote is kept.
 export function correctedWord(word, fix, entries, detail) {
-  const wrong = entries.find((entry) => entry.pinyin === fix.wrong);
-  const right = entries.find((entry) => entry.pinyin === fix.right);
+  // Looked up by its characters, a word can also find entries of a variant
+  // written alike in one script (著 is also a form of 着 and of 著 zhù).
+  const own = entries.filter((entry) => entry.simplified === word.simplified && entry.traditional === word.traditional);
+  const wrong = own.find((entry) => entry.pinyin === fix.wrong);
+  const right = own.find((entry) => entry.pinyin === fix.right);
   const proposedFromWrong = wrong ? MEANING_DETAILS.map((each) => proposeMeaning(wrong.meanings, each)) : [];
   const definition =
     right && proposedFromWrong.includes(word.definition) ? proposeMeaning(right.meanings, detail) : word.definition;

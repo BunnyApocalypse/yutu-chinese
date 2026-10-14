@@ -207,7 +207,10 @@ function corrected(listId, words) {
     if (!fix) {
       return word;
     }
-    const entry = dictionaryEntries(word.simplified).find((candidate) => candidate.pinyin === fix.right);
+    // The entry with the word's own traditional form, where there is one
+    // (着 zhuó is both 著 and a variant written 着 in the dictionary).
+    const entries = dictionaryEntries(word.simplified).filter((candidate) => candidate.pinyin === fix.right);
+    const entry = entries.find((candidate) => candidate.traditional === word.traditional) || entries[0];
     if (!entry) {
       throw new Error(`reading-fixes.tsv: the dictionary has no ${word.simplified} ${fix.right}`);
     }
