@@ -12,7 +12,10 @@ const byId = (id) => document.getElementById(id);
 // settings:  the current settings (see settings.js), with their change()
 // keepData:  from offline.js: long-term storage and installing
 // hasWords(): true if the word list is not empty
-// onFinish(): called when the last screen's button is tapped
+// onFinish(start): called when the last screen's button is tapped, and
+//           waited for before the introduction closes. `start` is the
+//           ready-made level chosen to begin with, { listId, level }, or
+//           null for none.
 //
 // Returns { open(), openIfFirstTime() }.
 export function createWelcome({ settings, keepData, hasWords, onFinish }) {
@@ -26,6 +29,14 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
   const keepButton = byId('welcome-keep-button');
   const keepNote = byId('welcome-keep-note');
   const installButton = byId('welcome-install-button');
+  const startRadios = [...dialog.querySelectorAll('input[name="welcome-start"]')];
+  // Whether the level to start with was chosen by hand; until it is, it
+  // follows the script and pronunciation chosen before.
+  let startTouched = false;
+  startRadios.forEach((radio) => radio.addEventListener('change', () => {
+    startTouched = true;
+    showStep();
+  }));
 
   // Which screen is showing, counting from 0.
   let step = 0;
@@ -36,14 +47,44 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
     dialog.querySelector(`input[name="${name}"][value="${value}"]`).checked = true;
   };
 
+  // The level suggested to start with: Taiwan's list for someone learning
+  // traditional characters or Taiwan's pronunciation first, the mainland's
+  // otherwise; none for someone who has words already.
+  function suggestStart() {
+    if (startTouched) {
+      return;
+    }
+    const taiwanese = chosen('welcome-script').endsWith('traditional') || chosen('welcome-pronunciation') === 'taiwan';
+    choose('welcome-start', hasWords() ? '' : taiwanese ? 'tocfl|Novice 1' : 'hsk-3.0|1');
+  }
+
+  // The level chosen to start with, or null.
+  function startChosen() {
+    const value = chosen('welcome-start');
+    if (value === '') {
+      return null;
+    }
+    const [listId, level] = value.split('|');
+    return { listId, level };
+  }
+
   function showStep() {
     steps.forEach((section, index) => {
       section.hidden = index !== step;
     });
+    if (steps[step].contains(startRadios[0])) {
+      suggestStart();
+    }
     const last = step === steps.length - 1;
     progress.textContent = `${step + 1} of ${steps.length}`;
     backButton.hidden = step === 0;
-    nextButton.textContent = !last ? 'Next' : hasWords() ? 'Done' : 'Add my first words';
+    nextButton.textContent = !last
+      ? 'Next'
+      : startChosen()
+        ? 'Start learning'
+        : hasWords()
+          ? 'Done'
+          : 'Add my first words';
     // Each screen starts at its top, whatever was scrolled before.
     dialog.scrollTop = 0;
   }
@@ -90,8 +131,18 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
     }
     await applyChoices();
     await setSetting('welcomeDone', true);
-    dialog.close();
-    onFinish();
+    // Adding a level takes a few seconds (the dictionary is read for the
+    // meanings); the introduction stays up meanwhile.
+    nextButton.disabled = true;
+    backButton.disabled = true;
+    nextButton.textContent = startChosen() ? 'Adding words…' : nextButton.textContent;
+    try {
+      await onFinish(startChosen());
+    } finally {
+      nextButton.disabled = false;
+      backButton.disabled = false;
+      dialog.close();
+    }
   });
 
   // Skipping changes no settings. Esc closes a <dialog> too; "close" is
@@ -107,6 +158,7 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
       box.checked = settings.enabledTypes.includes(box.dataset.welcomeType);
     }
     typesNote.textContent = '';
+    startTouched = false;
     showKeepState();
     step = 0;
     showStep();

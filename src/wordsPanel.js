@@ -962,8 +962,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   // The lists fetched so far: list ID → its entries (see parseReadyList).
   const readyLists = new Map();
 
-  async function readyEntries() {
-    const listId = readyListId;
+  async function readyEntries(listId) {
     if (!readyLists.has(listId)) {
       const response = await fetch(READY_LIST_URLS[listId]);
       readyLists.set(listId, parseReadyList(await response.text()));
@@ -990,7 +989,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     }
     let entries;
     try {
-      entries = await readyEntries();
+      entries = await readyEntries(listId);
     } catch {
       readyLevels.replaceChildren();
       readyReport.textContent = 'The list could not be fetched. It needs a connection the first time.';
@@ -1059,9 +1058,10 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
 
   // Adds levels of a list: their new words at the end of the queue, lowest
   // level first, and the words that were there already into their decks as
-  // well.
+  // well. Also used by the introduction (welcome.js), through the panel's
+  // addReadyLevels. Returns how many words were added.
   async function addReadyLevels(listId, levels) {
-    const entries = (await readyEntries()).filter((entry) => levels.includes(entry.level));
+    const entries = (await readyEntries(listId)).filter((entry) => levels.includes(entry.level));
     for (const button of readyLevels.querySelectorAll('button')) {
       button.disabled = true;
     }
@@ -1117,6 +1117,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       (alreadyHave > 0 ? `; ${alreadyHave} you already had` : '') +
       (noMeaning > 0 ? `; ${noMeaning} left out because the dictionary could not be fetched for their meaning` : '') +
       `. They are in the deck ${(readyMadeDeck(listId) || readyMadeDeck(listTag(listId, levels[0]))).name} under My decks, and wait in Learn, last in line.`;
+    return toAdd.length;
   }
 
   // ---- One word: change, study next, remove ----
@@ -1423,6 +1424,8 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   byId('word-dialog-close').addEventListener('click', () => dialog.close());
 
   return {
+    addReadyLevels,
+
     // Opens a word's panel from elsewhere in the app (Review's "Edit word").
     // Returns a promise for what became of the word once the panel is closed:
     //   changed: true if anything was saved

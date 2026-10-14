@@ -573,15 +573,26 @@ async function startUp() {
 
   await loadWordList();
 
-  // The introduction, the first time the app is opened on a device. It ends
-  // in the Decks tab if there are no words yet.
+  // The introduction, the first time the app is opened on a device. It adds
+  // the level chosen to start with and ends in Learn; with none, it ends in
+  // the Decks tab if there are no words yet.
   const welcome = createWelcome({
     settings,
     keepData,
     hasWords: () => wordList.length > 0,
-    onFinish: () => {
+    onFinish: async (start) => {
+      if (start) {
+        try {
+          await wordsPanel.addReadyLevels(start.listId, [start.level]);
+          await setMode('learn');
+          return;
+        } catch {
+          // Without a connection the list cannot be fetched the first time.
+          // The Decks tab's Ready-made section says so when it is opened.
+        }
+      }
       if (wordList.length === 0) {
-        setMode('words');
+        await setMode('words');
       }
     },
   });

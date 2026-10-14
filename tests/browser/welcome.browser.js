@@ -78,6 +78,30 @@ describe('the introduction', { concurrency: false }, () => {
     await tap(page, 'welcome-next');
     await tap(page, 'welcome-next');
     assert.equal(await heading(), 'Your words');
+    // A first level is suggested to suit the script and pronunciation chosen.
+    const start = `document.querySelector('input[name="welcome-start"]:checked').value`;
+    assert.equal(await page.evaluate(start), 'tocfl|Novice 1');
+    // Going back to change the script changes the suggestion...
+    await tap(page, 'welcome-back');
+    await tap(page, 'welcome-back');
+    await tap(page, 'welcome-back');
+    await click('input[name="welcome-script"][value="simplified"]');
+    await click('input[name="welcome-pronunciation"][value="mainlandOnly"]');
+    for (let screen = 0; screen < 3; screen++) {
+      await tap(page, 'welcome-next');
+    }
+    assert.equal(await page.evaluate(start), 'hsk-3.0|1');
+    await tap(page, 'welcome-back');
+    await tap(page, 'welcome-back');
+    await tap(page, 'welcome-back');
+    await click('input[name="welcome-script"][value="traditional"]');
+    await click('input[name="welcome-pronunciation"][value="taiwan"]');
+    for (let screen = 0; screen < 3; screen++) {
+      await tap(page, 'welcome-next');
+    }
+    // ...until one is chosen by hand. This run starts with nothing.
+    await click('input[name="welcome-start"][value=""]');
+    assert.equal(await page.evaluate(start), '');
   });
 
   it('explains long-term storage before asking for it', async () => {
@@ -202,5 +226,30 @@ describe('the introduction', { concurrency: false }, () => {
     assert.equal(await page.evaluate(`document.getElementById('script-select').value`), 'both-traditional');
     assert.equal(await page.evaluate(`document.getElementById('pronunciation-select').value`), 'mainland');
     await tap(page, 'settings-close');
+  });
+
+  it('can add a first level, and then ends in Learn', { timeout: 60000 }, async () => {
+    await tap(page, 'settings-button');
+    await tap(page, 'welcome-again-button');
+    // To the screen about words. With words on the device already (from the
+    // steps before), nothing is suggested; a level chosen is added when the
+    // introduction is finished.
+    for (let screen = 0; screen < 4; screen++) {
+      await tap(page, 'welcome-next');
+    }
+    assert.equal(await heading(), 'Your words');
+    assert.equal(await page.evaluate(`document.querySelector('input[name="welcome-start"]:checked').value`), '');
+    await click('input[name="welcome-start"][value="tocfl|Novice 1"]');
+    await tap(page, 'welcome-next');
+    assert.equal(await textOf(page, 'welcome-next'), 'Start learning');
+    await tap(page, 'welcome-next');
+    await waitUntil(page, `!${welcomeOpen} && document.getElementById('learn-tab').classList.contains('selected')`, 'Learn');
+    const words = await page.evaluate(`new Promise((resolve) => {
+      const opening = indexedDB.open('hanzi-trainer');
+      opening.onsuccess = () => {
+        opening.result.transaction('words').objectStore('words').getAll().onsuccess = (event) => resolve(event.target.result);
+      };
+    })`);
+    assert.ok(words.filter((word) => word.decks.some((deck) => deck.startsWith('tocfl/Novice 1'))).length > 150);
   });
 });

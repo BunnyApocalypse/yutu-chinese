@@ -696,17 +696,27 @@
 
         <section data-step hidden>
           <h2>How it works</h2>
-          <p><b>Learn</b> teaches you the words that are waiting, one at a time: you look at the word, practice its tones, write it stroke by stroke as each stroke is shown, and then write it from memory. A few a day is plenty (the goal is 5 to begin with), so that reviews don't pile up.</p>
-          <p><b>Review</b> brings back the words you have learned. It shows the card that is due next; after you answer, you grade yourself: Again, Hard, Good or Easy. Each button says when the card would come back, and where the app can check your answer it suggests a grade.</p>
+          <p><b>Learn</b> teaches the words that are waiting, one at a time: you look at the word, practice its tones, then write it, first with each stroke shown, then from memory. A few a day is plenty (the goal starts at 5), so reviews don't pile up.</p>
+          <p><b>Review</b> brings back the words you have learned, each just before you would forget it. After answering you grade yourself, Again, Hard, Good or Easy; where the app can check your answer, it suggests a grade.</p>
           <p><b>Writing:</b> write anywhere in the box, at any size. Your own strokes stay on screen, and two strokes joined the way handwriting joins them are accepted.</p>
-          <p><b>Free practice</b> lets you try any card, or write any characters at all. Nothing there is recorded.</p>
+          <p><b>Already know a word?</b> Tap <b>I know this word</b> during its lesson to skip it. It still comes back in Review now and then, to check.</p>
+          <p><b>Sound:</b> words are spoken as you study them. Settings has a volume slider, and can make them speak only when you tap the loudspeaker, or not at all.</p>
+          <p>Everything is in the <b>menu</b>, ☰ at the top left: Review, Learn, Decks (your decks of words, and ready-made ones), Words (all your words, and <b>Free practice</b>, which lets you try any card or write any characters without anything being recorded) and Settings.</p>
         </section>
 
         <section data-step hidden>
           <h2>Your words</h2>
-          <p>The app starts with no words. You add the ones you want to learn in <b>Decks</b>, in the menu (☰ at the top left); they then wait in <b>Learn</b> until you learn them.</p>
-          <p>Type a word's characters and tap its dictionary entry to fill in the reading and meaning, paste a list of your own, or add a ready-made list such as the words of HSK level 1.</p>
-          <p>If something about a word is wrong, correct it in Decks, or tap <b>Edit word</b> after answering one of its cards.</p>
+          <p>The app starts with no words. To begin with, it can add the first level of one of the two official tests' word lists; the words then wait in <b>Learn</b>, a few a day.</p>
+          <!-- Chosen to suit the script picked above, when this screen is
+               reached (welcome.js). The value is a list and a level. -->
+          <fieldset class="setting">
+            <legend>Start with</legend>
+            <label><input type="radio" name="welcome-start" value="hsk-3.0|1" /> HSK 3.0, level 1: mainland China's test, 512 words</label>
+            <label><input type="radio" name="welcome-start" value="tocfl|Novice 1" /> TOCFL, Novice 1: Taiwan's test, 182 words</label>
+            <label><input type="radio" name="welcome-start" value="" /> Nothing for now</label>
+          </fieldset>
+          <p class="hint">More levels, the radicals, and lists or words of your own can be added any time in <b>Decks</b>. Tap any word there to see its page: its learning tips, an example sentence, and the parts its characters are built from. If something about a word is wrong, <b>Edit</b> on that page corrects it; after you answer one of its cards, <b>About</b> and <b>Edit</b> do the same.</p>
+          <p id="welcome-start-note" class="note"></p>
         </section>
 
         <section data-step hidden>
