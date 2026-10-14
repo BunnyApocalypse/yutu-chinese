@@ -60,6 +60,28 @@ const putBackOldDatabase = (page, words, settings) =>
     };
   })`);
 
+// Puts records into stores of the app's database, through a connection of
+// the test's own. records: { storeName: [record, ...] }
+const putRecords = (page, records) =>
+  page.evaluate(`new Promise((resolve, reject) => {
+    const records = ${JSON.stringify(records)};
+    const request = indexedDB.open('hanzi-trainer');
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      const tx = request.result.transaction(Object.keys(records), 'readwrite');
+      for (const [storeName, list] of Object.entries(records)) {
+        for (const record of list) {
+          tx.objectStore(storeName).put(record);
+        }
+      }
+      tx.oncomplete = () => {
+        request.result.close();
+        resolve(true);
+      };
+      tx.onerror = () => reject(tx.error);
+    };
+  })`);
+
 // One browser, and the steps in order: each builds on the one before.
 describe('the database', { concurrency: false }, () => {
   let app;
@@ -164,5 +186,28 @@ describe('the database', { concurrency: false }, () => {
     assert.deepEqual(await stored(page, 'removed'), removed);
     const [word] = await stored(page, 'words');
     assert.ok(word.changedAt >= removed[0].removedAt);
+  });
+
+  it("gives a list's word the reading the list has since put right, with its cards and reviews", async () => {
+    // As added from HSK 3.0 level 5 before 2026-10-14, with the meaning the
+    // app proposed from the wrong entry, and studied once.
+    const oldId = '說法|shuo1fa3';
+    await putRecords(page, {
+      words: [{ id: oldId, traditional: '說法', simplified: '说法', pinyin: 'shuo1fa3', definition: 'to expound Buddhist teachings', decks: ['hsk-3.0/5'], order: 5, addedAt: 1, learnedAt: 2 }],
+      cards: [{ id: `${oldId}#meaning`, wordId: oldId, type: 'meaning', due: 3, firstReviewedAt: 2, lastReviewedAt: 2, fsrsState: null }],
+      reviews: [{ id: 'review-of-shuofa', cardId: `${oldId}#meaning`, wordId: oldId, type: 'meaning', time: 2, grade: 3 }],
+    });
+    await reloadApp(page);
+    const word = (await stored(page, 'words')).find((entry) => entry.simplified === '说法');
+    assert.equal(word.id, '說法|shuo1fa5');
+    assert.deepEqual(word.formerIds, [oldId]);
+    assert.match(word.definition, /^way of speaking/);
+    assert.deepEqual(word.decks, ['hsk-3.0/5']);
+    assert.equal(word.learnedAt, 2);
+    const cards = (await stored(page, 'cards')).filter((card) => card.id.startsWith('說法'));
+    assert.deepEqual(cards.map((card) => [card.id, card.wordId]), [['說法|shuo1fa5#meaning', '說法|shuo1fa5']]);
+    const review = (await stored(page, 'reviews')).find((entry) => entry.id === 'review-of-shuofa');
+    assert.equal(review.wordId, '說法|shuo1fa5');
+    assert.equal(review.cardId, '說法|shuo1fa5#meaning');
   });
 });

@@ -1,7 +1,7 @@
 // Entry point: sets up the page, the three tabs (Review, Free practice and
 // Words), settings and backups.
 
-import { getAll, putAll, getSetting, setSetting, removeWord, replaceEverything } from './db.js';
+import { getAll, putAll, getSetting, setSetting, removeWord, renameWord, replaceEverything } from './db.js';
 import { allCardIds } from './session.js';
 import { OLD_BUILT_IN_WORD_IDS } from './oldBuiltInWords.js';
 import { createWordFlow } from './wordFlow.js';
@@ -20,6 +20,13 @@ import { mergeBackups, describeMerge } from './merge.js';
 import { ask, tell } from './confirm.js';
 import { clampWithPopup } from './clamp.js';
 import { watchForErrors, showVersion } from './errors.js';
+import { parseReadingFixes, wordsToCorrect, correctedWord } from './readingFixes.js';
+import { readDictionary, lookUp, DEFAULT_MEANING_DETAIL } from './dictionary.js';
+// The corrections are a small file, so they come with the program ("?raw":
+// Vite hands over the file's text). The dictionary is big and only fetched
+// when a correction applies ("?url": Vite hands over its address).
+import readingFixesText from '../data/wordlists/reading-fixes.tsv?raw';
+import dictionaryUrl from '../data/cedict/dictionary.tsv?url';
 
 const byId = (id) => document.getElementById(id);
 
@@ -436,10 +443,35 @@ async function fileListWordsInDecks() {
   }
 }
 
+// Words added from a ready-made list whose reading the list has since put
+// right (see src/readingFixes.js) are given the reading meant. Looked at on
+// every start, since an older backup may bring such words back; usually
+// there is nothing to do, and the dictionary is not fetched.
+async function applyReadingFixes() {
+  const found = wordsToCorrect(parseReadingFixes(readingFixesText), await getAll('words'));
+  if (found.length === 0) {
+    return;
+  }
+  // The dictionary decides the new meaning. Without it (offline, before it
+  // was saved for offline use) the readings are put right all the same.
+  let dictionary = null;
+  try {
+    dictionary = readDictionary(await (await fetch(dictionaryUrl)).text());
+  } catch {
+    // the meanings stay as they are
+  }
+  const detail = await getSetting('meaningDetail', DEFAULT_MEANING_DETAIL);
+  for (const { word, fix } of found) {
+    const entries = dictionary ? lookUp(dictionary, word.traditional) : [];
+    await renameWord(word.id, correctedWord(word, fix, entries, detail));
+  }
+}
+
 async function startUp() {
   await keepOldDefaults();
   await removeOldBuiltInWords();
   await fileListWordsInDecks();
+  await applyReadingFixes();
   // Once per device (and again after an older backup is restored): cards
   // studied before writing cards were kept per script are filed under the
   // script they were learned in.

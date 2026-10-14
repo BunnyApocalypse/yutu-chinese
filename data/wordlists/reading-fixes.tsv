@@ -10,6 +10,9 @@
 #
 # Columns: list, simplified, reading the script picks, reading meant, what the wrong entry means.
 # The script stops if a line no longer matches anything, so a stale line is noticed.
+# The app reads this file too (src/readingFixes.js): a device that added one of these
+# words before the correction has it renamed to the reading meant at its next start.
+# So never remove a line that has been published, even once the lists are right.
 hsk-3.0	说法	shuo1fa3	shuo1fa5	to expound Buddhist teachings
 hsk-3.0	标致	Biao1zhi4	biao1zhi5	Peugeot (car brand)
 hsk-3.0	口音	kou3yin1	kou3yin5	(linguistics) oral speech sounds
