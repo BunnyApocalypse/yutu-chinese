@@ -74,7 +74,7 @@ function sum(numbers) {
 // elements: the page elements the flow controls:
 //   writingArea, wordRow, statusElement, noteElement,
 //   nextButton, restartButton, outlineButton, animateButton,
-//   verdictRow, missedButton, gotItButton, orderNote,
+//   orderNote,
 //   skipButton, backButton
 //
 // Returns { start, rebuild }.
@@ -88,9 +88,6 @@ export function createWordFlow(elements) {
     restartButton,
     outlineButton,
     animateButton,
-    verdictRow,
-    missedButton,
-    gotItButton,
     orderNote,
     skipButton,
     backButton,
@@ -134,18 +131,32 @@ export function createWordFlow(elements) {
   // Shows the word's progress: finished characters are revealed (green or red
   // if they have a verdict), the current one is marked, and the ones still to
   // come are placeholders.
+  //
+  // A finished character with a verdict is a button: tapping it overrules the
+  // verdict the app proposed (passed becomes missed and the other way round).
+  // A word of one character has no row of slots; its grade is its verdict
+  // (see grade() in review.js). Until 2026-10-14 two buttons beside the status
+  // line, Missed and Got it, did this for the character just written.
   function renderWordRow() {
     wordRow.replaceChildren();
     wordRow.classList.toggle('single', chars.length === 1);
     chars.forEach((char, index) => {
-      const slot = document.createElement('span');
       const finished = Boolean(finishedPerChar[index]);
+      const hasVerdict = finished && passedPerChar[index] !== undefined;
+      const slot = document.createElement(hasVerdict ? 'button' : 'span');
       slot.textContent = finished ? char : '·';
       slot.className = 'slot';
+      if (hasVerdict) {
+        slot.type = 'button';
+        const verdict = passedPerChar[index] ? 'got it' : 'missed';
+        slot.title = `${char}: ${verdict}. Tap to change.`;
+        slot.setAttribute('aria-label', slot.title);
+        slot.addEventListener('click', () => setVerdict(index, !passedPerChar[index]));
+      }
       if (index === position) {
         slot.classList.add('current');
       }
-      if (finished && passedPerChar[index] !== undefined) {
+      if (hasVerdict) {
         slot.classList.add(passedPerChar[index] ? 'passed' : 'missed');
       }
       if (skippedPerChar[index]) {
@@ -189,14 +200,6 @@ export function createWordFlow(elements) {
   function showArrows() {
     skipButton.classList.toggle('unavailable', !canSkip());
     backButton.classList.toggle('unavailable', !canGoBack());
-  }
-
-  // Shows the two verdict buttons with the current verdict selected.
-  function renderVerdict() {
-    const passed = passedPerChar[position];
-    gotItButton.classList.toggle('selected', passed === true);
-    missedButton.classList.toggle('selected', passed === false);
-    verdictRow.hidden = false;
   }
 
   function showProgress(strokeNumber, totalStrokes) {
@@ -244,7 +247,6 @@ export function createWordFlow(elements) {
         peekedPerChar[position] = true;
       }
       nextButton.hidden = true;
-      verdictRow.hidden = true;
       orderNote.hidden = true;
       renderWordRow();
       showProgress(1, totalStrokes);
@@ -274,7 +276,6 @@ export function createWordFlow(elements) {
           peeked: Boolean(peekedPerChar[position]),
         });
         passedPerChar[position] = suggestedPerChar[position];
-        renderVerdict();
       }
       afterCharFinished();
       // Returned to the quiz, which colors the printed character to match.
@@ -283,7 +284,6 @@ export function createWordFlow(elements) {
     },
     onAnimateStart() {
       nextButton.hidden = true;
-      verdictRow.hidden = true;
       orderNote.hidden = true;
       statusElement.textContent = 'Watch the stroke order…';
     },
@@ -338,9 +338,6 @@ export function createWordFlow(elements) {
     charDone = true;
     tapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
     quiz.reveal();
-    if (options.judgeChar) {
-      renderVerdict();
-    }
     afterCharFinished();
   }
 
@@ -419,21 +416,21 @@ export function createWordFlow(elements) {
     }
   }
 
-  // One of the two verdict buttons: overrules the verdict for the character
-  // just written.
-  function setVerdict(passed) {
-    passedPerChar[position] = passed;
-    renderVerdict();
+  // A tap on a finished character's slot: overrules its verdict.
+  function setVerdict(index, passed) {
+    passedPerChar[index] = passed;
     renderWordRow();
-    quiz.showVerdict(passed);
+    // The printed character under the writing is colored to match, if it is
+    // the one on screen.
+    if (index === position) {
+      quiz.showVerdict(passed);
+    }
     if (wordFinished()) {
       options.onVerdictChange?.(wordResult());
     }
   }
 
   nextButton.addEventListener('click', goOn);
-  gotItButton.addEventListener('click', () => setVerdict(true));
-  missedButton.addEventListener('click', () => setVerdict(false));
 
   // "pointerup" fires when a finger, stylus or mouse button is lifted. A plain
   // "click" listener would not work here: Hanzi Writer blocks the click that
@@ -481,7 +478,8 @@ export function createWordFlow(elements) {
     //   onWordDone(result): the last character was finished. `result` has
     //                  mistakes, mistakesPerChar, passedPerChar,
     //                  suggestedPerChar, orderPerChar, skippedPerChar
-    //   onVerdictChange(result): the last character's verdict was overruled
+    //   onVerdictChange(result): a verdict was overruled after the word was
+    //                  finished
     //   onContinue():  Next was pressed, or the writing area tapped, after the
     //                  word was finished
     async start(text, newOptions) {

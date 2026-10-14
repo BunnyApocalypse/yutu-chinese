@@ -487,14 +487,21 @@ select {
   background: #f9dfd9;
 }
 
+/* A finished character's slot can be tapped to change its verdict
+   (wordFlow.js). Without these, the rule for every button would make it
+   taller and pad it. */
+button.slot {
+  min-height: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
 .status-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 4px 12px;
-  /* As tall as the verdict buttons, so the page doesn't jump when they appear */
-  min-height: 40px;
 }
 
 .status {
@@ -502,23 +509,6 @@ select {
   font-size: 1.1rem;
   white-space: nowrap;
   text-align: center;
-}
-
-.verdict-row {
-  display: flex;
-  gap: 6px;
-}
-
-button.verdict.selected.passed {
-  border-color: #3b9c5a;
-  background: #3b9c5a;
-  color: #fff;
-}
-
-button.verdict.selected.missed {
-  border-color: #c2452d;
-  background: #c2452d;
-  color: #fff;
 }
 
 .writing-area {

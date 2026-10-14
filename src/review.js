@@ -51,7 +51,7 @@ const RECHECK_MS = 15 * 1000;
 //   gradeRow, editWordButton, leechNote, donePanel, doneMessage, studyArea, scriptFlag,
 //   lessonNote, skipLessonButton, lessonNextButton, learnNextButton,
 //   and the parts of the study area that differ per kind of card:
-//   wordRow, statusRow, verdictRow, writingRow, writingButtons, cardFace,
+//   wordRow, statusRow, writingRow, writingButtons, cardFace,
 //   toneButtonRow, orderNote
 // flows:    { writing, tone, recall }: the three pieces of code named above
 // settings: the current settings (see settings.js)
@@ -88,7 +88,6 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     learnNextButton,
     wordRow,
     statusRow,
-    verdictRow,
     writingRow,
     writingButtons,
     cardFace,
@@ -149,8 +148,7 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     if (current) {
       wordRow.classList.toggle('single', Array.from(current.word[scriptFor(current.word, settings)]).length === 1);
     }
-    // These two belong to the writing card and may be left over from the last one.
-    verdictRow.hidden = true;
+    // This belongs to the writing card and may be left over from the last one.
     orderNote.hidden = true;
     // A sentence's writing card lets its prompt run to two lines (see there).
     meaningElement.style.webkitLineClamp = '';
@@ -353,6 +351,12 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     options = null;
     const { word, type, card } = current;
     const time = finishedAt.getTime();
+    // A word of one character has no verdict of its own to overrule (its
+    // row of slots is not shown): the grade is the verdict, Again for
+    // missed and the others for passed.
+    if (type === 'writing' && answerDetails?.passedPerChar?.length === 1) {
+      answerDetails = { ...answerDetails, passedPerChar: [value !== AGAIN] };
+    }
 
     const newCard = {
       // Writing cards are kept per script (see cardIdFor).
