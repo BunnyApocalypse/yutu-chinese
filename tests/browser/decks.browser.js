@@ -272,30 +272,32 @@ describe('decks', { concurrency: false }, () => {
   it('makes a deck of each group of words inside a ready-made level', { timeout: 60000 }, async () => {
     await tap(page, 'ready-decks-button');
     await page.evaluate(`document.querySelector('#ready-list button[data-list="tocfl"]').click()`);
-    await waitUntil(page, `document.querySelector('#ready-levels label')?.textContent.trim().startsWith('Novice 1:')`, 'the levels of TOCFL');
-    await page.evaluate(`document.querySelector('#ready-levels input[value="Novice 1"]').click()`);
-    await tap(page, 'add-ready-button');
+    await waitUntil(page, `document.querySelector('#ready-levels li span')?.textContent.startsWith('Novice 1:')`, 'the levels of TOCFL');
+    await page.evaluate(`document.querySelector('#ready-levels button[data-level="Novice 1"]').click()`);
     // Reading the dictionary and adding the words takes a few seconds.
     await waitUntil(page, `document.getElementById('ready-report').textContent.startsWith('Added 182 words')`, 'the words added');
 
-    // The list, its level, and the level's eleven topics, in the list's order.
+    // The level, a deck of its own, and its eleven topics, in the list's order.
     const decks = await stored(page, 'decks');
     const topics = decks.filter((deck) => deck.parentId === 'tocfl/Novice 1').sort((a, b) => a.order - b.order);
-    assert.equal(decks.find((deck) => deck.id === 'tocfl/Novice 1').parentId, 'tocfl');
+    assert.equal(decks.find((deck) => deck.id === 'tocfl/Novice 1').parentId, null);
+    assert.equal(decks.some((deck) => deck.id === 'tocfl'), false);
     assert.equal(topics.length, 11);
     assert.deepEqual(topics.slice(0, 2).map((deck) => deck.name), ['Personal information 個人資料', 'Work 工作']);
-    // A word is in its topic's deck, and so counts for the level and the list.
+    // A word is in its topic's deck, and so counts for the level.
     const me = (await stored(page, 'words')).find((word) => word.id === '我|wo3');
     assert.deepEqual(me.decks, ['tocfl/Novice 1/01']);
     await tap(page, 'my-decks-button');
     await waitUntil(page, deckRows(2), 'the two decks');
-    assert.match(await textOf(page, '#deck-list li:last-child'), /^TOCFL182 words · 0 learned \(0%\) · 12 decks inside$/);
+    assert.match(await textOf(page, '#deck-list li:last-child'), /^TOCFL Novice 1182 words · 0 learned \(0%\) · 11 decks inside$/);
   });
 
   it('adds the common radicals, and teaches one that is not a word', { timeout: 60000 }, async () => {
     await tap(page, 'ready-decks-button');
     await page.evaluate(`document.querySelector('#ready-list button[data-list="radicals"]').click()`);
-    await waitUntil(page, `document.querySelector('#ready-levels label')?.textContent.trim().startsWith('Common:')`, 'the levels of the radicals');
+    await waitUntil(page, `document.querySelector('#ready-levels li span')?.textContent.startsWith('Common:')`, 'the levels of the radicals');
+    // The radicals' two levels make one deck: they are ticked and added together.
+    assert.equal(await page.evaluate(`document.getElementById('add-ready-button').disabled`), true);
     await page.evaluate(`document.querySelector('#ready-levels input[value="Common"]').click()`);
     await tap(page, 'add-ready-button');
     await waitUntil(page, `document.getElementById('ready-report').textContent.startsWith('Added')`, 'the radicals added');
@@ -327,6 +329,9 @@ describe('decks', { concurrency: false }, () => {
     assert.match(await page.evaluate(typeShown), /^New radical · step 1 of 4/);
     assert.equal(await page.evaluate(`document.getElementById('listen-button').hidden`), true);
     await choose(page, 'deck-select', '');
+    // The Decks tab was left on Ready-made decks; it comes back on My decks.
     await tap(page, 'decks-tab');
+    await waitUntil(page, `!document.getElementById('my-decks-section').hidden`, 'My decks');
+    assert.equal(await page.evaluate(`document.getElementById('ready-decks-section').hidden`), true);
   });
 });

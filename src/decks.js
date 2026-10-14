@@ -14,12 +14,27 @@
 // The ready-made lists and their levels, in order. The IDs are the `data-list`
 // of the rows in the Ready-made decks section of index.html, and the levels are those in the first
 // column of the files in data/wordlists/ (a test checks they agree).
+//
+// `levelName`, where a list has it, makes each of its levels a deck of its
+// own, inside no other, under that name: learning one HSK level takes
+// months, so nobody takes on the whole list as one deck (the owner,
+// 2026-10-14). The list then has no deck. The radicals keep a deck of their
+// own with their two levels inside it.
 export const READY_MADE_LISTS = [
-  { id: 'hsk-3.0', name: 'HSK 3.0', levels: ['1', '2', '3', '4', '5', '6', '7-9'] },
-  { id: 'hsk-2.0', name: 'HSK 2.0', levels: ['1', '2', '3', '4', '5', '6'] },
-  { id: 'tocfl', name: 'TOCFL', levels: ['Novice 1', 'Novice 2', '1', '2', '3', '4', '5'] },
+  { id: 'hsk-3.0', name: 'HSK 3.0', levels: ['1', '2', '3', '4', '5', '6', '7-9'], levelName: (level) => `HSK ${level} (3.0)` },
+  { id: 'hsk-2.0', name: 'HSK 2.0', levels: ['1', '2', '3', '4', '5', '6'], levelName: (level) => `HSK ${level} (2.0)` },
+  { id: 'tocfl', name: 'TOCFL', levels: ['Novice 1', 'Novice 2', '1', '2', '3', '4', '5'], levelName: (level) => `TOCFL ${level}` },
   { id: 'radicals', name: 'Radicals 部首', levels: ['Common', 'Uncommon'] },
 ];
+
+// Where the decks of the levels that stand on their own go among the decks
+// inside no other: after the ones made before them (newDeckRecord puts a new
+// deck after all of these), and in the order of the lists and their levels.
+const LEVEL_ORDER_BASE = 100;
+const levelOrder = (position, index) => LEVEL_ORDER_BASE + position * 10 + index;
+
+// How a level's deck was named until 2026-10-14, inside its list's deck.
+const oldLevelName = (level) => (/^\d/.test(level) ? `Level ${level}` : level);
 
 // The deck record for a ready-made list ('hsk-3.0'), one of its levels
 // ('hsk-3.0/1') or a group of words inside a level ('tocfl/1/03'; see
@@ -33,14 +48,15 @@ export const READY_MADE_LISTS = [
 export function readyMadeDeck(deckId, names = new Map()) {
   for (const [position, list] of READY_MADE_LISTS.entries()) {
     if (deckId === list.id) {
-      return { id: list.id, name: list.name, parentId: null, order: position };
+      return list.levelName ? null : { id: list.id, name: list.name, parentId: null, order: position };
     }
     for (const level of list.levels) {
       const levelId = `${list.id}/${level}`;
       if (deckId === levelId) {
-        // TOCFL has two levels with names of their own before its level 1.
-        const name = /^\d/.test(level) ? `Level ${level}` : level;
-        return { id: deckId, name, parentId: list.id, order: list.levels.indexOf(level) };
+        const index = list.levels.indexOf(level);
+        return list.levelName
+          ? { id: deckId, name: list.levelName(level), parentId: null, order: levelOrder(position, index) }
+          : { id: deckId, name: oldLevelName(level), parentId: list.id, order: index };
       }
       const group = deckId.startsWith(`${levelId}/`) && deckId.slice(levelId.length + 1).match(/^(\d+)$/);
       if (group) {
@@ -81,6 +97,43 @@ export function missingReadyMadeDecks(words, decks, names = new Map()) {
     }
   }
   return [...missing.values()];
+}
+
+// Until 2026-10-14 the levels of every ready-made list were inside a deck of
+// the list ("HSK 3.0 › Level 1"). Returns what has to change in the stored
+// `decks` for the lists whose levels now stand on their own (see
+// READY_MADE_LISTS):
+//   changed: the level decks, and any deck someone made inside the list's
+//            deck, now inside no other; a level still under its old name
+//            gets the new one ("Level 1" becomes "HSK 1 (3.0)"), one renamed
+//            by hand keeps its name
+//   removed: the IDs of the lists' decks, if no word is in one directly
+// Doing it again changes nothing, so it can run at every start.
+export function flattenedReadyMadeDecks(decks, words) {
+  const changed = [];
+  const removed = [];
+  for (const [position, list] of READY_MADE_LISTS.entries()) {
+    // (A level can be left inside a list's deck that is gone, when a backup
+    // from a device that had not changed yet is combined with this one.)
+    if (!list.levelName || !decks.some((deck) => deck.id === list.id || deck.parentId === list.id)) {
+      continue;
+    }
+    for (const deck of decks.filter((candidate) => candidate.parentId === list.id)) {
+      const { changedAt, ...moved } = { ...deck, parentId: null };
+      const level = list.levels.find((candidate) => deck.id === `${list.id}/${candidate}`);
+      if (level !== undefined) {
+        moved.order = levelOrder(position, list.levels.indexOf(level));
+        if (deck.name === oldLevelName(level)) {
+          moved.name = list.levelName(level);
+        }
+      }
+      changed.push(moved);
+    }
+    if (decks.some((deck) => deck.id === list.id) && !words.some((word) => (word.decks || []).includes(list.id))) {
+      removed.push(list.id);
+    }
+  }
+  return { changed, removed };
 }
 
 // Until 2026-10-13 a word from a ready-made list carried the list and level

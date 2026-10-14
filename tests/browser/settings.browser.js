@@ -146,7 +146,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     await waitUntil(page, `document.getElementById('list-report').textContent !== ''`, 'the list report');
     assert.equal(await textOf(page, 'list-report'), "2 new words, 0 you already have, 0 lines that can't be read.");
     await tap(page, 'add-list-button');
-    await waitUntil(page, `document.getElementById('list-report').textContent === 'Added 2 words. They wait in the Learn tab.'`);
+    await waitUntil(page, `document.getElementById('list-report').textContent === 'Added 2 words. They wait in Learn.'`);
 
     // With both scripts learned, both are shown: the traditional forms were stored.
     await choose(page, 'script-select', 'both-traditional');

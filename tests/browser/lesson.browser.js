@@ -103,7 +103,7 @@ describe('learning new words', { concurrency: false }, () => {
   });
 
   it('keeps words out of Review until they are learned', async () => {
-    assert.equal(await textOf(page, 'done-message'), 'Nothing to review yet. 3 words are waiting in the Learn tab.');
+    assert.equal(await textOf(page, 'done-message'), 'Nothing to review yet. 3 words are waiting in Learn.');
     await tap(page, 'learn-tab');
     await waitUntil(page, stepIs('step 1 of 5'), 'the first word');
     assert.equal(await textOf(page, 'review-counts'), 'Learned today 0 of 5 · 3 waiting');
@@ -184,7 +184,7 @@ describe('learning new words', { concurrency: false }, () => {
     // writing) and still leaves the other words alone.
     await tap(page, 'review-tab');
     await waitUntil(page, `document.getElementById('review-counts').textContent === 'Due 0 · New cards 1'`, 'Review');
-    assert.match(await textOf(page, 'done-message'), /2 words are waiting in the Learn tab\.$/);
+    assert.match(await textOf(page, 'done-message'), /2 words are waiting in Learn\.$/);
   });
 
   it('lets a known word skip its lesson altogether', { timeout: 60000 }, async () => {

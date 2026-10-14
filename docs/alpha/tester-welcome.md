@@ -13,7 +13,7 @@ It then works without a connection. You can add it to your home screen from the 
 ## Three things to know
 
 - **Your data stays on your device.** Nothing you enter is sent anywhere. That also means I cannot see it, and cannot get it back if it is lost.
-- **Make a backup now and then.** In the app: the cog wheel, then "Your data and backups", then "Export backup". It saves one file. Keep it somewhere safe.
+- **Make a backup now and then.** In the app: the menu button (☰ at the top left), then Settings, then "Your data and backups", then "Export backup". It saves one file. Keep it somewhere safe.
 - **It may change while you use it.** I will try hard not to lose anyone's progress, but this is a test version, and it could happen that an update asks you to start again.
 
 ## What I would like you to do

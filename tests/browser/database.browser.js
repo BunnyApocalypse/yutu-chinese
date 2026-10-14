@@ -124,8 +124,8 @@ describe('the database', { concurrency: false }, () => {
     const { lists, ...rest } = oldWord;
     assert.deepEqual(await stored(page, 'words'), [{ ...rest, decks: lists }]);
     const decks = await stored(page, 'decks');
-    assert.deepEqual(decks.map((deck) => deck.id).sort(), ['hsk-2.0', 'hsk-2.0/1', 'hsk-3.0', 'hsk-3.0/1']);
-    assert.deepEqual(decks.find((deck) => deck.id === 'hsk-3.0/1').parentId, 'hsk-3.0');
+    assert.deepEqual(decks.map((deck) => deck.id).sort(), ['hsk-2.0/1', 'hsk-3.0/1']);
+    assert.deepEqual(decks.find((deck) => deck.id === 'hsk-3.0/1').parentId, null);
     assert.deepEqual(await stored(page, 'removed'), []);
   });
 
@@ -209,5 +209,23 @@ describe('the database', { concurrency: false }, () => {
     const review = (await stored(page, 'reviews')).find((entry) => entry.id === 'review-of-shuofa');
     assert.equal(review.wordId, '說法|shuo1fa5');
     assert.equal(review.cardId, '說法|shuo1fa5#meaning');
+  });
+
+  it("takes a level out of its list's deck, which goes", async () => {
+    // As made before 2026-10-14: TOCFL's deck with its level inside.
+    await putRecords(page, {
+      decks: [
+        { id: 'tocfl', name: 'TOCFL', parentId: null, order: 2 },
+        { id: 'tocfl/1', name: 'Level 1', parentId: 'tocfl', order: 2 },
+      ],
+      words: [{ id: '早|zao3', traditional: '早', simplified: '早', pinyin: 'zao3', definition: 'early', decks: ['tocfl/1'], order: 6, addedAt: 1 }],
+    });
+    await reloadApp(page);
+    const decks = await stored(page, 'decks');
+    assert.equal(decks.some((deck) => deck.id === 'tocfl'), false);
+    const level = decks.find((deck) => deck.id === 'tocfl/1');
+    assert.equal(level.parentId, null);
+    assert.equal(level.name, 'TOCFL 1');
+    assert.ok((await stored(page, 'removed')).some((mark) => mark.id === 'tocfl' && mark.kind === 'deck'));
   });
 });

@@ -34,7 +34,7 @@ Tell them:
 
 Do not tell them:
 
-- how to do things. No tour, no tips, no "the cog wheel is Settings". The introduction inside the app is what a stranger would get; if it is not enough, that is a finding.
+- how to do things. No tour, no tips, no "Settings is in the menu". The introduction inside the app is what a stranger would get; if it is not enough, that is a finding.
 - what you think is good or unfinished. It steers what they notice.
 - what you hope they will say.
 

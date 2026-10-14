@@ -20,13 +20,19 @@ import {
   wordsOnlyIn,
   DEFAULT_DECK,
   homeForEveryWord,
+  flattenedReadyMadeDecks,
 } from '../src/decks.js';
 import { parseReadyList, levelsOfReadyList, listTag } from '../src/words.js';
 
-test('a ready-made list and its levels have decks with fixed IDs', () => {
-  assert.deepEqual(readyMadeDeck('hsk-3.0'), { id: 'hsk-3.0', name: 'HSK 3.0', parentId: null, order: 0 });
-  assert.deepEqual(readyMadeDeck('hsk-3.0/7-9'), { id: 'hsk-3.0/7-9', name: 'Level 7-9', parentId: 'hsk-3.0', order: 6 });
-  assert.deepEqual(readyMadeDeck('tocfl/Novice 2'), { id: 'tocfl/Novice 2', name: 'Novice 2', parentId: 'tocfl', order: 1 });
+test('a ready-made list\'s levels have decks with fixed IDs, each on its own except the radicals\'', () => {
+  // HSK and TOCFL levels stand on their own, after the decks made by hand.
+  assert.equal(readyMadeDeck('hsk-3.0'), null);
+  assert.deepEqual(readyMadeDeck('hsk-3.0/7-9'), { id: 'hsk-3.0/7-9', name: 'HSK 7-9 (3.0)', parentId: null, order: 106 });
+  assert.deepEqual(readyMadeDeck('hsk-2.0/1'), { id: 'hsk-2.0/1', name: 'HSK 1 (2.0)', parentId: null, order: 110 });
+  assert.deepEqual(readyMadeDeck('tocfl/Novice 2'), { id: 'tocfl/Novice 2', name: 'TOCFL Novice 2', parentId: null, order: 121 });
+  // The radicals' levels are inside a deck of the radicals.
+  assert.deepEqual(readyMadeDeck('radicals'), { id: 'radicals', name: 'Radicals 部首', parentId: null, order: 3 });
+  assert.deepEqual(readyMadeDeck('radicals/Common'), { id: 'radicals/Common', name: 'Common', parentId: 'radicals', order: 0 });
   // A group of words inside a level: its number is its place, the rest its name.
   // Its name comes from the list, not from its ID, so it can change.
   const names = new Map([['tocfl/Novice 2/03', 'Education 教育']]);
@@ -55,7 +61,7 @@ test('the levels listed for the decks are those in the list files', () => {
     assert.deepEqual(levelsOfReadyList(entries, []).map((entry) => entry.level), list.levels, list.id);
     // Every level's tag, as the Decks tab makes it, has a deck.
     for (const level of list.levels) {
-      assert.equal(readyMadeDeck(listTag(list.id, level)).parentId, list.id);
+      assert.equal(readyMadeDeck(listTag(list.id, level)).parentId, list.levelName ? null : list.id);
     }
     // So has every group's, inside its level and in the order of the file.
     const seen = new Map();
@@ -97,13 +103,41 @@ test('only the decks that are not stored yet are made, with the list they are in
     { id: 'b', decks: ['hsk-3.0/1', 'hsk-2.0/2', 'made by hand'] },
     { id: 'c' },
   ];
-  assert.deepEqual(missingReadyMadeDecks(words, []).map((deck) => deck.id), ['hsk-3.0', 'hsk-3.0/1', 'hsk-2.0', 'hsk-2.0/2']);
-  assert.deepEqual(missingReadyMadeDecks(words, [{ id: 'hsk-3.0' }, { id: 'hsk-3.0/1' }]).map((deck) => deck.id), ['hsk-2.0', 'hsk-2.0/2']);
-  // A word in a group brings the group, its level and its list.
+  assert.deepEqual(missingReadyMadeDecks(words, []).map((deck) => deck.id), ['hsk-3.0/1', 'hsk-2.0/2']);
+  assert.deepEqual(missingReadyMadeDecks(words, [{ id: 'hsk-3.0/1' }]).map((deck) => deck.id), ['hsk-2.0/2']);
+  // A word in a group brings the group and its level.
   assert.deepEqual(
-    missingReadyMadeDecks([{ id: 'd', decks: ['tocfl/1/02'] }], [{ id: 'tocfl' }], new Map([['tocfl/1/02', 'Work 工作']])).map((deck) => [deck.id, deck.name]),
-    [['tocfl/1', 'Level 1'], ['tocfl/1/02', 'Work 工作']],
+    missingReadyMadeDecks([{ id: 'd', decks: ['tocfl/1/02'] }], [], new Map([['tocfl/1/02', 'Work 工作']])).map((deck) => [deck.id, deck.name]),
+    [['tocfl/1', 'TOCFL 1'], ['tocfl/1/02', 'Work 工作']],
   );
+  // A radical brings the radicals' deck too.
+  assert.deepEqual(missingReadyMadeDecks([{ id: 'e', decks: ['radicals/Common'] }], []).map((deck) => deck.id), ['radicals', 'radicals/Common']);
+});
+
+test('levels stored inside their list\'s deck come out of it, and the list\'s deck goes', () => {
+  const decks = [
+    { id: 'chinese', name: 'Chinese 中文', parentId: null, order: -1 },
+    { id: 'hsk-3.0', name: 'HSK 3.0', parentId: null, order: 0, changedAt: 5 },
+    { id: 'hsk-3.0/1', name: 'Level 1', parentId: 'hsk-3.0', order: 0, changedAt: 5 },
+    { id: 'hsk-3.0/2', name: 'Year one', parentId: 'hsk-3.0', order: 1 },
+    { id: 'hsk-3.0/1/01', name: 'Greetings', parentId: 'hsk-3.0/1', order: 1 },
+    { id: 'mine', name: 'Extra', parentId: 'hsk-3.0', order: 4 },
+    { id: 'radicals', name: 'Radicals 部首', parentId: null, order: 3 },
+    { id: 'radicals/Common', name: 'Common', parentId: 'radicals', order: 0 },
+  ];
+  const { changed, removed } = flattenedReadyMadeDecks(decks, [{ id: 'a', decks: ['hsk-3.0/1/01'] }]);
+  assert.deepEqual(changed, [
+    // Renamed, unless it was renamed by hand; its time of change is the store's to give.
+    { id: 'hsk-3.0/1', name: 'HSK 1 (3.0)', parentId: null, order: 100 },
+    { id: 'hsk-3.0/2', name: 'Year one', parentId: null, order: 101 },
+    { id: 'mine', name: 'Extra', parentId: null, order: 4 },
+  ]);
+  assert.deepEqual(removed, ['hsk-3.0']);
+  // The list's deck stays while a word is in it directly.
+  assert.deepEqual(flattenedReadyMadeDecks(decks, [{ id: 'b', decks: ['hsk-3.0'] }]).removed, []);
+  // Once done there is nothing more to do.
+  const after = decks.filter((deck) => deck.id !== 'hsk-3.0').map((deck) => changed.find((c) => c.id === deck.id) || deck);
+  assert.deepEqual(flattenedReadyMadeDecks(after, []), { changed: [], removed: [] });
 });
 
 test('the list tags of words added before there were decks become their decks', () => {

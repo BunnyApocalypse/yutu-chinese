@@ -17,60 +17,127 @@ main {
   padding: 16px;
 }
 
-/* main is what the cog wheel is placed against. */
+/* main is what the menu button is placed against while a card is up. */
 main {
   position: relative;
 }
 
-/* Settings, in the upper right corner of the page. */
-button.settings-cog {
-  position: absolute;
-  top: 16px;
-  right: 12px;
+/* ---- The top bar and the menu ---- */
+
+/* The menu button and the name of the screen, at the top of the page. */
+.top-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* The menu button is always in the same place, the upper left corner of
+     the window, whatever the screen and whether a card is up (the owner,
+     2026-10-14): main's padding of 16px, less these 10, is the 6px that
+     main.focused .top-bar has below. */
+  align-self: stretch;
+  margin: -10px 0 0 -10px;
+  min-height: 36px;
 }
 
-@media (max-width: 460px) {
-  button.settings-cog {
-    right: 8px;
+.place-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+button.icon-button.menu-button {
+  color: #3d3a33;
+  /* Just the three lines, not a round button (the owner, 2026-10-14). */
+  border: none;
+  background: none;
+  border-radius: 6px;
+  /* For the reminder dot (.reminder). */
+  position: relative;
+}
+
+/* The menu: a panel along the left edge, over the page. */
+dialog.side-menu {
+  margin: 0;
+  padding: 16px 12px;
+  width: min(260px, 80vw);
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  border: none;
+  border-right: 1px solid #d8d1c2;
+  background: #f5f2ea;
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.12);
+}
+
+dialog.side-menu[open] {
+  display: flex;
+}
+
+dialog.side-menu::backdrop {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  dialog.side-menu[open] {
+    animation: slide-in 0.15s ease-out;
   }
 }
 
-.tabs {
-  display: flex;
-  gap: 8px;
+@keyframes slide-in {
+  from {
+    transform: translateX(-100%);
+  }
 }
 
+.side-menu-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 
+.side-menu-items button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-start;
+  width: 100%;
+  border: none;
+  background: none;
+  font-size: 1.05rem;
+  text-align: left;
+}
 
-/* Four tabs have to fit across a phone, each on one line. */
-.tabs {
+.side-menu-items button.selected {
+  background: #222;
+  color: #fff;
+}
+
+.side-menu-items button svg {
+  color: #6b6557;
+}
+
+.side-menu-bottom {
+  border-top: 1px solid #d8d1c2;
+  padding-top: 8px;
+}
+
+/* The two sections of the Decks tab: My decks, Ready-made decks. */
+.section-switch {
+  display: flex;
   gap: 6px;
 }
 
-.tabs button {
+.section-switch button {
   padding: 0 10px;
   font-size: 0.95rem;
   white-space: nowrap;
 }
 
-.tabs button.selected {
+.section-switch button.selected {
   border-color: #222;
   background: #222;
   color: #fff;
-}
-
-/* On a phone the tabs move to the left and get a little smaller, to leave
-   the corner to the cog wheel. (After the rules above, which it overrides.) */
-@media (max-width: 460px) {
-  .tabs {
-    align-self: flex-start;
-    gap: 4px;
-  }
-
-  .tabs button {
-    padding: 0 6px;
-    font-size: 0.82rem;
-  }
 }
 
 .review-header {
@@ -127,10 +194,6 @@ button.icon-button {
   color: #3b6fb6;
 }
 
-button.icon-button.settings-cog {
-  color: #6b6557;
-}
-
 /* The loudspeaker when the word could not be spoken. */
 button.icon-button.no-sound {
   color: #b9b2a3;
@@ -160,24 +223,23 @@ button.icon-button.no-sound {
 }
 
 /* ---- Focus: while a card is up ----
-   The tabs and the line with the deck and the counts are put away, so that
-   the writing area can have their room ("focused" on main, set by
-   review.js). "‹ Menu" brings them back until the next card ("show-nav"). */
-main.focused:not(.show-nav) #main-tabs,
-main.focused:not(.show-nav) .counts-row {
+   The top bar's name and the line with the deck and the counts are put
+   away, so that the writing area can have their room ("focused" on main,
+   set by review.js). The menu button stays, in the upper left corner. */
+main.focused .counts-row,
+main.focused .place-title {
   display: none;
 }
 
-.focus-exit {
-  display: none;
+main.focused .top-bar {
   position: absolute;
-  top: 12px;
-  left: 12px;
+  top: 6px;
+  left: 6px;
+  /* Only as wide as the button, so it covers nothing beside it. */
+  width: auto;
   margin: 0;
-}
-
-main.focused:not(.show-nav) .focus-exit {
-  display: block;
+  min-height: 0;
+  z-index: 1;
 }
 
 /* A word of one character needs no row of slots: there is nothing to keep
@@ -723,14 +785,24 @@ button.slot {
   margin-bottom: 12px;
 }
 
-/* A dot on the cog wheel: there is something in Settings to see to. */
-button.settings-cog.reminder::after {
+/* A dot on the menu button: there is something in Settings to see to. */
+button.menu-button.reminder::after {
   content: '';
   position: absolute;
   top: 2px;
   right: 2px;
   width: 10px;
   height: 10px;
+  border-radius: 50%;
+  background: #c2452d;
+}
+
+/* The same dot on Settings in the menu, so it is plain where to go. */
+#settings-button.reminder::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  margin-left: auto;
   border-radius: 50%;
   background: #c2452d;
 }
@@ -824,6 +896,12 @@ button {
   border-radius: 8px;
   background: #fff;
   color: inherit;
+}
+
+/* A button that cannot be used now looks it. */
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 button:active {
@@ -1023,6 +1101,25 @@ button.word-entry {
 /* The fold-outs of a pop-up panel, one under the other. */
 .settings-panel .add-list {
   margin-bottom: 8px;
+}
+
+/* The levels of a ready-made list: "Level 3: 959 words, 944 new [Add]". */
+.ready-levels-title {
+  margin: 16px 0 4px;
+  font-size: 1rem;
+}
+.ready-levels {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.ready-levels li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid #e3ddcf;
 }
 
 /* ---- The word page ---- */
@@ -1352,6 +1449,19 @@ button.deck-entry {
 button.ready-entry.selected {
   border-color: #222;
   box-shadow: inset 0 0 0 1px #222;
+}
+
+/* The chosen list's description is shown whole (the owner, 2026-10-14). */
+button.ready-entry.selected .entry-definition {
+  -webkit-line-clamp: unset;
+  display: block;
+}
+
+/* The radicals' levels are chosen with checkboxes and added together. */
+.ready-levels label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* The Back button with the line saying where you are beside it. */

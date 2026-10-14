@@ -14,23 +14,37 @@
   </head>
   <body>
     <main>
-      <!-- Settings: a cog wheel in the upper right corner of the page, on every tab. -->
-      <button id="settings-button" class="icon-button settings-cog" type="button" aria-label="Settings" title="Settings">
-        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor">
-          <!-- Eight teeth around a ring. -->
-          <rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(0 12 12)" /><rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(45 12 12)" /><rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(90 12 12)" /><rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(135 12 12)" /><rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(180 12 12)" /><rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(225 12 12)" /><rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(270 12 12)" /><rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(315 12 12)" />
-          <path fill-rule="evenodd" d="M12 5.2a6.800 6.800 0 1 0 0 13.600 6.800 6.800 0 0 0 0-13.600Zm0 3.900a2.900 2.900 0 1 1 0 5.800 2.900 2.900 0 0 1 0-5.800Z" />
-        </svg>
-      </button>
-      <!-- While a card is up, the tabs and the line under them are put away,
-           to leave the room to the writing area; this brings them back (review.js). -->
-      <button id="focus-exit" class="link-button focus-exit" type="button" hidden>‹ Menu</button>
-      <nav id="main-tabs" class="tabs">
-        <button id="review-tab" class="selected" type="button">Review</button>
-        <button id="learn-tab" type="button">Learn</button>
-        <button id="decks-tab" type="button">Decks</button>
-        <button id="words-tab" type="button">Words</button>
-      </nav>
+      <!-- The top of the page: the menu button and where you are. While a
+           card is up only the button stays, in the corner (main.focused). -->
+      <header class="top-bar">
+        <button id="menu-button" class="icon-button menu-button" type="button" aria-label="Menu" title="Menu" aria-controls="side-menu">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor">
+            <!-- Three lines. -->
+            <rect x="3" y="5" width="18" height="2.2" rx="1.1" /><rect x="3" y="10.9" width="18" height="2.2" rx="1.1" /><rect x="3" y="16.8" width="18" height="2.2" rx="1.1" />
+          </svg>
+        </button>
+        <span id="place-title" class="place-title">Review</span>
+      </header>
+      <!-- The menu: a panel that slides in from the left (main.js). The
+           buttons keep the IDs they had as tabs. -->
+      <dialog id="side-menu" class="side-menu" aria-label="Menu">
+        <nav id="main-tabs" class="side-menu-items">
+          <button id="review-tab" class="selected" type="button">Review</button>
+          <button id="learn-tab" type="button">Learn</button>
+          <button id="decks-tab" type="button">Decks</button>
+          <button id="words-tab" type="button">Words</button>
+        </nav>
+        <div class="side-menu-items side-menu-bottom">
+          <button id="settings-button" type="button">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor">
+              <!-- Eight teeth around a ring. -->
+              <rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(0 12 12)" /><rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(45 12 12)" /><rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(90 12 12)" /><rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(135 12 12)" /><rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(180 12 12)" /><rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(225 12 12)" /><rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(270 12 12)" /><rect x="10.6" y="1.5" width="2.8" height="5" rx="0.8" transform="rotate(315 12 12)" />
+              <path fill-rule="evenodd" d="M12 5.2a6.800 6.800 0 1 0 0 13.600 6.800 6.800 0 0 0 0-13.600Zm0 3.900a2.900 2.900 0 1 1 0 5.800 2.900 2.900 0 0 1 0-5.800Z" />
+            </svg>
+            Settings
+          </button>
+        </div>
+      </dialog>
 
       <!-- Review mode: what is left to do, and the prompt for the current word -->
       <section id="review-header" class="review-header">
@@ -104,7 +118,7 @@
            decks to add. Run by wordsPanel.js and decksPanel.js. -->
       <section id="words-panel" class="words-panel" hidden>
         <!-- The tab's two sections. -->
-        <nav class="tabs">
+        <nav class="section-switch">
           <button id="my-decks-button" class="selected" type="button">My decks</button>
           <button id="ready-decks-button" type="button">Ready-made decks</button>
         </nav>
@@ -116,7 +130,8 @@
             <a href="https://en.wikipedia.org/wiki/Hanyu_Shuiping_Kaoshi" target="_blank" rel="noopener">HSK</a> and the
             <a href="https://en.wikipedia.org/wiki/Test_of_Chinese_as_a_Foreign_Language" target="_blank" rel="noopener">TOCFL</a>.
             They are a common answer to "which words should I learn first?", and many textbooks and courses follow
-            them. The lowest level is the easiest. Not sure? Start with HSK 3.0, level 1.
+            them. The lowest level is the easiest. Not sure? Start with HSK 3.0, level 1. The radicals, at the
+            end, go well alongside any of them.
           </p>
           <!-- The lists to choose from; tapping one shows its levels below
                (wordsPanel.js). data-list is the list's ID, as in READY_MADE_LISTS. -->
@@ -146,12 +161,12 @@
               </button>
             </li>
           </ul>
-          <!-- One checkbox per level, with how many of its words are new. Filled in by wordsPanel.js. -->
-          <fieldset id="ready-levels" class="setting"><legend id="ready-levels-title">Levels</legend></fieldset>
-          <p class="hint">What you add appears under My decks, a deck for each level. Where a level is divided into smaller groups of words, each group is a deck inside it.</p>
-          <div class="buttons">
-            <button id="add-ready-button" class="small primary" type="button" disabled>Add</button>
-          </div>
+          <!-- One row per level, with how many of its words are new and a
+               button to add it. Filled in by wordsPanel.js. -->
+          <h3 id="ready-levels-title" class="ready-levels-title">Levels</h3>
+          <ul id="ready-levels" class="ready-levels"></ul>
+          <!-- What adding makes, worded for the list chosen (wordsPanel.js). -->
+          <p id="ready-levels-hint" class="hint"></p>
           <p id="ready-report" class="note"></p>
         </section>
 
@@ -590,7 +605,7 @@
             New words per day
             <input id="deck-goal" type="number" min="0" max="50" step="1" inputmode="numeric" placeholder="—" />
             <span class="hint">
-              The goal shown in the Learn tab while this deck is studied. Leave it empty to use the number in Settings.
+              The goal shown in Learn while this deck is studied. Leave it empty to use the number in Settings.
             </span>
           </label>
           <p id="deck-dialog-note" class="note"></p>
@@ -689,9 +704,9 @@
 
         <section data-step hidden>
           <h2>Your words</h2>
-          <p>The app starts with no words. You add the ones you want to learn in the <b>Decks</b> tab; they then wait in the <b>Learn</b> tab until you learn them.</p>
+          <p>The app starts with no words. You add the ones you want to learn in <b>Decks</b>, in the menu (☰ at the top left); they then wait in <b>Learn</b> until you learn them.</p>
           <p>Type a word's characters and tap its dictionary entry to fill in the reading and meaning, paste a list of your own, or add a ready-made list such as the words of HSK level 1.</p>
-          <p>If something about a word is wrong, correct it in the Decks tab, or tap <b>Edit word</b> after answering one of its cards.</p>
+          <p>If something about a word is wrong, correct it in Decks, or tap <b>Edit word</b> after answering one of its cards.</p>
         </section>
 
         <section data-step hidden>
@@ -804,7 +819,7 @@
           A card is a leech after
           <input id="leech-input" type="number" min="2" max="30" inputmode="numeric" aria-label="Times forgotten before a card is a leech" />
           <span class="hint">
-            times forgotten. A leech is a card you keep getting wrong. The Decks tab can list your leeches, so
+            times forgotten. A leech is a card you keep getting wrong. Words, in the menu, can list your leeches, so
             you can do something about them.
           </span>
         </label>
@@ -816,7 +831,7 @@
             <option value="suspend">Suspend it</option>
           </select>
           <span class="hint">
-            A suspended card no longer comes up in Review, until you switch it back on in the word's panel (Decks tab).
+            A suspended card no longer comes up in Review, until you switch it back on, on the word's page.
           </span>
         </label>
         </details>
@@ -885,7 +900,7 @@
         </details>
 
         <details id="settings-help" class="settings-group">
-          <summary>Help</summary>
+          <summary>Help, feedback and licenses</summary>
         <div class="setting">
           <button id="welcome-again-button" class="small" type="button">Show the introduction again</button>
           <button id="credits-button" class="small" type="button">Credits and licenses</button>

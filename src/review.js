@@ -79,7 +79,6 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     gradeRow,
     editWordButton,
     aboutWordButton,
-    focusExit,
     leechNote,
     leechSuspendButton,
     listenButton,
@@ -216,17 +215,14 @@ export function createReview(elements, flows, settings, editWord, showWord) {
 
   // ---- Focus ----
   //
-  // While a card is up, the tabs and the line with the deck and the counts
-  // are put away (the style sheet does it, for main.focused), so that the
-  // writing area has their room. "‹ Menu" brings them back until the next
-  // card; between cards, and when there is nothing to study, they are there.
+  // While a card is up, the name in the top bar and the line with the deck
+  // and the counts are put away (the style sheet does it, for main.focused),
+  // so that the writing area has their room; the menu button stays in the
+  // corner. Between cards, and when there is nothing to study, they are there.
   const page = document.querySelector('main');
   function setFocus(on) {
     page.classList.toggle('focused', on);
-    page.classList.remove('show-nav');
-    focusExit.hidden = !on;
   }
-  focusExit.addEventListener('click', () => page.classList.add('show-nav'));
 
   // The loudspeaker beside the kind of card. It is there whenever hearing
   // the word does not give the answer away: all through a new word's lesson;
@@ -429,7 +425,7 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     // A card that keeps being forgotten is pointed out, now that its answer
     // is in view: the moment to think of a way to remember it.
     const lapses = lapsesOf(current.card);
-    leechNote.textContent = `Leech: you have forgotten this card ${lapses} times. The Decks tab lists your leeches.`;
+    leechNote.textContent = `Leech: you have forgotten this card ${lapses} times. Words, in the menu, lists your leeches.`;
     leechNote.hidden = !isLeech(current.card, settings.leechLapses);
     leechSuspendButton.hidden = leechNote.hidden;
   }
@@ -880,10 +876,10 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     } else if (waiting === 0) {
       showLearnMessage(
         words.length === 0
-          ? 'You have no words yet. Add some in the Decks tab.'
+          ? 'You have no words yet. Add some in Decks, in the menu.'
           : studyDeck()
             ? 'No words of this deck are waiting to be learned.'
-            : 'No words are waiting to be learned. Add more in the Decks tab.',
+            : 'No words are waiting to be learned. Add more in Decks, in the menu.',
         false,
       );
     } else if (learnedToday >= goal) {
@@ -1014,12 +1010,12 @@ export function createReview(elements, flows, settings, editWord, showWord) {
       // The app starts with no words at all, and words wait to be learned.
       const waiting =
         plan.waitingCount > 0
-          ? ` ${plan.waitingCount} ${plan.waitingCount === 1 ? 'word is' : 'words are'} waiting in the Learn tab.`
+          ? ` ${plan.waitingCount} ${plan.waitingCount === 1 ? 'word is' : 'words are'} waiting in Learn.`
           : '';
       if (words.length === 0) {
-        doneMessage.textContent = 'You have no words yet. Add some in the Decks tab.';
+        doneMessage.textContent = 'You have no words yet. Add some in Decks, in the menu.';
       } else if (studied.length === 0) {
-        doneMessage.textContent = 'This deck has no words yet. Put some in it in the Decks tab.';
+        doneMessage.textContent = 'This deck has no words yet. Put some in it in Decks.';
       } else if (plan.waitingCount === studied.length) {
         doneMessage.textContent = `Nothing to review yet.${waiting}`;
       } else {

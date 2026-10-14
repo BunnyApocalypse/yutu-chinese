@@ -1,7 +1,7 @@
 // Entry point: sets up the page, the three tabs (Review, Free practice and
 // Words), settings and backups.
 
-import { getAll, putAll, getSetting, setSetting, removeWord, renameWord, replaceEverything } from './db.js';
+import { getAll, putAll, getSetting, setSetting, removeWord, removeDecks, renameWord, replaceEverything } from './db.js';
 import { allCardIds } from './session.js';
 import { OLD_BUILT_IN_WORD_IDS } from './oldBuiltInWords.js';
 import { createWordFlow } from './wordFlow.js';
@@ -12,7 +12,7 @@ import { createSettings } from './settings.js';
 import { createWordsPanel } from './wordsPanel.js';
 import { scriptFor, scriptFlagFor } from './words.js';
 import { fileCardsByScript } from './scriptCards.js';
-import { missingReadyMadeDecks, wordsWithListsAsDecks, homeForEveryWord } from './decks.js';
+import { missingReadyMadeDecks, wordsWithListsAsDecks, homeForEveryWord, flattenedReadyMadeDecks } from './decks.js';
 import { setUpOffline, keepData } from './offline.js';
 import { createWelcome } from './welcome.js';
 import { buildBackup, checkBackup, describeBackup, restoreBackup } from './backup.js';
@@ -105,7 +105,7 @@ watchForErrors({
 });
 showVersion();
 
-// "Credits and licenses", under Help in Settings.
+// "Credits and licenses", under "Help, feedback and licenses" in Settings.
 byId('credits-button').addEventListener('click', () => byId('credits-dialog').showModal());
 byId('credits-close').addEventListener('click', () => byId('credits-dialog').close());
 
@@ -202,6 +202,7 @@ function setMode(newMode) {
   practiceTab.classList.toggle('selected', mode === 'practice');
   wordsTab.classList.toggle('selected', mode === 'words');
   browseTab.classList.toggle('selected', mode === 'browse');
+  byId('place-title').textContent = PLACE_TITLES[mode];
   reviewHeader.hidden = !reviewing;
   wordForm.hidden = mode !== 'practice';
   wordsPanelElement.hidden = mode !== 'words' && mode !== 'browse';
@@ -223,6 +224,25 @@ function setMode(newMode) {
   }
   return startFreePractice();
 }
+
+// ---- The menu ----
+//
+// Review, Learn, Decks, Words and Settings are in a panel that slides in
+// from the left, opened with the button at the top left (the owner,
+// 2026-10-14: two rows of buttons stacked at the top were too much). It is a
+// <dialog>, so the page under it is out of reach and Esc closes it. Choosing
+// anything in it closes it.
+const sideMenu = byId('side-menu');
+byId('menu-button').addEventListener('click', () => sideMenu.showModal());
+// A tap on the dimmed page beside the panel lands on the dialog itself.
+sideMenu.addEventListener('click', (event) => {
+  if (event.target === sideMenu || event.target.closest('button')) {
+    sideMenu.close();
+  }
+});
+
+// The name of each screen, in the top bar.
+const PLACE_TITLES = { review: 'Review', learn: 'Learn', practice: 'Free practice', words: 'Decks', browse: 'Words' };
 
 reviewTab.addEventListener('click', () => setMode('review'));
 learnTab.addEventListener('click', () => setMode('learn'));
@@ -283,7 +303,7 @@ exportButton.addEventListener('click', async () => {
 });
 
 // Everything the learner has is in this one browser. Settings says when a
-// backup was last made, and the cog wheel gets a dot when it is time for
+// backup was last made, and the menu button gets a dot when it is time for
 // another: there are words, and no backup was made in the last two weeks.
 const BACKUP_DUE_AFTER_MS = 14 * 24 * 60 * 60 * 1000;
 async function showBackupStatus() {
@@ -296,15 +316,18 @@ async function showBackupStatus() {
       : `Last backup: ${days === 0 ? 'today' : days === 1 ? 'yesterday' : `${days} days ago`}.`) +
     (due
       ? ' Your words and progress are kept only in this browser, so export a backup now and then. ' +
-        'The red dot on the cog wheel is this reminder; it goes away once you have exported one.'
+        'The red dot on the menu button is this reminder; it goes away once you have exported one.'
       : '');
-  // The dot says why it is there to anyone who rests the mouse on the cog or
-  // uses a screen reader, and in Settings the same dot is on the heading of
-  // the group it is about, which is opened.
-  const cog = byId('settings-button');
-  cog.classList.toggle('reminder', due);
-  cog.title = due ? 'Settings (time to make a backup)' : 'Settings';
-  cog.setAttribute('aria-label', cog.title);
+  // The dot says why it is there to anyone who rests the mouse on the menu
+  // button or uses a screen reader, and in Settings the same dot is on the
+  // heading of the group it is about, which is opened.
+  const menuButton = byId('menu-button');
+  menuButton.classList.toggle('reminder', due);
+  menuButton.title = due ? 'Menu (time to make a backup, in Settings)' : 'Menu';
+  menuButton.setAttribute('aria-label', menuButton.title);
+  const settingsButton = byId('settings-button');
+  settingsButton.classList.toggle('reminder', due);
+  settingsButton.title = due ? 'Settings (time to make a backup)' : '';
   byId('settings-data').classList.toggle('reminder', due);
   byId('settings-data').open = due || byId('settings-data').open;
 }
@@ -429,6 +452,14 @@ async function fileListWordsInDecks() {
   if (missing.length > 0) {
     await putAll('decks', missing);
   }
+  // The levels of HSK and TOCFL stand on their own since 2026-10-14.
+  const flattened = flattenedReadyMadeDecks(await getAll('decks'), await getAll('words'));
+  if (flattened.changed.length > 0) {
+    await putAll('decks', flattened.changed, { stamp: false });
+  }
+  if (flattened.removed.length > 0) {
+    await removeDecks(flattened.removed);
+  }
   // Every word is in a deck, and there is always a deck: a new device gets
   // "Chinese 中文", and words from before there were decks are put in it.
   const home = homeForEveryWord(await getAll('words'), await getAll('decks'));
@@ -510,7 +541,6 @@ async function startUp() {
       gradeRow: byId('grade-row'),
       editWordButton: byId('edit-word-button'),
       aboutWordButton: byId('about-word-button'),
-      focusExit: byId('focus-exit'),
       leechNote: byId('leech-note'),
       leechSuspendButton: byId('leech-suspend-button'),
       listenButton: byId('listen-button'),

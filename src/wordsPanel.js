@@ -10,7 +10,7 @@ import { getAll, putAll, removeWord, renameWord } from './db.js';
 import { formatPinyin, wordId } from './wordList.js';
 import { allCardIds } from './session.js';
 import { fileCardsByScript } from './scriptCards.js';
-import { missingReadyMadeDecks, deckTree, deckWithInside, isInDecks, withDeck, DEFAULT_DECK } from './decks.js';
+import { READY_MADE_LISTS, missingReadyMadeDecks, readyMadeDeck, deckTree, deckWithInside, isInDecks, withDeck, DEFAULT_DECK } from './decks.js';
 import { createDecksPanel, fillDeckSelect } from './decksPanel.js';
 import { createCardsPanel } from './cardsPanel.js';
 import { createWordPage } from './wordPage.js';
@@ -843,7 +843,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     suggestions.replaceChildren();
     addNote.textContent = existing
       ? `${name} was already in your words, as you had it. It is in this deck now too.`
-      : `Added ${charactersOf(toAdd[0])}. It waits in the Learn tab, last in line.`;
+      : `Added ${charactersOf(toAdd[0])}. It waits in Learn, last in line.`;
     await afterChange();
     lookedUpField.focus();
   });
@@ -945,7 +945,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     listText.value = '';
     listReport.textContent =
       `Added ${plural(toAdd.length, 'word')}.` +
-      (toAdd.length > 0 ? ' They wait in the Learn tab.' : '') +
+      (toAdd.length > 0 ? ' They wait in Learn.' : '') +
       (alreadyThere.length > 0 ? ` ${plural(alreadyThere.length, 'word')} you already had went into this deck.` : '');
     await afterChange();
   });
@@ -957,7 +957,6 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   const readyRows = [...document.querySelectorAll('#ready-list button')];
   let readyListId = readyRows[0].dataset.list;
   const readyLevels = byId('ready-levels');
-  const addReadyButton = byId('add-ready-button');
   const readyReport = byId('ready-report');
 
   // The lists fetched so far: list ID → its entries (see parseReadyList).
@@ -972,20 +971,12 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     return readyLists.get(listId);
   }
 
-  const chosenLevels = () =>
-    [...readyLevels.querySelectorAll('input:checked')].map((box) => box.value);
-
-  // Says on the button how many words the chosen levels would add.
-  function showReadyCount() {
-    const count = [...readyLevels.querySelectorAll('input:checked')].reduce(
-      (total, box) => total + Number(box.dataset.newCount),
-      0,
-    );
-    addReadyButton.textContent = `Add ${plural(count, 'word')}`;
-    addReadyButton.disabled = chosenLevels().length === 0;
-  }
-
-  // Lists the levels of the chosen list, each with a checkbox.
+  // Lists the levels of the chosen list, one row each with how many of its
+  // words are new and a button that adds it (the owner, 2026-10-14: a level
+  // is months of work, so levels are added one at a time). The levels of a
+  // list that keeps a deck of its own with its levels inside (the radicals)
+  // get a checkbox each instead, and one button under them that adds the
+  // ones ticked, since they make one deck.
   async function showReadyLevels() {
     const listId = readyListId;
     for (const row of readyRows) {
@@ -1001,32 +992,61 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     try {
       entries = await readyEntries();
     } catch {
-      readyLevels.replaceChildren(readyLevels.firstElementChild);
-      showReadyCount();
+      readyLevels.replaceChildren();
       readyReport.textContent = 'The list could not be fetched. It needs a connection the first time.';
       return;
     }
     if (listId !== readyListId) {
       return; // another list was tapped while this one was being fetched
     }
-    const boxes = levelsOfReadyList(entries, words).map(({ level, count, newCount }) => {
-      const box = document.createElement('input');
-      box.type = 'checkbox';
-      box.value = level;
-      box.dataset.newCount = newCount;
-      box.addEventListener('change', showReadyCount);
-      const label = document.createElement('label');
-      label.append(
-        box,
-        // TOCFL has two levels with names of their own before its level 1.
-        ` ${/^\d/.test(level) ? `Level ${level}` : level}: ${plural(count, 'word')}` +
-          (newCount === count ? '' : newCount === 0 ? ', all in your words already' : `, ${newCount} new`),
-      );
-      return label;
+    const together = !READY_MADE_LISTS.find((list) => list.id === listId).levelName;
+    byId('ready-levels-hint').textContent = together
+      ? `What you add goes into the deck ${readyMadeDeck(listId).name} under My decks, with a deck for each level inside it.`
+      : 'Each level you add becomes a deck of its own under My decks. Where a level is divided into smaller groups of words, each group is a deck inside it.';
+    const rows = levelsOfReadyList(entries, words).map(({ level, count, newCount }) => {
+      const row = document.createElement('li');
+      const text = document.createElement('span');
+      // TOCFL has two levels with names of their own before its level 1.
+      text.textContent =
+        `${/^\d/.test(level) ? `Level ${level}` : level}: ${plural(count, 'word')}` +
+        (newCount === count ? '' : newCount === 0 ? ', all in your words already' : `, ${newCount} new`);
+      if (together) {
+        const box = document.createElement('input');
+        box.type = 'checkbox';
+        box.value = level;
+        box.addEventListener('change', () => {
+          addTogether.disabled = !readyLevels.querySelector('input:checked');
+        });
+        const label = document.createElement('label');
+        label.append(box, text);
+        row.append(label);
+        return row;
+      }
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'small';
+      button.textContent = 'Add';
+      button.dataset.level = level;
+      button.addEventListener('click', () => addReadyLevels(listId, [level]));
+      row.append(text, button);
+      return row;
     });
-    // The first child is the fieldset's caption, which stays.
-    readyLevels.replaceChildren(readyLevels.firstElementChild, ...boxes);
-    showReadyCount();
+    // The one button for the levels ticked.
+    const addTogether = document.createElement('button');
+    addTogether.type = 'button';
+    addTogether.className = 'small primary';
+    addTogether.id = 'add-ready-button';
+    addTogether.textContent = 'Add';
+    addTogether.disabled = true;
+    addTogether.addEventListener('click', () =>
+      addReadyLevels(listId, [...readyLevels.querySelectorAll('input:checked')].map((box) => box.value)),
+    );
+    if (together) {
+      const row = document.createElement('li');
+      row.append(addTogether);
+      rows.push(row);
+    }
+    readyLevels.replaceChildren(...rows);
   }
 
   for (const row of readyRows) {
@@ -1037,11 +1057,14 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     });
   }
 
-  addReadyButton.addEventListener('click', async () => {
-    const listId = readyListId;
-    const levels = new Set(chosenLevels());
-    const entries = (await readyEntries()).filter((entry) => levels.has(entry.level));
-    addReadyButton.disabled = true;
+  // Adds levels of a list: their new words at the end of the queue, lowest
+  // level first, and the words that were there already into their decks as
+  // well.
+  async function addReadyLevels(listId, levels) {
+    const entries = (await readyEntries()).filter((entry) => levels.includes(entry.level));
+    for (const button of readyLevels.querySelectorAll('button')) {
+      button.disabled = true;
+    }
     readyReport.textContent = 'Adding…';
     // Meanings come from the dictionary, as for a word typed by hand.
     await loadDictionary();
@@ -1084,7 +1107,8 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     const marked = words.filter((word) => tags.has(word.id) && !(word.decks || []).includes(tags.get(word.id)));
     const tagged = [...toAdd, ...marked].map(withTag);
     await putAll('words', tagged);
-    // The list and its levels become decks, if they are not there yet.
+    // The level (and the list, for the radicals) become decks, if they are
+    // not there yet.
     await putAll('decks', missingReadyMadeDecks(tagged, await getAll('decks'), groupNames));
     await afterChange();
     await showReadyLevels();
@@ -1092,8 +1116,8 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       `Added ${plural(toAdd.length, 'word')}` +
       (alreadyHave > 0 ? `; ${alreadyHave} you already had` : '') +
       (noMeaning > 0 ? `; ${noMeaning} left out because the dictionary could not be fetched for their meaning` : '') +
-      '. They are under My decks, a deck for each level, and wait in the Learn tab, last in line, lowest level first.';
-  });
+      `. They are in the deck ${(readyMadeDeck(listId) || readyMadeDeck(listTag(listId, levels[0]))).name} under My decks, and wait in Learn, last in line.`;
+  }
 
   // ---- One word: change, study next, remove ----
 
@@ -1101,7 +1125,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   function showDialogStatus(word) {
     dialogStatus.textContent = studiedWordIds.has(word.id)
       ? 'You have learned this word; its cards come up in Review.'
-      : 'Waiting: you have not learned this word yet. It comes up in the Learn tab.';
+      : 'Waiting: you have not learned this word yet. It comes up in Learn.';
   }
 
   // The checkboxes for suspending a word's cards, one per kind.
@@ -1424,6 +1448,13 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
 
     async show(newView) {
       view = newView || view;
+      // Coming to the Decks tab always shows My decks (the owner,
+      // 2026-10-14), whichever section was showing before. Done before
+      // anything is waited for, so a tap on Ready-made decks right after is
+      // not undone.
+      if (newView === 'decks') {
+        showSection(false);
+      }
       applySettings();
       await load();
       // The first time, with only the deck the app starts with, that deck's

@@ -30,7 +30,7 @@ describe('the Decks tab', { concurrency: false }, () => {
     await tap(page, 'review-tab');
     await waitUntil(
       page,
-      `document.getElementById('done-message').textContent === 'You have no words yet. Add some in the Decks tab.'`,
+      `document.getElementById('done-message').textContent === 'You have no words yet. Add some in Decks, in the menu.'`,
       'the note that there are no words',
     );
     await tap(page, 'decks-tab');
@@ -175,24 +175,22 @@ describe('the Decks tab', { concurrency: false }, () => {
     const before = await wordCount(page);
     await tap(page, 'ready-decks-button');
     // HSK 3.0 is offered first; its levels appear with their word counts.
-    await waitUntil(page, `document.querySelectorAll('#ready-levels input').length === 7`, 'the levels of HSK 3.0');
-    assert.match(await textOf(page, '#ready-levels label'), /^Level 1: 512 words, \d+ new$/);
-    assert.equal(await page.evaluate(`document.getElementById('add-ready-button').disabled`), true);
+    await waitUntil(page, `document.querySelectorAll('#ready-levels li').length === 7`, 'the levels of HSK 3.0');
+    assert.match(await textOf(page, '#ready-levels li span'), /^Level 1: 512 words, \d+ new$/);
     // Taiwan's list has two levels with names of their own, then five.
     await page.evaluate(`document.querySelector('#ready-list button[data-list="tocfl"]').click()`);
-    await waitUntil(page, `document.querySelector('#ready-levels label')?.textContent.trim().startsWith('Novice 1:')`, 'the levels of TOCFL');
-    assert.equal(await page.evaluate(`document.querySelectorAll('#ready-levels input').length`), 7);
-    // The older list has six.
+    await waitUntil(page, `document.querySelector('#ready-levels li span')?.textContent.startsWith('Novice 1:')`, 'the levels of TOCFL');
+    assert.equal(await page.evaluate(`document.querySelectorAll('#ready-levels li').length`), 7);
+    // The older list has six, each with a button that adds it.
     await page.evaluate(`document.querySelector('#ready-list button[data-list="hsk-2.0"]').click()`);
-    await waitUntil(page, `document.querySelectorAll('#ready-levels input').length === 6`, 'the levels of HSK 2.0');
-    await page.evaluate(`document.querySelector('#ready-levels input[value="1"]').click()`);
-    const button = await textOf(page, 'add-ready-button');
-    assert.match(button, /^Add \d+ words$/);
-    const adding = Number(button.match(/\d+/)[0]);
+    await waitUntil(page, `document.querySelectorAll('#ready-levels li').length === 6`, 'the levels of HSK 2.0');
+    const level = await textOf(page, '#ready-levels li span');
+    assert.match(level, /^Level 1: 150 words, \d+ new$/);
+    const adding = Number(level.match(/(\d+) new/)[1]);
     // Some of the 150 are among the test words already.
-    assert.ok(adding > 50 && adding < 150, button);
+    assert.ok(adding > 50 && adding < 150, level);
 
-    await tap(page, 'add-ready-button');
+    await page.evaluate(`document.querySelector('#ready-levels button[data-level="1"]').click()`);
     // Reading the dictionary and adding the words takes a few seconds.
     let report = '';
     for (let attempt = 0; attempt < 120 && !report.startsWith('Added'); attempt++) {
@@ -200,13 +198,14 @@ describe('the Decks tab', { concurrency: false }, () => {
       report = await textOf(page, 'ready-report');
     }
     assert.match(report, new RegExp(`^Added ${adding} words`));
-    assert.match(await textOf(page, '#ready-levels label'), /^Level 1: 150 words, all in your words already$/);
+    assert.match(report, /in the deck HSK 1 \(2\.0\) under My decks/);
+    await waitUntil(page, `document.querySelector('#ready-levels li span')?.textContent === 'Level 1: 150 words, all in your words already'`, 'the level counted afresh');
     // They are under My decks, in a deck of their own: the front page has
-    // the list's deck beside the one the app started with, and all words.
+    // the level's deck beside the one the app started with, and all words.
     await tap(page, 'my-decks-button');
     await page.evaluate(`document.querySelector('#deck-path button').click()`);
     await waitUntil(page, `document.querySelectorAll('#deck-list li').length === 2`, 'the two decks');
-    assert.match(await textOf(page, '#deck-list li:last-child'), /^HSK 2\.0150 words · 0 learned \(0%\) · 12 decks inside$/);
+    assert.match(await textOf(page, '#deck-list li:last-child'), /^HSK 1 \(2\.0\)150 words · 0 learned \(0%\) · 11 decks inside$/);
     assert.equal(await wordCount(page), before + adding);
     // The steps after this one count from the start; they count these in too.
     countAtStart += adding;
