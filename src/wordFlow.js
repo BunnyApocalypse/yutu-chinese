@@ -25,16 +25,18 @@ function chooseSize() {
   // The writing area has one size, and everything else has fixed room
   // above and below it, so that the area never moves or changes size from
   // one card or one step of a lesson to the next (the owner's rule,
-  // 2026-10-13). 420 is that room, measured that day with the tabs put away
-  // (see "Focus" in review.js):
+  // 2026-10-13). 380 is that room, measured with the tabs put away (see
+  // "Focus" in review.js):
   //   above: the kind of card, the meaning (one line), the pinyin, a
-  //          lesson's note, the row of slots (words of several characters)
-  //          and the status line: 265. Each keeps its room when empty.
+  //          lesson's note, and the row of slots (words of several
+  //          characters) with the status line beside them: 213. Each keeps
+  //          its room when empty. (Until 2026-10-14 the slots and the status
+  //          line had a row each, and the number was 420.)
   //   below: the three buttons and the four grade buttons, with the
-  //          margins: about 155.
+  //          margins: about 167 (155 left the page 9px too tall).
   // The area is the point of the app: if a row is added, find its room in
   // the rows there are, do not raise this number.
-  const fitsHeight = window.innerHeight - 420;
+  const fitsHeight = window.innerHeight - 380;
   return Math.max(200, Math.min(fitsWidth, fitsHeight, 640));
 }
 

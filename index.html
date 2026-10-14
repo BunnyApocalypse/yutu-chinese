@@ -313,16 +313,19 @@
       <div id="study-area" class="study-area">
         <!-- Says so when this word is in another script than the rest of the deck: "simp. 简体". -->
         <p id="script-flag" class="script-flag" hidden></p>
-        <!-- One slot per character of the word. Filled in by wordFlow.js. -->
-        <div id="word-row" class="word-row"></div>
+        <!-- One row above the writing area: the slots, and the status line beside them. -->
+        <div class="progress-row">
+          <!-- One slot per character of the word. Filled in by wordFlow.js. -->
+          <div id="word-row" class="word-row"></div>
 
-        <!-- The status line. In Review, once a character is written, the two
-             verdict buttons appear next to it. -->
-        <div id="status-row" class="status-row">
-          <p id="status" class="status"></p>
-          <div id="verdict-row" class="verdict-row" hidden>
-            <button id="missed-button" class="small verdict missed" type="button">Missed</button>
-            <button id="got-it-button" class="small verdict passed" type="button">Got it</button>
+          <!-- The status line. In Review, once a character is written, the two
+               verdict buttons appear next to it. -->
+          <div id="status-row" class="status-row">
+            <p id="status" class="status"></p>
+            <div id="verdict-row" class="verdict-row" hidden>
+              <button id="missed-button" class="small verdict missed" type="button">Missed</button>
+              <button id="got-it-button" class="small verdict passed" type="button">Got it</button>
+            </div>
           </div>
         </div>
 

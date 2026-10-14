@@ -160,7 +160,7 @@ describe('learning new words', { concurrency: false }, () => {
 
     await waitUntil(page, stepIs('step 5 of 5'), 'step 5');
     await waitForFirstStroke();
-    assert.match(await textOf(page, 'lesson-note'), /from memory/);
+    assert.match(await textOf(page, 'lesson-note'), /From memory/);
     assert.equal(await outlineButton(), 'Show outline');
     // The reading is hidden again. The lesson can still be skipped.
     assert.equal(await isShown(page, 'prompt-pinyin'), false);

@@ -154,6 +154,7 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     orderNote.hidden = true;
     // A sentence's writing card lets its prompt run to two lines (see there).
     meaningElement.style.webkitLineClamp = '';
+    meaningElement.style.maxHeight = '';
   }
 
   // Above the card: a note if this word is in another script than the rest
@@ -454,6 +455,7 @@ export function createReview(elements, flows, settings, editWord, showWord) {
       // The prompt is cut off after one line (clamp.js); a sentence with its
       // gap is a second line that has to stay in view.
       meaningElement.style.webkitLineClamp = sentence ? '2' : '';
+      meaningElement.style.maxHeight = sentence ? 'none' : '';
       if (sentence) {
         const line = document.createElement('span');
         line.className = 'cloze-sentence';
@@ -589,7 +591,7 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     tone: 'First its tones.',
     trace: 'Write each stroke as it is shown.',
     outline: 'Again, over the bare outline.',
-    test: 'Now from memory. This one counts.',
+    test: 'From memory. This one counts.',
   };
 
   function endLesson() {
