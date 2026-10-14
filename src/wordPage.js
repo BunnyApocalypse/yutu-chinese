@@ -201,7 +201,9 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
     if ([...deckSelect.options].some((option) => option.value === preferred)) {
       deckSelect.value = preferred;
     }
-    const addButton = element('button', 'small', 'Add sentence');
+    // Worded so that it is plain a card is made (the owner, 2026-10-14:
+    // "Study this sentence in" did not say so).
+    const addButton = element('button', 'small', 'Add');
     addButton.type = 'button';
     const said = element('p', 'note');
     addButton.addEventListener('click', async () => {
@@ -222,7 +224,7 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
             ? 'You had this sentence already. It is in that deck now too.'
             : 'This sentence is already in that deck.';
     });
-    adding.append(element('span', '', 'Study this sentence in'), deckSelect, addButton);
+    adding.append(element('span', '', 'Make cards from this sentence in'), deckSelect, addButton);
     section.append(adding, said);
     return section;
   }

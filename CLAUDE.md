@@ -579,6 +579,19 @@ A review by Claude on 2026-10-13 of what having testers changes; the decisions a
 
 ## Where the work stands
 
+**For the session after 2026-10-14, first of all** (put here at the owner's request, from Claude's suggestions after the first testing session and the question of Anki sync; each still to be agreed with the owner before it is built):
+
+1. **Adding a word by its pinyin**, for a learner without a Chinese keyboard: the characters box also takes pinyin and lists the dictionary's words read that way, usual readings first (HSK and TOCFL), to choose from. Claude's advice: build this first; it is what stopped the beginner in testing.
+2. **The stroke count is there and was not seen**: the status line says "Stroke 1 of 10 · no mistakes", and a tester asked for a stroke counter. A question of where and how it is shown, not a missing feature.
+3. **Tips that are read:** they were ignored in testing. Shorter (one line each), or placed beside the thing they are about.
+4. **A word of an example sentence tapped by accident:** a tap shows a small popup with its pinyin and meaning and "Open its page", rather than going straight to the page.
+5. **Tone buttons always show "a"** (asked in testing): showing the word's own syllable would give its reading away on a tone card; bare tone marks (ˉ ˊ ˇ ˋ ·) would not.
+6. **Pinyin in the notes of the beginner levels** (a beginner did not know 的 in a note): put the reading after each Chinese word or phrase in the notes of TOCFL Novice and HSK 3.0 levels 1 and 2, by a script.
+7. **Long-term storage:** a separate dot for it would stay on for most Chrome users (Chrome only grants it to an installed app); a message once seems better than a dot.
+8. **Free practice under Words, and "too many buttons", the Learn screen busy:** for the pass over the looks.
+9. **Anki:** syncing through AnkiWeb is against its terms (only Anki's own clients may sync) and would need a server; the self-hosted sync server and AnkiConnect are allowed but a poor fit, since Anki has no writing check and its reviews would not carry what the scheduling uses. Claude's advice: no Anki sync; syncing through storage the learner has (see "Long-term goals") reuses the combining of backups; an export to an Anki deck file (.apkg) could come later, and would need a library (a dependency to ask about).
+10. **Note-taking in testing** (Claude's feedback, asked for by the owner): keep what was seen apart from what to do about it; fill in "While they work" and the time; mark answers that were prompted; name the notes file by a code (T1), not the tester's name.
+
 **For the session after 2026-10-13, first of all:**
 
 - **The owner is testing the app themselves before giving it to anyone** (their decision at the end of that session). Ask how it went, and expect remarks on the layout around the writing area, which was reworked late that day and which they had only tried on a desktop.
