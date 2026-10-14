@@ -11,6 +11,7 @@
 import { putAll, removeDecks, removeWords, randomId } from './db.js';
 import { allCardIds } from './session.js';
 import {
+  lastActivity,
   deckTree,
   deckWithInside,
   canBeInside,
@@ -166,9 +167,13 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
 
     // The decks right inside the one that is open; on the front page, those
     // inside no other.
-    const shown = deckTree(decks).filter(({ deck, depth }) =>
-      current ? deck.parentId === current.id : depth === 0,
-    );
+    // Most recently active first (the owner, 2026-10-14), then in the
+    // tree's order.
+    const activity = lastActivity(decks, getWords(), getCards());
+    const shown = deckTree(decks)
+      .filter(({ deck, depth }) => (current ? deck.parentId === current.id : depth === 0))
+      .map((row, index) => ({ ...row, index }))
+      .sort((a, b) => activity.get(b.deck.id) - activity.get(a.deck.id) || a.index - b.index);
     const rows = shown.map(({ deck }) => {
       const span = (className, text) => {
         const element = document.createElement('span');
@@ -209,13 +214,22 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
     });
     listElement.replaceChildren(...rows);
     byId('deck-list-title').textContent = current ? 'Decks inside this one' : 'Decks';
-    byId('deck-list-title').hidden = Boolean(current) && rows.length === 0;
-    addName.placeholder = current ? `Name of a new deck inside ${current.name}` : 'Name of a new deck';
   }
 
   // ---- Adding a deck ----
 
-  // A new deck goes inside the deck whose page is open.
+  // "+ New deck" beside the heading opens a small panel for its name (the
+  // owner, 2026-10-14: a box under the list would be pushed out of sight by
+  // many decks). A new deck goes inside the deck whose page is open.
+  const newDeckDialog = byId('new-deck-dialog');
+  byId('new-deck-button').addEventListener('click', () => {
+    const current = getOpenDeck();
+    byId('new-deck-title').textContent = current ? `New deck inside ${current.name}` : 'New deck';
+    addName.value = '';
+    newDeckDialog.showModal();
+    addName.focus();
+  });
+  byId('new-deck-cancel').addEventListener('click', () => newDeckDialog.close());
   addForm.addEventListener('submit', async (event) => {
     event.preventDefault(); // or the browser would reload the page
     const name = addName.value.trim();
@@ -226,6 +240,7 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
     const current = getOpenDeck();
     await putAll('decks', [newDeckRecord(randomId(), name, current ? current.id : null, getDecks())]);
     addName.value = '';
+    newDeckDialog.close();
     await afterChange();
   });
 

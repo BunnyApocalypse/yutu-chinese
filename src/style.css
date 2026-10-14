@@ -1182,6 +1182,43 @@ button.word-entry {
   border-bottom: 1px solid #e3ddcf;
 }
 
+/* ---- Tips (tips.js) ----
+   A card at the bottom of the screen. As a popover it is centered by the
+   browser; these place it at the bottom instead. Without popovers it is a
+   plain card, hidden with the "hidden" attribute. */
+.tip-card {
+  position: fixed;
+  inset: auto 12px calc(12px + env(safe-area-inset-bottom, 0px)) 12px;
+  margin: 0 auto;
+  max-width: 480px;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  border: 1px solid #d8d1c2;
+  border-radius: 12px;
+  background: #fffdf7;
+  color: inherit;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tip-card:not(:popover-open):not([hidden]) {
+  /* The browser hides a closed popover with a style of its own, which the
+     "display" above would override. */
+  display: none;
+}
+
+.tip-card p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.tip-card button {
+  flex: none;
+}
+
 /* ---- The word page ---- */
 
 /* While a pop-up panel is open, the page under it does not scroll. A swipe
@@ -1522,6 +1559,18 @@ button.deck-entry {
   min-height: 32px;
 }
 
+/* A list's heading with a button beside it: "Decks [+ New deck]". */
+.list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.list-heading h2 {
+  margin: 0;
+}
+
 /* A ready-made list to choose from: the chosen one has a heavy edge. */
 button.ready-entry.selected {
   border-color: #222;
@@ -1574,15 +1623,11 @@ button.path-part {
   gap: 8px;
 }
 
-/* The name of a new deck with its button beside it. */
-.add-deck-form {
+/* The panel for a new deck's name. */
+#add-deck-form {
   display: flex;
-  gap: 8px;
-}
-
-.add-deck-form input {
-  flex: 1;
-  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .deck-entry .entry-characters {

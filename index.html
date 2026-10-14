@@ -199,12 +199,24 @@
             words and add to them. A word can be in several decks and is still scheduled once.
           </p>
 
-          <h2 id="deck-list-title">Decks</h2>
+          <!-- The heading, with the button for a new deck beside it, so that it
+               stays in reach however many decks there are. -->
+          <div class="list-heading">
+            <h2 id="deck-list-title">Decks</h2>
+            <button id="new-deck-button" class="small" type="button">+ New deck</button>
+          </div>
           <ul id="deck-list" class="word-list"></ul>
-          <form id="add-deck-form" class="add-deck-form">
-            <input id="add-deck-name" type="text" placeholder="Name of a new deck" aria-label="Name of a new deck" autocomplete="off" />
-            <button type="submit" class="small">Add deck</button>
-          </form>
+          <!-- Naming a new deck, in a panel of its own (decksPanel.js). -->
+          <dialog id="new-deck-dialog" class="settings-panel">
+            <form id="add-deck-form">
+              <h2 id="new-deck-title">New deck</h2>
+              <input id="add-deck-name" type="text" placeholder="Name of the deck" aria-label="Name of the deck" autocomplete="off" />
+              <div class="buttons">
+                <button id="new-deck-cancel" class="small" type="button">Cancel</button>
+                <button class="small primary" type="submit">Create deck</button>
+              </div>
+            </form>
+          </dialog>
 
           <!-- Adding words: only on a deck's page, since every word is in a deck. -->
           <div id="deck-adding" class="words-panel" hidden>
@@ -419,7 +431,7 @@
             <input id="edit-simplified" type="text" lang="zh-Hans-CN" autocomplete="off" autocapitalize="off" />
           </label>
           <label class="setting stacked">
-            Pinyin
+            <span id="edit-pinyin-caption">Mainland reading</span>
             <input id="edit-pinyin" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" />
           </label>
           <label class="setting stacked">
@@ -671,12 +683,13 @@
           <p class="hint"><a href="https://en.wikipedia.org/wiki/Simplified_Chinese_characters" target="_blank" rel="noopener">Simplified</a> characters are used in mainland China, Singapore and Malaysia. <a href="https://en.wikipedia.org/wiki/Traditional_Chinese_characters" target="_blank" rel="noopener">Traditional</a> characters are used in Taiwan, Hong Kong and Macau. Many characters are the same in both; others differ, like 学 and 學. If you are not sure, pick the one used where you plan to read or speak Chinese.</p>
           <p class="hint">With both, your cards are in the script you mostly use, and you can pick the other one for single words.</p>
           <fieldset class="setting">
-            <legend>Pronunciation</legend>
-            <label><input type="radio" name="welcome-pronunciation" value="mainlandOnly" /> Mainland only</label>
-            <label><input type="radio" name="welcome-pronunciation" value="mainland" /> Both, mainland first</label>
-            <label><input type="radio" name="welcome-pronunciation" value="taiwan" /> Both, Taiwan first</label>
+            <legend>Pronunciation: which standard?</legend>
+            <label><input type="radio" name="welcome-pronunciation" value="mainlandOnly" /> Mainland China (普通话)</label>
+            <label><input type="radio" name="welcome-pronunciation" value="taiwan" /> Taiwan (國語)</label>
+            <!-- "mainland": both readings, the mainland one listed first. -->
+            <label><input type="radio" name="welcome-pronunciation" value="mainland" /> Both</label>
           </fieldset>
-          <p class="hint">Some words are read differently in Taiwan: 星期 is xīngqī on the mainland and xīngqí in Taiwan (more on <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">Taiwan's Mandarin</a>). With both, a card shows both readings and accepts both tones.</p>
+          <p class="hint">A few words are read differently in Taiwan and on the mainland: 星期 is xīngqí in Taiwan and xīngqī on the mainland (more on <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">Taiwan's Mandarin</a>). The reading you choose is the one shown and tested. With Taiwan, the mainland reading also appears beside it in small print, because dictionaries file words under it. With Both, cards show both readings and accept either tone.</p>
           <p class="hint">You can change all of this later in Settings.</p>
         </section>
 
@@ -695,16 +708,6 @@
         </section>
 
         <section data-step hidden>
-          <h2>How it works</h2>
-          <p><b>Learn</b>, opened from a deck, teaches its words that are waiting, one at a time: you look at the word, practice its tones, then write it, first with each stroke shown, then from memory. A few a day is plenty (the goal starts at 5), so reviews don't pile up.</p>
-          <p><b>Review</b> brings back the words you have learned, each just before you would forget it. After answering you grade yourself, Again, Hard, Good or Easy; where the app can check your answer, it suggests a grade.</p>
-          <p><b>Writing:</b> write anywhere in the box, at any size. Your own strokes stay on screen, and two strokes joined the way handwriting joins them are accepted.</p>
-          <p><b>Already know a word?</b> Tap <b>I know this word</b> during its lesson to skip it. It still comes back in Review now and then, to check.</p>
-          <p><b>Sound:</b> words are spoken as you study them. Settings has a volume slider, and can make them speak only when you tap the loudspeaker, or not at all.</p>
-          <p>Everything else is in the <b>menu</b>, ☰ at the top left: Review, Decks (your decks of words, each with its Learn and Review, and ready-made ones), Words (all your words, and <b>Free practice</b>, which lets you try any card or write any characters without anything being recorded) and Settings.</p>
-        </section>
-
-        <section data-step hidden>
           <h2>Your words</h2>
           <p>The app starts with no words. To begin with, it can add the first level of one of the two official tests' word lists; the words then wait in <b>Learn</b>, a few a day.</p>
           <!-- Chosen to suit the script picked above, when this screen is
@@ -715,7 +718,7 @@
             <label><input type="radio" name="welcome-start" value="tocfl|Novice 1" /> TOCFL, Novice 1: Taiwan's test, 182 words</label>
             <label><input type="radio" name="welcome-start" value="" /> Nothing for now</label>
           </fieldset>
-          <p class="hint">More levels, the radicals, and lists or words of your own can be added any time in <b>Decks</b>. Tap any word there to see its page: its learning tips, an example sentence, and the parts its characters are built from. If something about a word is wrong, <b>Edit</b> on that page corrects it; after you answer one of its cards, <b>About</b> and <b>Edit</b> do the same.</p>
+          <p class="hint">Everything is in the menu, ☰ at the top left; each screen explains itself with a short tip the first time. More levels, the radicals, and lists or words of your own can be added any time in <b>Decks</b>. Tap any word there to see its page: its learning tips, an example sentence, and the parts its characters are built from. If something about a word is wrong, <b>Edit</b> on that page corrects it; after you answer one of its cards, <b>About</b> and <b>Edit</b> do the same.</p>
           <p id="welcome-start-note" class="note"></p>
         </section>
 
@@ -770,12 +773,13 @@
             <button class="help-button" type="button" aria-label="What does this setting do?" aria-expanded="false" aria-controls="pronunciation-hint">?</button>
           </span>
           <select id="pronunciation-select">
-            <option value="mainlandOnly">Mainland only</option>
-            <option value="mainland">Both, mainland first</option>
-            <option value="taiwan">Both, Taiwan first</option>
+            <option value="mainlandOnly">Mainland China (普通话)</option>
+            <option value="taiwan">Taiwan (國語)</option>
+            <!-- Both readings, the mainland one listed first. -->
+            <option value="mainland">Both</option>
           </select>
           <p id="pronunciation-hint" class="hint" hidden>
-            Some words are read differently in Taiwan: 星期 is xīngqī on the mainland and xīngqí in Taiwan (more on <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">Taiwan's Mandarin</a>). With both, a card shows both readings and accepts both tones. The one named first is the reading a card expects. With mainland only, Taiwan readings are never shown or asked for.
+            A few words are read differently in Taiwan and on the mainland: 星期 is xīngqí in Taiwan and xīngqī on the mainland (more on <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">Taiwan's Mandarin</a>). The reading you choose is the one shown and tested. With Taiwan, the mainland reading also appears beside it in small print, because dictionaries file words under it. With Both, cards show both readings and accept either tone. With Mainland China, Taiwan readings are never shown or asked for.
           </p>
         </div>
         </details>
@@ -915,6 +919,14 @@
           <button id="welcome-again-button" class="small" type="button">Show the introduction again</button>
           <button id="credits-button" class="small" type="button">Credits and licenses</button>
         </div>
+        <!-- The tips shown the first time each screen is opened (tips.js). -->
+        <label class="setting">
+          <input id="tips-checkbox" type="checkbox" />
+          Show a tip the first time each screen is opened
+        </label>
+        <div class="setting">
+          <button id="tips-again-button" class="small" type="button">Show all tips again</button>
+        </div>
         <p class="hint">
           Send feedback, questions or a report of something broken to
           <a href="mailto:hanzifeedback.veggie892@passmail.com">hanzifeedback.veggie892@passmail.com</a>,
@@ -930,6 +942,13 @@
         <button id="settings-close" class="primary" type="button">Done</button>
       </dialog>
     </main>
+
+    <!-- A tip the first time a screen is opened (tips.js). A popover, so that
+         it lies above a pop-up panel opened before it. -->
+    <div id="tip-card" class="tip-card" popover="manual" role="status">
+      <p id="tip-text"></p>
+      <button id="tip-dismiss" class="small primary" type="button">Got it</button>
+    </div>
 
     <script type="module" src="/src/main.js"></script>
   </body>

@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, reloadApp, tap, type, choose, textOf, waitUntil, addTestWords, openLearn, ANSWER_YES } from './harness.js';
+import { startApp, startBrowsers, reloadApp, tap, type, choose, textOf, waitUntil, addTestWords, openDeckPage, openLearn, ANSWER_YES } from './harness.js';
 
 // Text for "the Decks tab's list has this many rows".
 const rows = (count) => `document.querySelectorAll('#word-list li').length === ${count}`;
@@ -33,12 +33,12 @@ describe('the Decks tab', { concurrency: false }, () => {
       `document.getElementById('done-message').textContent === 'You have no words yet. Add some in Decks, in the menu.'`,
       'the note that there are no words',
     );
-    await tap(page, 'decks-tab');
+    await openDeckPage(page);
     assert.equal(await textOf(page, 'word-count'), '0');
     await addTestWords(page);
     // The pop-up that asks before a word is removed: answer OK.
     await page.evaluate(ANSWER_YES);
-    await tap(page, 'decks-tab');
+    await openDeckPage(page);
     await waitUntil(page, `document.getElementById('word-count').textContent !== '0'`, 'the word list');
     countAtStart = await wordCount(page);
   });
@@ -103,18 +103,44 @@ describe('the Decks tab', { concurrency: false }, () => {
   });
 
   it('fills in a word from the dictionary', async () => {
-    await tap(page, 'decks-tab');
+    await openDeckPage(page);
+    // (An empty form: a field with something typed in it is left alone.)
+    for (const field of ['traditional', 'simplified', 'pinyin', 'definition']) {
+      await type(page, `add-${field}`, '');
+    }
     await type(page, 'add-simplified', '图书馆');
     await waitUntil(page, `document.querySelector('#add-suggestions button') !== null`, 'a dictionary entry');
     assert.match(await textOf(page, '#add-suggestions button'), /圖書館 · 图书馆.*túshūguǎn.*library/);
-    await page.evaluate(`document.querySelector('#add-suggestions button').click()`);
-    const fields = await page.evaluate(`['traditional', 'simplified', 'pinyin', 'definition'].map(
+    // Filled in by itself, from the first entry, without a tap.
+    const fields = () => page.evaluate(`['traditional', 'simplified', 'pinyin', 'definition'].map(
       (name) => document.getElementById('add-' + name).value)`);
-    assert.deepEqual(fields, ['圖書館', '图书馆', 'tu2shu1guan3', 'library']);
+    await waitUntil(page, `document.getElementById('add-pinyin').value !== ''`, 'the fields filled in');
+    assert.deepEqual(await fields(), ['圖書館', '图书馆', 'tu2shu1guan3', 'library']);
+    assert.match(await textOf(page, '#add-suggestions button'), /filled in$/);
 
     await page.evaluate(`document.getElementById('add-word-form').requestSubmit()`);
     await waitUntil(page, `document.getElementById('word-count').textContent === '${countAtStart + 2}'`);
     assert.equal(await textOf(page, 'add-suggestions'), '');
+  });
+
+  it('fills in another reading when its entry is tapped, and keeps a meaning typed by hand', async () => {
+    await type(page, 'add-traditional', '行');
+    await waitUntil(page, `document.querySelectorAll('#add-suggestions button').length > 1`, 'the entries for 行');
+    // The dictionary lists háng first; the usual reading, from the HSK list, is filled in.
+    await waitUntil(page, `document.getElementById('add-pinyin').value === 'xing2'`, 'the usual reading of 行');
+    // Tapping another entry fills in that one, and it stays.
+    await page.evaluate(`document.querySelectorAll('#add-suggestions button')[0].click()`);
+    assert.equal(await page.evaluate(`document.getElementById('add-pinyin').value`), 'hang2');
+    assert.match(await textOf(page, '#add-suggestions button'), /filled in$/);
+    // A meaning typed by hand stays when the characters change.
+    await type(page, 'add-definition', 'my own meaning');
+    await type(page, 'add-traditional', '走');
+    await waitUntil(page, `document.getElementById('add-pinyin').value === 'zou3'`, 'the reading of 走');
+    assert.equal(await page.evaluate(`document.getElementById('add-definition').value`), 'my own meaning');
+    // Characters the dictionary does not have take out what was filled in by itself.
+    await type(page, 'add-traditional', '');
+    await waitUntil(page, `document.getElementById('add-pinyin').value === ''`, 'the reading taken out');
+    await type(page, 'add-definition', '');
   });
 
   it('says so when the characters typed are in the list already', async () => {
@@ -205,7 +231,7 @@ describe('the Decks tab', { concurrency: false }, () => {
     await tap(page, 'my-decks-button');
     await page.evaluate(`document.querySelector('#deck-path button').click()`);
     await waitUntil(page, `document.querySelectorAll('#deck-list li').length === 2`, 'the two decks');
-    assert.match(await textOf(page, '#deck-list li:last-child .deck-entry'), /^HSK 1 \(2\.0\)150 words · 0 learned \(0%\) · 11 decks inside$/);
+    assert.match(await textOf(page, '#deck-list li:first-child .deck-entry'), /^HSK 1 \(2\.0\)150 words · 0 learned \(0%\) · 11 decks inside$/);
     assert.equal(await wordCount(page), before + adding);
     // The steps after this one count from the start; they count these in too.
     countAtStart += adding;
@@ -231,6 +257,7 @@ describe('the Decks tab', { concurrency: false }, () => {
     await reloadApp(page);
     await openLearn(page);
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('貓頭鷹')`, 'the word still first in line');
+    // The front page of Decks lists every word.
     await tap(page, 'decks-tab');
     await waitUntil(page, `document.getElementById('word-count').textContent === '${countAtStart + 3}'`);
     await type(page, 'word-search', 'peacock');

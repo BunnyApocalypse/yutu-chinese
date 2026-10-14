@@ -11,6 +11,8 @@
 // The page side is the Decks tab (wordsPanel.js and decksPanel.js) and the
 // deck chooser in review.js.
 
+import { lastReviewOf } from './session.js';
+
 // The ready-made lists and their levels, in order. The IDs are the `data-list`
 // of the rows in the Ready-made decks section of index.html, and the levels are those in the first
 // column of the files in data/wordlists/ (a test checks they agree).
@@ -179,6 +181,37 @@ export function deckTree(decks) {
     }
   }
   return rows;
+}
+
+// When something last happened in each deck, for listing the most active
+// first (the owner, 2026-10-14): the latest of the deck's own change, a
+// change to a word in it (added, corrected, learned: `changedAt`,
+// `addedAt`, `learnedAt`) and a review of one of those words' cards. A deck
+// counts what happens in the decks inside it.
+//
+// Returns a Map from deck ID to a time (0 for a deck where nothing ever
+// happened, or that was never stamped).
+export function lastActivity(decks, words, cards) {
+  const reviewed = new Map(); // word ID → its latest review
+  for (const card of cards) {
+    reviewed.set(card.wordId, Math.max(reviewed.get(card.wordId) || 0, lastReviewOf(card) || 0));
+  }
+  const times = new Map(decks.map((deck) => [deck.id, deck.changedAt || 0]));
+  const note = (deckId, time) => {
+    // The deck and every deck it is inside (a circle is stopped by `seen`).
+    const seen = new Set();
+    for (let id = deckId; id && times.has(id) && !seen.has(id); id = decks.find((deck) => deck.id === id).parentId) {
+      seen.add(id);
+      times.set(id, Math.max(times.get(id), time));
+    }
+  };
+  for (const word of words) {
+    const time = Math.max(word.changedAt || 0, word.addedAt || 0, word.learnedAt || 0, reviewed.get(word.id) || 0);
+    for (const deckId of word.decks || []) {
+      note(deckId, time);
+    }
+  }
+  return times;
 }
 
 // The IDs of a deck and of every deck inside it, as a Set.

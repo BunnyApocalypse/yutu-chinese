@@ -95,8 +95,11 @@ describe('decks', { concurrency: false }, () => {
     assert.deepEqual(errors, [], 'the page threw errors');
   });
 
-  it('starts with one deck, open, which the first word goes into', async () => {
-    await waitUntil(page, titleIs('Chinese 中文'), 'the page of the deck the app starts with');
+  it('starts with one deck, on the front page, which the first word goes into', async () => {
+    // The tab opens on its front page, with the one deck the app starts with
+    // listed and none opened by itself.
+    await waitUntil(page, `document.getElementById('deck-head').hidden && ${deckRows(1)}`, 'the front page');
+    await openDeck('Chinese 中文');
     assert.equal(await textOf(page, 'deck-path'), 'Decks › Chinese 中文');
     assert.match(await addWord('貓', '猫', 'mao1', 'cat'), /^Added/);
     await waitUntil(page, rows(1));
@@ -106,12 +109,12 @@ describe('decks', { concurrency: false }, () => {
     await openLearn(page);
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('貓')`, 'the word in Learn');
     assert.equal(await page.evaluate(`document.getElementById('deck-select').hidden`), true);
+    // Back to Decks: the front page again, not the deck that was open.
     await tap(page, 'decks-tab');
-    await waitUntil(page, titleIs('Chinese 中文'), 'the same page again');
+    await waitUntil(page, `document.getElementById('deck-head').hidden`, 'the front page again');
   });
 
   it('makes a deck on the front page, and one inside it on its page', async () => {
-    await goUpTo('Decks');
     // The front page has no forms for adding words: every word is in a deck.
     assert.equal(await page.evaluate(`document.getElementById('deck-adding').hidden`), true);
     assert.equal(await textOf(page, 'word-count'), '1');
@@ -209,14 +212,15 @@ describe('decks', { concurrency: false }, () => {
 
     // "Review this deck" does the same for Review. A deck includes the decks inside it.
     await tap(page, 'decks-tab');
-    await goUpTo('Textbook');
+    await waitUntil(page, `document.getElementById('deck-head').hidden`, 'the front page');
+    await openDeck('Textbook');
     await tap(page, 'deck-review-button');
     await waitUntil(page, `document.getElementById('done-message').textContent.includes('2 words are waiting')`, 'Review for the deck');
     await tap(page, 'decks-tab');
   });
 
   it('deletes a deck and moves the words it leaves without one', async () => {
-    await goUpTo('Decks');
+    await waitUntil(page, `document.getElementById('deck-head').hidden`, 'the front page');
     await openDeck('Animals');
     await openSettings();
     await tap(page, 'deck-delete-button');
@@ -289,7 +293,7 @@ describe('decks', { concurrency: false }, () => {
     assert.deepEqual(me.decks, ['tocfl/Novice 1/01']);
     await tap(page, 'my-decks-button');
     await waitUntil(page, deckRows(2), 'the two decks');
-    assert.match(await textOf(page, '#deck-list li:last-child .deck-entry'), /^TOCFL Novice 1182 words · 0 learned \(0%\) · 11 decks inside$/);
+    assert.match(await textOf(page, '#deck-list li:first-child .deck-entry'), /^TOCFL Novice 1182 words · 0 learned \(0%\) · 11 decks inside$/);
   });
 
   it('adds the common radicals, and teaches one that is not a word', { timeout: 60000 }, async () => {

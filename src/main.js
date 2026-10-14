@@ -15,6 +15,7 @@ import { fileCardsByScript } from './scriptCards.js';
 import { missingReadyMadeDecks, wordsWithListsAsDecks, homeForEveryWord, flattenedReadyMadeDecks } from './decks.js';
 import { setUpOffline, keepData } from './offline.js';
 import { createWelcome } from './welcome.js';
+import { createTips } from './tips.js';
 import { buildBackup, checkBackup, describeBackup, restoreBackup } from './backup.js';
 import { mergeBackups, describeMerge } from './merge.js';
 import { ask, tell } from './confirm.js';
@@ -168,6 +169,8 @@ function startFreePractice() {
     const scriptFlag = byId('script-flag');
     scriptFlag.textContent = ownScript ? scriptFlagFor(word, settings) : '';
     scriptFlag.hidden = scriptFlag.textContent === '';
+    // A tip the first time something is written (tips.js).
+    document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'writing' }));
     return flow.start(text, {
       script: ownScript ? scriptFor(word, settings) : settings.script,
       rawInput: settings.rawInput,
@@ -211,6 +214,8 @@ function setMode(newMode) {
     return undefined;
   }
   if (reviewing) {
+    // A tip the first time (tips.js).
+    document.dispatchEvent(new CustomEvent('screen-shown', { detail: mode }));
     return review.activate(mode);
   }
   // Stops any card being shown and brings the study area back for writing.
@@ -605,6 +610,19 @@ async function startUp() {
   byId('welcome-again-button').addEventListener('click', () => {
     byId('settings-panel').close();
     welcome.open();
+  });
+
+  // The tips the first time each screen is opened, and their two controls
+  // in Settings (Help).
+  const tips = createTips();
+  await tips.load();
+  const tipsCheckbox = byId('tips-checkbox');
+  tipsCheckbox.checked = tips.on;
+  tipsCheckbox.addEventListener('change', () => tips.setOn(tipsCheckbox.checked));
+  byId('tips-again-button').addEventListener('click', async () => {
+    await tips.showAgain();
+    tipsCheckbox.checked = true;
+    byId('settings-panel').close();
   });
   // Free practice starts with an example character in the script being learned.
   if (settings.script === 'simplified' && wordInput.value === '學') {

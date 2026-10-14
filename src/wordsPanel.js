@@ -406,6 +406,8 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     if (readyMade) {
       readyReport.textContent = '';
       showReadyLevels();
+      // A tip the first time (tips.js).
+      document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'ready' }));
     }
   }
   // "My decks" tapped while a deck's page is open goes back to the front
@@ -451,10 +453,31 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   }
 
   // Fits the forms and their wording to the settings.
+  // The boxes for a word's readings are named by region, and with Taiwan's
+  // pronunciation chosen its box comes first (the owner, 2026-10-14: the two
+  // standards are to be treated alike). With Mainland China only, the one
+  // box is simply the pinyin.
+  function showReadingBoxes(taiwanAsked) {
+    const taiwanFirst = getSettings().pronunciation === 'taiwan';
+    const pinyinLabel = taiwanAsked ? 'Mainland reading' : 'Pinyin';
+    // (The example shows the tone numbers; spelled out, it did not fit a phone.)
+    addFields.pinyin.placeholder = `${pinyinLabel}: xue2xi2`;
+    addFields.pinyin.setAttribute('aria-label', `${pinyinLabel}, with tone numbers`);
+    byId('edit-pinyin-caption').textContent = pinyinLabel;
+    if (taiwanFirst) {
+      addFields.pinyin.before(addFields.pinyinTaiwan);
+      editPinyin.closest('label').before(editPinyinTaiwan.closest('label'));
+    } else {
+      pinyinPreview.after(addFields.pinyinTaiwan);
+      editPinyin.closest('label').after(editPinyinTaiwan.closest('label'));
+    }
+  }
+
   function applySettings() {
     const asks = asksFor();
     const both = asks.traditional && asks.simplified;
     const asked = scriptAsked();
+    showReadingBoxes(asks.taiwan);
     // A box that is out of sight is also emptied, so nothing stale is used.
     const showBox = (box, shown) => {
       box.hidden = !shown;
@@ -665,9 +688,15 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   let dictionaryLoading = null;
   // The characters field last typed in, which is what gets looked up.
   let lookedUpField = null;
-  // The dictionary entry last tapped to fill in the fields, until the
-  // characters are typed over.
+  // The dictionary entry the fields were last filled in from, by itself or
+  // by a tap, until the characters are typed over.
   let filledEntry = null;
+  // Whether that entry was tapped, rather than chosen by itself (a tapped
+  // one is kept; one chosen by itself gives way to a likelier one).
+  let entryTapped = false;
+  // What was last put in each field by itself (see autoFill), so that a
+  // field the learner has typed in is told apart and left alone.
+  const autoValues = new Map();
 
   // Returns a promise that is done once the dictionary is there, or could
   // not be fetched.
@@ -678,6 +707,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
         .then((text) => {
           dictionary = readDictionary(text);
           showSuggestions();
+          loadUsualReadings();
         })
         // Without the dictionary the fields are simply filled in by hand.
         .catch(() => {
@@ -729,14 +759,90 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   function fillIn(entry) {
     const asks = asksFor();
     filledEntry = entry;
+    entryTapped = true;
     fillInCharacters(entry);
     addFields.pinyin.value = entry.pinyin;
     addFields.pinyinTaiwan.value = asks.taiwan ? entry.pinyinTaiwan || '' : '';
     addFields.definition.value = proposeMeaning(entry.meanings, getSettings().meaningDetail);
+    // What a tap put there may be replaced by itself, as when filled in by
+    // itself, should the characters be typed over.
+    for (const field of [addFields.pinyin, addFields.pinyinTaiwan, addFields.definition]) {
+      autoValues.set(field, field.value);
+    }
     showPinyinPreview();
     addNote.textContent = '';
+    showSuggestions();
     // The meaning is the part most likely to want changing.
     addFields.definition.focus();
+  }
+
+  // Fills in the reading and meaning by themselves as the characters are
+  // typed, from the dictionary's first entry for them (the owner,
+  // 2026-10-14: having to tap an entry was one step too many); the entries
+  // listed under the box can still be tapped for another reading. A field
+  // the learner has typed in is left as it is, and so is the box being
+  // typed in; with `entry` null (nothing in the dictionary) what was filled
+  // in by itself is taken out again.
+  // The reading a word usually has, where the dictionary has several: the
+  // first one the HSK 3.0 list gives it (the list goes from the lowest level
+  // up, so that is the reading learned first: 行 xíng, not háng), else the
+  // TOCFL list's. By either form; filled in once both lists are fetched,
+  // which happens with the dictionary. (The dictionary itself lists a
+  // word's readings alphabetically, which says nothing of which is usual.)
+  const usualReading = new Map();
+  let usualReadingsLoading = null;
+  function loadUsualReadings() {
+    usualReadingsLoading =
+      usualReadingsLoading ||
+      Promise.all(['hsk-3.0', 'tocfl'].map((listId) => readyEntries(listId).catch(() => [])))
+        .then((lists) => {
+          for (const entry of lists.flat()) {
+            for (const form of [entry.simplified, entry.traditional]) {
+              if (!usualReading.has(form)) {
+                usualReading.set(form, entry.pinyin);
+              }
+            }
+          }
+          showSuggestions();
+        });
+    return usualReadingsLoading;
+  }
+
+  // The entry to fill in by itself: the one with the usual reading, if the
+  // lists know it, otherwise the dictionary's first.
+  function likeliestEntry(entries, typed) {
+    const usual = usualReading.get(typed);
+    return entries.find((entry) => entry.pinyin === usual) || entries[0] || null;
+  }
+
+  // Each lookup gives new records, so entries are compared by what they say.
+  const sameEntry = (a, b) =>
+    Boolean(a && b) && a.traditional === b.traditional && a.simplified === b.simplified && a.pinyin === b.pinyin;
+
+  function autoFill(entry) {
+    const asks = asksFor();
+    const put = (field, value) => {
+      const free = field.value === '' || field.value === autoValues.get(field);
+      if (free) {
+        field.value = value;
+        autoValues.set(field, value);
+      }
+    };
+    filledEntry = entry;
+    entryTapped = false;
+    put(addFields.pinyin, entry ? entry.pinyin : '');
+    put(addFields.pinyinTaiwan, entry && asks.taiwan ? entry.pinyinTaiwan || '' : '');
+    put(addFields.definition, entry ? proposeMeaning(entry.meanings, getSettings().meaningDetail) : '');
+    // The other script's box, where both are asked for. (The simplified
+    // box is left empty when the forms are the same, as its caption says.)
+    if (!scriptAsked()) {
+      if (lookedUpField === addFields.traditional) {
+        put(addFields.simplified, entry && entry.simplified !== entry.traditional ? entry.simplified : '');
+      } else {
+        put(addFields.traditional, entry ? entry.traditional : '');
+      }
+    }
+    showPinyinPreview();
   }
 
   // Shows, under the characters typed, the words in the list written the
@@ -744,6 +850,10 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   function showSuggestions() {
     const typed = lookedUpField.value.trim();
     const parts = [];
+    // Nothing typed: what was filled in by itself goes too.
+    if (typed === '' && !entryTapped) {
+      autoFill(null);
+    }
     if (typed !== '') {
       const alreadyHave = wordsWithSameCharacters({ traditional: typed, simplified: typed }, words);
       for (const word of alreadyHave) {
@@ -752,6 +862,11 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
         );
       }
       const entries = dictionary ? lookUp(dictionary, typed) : [];
+      // The fields follow the characters typed, unless an entry was tapped
+      // for these very characters.
+      if (dictionary && !(entryTapped && entries.some((entry) => sameEntry(entry, filledEntry)))) {
+        autoFill(likeliestEntry(entries, typed));
+      }
       for (const entry of entries.slice(0, MAX_SUGGESTIONS)) {
         const span = (className, text) => {
           const element = document.createElement('span');
@@ -770,8 +885,9 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
             'entry-definition',
             meanings.length > MAX_MEANINGS_LENGTH ? `${meanings.slice(0, MAX_MEANINGS_LENGTH)}…` : meanings,
           ),
-          span('entry-new', 'fill in'),
+          span('entry-new', sameEntry(entry, filledEntry) ? 'filled in' : 'use this'),
         );
+        button.classList.toggle('selected', sameEntry(entry, filledEntry));
         button.addEventListener('click', () => fillIn(entry));
         parts.push(button);
       }
@@ -788,6 +904,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     field.addEventListener('focus', loadDictionary);
     field.addEventListener('input', () => {
       filledEntry = null; // the characters are no longer the tapped entry's
+      entryTapped = false;
       lookedUpField = field;
       loadDictionary(); // in case the text arrived without the box being tapped
       showSuggestions();
@@ -837,6 +954,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     await putAll('words', [withDeck(existing || toAdd[0], deck.id)]);
     addForm.reset();
     filledEntry = null;
+    autoValues.clear();
     applySettings(); // "Cards in" is back to "As in Settings", so both boxes are
 
     pinyinPreview.textContent = '';
@@ -1459,14 +1577,22 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       if (newView === 'decks') {
         showSection(false);
       }
+      // Coming to the Decks tab always shows the front page, with the decks,
+      // and never opens one by itself (the owner, 2026-10-14: having
+      // "Chinese 中文" open to begin with misled new learners, above all
+      // after adding an HSK or TOCFL level). Before anything is waited for,
+      // like the section.
+      if (newView === 'decks' || openDeckId === undefined) {
+        openDeckId = null;
+        renderDecks(); // at once, from what was read before; again below
+        showView();
+      }
+      // A tip the first time each tab is opened (tips.js).
+      if (newView) {
+        document.dispatchEvent(new CustomEvent('screen-shown', { detail: newView }));
+      }
       applySettings();
       await load();
-      // The first time, with only the deck the app starts with, that deck's
-      // page is opened: it is where the first words go.
-      if (openDeckId === undefined) {
-        openDeckId = decks.length === 1 ? decks[0].id : null;
-        foldAddWord();
-      }
       renderDecks();
       showView();
       renderList();

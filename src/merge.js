@@ -40,6 +40,8 @@ const DEVICE_SETTINGS = [
   'audioOffline',
   'volume',
   'lastBackupAt',
+  'tipsSeen',
+  'tipsOn',
 ];
 
 const changedAt = (record) => (record && record.changedAt) || 0;

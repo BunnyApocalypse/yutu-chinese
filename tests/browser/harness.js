@@ -352,6 +352,15 @@ async function openFreePractice(page, appUrl, keepWelcome = false) {
           pronunciation.dispatchEvent(new Event('change', { bubbles: true }));
           return '';
         }
+        // The tips the first time each screen is opened lie over the page
+        // and could catch strokes; they are switched off as Settings does
+        // it (tips.browser.js switches them back on).
+        const tips = document.getElementById('tips-checkbox');
+        if (started && !${keepWelcome} && tips.checked) {
+          tips.checked = false;
+          tips.dispatchEvent(new Event('change', { bubbles: true }));
+          return '';
+        }
         const tab = document.getElementById('practice-tab');
         if (started && !tab.classList.contains('selected')) {
           tab.click();
@@ -399,30 +408,31 @@ export const type = (page, id, text) =>
     box.dispatchEvent(new Event('input', { bubbles: true }));
   })()`);
 
-// Opens the Decks tab on the page of a deck, where words are added: the page
-// it is on if it is on one (the first time, that of the deck the app starts
-// with), otherwise that of the first deck listed.
+// Opens the Decks tab on the page of a deck, where words are added. The tab
+// opens on its front page; this then opens "Chinese 中文", the deck the app
+// starts with, or the first deck listed if that is gone.
 export async function openDeckPage(page) {
   await tap(page, 'decks-tab');
-  await waitUntil(page, `document.querySelectorAll('#deck-list li').length > 0 || !document.getElementById('deck-adding').hidden`, 'the Decks tab');
-  if (await page.evaluate(`document.getElementById('deck-adding').hidden`)) {
-    await page.evaluate(`document.querySelector('#deck-list button').click()`);
-  }
+  await waitUntil(page, `document.querySelectorAll('#deck-list li').length > 0`, 'the Decks tab');
+  await page.evaluate(`(() => {
+    const decks = [...document.querySelectorAll('#deck-list .deck-entry')];
+    (decks.find((deck) => deck.querySelector('.entry-characters').textContent === 'Chinese 中文') || decks[0]).click();
+  })()`);
   await waitUntil(page, `!document.getElementById('deck-adding').hidden`, 'a deck\'s page');
 }
 
 // Opens Learn the way a learner does since it left the menu: from the Decks
-// tab, with "Learn this deck" on the deck's page that is open, or else with
-// the Learn button of the first deck's row on the front page. That deck is
-// then the one studied, and the Decks tab is left as it was.
+// tab's front page, with the Learn button of the row of "Chinese 中文" (the
+// deck the app starts with; the first deck if that is gone). That deck is
+// then the one studied.
 export async function openLearn(page) {
   await tap(page, 'decks-tab');
-  await waitUntil(page, `!document.getElementById('my-decks-section').hidden && (!document.getElementById('deck-head').hidden || document.querySelector('#deck-list li'))`, 'My decks');
-  if (!(await page.evaluate(`document.getElementById('deck-head').hidden`))) {
-    await tap(page, 'deck-learn-button');
-  } else {
-    await page.evaluate(`document.querySelector('#deck-list li .deck-learn').click()`);
-  }
+  await waitUntil(page, `document.getElementById('deck-head').hidden && document.querySelector('#deck-list li .deck-learn')`, 'the front page of Decks');
+  await page.evaluate(`(() => {
+    const rows = [...document.querySelectorAll('#deck-list li')];
+    const row = rows.find((li) => li.querySelector('.entry-characters').textContent === 'Chinese 中文') || rows[0];
+    row.querySelector('.deck-learn').click();
+  })()`);
   await waitUntil(page, `document.getElementById('place-title').textContent === 'Learn'`, 'Learn');
 }
 

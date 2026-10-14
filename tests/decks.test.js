@@ -21,6 +21,7 @@ import {
   DEFAULT_DECK,
   homeForEveryWord,
   flattenedReadyMadeDecks,
+  lastActivity,
 } from '../src/decks.js';
 import { parseReadyList, levelsOfReadyList, listTag } from '../src/words.js';
 
@@ -227,4 +228,25 @@ test('every word gets a deck, and there is always one deck', () => {
   // It is there already (renamed, even).
   const renamed = { ...DEFAULT_DECK, name: 'Mandarin' };
   assert.deepEqual(homeForEveryWord([{ id: 'a' }], [renamed]).decks, []);
+});
+
+test('a deck\'s last activity is the latest change to it, its words and their reviews, inside decks included', () => {
+  const decks = [
+    { id: 'book', name: 'Book', parentId: null, order: 0, changedAt: 10 },
+    { id: 'ch1', name: 'Chapter 1', parentId: 'book', order: 0, changedAt: 20 },
+    { id: 'other', name: 'Other', parentId: null, order: 1 },
+  ];
+  const words = [
+    { id: 'a', decks: ['ch1'], addedAt: 30, learnedAt: 40 },
+    { id: 'b', decks: ['other'], addedAt: 5, changedAt: 15 },
+  ];
+  const cards = [{ wordId: 'b', lastReviewedAt: 50 }, { wordId: 'a', lastReviewedAt: 35 }];
+  const times = lastActivity(decks, words, cards);
+  // Chapter 1's word was learned at 40, which counts for the book too.
+  assert.equal(times.get('ch1'), 40);
+  assert.equal(times.get('book'), 40);
+  // Other's word was reviewed at 50.
+  assert.equal(times.get('other'), 50);
+  // A deck where nothing happened.
+  assert.equal(lastActivity([{ id: 'x', parentId: null }], [], []).get('x'), 0);
 });

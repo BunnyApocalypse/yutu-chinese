@@ -77,7 +77,7 @@ export function startOfStudyDay(now) {
 
 // When a card was last reviewed. Cards saved before `lastReviewedAt` existed
 // only have the time inside their FSRS state, as text.
-function lastReviewOf(card) {
+export function lastReviewOf(card) {
   return card.lastReviewedAt ?? Date.parse(card.fsrsState.last_review);
 }
 

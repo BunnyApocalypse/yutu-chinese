@@ -39,7 +39,7 @@ describe('the introduction', { concurrency: false }, () => {
   it('opens by itself the first time', async () => {
     assert.equal(await page.evaluate(welcomeOpen), true);
     assert.equal(await heading(), 'Welcome to Hanzi Trainer');
-    assert.equal(await textOf(page, 'welcome-progress'), '1 of 6');
+    assert.equal(await textOf(page, 'welcome-progress'), '1 of 5');
     assert.equal(await isShown(page, 'welcome-back'), false);
   });
 
@@ -72,10 +72,9 @@ describe('the introduction', { concurrency: false }, () => {
     }
 
     await tap(page, 'welcome-next');
-    assert.equal(await heading(), 'How it works');
+    assert.equal(await heading(), 'Your words');
     await tap(page, 'welcome-back');
     assert.equal(await heading(), 'Four kinds of card');
-    await tap(page, 'welcome-next');
     await tap(page, 'welcome-next');
     assert.equal(await heading(), 'Your words');
     // A first level is suggested to suit the script and pronunciation chosen.
@@ -84,19 +83,17 @@ describe('the introduction', { concurrency: false }, () => {
     // Going back to change the script changes the suggestion...
     await tap(page, 'welcome-back');
     await tap(page, 'welcome-back');
-    await tap(page, 'welcome-back');
     await click('input[name="welcome-script"][value="simplified"]');
     await click('input[name="welcome-pronunciation"][value="mainlandOnly"]');
-    for (let screen = 0; screen < 3; screen++) {
+    for (let screen = 0; screen < 2; screen++) {
       await tap(page, 'welcome-next');
     }
     assert.equal(await page.evaluate(start), 'hsk-3.0|1');
     await tap(page, 'welcome-back');
     await tap(page, 'welcome-back');
-    await tap(page, 'welcome-back');
     await click('input[name="welcome-script"][value="traditional"]');
     await click('input[name="welcome-pronunciation"][value="taiwan"]');
-    for (let screen = 0; screen < 3; screen++) {
+    for (let screen = 0; screen < 2; screen++) {
       await tap(page, 'welcome-next');
     }
     // ...until one is chosen by hand. This run starts with nothing.
@@ -107,7 +104,7 @@ describe('the introduction', { concurrency: false }, () => {
   it('explains long-term storage before asking for it', async () => {
     await tap(page, 'welcome-next');
     assert.equal(await heading(), 'Keeping your data');
-    assert.equal(await textOf(page, 'welcome-progress'), '6 of 6');
+    assert.equal(await textOf(page, 'welcome-progress'), '5 of 5');
     // Nothing has been asked yet. The test's browser is a Chromium, which
     // decides by itself, so the app says to install first.
     assert.equal(await isShown(page, 'welcome-keep-button'), true);
@@ -234,7 +231,7 @@ describe('the introduction', { concurrency: false }, () => {
     // To the screen about words. With words on the device already (from the
     // steps before), nothing is suggested; a level chosen is added when the
     // introduction is finished.
-    for (let screen = 0; screen < 4; screen++) {
+    for (let screen = 0; screen < 3; screen++) {
       await tap(page, 'welcome-next');
     }
     assert.equal(await heading(), 'Your words');

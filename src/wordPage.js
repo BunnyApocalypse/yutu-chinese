@@ -401,6 +401,8 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
     delete dialog.dataset.shown;
     if (!dialog.open) {
       dialog.showModal();
+      // A tip the first time (tips.js); after the page is open, so it lies above it.
+      document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'wordPage' }));
     }
     return show(target);
   }

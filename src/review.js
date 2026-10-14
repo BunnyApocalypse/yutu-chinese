@@ -493,6 +493,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       skippedPerChar: result.skippedPerChar,
     });
 
+    // A tip the first time something is written (tips.js).
+    document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'writing' }));
     return flows.writing.start(asked.text, {
       script,
       rawInput: settings.rawInput,
@@ -722,6 +724,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       return true;
     }
     showPartsFor('writing');
+    // A tip the first time something is written (tips.js).
+    document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'writing' }));
     return flows.writing.start(word[script], {
       script,
       rawInput: settings.rawInput,
