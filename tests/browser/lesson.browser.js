@@ -18,6 +18,7 @@ import {
   textOf,
   isShown,
   waitUntil,
+  openLearn,
 } from './harness.js';
 
 const statusIs = (start) => `document.getElementById('status').textContent.startsWith('${start}')`;
@@ -104,13 +105,23 @@ describe('learning new words', { concurrency: false }, () => {
 
   it('keeps words out of Review until they are learned', async () => {
     assert.equal(await textOf(page, 'done-message'), 'Nothing to review yet. 3 words are waiting in Learn.');
-    await tap(page, 'learn-tab');
+    // Learn is not in the menu; Review offers the way there.
+    assert.equal(await textOf(page, 'learn-next-button'), 'Learn new words');
+    assert.equal(await isShown(page, 'learn-next-button'), true);
+    await tap(page, 'learn-next-button');
     await waitUntil(page, stepIs('step 1 of 5'), 'the first word');
     assert.equal(await textOf(page, 'review-counts'), 'Learned today 0 of 5 · 3 waiting');
   });
 
-  it('starts with a look at the word, then its tones as practice', async () => {
-    assert.equal(await textOf(page, 'card-face'), '大dàbig');
+  it('starts with a look at the word and its learning tip, then its tones as practice', async () => {
+    // The word, its reading and meaning, and once the notes are there, its tip.
+    await waitUntil(page, `document.querySelector('#card-face .face-tip')`, 'the tip');
+    assert.match(await textOf(page, 'card-face'), /^大dàbig"Big"\./);
+    // "More about this word" opens its page, and the lesson stays where it was.
+    await page.evaluate(`document.querySelector('#card-face .face-tip-more').click()`);
+    await waitUntil(page, `document.getElementById('word-page').dataset.shown === '大|da4'`, 'the word\'s page');
+    await tap(page, 'word-page-close');
+    assert.ok(await page.evaluate(stepIs('step 1 of 5')));
     await tap(page, 'lesson-next-button');
     await waitUntil(page, stepIs('step 2 of 5'), 'step 2');
     assert.match(await textOf(page, 'lesson-note'), /tones/);
@@ -188,7 +199,7 @@ describe('learning new words', { concurrency: false }, () => {
   });
 
   it('lets a known word skip its lesson altogether', { timeout: 60000 }, async () => {
-    await tap(page, 'learn-tab');
+    await openLearn(page);
     await waitUntil(page, `${stepIs('step 1 of 5')} && document.getElementById('card-face').textContent.startsWith('小')`, 'the next word');
     assert.equal(await textOf(page, 'skip-lesson-button'), 'I know this word');
     await tap(page, 'skip-lesson-button');

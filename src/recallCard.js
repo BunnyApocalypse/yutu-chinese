@@ -45,6 +45,7 @@ export function createRecallCard(cardFace) {
       cardFace.firstElementChild,
       ...(ask === 'meaning' ? [meaning, ...pinyin] : [...pinyin, meaning]),
     );
+    current.onAnswerShown?.();
   }
 
   function reveal() {
@@ -76,6 +77,8 @@ export function createRecallCard(cardFace) {
     //   reading: which reading to show (from readingsFor in tones.js)
     //   onReveal():   the answer was shown
     //   onContinue(): the card was tapped again after the answer was shown
+    //   onAnswerShown(): optional; the answer was put on the face (each time,
+    //                 also after update()), so more can be added under it
     start(options) {
       current = options;
       revealed = false;

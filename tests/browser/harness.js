@@ -411,6 +411,21 @@ export async function openDeckPage(page) {
   await waitUntil(page, `!document.getElementById('deck-adding').hidden`, 'a deck\'s page');
 }
 
+// Opens Learn the way a learner does since it left the menu: from the Decks
+// tab, with "Learn this deck" on the deck's page that is open, or else with
+// the Learn button of the first deck's row on the front page. That deck is
+// then the one studied, and the Decks tab is left as it was.
+export async function openLearn(page) {
+  await tap(page, 'decks-tab');
+  await waitUntil(page, `!document.getElementById('my-decks-section').hidden && (!document.getElementById('deck-head').hidden || document.querySelector('#deck-list li'))`, 'My decks');
+  if (!(await page.evaluate(`document.getElementById('deck-head').hidden`))) {
+    await tap(page, 'deck-learn-button');
+  } else {
+    await page.evaluate(`document.querySelector('#deck-list li .deck-learn').click()`);
+  }
+  await waitUntil(page, `document.getElementById('place-title').textContent === 'Learn'`, 'Learn');
+}
+
 // The app starts with no words. This gives it the test word list
 // (tests/words.tsv, 109 common words) through the Decks tab's "Add a list",
 // and goes back to Free practice.

@@ -31,7 +31,6 @@ import dictionaryUrl from '../data/cedict/dictionary.tsv?url';
 const byId = (id) => document.getElementById(id);
 
 const reviewTab = byId('review-tab');
-const learnTab = byId('learn-tab');
 const practiceTab = byId('practice-tab');
 const wordsTab = byId('decks-tab');
 // The Words tab: the same panel as the Decks tab, showing its list of words.
@@ -198,7 +197,6 @@ function setMode(newMode) {
   // Review and Learn share the top of the page and the study area.
   const reviewing = mode === 'review' || mode === 'learn';
   reviewTab.classList.toggle('selected', mode === 'review');
-  learnTab.classList.toggle('selected', mode === 'learn');
   practiceTab.classList.toggle('selected', mode === 'practice');
   wordsTab.classList.toggle('selected', mode === 'words');
   browseTab.classList.toggle('selected', mode === 'browse');
@@ -245,7 +243,14 @@ sideMenu.addEventListener('click', (event) => {
 const PLACE_TITLES = { review: 'Review', learn: 'Learn', practice: 'Free practice', words: 'Decks', browse: 'Words' };
 
 reviewTab.addEventListener('click', () => setMode('review'));
-learnTab.addEventListener('click', () => setMode('learn'));
+// Learn is opened from a deck (its row in Decks, or its page), and from
+// Review when nothing is due and words are waiting (the owner, 2026-10-14:
+// learning goes with a deck, so Learn left the menu).
+byId('learn-next-button').addEventListener('click', () => {
+  if (mode === 'review') {
+    setMode('learn');
+  }
+});
 practiceTab.addEventListener('click', () => setMode('practice'));
 wordsTab.addEventListener('click', () => setMode('words'));
 browseTab.addEventListener('click', () => setMode('browse'));
@@ -567,6 +572,7 @@ async function startUp() {
     settings,
     (word) => wordsPanel.edit(word),
     (word) => wordsPanel.showWord(word),
+    (word) => wordsPanel.noteOf(word),
   );
 
   await review.load();

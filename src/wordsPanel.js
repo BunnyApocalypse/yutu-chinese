@@ -1425,6 +1425,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
 
   return {
     addReadyLevels,
+    noteOf: (word) => wordPage.noteOf(word),
 
     // Opens a word's panel from elsewhere in the app (Review's "Edit word").
     // Returns a promise for what became of the word once the panel is closed:

@@ -190,8 +190,21 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
         bar,
       );
       button.addEventListener('click', () => open(deck.id));
+      // Learning and reviewing start from a deck (the owner, 2026-10-14:
+      // Learn is no longer in the menu).
+      const actions = document.createElement('div');
+      actions.className = 'deck-actions';
+      for (const [label, mode] of [['Learn', 'learn'], ['Review', 'review']]) {
+        const action = document.createElement('button');
+        action.type = 'button';
+        action.className = `small deck-${mode}`;
+        action.textContent = label;
+        action.addEventListener('click', () => study(deck.id, mode));
+        actions.append(action);
+      }
       const row = document.createElement('li');
-      row.append(button);
+      row.className = 'deck-row';
+      row.append(button, actions);
       return row;
     });
     listElement.replaceChildren(...rows);

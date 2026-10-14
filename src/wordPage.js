@@ -406,6 +406,9 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
   }
 
   return {
+    // The learning note of one of your words, or null (for the tip on a
+    // card: cardTip.js). The notes are fetched the first time.
+    noteOf: async (word) => noteFor(await loadNotes(), word),
     // Opens the page of one of your words.
     open: (word) => start({ word }),
     // Opens the page for some characters, whatever they are.

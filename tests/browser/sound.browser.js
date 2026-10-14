@@ -10,7 +10,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, type, choose, waitUntil, openDeckPage, isShown, ANSWER_YES } from './harness.js';
+import { startApp, startBrowsers, tap, type, choose, waitUntil, openDeckPage, openLearn, isShown, ANSWER_YES } from './harness.js';
 
 const spoken = `document.getElementById('listen-button').dataset.spoken`;
 // The addresses of the recordings the page has fetched so far.
@@ -53,7 +53,7 @@ describe('hearing a word', { concurrency: false }, () => {
       await page.evaluate(`document.getElementById('add-word-form').requestSubmit()`);
       await waitUntil(page, `document.getElementById('add-word-note').textContent.includes('${traditional}')`, 'the word added');
     }
-    await tap(page, 'learn-tab');
+    await openLearn(page);
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('學習')`, 'the first look at the word');
     assert.equal(await isShown(page, 'listen-button'), true);
     // Sound plays by itself, as the setting has it to begin with, but not
@@ -85,7 +85,7 @@ describe('hearing a word', { concurrency: false }, () => {
     await page.evaluate(ANSWER_YES);
     await tap(page, 'remove-word-button');
     await waitUntil(page, `document.querySelectorAll('#word-list li').length === 1`, 'one word left');
-    await tap(page, 'learn-tab');
+    await openLearn(page);
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('xīngqí')`, 'the Taiwan reading');
     await tap(page, 'listen-button');
     await waitUntil(page, `${spoken} === '星期|xing1qi1 syllables'`, 'the word spoken syllable by syllable');

@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, type, choose, textOf, waitUntil } from './harness.js';
+import { startApp, startBrowsers, tap, type, choose, textOf, waitUntil, openLearn } from './harness.js';
 
 const rows = (count) => `document.querySelectorAll('#word-list li').length === ${count}`;
 const deckRows = (count) => `document.querySelectorAll('#deck-list li').length === ${count}`;
@@ -103,7 +103,7 @@ describe('decks', { concurrency: false }, () => {
     assert.deepEqual(await decksOf('貓'), ['chinese']);
     assert.match(await textOf(page, 'deck-counts'), /^1 word · 0 learned/);
     // With one deck there is nothing to choose in Learn.
-    await tap(page, 'learn-tab');
+    await openLearn(page);
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('貓')`, 'the word in Learn');
     assert.equal(await page.evaluate(`document.getElementById('deck-select').hidden`), true);
     await tap(page, 'decks-tab');
@@ -198,7 +198,7 @@ describe('decks', { concurrency: false }, () => {
     await waitUntil(page, `!document.getElementById('deck-dialog').open`, 'the deck settings to close');
 
     await tap(page, 'deck-learn-button');
-    await waitUntil(page, `document.getElementById('learn-tab').classList.contains('selected')`, 'the Learn tab');
+    await waitUntil(page, `document.getElementById('place-title').textContent === 'Learn'`, 'Learn');
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('狗')`, 'the word of the deck');
     assert.match(await textOf(page, 'review-counts'), /of 7 · 1 waiting/);
     assert.equal(await page.evaluate(`document.getElementById('deck-select').selectedOptions[0].textContent`), 'Textbook › Chapter 1');
@@ -250,7 +250,7 @@ describe('decks', { concurrency: false }, () => {
     assert.deepEqual(marks.map((mark) => mark.id).filter((id) => id.includes('|')), ['狗|gou3']);
     assert.equal(marks.filter((mark) => mark.kind === 'deck').length, 3);
     // The deck that was being studied is gone: all words are studied again.
-    await tap(page, 'learn-tab');
+    await openLearn(page);
     await waitUntil(page, `document.getElementById('review-counts').textContent.includes('2 waiting')`, 'all words in Learn');
     await tap(page, 'decks-tab');
   });
@@ -289,7 +289,7 @@ describe('decks', { concurrency: false }, () => {
     assert.deepEqual(me.decks, ['tocfl/Novice 1/01']);
     await tap(page, 'my-decks-button');
     await waitUntil(page, deckRows(2), 'the two decks');
-    assert.match(await textOf(page, '#deck-list li:last-child'), /^TOCFL Novice 1182 words · 0 learned \(0%\) · 11 decks inside$/);
+    assert.match(await textOf(page, '#deck-list li:last-child .deck-entry'), /^TOCFL Novice 1182 words · 0 learned \(0%\) · 11 decks inside$/);
   });
 
   it('adds the common radicals, and teaches one that is not a word', { timeout: 60000 }, async () => {
@@ -316,7 +316,7 @@ describe('decks', { concurrency: false }, () => {
     // Learning the radicals' deck, the words TOCFL brought come first (they
     // were in line already); past them, a radical's lesson is a first look
     // and three writing steps, with no tones and nothing to hear.
-    await tap(page, 'learn-tab');
+    await openLearn(page);
     await choose(page, 'deck-select', 'radicals/Common');
     const typeShown = `document.getElementById('card-type').textContent`;
     await waitUntil(page, `${typeShown}.startsWith('New ')`, 'a lesson');

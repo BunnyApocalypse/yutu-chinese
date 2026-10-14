@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, reloadApp, tap, type, choose, textOf, waitUntil, addTestWords, ANSWER_YES } from './harness.js';
+import { startApp, startBrowsers, reloadApp, tap, type, choose, textOf, waitUntil, addTestWords, openLearn, ANSWER_YES } from './harness.js';
 
 // Text for "the Decks tab's list has this many rows".
 const rows = (count) => `document.querySelectorAll('#word-list li').length === ${count}`;
@@ -96,7 +96,7 @@ describe('the Decks tab', { concurrency: false }, () => {
   });
 
   it('brings the word up as the next one in the Learn tab', async () => {
-    await tap(page, 'learn-tab');
+    await openLearn(page);
     // A lesson starts with a look at the word.
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('貓頭鷹')`, 'the lesson for the new word');
     assert.equal(await textOf(page, 'words-panel'), '');
@@ -205,7 +205,7 @@ describe('the Decks tab', { concurrency: false }, () => {
     await tap(page, 'my-decks-button');
     await page.evaluate(`document.querySelector('#deck-path button').click()`);
     await waitUntil(page, `document.querySelectorAll('#deck-list li').length === 2`, 'the two decks');
-    assert.match(await textOf(page, '#deck-list li:last-child'), /^HSK 1 \(2\.0\)150 words · 0 learned \(0%\) · 11 decks inside$/);
+    assert.match(await textOf(page, '#deck-list li:last-child .deck-entry'), /^HSK 1 \(2\.0\)150 words · 0 learned \(0%\) · 11 decks inside$/);
     assert.equal(await wordCount(page), before + adding);
     // The steps after this one count from the start; they count these in too.
     countAtStart += adding;
@@ -229,7 +229,7 @@ describe('the Decks tab', { concurrency: false }, () => {
 
   it('keeps it all when the app is opened again', async () => {
     await reloadApp(page);
-    await tap(page, 'learn-tab');
+    await openLearn(page);
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('貓頭鷹')`, 'the word still first in line');
     await tap(page, 'decks-tab');
     await waitUntil(page, `document.getElementById('word-count').textContent === '${countAtStart + 3}'`);

@@ -30,7 +30,6 @@
       <dialog id="side-menu" class="side-menu" aria-label="Menu">
         <nav id="main-tabs" class="side-menu-items">
           <button id="review-tab" class="selected" type="button">Review</button>
-          <button id="learn-tab" type="button">Learn</button>
           <button id="decks-tab" type="button">Decks</button>
           <button id="words-tab" type="button">Words</button>
         </nav>
@@ -110,7 +109,8 @@
       <!-- Review mode, when nothing is due -->
       <div id="done-panel" class="done-panel" hidden>
         <p id="done-message"></p>
-        <!-- The Learn tab, between two words: on to the next one (review.js). -->
+        <!-- In Learn, between two words: on to the next one; in Review, with
+             nothing due and words waiting: to Learn (review.js, main.js). -->
         <button id="learn-next-button" class="primary" type="button" hidden>Learn the next word</button>
       </div>
 
@@ -696,12 +696,12 @@
 
         <section data-step hidden>
           <h2>How it works</h2>
-          <p><b>Learn</b> teaches the words that are waiting, one at a time: you look at the word, practice its tones, then write it, first with each stroke shown, then from memory. A few a day is plenty (the goal starts at 5), so reviews don't pile up.</p>
+          <p><b>Learn</b>, opened from a deck, teaches its words that are waiting, one at a time: you look at the word, practice its tones, then write it, first with each stroke shown, then from memory. A few a day is plenty (the goal starts at 5), so reviews don't pile up.</p>
           <p><b>Review</b> brings back the words you have learned, each just before you would forget it. After answering you grade yourself, Again, Hard, Good or Easy; where the app can check your answer, it suggests a grade.</p>
           <p><b>Writing:</b> write anywhere in the box, at any size. Your own strokes stay on screen, and two strokes joined the way handwriting joins them are accepted.</p>
           <p><b>Already know a word?</b> Tap <b>I know this word</b> during its lesson to skip it. It still comes back in Review now and then, to check.</p>
           <p><b>Sound:</b> words are spoken as you study them. Settings has a volume slider, and can make them speak only when you tap the loudspeaker, or not at all.</p>
-          <p>Everything is in the <b>menu</b>, ☰ at the top left: Review, Learn, Decks (your decks of words, and ready-made ones), Words (all your words, and <b>Free practice</b>, which lets you try any card or write any characters without anything being recorded) and Settings.</p>
+          <p>Everything else is in the <b>menu</b>, ☰ at the top left: Review, Decks (your decks of words, each with its Learn and Review, and ready-made ones), Words (all your words, and <b>Free practice</b>, which lets you try any card or write any characters without anything being recorded) and Settings.</p>
         </section>
 
         <section data-step hidden>

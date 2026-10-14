@@ -243,7 +243,7 @@ describe('the introduction', { concurrency: false }, () => {
     await tap(page, 'welcome-next');
     assert.equal(await textOf(page, 'welcome-next'), 'Start learning');
     await tap(page, 'welcome-next');
-    await waitUntil(page, `!${welcomeOpen} && document.getElementById('learn-tab').classList.contains('selected')`, 'Learn');
+    await waitUntil(page, `!${welcomeOpen} && document.getElementById('place-title').textContent === 'Learn'`, 'Learn');
     const words = await page.evaluate(`new Promise((resolve) => {
       const opening = indexedDB.open('hanzi-trainer');
       opening.onsuccess = () => {

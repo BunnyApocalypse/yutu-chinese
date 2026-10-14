@@ -30,6 +30,7 @@ import { speak } from './speech.js';
 import { markedKnown } from './cardManager.js';
 import { isSentence, sentenceCardTypes, sentenceWriting } from './sentences.js';
 import { isRadical, RADICAL_CARD_TYPES } from './radicals.js';
+import { cardTip } from './cardTip.js';
 
 // The same for a sentence, which has two kinds of card (see sentences.js).
 const SENTENCE_LABELS = {
@@ -63,12 +64,14 @@ const RECHECK_MS = 15 * 1000;
 // settings: the current settings (see settings.js)
 // editWord(word): opens the word's panel to change it; returns a promise for
 //           { changed, word } (see edit() in wordsPanel.js)
+// showWord(word): opens the word's page
+// noteOf(word): a promise for the word's learning note, or null
 //
 // The deck studied is chosen with `deckSelect`, at the top of Review and
 // Learn (see "Studying one deck").
 //
 // Returns { load, activate, deactivate, practice, refresh }.
-export function createReview(elements, flows, settings, editWord, showWord) {
+export function createReview(elements, flows, settings, editWord, showWord, noteOf) {
   const {
     deckSelect,
     countsElement,
@@ -135,6 +138,8 @@ export function createReview(elements, flows, settings, editWord, showWord) {
   // Shows the parts of the study area that the given kind of card uses, and
   // hides the rest.
   function showPartsFor(type) {
+    // A tip on the face belongs to the card it was put on (addTip).
+    cardFace.classList.remove('with-tip');
     const writing = type === 'writing';
     const tone = type === 'tone';
     writingRow.hidden = !writing;
@@ -543,14 +548,32 @@ export function createReview(elements, flows, settings, editWord, showWord) {
   // Meaning and pinyin cards: nothing is checked, so "Good" is highlighted
   // and you choose.
   function showRecallCard(ask) {
+    const { word } = current;
+    const script = scriptFor(word, settings);
     flows.recall.start({
-      word: current.word,
-      script: scriptFor(current.word, settings),
+      word,
+      script,
       reading: readingOf(current.word),
       ask,
       onReveal: () => offerGrades(GOOD, {}),
       onContinue: () => grade(suggested),
+      // Under the answer, the word's learning tip (cardTip.js).
+      onAnswerShown: () => addTip(word, script, () => current && current.word === word && current.type === ask),
     });
+  }
+
+  // Puts the word's learning tip on the card's face once its note is there,
+  // if the card is still the one it was for (`still()` says so). A word
+  // without a note gets nothing.
+  function addTip(word, script, still) {
+    noteOf(word)
+      .then((note) => {
+        if (note && still()) {
+          cardFace.classList.add('with-tip');
+          cardFace.append(cardTip(note, script, () => showWord(word)));
+        }
+      })
+      .catch(() => {});
   }
 
   // Shows a tone, pinyin or meaning card for Free practice. Returns false if
@@ -664,6 +687,10 @@ export function createReview(elements, flows, settings, editWord, showWord) {
         ...(described.other ? [face('face-hint', described.other)] : []),
         face('face-meaning', word.definition),
       );
+      // The word's learning tip, so that every word's is seen once, as it is
+      // met (cardTip.js).
+      const lessonNow = lesson;
+      addTip(word, script, () => lesson === lessonNow && lesson.steps[lesson.index] === 'meet');
       lessonNextButton.hidden = false;
       // The word is spoken by itself only once something has been tapped
       // here: not on arriving at the tab, when a voice out of nowhere would
@@ -828,6 +855,7 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     studyArea.hidden = true;
     typeElement.textContent = '';
     doneMessage.textContent = message;
+    learnNextButton.textContent = 'Learn the next word';
     learnNextButton.hidden = !canGoOn;
     donePanel.hidden = false;
   }
@@ -853,7 +881,12 @@ export function createReview(elements, flows, settings, editWord, showWord) {
     }
   }
 
-  learnNextButton.addEventListener('click', startNextWord);
+  // In Review the same button opens Learn (main.js does that).
+  learnNextButton.addEventListener('click', () => {
+    if (mode === 'learn') {
+      startNextWord();
+    }
+  });
 
   // What the Learn tab shows: the next word's lesson or, between two words
   // and when there is nothing to learn, a message.
@@ -1021,6 +1054,10 @@ export function createReview(elements, flows, settings, editWord, showWord) {
       } else {
         doneMessage.textContent = `All done for now. ${describeWait(plan.nextDueAt, now)}${waiting}`;
       }
+      // Learn is not in the menu (it is opened from a deck), so Review offers
+      // the way there when words are waiting.
+      learnNextButton.textContent = 'Learn new words';
+      learnNextButton.hidden = plan.waitingCount === 0;
       donePanel.hidden = false;
       // Cards come back after a few minutes, so keep checking.
       recheckTimer = setTimeout(showNext, RECHECK_MS);
