@@ -252,6 +252,18 @@ export async function createSettings(elements, onChange) {
     panel.showModal();
   });
   closeButton.addEventListener('click', () => panel.close());
+  // A tap beside the panel, on the dimmed page, closes it too (the owner,
+  // 2026-10-15); every setting is saved as soon as it is changed, so
+  // nothing is lost. Such a tap reaches the <dialog> element itself, as does
+  // a tap on the panel's own padding, so where it landed decides.
+  panel.addEventListener('click', (event) => {
+    const box = panel.getBoundingClientRect();
+    const outside =
+      event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom;
+    if (event.target === panel && outside) {
+      panel.close();
+    }
+  });
 
   fillPanel();
   settings.change = change;

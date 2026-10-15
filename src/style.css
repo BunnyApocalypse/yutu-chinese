@@ -1644,9 +1644,11 @@ html:has(dialog[open]) {
   font-size: 1.5rem;
 }
 
-/* "trad. 繁體" or "simp. 简体" before the sentence, when both are shown. */
+/* "trad." or "simp." before the sentence, when both are shown. Both the
+   same width, so that the two sentences start at the same place. */
 .sentence-script {
-  margin-right: 8px;
+  display: inline-block;
+  width: 3em;
   font-size: 0.8rem;
   color: var(--muted);
   vertical-align: middle;

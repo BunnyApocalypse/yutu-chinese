@@ -386,6 +386,24 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     await device('');
   });
 
+  it('closes Settings with a tap beside the panel, not with a tap on it', async () => {
+    const isOpen = `document.getElementById('settings-panel').open`;
+    const tapAt = async (x, y) => {
+      for (const type of ['mousePressed', 'mouseReleased']) {
+        await page.send('Input.dispatchMouseEvent', { type, x, y, button: 'left', clickCount: 1 });
+      }
+    };
+    await tap(page, 'settings-button');
+    await waitUntil(page, isOpen, 'Settings');
+    // On the panel's own edge, inside it: it stays.
+    const box = await page.evaluate(`(() => { const box = document.getElementById('settings-panel').getBoundingClientRect(); return { x: box.x, y: box.y }; })()`);
+    await tapAt(box.x + 4, box.y + 4);
+    assert.equal(await page.evaluate(isOpen), true);
+    // On the dimmed page above it: it closes.
+    await tapAt(box.x + 4, box.y / 2);
+    await waitUntil(page, `!${isOpen}`, 'Settings to close');
+  });
+
   it('opens a tab that was tapped before the app had started', async () => {
     // Makes every page loaded from now on tap Free practice as soon as it has
     // been read, which is before the app has opened its database.

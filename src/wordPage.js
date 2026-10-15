@@ -192,12 +192,11 @@ export function createWordPage({
       const traditional = sentence === note.example.traditional;
       line.lang = traditional ? 'zh-Hant-TW' : 'zh-Hans-CN';
       // With the sentence in both scripts, each says which it is (the owner,
-      // 2026-10-15), in the words of the flag on cards (scriptFlagFor). The
-      // label is English with its Chinese marked as such (lang.js).
+      // 2026-10-15: in English only, as English and Chinese were too busy).
+      // The label is English inside a line marked as Chinese (lang.js).
       if (sentences.length > 1) {
-        const label = element('span', 'sentence-script');
+        const label = element('span', 'sentence-script', traditional ? 'trad.' : 'simp.');
         label.lang = 'en';
-        fillMixed(label, traditional ? 'trad. 繁體' : 'simp. 简体', traditional ? 'traditional' : 'simplified');
         line.append(label);
       }
       // Each word of the sentence can be tapped; punctuation is plain text.
