@@ -46,12 +46,22 @@ The owner wants to bring their Skritter data across eventually rather than start
 
 ## Translations and other languages (future)
 
-Discussed with the owner on 2026-10-15; nothing decided or built. The owner's reasons and the languages they have in mind were still open questions.
+Discussed with the owner on 2026-10-15. Nothing built yet.
+
+- **Why** (the owner, 2026-10-15): the first batch of users will largely be native German speakers, and accessibility to learners worldwide in general.
+- **What** (the owner, 2026-10-15): **translate the interface, and use a dictionary in the learner's language where a license-compatible one exists.** The learning notes and example sentences stay in English; the owner does not want to generate them again. Where no good dictionary exists, the interface alone is still worth translating, with English meanings.
+- **Which languages:** German first, other major languages later.
 
 - **Four layers, very different in cost:**
   1. **The interface** (buttons, Settings, tips, introduction, errors): written straight into `index.html` and the JS files (about 165 places set text in code), not gathered anywhere. Doable without a dependency: one file of strings per language (`en.js`, `de.js`, …), a small `t('key')` lookup, a `data-text` attribute on static HTML filled in at start-up, the browser's own `Intl` for plurals, dates and numbers, and the page's `lang` following the language (the Chinese `lang` marking is unchanged). The lasting cost: every new button or message has to be written in every language; a test can catch missing keys but not write them. The docs name things by their English labels, which stays fine as long as English is the reference language.
   2. **Dictionary meanings:** CC-CEDICT (`data/cedict/`, about 124,000 entries) is English only. Another language needs another dictionary, not a translation. German (HanDeDict) and French (CFDICT) exist under CC BY-SA in the same format; most other languages have none, a much smaller one, or one without a clear license, to check one by one. Search by meaning (`lookUpByMeaning`) leaves out English words ("to", "a", "the"), so each language needs its own such list.
   3. **Learning notes and example sentences** (`data/notes/`, about 6,000 lines, 320,000 words of English): a content project. Claude can draft, but someone who speaks the language has to check it, as with the Taiwan notes. A middle step: a translated interface with English notes, notes translated level by level (HSK 1 and 2 first).
   4. **Smaller data:** TOCFL topic names, radical meanings, the lists' group names.
-- **Claude's advice:** nothing now (it is a feature, and the interface's wording keeps changing until the pass over the looks). During the refactor after the testers' round, gather all interface text into one English strings file, which costs little and makes a language easy to add later. The first real language would be one with an open dictionary and a tester who speaks it.
-- **Open questions for the owner:** what drives it (their own native language, testers, a wider audience); which languages; whether an interface-only translation, with English meanings and notes, would still be of use.
+- **Claude's advice, before the owner's answers:** nothing now (it is a feature, and the interface's wording keeps changing until the pass over the looks); gather all interface text into one English strings file during the refactor after the testers' round, then add languages.
+- **Things to settle when it is built:**
+  - **Before or after the German testers' round.** If most testers are German speakers, waiting for the refactor may be too late. It is the owner's call whether German comes before that round, as an exception to "no new features until testing is done".
+  - **HanDeDict's license and state** must be checked before use (believed CC BY-SA, edited by volunteers and not updated for years; quality, size and readings against CC-CEDICT to be compared). It goes in its own folder with its README, and in "Credits and licenses".
+  - **A word's meaning is copied into the word when it is added**, so the dictionary language decides the meaning of words added from then on. Words already added keep theirs; whether switching language offers to change them is to be decided.
+  - **Search by meaning** needs each language's own short words left out (German "der", "die", "das", "sich", …), and perhaps English meanings searched as well.
+  - **Fallback:** a string missing in a language shows the English one, and a test lists what is missing.
+  - **The language is chosen in Settings**, starting from the browser's language; whether it belongs to the device (`DEVICE_SETTINGS`) is to be decided.
