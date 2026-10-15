@@ -1,3 +1,114 @@
+/* ---- Colors ----
+   Every color of the app has a name here, with its value in the light look
+   and in the dark one (the owner asked for dark mode on 2026-10-13 and had
+   it built on 2026-10-15). Elsewhere the style sheet only uses the names, as
+   var(--name). The writing area's colors are read by the code too (quiz.js,
+   theme.js), so they are here as well.
+
+   Which look is used: the "Look" setting (theme.js) puts data-theme="light"
+   or "dark" on the page; with "As the device" it puts neither, and the
+   device's own setting decides (prefers-color-scheme). */
+:root {
+  color-scheme: light;
+  --bg: #f5f2ea; /* the page */
+  --surface: #fff; /* buttons, boxes, cards, the writing area */
+  --raised: #fffdf7; /* tips and popups, over the page */
+  --pressed: #e9e4d8; /* a button being pressed */
+  --text: #222;
+  --text-soft: #4a463d;
+  --muted: #6b6557; /* hints and other quieter text */
+  --inverse-text: #fff; /* on something filled with the text's color */
+  --accent: #3b6fb6; /* the app's blue: pinyin, links, the current slot */
+  --accent-fill: #3b6fb6; /* the blue of a main button */
+  --accent-pressed: #315d99;
+  --on-accent: #fff; /* text on the blue or the red */
+  --border: #b9b2a3;
+  --border-soft: #d8d1c2;
+  --line: #ddd7c9; /* lines between parts */
+  --scrollbar: #c9c1ae;
+  --danger: #c2452d; /* missed, leeches, the reminder dot */
+  --danger-bg: #f9dfd9;
+  --success: #3b9c5a; /* passed, progress */
+  --success-bg: #dff1e4;
+  --warn: #8a5a00; /* notes and "new" */
+  --shadow: rgba(0, 0, 0, 0.18);
+  --backdrop: rgba(0, 0, 0, 0.4); /* behind a pop-up panel */
+  /* The writing area. */
+  --ink: #222; /* your own strokes */
+  --grid: #e3ded2; /* the 米字格 guide lines */
+  --outline: #d8d3c7; /* "Show outline" */
+  --reference: #a9d4b8; /* the printed character under yours, passed */
+  --reference-missed: #ecb3a7; /* the same, missed */
+}
+
+/* The dark look. The same values twice: once for "Dark", once for "As the
+   device" on a device set to dark. CSS has no way to say both at once. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #1b1a18;
+  --surface: #262522;
+  --raised: #2f2d2a;
+  --pressed: #3a3833;
+  --text: #e8e4da;
+  --text-soft: #d3cec2;
+  --muted: #a39d8f;
+  --inverse-text: #1b1a18;
+  --accent: #8cb4ec;
+  --accent-fill: #3d6fb3;
+  --accent-pressed: #335f9c;
+  --on-accent: #fff;
+  --border: #5a564d;
+  --border-soft: #46433d;
+  --line: #3a3833;
+  --scrollbar: #5a564d;
+  --danger: #ec7a62;
+  --danger-bg: #4a2620;
+  --success: #62c286;
+  --success-bg: #1f3a28;
+  --warn: #e0a640;
+  --shadow: rgba(0, 0, 0, 0.5);
+  --backdrop: rgba(0, 0, 0, 0.6);
+  --ink: #ece8de;
+  --grid: #3a3833;
+  --outline: #4d4a43;
+  --reference: #2f6343;
+  --reference-missed: #74382b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #1b1a18;
+    --surface: #262522;
+    --raised: #2f2d2a;
+    --pressed: #3a3833;
+    --text: #e8e4da;
+    --text-soft: #d3cec2;
+    --muted: #a39d8f;
+    --inverse-text: #1b1a18;
+    --accent: #8cb4ec;
+    --accent-fill: #3d6fb3;
+    --accent-pressed: #335f9c;
+    --on-accent: #fff;
+    --border: #5a564d;
+    --border-soft: #46433d;
+    --line: #3a3833;
+    --scrollbar: #5a564d;
+    --danger: #ec7a62;
+    --danger-bg: #4a2620;
+    --success: #62c286;
+    --success-bg: #1f3a28;
+    --warn: #e0a640;
+    --shadow: rgba(0, 0, 0, 0.5);
+    --backdrop: rgba(0, 0, 0, 0.6);
+    --ink: #ece8de;
+    --grid: #3a3833;
+    --outline: #4d4a43;
+    --reference: #2f6343;
+    --reference-missed: #74382b;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -5,8 +116,8 @@
 body {
   margin: 0;
   font-family: system-ui, sans-serif;
-  background: #f5f2ea;
-  color: #222;
+  background: var(--bg);
+  color: var(--text);
 }
 
 main {
@@ -44,7 +155,7 @@ main {
 }
 
 button.icon-button.menu-button {
-  color: #3d3a33;
+  color: var(--text-soft);
   /* Just the three lines, not a round button (the owner, 2026-10-14). */
   border: none;
   background: none;
@@ -62,12 +173,12 @@ dialog.side-menu {
   height: 100%;
   max-height: none;
   border: none;
-  border-right: 1px solid #d8d1c2;
-  background: #f5f2ea;
+  border-right: 1px solid var(--border-soft);
+  background: var(--bg);
   display: none;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.12);
+  box-shadow: 2px 0 12px var(--shadow);
 }
 
 dialog.side-menu[open] {
@@ -75,7 +186,7 @@ dialog.side-menu[open] {
 }
 
 dialog.side-menu::backdrop {
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--backdrop);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -109,16 +220,16 @@ dialog.side-menu::backdrop {
 }
 
 .side-menu-items button.selected {
-  background: #222;
-  color: #fff;
+  background: var(--text);
+  color: var(--inverse-text);
 }
 
 .side-menu-items button svg {
-  color: #6b6557;
+  color: var(--muted);
 }
 
 .side-menu-bottom {
-  border-top: 1px solid #d8d1c2;
+  border-top: 1px solid var(--border-soft);
   padding-top: 8px;
 }
 
@@ -135,9 +246,9 @@ dialog.side-menu::backdrop {
 }
 
 .section-switch button.selected {
-  border-color: #222;
-  background: #222;
-  color: #fff;
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--inverse-text);
 }
 
 .review-header {
@@ -156,7 +267,7 @@ dialog.side-menu::backdrop {
 
 .counts {
   font-size: 0.9rem;
-  color: #6b6557;
+  color: var(--muted);
 }
 
 .card-type {
@@ -164,7 +275,7 @@ dialog.side-menu::backdrop {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #3b6fb6;
+  color: var(--accent);
 }
 
 /* The kind of card with the loudspeaker beside it. The row is as tall as
@@ -191,12 +302,12 @@ button.icon-button {
   min-height: 0;
   padding: 0;
   border-radius: 50%;
-  color: #3b6fb6;
+  color: var(--accent);
 }
 
 /* The loudspeaker when the word could not be spoken. */
 button.icon-button.no-sound {
-  color: #b9b2a3;
+  color: var(--border);
 }
 
 .meaning {
@@ -288,7 +399,7 @@ main.focused .top-bar {
 
 .pinyin {
   font-size: 1.1rem;
-  color: #3b6fb6;
+  color: var(--accent);
 }
 
 .done-panel {
@@ -313,7 +424,7 @@ main.focused .top-bar {
    start makes the stroke grow the way it is written. */
 .stroke-demo-line {
   fill: none;
-  stroke: #3b6fb6;
+  stroke: var(--accent);
   stroke-width: 200;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -342,13 +453,13 @@ main.focused .top-bar {
 
 /* Links inside explanations, in the app's blue. */
 .hint a {
-  color: #3b6fb6;
+  color: var(--accent);
 }
 
 .script-flag {
   margin: 0;
   font-size: 0.9rem;
-  color: #6b6557;
+  color: var(--muted);
 }
 
 /* The introduction: one screen of it at a time. */
@@ -381,7 +492,7 @@ main.focused .top-bar {
   border: none;
   background: none;
   font-size: 0.9rem;
-  color: #6b6557;
+  color: var(--muted);
   text-decoration: underline;
 }
 
@@ -408,17 +519,17 @@ footer {
   gap: 8px;
   margin-top: 16px;
   font-size: 0.9rem;
-  color: #6b6557;
+  color: var(--muted);
 }
 
 select {
   font: inherit;
   min-height: 40px;
   padding: 0 8px;
-  border: 1px solid #b9b2a3;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #fff;
-  color: #222;
+  background: var(--surface);
+  color: var(--text);
 }
 
 .word-form {
@@ -441,16 +552,16 @@ select {
   /* Below 16px, mobile browsers zoom the whole page in when the field is tapped */
   font: inherit;
   font-size: 1.25rem;
-  border: 1px solid #b9b2a3;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--surface);
   color: inherit;
 }
 
 .note {
   margin: 0;
   font-size: 0.9rem;
-  color: #8a5a00;
+  color: var(--warn);
 }
 
 .note:empty {
@@ -485,9 +596,9 @@ select {
   width: 44px;
   height: 44px;
   font-size: 1.6rem;
-  border: 1px solid #d8d3c7;
+  border: 1px solid var(--border-soft);
   border-radius: 8px;
-  background: #fff;
+  background: var(--surface);
 }
 
 /* On a phone, a little smaller, so that a word of three or four
@@ -501,7 +612,7 @@ select {
 }
 
 .slot.current {
-  border: 2px solid #3b6fb6;
+  border: 2px solid var(--accent);
 }
 
 /* A character that was skipped, not written. */
@@ -525,12 +636,12 @@ select {
   background: transparent;
   font-size: 2.6rem;
   line-height: 1;
-  color: #3b6fb6;
+  color: var(--accent);
 }
 
 .side-arrow:active {
   background: transparent;
-  color: #222;
+  color: var(--text);
 }
 
 /* An arrow that doesn't apply right now keeps its place, so the writing area
@@ -540,13 +651,13 @@ select {
 }
 
 .slot.passed {
-  border-color: #3b9c5a;
-  background: #dff1e4;
+  border-color: var(--success);
+  background: var(--success-bg);
 }
 
 .slot.missed {
-  border-color: #c2452d;
-  background: #f9dfd9;
+  border-color: var(--danger);
+  background: var(--danger-bg);
 }
 
 /* A finished character's slot can be tapped to change its verdict
@@ -585,8 +696,8 @@ button.slot {
 }
 
 .writing-area {
-  background: #fff;
-  border: 2px solid #b9b2a3;
+  background: var(--surface);
+  border: 2px solid var(--border);
   border-radius: 8px;
   /* Without this, dragging a finger here would scroll or zoom the page instead of drawing */
   touch-action: none;
@@ -614,8 +725,8 @@ button.slot {
   width: var(--area-size, 300px);
   height: var(--area-size, 300px);
   padding: 12px;
-  background: #fff;
-  border: 2px solid #b9b2a3;
+  background: var(--surface);
+  border: 2px solid var(--border);
   border-radius: 8px;
   text-align: center;
   /* Tapping the card is how you reveal and continue; don't select its text instead. */
@@ -649,7 +760,7 @@ button.slot {
 
 .tone-ink path {
   fill: none;
-  stroke: #3b6fb6;
+  stroke: var(--accent);
   stroke-width: 7;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -676,20 +787,20 @@ button.slot {
 
 .face-hint {
   font-size: 0.95rem;
-  color: #6b6557;
+  color: var(--muted);
 }
 
 .face-pinyin {
   font-size: 1.5rem;
-  color: #3b6fb6;
+  color: var(--accent);
 }
 
 .face-pinyin.passed {
-  color: #3b9c5a;
+  color: var(--success);
 }
 
 .face-pinyin.missed {
-  color: #c2452d;
+  color: var(--danger);
 }
 
 /* A card's face with a word's learning tip on it (cardTip.js): from the top,
@@ -699,7 +810,7 @@ button.slot {
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: #c9c1ae transparent;
+  scrollbar-color: var(--scrollbar) transparent;
 }
 
 /* In a column of fixed height, a part that hides its overflow (the clamped
@@ -727,10 +838,10 @@ button.slot {
   gap: 4px;
   margin-top: 4px;
   padding-top: 8px;
-  border-top: 1px solid #e3ddcf;
+  border-top: 1px solid var(--line);
   text-align: left;
   font-size: 0.92rem;
-  color: #4a463d;
+  color: var(--text-soft);
 }
 
 .face-tip-text {
@@ -745,7 +856,7 @@ button.slot {
 }
 
 .face-tip-english {
-  color: #6b6557;
+  color: var(--muted);
 }
 
 .face-tip-more {
@@ -764,11 +875,11 @@ button.slot {
 .face-note {
   font-size: 0.85rem;
   line-height: 1.3;
-  color: #8a5a00;
+  color: var(--warn);
 }
 
 .face-note.missed {
-  color: #c2452d;
+  color: var(--danger);
 }
 
 .tone-buttons button {
@@ -800,15 +911,15 @@ button.slot {
 .settings-panel {
   width: min(92vw, 420px);
   padding: 20px;
-  border: 1px solid #b9b2a3;
+  border: 1px solid var(--border);
   border-radius: 12px;
-  background: #f5f2ea;
-  color: #222;
+  background: var(--bg);
+  color: var(--text);
 }
 
 /* The dimmed page behind the open panel. */
 .settings-panel::backdrop {
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--backdrop);
 }
 
 /* A list with a long choice in it must not push the panel wider than the
@@ -826,8 +937,8 @@ button.slot {
   bottom: 0;
   margin: 0;
   padding: 8px 16px;
-  background: #c2452d;
-  color: #fff;
+  background: var(--danger);
+  color: var(--on-accent);
   text-align: center;
   font-size: 0.9rem;
 }
@@ -835,7 +946,7 @@ button.slot {
 .error-banner .link-button {
   display: inline;
   margin: 0 0 0 8px;
-  color: #fff;
+  color: var(--on-accent);
 }
 
 #error-text {
@@ -860,7 +971,7 @@ button.slot {
 .settings-group {
   margin: 0 0 10px;
   padding: 8px 12px;
-  border: 1px solid #ddd7c9;
+  border: 1px solid var(--line);
   border-radius: 8px;
 }
 
@@ -882,7 +993,7 @@ button.menu-button.reminder::after {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #c2452d;
+  background: var(--danger);
 }
 
 /* The same dot on Settings in the menu, so it is plain where to go. */
@@ -892,7 +1003,7 @@ button.menu-button.reminder::after {
   height: 10px;
   margin-left: auto;
   border-radius: 50%;
-  background: #c2452d;
+  background: var(--danger);
 }
 
 /* The same dot on the heading of the group of settings it is about. */
@@ -903,7 +1014,7 @@ button.menu-button.reminder::after {
   height: 9px;
   margin-left: 8px;
   border-radius: 50%;
-  background: #c2452d;
+  background: var(--danger);
 }
 
 .settings-panel h2 {
@@ -932,10 +1043,10 @@ button.menu-button.reminder::after {
   font: inherit;
   font-size: 0.85rem;
   line-height: 1;
-  border: 1px solid #b9b2a3;
+  border: 1px solid var(--border);
   border-radius: 50%;
-  background: #fff;
-  color: #6b6557;
+  background: var(--surface);
+  color: var(--muted);
   cursor: help;
 }
 
@@ -948,7 +1059,7 @@ fieldset.setting {
   flex-direction: column;
   align-items: flex-start;
   padding: 8px 12px;
-  border: 1px solid #b9b2a3;
+  border: 1px solid var(--border);
   border-radius: 8px;
 }
 
@@ -957,9 +1068,9 @@ fieldset.setting {
   min-height: 40px;
   padding: 0 8px;
   font: inherit;
-  border: 1px solid #b9b2a3;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--surface);
 }
 
 .setting input[type='checkbox'] {
@@ -980,9 +1091,9 @@ button {
   /* 48px is the recommended minimum height for a finger-sized touch target */
   min-height: 48px;
   padding: 0 16px;
-  border: 1px solid #b9b2a3;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--surface);
   color: inherit;
 }
 
@@ -993,7 +1104,7 @@ button:disabled {
 }
 
 button:active {
-  background: #e9e4d8;
+  background: var(--pressed);
 }
 
 /* The note about stroke order. Its height is always reserved, so the page
@@ -1006,7 +1117,7 @@ button:active {
   font-size: 0.85rem;
   line-height: 1.3;
   text-align: center;
-  color: #6b6557;
+  color: var(--muted);
 }
 
 /* (These notes used to keep their room while hidden. They are the last
@@ -1014,7 +1125,7 @@ button:active {
    being taken from the writing area: see chooseSize in wordFlow.js.) */
 
 .order-note a {
-  color: #3b6fb6;
+  color: var(--accent);
 }
 
 button.small {
@@ -1048,13 +1159,13 @@ button.grade .wait {
 }
 
 button.primary {
-  border-color: #3b6fb6;
-  background: #3b6fb6;
-  color: #fff;
+  border-color: var(--accent-fill);
+  background: var(--accent-fill);
+  color: var(--on-accent);
 }
 
 button.primary:active {
-  background: #315d99;
+  background: var(--accent-pressed);
 }
 
 /* ---- The Decks tab ---- */
@@ -1090,9 +1201,9 @@ button.primary:active {
   /* Below 16px, mobile browsers zoom the whole page in when the field is tapped */
   font: inherit;
   font-size: 1rem;
-  border: 1px solid #b9b2a3;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--surface);
   color: inherit;
 }
 
@@ -1113,7 +1224,7 @@ button.primary:active {
 
 .pinyin-preview {
   margin: 0;
-  color: #3b6fb6;
+  color: var(--accent);
 }
 
 .pinyin-preview:empty {
@@ -1123,12 +1234,12 @@ button.primary:active {
 .hint {
   margin: 0 0 8px;
   font-size: 0.9rem;
-  color: #6b6557;
+  color: var(--muted);
 }
 
 .add-list {
   padding: 10px 12px;
-  border: 1px solid #b9b2a3;
+  border: 1px solid var(--border);
   border-radius: 8px;
 }
 
@@ -1145,7 +1256,7 @@ button.primary:active {
   margin: 0;
   padding-left: 20px;
   font-size: 0.85rem;
-  color: #6b6557;
+  color: var(--muted);
 }
 
 .word-list {
@@ -1172,13 +1283,13 @@ button.word-entry {
 }
 
 .entry-pinyin {
-  color: #3b6fb6;
+  color: var(--accent);
   text-align: right;
 }
 
 .entry-definition {
   font-size: 0.9rem;
-  color: #6b6557;
+  color: var(--muted);
   /* A long meaning takes two lines of the row at most; the word's page has all of it. */
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -1207,7 +1318,7 @@ button.word-entry {
   justify-content: space-between;
   gap: 12px;
   padding: 6px 0;
-  border-bottom: 1px solid #e3ddcf;
+  border-bottom: 1px solid var(--line);
 }
 
 /* ---- Tips (tips.js) ----
@@ -1220,9 +1331,9 @@ button.word-entry {
 .storage-message {
   margin-top: 20px;
   padding: 14px 16px;
-  border: 1px solid #d8d1c2;
+  border: 1px solid var(--border-soft);
   border-radius: 12px;
-  background: #fffdf7;
+  background: var(--raised);
   text-align: left;
 }
 
@@ -1238,11 +1349,11 @@ button.word-entry {
   overflow: visible;
   box-sizing: border-box;
   padding: 14px 16px;
-  border: 1px solid #d8d1c2;
+  border: 1px solid var(--border-soft);
   border-radius: 12px;
-  background: #fffdf7;
+  background: var(--raised);
   color: inherit;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 4px 18px var(--shadow);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -1273,8 +1384,8 @@ button.word-entry {
   left: calc(var(--arrow-x, 50%) - 7px);
   width: 12px;
   height: 12px;
-  background: #fffdf7;
-  border: 1px solid #d8d1c2;
+  background: var(--raised);
+  border: 1px solid var(--border-soft);
   transform: rotate(45deg);
 }
 
@@ -1315,7 +1426,7 @@ html:has(dialog[open]) {
   /* A thin bar in the page's own colors instead of the browser's wide gray
      one, with a little room between it and the text. */
   scrollbar-width: thin;
-  scrollbar-color: #c9c1ae transparent;
+  scrollbar-color: var(--scrollbar) transparent;
   padding-right: 6px;
 }
 
@@ -1327,7 +1438,7 @@ html:has(dialog[open]) {
   gap: 6px 8px;
   margin-top: 6px;
   font-size: 0.9rem;
-  color: #6b6557;
+  color: var(--muted);
 }
 
 .page-add-sentence select {
@@ -1358,7 +1469,7 @@ html:has(dialog[open]) {
 /* The word in the other script, under the first. */
 .page-word.second {
   font-size: 1.8rem;
-  color: #6b6557;
+  color: var(--muted);
 }
 
 .page-reading {
@@ -1384,16 +1495,16 @@ html:has(dialog[open]) {
 
 .chip {
   padding: 2px 8px;
-  border: 1px solid #b9b2a3;
+  border: 1px solid var(--border);
   border-radius: 6px;
   font-size: 0.8rem;
-  color: #6b6557;
+  color: var(--muted);
 }
 
 .page-section {
   margin-top: 16px;
   padding-top: 12px;
-  border-top: 1px solid #ddd7c9;
+  border-top: 1px solid var(--line);
 }
 
 .page-section h3 {
@@ -1403,7 +1514,7 @@ html:has(dialog[open]) {
 
 .page-pinyin {
   margin: 0 0 2px;
-  color: #3b6fb6;
+  color: var(--accent);
 }
 
 .page-note,
@@ -1434,7 +1545,7 @@ button.note-word {
   line-height: inherit;
   vertical-align: baseline;
   color: inherit;
-  text-decoration: underline dotted #3b6fb6;
+  text-decoration: underline dotted var(--accent);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
 }
@@ -1462,11 +1573,11 @@ button.note-word + .nowrap {
   max-width: min(320px, calc(100vw - 24px));
   box-sizing: border-box;
   padding: 10px 14px;
-  border: 1px solid #d8d1c2;
+  border: 1px solid var(--border-soft);
   border-radius: 12px;
-  background: #fffdf7;
+  background: var(--raised);
   color: inherit;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 4px 18px var(--shadow);
 }
 
 .word-peek p {
@@ -1484,7 +1595,7 @@ button.note-word + .nowrap {
 }
 
 .word-peek-pinyin {
-  color: #3b6fb6;
+  color: var(--accent);
 }
 
 /* The meaning on one line, cut off with "…": the page has all of it. */
@@ -1507,7 +1618,7 @@ button.note-word + .nowrap {
 .character-top p {
   margin: 0;
   font-size: 0.9rem;
-  color: #6b6557;
+  color: var(--muted);
 }
 
 button.character-big {
@@ -1542,11 +1653,11 @@ button.part {
 }
 
 button.part.meaning .part-role {
-  color: #3b9c5a;
+  color: var(--success);
 }
 
 button.part.sound .part-role {
-  color: #3b6fb6;
+  color: var(--accent);
 }
 
 /* A part of the Decks and Words tabs that the other of the two shows. (A
@@ -1565,7 +1676,7 @@ button.part.sound .part-role {
   align-items: center;
   gap: 8px 12px;
   font-size: 0.9rem;
-  color: #6b6557;
+  color: var(--muted);
 }
 
 .list-tools label {
@@ -1604,25 +1715,25 @@ button.part.sound .part-role {
 
 .card-rows li span {
   flex: 1;
-  color: #6b6557;
+  color: var(--muted);
 }
 
 /* A word picked while several are being selected. */
 button.word-entry.selected {
-  border-color: #3b6fb6;
-  box-shadow: inset 0 0 0 2px #3b6fb6;
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--accent);
 }
 
 /* In the list of leeches: what is forgotten about the word, on a line of its own. */
 .entry-leech {
   grid-column: 1 / -1;
   font-size: 0.85rem;
-  color: #c2452d;
+  color: var(--danger);
 }
 
 .entry-new {
   font-size: 0.8rem;
-  color: #8a5a00;
+  color: var(--warn);
   text-align: right;
 }
 
@@ -1662,7 +1773,7 @@ button.deck-entry {
   height: 5px;
   margin-top: 4px;
   border-radius: 3px;
-  background: #ddd7c9;
+  background: var(--line);
   overflow: hidden;
 }
 
@@ -1673,7 +1784,7 @@ button.deck-entry {
 .deck-progress span {
   display: block;
   height: 100%;
-  background: #3b9c5a;
+  background: var(--success);
 }
 
 #deck-head .deck-progress {
@@ -1711,8 +1822,8 @@ button.deck-entry {
 
 /* A ready-made list to choose from: the chosen one has a heavy edge. */
 button.ready-entry.selected {
-  border-color: #222;
-  box-shadow: inset 0 0 0 1px #222;
+  border-color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--text);
 }
 
 /* The chosen list's description is shown whole (the owner, 2026-10-14). */
@@ -1738,7 +1849,7 @@ button.ready-entry.selected .entry-definition {
 /* Where you are, above a deck's page: Decks › Textbook › Chapter 2. */
 .deck-path {
   font-size: 0.95rem;
-  color: #6b6557;
+  color: var(--muted);
 }
 
 /* A part of it that can be tapped: it looks like a link, not a button. */
@@ -1748,7 +1859,7 @@ button.path-part {
   border: none;
   background: none;
   font: inherit;
-  color: #3b6fb6;
+  color: var(--accent);
   text-decoration: underline;
   cursor: pointer;
 }

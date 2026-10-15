@@ -362,6 +362,28 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     assert.doesNotMatch(row, new RegExp(pinyin));
   });
 
+  it('follows the device\'s light or dark look, unless the Look setting says otherwise', async () => {
+    const background = () => page.evaluate(`getComputedStyle(document.body).backgroundColor`);
+    const LIGHT = 'rgb(245, 242, 234)';
+    const DARK = 'rgb(27, 26, 24)';
+    // (The DevTools protocol can make the page believe the device is set to dark.)
+    const device = (value) =>
+      page.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value }] });
+    assert.equal(await page.evaluate(`document.getElementById('theme-select').value`), 'auto');
+    await device('dark');
+    await waitUntil(page, `getComputedStyle(document.body).backgroundColor === '${DARK}'`, 'the dark look');
+    await choose(page, 'theme-select', 'light');
+    assert.equal(await background(), LIGHT);
+    await device('light');
+    await choose(page, 'theme-select', 'dark');
+    assert.equal(await background(), DARK);
+    // The browser's bar on a phone takes the page's color too.
+    assert.equal(await page.evaluate(`document.querySelector('meta[name="theme-color"]').content`), '#1b1a18');
+    await choose(page, 'theme-select', 'auto');
+    assert.equal(await background(), LIGHT);
+    await device('');
+  });
+
   it('opens a tab that was tapped before the app had started', async () => {
     // Makes every page loaded from now on tap Free practice as soon as it has
     // been read, which is before the app has opened its database.

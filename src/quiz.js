@@ -17,6 +17,7 @@ import { loadCharData } from './charData.js';
 import { isShortcutStroke, joinedLine } from './shortcuts.js';
 import { fitFrame, applyFrame, framesDiffer, sizeIsKnown, NO_FRAME } from './frame.js';
 import { toPoints, resample, averageDistance } from './lines.js';
+import { themeColor } from './theme.js';
 import {
   fitsStroke,
   distanceFromStroke,
@@ -42,12 +43,15 @@ const PAUSE_BETWEEN_STROKES_MS = 300;
 // before the quiz starts again.
 const PAUSE_AFTER_ANIMATION_MS = 1500;
 
-const INK_COLOR = '#222222';
+// The colors, from the named colors in style.css. They differ between the
+// light and the dark look (theme.js), so they are read each time they are
+// used, and set again when the look changes (see 'theme-changed' below).
+const ink = () => themeColor('--ink');
 const INVISIBLE = 'rgba(0, 0, 0, 0)';
 // The printed character shown under your handwriting once you finish: green,
 // or red if the character was judged as missed.
-const REFERENCE_COLOR = '#a9d4b8';
-const REFERENCE_COLOR_MISSED = '#ecb3a7';
+const reference = () => themeColor('--reference');
+const referenceMissed = () => themeColor('--reference-missed');
 
 // Nothing shows where a character will be until its first stroke is written,
 // so the first stroke may land anywhere, at any reasonable size: only its
@@ -202,7 +206,9 @@ export function createQuiz(target, size, handlers) {
     const path = document.createElementNS(SVG_NAMESPACE, 'path');
     path.setAttribute('d', pathString);
     path.setAttribute('fill', 'none');
-    path.setAttribute('stroke', INK_COLOR);
+    // A style rather than a plain value, so that the stroke follows the
+    // light or dark look by itself.
+    path.style.stroke = 'var(--ink)';
     path.setAttribute('stroke-width', penWidth);
     path.setAttribute('stroke-linecap', 'round');
     path.setAttribute('stroke-linejoin', 'round');
@@ -215,8 +221,14 @@ export function createQuiz(target, size, handlers) {
   //
   // Each change waits for the one before it to finish, so two requests made
   // close together can't end up half applied in the wrong order.
+  //
+  // `colorOf` is a function giving the color, kept so that the color can be
+  // worked out again when the look changes from light to dark or back.
   let lastColorChange = Promise.resolve();
-  function setPrintedColor(color) {
+  let printedColorOf = () => INVISIBLE;
+  function setPrintedColor(colorOf) {
+    printedColorOf = colorOf;
+    const color = colorOf();
     lastColorChange = lastColorChange.then(async () => {
       await writer.updateColor('strokeColor', color, { duration: 0 });
       await writer.updateColor('radicalColor', color, { duration: 0 });
@@ -224,10 +236,24 @@ export function createQuiz(target, size, handlers) {
     return lastColorChange;
   }
 
+  // The look changed from light to dark or back (theme.js): Hanzi Writer
+  // was given its colors as values, so it is given them again.
+  document.addEventListener('theme-changed', () => {
+    if (!writer) {
+      return;
+    }
+    setPrintedColor(printedColorOf);
+    lastColorChange = lastColorChange.then(async () => {
+      await writer.updateColor('outlineColor', themeColor('--outline'), { duration: 0 });
+      await writer.updateColor('drawingColor', ink(), { duration: 0 });
+      await writer.updateColor('highlightColor', themeColor('--success'), { duration: 0 });
+    });
+  });
+
   // The color of the printed strokes while the character is being written:
   // invisible under your own strokes, or plain ink when they stand in for them.
   function colorWhileWriting() {
-    return rawInput ? INVISIBLE : INK_COLOR;
+    return rawInput ? INVISIBLE : ink();
   }
 
   // The color of the printed character once it is finished. With raw input
@@ -235,9 +261,9 @@ export function createQuiz(target, size, handlers) {
   // it is the character itself, and only turns red if it was missed.
   function referenceColor(passed) {
     if (passed === false) {
-      return REFERENCE_COLOR_MISSED;
+      return referenceMissed();
     }
-    return rawInput ? REFERENCE_COLOR : INK_COLOR;
+    return rawInput ? reference() : ink();
   }
 
   function drewShortcut(stroke) {
@@ -620,7 +646,7 @@ export function createQuiz(target, size, handlers) {
     setBusy(true);
     try {
       await useOriginalData();
-      await setPrintedColor(colorWhileWriting());
+      await setPrintedColor(colorWhileWriting);
       target.append(demoLayer, drawnLayer);
       if (outlineVisible) {
         writer.showOutline({ duration: 0 });
@@ -745,7 +771,7 @@ export function createQuiz(target, size, handlers) {
         }
         showDemo(sequence.length); // nothing left to show
         const passed = handlers.onComplete({ totalMistakes: mistakes, hintShown, order });
-        setPrintedColor(referenceColor(passed));
+        setPrintedColor(() => referenceColor(passed));
       },
     });
   }
@@ -779,12 +805,12 @@ export function createQuiz(target, size, handlers) {
           showCharacter: false,
           showOutline: false,
           strokeColor: INVISIBLE,
-          outlineColor: '#d8d3c7',
+          outlineColor: themeColor('--outline'),
           // Same color and width as the kept strokes, so a stroke doesn't
           // visibly change at the moment it is accepted.
-          drawingColor: INK_COLOR,
+          drawingColor: ink(),
           drawingWidth: penWidth,
-          highlightColor: '#3b9c5a',
+          highlightColor: themeColor('--success'),
           strokeAnimationSpeed: STROKE_ANIMATION_SPEED,
           delayBetweenStrokes: PAUSE_BETWEEN_STROKES_MS,
           // Tells Hanzi Writer to use our own data instead of fetching from
@@ -825,14 +851,14 @@ export function createQuiz(target, size, handlers) {
     async reveal() {
       clearTimeout(afterAnimationTimer);
       writer.cancelQuiz();
-      await setPrintedColor(referenceColor(true));
+      await setPrintedColor(() => referenceColor(true));
       writer.showCharacter();
     },
 
     // Recolors the printed character of a finished quiz after its verdict
     // changed: red for missed (false), green otherwise.
     showVerdict(passed) {
-      setPrintedColor(referenceColor(passed));
+      setPrintedColor(() => referenceColor(passed));
     },
 
     // Plays the stroke order, then starts the quiz again. This always shows
@@ -845,7 +871,7 @@ export function createQuiz(target, size, handlers) {
       handlers.onAnimateStart();
       await useOriginalData();
       await writer.hideCharacter({ duration: 0 });
-      await setPrintedColor(INK_COLOR);
+      await setPrintedColor(ink);
       writer.animateCharacter({
         // The animation is canceled if you move to another character meanwhile.
         onComplete: (result) => {

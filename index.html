@@ -695,6 +695,13 @@
           <p>This app helps you learn to read and write Chinese words. It brings each word back just before you would forget it.</p>
           <p>Everything stays on this device. There is no account, and nothing is sent anywhere.</p>
           <p>The next few screens set the app up and show how it works. It takes about a minute.</p>
+          <!-- Shown at once as it is chosen; saved with the rest at the end (welcome.js). -->
+          <fieldset class="setting">
+            <legend>Look</legend>
+            <label><input type="radio" name="welcome-theme" value="auto" /> As this device is set</label>
+            <label><input type="radio" name="welcome-theme" value="light" /> Light</label>
+            <label><input type="radio" name="welcome-theme" value="dark" /> Dark</label>
+          </fieldset>
         </section>
 
         <section data-step hidden>
@@ -852,6 +859,15 @@
           <label><input id="stroke-count-checkbox" type="checkbox" /> Show the stroke count in Review</label>
           <p class="hint">How many strokes the character has, as in "3/7". It is always shown in Learn and Free practice; in Review it is a hint, so it is off unless you want it.</p>
         </div>
+
+        <label class="setting">
+          Look
+          <select id="theme-select">
+            <option value="auto">As the device is set</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </label>
 
         <label class="setting">
           Handwriting

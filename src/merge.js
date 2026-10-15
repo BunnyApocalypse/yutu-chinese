@@ -44,6 +44,7 @@ const DEVICE_SETTINGS = [
   'backupReminderOff',
   'tipsOn',
   'storageMessageShown',
+  'theme',
 ];
 
 const changedAt = (record) => (record && record.changedAt) || 0;

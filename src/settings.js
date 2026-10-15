@@ -6,12 +6,13 @@ import { DEFAULT_MEANING_DETAIL } from './dictionary.js';
 import { CARD_TYPES, DEFAULT_NEW_WORDS_PER_DAY } from './session.js';
 import { DEFAULT_LEECH_LAPSES, MIN_LEECH_LAPSES, MAX_LEECH_LAPSES } from './leeches.js';
 import { speak } from './speech.js';
+import { setTheme } from './theme.js';
 
 const MAX_NEW_WORDS_PER_DAY = 50;
 
 // elements: the panel's parts:
 //   panel, openButton, closeButton, scriptSelect, pronunciationSelect,
-//   handwritingSelect, lessonsCheckbox, strokeCountCheckbox, newWordsInput,
+//   handwritingSelect, themeSelect, lessonsCheckbox, strokeCountCheckbox, newWordsInput,
 //   meaningDetailSelect,
 //   typeCheckboxes (a list of the four checkboxes; each has a
 //   data-card-type attribute saying which type it is)
@@ -35,6 +36,9 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //                   are kept out of sight
 //   rawInput:      true to keep your own strokes on screen when writing,
 //                   false to replace each correct stroke with the printed one
+//   theme:          'auto' (the default: as the device is set, where the
+//                   browser can tell; light otherwise), 'light' or 'dark'
+//                   (see theme.js); belongs to the device
 //   meaningDetail:  'first', 'everyday' or 'all': how much of a dictionary
 //                   entry is filled in as a word's meaning (see
 //                   proposeMeaning in dictionary.js)
@@ -72,6 +76,7 @@ export async function createSettings(elements, onChange) {
     scriptSelect,
     pronunciationSelect,
     handwritingSelect,
+    themeSelect,
     lessonsCheckbox,
     strokeCountCheckbox,
     meaningDetailSelect,
@@ -92,6 +97,7 @@ export async function createSettings(elements, onChange) {
     // Saved as 'rawSquigs' before the setting was renamed; a device that still
     // has it under the old name keeps its choice.
     rawInput: await getSetting('rawInput', await getSetting('rawSquigs', true)),
+    theme: await getSetting('theme', 'auto'),
     lessons: await getSetting('lessons', true),
     strokeCountInReview: await getSetting('strokeCountInReview', false),
     meaningDetail: await getSetting('meaningDetail', DEFAULT_MEANING_DETAIL),
@@ -105,6 +111,8 @@ export async function createSettings(elements, onChange) {
     enabledTypes: await getSetting('enabledTypes', CARD_TYPES),
     studyDeck: await getSetting('studyDeck', ''),
   };
+  // "As the device is set" needs nothing: the style sheet does that by itself.
+  setTheme(settings.theme);
 
   // Shows the current settings in the panel's controls.
   function fillPanel() {
@@ -112,6 +120,7 @@ export async function createSettings(elements, onChange) {
     scriptSelect.value = settings.bothScripts ? `both-${settings.script}` : settings.script;
     pronunciationSelect.value = settings.pronunciation;
     handwritingSelect.value = settings.rawInput ? 'raw' : 'snap';
+    themeSelect.value = settings.theme;
     lessonsCheckbox.checked = settings.lessons;
     strokeCountCheckbox.checked = settings.strokeCountInReview;
     meaningDetailSelect.value = settings.meaningDetail;
@@ -129,6 +138,10 @@ export async function createSettings(elements, onChange) {
 
   async function change(key, value) {
     settings[key] = value;
+    // The look changes at once, before the setting is saved.
+    if (key === 'theme') {
+      setTheme(value);
+    }
     await setSetting(key, value);
     onChange();
   }
@@ -149,6 +162,8 @@ export async function createSettings(elements, onChange) {
   handwritingSelect.addEventListener('change', () =>
     change('rawInput', handwritingSelect.value === 'raw'),
   );
+
+  themeSelect.addEventListener('change', () => change('theme', themeSelect.value));
 
   lessonsCheckbox.addEventListener('change', () => change('lessons', lessonsCheckbox.checked));
 

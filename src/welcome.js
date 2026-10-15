@@ -6,6 +6,7 @@
 import { getSetting, setSetting } from './db.js';
 import { CARD_TYPES } from './session.js';
 import { storageAdvice } from './storageAdvice.js';
+import { setTheme } from './theme.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -37,6 +38,11 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
     startTouched = true;
     showStep();
   }));
+
+  // The look is shown at once as it is chosen, before it is saved.
+  for (const radio of dialog.querySelectorAll('input[name="welcome-theme"]')) {
+    radio.addEventListener('change', () => setTheme(radio.value));
+  }
 
   // Which screen is showing, counting from 0.
   let step = 0;
@@ -103,6 +109,7 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
 
   // Saves what was chosen on the screens.
   async function applyChoices() {
+    await settings.change('theme', chosen('welcome-theme'));
     const script = chosen('welcome-script');
     await settings.change('bothScripts', script.startsWith('both-'));
     await settings.change('script', script.replace('both-', ''));
@@ -148,10 +155,16 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
   // Skipping changes no settings. Esc closes a <dialog> too; "close" is
   // announced either way, so the introduction is not shown again unasked.
   byId('welcome-skip').addEventListener('click', () => dialog.close());
-  dialog.addEventListener('close', () => setSetting('welcomeDone', true));
+  dialog.addEventListener('close', () => {
+    setSetting('welcomeDone', true);
+    // A look tried and then skipped is undone (after finishing, this is the
+    // one just saved).
+    setTheme(settings.theme);
+  });
 
   function open() {
     // The screens start from the settings as they are.
+    choose('welcome-theme', settings.theme);
     choose('welcome-script', settings.bothScripts ? `both-${settings.script}` : settings.script);
     choose('welcome-pronunciation', settings.pronunciation);
     for (const box of typeBoxes) {

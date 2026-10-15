@@ -85,7 +85,7 @@ How each part of the app works, and why, is in `docs/` (index: `docs/README.md`)
 - **A new source of data or code** gets its README with source and license, and a line in "Credits and licenses" (`credits-dialog` in `index.html`).
 - **Nothing that identifies a tester** goes into the repository (names, contacts, identifying quotes): say "a tester". Testing notes live in the git-ignored `local/testing/`.
 - **Content from Skritter stays on the owner's devices**: never commit an export or anything derived from one; `exports/` is git-ignored; print counts, not words.
-- **Looks are not worked on** until the pass over the looks (with dark mode), except what is plainly broken. **The writing area must stay the biggest thing on the screen** and the same size in every step; room is found by trimming the rows around it (`docs/pitfalls.md`).
+- **Looks are not worked on** until the pass over the looks, except what is plainly broken. **Colors are named once at the top of `src/style.css`, with a light and a dark value**; use `var(--name)` (add a name, in both looks, if none fits), never a color written out (`docs/interface.md`, "Dark mode"). **The writing area must stay the biggest thing on the screen** and the same size in every step; room is found by trimming the rows around it (`docs/pitfalls.md`).
 
 ## Deploying
 
@@ -123,8 +123,9 @@ Past session notes are in `docs/history.md`.
   7. **Done 2026-10-15:** a message about long-term storage once, after the first word learned (`docs/interface.md`).
   8. **Free practice under Words, "too many buttons", the Learn screen busy:** for the pass over the looks.
 - **The deck chooser is far too long** with a ready-made list added or many decks (the owner, 2026-10-15): every group of every level is an option, e.g. where a sentence from a word's page is added to a deck (`fillDeckSelect` in `src/decksPanel.js`). To be fixed.
+- **An accessibility review, at some point** (the owner, 2026-10-15): screen readers, keyboard use, contrast in both looks, sizes of what is tapped.
 - **The owner has not tried** sentences, combining backups between real devices, and leeches. Ask how it went before building further on them. The rest built on 2026-10-13 and 14 they test as they use it (the owner, 2026-10-15).
 - **The general page of notes for a native speaker** has not been answered (the Taiwan one was; `data/notes/CLAUDE.md`).
 - **The TOCFL list has no stated license**: to be reconsidered before a larger audience.
-- **Refactoring** (`src/wordsPanel.js` split by screen, old names such as the mode `'words'` and `practice-tab`, colors gathered into named values): after the testers' round, together with the pass over the looks.
+- **Refactoring** (`src/wordsPanel.js` split by screen, old names such as the mode `'words'` and `practice-tab`): after the testers' round, together with the pass over the looks.
 - **The owner's real study is still in Skritter**; the Skritter scheduling data (GDPR request, 2026-10-12) has not arrived.
