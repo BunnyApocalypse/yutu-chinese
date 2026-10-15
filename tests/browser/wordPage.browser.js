@@ -52,6 +52,8 @@ describe('the word page', { concurrency: false }, () => {
     // The note, and the sentence in both scripts, word by word.
     assert.match(await textOf(page, '#word-page-body .page-note'), /^"We" or "us"/);
     assert.deepEqual(await page.evaluate(texts('.sentence-word')), ['我們', '是', '同學', '我们', '是', '同学']);
+    // Shown in both scripts, each line says which it is.
+    assert.deepEqual(await page.evaluate(texts('.sentence-script')), ['trad. 繁體', 'simp. 简体']);
     assert.equal(await textOf(page, '#word-page-body .page-english'), 'We are classmates.');
     // Each character with its parts; 們 has one for the meaning and one for the sound.
     assert.deepEqual(await page.evaluate(texts('.character-big')), ['我', '們']);

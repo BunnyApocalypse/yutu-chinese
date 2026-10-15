@@ -15,6 +15,7 @@
 
 import { formatPinyin } from './wordList.js';
 import { scriptFor } from './words.js';
+import { langFor, fillMixed } from './lang.js';
 import { readingsFor, describeReading } from './tones.js';
 import { parseNotes, noteFor, sentenceWords } from './notes.js';
 import { parseCharacters, structureOf } from './characters.js';
@@ -188,7 +189,17 @@ export function createWordPage({
     const sentences = [...new Set(scripts.map((script) => note.example[script]))];
     sentences.forEach((sentence) => {
       const line = element('p', 'page-sentence');
-      line.lang = sentence === note.example.traditional ? 'zh-Hant-TW' : 'zh-Hans-CN';
+      const traditional = sentence === note.example.traditional;
+      line.lang = traditional ? 'zh-Hant-TW' : 'zh-Hans-CN';
+      // With the sentence in both scripts, each says which it is (the owner,
+      // 2026-10-15), in the words of the flag on cards (scriptFlagFor). The
+      // label is English with its Chinese marked as such (lang.js).
+      if (sentences.length > 1) {
+        const label = element('span', 'sentence-script');
+        label.lang = 'en';
+        fillMixed(label, traditional ? 'trad. 繁體' : 'simp. 简体', traditional ? 'traditional' : 'simplified');
+        line.append(label);
+      }
       // Each word of the sentence can be tapped; punctuation is plain text.
       for (const piece of sentenceWords(sentence, note.example.pinyin)) {
         if (Array.from(piece.text).some(isHan)) {
@@ -246,8 +257,15 @@ export function createWordPage({
     return section;
   }
 
-  // How each character is built. `chars`: the characters to show.
-  function showCharacters(characters, chars, single) {
+  // How each character is built. `chars`: the characters to show, written
+  // in `script` (for marking them as Chinese, lang.js).
+  function showCharacters(characters, chars, single, script) {
+    // Text with Chinese in it, its Chinese marked.
+    const mixed = (tag, className, text) => {
+      const made = element(tag, className);
+      fillMixed(made, text, script);
+      return made;
+    };
     const section = element('section', 'page-section');
     section.append(element('h3', '', single ? 'How it is built' : 'Characters'));
     let any = false;
@@ -261,8 +279,9 @@ export function createWordPage({
       if (!single) {
         const big = element('button', 'character-big', char);
         big.type = 'button';
+        big.lang = langFor(script);
         big.addEventListener('click', () => go({ text: char }));
-        const about = element('p', '', `${structure.pinyin.join(', ')}  ${structure.definition}`);
+        const about = mixed('p', '', `${structure.pinyin.join(', ')}  ${structure.definition}`);
         const top = element('div', 'character-top');
         top.append(big, about);
         card.append(top);
@@ -272,7 +291,9 @@ export function createWordPage({
         for (const { part, role } of structure.parts) {
           const button = element('button', `part ${role || ''}`.trim());
           button.type = 'button';
-          button.append(element('span', 'part-character', part));
+          const partCharacter = element('span', 'part-character', part);
+          partCharacter.lang = langFor(script);
+          button.append(partCharacter);
           if (role) {
             // "meaning" or "sound": what this part does in the character.
             button.append(element('span', 'part-role', role));
@@ -292,7 +313,7 @@ export function createWordPage({
         picture: structure.hint ? `Seen as a picture: ${structure.hint.replace(/\.$/, '')}.` : 'Seen as a picture.',
       };
       if (KINDS[structure.kind]) {
-        card.append(element('p', 'hint', KINDS[structure.kind]));
+        card.append(mixed('p', 'hint', KINDS[structure.kind]));
       }
       section.append(card);
     }
@@ -317,9 +338,11 @@ export function createWordPage({
     }
     let forms;
     let chars;
+    // The script the page's characters are in.
+    let script = settings.script;
 
     if (word) {
-      const script = scriptFor(word, settings);
+      script = scriptFor(word, settings);
       shown = { word };
       forms = { simplified: word.simplified, traditional: word.traditional, own: word[script] };
       const described = describeReading(readingsFor(word, settings.pronunciation, null));
@@ -337,10 +360,17 @@ export function createWordPage({
         .map(({ label }) => label);
       if (labels.length > 0) {
         const chips = element('div', 'page-chips');
-        labels.forEach((label) => chips.append(element('span', 'chip', label)));
+        // (A deck's name has no script of its own: the learner's is taken.)
+        for (const label of labels) {
+          const chip = element('span', 'chip');
+          fillMixed(chip, label, settings.script);
+          chips.append(chip);
+        }
         parts.push(chips);
       }
-      parts.push(element('p', 'page-meaning', word.definition));
+      const meaning = element('p', 'page-meaning');
+      fillMixed(meaning, word.definition, script);
+      parts.push(meaning);
     } else {
       // Not one of your words: what the dictionary says.
       const entries = await lookUp(target.text);
@@ -355,7 +385,9 @@ export function createWordPage({
       parts.push(showHeading(forms, first ? formatPinyin(first.pinyin) : '', null, speakable));
       // Every reading the dictionary has, each with its meanings.
       for (const entry of entries) {
-        parts.push(element('p', 'page-meaning', `${formatPinyin(entry.pinyin)}: ${entry.meanings.join('; ')}`));
+        const meaning = element('p', 'page-meaning');
+        fillMixed(meaning, `${formatPinyin(entry.pinyin)}: ${entry.meanings.join('; ')}`, script);
+        parts.push(meaning);
       }
       parts.push(element('p', 'hint', 'Not in your words. To add it, type it on a deck\'s page.'));
     }
@@ -367,7 +399,7 @@ export function createWordPage({
       parts.push(showNote(note, forms));
     }
     const characters = await loadCharacters();
-    const built = showCharacters(characters, chars, chars.length === 1 && Array.from(forms.own).length === 1);
+    const built = showCharacters(characters, chars, chars.length === 1 && Array.from(forms.own).length === 1, script);
     if (built) {
       parts.push(built);
     }
@@ -512,6 +544,10 @@ export function createWordPage({
   function noteWordButton(piece) {
     const button = element('button', 'note-word', piece.text);
     button.type = 'button';
+    // Marked as Chinese for screen readers and the font (lang.js). A note's
+    // Chinese may be in either script (data/notes/CLAUDE.md), so the
+    // learner's is taken.
+    button.lang = langFor(getSettings().script);
     button.addEventListener('pointerup', (event) => event.stopPropagation());
     button.addEventListener('click', (event) => {
       event.stopPropagation();
@@ -526,7 +562,9 @@ export function createWordPage({
   // time, it is fetched). The owner asked for this on 2026-10-15, in place of
   // pinyin written into the notes of the beginner levels.
   function tappableText(target, text) {
-    target.textContent = text;
+    // Its Chinese marked as Chinese from the start (lang.js), in the
+    // learner's script, as the buttons below are.
+    fillMixed(target, text, getSettings().script);
     splitWords(text).then((pieces) => {
       // (Unless the element was given other text meanwhile, or the text has
       // no Chinese in it.)

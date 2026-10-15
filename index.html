@@ -53,7 +53,7 @@
           <p id="review-counts" class="counts"></p>
         </div>
         <!-- Says so when the card just graded was suspended as a leech (review.js). -->
-        <p id="review-notice" class="note" hidden></p>
+        <p id="review-notice" role="status" class="note" hidden></p>
         <!-- Which kind of card this is: Writing, Tone, Pinyin or Meaning -->
         <div class="type-row">
           <p id="card-type" class="card-type"></p>
@@ -104,11 +104,11 @@
         </select>
         <button type="submit">Practice</button>
       </form>
-      <p id="note" class="note"></p>
+      <p id="note" role="status" class="note"></p>
 
       <!-- Review mode, when nothing is due -->
       <div id="done-panel" class="done-panel" hidden>
-        <p id="done-message"></p>
+        <p id="done-message" role="status"></p>
         <!-- In Learn, between two words: on to the next one; in Review, with
              nothing due and words waiting: to Learn (review.js, main.js). -->
         <button id="learn-next-button" class="primary" type="button" hidden>Learn the next word</button>
@@ -167,8 +167,8 @@
             </li>
             <li>
               <button class="word-entry deck-entry ready-entry" type="button" data-list="radicals">
-                <span class="entry-characters">Radicals 部首</span>
-                <span class="entry-definition">The parts characters are built from, such as 氵 "water" in 洗 and 河. Knowing them makes new characters easier to remember. Start with Common: its 80 radicals are the radical of nearly 9 in 10 characters in the lists above, most useful first. Uncommon has the other 134, rare in modern characters and mostly of use for looking characters up in a paper dictionary.</span>
+                <span class="entry-characters">Radicals <span lang="zh-Hant-TW">部首</span></span>
+                <span class="entry-definition">The parts characters are built from, such as <span lang="zh-Hans-CN">氵</span> "water" in <span lang="zh-Hans-CN">洗</span> and <span lang="zh-Hans-CN">河</span>. Knowing them makes new characters easier to remember. Start with Common: its 80 radicals are the radical of nearly 9 in 10 characters in the lists above, most useful first. Uncommon has the other 134, rare in modern characters and mostly of use for looking characters up in a paper dictionary.</span>
               </button>
             </li>
           </ul>
@@ -178,7 +178,7 @@
           <ul id="ready-levels" class="ready-levels"></ul>
           <!-- What adding makes, worded for the list chosen (wordsPanel.js). -->
           <p id="ready-levels-hint" class="hint"></p>
-          <p id="ready-report" class="note"></p>
+          <p id="ready-report" role="status" class="note"></p>
         </section>
 
         <!-- My decks: either the front page, with the decks that are inside no
@@ -257,7 +257,7 @@
                 </select>
               </label>
               <button type="submit" class="primary">Add word</button>
-              <p id="add-word-note" class="note"></p>
+              <p id="add-word-note" role="status" class="note"></p>
             </form>
             </details>
 
@@ -272,7 +272,7 @@
                 <button id="check-list-button" class="small" type="button">Check list</button>
                 <button id="add-list-button" class="small primary" type="button" hidden>Add</button>
               </div>
-              <p id="list-report" class="note"></p>
+              <p id="list-report" role="status" class="note"></p>
               <ul id="list-problems" class="list-problems"></ul>
             </details>
 
@@ -286,7 +286,7 @@
                 <input id="sentence-meaning" type="text" placeholder="What it means" aria-label="What it means" autocomplete="off" />
                 <input id="sentence-cloze" type="text" placeholder="Word to fill in when writing (optional)" aria-label="Word of the sentence to fill in when writing, optional" autocomplete="off" autocapitalize="off" />
                 <button type="submit" class="primary">Add sentence</button>
-                <p id="add-sentence-note" class="note"></p>
+                <p id="add-sentence-note" role="status" class="note"></p>
               </form>
             </details>
           </div>
@@ -342,7 +342,7 @@
               <select id="bulk-deck" aria-label="Deck to put the selected words in"></select>
               <button id="bulk-deck-button" class="small" type="button" data-needs-selection>Add to this deck</button>
             </div>
-            <p id="bulk-note" class="note"></p>
+            <p id="bulk-note" role="status" class="note"></p>
           </div>
           <!-- Only with the leeches listed: two ways to take them elsewhere. -->
           <div id="leech-export" class="buttons" hidden>
@@ -364,10 +364,13 @@
           <div id="word-row" class="word-row"></div>
 
           <!-- The status line: the stroke count ("3/7", hidden in Review unless
-               a setting says otherwise) and the mistakes. -->
+               a setting says otherwise) and the mistakes. role="status" makes
+               a screen reader read out what the status says when it changes
+               (the same on the notes after adding words and the like); the
+               stroke count is left out, or every stroke would be read out. -->
           <div id="status-row" class="status-row">
             <p id="stroke-count" class="stroke-count"></p>
-            <p id="status" class="status"></p>
+            <p id="status" role="status" class="status"></p>
           </div>
         </div>
 
@@ -476,7 +479,7 @@
             <fieldset id="edit-decks" class="setting"><legend>This word is in</legend></fieldset>
           </details>
           <p class="hint">Pinyin is written with tone numbers, like xue2xi2. Your progress with the word is kept whatever you change.</p>
-          <p id="word-dialog-note" class="note"></p>
+          <p id="word-dialog-note" role="status" class="note"></p>
           <div class="buttons">
             <button type="submit" class="small primary">Save</button>
             <button id="study-next-button" class="small" type="button">Study next</button>
@@ -549,7 +552,7 @@
               Their grouping into themes was made for this app by AI models. MIT License.
             </li>
             <li>
-              <b>TOCFL word list:</b> the 華語八千詞表 published by Taiwan's Steering Committee for the Test of Proficiency-Huayu.
+              <b>TOCFL word list:</b> the <span lang="zh-Hant-TW">華語八千詞表</span> published by Taiwan's Steering Committee for the Test of Proficiency-Huayu.
               The committee states no license for it.
             </li>
             <li>
@@ -647,7 +650,7 @@
               The goal shown in Learn while this deck is studied. Leave it empty to use the number in Settings.
             </span>
           </label>
-          <p id="deck-dialog-note" class="note"></p>
+          <p id="deck-dialog-note" role="status" class="note"></p>
           <div id="deck-buttons" class="buttons">
             <button type="submit" class="small primary">Save</button>
             <button id="deck-delete-button" class="small" type="button">Delete</button>
@@ -682,7 +685,7 @@
           backup of this device is saved to your downloads first, in case you want to go back.<br />
           <b>Replace</b> throws away what is on this device and puts the backup in its place.
         </p>
-        <p id="import-note" class="note"></p>
+        <p id="import-note" role="status" class="note"></p>
       </dialog>
 
       <!-- The introduction shown the first time the app is opened: a few screens,
@@ -725,22 +728,22 @@
           <h2>Which characters are you learning?</h2>
           <fieldset class="setting">
             <legend>Script</legend>
-            <label><input type="radio" name="welcome-script" value="simplified" /> Simplified 简体</label>
-            <label><input type="radio" name="welcome-script" value="traditional" /> Traditional 繁體</label>
+            <label><input type="radio" name="welcome-script" value="simplified" /> Simplified <span lang="zh-Hans-CN">简体</span></label>
+            <label><input type="radio" name="welcome-script" value="traditional" /> Traditional <span lang="zh-Hant-TW">繁體</span></label>
             <label><input type="radio" name="welcome-script" value="both-simplified" /> Both, mostly simplified</label>
             <label><input type="radio" name="welcome-script" value="both-traditional" /> Both, mostly traditional</label>
           </fieldset>
           <!-- The names link to Wikipedia; a link someone taps is fine under the offline rule. -->
-          <p class="hint"><a href="https://en.wikipedia.org/wiki/Simplified_Chinese_characters" target="_blank" rel="noopener">Simplified</a> characters are used in mainland China, Singapore and Malaysia. <a href="https://en.wikipedia.org/wiki/Traditional_Chinese_characters" target="_blank" rel="noopener">Traditional</a> characters are used in Taiwan, Hong Kong and Macau. Many characters are the same in both; others differ, like 学 and 學. If you are not sure, pick the one used where you plan to read or speak Chinese.</p>
+          <p class="hint"><a href="https://en.wikipedia.org/wiki/Simplified_Chinese_characters" target="_blank" rel="noopener">Simplified</a> characters are used in mainland China, Singapore and Malaysia. <a href="https://en.wikipedia.org/wiki/Traditional_Chinese_characters" target="_blank" rel="noopener">Traditional</a> characters are used in Taiwan, Hong Kong and Macau. Many characters are the same in both; others differ, like <span lang="zh-Hans-CN">学</span> and <span lang="zh-Hant-TW">學</span>. If you are not sure, pick the one used where you plan to read or speak Chinese.</p>
           <p class="hint">With both, your cards are in the script you mostly use, and you can pick the other one for single words.</p>
           <fieldset class="setting">
             <legend>Pronunciation: which standard?</legend>
-            <label><input type="radio" name="welcome-pronunciation" value="mainlandOnly" /> Mainland China (普通话)</label>
-            <label><input type="radio" name="welcome-pronunciation" value="taiwan" /> Taiwan (國語)</label>
+            <label><input type="radio" name="welcome-pronunciation" value="mainlandOnly" /> Mainland China (<span lang="zh-Hans-CN">普通话</span>)</label>
+            <label><input type="radio" name="welcome-pronunciation" value="taiwan" /> Taiwan (<span lang="zh-Hant-TW">國語</span>)</label>
             <!-- "mainland": both readings, the mainland one listed first. -->
             <label><input type="radio" name="welcome-pronunciation" value="mainland" /> Both</label>
           </fieldset>
-          <p class="hint">A few words are read differently in Taiwan and on the mainland: 星期 is xīngqí in Taiwan and xīngqī on the mainland (more on <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">Taiwan's Mandarin</a>). The reading you choose is the one shown and tested. With Taiwan, the mainland reading also appears beside it in small print, because dictionaries file words under it. With Both, cards show both readings and accept either tone.</p>
+          <p class="hint">A few words are read differently in Taiwan and on the mainland: <span lang="zh-Hant-TW">星期</span> is xīngqí in Taiwan and xīngqī on the mainland (more on <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">Taiwan's Mandarin</a>). The reading you choose is the one shown and tested. With Taiwan, the mainland reading also appears beside it in small print, because dictionaries file words under it. With Both, cards show both readings and accept either tone.</p>
           <p class="hint">You can change all of this later in Settings.</p>
         </section>
 
@@ -816,7 +819,7 @@
             <option value="both-traditional">Both, cards in traditional</option>
           </select>
           <p id="script-hint" class="hint" hidden>
-            <a href="https://en.wikipedia.org/wiki/Simplified_Chinese_characters" target="_blank" rel="noopener">Simplified</a> characters are used in mainland China, Singapore and Malaysia. <a href="https://en.wikipedia.org/wiki/Traditional_Chinese_characters" target="_blank" rel="noopener">Traditional</a> characters are used in Taiwan, Hong Kong and Macau. Many characters are the same in both; others differ, like 学 and 學. If you are not sure, pick the one used where you plan to read or speak Chinese.<br />
+            <a href="https://en.wikipedia.org/wiki/Simplified_Chinese_characters" target="_blank" rel="noopener">Simplified</a> characters are used in mainland China, Singapore and Malaysia. <a href="https://en.wikipedia.org/wiki/Traditional_Chinese_characters" target="_blank" rel="noopener">Traditional</a> characters are used in Taiwan, Hong Kong and Macau. Many characters are the same in both; others differ, like <span lang="zh-Hans-CN">学</span> and <span lang="zh-Hant-TW">學</span>. If you are not sure, pick the one used where you plan to read or speak Chinese.<br />
             With one script, you are only asked for and shown that one. With both, cards are in the script named, and single words can be given the other.
           </p>
         </div>
@@ -833,7 +836,7 @@
             <option value="mainland">Both</option>
           </select>
           <p id="pronunciation-hint" class="hint" hidden>
-            A few words are read differently in Taiwan and on the mainland: 星期 is xīngqí in Taiwan and xīngqī on the mainland (more on <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">Taiwan's Mandarin</a>). The reading you choose is the one shown and tested. With Taiwan, the mainland reading also appears beside it in small print, because dictionaries file words under it. With Both, cards show both readings and accept either tone. With Mainland China, Taiwan readings are never shown or asked for.
+            A few words are read differently in Taiwan and on the mainland: <span lang="zh-Hant-TW">星期</span> is xīngqí in Taiwan and xīngqī on the mainland (more on <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">Taiwan's Mandarin</a>). The reading you choose is the one shown and tested. With Taiwan, the mainland reading also appears beside it in small print, because dictionaries file words under it. With Both, cards show both readings and accept either tone. With Mainland China, Taiwan readings are never shown or asked for.
           </p>
         </div>
 

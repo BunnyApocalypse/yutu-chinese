@@ -23,12 +23,18 @@
   --accent-pressed: #315d99;
   --on-accent: #fff; /* text on the blue or the red */
   --border: #b9b2a3;
+  /* The edge of a text box or drop-down list: darker than other edges, as
+     it is what shows where the box is (3:1 against what is around it, the
+     accessibility guidelines' minimum, 2026-10-15). */
+  --field-border: #8a8374;
   --border-soft: #d8d1c2;
   --line: #ddd7c9; /* lines between parts */
   --scrollbar: #c9c1ae;
   --danger: #c2452d; /* missed, leeches, the reminder dot */
+  --danger-fill: #c2452d; /* behind white text: the bar saying something went wrong */
   --danger-bg: #f9dfd9;
   --success: #3b9c5a; /* passed, progress */
+  --success-text: #2e7a46; /* the same as text, darker to be read (4.5:1) */
   --success-bg: #dff1e4;
   --warn: #8a5a00; /* notes and "new" */
   --shadow: rgba(0, 0, 0, 0.18);
@@ -63,12 +69,15 @@
   --accent-pressed: #335f9c;
   --on-accent: #fff;
   --border: #5a564d;
+  --field-border: #807b6f;
   --border-soft: #46433d;
   --line: #3e3c37;
   --scrollbar: #5a564d;
   --danger: #ec7a62;
+  --danger-fill: #b23f2a;
   --danger-bg: #4a2620;
   --success: #62c286;
+  --success-text: #62c286;
   --success-bg: #1f3a28;
   --warn: #e0a640;
   --shadow: rgba(0, 0, 0, 0.5);
@@ -96,12 +105,15 @@
     --accent-pressed: #335f9c;
     --on-accent: #fff;
     --border: #5a564d;
+    --field-border: #807b6f;
     --border-soft: #46433d;
     --line: #3e3c37;
     --scrollbar: #5a564d;
     --danger: #ec7a62;
+    --danger-fill: #b23f2a;
     --danger-bg: #4a2620;
     --success: #62c286;
+    --success-text: #62c286;
     --success-bg: #1f3a28;
     --warn: #e0a640;
     --shadow: rgba(0, 0, 0, 0.5);
@@ -610,7 +622,7 @@ select {
   font: inherit;
   min-height: 40px;
   padding: 0 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--field-border);
   border-radius: 8px;
   background: var(--surface);
   color: var(--text);
@@ -636,7 +648,7 @@ select {
   /* Below 16px, mobile browsers zoom the whole page in when the field is tapped */
   font: inherit;
   font-size: 1.25rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--field-border);
   border-radius: 8px;
   background: var(--surface);
   color: inherit;
@@ -880,7 +892,7 @@ button.slot {
 }
 
 .face-pinyin.passed {
-  color: var(--success);
+  color: var(--success-text);
 }
 
 .face-pinyin.missed {
@@ -1021,7 +1033,7 @@ button.slot {
   bottom: 0;
   margin: 0;
   padding: 8px 16px;
-  background: var(--danger);
+  background: var(--danger-fill);
   color: var(--on-accent);
   text-align: center;
   font-size: 0.9rem;
@@ -1062,6 +1074,22 @@ button.slot {
 .settings-group > summary {
   font-weight: 600;
   cursor: pointer;
+  /* A taller area to tap (at least 24px, the accessibility guidelines'
+     minimum, 2026-10-15) that takes in the group's padding, so that it looks
+     the same. */
+  padding: 6px 0;
+  margin: -6px 0;
+}
+
+/* The volume slider: as tall as the guidelines' minimum area to tap. */
+#volume-input {
+  height: 32px;
+}
+
+/* Links in the text of the settings panel: a taller area to tap. Padding
+   above and below a link inside a line of text does not move the lines. */
+.settings-panel .hint a {
+  padding: 4px 0;
 }
 
 .settings-group[open] > summary {
@@ -1152,7 +1180,7 @@ fieldset.setting {
   min-height: 40px;
   padding: 0 8px;
   font: inherit;
-  border: 1px solid var(--border);
+  border: 1px solid var(--field-border);
   border-radius: 8px;
   background: var(--surface);
 }
@@ -1242,6 +1270,11 @@ button.grade .wait {
   opacity: 0.75;
 }
 
+/* On the blue of the main grade, faded white is too faint to read. */
+button.grade.primary .wait {
+  opacity: 1;
+}
+
 button.primary {
   border-color: var(--accent-fill);
   background: var(--accent-fill);
@@ -1285,7 +1318,7 @@ button.primary:active {
   /* Below 16px, mobile browsers zoom the whole page in when the field is tapped */
   font: inherit;
   font-size: 1rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--field-border);
   border-radius: 8px;
   background: var(--surface);
   color: inherit;
@@ -1611,6 +1644,14 @@ html:has(dialog[open]) {
   font-size: 1.5rem;
 }
 
+/* "trad. 繁體" or "simp. 简体" before the sentence, when both are shown. */
+.sentence-script {
+  margin-right: 8px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  vertical-align: middle;
+}
+
 /* A word of the example sentence or of a learning note: looks like text,
    taps like a button. A tap on a word in a line of text needs no more room
    than the word: the popup it opens is the bigger target. */
@@ -1632,6 +1673,28 @@ button.note-word {
   text-decoration: underline dotted var(--accent);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
+}
+
+/* The area that takes a tap reaches a little above and below the word,
+   so that it is at least 24px tall (the accessibility guidelines' minimum,
+   2026-10-15), without moving the lines apart: an invisible layer over the
+   button, which is part of it. The same for "I know this word", whose row
+   must not grow (docs/pitfalls.md), and for "About" and "Edit" beside the
+   kind of card. */
+button.sentence-word,
+button.note-word,
+#skip-lesson-button,
+.review-header .link-button {
+  position: relative;
+}
+
+button.sentence-word::after,
+button.note-word::after,
+#skip-lesson-button::after,
+.review-header .link-button::after {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
 }
 
 /* Words side by side (我们 的 老师) are told apart by a hair's gap in the
@@ -1737,7 +1800,7 @@ button.part {
 }
 
 button.part.meaning .part-role {
-  color: var(--success);
+  color: var(--success-text);
 }
 
 button.part.sound .part-role {

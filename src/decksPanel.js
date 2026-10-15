@@ -9,6 +9,7 @@
 // reads the words and decks and hands them over through the functions below.
 
 import { putAll, removeDecks, removeWords, randomId } from './db.js';
+import { fillMixed } from './lang.js';
 import { allCardIds } from './session.js';
 import {
   lastActivity,
@@ -70,9 +71,10 @@ export function fillDeckSelect(select, decks, first, { skip = () => false, keep 
 // study(deckId, mode): shows Review ('review') or Learn ('learn') for a deck
 // afterChange: called after anything was saved, to read it all afresh and
 //              show it (which calls render() here)
+// getSettings: returns the current settings (see settings.js)
 //
 // Returns { render() }.
-export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getOpenDeck, open, study, afterChange }) {
+export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getOpenDeck, open, study, afterChange, getSettings }) {
   const listElement = byId('deck-list');
   const pathElement = byId('deck-path');
   const addForm = byId('add-deck-form');
@@ -91,6 +93,10 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
   let openDeck = null;
 
   const NO_PARENT = [{ value: '', label: 'No other deck' }];
+
+  // A deck's name into an element, its Chinese marked as Chinese (lang.js).
+  // A name has no script of its own, so the learner's is taken.
+  const showName = (element, name) => fillMixed(element, name, getSettings().script);
 
   // The words in a deck or in the decks inside it.
   function wordsIn(deck) {
@@ -147,12 +153,14 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'path-part';
-      button.textContent = text;
+      showName(button, text);
       button.addEventListener('click', () => open(deckId));
       return button;
     };
     const parts = current ? [link('Decks', null), ...above.map((deck) => link(deck.name, deck.id))] : [];
-    pathElement.replaceChildren(...parts.flatMap((part) => [part, ' › ']), ...(current ? [current.name] : []));
+    const here = document.createElement('span');
+    showName(here, current ? current.name : '');
+    pathElement.replaceChildren(...parts.flatMap((part) => [part, ' › ']), ...(current ? [here] : []));
     byId('deck-path-row').hidden = !current;
   }
 
@@ -170,7 +178,7 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
     byId('deck-head').hidden = !current;
     byId('decks-hint').hidden = Boolean(current);
     if (current) {
-      byId('deck-title').textContent = current.name;
+      showName(byId('deck-title'), current.name);
       const counts = countsOf(current);
       byId('deck-counts').textContent = counts.text;
       fillBar(byId('deck-progress'), counts.percent);
@@ -200,8 +208,10 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
       const counts = countsOf(deck);
       const bar = span('deck-progress', '');
       fillBar(bar, counts.percent);
+      const name = span('entry-characters', '');
+      showName(name, deck.name);
       button.append(
-        span('entry-characters', deck.name),
+        name,
         span('entry-definition', counts.text + (inside > 0 ? ` · ${plural(inside, 'deck')} inside` : '')),
         bar,
       );
@@ -235,7 +245,7 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
   const newDeckDialog = byId('new-deck-dialog');
   byId('new-deck-button').addEventListener('click', () => {
     const current = getOpenDeck();
-    byId('new-deck-title').textContent = current ? `New deck inside ${current.name}` : 'New deck';
+    showName(byId('new-deck-title'), current ? `New deck inside ${current.name}` : 'New deck');
     addName.value = '';
     newDeckDialog.showModal();
     addName.focus();

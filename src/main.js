@@ -11,6 +11,7 @@ import { createReview } from './review.js';
 import { createSettings } from './settings.js';
 import { createWordsPanel } from './wordsPanel.js';
 import { scriptFor, scriptFlagFor } from './words.js';
+import { fillMixed } from './lang.js';
 import { fileCardsByScript } from './scriptCards.js';
 import { missingReadyMadeDecks, wordsWithListsAsDecks, homeForEveryWord, flattenedReadyMadeDecks } from './decks.js';
 import { setUpOffline, keepData } from './offline.js';
@@ -169,7 +170,7 @@ function startFreePractice() {
     // (review.js does that for those).
     const ownScript = word && text === word[scriptFor(word, settings)];
     const scriptFlag = byId('script-flag');
-    scriptFlag.textContent = ownScript ? scriptFlagFor(word, settings) : '';
+    fillMixed(scriptFlag, ownScript ? scriptFlagFor(word, settings) : '', ownScript ? scriptFor(word, settings) : settings.script);
     scriptFlag.hidden = scriptFlag.textContent === '';
     return flow.start(text, {
       script: ownScript ? scriptFor(word, settings) : settings.script,
@@ -199,10 +200,22 @@ function setMode(newMode) {
   mode = newMode;
   // Review and Learn share the top of the page and the study area.
   const reviewing = mode === 'review' || mode === 'learn';
-  reviewTab.classList.toggle('selected', mode === 'review');
-  practiceTab.classList.toggle('selected', mode === 'practice');
-  wordsTab.classList.toggle('selected', mode === 'words');
-  browseTab.classList.toggle('selected', mode === 'browse');
+  // The menu's item for the place shown is marked: by color ("selected"),
+  // and for screen readers by aria-current, which they read as "current
+  // page".
+  for (const [tab, itsMode] of [
+    [reviewTab, 'review'],
+    [practiceTab, 'practice'],
+    [wordsTab, 'words'],
+    [browseTab, 'browse'],
+  ]) {
+    tab.classList.toggle('selected', mode === itsMode);
+    if (mode === itsMode) {
+      tab.setAttribute('aria-current', 'page');
+    } else {
+      tab.removeAttribute('aria-current');
+    }
+  }
   byId('place-title').textContent = PLACE_TITLES[mode];
   reviewHeader.hidden = !reviewing;
   wordForm.hidden = mode !== 'practice';

@@ -14,10 +14,32 @@ export function clampWithPopup(element, showAll) {
     element.classList.add('clamped');
     // scrollHeight is how tall the text is in full; clientHeight how much of
     // that is showing.
-    element.classList.toggle('has-more', element.scrollHeight > element.clientHeight + 1);
+    const hasMore = element.scrollHeight > element.clientHeight + 1;
+    element.classList.toggle('has-more', hasMore);
+    // While it has more, it acts as a button for the keyboard and screen
+    // readers too: tabindex="0" lets Tab reach it, and role="button" makes a
+    // screen reader say it can be pressed. (Not a <button> element, which
+    // would not cut its text off the same way.)
+    if (hasMore) {
+      element.tabIndex = 0;
+      element.setAttribute('role', 'button');
+      element.setAttribute('aria-description', 'Shows all of it');
+    } else {
+      element.removeAttribute('tabindex');
+      element.removeAttribute('role');
+      element.removeAttribute('aria-description');
+    }
   };
   element.addEventListener('click', () => {
     if (element.classList.contains('has-more')) {
+      showAll(element.textContent);
+    }
+  });
+  // A button is pressed with Enter or Space from the keyboard; a <p> needs
+  // to be told so.
+  element.addEventListener('keydown', (event) => {
+    if ((event.key === 'Enter' || event.key === ' ') && element.classList.contains('has-more')) {
+      event.preventDefault(); // or Space would scroll the page
       showAll(element.textContent);
     }
   });

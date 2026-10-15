@@ -9,6 +9,7 @@ import {
   splitCsvLine,
   readWordList,
   charactersShown,
+  scriptsShown,
   scriptFor,
   scriptFlagFor,
   parseReadyList,
@@ -140,6 +141,10 @@ test('characters are shown in the script being learned', () => {
   assert.equal(charactersShown(study, settings('traditional', true)), '學習 · 学习');
   assert.equal(charactersShown(study, settings('simplified', true)), '学习 · 學習');
   assert.equal(charactersShown({ traditional: '好', simplified: '好' }, settings('simplified', true)), '好');
+  // The scripts of the parts, for marking each with its language.
+  assert.deepEqual(scriptsShown(study, settings('simplified', true)), ['simplified', 'traditional']);
+  assert.deepEqual(scriptsShown(study, settings('traditional', false)), ['traditional']);
+  assert.deepEqual(scriptsShown({ traditional: '好', simplified: '好' }, settings('traditional', true)), ['traditional']);
 });
 
 test("a word's own script counts only while both scripts are learned", () => {

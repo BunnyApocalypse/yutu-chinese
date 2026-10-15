@@ -79,6 +79,7 @@ How each part of the app works, and why, is in `docs/` (index: `docs/README.md`)
 - **A setting that belongs to the device** goes in `DEVICE_SETTINGS` in `src/merge.js`, or combining backups takes it from the other device.
 - **A word's script is decided by `scriptFor(word, settings)`** in `src/words.js`; never read `settings.script` for a word. Card IDs come from `cardIdFor` / `allCardIds` in `src/session.js`, never built by hand.
 - **`word.pinyin` may be empty or not syllables** (sentences, radicals); code reading it must cope.
+- **Chinese put on the page is marked with `lang`** (`langFor` / `fillMixed` in `src/lang.js`), and anything tapped is at least 24px tall; `tests/browser/accessibility.browser.js` checks both, with contrast, in both looks.
 - **Always pass the script to `loadCharData`**; never cache stroke data by character alone, never hard-code a stroke number.
 - **Addresses are built with `import.meta.env.BASE_URL`**, never a leading `/` (the build is relative).
 - **Anything kept per site** (a cache, `localStorage`, a database) must be named apart for the test copy (`__CHANNEL__`), or the test copy changes what the stable one relies on.
@@ -114,7 +115,7 @@ Past session notes are in `docs/history.md`.
 
 - **No new features until the owner's own testing and a first round with testers are done** (agreed 2026-10-13); fixing what testing finds is the work. Exceptions are agreed one by one, like the list below.
 - **The first testing session's suggestions (2026-10-14) were all built on 2026-10-15** (list and where each is documented: `docs/history.md`), except **Free practice under Words, "too many buttons" and the busy Learn screen: for the pass over the looks**.
-- **An accessibility review, at some point** (the owner, 2026-10-15): screen readers, keyboard use, contrast in both looks, sizes of what is tapped.
+- **The accessibility review was done and fixed on 2026-10-15** (`docs/interface.md`, "Accessibility"). Open: keyboard shortcuts for the grades (a possible feature, not agreed), and checking by hand with VoiceOver or TalkBack.
 - **The owner has not tried** sentences, combining backups between real devices, and leeches. Ask how it went before building further on them. The rest built on 2026-10-13 and 14 they test as they use it (the owner, 2026-10-15).
 - **The general page of notes for a native speaker** has not been answered (the Taiwan one was; `data/notes/CLAUDE.md`).
 - **The TOCFL list has no stated license**: to be reconsidered before a larger audience.

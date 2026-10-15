@@ -23,6 +23,7 @@ import {
 import { createDecksPanel, fillDeckSelect } from './decksPanel.js';
 import { createCardsPanel } from './cardsPanel.js';
 import { createWordPage } from './wordPage.js';
+import { langFor } from './lang.js';
 import { ask } from './confirm.js';
 import { isSentence, sentenceId, sentenceRecord, clozeInBoth } from './sentences.js';
 import { isRadical, radicalRecord } from './radicals.js';
@@ -36,6 +37,7 @@ import {
   orderForStudyingNext,
   matchesSearch,
   charactersShown,
+  scriptsShown,
   scriptFor,
   parseReadyList,
   levelsOfReadyList,
@@ -254,6 +256,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     open: openDeckPage,
     study: studyDeck,
     afterChange: () => afterChange(),
+    getSettings,
   });
 
   // "Add a word" is folded away, so that the deck's words are near the top
@@ -463,6 +466,21 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     return charactersShown(word, getSettings());
   }
 
+  // The same as a span for a row of a list, each script's part marked with
+  // its language (lang.js), so that a screen reader reads it as Chinese.
+  function charactersElement(word) {
+    const element = document.createElement('span');
+    element.className = 'entry-characters';
+    const parts = scriptsShown(word, getSettings()).map((script) => {
+      const part = document.createElement('span');
+      part.lang = langFor(script);
+      part.textContent = word[script];
+      return part;
+    });
+    element.append(...parts.flatMap((part, index) => (index > 0 ? [' · ', part] : [part])));
+    return element;
+  }
+
   // Which of the two scripts and of the Taiwan readings are asked for.
   function asksFor() {
     const { script, bothScripts, pronunciation } = getSettings();
@@ -628,7 +646,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       button.type = 'button';
       button.className = 'word-entry';
       button.append(
-        span('entry-characters', charactersOf(word)),
+        charactersElement(word),
         span('entry-pinyin', formatPinyin(word.pinyin)),
         span('entry-definition', word.definition),
       );
@@ -899,7 +917,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     button.type = 'button';
     button.className = 'word-entry';
     button.append(
-      span('entry-characters', charactersOf(entry)),
+      charactersElement(entry),
       span('entry-pinyin', formatPinyin(entry.pinyin)),
       span(
         'entry-definition',

@@ -25,6 +25,7 @@ import {
 } from './session.js';
 import { toneAnswers, readingsFor, describeReading } from './tones.js';
 import { scriptFor, scriptFlagFor } from './words.js';
+import { fillMixed } from './lang.js';
 import { isLeech, lapsesOf, isSuspended, withSuspended, becameLeech } from './leeches.js';
 import { speak } from './speech.js';
 import { markedKnown } from './cardManager.js';
@@ -173,7 +174,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // Above the card: a note if this word is in another script than the rest
   // of the deck. Pass null to take it away.
   function showScriptFlag(word) {
-    scriptFlag.textContent = word ? scriptFlagFor(word, settings) : '';
+    fillMixed(scriptFlag, word ? scriptFlagFor(word, settings) : '', word ? scriptFor(word, settings) : settings.script);
     scriptFlag.hidden = scriptFlag.textContent === '';
   }
 

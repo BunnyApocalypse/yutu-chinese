@@ -374,12 +374,18 @@ export function wordsWithSameCharacters(word, words) {
 //
 // settings: the current settings; `script` and `bothScripts` are used
 export function charactersShown(word, settings) {
+  return scriptsShown(word, settings)
+    .map((script) => word[script])
+    .join(' · ');
+}
+
+// The scripts of what charactersShown shows, in its order: ['traditional'],
+// or ['simplified', 'traditional']. The page needs them to mark each part
+// with its language (lang.js).
+export function scriptsShown(word, settings) {
   const script = scriptFor(word, settings);
-  const { bothScripts } = settings;
   const other = script === 'traditional' ? 'simplified' : 'traditional';
-  return bothScripts && word[other] !== word[script]
-    ? `${word[script]} · ${word[other]}`
-    : word[script];
+  return settings.bothScripts && word[other] !== word[script] ? [script, other] : [script];
 }
 
 // The `order` that puts a word ahead of every other word, so that it is the
