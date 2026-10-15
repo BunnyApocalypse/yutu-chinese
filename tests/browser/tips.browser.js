@@ -100,14 +100,13 @@ describe('tips', { concurrency: false }, () => {
     await tap(page, 'decks-tab');
     await tap(page, 'words-tab');
     assert.equal(await page.evaluate(tipOpen), false);
-    // One not seen yet does (Free practice writes a character).
-    await tap(page, 'words-tab');
+    // Writing a character brings none (its tip was taken out).
     await tap(page, 'practice-tab');
-    await waitUntil(page, tipSays('Write anywhere'), 'the writing tip');
-    // A tip can wait for its moment rather than its screen: the one about
-    // overruling a verdict comes when a character is first judged (wordFlow.js
-    // announces that; lesson.browser.js checks that it does).
-    await tap(page, 'tip-dismiss');
+    await waitUntil(page, `document.getElementById('stroke-count').textContent.startsWith('1/')`, 'Free practice');
+    assert.equal(await page.evaluate(tipOpen), false);
+    // One not seen yet does. A tip can wait for its moment rather than its
+    // screen: the one about overruling a verdict comes when a character of a
+    // word of several is first judged (wordFlow.js announces that).
     await page.evaluate(`document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'verdict' }))`);
     await waitUntil(page, tipSays('Tap a character\'s box'), 'the verdict tip');
     // Switching tips off takes away the one on screen.

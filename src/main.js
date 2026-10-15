@@ -170,8 +170,6 @@ function startFreePractice() {
     const scriptFlag = byId('script-flag');
     scriptFlag.textContent = ownScript ? scriptFlagFor(word, settings) : '';
     scriptFlag.hidden = scriptFlag.textContent === '';
-    // A tip the first time something is written (tips.js).
-    document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'writing' }));
     return flow.start(text, {
       script: ownScript ? scriptFor(word, settings) : settings.script,
       rawInput: settings.rawInput,

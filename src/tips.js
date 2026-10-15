@@ -28,7 +28,9 @@ const TIPS = {
   // Until 2026-10-15 this was the Learn tab's tip ('learn'), shown when the
   // tab opened, before the button was there.
   lesson: 'Already know a word? "I know this word" skips its lesson.',
-  writing: 'Write anywhere in the box, at any size.',
+  // There was a tip the first time something was written, "Write anywhere
+  // in the box, at any size.": taken out on 2026-10-15, the owner finding
+  // writing plain enough without it.
   // The first character judged in a word of several (wordFlow.js): one
   // character has no row of boxes, and its grade is its verdict.
   verdict: 'Tap a character\'s box if the app judged it wrong.',
