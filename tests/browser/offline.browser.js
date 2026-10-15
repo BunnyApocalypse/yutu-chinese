@@ -93,6 +93,17 @@ describe('offline use', { concurrency: false }, () => {
     );
   });
 
+  it('deletes what was saved under the old folder, /hanzi-trainer/, and keeps its own', async () => {
+    const old = JSON.stringify(`${new URL(app.url).origin}/hanzi-trainer/char-data/5b78.json`);
+    const dataCache = `caches.open('offline-data')`;
+    await page.evaluate(`${dataCache}.then((cache) => cache.put(${old}, new Response('{}')))`);
+    await page.evaluate(`localStorage.removeItem('old-folder-forgotten')`);
+    await reloadApp(page);
+    await waitUntil(page, `localStorage.getItem('old-folder-forgotten') === 'yes'`, 'the clean-up');
+    assert.equal(await page.evaluate(`${dataCache}.then((cache) => cache.match(${old})).then((found) => found === undefined)`), true);
+    assert.ok(await page.evaluate(`${dataCache}.then((cache) => cache.keys()).then((keys) => keys.length)`) > 1000);
+  });
+
   it('offers a new version of the app and switches to it when asked', { timeout: 60000 }, async () => {
     const appCaches = () =>
       page.evaluate(`caches.keys().then((names) => names.filter((name) => name.startsWith('app-')).join(','))`);

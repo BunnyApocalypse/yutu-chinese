@@ -1,10 +1,10 @@
 # Publishes the app to GitHub Pages: two copies of it, at one address.
 #
-#   stable branch  ->  https://bunnyapocalypse.github.io/hanzi-trainer/
+#   stable branch  ->  https://bunnyapocalypse.github.io/yutu-chinese/
 #                      The copy people use. It only changes when the stable
 #                      branch does, which is moved forward by hand once what
 #                      is on main has been tried.
-#   main branch    ->  https://bunnyapocalypse.github.io/hanzi-trainer/test/
+#   main branch    ->  https://bunnyapocalypse.github.io/yutu-chinese/test/
 #                      The test copy: every change, as soon as it is pushed.
 #                      It keeps its own database (see CHANNEL in src/db.js),
 #                      so trying it never touches the words and progress in

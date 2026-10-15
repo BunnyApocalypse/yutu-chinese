@@ -1,0 +1,37 @@
+<!doctype html>
+<!--
+  The app's old address, https://bunnyapocalypse.github.io/hanzi-trainer/,
+  sends people to the new one. This page is published from the repository
+  BunnyApocalypse/hanzi-trainer, which holds nothing else (see README.md
+  here). GitHub Pages shows 404.html, an exact copy of this page, for any
+  address under the old folder that has no file, so /hanzi-trainer/test/
+  and the rest are sent on too, keeping what follows the folder.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>玉兔中文 has moved</title>
+    <!-- Without JavaScript: the new address's front page, after a moment. -->
+    <meta http-equiv="refresh" content="2; url=https://bunnyapocalypse.github.io/yutu-chinese/" />
+    <script>
+      // The same place in the new folder: /hanzi-trainer/test/ becomes /yutu-chinese/test/.
+      const rest = location.pathname.replace(/^\/hanzi-trainer\/?/, '');
+      location.replace('/yutu-chinese/' + rest + location.search + location.hash);
+    </script>
+    <style>
+      body {
+        margin: 0;
+        padding: 32px 16px;
+        font-family: system-ui, sans-serif;
+        background: #f5f2ea;
+        color: #34322d;
+      }
+    </style>
+  </head>
+  <body>
+    <p>Hanzi Trainer is now <span lang="zh-Hant-TW">玉兔中文</span>, at a new address:</p>
+    <p><a href="https://bunnyapocalypse.github.io/yutu-chinese/">bunnyapocalypse.github.io/yutu-chinese</a></p>
+    <p>Your words and progress are still there.</p>
+  </body>
+</html>

@@ -49,7 +49,7 @@ Written on 2026-10-13 for whichever session picks the work up next (the owner wo
 - **Before the session ends, push** (the owner's instruction): commits made after the last push are local only.
 - **The owner has only tried the Decks tab briefly.** They asked for the Back button after their first look; expect more remarks on it.
 - **Deploying:** if the deploy step fails with "Fetching artifact metadata failed", do not re-run the failed run (the re-run uploads a second copy of the site and fails on that); start a fresh one with `gh workflow run deploy.yml --ref main`.
-- **The repository's address** is `BunnyApocalypse/hanzi-trainer`, with capitals; the lowercase one still works but git says it has moved.
+- **The repository's address** is `BunnyApocalypse/yutu-chinese` since 2026-10-15 (before: `BunnyApocalypse/hanzi-trainer`), with capitals.
 
 ## The first testing session (2026-10-14)
 

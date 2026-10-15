@@ -56,7 +56,7 @@ export async function startBuiltApp() {
     '.webmanifest': 'application/manifest+json',
     '.png': 'image/png',
   };
-  const FOLDER = '/hanzi-trainer/';
+  const FOLDER = '/yutu-chinese/';
   const server = http.createServer((request, response) => {
     const asked = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
     const inFolder = asked.startsWith(FOLDER) ? asked.slice(FOLDER.length) || 'index.html' : null;

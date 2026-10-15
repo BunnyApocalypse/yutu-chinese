@@ -25,6 +25,53 @@ const markFor = (packFile) => `offline/done/${packFile}`;
 
 const address = (file) => new URL(file, baseAddress).href;
 
+// The folder the app was published in until it was renamed 玉兔中文 (2026-10-15):
+// https://bunnyapocalypse.github.io/hanzi-trainer/. The browser keeps the
+// database, caches and long-term storage per site, not per folder, so the
+// words and progress came along by themselves. What did not: the service
+// worker registered for the old folder, and the stroke data, dictionary and
+// recordings saved under the old folder's addresses (about 45 MB). The new
+// copy saves its own, so the old ones are deleted, once.
+const OLD_FOLDER = '/hanzi-trainer/';
+// Marks that this was done. Kept in localStorage, which is shared by the
+// stable and test copies: that's right here, since both clean up the same
+// old folder.
+const OLD_FOLDER_DONE = 'old-folder-forgotten';
+
+async function forgetOldFolder() {
+  // Never while the app itself is still served from the old folder: it would
+  // delete its own saved files.
+  if (baseAddress.pathname.startsWith(OLD_FOLDER)) {
+    return;
+  }
+  try {
+    if (localStorage.getItem(OLD_FOLDER_DONE)) {
+      return;
+    }
+  } catch {
+    // Storage refused (a private window, for one): just do the work again.
+  }
+  const inOldFolder = (url) => new URL(url).pathname.startsWith(OLD_FOLDER);
+  for (const registration of await navigator.serviceWorker.getRegistrations()) {
+    if (inOldFolder(registration.scope)) {
+      await registration.unregister();
+    }
+  }
+  for (const name of [DATA_CACHE, AUDIO_CACHE]) {
+    const cache = await caches.open(name);
+    for (const request of await cache.keys()) {
+      if (inOldFolder(request.url)) {
+        await cache.delete(request);
+      }
+    }
+  }
+  try {
+    localStorage.setItem(OLD_FOLDER_DONE, 'yes');
+  } catch {
+    // As above.
+  }
+}
+
 // What kind of file a path is, for the browser's benefit.
 function typeOf(file) {
   return file.endsWith('.json') ? 'application/json' : 'text/plain; charset=utf-8';
@@ -308,6 +355,8 @@ export async function setUpOffline({ statusElement, updateButton, keepButton, in
   }
   state.app = 'The app is saved on this device.';
   show();
+  // In the background; if it fails, it is tried again next time.
+  forgetOldFolder().catch(() => {});
 
   // A new version has been fetched and is waiting to take over.
   const offerUpdate = () => {

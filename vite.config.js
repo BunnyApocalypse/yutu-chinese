@@ -18,7 +18,7 @@ function appVersion() {
 export default defineConfig(({ command }) => ({
   // The folder the built app is served from. './' makes every address in the
   // build relative to the page, so the same build works at
-  // https://<name>.github.io/hanzi-trainer/ and at http://localhost:4173/.
+  // https://<name>.github.io/yutu-chinese/ and at http://localhost:4173/.
   base: command === 'build' ? './' : '/',
   // Vite puts these values in place of the names wherever the program uses them.
   define: {

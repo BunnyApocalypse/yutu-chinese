@@ -4,7 +4,7 @@ Formerly Hanzi Trainer. 玉兔, the Jade Rabbit, lives on the moon.
 
 A personal, local-first Chinese character writing trainer. It runs entirely in the browser: no account, no server, and it works offline once it has been opened.
 
-**Use it at https://bunnyapocalypse.github.io/hanzi-trainer/.** On a phone or tablet, open that address and choose "Install app" or "Add to Home Screen" from the browser's menu. The first time, it saves itself, the stroke data for about 10,600 characters and a dictionary on the device (about 18 MB to download, 45 MB stored); Settings shows the progress. After that it needs no connection. When a newer version has been published, a "New version ready" button appears.
+**Use it at https://bunnyapocalypse.github.io/yutu-chinese/.** On a phone or tablet, open that address and choose "Install app" or "Add to Home Screen" from the browser's menu. The first time, it saves itself, the stroke data for about 10,600 characters and a dictionary on the device (about 18 MB to download, 45 MB stored); Settings shows the progress. After that it needs no connection. When a newer version has been published, a "New version ready" button appears.
 
 Stroke display and grading are done by [Hanzi Writer](https://hanziwriter.org/).
 
