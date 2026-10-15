@@ -695,12 +695,29 @@
           <p>This app helps you learn to read and write Chinese words. It brings each word back just before you would forget it.</p>
           <p>Everything stays on this device. There is no account, and nothing is sent anywhere.</p>
           <p>The next few screens set the app up and show how it works. It takes about a minute.</p>
-          <!-- Shown at once as it is chosen; saved with the rest at the end (welcome.js). -->
-          <fieldset class="setting">
+          <!-- Shown at once as it is chosen; saved with the rest at the end
+               (welcome.js). Each choice is a small sample of the look: the
+               app's icon, in the dark one turned dark, and for "Follow device
+               theme" split diagonally (the owner, 2026-10-15). The radio
+               buttons are still there, out of sight, for the keyboard and
+               screen readers. -->
+          <fieldset class="setting theme-picker">
             <legend>Look</legend>
-            <label><input type="radio" name="welcome-theme" value="auto" /> As this device is set</label>
-            <label><input type="radio" name="welcome-theme" value="light" /> Light</label>
-            <label><input type="radio" name="welcome-theme" value="dark" /> Dark</label>
+            <label class="theme-choice">
+              <input type="radio" name="welcome-theme" value="light" />
+              <span class="theme-swatch light" aria-hidden="true"><img src="icons/icon-192.png" alt="" /></span>
+              Light
+            </label>
+            <label class="theme-choice">
+              <input type="radio" name="welcome-theme" value="dark" />
+              <span class="theme-swatch dark" aria-hidden="true"><img src="icons/icon-192.png" alt="" /></span>
+              Dark
+            </label>
+            <label class="theme-choice">
+              <input type="radio" name="welcome-theme" value="auto" />
+              <span class="theme-swatch auto" aria-hidden="true"><img src="icons/icon-192.png" alt="" /><img src="icons/icon-192.png" alt="" /></span>
+              Follow device theme
+            </label>
           </fieldset>
         </section>
 
@@ -863,7 +880,7 @@
         <label class="setting">
           Look
           <select id="theme-select">
-            <option value="auto">As the device is set</option>
+            <option value="auto">Follow device theme</option>
             <option value="light">Light</option>
             <option value="dark">Dark</option>
           </select>

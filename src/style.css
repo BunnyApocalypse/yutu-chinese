@@ -478,6 +478,79 @@ main.focused .top-bar {
   vertical-align: middle;
 }
 
+/* The choice of look in the introduction: three samples side by side, the
+   chosen one ringed in blue. The radio buttons are kept for the keyboard and
+   screen readers, but out of sight. */
+.welcome fieldset.theme-picker {
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: flex-start;
+}
+
+.welcome fieldset.theme-picker label.theme-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 30%;
+  margin: 0;
+  text-align: center;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.theme-choice input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.theme-swatch {
+  position: relative;
+  display: block;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+/* The icon has a frame and a margin of its own (18 of its 192 pixels on
+   each side); it is shown that much larger, so that only the paper, the
+   grid and the character are in the sample. */
+.theme-swatch img {
+  display: block;
+  width: 123%;
+  height: 123%;
+  margin: -11.5%;
+}
+
+/* The icon turned dark. A partial invert makes its white paper about the
+   dark look's page (#1b1a18) and its black ink about the dark look's text,
+   where a full one would make them pure black and white. */
+.theme-swatch.dark img,
+.theme-swatch.auto img + img {
+  filter: invert(0.89);
+}
+
+/* Both, the dark one over the light one, cut off along the diagonal. */
+.theme-swatch.auto img + img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+.theme-choice input:checked + .theme-swatch {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.theme-choice input:focus-visible + .theme-swatch {
+  outline: 3px dashed var(--accent);
+  outline-offset: 2px;
+}
+
 /* The button that asks for long-term storage sits among the paragraphs. */
 .welcome section > button {
   margin-bottom: 12px;

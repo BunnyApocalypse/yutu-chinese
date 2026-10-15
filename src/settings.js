@@ -111,7 +111,7 @@ export async function createSettings(elements, onChange) {
     enabledTypes: await getSetting('enabledTypes', CARD_TYPES),
     studyDeck: await getSetting('studyDeck', ''),
   };
-  // "As the device is set" needs nothing: the style sheet does that by itself.
+  // "Follow device theme" needs nothing: the style sheet does that by itself.
   setTheme(settings.theme);
 
   // Shows the current settings in the panel's controls.
