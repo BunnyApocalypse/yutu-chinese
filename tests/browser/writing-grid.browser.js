@@ -89,7 +89,7 @@ async function writeChar(page, char, strokeOrder, position, random) {
     status = await drawStroke(page, area, points);
     strokesDrawn += 1;
     // After the last stroke the status line is "No mistakes"; until then it
-    // ends in "· no mistakes" for as long as every stroke has been accepted.
+    // is "3/7 · No mistakes" for as long as every stroke has been accepted.
     if (!/no mistakes$/i.test(status)) {
       break;
     }

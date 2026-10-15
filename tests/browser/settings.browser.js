@@ -214,7 +214,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     assert.equal(await textOf(page, 'script-flag'), 'simp. 简体');
     // Free practice writes what was typed, so there only the simplified form is flagged.
     await choose(page, 'practice-type', 'writing');
-    await waitUntil(page, `document.getElementById('status').textContent.startsWith('Stroke 1 of')`, 'the writing card');
+    await waitUntil(page, `document.getElementById('stroke-count').textContent.startsWith('1/')`, 'the writing card');
     assert.equal(await textOf(page, 'script-flag'), '');
     await type(page, 'word-input', '图书馆');
     await page.evaluate(`document.getElementById('word-form').requestSubmit()`);
@@ -363,7 +363,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
       started = await page
         .evaluate(`!window.loadedBefore &&
           document.getElementById('practice-tab').classList.contains('selected') &&
-          document.getElementById('status').textContent.startsWith('Stroke 1 of')`)
+          document.getElementById('stroke-count').textContent.startsWith('1/')`)
         .catch(() => false);
     }
     assert.ok(started, 'Free practice did not open');

@@ -85,7 +85,7 @@ describe('sentences', { concurrency: false }, () => {
     await waitUntil(page, cardType('Sentence · writing'), 'the sentence\'s writing card');
     assert.equal(await textOf(page, 'prompt-meaning'), 'We are classmates.＿＿是同學。');
     assert.equal(await isShown(page, 'lesson-note'), false);
-    await waitUntil(page, `document.getElementById('status').textContent.startsWith('Stroke 1 of')`, 'the first character to write');
+    await waitUntil(page, `document.getElementById('stroke-count').textContent.startsWith('1/')`, 'the first character to write');
     // Two characters to write: those of the missing word.
     assert.equal(await page.evaluate(`document.querySelectorAll('#word-row > *').length`), 2);
 

@@ -352,8 +352,10 @@
           <!-- One slot per character of the word. Filled in by wordFlow.js. -->
           <div id="word-row" class="word-row"></div>
 
-          <!-- The status line. -->
+          <!-- The status line: the stroke count ("3/7", hidden in Review unless
+               a setting says otherwise) and the mistakes. -->
           <div id="status-row" class="status-row">
+            <p id="stroke-count" class="stroke-count"></p>
             <p id="status" class="status"></p>
           </div>
         </div>
@@ -821,6 +823,11 @@
         <div class="setting">
           <label><input id="lessons-checkbox" type="checkbox" /> In Review, teach before testing</label>
           <p class="hint">When a word you already know is to be written for the first time (after changing script, say): its tones, then each stroke shown, then the outline, then from memory. Words in the Learn tab are always taught this way.</p>
+        </div>
+
+        <div class="setting">
+          <label><input id="stroke-count-checkbox" type="checkbox" /> Show the stroke count in Review</label>
+          <p class="hint">How many strokes the character has, as in "3/7". It is always shown in Learn and Free practice; in Review it is a hint, so it is off unless you want it.</p>
         </div>
 
         <label class="setting">

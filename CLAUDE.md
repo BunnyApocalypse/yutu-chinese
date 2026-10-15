@@ -115,7 +115,7 @@ Past session notes are in `docs/history.md`.
 - **No new features until the owner's own testing and a first round with testers are done** (agreed 2026-10-13); fixing what testing finds is the work. Exceptions are agreed one by one, like the list below.
 - **Suggestions from the first testing session** (2026-10-14; each to be agreed with the owner before it is built):
   1. **Done 2026-10-15:** adding a word by its pinyin (`docs/words.md`).
-  2. **The stroke count is there and was not seen** ("Stroke 1 of 10 · no mistakes" in the status line); a tester asked for a stroke counter. Where and how it is shown.
+  2. **Done 2026-10-15:** the stroke count as "3/7", hidden in Review unless a setting shows it (`docs/writing.md`).
   3. **Tips that are read:** they were ignored in testing. Shorter (one line each), or beside the thing they are about.
   4. **A word of an example sentence tapped by accident:** a small popup with its pinyin, meaning and "Open its page", rather than going straight to the page.
   5. **Done 2026-10-15:** tone buttons show bare tone marks (`docs/cards.md`).

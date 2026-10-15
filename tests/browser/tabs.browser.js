@@ -104,7 +104,7 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     await waitUntil(page, `document.getElementById('word-page').dataset.shown === '貓|mao1'`, 'the word\'s page');
     await tap(page, 'word-page-practice');
     // The writing area with the word's first stroke to write.
-    await waitUntil(page, `document.getElementById('status').textContent.startsWith('Stroke 1 of')`, 'Free practice');
+    await waitUntil(page, `document.getElementById('stroke-count').textContent.startsWith('1/')`, 'Free practice');
     assert.equal(await page.evaluate(`document.getElementById('word-input').value`), '貓');
     assert.equal(await page.evaluate(`document.getElementById('word-page').open`), false);
     assert.equal(await inView(page, 'word-list'), false);

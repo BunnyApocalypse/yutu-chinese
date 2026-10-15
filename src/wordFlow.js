@@ -72,7 +72,7 @@ function sum(numbers) {
 }
 
 // elements: the page elements the flow controls:
-//   writingArea, wordRow, statusElement, noteElement,
+//   writingArea, wordRow, statusElement, strokeCountElement, noteElement,
 //   nextButton, restartButton, outlineButton, animateButton,
 //   orderNote,
 //   skipButton, backButton
@@ -83,6 +83,7 @@ export function createWordFlow(elements) {
     writingArea,
     wordRow,
     statusElement,
+    strokeCountElement,
     noteElement,
     nextButton,
     restartButton,
@@ -202,10 +203,18 @@ export function createWordFlow(elements) {
     backButton.classList.toggle('unavailable', !canGoBack());
   }
 
+  // The stroke being written out of how many: "3/7". With hideStrokeCount
+  // the text is still filled in (the browser tests read it), but not shown.
   function showProgress(strokeNumber, totalStrokes) {
-    const mistakes = carriedMistakes + currentMistakes;
-    statusElement.textContent =
-      `Stroke ${strokeNumber} of ${totalStrokes} · ${describeMistakes(mistakes).toLowerCase()}`;
+    strokeCountElement.textContent = `${strokeNumber}/${totalStrokes}`;
+    strokeCountElement.hidden = Boolean(options.hideStrokeCount);
+    statusElement.textContent = describeMistakes(carriedMistakes + currentMistakes);
+  }
+
+  // The count is only for while a character is being written.
+  function hideProgress() {
+    strokeCountElement.textContent = '';
+    strokeCountElement.hidden = true;
   }
 
   // Everything known about the word so far, for the mode's callbacks.
@@ -285,6 +294,7 @@ export function createWordFlow(elements) {
     onAnimateStart() {
       nextButton.hidden = true;
       orderNote.hidden = true;
+      hideProgress();
       statusElement.textContent = 'Watch the stroke order…';
     },
   };
@@ -293,6 +303,7 @@ export function createWordFlow(elements) {
   // update the page and, at the end of the word, tell the mode.
   function afterCharFinished() {
     renderWordRow();
+    hideProgress();
     statusElement.textContent = skippedPerChar[position]
       ? 'Skipped'
       : describeMistakes(mistakesPerChar[position]);
@@ -471,6 +482,8 @@ export function createWordFlow(elements) {
     //   showOutline:   true to switch the outline on first
     //   demoStrokes:   true to show each stroke, over and over, until it is
     //                  written (the lesson for a new word, see review.js)
+    //   hideStrokeCount: true to keep the stroke count ("3/7") out of sight,
+    //                  since it is a hint (Review, unless a setting says so)
     //   judgeChar({ mistakes, strokes, hintShown, peeked }):
     //                  returns true if the character counts as passed. Leave
     //                  it out for no verdicts at all (Free practice).

@@ -275,8 +275,11 @@ export async function startBrowsers(appUrl, count = BROWSER_COUNT, { keepWelcome
 
 // ---- Doing things in the page ----
 
-// JavaScript text for "the page's status line", used in the snippets below.
-const STATUS = `document.getElementById('status').textContent`;
+// JavaScript text for "the page's status line", used in the snippets below:
+// the stroke count and the rest, as in "3/7 · No mistakes" (or just "No
+// mistakes" once the character is finished). The count is read even where it
+// is hidden (Review), so that the tests can tell a stroke was taken.
+const STATUS = `[document.getElementById('stroke-count').textContent, document.getElementById('status').textContent].filter(Boolean).join(' · ')`;
 // The quiz can take a stroke: see setBusy in src/quiz.js.
 const NOT_BUSY = `!document.getElementById('writing-area').hasAttribute('data-busy')`;
 
@@ -367,7 +370,7 @@ async function openFreePractice(page, appUrl, keepWelcome = false) {
         }
         return tab.classList.contains('selected') && ${NOT_BUSY} ? ${STATUS} : '';
       })()`);
-      if (status.startsWith('Stroke 1 of')) {
+      if (status.startsWith('1/')) {
         return;
       }
     } catch {
@@ -381,15 +384,15 @@ async function openFreePractice(page, appUrl, keepWelcome = false) {
 // first character can be written.
 export async function startWriting(page, word) {
   await page.evaluate(`(() => {
-    // Emptied first, so that the new card's "Stroke 1 of ..." can be told
-    // from the same words left over from the card before.
-    document.getElementById('status').textContent = '';
+    // Emptied first, so that the new card's "1/..." can be told from the
+    // same count left over from the card before.
+    document.getElementById('stroke-count').textContent = '';
     document.getElementById('word-input').value = ${JSON.stringify(word)};
     document.getElementById('practice-type').value = 'writing';
     document.getElementById('word-form').requestSubmit();
   })()`);
-  const status = await waitInPage(page, `${STATUS}.startsWith('Stroke 1 of') && ${NOT_BUSY}`, 5000);
-  if (!status.startsWith('Stroke 1 of')) {
+  const status = await waitInPage(page, `(${STATUS}).startsWith('1/') && ${NOT_BUSY}`, 5000);
+  if (!status.startsWith('1/')) {
     throw new Error(`The writing card for ${word} did not start. Status line: "${status}"`);
   }
 }
@@ -449,7 +452,7 @@ export async function addTestWords(page) {
   await tap(page, 'add-list-button');
   await waitUntil(page, `document.getElementById('word-count').textContent === '${count}'`, 'the test words');
   await tap(page, 'practice-tab');
-  await waitInPage(page, `${STATUS}.startsWith('Stroke 1 of') && ${NOT_BUSY}`, 5000);
+  await waitInPage(page, `(${STATUS}).startsWith('1/') && ${NOT_BUSY}`, 5000);
 }
 
 // For page.evaluate: from then on, the app's question before something that

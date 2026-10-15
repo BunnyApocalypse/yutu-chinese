@@ -21,7 +21,6 @@ import {
   openLearn,
 } from './harness.js';
 
-const statusIs = (start) => `document.getElementById('status').textContent.startsWith('${start}')`;
 const stepIs = (step) => `document.getElementById('card-type').textContent.endsWith('${step}')`;
 // The outline of the stroke being shown, or null if none is.
 const DEMO = `document.querySelector('#writing-area .stroke-demo clipPath path')?.getAttribute('d') ?? null`;
@@ -38,7 +37,7 @@ describe('learning new words', { concurrency: false }, () => {
   async function waitForFirstStroke() {
     await waitUntil(
       page,
-      `${statusIs('Stroke 1 of')} && !document.getElementById('writing-area').hasAttribute('data-busy')`,
+      `document.getElementById('stroke-count').textContent.startsWith('1/') && !document.getElementById('writing-area').hasAttribute('data-busy')`,
       'the character to be writable',
     );
   }
@@ -176,6 +175,8 @@ describe('learning new words', { concurrency: false }, () => {
     // The reading is hidden again. The lesson can still be skipped.
     assert.equal(await isShown(page, 'prompt-pinyin'), false);
     assert.equal(await isShown(page, 'skip-lesson-button'), true);
+    // The stroke count is shown while a word is being taught, graded step included.
+    assert.equal(await isShown(page, 'stroke-count'), true);
     await passTest('大');
   });
 
@@ -255,5 +256,12 @@ describe('learning new words', { concurrency: false }, () => {
     assert.equal(await isShown(page, 'skip-lesson-button'), false);
     await waitForFirstStroke();
     assert.equal(await outlineButton(), 'Show outline');
+    // In Review the stroke count is a hint, hidden unless the setting says otherwise.
+    assert.equal(await isShown(page, 'stroke-count'), false);
+    await tap(page, 'settings-button');
+    await tap(page, 'stroke-count-checkbox');
+    await tap(page, 'settings-close');
+    await waitUntil(page, `!document.getElementById('stroke-count').hidden`, 'the stroke count');
+    assert.equal(await textOf(page, 'stroke-count'), '1/3');
   });
 });

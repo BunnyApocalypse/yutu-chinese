@@ -566,6 +566,17 @@ button.slot {
   gap: 4px 12px;
 }
 
+/* The stroke count, "3/7", stands out from the rest of the status line: a
+   tester asked for a stroke counter when it was there in a sentence,
+   "Stroke 3 of 7 · no mistakes" (2026-10-14). */
+.stroke-count {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .status {
   margin: 0;
   font-size: 1.1rem;

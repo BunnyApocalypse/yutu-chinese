@@ -7,7 +7,7 @@ Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where
 **For the session after 2026-10-14, first of all** (put here at the owner's request, from Claude's suggestions after the first testing session and the question of Anki sync; each still to be agreed with the owner before it is built):
 
 1. **Done on 2026-10-15** (see "The word list"): **Adding a word by its pinyin**, for a learner without a Chinese keyboard: the characters box also takes pinyin and lists the dictionary's words read that way, usual readings first (HSK and TOCFL), to choose from. Claude's advice: build this first; it is what stopped the beginner in testing.
-2. **The stroke count is there and was not seen**: the status line says "Stroke 1 of 10 · no mistakes", and a tester asked for a stroke counter. A question of where and how it is shown, not a missing feature.
+2. **Done on 2026-10-15** (see "The stroke count" in `docs/writing.md`): **The stroke count is there and was not seen**: the status line says "Stroke 1 of 10 · no mistakes", and a tester asked for a stroke counter. A question of where and how it is shown, not a missing feature.
 3. **Tips that are read:** they were ignored in testing. Shorter (one line each), or placed beside the thing they are about.
 4. **A word of an example sentence tapped by accident:** a tap shows a small popup with its pinyin and meaning and "Open its page", rather than going straight to the page.
 5. **Done on 2026-10-15** (see `docs/cards.md`): **Tone buttons always show "a"** (asked in testing): showing the word's own syllable would give its reading away on a tone card; bare tone marks (ˉ ˊ ˇ ˋ ·) would not.

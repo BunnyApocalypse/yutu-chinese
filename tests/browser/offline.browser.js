@@ -56,7 +56,7 @@ describe('offline use', { concurrency: false }, () => {
   });
 
   it('runs from a folder below the top of the site', async () => {
-    assert.match(await writeFirstStroke('學'), /^Stroke 2 of 16/);
+    assert.match(await writeFirstStroke('學'), /^2\/16 /);
   });
 
   it('saves the app, the stroke data and the dictionary on the device', { timeout: 180000 }, async () => {
@@ -125,8 +125,8 @@ describe('offline use', { concurrency: false }, () => {
     await app.close();
     await reloadApp(page);
     // A character of the Taiwan set, and one that is only in the big set.
-    assert.match(await writeFirstStroke('學'), /^Stroke 2 of 16/);
-    assert.match(await writeFirstStroke('学'), /^Stroke 2 of 8/);
+    assert.match(await writeFirstStroke('學'), /^2\/16 /);
+    assert.match(await writeFirstStroke('学'), /^2\/8 /);
     // The dictionary is there too.
     await openDeckPage(page);
     await type(page, 'add-traditional', '圖書館');

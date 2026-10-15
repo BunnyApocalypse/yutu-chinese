@@ -58,7 +58,7 @@ const RECHECK_MS = 15 * 1000;
 //   gradeRow, editWordButton, leechNote, donePanel, doneMessage, studyArea, scriptFlag,
 //   lessonNote, skipLessonButton, lessonNextButton, learnNextButton,
 //   and the parts of the study area that differ per kind of card:
-//   wordRow, statusRow, writingRow, writingButtons, cardFace,
+//   wordRow, statusRow, strokeCountElement, writingRow, writingButtons, cardFace,
 //   toneButtonRow, orderNote
 // flows:    { writing, tone, recall }: the three pieces of code named above
 // settings: the current settings (see settings.js)
@@ -96,6 +96,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     learnNextButton,
     wordRow,
     statusRow,
+    strokeCountElement,
     writingRow,
     writingButtons,
     cardFace,
@@ -158,8 +159,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     if (current) {
       wordRow.classList.toggle('single', Array.from(current.word[scriptFor(current.word, settings)]).length === 1);
     }
-    // This belongs to the writing card and may be left over from the last one.
+    // These belong to the writing card and may be left over from the last
+    // one. (A writing card shows its stroke count again when it starts.)
     orderNote.hidden = true;
+    strokeCountElement.hidden = true;
     // A sentence's writing card lets its prompt run to two lines (see there).
     meaningElement.style.webkitLineClamp = '';
     meaningElement.style.maxHeight = '';
@@ -500,6 +503,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       rawInput: settings.rawInput,
       continueLabel: null,
       hideOutline: true,
+      // The stroke count is a hint: kept out of sight in Review unless the
+      // setting says otherwise, but shown while a word is being taught (the
+      // last step of a lesson comes here too). The owner's choice, 2026-10-15.
+      hideStrokeCount: !settings.strokeCountInReview && lesson === null,
       judgeChar,
       // Starting a character over after the word was finished takes the grade
       // buttons away again until it is finished once more.
