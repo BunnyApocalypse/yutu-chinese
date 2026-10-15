@@ -117,7 +117,7 @@ Past session notes are in `docs/history.md`.
   1. **Done 2026-10-15:** adding a word by its pinyin (`docs/words.md`).
   2. **Done 2026-10-15:** the stroke count as "3/7", hidden in Review unless a setting shows it (`docs/writing.md`).
   3. **Done 2026-10-15:** tips of one line each, those about one thing beside it when it first matters (`docs/interface.md`).
-  4. **A word of an example sentence tapped by accident:** a small popup with its pinyin, meaning and "Open its page", rather than going straight to the page.
+  4. **Done 2026-10-15:** a word of an example sentence shows a popup first (`docs/word-page.md`).
   5. **Done 2026-10-15:** tone buttons show bare tone marks (`docs/cards.md`).
   6. **Pinyin in the notes of the beginner levels** (TOCFL Novice, HSK 3.0 levels 1 and 2), by a script: a beginner did not know 的 in a note.
   7. **Long-term storage:** a message once rather than a dot (Chrome grants it only to an installed app, so a dot would stay on).

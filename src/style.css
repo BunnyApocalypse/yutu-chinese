@@ -1412,6 +1412,49 @@ button.sentence-word {
   color: inherit;
 }
 
+/* The popup for a word of the example sentence (wordPage.js sets left and
+   top). As a popover it would be centered by the browser, hence inset and
+   margin. */
+.word-peek {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 24px));
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border: 1px solid #d8d1c2;
+  border-radius: 12px;
+  background: #fffdf7;
+  color: inherit;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+}
+
+.word-peek p {
+  margin: 0 0 6px;
+}
+
+.word-peek-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.word-peek-word {
+  font-size: 1.5rem;
+}
+
+.word-peek-pinyin {
+  color: #3b6fb6;
+}
+
+/* The meaning on one line, cut off with "…": the page has all of it. */
+.word-peek-meaning {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .character-card {
   margin-bottom: 12px;
 }

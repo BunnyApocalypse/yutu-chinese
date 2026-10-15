@@ -78,9 +78,29 @@ describe('the word page', { concurrency: false }, () => {
     await tap(page, 'word-page-back');
     await waitUntil(page, shown('我們|wo3men5'), 'the word\'s page again');
 
-    // A word of the example sentence: 同學.
+    // A word of the example sentence: 同學. A tap shows a small popup first,
+    // with its reading in the sentence, its meaning and a loudspeaker; a tap
+    // elsewhere closes it, and the page stays.
+    const peekOpen = `document.getElementById('word-peek').matches(':popover-open')`;
     await page.evaluate(`document.querySelectorAll('#word-page-body .sentence-word')[2].click()`);
+    await waitUntil(page, peekOpen, 'the popup');
+    assert.equal(await textOf(page, 'word-peek-word'), '同學');
+    assert.equal(await textOf(page, 'word-peek-pinyin'), 'tóngxué');
+    assert.match(await textOf(page, 'word-peek-meaning'), /classmate/);
+    assert.equal(await page.evaluate(`document.querySelectorAll('#word-peek .icon-button').length`), 1);
+    // (A press elsewhere, as a finger would: the browser closes the popup.)
+    const area = await page.evaluate(`JSON.stringify(document.querySelector('#word-page-body .page-english').getBoundingClientRect())`).then(JSON.parse);
+    for (const type of ['mousePressed', 'mouseReleased']) {
+      await page.send('Input.dispatchMouseEvent', { type, x: area.x + 5, y: area.y + 5, button: 'left', clickCount: 1 });
+    }
+    await waitUntil(page, `!${peekOpen}`, 'the popup closed');
+    assert.ok(await page.evaluate(shown('我們|wo3men5')));
+    // "Open its page" goes on to the word's page.
+    await page.evaluate(`document.querySelectorAll('#word-page-body .sentence-word')[2].click()`);
+    await waitUntil(page, peekOpen, 'the popup again');
+    await tap(page, 'word-peek-open');
     await waitUntil(page, shown('同學'), 'the page of 同學');
+    assert.equal(await page.evaluate(peekOpen), false);
     assert.match(await textOf(page, '#word-page-body .page-meaning'), /^tóngxué: .*classmate/);
     // It has a note of its own, being a word of the same level.
     assert.equal((await page.evaluate(texts('.page-note'))).length, 1);

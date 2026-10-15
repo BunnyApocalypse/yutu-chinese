@@ -1,8 +1,10 @@
 // The word page: everything about one word or character, to read, not to
 // change. Its characters and reading, with a loudspeaker; its meaning; a
 // learning note and an example sentence, where there are any; and how each
-// of its characters is built. The words of the example sentence and the
-// parts of the characters can be tapped, which opens their page in turn.
+// of its characters is built. The parts of the characters can be tapped,
+// which opens their page in turn; so can the words of the example sentence,
+// through a small popup with the word's reading and meaning first (a tester
+// tapped one by accident, 2026-10-14; the popup since 2026-10-15).
 //
 // A page can be about a word in your words or about anything else that was
 // tapped: then it shows what the dictionary has.
@@ -178,7 +180,7 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
         if (Array.from(piece.text).some(isHan)) {
           const button = element('button', 'sentence-word', piece.text);
           button.type = 'button';
-          button.addEventListener('click', () => go({ text: piece.text }));
+          button.addEventListener('click', () => peek(button, piece));
           line.append(button);
         } else {
           line.append(piece.text);
@@ -284,6 +286,7 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
 
   // Shows a page. target: { word } or { text }.
   async function show(target) {
+    closePeek();
     const settings = getSettings();
     // The word as it is stored now: what this was called with may be a copy
     // from before something on the page changed it.
@@ -362,6 +365,81 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
     // For the browser tests, which wait for a page to be filled in.
     dialog.dataset.shown = word ? word.id : target.text;
   }
+
+  // ---- A word of the example sentence, tapped ----
+
+  const peekCard = byId('word-peek');
+  // The piece of the sentence the popup is about: { text, pinyin }.
+  let peeked = null;
+
+  // The gap between the word and the popup, and the room kept at the
+  // screen's edges.
+  const PEEK_GAP = 6;
+  const PEEK_MARGIN = 12;
+
+  // Shows the popup for a word of the sentence, under the word (or above it,
+  // if there is no room under it). `piece` is from sentenceWords: the word
+  // and its reading in this sentence, with tone marks (null if the sentence's
+  // pinyin did not fit it). The reading in the sentence is the one shown,
+  // since a word with two readings is read one way there.
+  async function peek(button, piece) {
+    peeked = piece;
+    const settings = getSettings();
+    const own = wordWritten(piece.text);
+    const entries = own ? [] : await lookUp(piece.text);
+    if (peeked !== piece) {
+      return; // another word was tapped meanwhile
+    }
+    // The dictionary's entry for the reading in the sentence, if it has one.
+    const plain = (pinyin) => (pinyin || '').toLowerCase().replace(/\s+/g, '');
+    const entry =
+      entries.find((candidate) => plain(formatPinyin(candidate.pinyin)) === plain(piece.pinyin)) || entries[0];
+
+    byId('word-peek-word').textContent = piece.text;
+    // The same regional font as the sentence it is from.
+    byId('word-peek-word').lang = button.closest('[lang]')?.lang || '';
+    byId('word-peek-pinyin').textContent =
+      piece.pinyin || (own ? formatPinyin(own.pinyin) : entry ? formatPinyin(entry.pinyin) : '');
+    byId('word-peek-meaning').textContent = own
+      ? own.definition
+      : entry
+        ? entry.meanings.join('; ')
+        : 'Not in the dictionary.';
+    // The loudspeaker, made afresh for this word, on the word's line.
+    peekCard.querySelector('.icon-button')?.remove();
+    const speakable = own
+      ? { word: own, reading: readingsFor(own, settings.pronunciation, null).primary }
+      : entry
+        ? { word: entry, reading: entry.pinyin }
+        : null;
+    if (settings.sound !== 'off' && speakable) {
+      peekCard.querySelector('.word-peek-line').append(loudspeaker(speakable.word, speakable.reading));
+    }
+
+    peekCard.showPopover();
+    const box = button.getBoundingClientRect();
+    const width = peekCard.offsetWidth;
+    const height = peekCard.offsetHeight;
+    const below = box.bottom + PEEK_GAP + height <= window.innerHeight - PEEK_MARGIN;
+    const left = Math.min(Math.max(box.left, PEEK_MARGIN), window.innerWidth - PEEK_MARGIN - width);
+    peekCard.style.left = `${left}px`;
+    peekCard.style.top = `${below ? box.bottom + PEEK_GAP : box.top - PEEK_GAP - height}px`;
+  }
+
+  function closePeek() {
+    peeked = null;
+    if (peekCard.matches(':popover-open')) {
+      peekCard.hidePopover();
+    }
+  }
+
+  byId('word-peek-open').addEventListener('click', () => {
+    const { text } = peeked;
+    closePeek();
+    go({ text });
+  });
+  // The popup goes with the page it was opened on.
+  dialog.addEventListener('close', closePeek);
 
   // Goes on to another page from the one on screen.
   function go(target) {
