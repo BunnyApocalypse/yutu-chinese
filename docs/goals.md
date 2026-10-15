@@ -51,6 +51,7 @@ Discussed with the owner on 2026-10-15. Nothing built yet.
 - **Why** (the owner, 2026-10-15): the first batch of users will largely be native German speakers, and accessibility to learners worldwide in general.
 - **What** (the owner, 2026-10-15): **translate the interface, and use a dictionary in the learner's language where a license-compatible one exists.** The learning notes and example sentences stay in English; the owner does not want to generate them again. Where no good dictionary exists, the interface alone is still worth translating, with English meanings.
 - **Which languages:** German first, other major languages later.
+- **When** (the owner, 2026-10-15): a long-term goal, not urgent. German comes after the testers' round, so that round is in English.
 
 - **Four layers, very different in cost:**
   1. **The interface** (buttons, Settings, tips, introduction, errors): written straight into `index.html` and the JS files (about 165 places set text in code), not gathered anywhere. Doable without a dependency: one file of strings per language (`en.js`, `de.js`, …), a small `t('key')` lookup, a `data-text` attribute on static HTML filled in at start-up, the browser's own `Intl` for plurals, dates and numbers, and the page's `lang` following the language (the Chinese `lang` marking is unchanged). The lasting cost: every new button or message has to be written in every language; a test can catch missing keys but not write them. The docs name things by their English labels, which stays fine as long as English is the reference language.
@@ -59,7 +60,6 @@ Discussed with the owner on 2026-10-15. Nothing built yet.
   4. **Smaller data:** TOCFL topic names, radical meanings, the lists' group names.
 - **Claude's advice, before the owner's answers:** nothing now (it is a feature, and the interface's wording keeps changing until the pass over the looks); gather all interface text into one English strings file during the refactor after the testers' round, then add languages.
 - **Things to settle when it is built:**
-  - **Before or after the German testers' round.** If most testers are German speakers, waiting for the refactor may be too late. It is the owner's call whether German comes before that round, as an exception to "no new features until testing is done".
   - **HanDeDict's license and state** must be checked before use (believed CC BY-SA, edited by volunteers and not updated for years; quality, size and readings against CC-CEDICT to be compared). It goes in its own folder with its README, and in "Credits and licenses".
   - **A word's meaning is copied into the word when it is added**, so the dictionary language decides the meaning of words added from then on. Words already added keep theirs; whether switching language offers to change them is to be decided.
   - **Search by meaning** needs each language's own short words left out (German "der", "die", "das", "sich", …), and perhaps English meanings searched as well.
