@@ -1,0 +1,68 @@
+# Every file, one line each
+
+Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where each former section is now.
+
+## Layout
+
+- `index.html`: the single page.
+- `src/main.js`: entry point; the four tabs (Review, Learn, Decks, Words) and Free practice, backup buttons.
+- `src/wordsPanel.js`: the Decks tab (called the Words tab until 2026-10-13): its two sections, the words of the deck whose page is open (add a word, add a list, search), the ready-made decks, and a pop-up panel per word to change it, study it next or remove it.
+- `src/words.js`: the plain calculation behind the Decks tab: checking a typed word, reading a TSV or CSV list, working out which words are new, searching.
+- `src/dictionary.js`: looks a word up in the dictionary, by its characters or its pinyin, and proposes a meaning. Plain calculation.
+- `scripts/build-dictionary.js`, `data/cedict/dictionary.tsv`: the dictionary made from CC-CEDICT (run by hand, uses the internet, like the tone table script). About 124,000 entries, 8.4 MB.
+- `src/review.js`: Review and Learn. Picks the next card or the next word to learn, hands it to the code for its kind, runs the lesson, shows the grade buttons, saves the result.
+- `src/recallCard.js`: meaning and pinyin cards (see the word, tap to reveal, grade yourself).
+- `src/toneFlow.js`: tone cards (one tone per character, by button or drawn mark, checked automatically).
+- `src/toneMark.js`: recognizes a drawn tone mark (level, rising, down-then-up, falling, dot). Plain calculation.
+- `src/tones.js`: which reading of a word applies (Taiwan or mainland), lining syllables up with characters, and which tones are accepted. Plain calculation.
+- `src/settings.js`: the settings and their panel.
+- `src/wordFlow.js`: writing a word one character after another (slot row, status line, Restart / Outline / Animate / Next, tap to continue). Shared by both modes; tracks mistakes, hints and peeking per character, and in Review shows each character's verdict.
+- `src/quiz.js`: the only file that imports Hanzi Writer. It reports plain results (strokes done, mistakes, hint shown) through handler functions. One Hanzi Writer instance is reused for all characters via `setCharacter()`.
+- `src/scheduler.js`: the only file that imports `ts-fsrs`. `gradeOptions(fsrsState, now)` returns what each of the four grades would do to a card.
+- `src/session.js`: plain calculation, no page or database: which card is next (`planSession`), the suggested grade for writing (`suggestGrade`, `judgeChar`), the 4:00 day boundary, the daily new-word limit, the hold between cards of one word.
+- `src/db.js`: small promise wrapper around IndexedDB. The store layout is documented at the top of the file.
+- `src/decks.js`: the plain calculation behind decks: the tree, which words are in a deck, a deck's daily goal, the decks of the ready-made lists.
+- `src/decksPanel.js`: the decks in the Decks tab: the front page and a deck's page (the line saying where you are, the decks inside, adding one) and Deck settings (rename, move, daily goal, delete). Set up by `src/wordsPanel.js`. Also `fillDeckSelect`, which every list of decks to choose from is filled with.
+- `src/offline.js`, `src/serviceWorker.js`, `scripts/build-offline.js`, `public/manifest.webmanifest`, `.github/workflows/deploy.yml`: offline use and deployment (see that section).
+- `src/welcome.js`, `src/storageAdvice.js`: the introduction shown on first use, and what it says about long-term storage in each browser (see that section).
+- `src/scriptCards.js`: files writing cards under the script they were learned in (see "Switching script").
+- `src/backup.js`: build, check and restore a backup file.
+- `src/wordPage.js`: the page of a word or character (see "The word page"); `src/notes.js` and `src/characters.js` are the plain calculation behind it (learning notes and example sentences; the parts of characters).
+- `data/notes/`: learning notes and example sentences per level, CC BY-SA 4.0. `local/`: development-only downloads, git-ignored.
+- `src/confirm.js`: the app's own panel for asking before something that cannot be undone.
+- `src/sentences.js`: sentences as things to study (see "Sentences"). Plain calculation.
+- `src/speechPlan.js`, `src/speech.js`: speaking a word (see "Hearing a word"): which recordings to play, as plain calculation, and playing them.
+- `scripts/copy-audio.js`, `data/audio-cmn/`: the recordings, and the script that puts them in the git-ignored `public/audio/` under plain file names with an `index.json` listing them.
+- `data/makemeahanzi/`: how each character is built (parts, radical, meaning part and sound part), LGPL-3.0. Not used by the app yet; it is for the word page.
+- `src/cardManager.js`, `src/cardsPanel.js`: managing cards by hand (see "Managing cards"): the plain calculation, and its page side in the Decks tab.
+- `src/leeches.js`: which cards are leeches, suspended cards, and the two leech exports (see "Leeches and suspended cards"). Plain calculation.
+- `src/merge.js`: combines what is on the device with a backup from another device (see "Combining backups"). Plain calculation.
+- `src/readingFixes.js`, `data/wordlists/reading-fixes.tsv`: readings put right in the ready-made lists, and carrying them over to words a device has already (see "Ready-made word lists"). Plain calculation; tested in `tests/readingFixes.test.js` and `tests/browser/database.browser.js`.
+- `src/radicals.js`, `scripts/build-radicals.js`, `data/wordlists/radicals/`: the ready-made deck of radicals (see "Radicals"). Tested in `tests/radicals.test.js` and the last test of `tests/browser/decks.browser.js`.
+- `src/wordList.js`: parses the four-column TSV word list format (same as Skritter's export) and converts numbered pinyin to tone marks.
+- `tests/words.tsv`: 109 common words, hand-written, for the tests only. The app itself starts with no words (the owner's decision, 2026-10-13: this list had been loaded into every new database, and they did not want test words in their app). Browser tests that need words add it through the Decks tab (`addTestWords` in the harness).
+- `src/charData.js`: the only place stroke data is loaded from. `loadCharData(char, script)` returns `null` when a character has no data. For `'traditional'` it uses the Taiwan set where that has the character and the big set otherwise; for `'simplified'` only the big set.
+- `src/shortcuts.js`: recognizes handwriting shortcuts (two textbook strokes written as one). Plain calculation, no page or Hanzi Writer.
+- `src/strokeMatch.js`: judges whether a drawn stroke fits a given textbook stroke, and keeps track of two stroke orders. Plain calculation.
+- `src/frame.js`: works out where and how big a character is being written and moves stroke data there. Plain calculation.
+- `src/lines.js`: shared helpers for lines of points (length, resampling, shape, distance).
+- `src/style.css`: styles, phone-first.
+- `scripts/copy-char-data.js`: fills the two git-ignored stroke data folders, naming files by Unicode number (`學.json` becomes `5b78.json`): `public/char-data/` from `node_modules/hanzi-writer-data/` (about 9,500 characters) and `public/char-data-tw/` from `data/animcjk/graphicsZhHant.txt` (1,013 characters, plus an `index.json` listing them and recording `TAIWAN_SET_VERSION`; raise that number whenever the script changes what it writes, or existing copies will not be regenerated).
+- `scripts/strokeOrder.js`: finds a character's second stroke order by comparing the two data sets. Used by the copy script.
+- `scripts/build-tone-table.js`, `data/cedict/`: the tone table extracted from CC-CEDICT (run by hand; see above).
+- `scripts/build-word-lists.js`, `data/wordlists/`: the ready-made word lists (run by hand, uses the internet; see "Ready-made word lists").
+- `data/animcjk/`: the animCJK traditional stroke data, copied unchanged from that project at a pinned commit. Its README records the source, license and how to update. This is vendored data, not an npm dependency.
+- `tests/logic.test.js`, `tests/shortcuts.test.js`, `tests/strokeOrder.test.js`, `tests/toneMark.test.js`, `tests/frame.test.js`, `tests/storageAdvice.test.js`: tests for the plain-calculation code.
+- `tests/browser/harness.js`: what the browser tests share: serving the app, starting the browsers, drawing strokes, reading the status line.
+- `tests/browser/writing-grid.browser.js`: writes 15 characters in both stroke orders at seven positions and sizes.
+- `tests/browser/words.browser.js`: the Decks tab from adding a word to finding it in Review.
+- `tests/browser/settings.browser.js`: the Script and Pronunciation settings, on cards and on the Decks tab.
+- `tests/browser/lesson.browser.js`, `tests/browser/welcome.browser.js`, `tests/browser/offline.browser.js`: the Learn tab and its lesson, the introduction, and offline use.
+- `tests/browser/database.browser.js`: a database from before brought up to date, and what is kept for merging (removal marks, `changedAt`, `formerIds`).
+- `tests/decks.test.js`: tests for `src/decks.js`.
+- `tests/browser/decks.browser.js`: decks from making one to deleting it, and studying one in Learn.
+- `tests/cardManager.test.js`, `tests/browser/cards.browser.js`: managing cards, as a calculation and in the app.
+- `tests/leeches.test.js`, `tests/browser/leeches.browser.js`: leeches and suspending, as a calculation and in the app.
+- `tests/browser/tabs.browser.js`: what the Decks tab and the Words tab each show; `wordPage.browser.js`, `sentences.browser.js`, `sound.browser.js`: the word page, sentences, and hearing a word.
+- `tests/merge.test.js`, `tests/browser/merge.browser.js`: combining backups, as a calculation and in the app.
+- `tests/words.test.js`, `tests/dictionary.test.js`: tests for `src/words.js` and `src/dictionary.js`; the second also checks every line of the real dictionary.

@@ -1,0 +1,45 @@
+# Things that are easy to get wrong
+
+Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where each former section is now.
+
+## Things that are easy to get wrong
+
+- **On a tone card a tap is an answer** (a dot means the neutral tone), so `toneFlow` ignores touches for the first 300 ms after a character comes up. A stroke the recognizer can't classify is not an answer and not a mistake; the card says so and waits.
+- The tone mark is drawn on a layer inside the card face, which `replaceChildren` removes; `ask()` in `src/toneFlow.js` puts it back each time.
+
+- **The study area is shared by all card kinds.** `showPartsFor` in `src/review.js` decides which parts are visible for each kind, and Free practice needs the writing parts back (`deactivate`). A new element in the study area must be added there.
+- **The writing area is an SVG element, which has no `.hidden` property.** Hide its row (`#writing-row`) instead, or use `toggleAttribute('hidden', ...)`.
+- **A flow that is not on screen must ignore taps.** `toneFlow` and `recallCard` both listen on the card face; each checks that it has a current card first, and `review.js` calls `stop()` on both before showing the next card.
+
+- **Hanzi Writer remembers quiz options from one quiz to the next.** `quizStartStrokeNum` must be passed on every `quiz()` call (0 for a normal start), or a later quiz silently starts partway through.
+- **Don't replace Hanzi Writer's character from inside one of its own callbacks.** `switchOrder` in `src/quiz.js` waits a tick first.
+- **`charData` in `src/quiz.js` is what Hanzi Writer holds, which may be rearranged; `baseData` is the data as loaded.** Stroke numbers reported by Hanzi Writer refer to `charData`; `altOrder` and `sequence` refer to `baseData`.
+
+- **Only 1,013 traditional characters have Taiwan-standard stroke data.** The big set (`hanzi-writer-data`, from Make Me a Hanzi) draws traditional characters in mainland-style forms: 為 as 爲 (12 strokes), 說 as 説, 辶 and 艹 with 3 strokes. The animCJK overlay fixes the characters it covers; the rest (for example 吃, 真, 骨) still come from the big set and may differ from the Taiwan standard. Taiwan's MOE data would be complete but is CC BY-NC-ND, so it cannot be converted and redistributed.
+- **The script decides the form even for characters both scripts share** (花, 起, 道). Always pass the script to `loadCharData`; never cache stroke data by character alone.
+- **Stroke numbers can differ between the two sets** for the same character (花 has 8 strokes in one and 7 in the other). Never hard-code a stroke number for a character; derive what you need from the data in use, as `src/shortcuts.js` does.
+- The slot row sets `lang` (`zh-Hant-TW` or `zh-Hans-CN`) so the device picks the right regional font. Without it a phone may show Japanese or mainland glyphs for the same character.
+- `crypto.randomUUID()` only exists on HTTPS or localhost, so it fails on the LAN dev address. `randomId()` in `src/db.js` uses `crypto.getRandomValues()`, which works everywhere.
+- The four grade buttons must fit side by side at phone width, and the whole review screen should fit without scrolling. The writing area's size is worked out in `chooseSize` (`src/wordFlow.js`) by reserving a fixed height for everything else (380 since 2026-10-14; 420 before). **The rule, in the owner's words: the top and the bottom are sized to hold everything that can appear in Learn and in Review, and the canvas stays a constant size.** So every line above the area keeps its room when it has nothing on it (the meaning, the pinyin, the row with the slots and the status line), and nothing under the buttons is reserved for. **The writing area is the point of the app and must stay the biggest thing on the screen** (the owner, that day, on seeing it made smaller to fit a lesson's rows; that change was undone). Room is found by trimming the rows around it, never by raising that number. What was built for it, to the owner's choice among ideas put to them (they were going to see how they liked it):
+  - **Focus:** while a card is up, the screen's name and the line with the deck chooser and the counts are put away (`main.focused`, `setFocus` in `src/review.js`; the style sheet hides them), and the menu button moves to the upper left corner, button-sized so it covers nothing (it was a "‹ Menu" link until 2026-10-14). Between cards and when nothing is due they are there. So the counts are not in view while a card is up.
+  - **The meaning takes one line**, and a tap on a cut-off meaning opens all of it in a panel (`clampWithPopup` in `src/clamp.js`), so a long meaning costs no height. A sentence's writing card allows two lines, for the sentence with its gap.
+  - **The slots and the status line share one row** (`.progress-row`; the owner, 2026-10-14, on the empty space a word of one character left above its status line). A word of one character shows no slots (`.word-row.single`) and the status line has the row to itself, at the same height, so the area is at the same height for every word. In a 718 by 934 window the area went from 514 to 554. Only a word too long for the width (a sentence written whole) wraps the row onto a second line.
+  - **A lesson's notes must fit beside "I know this word" on one line on a phone**, or the area moves down at that step (the last step's note was shortened for this on 2026-10-14).
+  - **On a phone the line with the kind of card ran under "‹ Menu" and the cog wheel** during a lesson; with the menu (2026-10-14) only the round menu button is in the corner, and at 393px wide "New word · step 2 of 5" with the loudspeaker clears it. Not checked with About / Edit on that line.
+  - Measured then: the rows above the area and the buttons under it take 264px for one character and 320 for more; the grade buttons need about 70 more. In the owner's window (670 by 910) the area went from 414 to 500.
+  - **Nothing is added under the grade buttons, and nothing above the area changes height while a word is written** (the owner, on a screencast that day): "About" and "Edit" (once "About this word" and "Edit word", on rows of their own under the grades) are links beside the kind of card, and on a writing card the pinyin's line keeps its room while the pinyin is hidden.
+  - **The card sits at the same height whatever kind it is** (the owner, on a screencast: the canvas jumped between the steps of a lesson): `showPartsFor` no longer takes the row of slots and the status line away on meaning and pinyin cards but makes them invisible (`ghost`), and the card's face is exactly the size of the writing area with its edge. **A tone card's face looks like the writing area**, with the same guide lines (`.card-face.drawable`), since it is drawn on.
+  - Ideas left for the pass over the looks: one slim line for the kind of card, step and pinyin; hints inside the area's edge; buttons as icons; two columns on wide screens.
+- In Review, the outline is switched off at the start of every word. Left on, it would count as peeking and make every suggestion "Again".
+
+- Vite's dev server answers a request for a missing file with the app's HTML page and status 200, not a 404. `loadCharData` therefore treats "not valid JSON" as "no stroke data".
+- Never create a new Hanzi Writer per character: each instance adds touch listeners to the writing area and never removes them. Use `setCharacter()`. The one exception is rebuilding the writing area after a screen rotation, which is rare.
+- `setCharacter()` rebuilds Hanzi Writer's layers and resets the outline to hidden, so `start()` in `src/quiz.js` re-appends the layer of drawn strokes and re-applies the outline setting each time.
+- The window `resize` handler only reacts to width changes. On Android the on-screen keyboard changes the height, and that must not wipe a character in progress.
+- The stroke data is under the Arphic Public License; the copy script ships `ARPHICPL.TXT` alongside it.
+
+- Service workers and "Add to Home Screen" only work over HTTPS or on `localhost`. The LAN dev address (`http://192.168.x.x:5173`) is plain HTTP, so offline/install features cannot be tested there from the phone. The app is deployed to GitHub Pages for that (see "Offline use and deployment"); on the computer, the built app can be tried at a `localhost` address.
+- The writing area needs `touch-action: none`, otherwise drawing scrolls the page on a phone.
+- Hanzi Writer adds its SVG layers only after the character data has loaded, and later SVG elements are drawn on top. The layer of drawn strokes is therefore re-appended at the start of each quiz so it stays above them.
+- Hanzi Writer colors the strokes of a character's radical separately (`radicalColor`, falling back to `strokeColor` only at creation). Changing `strokeColor` later leaves the radical's strokes in the old color, so always change both (see `setPrintedColor` in `src/quiz.js`).
+- Hanzi Writer works out touch positions from the SVG's on-screen size, so the `width`/`height` passed to it must match the element's real size. Don't scale the SVG with CSS.
