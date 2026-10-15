@@ -1211,14 +1211,16 @@ button.word-entry {
 }
 
 /* ---- Tips (tips.js) ----
-   A card at the bottom of the screen. As a popover it is centered by the
-   browser; these place it at the bottom instead. Without popovers it is a
-   plain card, hidden with the "hidden" attribute. */
+   A card beside the thing it is about: tips.js sets where (left and top,
+   and --arrow-x for the arrow) and the class beside-above or beside-below.
+   As a popover it would be centered by the browser, hence inset and margin.
+   Without popovers it is a plain card, hidden with the "hidden" attribute. */
 .tip-card {
   position: fixed;
-  inset: auto 12px calc(12px + env(safe-area-inset-bottom, 0px)) 12px;
-  margin: 0 auto;
-  max-width: 480px;
+  inset: auto;
+  margin: 0;
+  width: min(360px, calc(100vw - 24px));
+  overflow: visible;
   box-sizing: border-box;
   padding: 14px 16px;
   border: 1px solid #d8d1c2;
@@ -1245,16 +1247,6 @@ button.word-entry {
 
 .tip-card button {
   flex: none;
-}
-
-/* A tip beside the thing it is about (tips.js sets where: left and top, and
-   --arrow-x for the arrow). */
-.tip-card.beside-above,
-.tip-card.beside-below {
-  inset: auto;
-  margin: 0;
-  width: min(360px, calc(100vw - 24px));
-  overflow: visible;
 }
 
 /* The arrow: a small square turned on its corner, half hidden behind the

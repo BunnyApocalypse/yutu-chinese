@@ -1,4 +1,4 @@
-// The tips shown the first time each screen is opened (src/tips.js). The
+// The tips shown beside things the first time they come up (src/tips.js). The
 // harness switches them off for the other tests; this one switches them on
 // again from Settings.
 //
@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, reloadApp, tap, waitUntil } from './harness.js';
+import { startApp, startBrowsers, reloadApp, startWriting, tap, waitUntil } from './harness.js';
 
 const tipOpen = `document.getElementById('tip-card').matches(':popover-open')`;
 const tipSays = (text) => `${tipOpen} && document.getElementById('tip-text').textContent.startsWith(${JSON.stringify(text)})`;
@@ -33,7 +33,17 @@ describe('tips', { concurrency: false }, () => {
     assert.deepEqual(errors, [], 'the page threw errors');
   });
 
-  it('shows a screen\'s tip the first time it is opened, until "Got it"', async () => {
+  // JavaScript text: [the tip's side of its element, the room between them].
+  const besideOf = (selector) => `(() => {
+    const tip = document.getElementById('tip-card');
+    const target = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();
+    const box = tip.getBoundingClientRect();
+    return tip.classList.contains('beside-below')
+      ? ['below', Math.round(box.top - target.bottom)]
+      : ['above', Math.round(target.top - box.bottom)];
+  })()`;
+
+  it('shows a tip beside its element the first time, until "Got it"', async () => {
     // Switched off by the harness; "Show all tips again" switches them back on.
     assert.equal(await page.evaluate(`document.getElementById('tips-checkbox').checked`), false);
     await tap(page, 'settings-button');
@@ -44,45 +54,33 @@ describe('tips', { concurrency: false }, () => {
     await tap(page, 'decks-tab');
     await waitUntil(page, tipSays('Everything else is in the menu'), 'the Decks tip');
     // It is about the menu button, so it sits under it, pointing up at it.
-    assert.deepEqual(
-      await page.evaluate(`(() => {
-        const tip = document.getElementById('tip-card');
-        const button = document.getElementById('menu-button').getBoundingClientRect();
-        const box = tip.getBoundingClientRect();
-        return [tip.classList.contains('beside-below'), box.top > button.bottom, box.top - button.bottom < 20];
-      })()`),
-      [true, true, true],
-    );
+    assert.deepEqual(await page.evaluate(besideOf('#menu-button')), ['below', 10]);
+    // A pop-up panel over its element puts it away until the panel closes.
+    await tap(page, 'settings-button');
+    await waitUntil(page, `!${tipOpen}`, 'the tip put away');
+    await tap(page, 'settings-close');
+    await waitUntil(page, tipSays('Everything else is in the menu'), 'the Decks tip back');
     await tap(page, 'tip-dismiss');
     assert.equal(await page.evaluate(tipOpen), false);
 
-    // Each screen its own; one seen does not come back. A tip about the
-    // whole screen is at the bottom.
+    // One seen does not come back; Words has none.
     await tap(page, 'words-tab');
-    await waitUntil(page, tipSays('Tap a word for its page'), 'the Words tip');
-    assert.equal(await page.evaluate(`document.getElementById('tip-card').className`), 'tip-card');
-    await tap(page, 'tip-dismiss');
     await tap(page, 'decks-tab');
-    await tap(page, 'ready-decks-button');
-    await waitUntil(page, tipSays('Add one level at a time'), 'the Ready-made tip');
-    await tap(page, 'tip-dismiss');
+    assert.equal(await page.evaluate(tipOpen), false);
   });
 
-  it('keeps a tip on top of a pop-up panel opened after it', async () => {
-    // Review's tip is up (not seen yet); then a panel opens over the page.
-    await tap(page, 'review-tab');
-    await waitUntil(page, tipSays('Grade yourself'), 'the Review tip');
-    await tap(page, 'settings-button');
-    // The tip is still the topmost thing where its button is.
-    assert.equal(
-      await page.evaluate(`(() => {
-        const button = document.getElementById('tip-dismiss').getBoundingClientRect();
-        return document.elementFromPoint(button.x + button.width / 2, button.y + button.height / 2)?.id;
-      })()`),
-      'tip-dismiss',
-    );
+  it('waits for its element, and is put away while the element is out of view', async () => {
+    // The ready-made lists' levels come once the list is loaded.
+    await tap(page, 'ready-decks-button');
+    await waitUntil(page, tipSays('Add one level at a time'), 'the Ready-made tip');
+    // Below it if there is room, else above: either way right beside it.
+    assert.equal((await page.evaluate(besideOf('#ready-levels button')))[1], 10);
+    await tap(page, 'my-decks-button');
+    await waitUntil(page, `!${tipOpen}`, 'the tip put away');
+    await tap(page, 'ready-decks-button');
+    await waitUntil(page, tipSays('Add one level at a time'), 'the Ready-made tip back');
     await tap(page, 'tip-dismiss');
-    await tap(page, 'settings-close');
+    await tap(page, 'my-decks-button');
   });
 
   it('remembers which were seen, and can be switched off', async () => {
@@ -101,14 +99,18 @@ describe('tips', { concurrency: false }, () => {
     await tap(page, 'words-tab');
     assert.equal(await page.evaluate(tipOpen), false);
     // Writing a character brings none (its tip was taken out).
+    // (The tab starts a card of its own; that one is waited for first, or it
+    // could come up after 我們 and take its place.)
     await tap(page, 'practice-tab');
     await waitUntil(page, `document.getElementById('stroke-count').textContent.startsWith('1/')`, 'Free practice');
+    await startWriting(page, '我們');
     assert.equal(await page.evaluate(tipOpen), false);
-    // One not seen yet does. A tip can wait for its moment rather than its
-    // screen: the one about overruling a verdict comes when a character of a
-    // word of several is first judged (wordFlow.js announces that).
+    // One not seen yet does: the one about overruling a verdict, announced
+    // when a character of a word of several is first judged (wordFlow.js).
+    // It goes above the row of boxes, leaving the writing area clear.
     await page.evaluate(`document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'verdict' }))`);
     await waitUntil(page, tipSays('Tap a character\'s box'), 'the verdict tip');
+    assert.deepEqual(await page.evaluate(besideOf('#word-row')), ['above', 10]);
     // Switching tips off takes away the one on screen.
     await tap(page, 'settings-button');
     await page.evaluate(`document.getElementById('tips-checkbox').click()`);

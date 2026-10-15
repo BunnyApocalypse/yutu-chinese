@@ -1,64 +1,93 @@
-// A short tip the first time each screen is opened (the owner, 2026-10-14:
-// the introduction is a wall of text many people will not read). A card at
-// the bottom of the screen with "Got it", which nothing waits for. Each tip
-// is shown once per device; Settings can show them all again, or switch
-// them off.
+// A short tip the first time something comes up (the owner, 2026-10-14: the
+// introduction is a wall of text many people will not read). A card with
+// "Got it", which nothing waits for. Each tip is shown once per device;
+// Settings can show them all again, or switch them off.
 //
-// One line each (the owner, 2026-10-15: in testing, tips of two or three
-// sentences went unread). A tip about one thing comes when that thing first
-// matters rather than when its screen opens, and beside it, with a small
-// arrow pointing at it (the owner, the same day): see PLACES.
+// Since 2026-10-15 (the owner, after testing, where tips of two or three
+// sentences at the bottom of the screen went unread): one line each, about
+// one thing on the screen, shown beside it with a small arrow pointing at it,
+// when it first matters.
 //
-// The rest of the app says which screen has just come up by announcing it:
+// The rest of the app says what has just come up by announcing it:
 //
 //     document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'decks' }));
 //
-// so that the screens need to know nothing about tips.
+// so that the screens need to know nothing about tips. Announcements without
+// a tip ('review', 'learn', 'words', ...) are let pass.
+//
+// A tip announced waits until its element is in view (the parts on a word's
+// page may be further down), and while it is up it follows the element. If
+// the element goes out of view (another tab, the page scrolled, a pop-up panel
+// over it), the tip is put away and waits for it to come back.
 //
 // The card is a popover (the `popover` attribute), which the browser puts in
-// the top layer: above the page, and above a pop-up panel opened before it,
-// such as a word's page. Browsers without popovers get a plain card fixed to
-// the bottom of the page.
+// the top layer, above the page. Browsers without popovers get a plain card
+// with position: fixed, which works the same here.
 
 import { getSetting, setSetting } from './db.js';
 
+// Each tip: its text, the element it is about (a CSS selector), and on which
+// side of it the tip goes if there is room ('above' or 'below').
+//
+// Taken out on 2026-10-15: the tip the first time something was written,
+// "Write anywhere in the box, at any size." (the owner found writing plain
+// enough without it, with the animations), and the Words tab's, "Tap a word
+// for its page. Free practice tries any card without it counting." (a word
+// is what anyone would tap; Free practice is for the pass over the looks).
 const TIPS = {
-  review: 'Grade yourself after each card; tap the card to take the suggested grade.',
+  // The first time the grades are offered (review.js), in Review or at a
+  // lesson's graded step.
+  grades: {
+    text: 'Grade yourself after each card; tap the card to take the suggested grade.',
+    target: '#grade-row',
+    side: 'below',
+  },
   // The first step of a lesson, which shows "I know this word" (review.js).
   // Until 2026-10-15 this was the Learn tab's tip ('learn'), shown when the
   // tab opened, before the button was there.
-  lesson: 'Already know a word? "I know this word" skips its lesson.',
-  // There was a tip the first time something was written, "Write anywhere
-  // in the box, at any size.": taken out on 2026-10-15, the owner finding
-  // writing plain enough without it.
+  lesson: {
+    text: 'Already know a word? "I know this word" skips its lesson.',
+    target: '#skip-lesson-button',
+    side: 'below',
+  },
   // The first character judged in a word of several (wordFlow.js): one
-  // character has no row of boxes, and its grade is its verdict.
-  verdict: 'Tap a character\'s box if the app judged it wrong.',
-  decks: 'Everything else is in the menu, ☰ at the top left.',
-  ready: 'Add one level at a time: each takes a few months.',
-  words: 'Tap a word for its page. Free practice tries any card without it counting.',
-  wordPage: 'Tap any character or part to go further.',
-};
-
-// The tips that are about one thing on the screen, and where that is: the
-// element's ID, and on which side of it the tip goes if there is room
-// ('above' or 'below'). The verdict's tip goes above the row of boxes, so as
-// not to cover the writing area while the next character is written. While
-// the element is out of sight, the tip is at the bottom like the others.
-const PLACES = {
-  lesson: { target: 'skip-lesson-button', side: 'below' },
-  verdict: { target: 'word-row', side: 'above' },
-  decks: { target: 'menu-button', side: 'below' },
+  // character has no row of boxes, and its grade is its verdict. Above the
+  // row, so as not to cover the writing area while the next one is written.
+  verdict: {
+    text: 'Tap a character\'s box if the app judged it wrong.',
+    target: '#word-row',
+    side: 'above',
+  },
+  decks: {
+    text: 'Everything else is in the menu, ☰ at the top left.',
+    target: '#menu-button',
+    side: 'below',
+  },
+  // The first level's Add button (or the one Add of a list whose levels are
+  // ticked), once the list has loaded.
+  ready: {
+    text: 'Add one level at a time: each takes a few months.',
+    target: '#ready-levels button',
+    side: 'below',
+  },
+  // Below the first character's parts: above them it would cover the
+  // character itself, which can be tapped too.
+  wordPage: {
+    text: 'Tap any character or part to go further.',
+    target: '#word-page .character-parts',
+    side: 'below',
+  },
 };
 
 // The room kept between the tip and the element, and the edge of the screen.
 const GAP = 10;
 const MARGIN = 12;
 
-// How often a tip beside something is moved to follow it (it can move when
-// the page scrolls, the screen turns or another row appears above it).
-// Simpler than watching for each of those, and cheap.
-const FOLLOW_EVERY_MS = 200;
+// How often the tip on screen is moved to follow its element, and a waiting
+// one looks whether its element has come into view. Simpler than watching
+// for every way an element can move or appear, and cheap: nothing is done
+// while no tip is up or waiting.
+const LOOK_EVERY_MS = 200;
 
 const byId = (id) => document.getElementById(id);
 
@@ -76,8 +105,9 @@ export function createTips() {
   // The tip on screen, and those asked for meanwhile, in order.
   let current = null;
   const waiting = [];
-
-  let following = null; // the timer that keeps a tip beside its element
+  // The modal pop-up panels that are open, the last opened last: the card
+  // goes inside the last, since everything outside it is out of reach.
+  const openPanels = [];
 
   function open() {
     if (popovers) {
@@ -85,14 +115,8 @@ export function createTips() {
     } else {
       card.hidden = false;
     }
-    place();
-    if (PLACES[current]) {
-      following = setInterval(place, FOLLOW_EVERY_MS);
-    }
   }
   function close() {
-    clearInterval(following);
-    following = null;
     if (popovers) {
       card.hidePopover();
     } else {
@@ -100,22 +124,30 @@ export function createTips() {
     }
   }
 
-  // Puts the tip beside its element, if it has one in sight; otherwise at
-  // the bottom of the screen (the style sheet's place for it). Beside means
-  // above or below, on the side PLACES asks for if there is room there, and
-  // as near the element's middle as the screen's edges allow. The class
-  // "beside-above" or "beside-below" says which, for the arrow, and
-  // --arrow-x where along the tip the arrow is.
-  function place() {
-    const where = PLACES[current];
-    const target = where && byId(where.target);
-    const box = target?.getBoundingClientRect();
-    card.classList.remove('beside-above', 'beside-below');
-    card.style.left = '';
-    card.style.top = '';
-    if (!box || box.width === 0 || box.height === 0) {
-      return;
+  // Where the tip's element is on the screen, or null if it cannot be seen
+  // and reached: not shown, not wholly on the screen, or hidden. Hidden is
+  // asked of the browser: what is at the middle of the element must be the
+  // element (or inside it, or the tip itself), not a pop-up panel over it,
+  // nor what is in view where a panel's own scrolling has moved it out of
+  // sight (the parts on a word's page).
+  function targetBox(key) {
+    const target = document.querySelector(TIPS[key].target);
+    if (!target) {
+      return null;
     }
+    const box = target.getBoundingClientRect();
+    if (box.width === 0 || box.height === 0 || box.top < 0 || box.bottom > window.innerHeight) {
+      return null;
+    }
+    const there = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+    return there && (target.contains(there) || card.contains(there)) ? box : null;
+  }
+
+  // Puts the tip beside its element: above or below, on the side the tip
+  // asks for if there is room there, and as near the element's middle as the
+  // screen's edges allow. The class "beside-above" or "beside-below" says
+  // which, for the arrow, and --arrow-x where along the tip the arrow is.
+  function place(box) {
     // With the class on, the style sheet gives the tip its width, so its
     // size can be measured.
     card.classList.add('beside-below');
@@ -123,7 +155,7 @@ export function createTips() {
     const height = card.offsetHeight;
     const roomAbove = box.top - GAP - height >= MARGIN;
     const roomBelow = box.bottom + GAP + height <= window.innerHeight - MARGIN;
-    const above = where.side === 'above' ? roomAbove || !roomBelow : !roomBelow && roomAbove;
+    const above = TIPS[current].side === 'above' ? roomAbove || !roomBelow : !roomBelow && roomAbove;
     const middle = box.left + box.width / 2;
     const left = Math.min(Math.max(middle - width / 2, MARGIN), window.innerWidth - MARGIN - width);
     card.classList.toggle('beside-below', !above);
@@ -133,14 +165,47 @@ export function createTips() {
     card.style.setProperty('--arrow-x', `${middle - left}px`);
   }
 
-  // Shows the next tip waiting, unless one is up or the introduction is.
+  // The card goes inside the pop-up panel opened last, if any (it could not
+  // be tapped outside it), or else in the page.
+  function moveCard() {
+    const parent = openPanels.at(-1) || document.body;
+    if (card.parentElement !== parent) {
+      parent.append(card); // which closes a popover
+    }
+  }
+
+  // Shows the first waiting tip whose element is in view, unless a tip is
+  // up or the introduction is.
   function next() {
-    if (current || waiting.length === 0 || byId('welcome').open) {
+    if (current || byId('welcome').open) {
       return;
     }
-    current = waiting.shift();
-    text.textContent = TIPS[current];
+    const key = waiting.find((waitingKey) => targetBox(waitingKey));
+    if (!key) {
+      return;
+    }
+    waiting.splice(waiting.indexOf(key), 1);
+    current = key;
+    text.textContent = TIPS[key].text;
+    moveCard();
     open();
+    place(targetBox(key));
+  }
+
+  // The tip on screen follows its element, or is put away to wait for it;
+  // then a waiting tip may come up.
+  function look() {
+    if (current) {
+      const box = targetBox(current);
+      if (box) {
+        place(box);
+      } else {
+        close();
+        waiting.unshift(current);
+        current = null;
+      }
+    }
+    next();
   }
 
   function ask(key) {
@@ -151,24 +216,14 @@ export function createTips() {
   }
 
   document.addEventListener('screen-shown', (event) => ask(event.detail));
-  // While a pop-up panel is open, everything outside it is out of reach,
-  // a tip drawn above it included ("Got it" could not be tapped under a
-  // word's page, seen in testing, 2026-10-14). So the card is moved into the
-  // panel opened last, and back out when that closes, and shown again there.
-  const openPanels = []; // modal panels that are open, the last opened last
-  function placeCard() {
-    const parent = openPanels.at(-1) || document.body;
-    if (card.parentElement !== parent) {
-      parent.append(card); // which closes a popover
+  setInterval(() => {
+    if (current || waiting.length > 0) {
+      look();
     }
-    if (current && popovers) {
-      if (card.matches(':popover-open')) {
-        card.hidePopover();
-      }
-      card.showPopover();
-      place();
-    }
-  }
+  }, LOOK_EVERY_MS);
+
+  // Keeps the list of open pop-up panels, and looks again whenever one opens
+  // or closes: a tip under a panel is put away, and one inside it comes up.
   new MutationObserver((changes) => {
     for (const { target } of changes) {
       if (target === card || target.tagName !== 'DIALOG') {
@@ -182,7 +237,7 @@ export function createTips() {
         openPanels.push(target);
       }
     }
-    placeCard();
+    look();
   }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['open'] });
   // The introduction goes first; its tips come once it is closed.
   byId('welcome').addEventListener('close', next);
@@ -215,7 +270,7 @@ export function createTips() {
         }
       }
     },
-    // Every tip is shown again, each the next time its screen comes up.
+    // Every tip is shown again, each the next time it comes up.
     async showAgain() {
       seen = new Set();
       await setSetting('tipsSeen', []);

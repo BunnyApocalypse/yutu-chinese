@@ -449,6 +449,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     suggested = suggestedGrade;
     answerDetails = details;
     renderGrades();
+    // A tip beside them, the first time (tips.js).
+    document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'grades' }));
     if (settings.sound === 'auto') {
       speakCurrent();
     }
