@@ -118,7 +118,7 @@ Past session notes are in `docs/history.md`.
   2. **The stroke count is there and was not seen** ("Stroke 1 of 10 · no mistakes" in the status line); a tester asked for a stroke counter. Where and how it is shown.
   3. **Tips that are read:** they were ignored in testing. Shorter (one line each), or beside the thing they are about.
   4. **A word of an example sentence tapped by accident:** a small popup with its pinyin, meaning and "Open its page", rather than going straight to the page.
-  5. **Tone buttons always show "a":** bare tone marks (ˉ ˊ ˇ ˋ ·) would not give the reading away, as the word's own syllable would.
+  5. **Done 2026-10-15:** tone buttons show bare tone marks (`docs/cards.md`).
   6. **Pinyin in the notes of the beginner levels** (TOCFL Novice, HSK 3.0 levels 1 and 2), by a script: a beginner did not know 的 in a note.
   7. **Long-term storage:** a message once rather than a dot (Chrome grants it only to an installed app, so a dot would stay on).
   8. **Free practice under Words, "too many buttons", the Learn screen busy:** for the pass over the looks.

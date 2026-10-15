@@ -765,6 +765,23 @@ button.slot {
   font-size: 1.6rem;
 }
 
+/* The bare tone marks (ˉ ˊ ˇ ˋ ·) are drawn small and high up in the letter's
+   box, so they are made bigger and pushed down with padding at the top. The
+   height is fixed, so the bigger letters don't make the row taller: the row's
+   height is part of what keeps the writing area the same size. */
+.tone-buttons button[data-tone] {
+  height: 48px;
+  padding-top: 12px;
+  padding-bottom: 0;
+  font-size: 2.8rem;
+  line-height: 1;
+}
+
+/* The neutral tone's dot sits in the middle of the letter's box already. */
+.tone-buttons button[data-tone="5"] {
+  padding-top: 0;
+}
+
 .tone-buttons button.primary {
   font-size: 1rem;
 }

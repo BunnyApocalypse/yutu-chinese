@@ -7,7 +7,7 @@ Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where
 - **Four card types per word, as in Skritter**, each with its own schedule (`cards` store, keyed `<wordId>#<type>`):
   - `meaning`: see the word, recall the meaning. Reveal and self-grade.
   - `pinyin`: see the word, recall the reading. Reveal and self-grade.
-  - `tone`: see the word, give each character's tone, with five buttons or by drawing the tone mark on the card. Checked automatically; a right answer moves on by itself, a wrong one waits for a tap; one wrong tone suggests Again. A word whose pinyin doesn't have one syllable per character gets no tone card.
+  - `tone`: see the word, give each character's tone, with five buttons or by drawing the tone mark on the card. The buttons show bare tone marks (ˉ ˊ ˇ ˋ ·), since 2026-10-15 at the owner's choice: they showed ā á ǎ à a, and a tester asked why always "a"; the word's own syllable would give its reading away. Checked automatically; a right answer moves on by itself, a wrong one waits for a tap; one wrong tone suggests Again. A word whose pinyin doesn't have one syllable per character gets no tone card.
   - `writing`: see the meaning, write the word.
 - **A word's cards are introduced in the order meaning, pinyin, tone, writing**, one at a time.
 - **Cards of one word are kept apart** (`SIBLING_GAP_MS`, 3 minutes), because each gives away the others' answers: a writing card ends by showing the pinyin, the others show the characters. With few words in play this makes the app say "next review in N minutes" although cards exist. That is intended.

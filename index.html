@@ -377,13 +377,15 @@
           <button id="next-button" class="primary" type="button" hidden>Next</button>
         </div>
 
-        <!-- Tone cards: one button per tone. The last is the neutral tone. -->
+        <!-- Tone cards: one button per tone. The last is the neutral tone.
+             Bare tone marks, not a syllable: the word's own syllable would give
+             its reading away, and a fixed "a" puzzled a tester (2026-10-15). -->
         <div id="tone-buttons" class="buttons tone-buttons" hidden>
-          <button type="button" data-tone="1" aria-label="First tone">ā</button>
-          <button type="button" data-tone="2" aria-label="Second tone">á</button>
-          <button type="button" data-tone="3" aria-label="Third tone">ǎ</button>
-          <button type="button" data-tone="4" aria-label="Fourth tone">à</button>
-          <button type="button" data-tone="5" aria-label="Neutral tone">a</button>
+          <button type="button" data-tone="1" aria-label="First tone">ˉ</button>
+          <button type="button" data-tone="2" aria-label="Second tone">ˊ</button>
+          <button type="button" data-tone="3" aria-label="Third tone">ˇ</button>
+          <button type="button" data-tone="4" aria-label="Fourth tone">ˋ</button>
+          <button type="button" data-tone="5" aria-label="Neutral tone">·</button>
           <button id="tone-next-button" class="primary" type="button" hidden>Next</button>
         </div>
 

@@ -10,7 +10,7 @@ Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where
 2. **The stroke count is there and was not seen**: the status line says "Stroke 1 of 10 · no mistakes", and a tester asked for a stroke counter. A question of where and how it is shown, not a missing feature.
 3. **Tips that are read:** they were ignored in testing. Shorter (one line each), or placed beside the thing they are about.
 4. **A word of an example sentence tapped by accident:** a tap shows a small popup with its pinyin and meaning and "Open its page", rather than going straight to the page.
-5. **Tone buttons always show "a"** (asked in testing): showing the word's own syllable would give its reading away on a tone card; bare tone marks (ˉ ˊ ˇ ˋ ·) would not.
+5. **Done on 2026-10-15** (see `docs/cards.md`): **Tone buttons always show "a"** (asked in testing): showing the word's own syllable would give its reading away on a tone card; bare tone marks (ˉ ˊ ˇ ˋ ·) would not.
 6. **Pinyin in the notes of the beginner levels** (a beginner did not know 的 in a note): put the reading after each Chinese word or phrase in the notes of TOCFL Novice and HSK 3.0 levels 1 and 2, by a script.
 7. **Long-term storage:** a separate dot for it would stay on for most Chrome users (Chrome only grants it to an installed app); a message once seems better than a dot.
 8. **Free practice under Words, and "too many buttons", the Learn screen busy:** for the pass over the looks.
