@@ -98,11 +98,17 @@ describe('tips', { concurrency: false }, () => {
     await tap(page, 'decks-tab');
     await tap(page, 'words-tab');
     assert.equal(await page.evaluate(tipOpen), false);
-    // Writing a character brings none (its tip was taken out).
+    // The first character written brings the tip about the gestures, below
+    // Restart so as to leave the writing area clear; once put away, the next
+    // character brings none.
     // (The tab starts a card of its own; that one is waited for first, or it
     // could come up after 我們 and take its place.)
     await tap(page, 'practice-tab');
     await waitUntil(page, `document.getElementById('stroke-count').textContent.startsWith('1/')`, 'Free practice');
+    await waitUntil(page, tipSays('Hold still on the writing area'), 'the gestures tip');
+    assert.deepEqual(await page.evaluate(besideOf('#restart-button')), ['below', 10]);
+    await tap(page, 'tip-dismiss');
+    await waitUntil(page, `!${tipOpen}`, 'the gestures tip gone');
     await startWriting(page, '我們');
     assert.equal(await page.evaluate(tipOpen), false);
     // One not seen yet does: the one about overruling a verdict, announced

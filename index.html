@@ -401,7 +401,7 @@
         <div id="card-face" class="card-face" hidden></div>
 
         <div id="writing-buttons" class="buttons">
-          <button id="restart-button" type="button">Restart</button>
+          <button id="restart-button" type="button" title="Start the character again. A swipe up on the writing area does the same.">Restart</button>
           <button id="outline-button" type="button">Show outline</button>
           <button id="animate-button" type="button">Animate</button>
           <button id="next-button" class="primary" type="button" hidden>Next</button>
@@ -755,9 +755,9 @@
             <label><input type="radio" name="welcome-pronunciation" value="mainlandOnly" /> Mainland China (<span lang="zh-Hans-CN">普通话</span>)</label>
             <label><input type="radio" name="welcome-pronunciation" value="taiwan" /> Taiwan (<span lang="zh-Hant-TW">國語</span>)</label>
             <!-- "mainland": both readings, the mainland one listed first. -->
-            <label><input type="radio" name="welcome-pronunciation" value="mainland" /> Both</label>
+            <label><input type="radio" name="welcome-pronunciation" value="mainland" /> Accept both</label>
           </fieldset>
-          <p class="hint">A few words are read differently in Taiwan and on the mainland: <span lang="zh-Hant-TW">星期</span> is xīngqí in Taiwan and xīngqī on the mainland (more on <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">Taiwan's Mandarin</a>). The reading you choose is the one shown and tested. With Taiwan, the mainland reading also appears beside it in small print, because dictionaries file words under it. With Both, cards show both readings and accept either tone.</p>
+          <p class="hint">A few words are read differently in Taiwan and on the mainland: <span lang="zh-Hant-TW">星期</span> is xīngqí in Taiwan and xīngqī on the mainland (more on <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">Taiwan's Mandarin</a>). The reading you choose is the one shown and tested. With Taiwan, the mainland reading also appears beside it in small print, because dictionaries file words under it. With Accept both, cards show both readings and accept either tone.</p>
           <p class="hint">You can change all of this later in Settings.</p>
         </section>
 
@@ -847,10 +847,10 @@
             <option value="mainlandOnly">Mainland China (普通话)</option>
             <option value="taiwan">Taiwan (國語)</option>
             <!-- Both readings, the mainland one listed first. -->
-            <option value="mainland">Both</option>
+            <option value="mainland">Accept both</option>
           </select>
           <p id="pronunciation-hint" class="hint" hidden>
-            A few words are read differently in Taiwan and on the mainland: <span lang="zh-Hant-TW">星期</span> is xīngqí in Taiwan and xīngqī on the mainland (more on <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">Taiwan's Mandarin</a>). The reading you choose is the one shown and tested. With Taiwan, the mainland reading also appears beside it in small print, because dictionaries file words under it. With Both, cards show both readings and accept either tone. With Mainland China, Taiwan readings are never shown or asked for.
+            A few words are read differently in Taiwan and on the mainland: <span lang="zh-Hant-TW">星期</span> is xīngqí in Taiwan and xīngqī on the mainland (more on <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">Taiwan's Mandarin</a>). The reading you choose is the one shown and tested. With Taiwan, the mainland reading also appears beside it in small print, because dictionaries file words under it. With Accept both, cards show both readings and accept either tone. With Mainland China, Taiwan readings are never shown or asked for.
           </p>
         </div>
 
@@ -945,6 +945,18 @@
           <label><input id="stroke-count-checkbox" type="checkbox" /> Show the stroke count in Review</label>
           <p class="hint">How many strokes the character has, as in "3/7". It is always shown in Learn and Free practice; in Review it is a hint, so it is off unless you want it.</p>
         </div>
+
+        <label class="setting">
+          A character written with a hint counts as
+          <select id="hint-select">
+            <option value="missed">Missed</option>
+            <option value="hard">Passed, the word Hard at best</option>
+          </select>
+          <span class="hint">
+            For a hint, hold your finger or pen still on the writing area: the next stroke flashes green. It also
+            comes by itself after three misses on a stroke. To start a character again, swipe up on the writing area.
+          </span>
+        </label>
         </details>
 
         <details id="settings-look" class="settings-group">

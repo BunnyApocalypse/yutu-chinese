@@ -526,6 +526,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       orderPerChar: result.orderPerChar,
       // True for characters that were skipped with the skip button.
       skippedPerChar: result.skippedPerChar,
+      // True where the next stroke was flashed as a hint.
+      hintPerChar: result.hintPerChar,
     });
 
     return flows.writing.start(asked.text, {
@@ -537,7 +539,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // setting says otherwise, but shown while a word is being taught (the
       // last step of a lesson comes here too). The owner's choice, 2026-10-15.
       hideStrokeCount: !settings.strokeCountInReview && lesson === null,
-      judgeChar,
+      // How a hint counts is a setting (the owner, 2026-10-15).
+      judgeChar: (facts) => judgeChar({ ...facts, hintCountsAs: settings.hintCountsAs }),
       // Starting a character over after the word was finished takes the grade
       // buttons away again until it is finished once more.
       onCharStart: hideGrades,

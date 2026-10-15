@@ -1,0 +1,67 @@
+// Gestures on the writing area (the owner, 2026-10-15, as in Skritter):
+//
+//   a long hold, with the finger or pen kept still, shows the next stroke
+//   as a hint;
+//   a swipe straight up wipes what is written and starts the character again.
+//
+// Everything else drawn on the area is a stroke. This file only decides what
+// a touch was; src/quiz.js, which talks to Hanzi Writer, acts on it.
+
+// A hold: the finger or pen stays down this long...
+export const HOLD_MS = 500;
+// ...without moving further than this from where it landed, in pixels. A
+// finger always wobbles a little. A dot (點) moves further and is over in
+// well under HOLD_MS, so it stays a stroke.
+export const HOLD_STILLNESS_PX = 12;
+
+// A swipe up must rise by at least this share of the writing area's height...
+const SWIPE_MIN_RISE_SHARE = 1 / 2;
+// ...or by this much when the stroke expected next itself goes steeply up,
+// as the rising stroke (提) of 氵 in 滿 does: then a big, quick 提 must not
+// wipe the character, which in Skritter it can (the owner, 2026-10-15).
+// Three quarters is nearly twice the tallest such stroke (0.4).
+const SWIPE_MIN_RISE_SHARE_STRICT = 3 / 4;
+// ...and stay near vertical: for each unit it rises, it may drift at most
+// this far sideways (about 22 degrees from straight up).
+//
+// The rising stroke (提) of 氵 in a tall character (滿, 灣) is nearly as
+// steep, but short: at most 0.4 of the character's height, in any character
+// of either stroke data set. Half the writing area leaves room for writing it
+// a good deal bigger than that. tests/gestures.test.js tries every stroke.
+const SWIPE_MAX_DRIFT = 0.4;
+// It may first go down below where it started by at most this share of its
+// rise, so that a stroke going down and back up is not taken for one.
+const SWIPE_MAX_DIP_SHARE = 0.1;
+
+// True if a stroke from the stroke data goes steeply up: it ends higher than
+// it starts, and rises more than it goes sideways (steeper than 45 degrees).
+// `median` is the stroke's [x, y] points as in the stroke data, where y grows
+// upward. A horizontal stroke (橫) often rises a little, but far less steeply.
+export function risesSteeply(median) {
+  const [startX, startY] = median[0];
+  const [endX, endY] = median[median.length - 1];
+  const rise = endY - startY;
+  return rise > 0 && Math.abs(endX - startX) < rise;
+}
+
+// True if the points drawn are a swipe up. `points` are { x, y } in screen
+// pixels (y grows downward), `areaSize` the writing area's height in pixels.
+// `strict` asks for a longer swipe, for when the stroke expected next rises
+// steeply (risesSteeply).
+export function isSwipeUp(points, areaSize, strict = false) {
+  if (points.length < 2) {
+    return false;
+  }
+  const first = points[0];
+  const last = points[points.length - 1];
+  const rise = first.y - last.y;
+  const minRise = strict ? SWIPE_MIN_RISE_SHARE_STRICT : SWIPE_MIN_RISE_SHARE;
+  if (rise < areaSize * minRise) {
+    return false;
+  }
+  if (Math.abs(last.x - first.x) > rise * SWIPE_MAX_DRIFT) {
+    return false;
+  }
+  const lowest = Math.max(...points.map((point) => point.y));
+  return lowest - first.y <= rise * SWIPE_MAX_DIP_SHARE;
+}

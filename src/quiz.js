@@ -18,6 +18,7 @@ import { isShortcutStroke, joinedLine } from './shortcuts.js';
 import { fitFrame, applyFrame, framesDiffer, sizeIsKnown, NO_FRAME } from './frame.js';
 import { toPoints, resample, averageDistance } from './lines.js';
 import { themeColor } from './theme.js';
+import { HOLD_MS, HOLD_STILLNESS_PX, isSwipeUp, risesSteeply } from './gestures.js';
 import {
   fitsStroke,
   distanceFromStroke,
@@ -82,6 +83,8 @@ const PADDING_SHARE = 0.06;
 //       may return false to say the character was missed, which turns the
 //       printed character red instead of green
 //   onAnimateStart()
+//   onWipe()  a swipe up asked to start the character again (gestures.js);
+//       the flow does what its Restart button does
 //
 // Returns an object with functions to control the quiz. Call showCharacter()
 // to begin.
@@ -118,8 +121,20 @@ export function createQuiz(target, size, handlers) {
   // We count mistakes ourselves rather than using Hanzi Writer's count, because
   // Hanzi Writer counts a shortcut stroke as a mistake before we recognize it.
   let mistakes = 0;
-  // True once a correct stroke has been flashed as a hint for this character.
+  // True once a correct stroke has been flashed as a hint for this character,
+  // after repeated misses or asked for with a long hold. The writing area
+  // carries a `data-hint-shown` attribute meanwhile, for the browser tests.
   let hintShown = false;
+  function noteHint(shown) {
+    hintShown = shown;
+    target.toggleAttribute('data-hint-shown', shown);
+  }
+
+  // True while a stroke can be written: a quiz is running and the character
+  // is not finished. How many strokes are done counts textbook strokes, as
+  // Hanzi Writer does (a joined stroke counts two).
+  let writing = false;
+  let strokesDone = 0;
 
   let outlineVisible = false;
 
@@ -194,6 +209,7 @@ export function createQuiz(target, size, handlers) {
 
   // Tells the flow how far the character has got, and shows the next stroke.
   function reportProgress(progress) {
+    strokesDone = progress.strokesDone;
     handlers.onProgress(progress);
     showDemo(progress.strokesDone);
   }
@@ -636,12 +652,128 @@ export function createQuiz(target, size, handlers) {
     resume(written);
   }
 
+  // ---- Gestures (see gestures.js) ----
+  //
+  // Hanzi Writer takes every touch on the writing area for a stroke. The
+  // browser reports a touch as "pointer" events first, before the touch or
+  // mouse events Hanzi Writer listens to, so a hold or a swipe is recognized
+  // here, and Hanzi Writer's quiz is called off before it can grade what was
+  // drawn. Calling the quiz off also throws away the line it was drawing.
+
+  // The touch in progress: the points it went through, the timer that makes
+  // it a hold, and whether it has been taken as one.
+  let press = null;
+  // A timer this late (in milliseconds) means the page was busy.
+  const HOLD_LATE_MS = 100;
+
+  // Where a pointer event happened, in pixels from the writing area's corner.
+  function pointOf(event) {
+    const box = target.getBoundingClientRect();
+    return { x: event.clientX - box.left, y: event.clientY - box.top };
+  }
+
+  function endPress() {
+    if (press) {
+      clearTimeout(press.holdTimer);
+    }
+    press = null;
+  }
+
+  // A gesture is only taken while a stroke could be written, and not while
+  // Hanzi Writer is being handed new stroke data.
+  function canTakeGesture() {
+    return writing && busyCount === 0;
+  }
+
+  // The finger or pen was held still for HOLD_MS, as far as the page has
+  // heard. If the timer came late, the page was busy (unpacking the offline
+  // data, say) and movements may still be waiting to be handed on: wait a
+  // little more, until a wait comes on time. The browser also hands on
+  // movements once per screen frame, so wait for the next frame, then look
+  // again.
+  function holdTimeUp(dueAt) {
+    const pressNow = press;
+    if (performance.now() - dueAt > HOLD_LATE_MS) {
+      pressNow.holdTimer = setTimeout(() => holdTimeUp(performance.now() + HOLD_LATE_MS), HOLD_LATE_MS);
+      return;
+    }
+    requestAnimationFrame(() => {
+      if (press === pressNow && !pressNow.moved) {
+        holdReached();
+      }
+    });
+  }
+
+  // A hold: flash the next stroke, which counts as a hint. The quiz carries
+  // on at the same stroke, with nothing lost. Busy until it has restarted, so
+  // that a stroke drawn meanwhile is not lost unseen.
+  async function holdReached() {
+    if (!canTakeGesture()) {
+      return;
+    }
+    press.taken = true;
+    writer.cancelQuiz();
+    noteHint(true);
+    const next = strokesDone;
+    setBusy(true);
+    try {
+      await runQuiz(next);
+    } finally {
+      setBusy(false);
+    }
+    writer.highlightStroke(next);
+  }
+
+  target.addEventListener('pointerdown', (event) => {
+    endPress();
+    // Only the first finger, and only the main mouse button.
+    if (!event.isPrimary || event.button !== 0 || !canTakeGesture()) {
+      return;
+    }
+    const dueAt = performance.now() + HOLD_MS;
+    press = { points: [pointOf(event)], moved: false, taken: false, holdTimer: setTimeout(() => holdTimeUp(dueAt), HOLD_MS) };
+  });
+
+  target.addEventListener('pointermove', (event) => {
+    if (!press || press.taken || !event.isPrimary) {
+      return;
+    }
+    const point = pointOf(event);
+    press.points.push(point);
+    const start = press.points[0];
+    if (Math.hypot(point.x - start.x, point.y - start.y) > HOLD_STILLNESS_PX) {
+      press.moved = true;
+      clearTimeout(press.holdTimer);
+    }
+  });
+
+  target.addEventListener('pointerup', (event) => {
+    if (!press || !event.isPrimary) {
+      return;
+    }
+    // A longer swipe is asked for when the stroke expected next itself goes
+    // steeply up (the 提 of 氵 in 滿, say).
+    const next = charData?.medians[strokesDone];
+    const strict = Boolean(next) && risesSteeply(next);
+    const swipedUp = !press.taken && canTakeGesture() && isSwipeUp(press.points, size, strict);
+    endPress();
+    if (swipedUp) {
+      writing = false;
+      writer.cancelQuiz();
+      handlers.onWipe();
+    }
+  });
+
+  // The system took the touch away (for a gesture of its own, say).
+  target.addEventListener('pointercancel', endPress);
+
   // Starts (or restarts) the quiz for the current character, from a clean slate.
   async function start() {
     clearTimeout(afterAnimationTimer);
     drawnLayer.replaceChildren();
     mistakes = 0;
-    hintShown = false;
+    strokesDone = 0;
+    noteHint(false);
     handlers.onStart({ totalStrokes: baseData.strokes.length });
     setBusy(true);
     try {
@@ -659,10 +791,12 @@ export function createQuiz(target, size, handlers) {
   }
 
   // Runs Hanzi Writer's quiz on charData, beginning at stroke `startAt`.
+  // Returns a promise that settles once the quiz has started.
   function runQuiz(startAt) {
     const totalStrokes = charData.strokes.length;
+    writing = true;
     // quiz() also cancels any quiz in progress.
-    writer.quiz({
+    return writer.quiz({
       // Hanzi Writer remembers quiz options from one quiz to the next, so this
       // must be given every time, not only when resuming partway.
       quizStartStrokeNum: startAt,
@@ -756,7 +890,7 @@ export function createQuiz(target, size, handlers) {
         mistakes += 1;
         // mistakesOnStroke counts the misses on this one stroke, including this one.
         if (stroke.mistakesOnStroke >= HINT_AFTER_MISSES) {
-          hintShown = true;
+          noteHint(true);
         }
         reportProgress({
           strokesDone: stroke.strokeNum,
@@ -765,6 +899,7 @@ export function createQuiz(target, size, handlers) {
         });
       },
       onComplete: () => {
+        writing = false;
         let order = null;
         if (baseData.altOrder) {
           order = isStandardOrder(sequence) ? 'moe' : 'mainland';
@@ -850,6 +985,7 @@ export function createQuiz(target, size, handlers) {
     // written. Used when a character is skipped.
     async reveal() {
       clearTimeout(afterAnimationTimer);
+      writing = false;
       writer.cancelQuiz();
       await setPrintedColor(() => referenceColor(true));
       writer.showCharacter();
@@ -865,6 +1001,7 @@ export function createQuiz(target, size, handlers) {
     // the centered character in the standard order.
     async animate() {
       clearTimeout(afterAnimationTimer);
+      writing = false;
       writer.cancelQuiz();
       drawnLayer.replaceChildren();
       demoLayer.replaceChildren();
@@ -886,6 +1023,8 @@ export function createQuiz(target, size, handlers) {
     // Stops this quiz for good. Used when the writing area is rebuilt at a new size.
     destroy() {
       clearTimeout(afterAnimationTimer);
+      writing = false;
+      endPress();
       if (writer) {
         writer.cancelQuiz();
       }

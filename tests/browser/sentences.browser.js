@@ -87,7 +87,7 @@ describe('sentences', { concurrency: false }, () => {
     assert.equal(await isShown(page, 'lesson-note'), false);
     await waitUntil(page, `document.getElementById('stroke-count').textContent.startsWith('1/')`, 'the first character to write');
     // Two characters to write: those of the missing word.
-    assert.equal(await page.evaluate(`document.querySelectorAll('#word-row > *').length`), 2);
+    await waitUntil(page, `document.querySelectorAll('#word-row > *').length === 2`, 'two characters');
 
     await tap(page, 'settings-button');
     await choose(page, 'sentence-writing-select', 'sentence');

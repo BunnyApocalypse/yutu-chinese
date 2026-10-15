@@ -302,11 +302,16 @@ const MISTAKES_ALWAYS_FORGIVEN = 1;
 //
 // mistakes:  wrong strokes on this character, over all attempts
 // strokes:   number of strokes the character has
-// hintShown: a correct stroke was flashed after repeated misses
+// hintShown: the next stroke was flashed as a hint, after repeated misses
+//            or asked for with a long hold (gestures.js)
 // peeked:    the outline or the animation was used, or the character was
 //            started over after the answer had been shown
-export function judgeChar({ mistakes, strokes, hintShown, peeked }) {
-  if (hintShown || peeked) {
+// hintCountsAs: the setting of that name: 'missed' (the default) to judge a
+//            character with a hint as missed, 'hard' to let it pass, with the
+//            word's grade then at best Hard (suggestGrade). The owner,
+//            2026-10-15.
+export function judgeChar({ mistakes, strokes, hintShown, peeked, hintCountsAs = 'missed' }) {
+  if (peeked || (hintShown && hintCountsAs !== 'hard')) {
     return false;
   }
   const allowed = Math.max(MISTAKES_ALWAYS_FORGIVEN, strokes * MISSED_MISTAKE_SHARE);
@@ -317,14 +322,15 @@ export function judgeChar({ mistakes, strokes, hintShown, peeked }) {
 //
 // passedPerChar: the verdict on each character (true = passed)
 // mistakes:      wrong strokes over the whole word
+// hintPerChar:   true where a hint was shown (see judgeChar)
 //
-// One missed character fails the whole word. "Easy" is never suggested; that
-// is for you to choose.
-export function suggestGrade({ passedPerChar, mistakes }) {
+// One missed character fails the whole word. A hint makes it Hard at best.
+// "Easy" is never suggested; that is for you to choose.
+export function suggestGrade({ passedPerChar, mistakes, hintPerChar = [] }) {
   if (passedPerChar.includes(false)) {
     return AGAIN;
   }
-  if (mistakes > 0) {
+  if (mistakes > 0 || hintPerChar.includes(true)) {
     return HARD;
   }
   return GOOD;

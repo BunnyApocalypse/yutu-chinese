@@ -226,6 +226,7 @@ export function createWordFlow(elements) {
       mistakesPerChar: [...mistakesPerChar],
       passedPerChar: [...passedPerChar],
       suggestedPerChar: [...suggestedPerChar],
+      hintPerChar: chars.map((char, index) => Boolean(hintPerChar[index])),
       orderPerChar: [...orderPerChar],
       skippedPerChar: chars.map((char, index) => Boolean(skippedPerChar[index])),
     };
@@ -261,6 +262,8 @@ export function createWordFlow(elements) {
       orderNote.hidden = true;
       renderWordRow();
       showProgress(1, totalStrokes);
+      // A tip the first time, about the gestures on the writing area (tips.js).
+      document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'gestures' }));
       options.onCharStart?.();
     },
     onProgress({ strokesDone, totalStrokes, totalMistakes }) {
@@ -304,6 +307,8 @@ export function createWordFlow(elements) {
       hideProgress();
       statusElement.textContent = 'Watch the stroke order…';
     },
+    // A swipe up on the writing area (gestures.js).
+    onWipe: startOver,
   };
 
   // The current character is finished (written, or skipped as the last one):
@@ -459,10 +464,14 @@ export function createWordFlow(elements) {
     }
   });
 
-  restartButton.addEventListener('click', () => {
+  // The Restart button, or a swipe up on the writing area: the mistakes made
+  // so far still count.
+  function startOver() {
     beforeRedo();
     quiz.restart();
-  });
+  }
+
+  restartButton.addEventListener('click', startOver);
 
   outlineButton.addEventListener('click', () => setOutlineVisible(!outlineVisible));
 
@@ -497,7 +506,8 @@ export function createWordFlow(elements) {
     //   onCharStart(): a character starts (or starts over)
     //   onWordDone(result): the last character was finished. `result` has
     //                  mistakes, mistakesPerChar, passedPerChar,
-    //                  suggestedPerChar, orderPerChar, skippedPerChar
+    //                  suggestedPerChar, hintPerChar, orderPerChar,
+    //                  skippedPerChar
     //   onVerdictChange(result): a verdict was overruled after the word was
     //                  finished
     //   onContinue():  Next was pressed, or the writing area tapped, after the

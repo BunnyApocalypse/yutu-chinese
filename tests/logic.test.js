@@ -478,6 +478,16 @@ test('one missed character fails the word; otherwise mistakes decide', () => {
   assert.equal(suggestGrade({ passedPerChar: [false, true, true], mistakes: 9 }), AGAIN);
 });
 
+test('a hint counts as missed, or with the setting lets the word be Hard at best', () => {
+  const hinted = { mistakes: 0, strokes: 8, hintShown: true, peeked: false };
+  assert.equal(judgeChar({ ...hinted, hintCountsAs: 'missed' }), false);
+  assert.equal(judgeChar({ ...hinted, hintCountsAs: 'hard' }), true);
+  // Peeking still counts as missed either way.
+  assert.equal(judgeChar({ ...hinted, peeked: true, hintCountsAs: 'hard' }), false);
+  assert.equal(suggestGrade({ passedPerChar: [true, true], mistakes: 0, hintPerChar: [false, true] }), HARD);
+  assert.equal(suggestGrade({ passedPerChar: [true, true], mistakes: 0, hintPerChar: [false, false] }), GOOD);
+});
+
 test('intervals are described briefly', () => {
   assert.equal(formatInterval(20 * 1000), '<1m');
   assert.equal(formatInterval(10 * MINUTE), '10m');

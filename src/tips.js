@@ -58,6 +58,14 @@ const TIPS = {
     target: '#word-row',
     side: 'above',
   },
+  // The first time a character can be written (wordFlow.js): the gestures
+  // on the writing area (gestures.js), which nothing on screen shows. Under
+  // the buttons, so as not to cover the writing area.
+  gestures: {
+    text: 'Hold still on the writing area for a hint; swipe up to start again.',
+    target: '#restart-button',
+    side: 'below',
+  },
   decks: {
     text: 'Everything else is in the menu, ☰ at the top left.',
     target: '#menu-button',

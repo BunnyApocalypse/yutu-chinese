@@ -568,6 +568,7 @@ async function startUp() {
       themeRadios: [...document.querySelectorAll('input[name="settings-theme"]')],
       lessonsCheckbox: byId('lessons-checkbox'),
       strokeCountCheckbox: byId('stroke-count-checkbox'),
+      hintSelect: byId('hint-select'),
       meaningDetailSelect: byId('meaning-detail-select'),
       newWordsInput: byId('new-words-input'),
       leechInput: byId('leech-input'),

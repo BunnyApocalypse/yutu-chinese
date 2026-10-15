@@ -46,7 +46,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `npm run preview`: serve the built `dist/` to check the production build.
 
 - `npm test`: run the tests in `tests/` with Node's built-in test runner (no extra dependency). They cover the plain-calculation code: scheduling, session planning, grade suggestion, pinyin formatting, word list parsing, backup checking. Anything touching the page or IndexedDB is not covered by these.
-- `npm run test:browser`: run the tests in `tests/browser/`, which write characters in the real app in several headless Chromium browsers at once. About half a minute. See `tests/browser/CLAUDE.md`.
+- `npm run test:browser`: run the tests in `tests/browser/`, which write characters in the real app in several headless Chromium browsers at once, as many as half the free memory allows (`tests/browser/run.js`). About two minutes on the laptop. See `tests/browser/CLAUDE.md`.
 
 ## Read before working on an area
 
@@ -116,7 +116,7 @@ Past session notes are in `docs/history.md`.
 - **No new features until the owner's own testing and a first round with testers are done** (agreed 2026-10-13); fixing what testing finds is the work. Exceptions are agreed one by one, like the list below.
 - **The first testing session's suggestions (2026-10-14) were all built on 2026-10-15** (list and where each is documented: `docs/history.md`), except **Free practice under Words, "too many buttons" and the busy Learn screen: for the pass over the looks**.
 - **A new name, before any new users** (the owner, 2026-10-15): there are many other "hanzi-trainer" projects. Renaming the repository moves the address, and the data is tied to the address (`docs/goals.md`, "Before other people use it"), so current testers would need to export first.
-- **Gestures on the writing area are a must-have for the owner on mobile** before they would switch from Skritter, and break the feature freeze (the owner, 2026-10-15). What was asked and what is open: `docs/history.md`, roadmap item 11.
+- **Gestures on the writing area** (a must-have for the owner on mobile, breaking the feature freeze) **were built on 2026-10-15**: hold for a hint, swipe up to start again (`docs/writing.md`). The owner has not tried them on a phone yet.
 - **The accessibility review was done and fixed on 2026-10-15** (`docs/interface.md`, "Accessibility"). Open: checking by hand with VoiceOver or TalkBack.
 - **The owner has not tried** sentences, combining backups between real devices, and leeches. Ask how it went before building further on them. The rest built on 2026-10-13 and 14 they test as they use it (the owner, 2026-10-15).
 - **The general page of notes for a native speaker** has not been answered (the Taiwan one was; `data/notes/CLAUDE.md`).

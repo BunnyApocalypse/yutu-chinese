@@ -47,6 +47,7 @@ Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where
 - `tests/words.tsv`: 109 common words, hand-written, for the tests only. The app itself starts with no words (the owner's decision, 2026-10-13: this list had been loaded into every new database, and they did not want test words in their app). Browser tests that need words add it through the Decks tab (`addTestWords` in the harness).
 - `src/charData.js`: the only place stroke data is loaded from. `loadCharData(char, script)` returns `null` when a character has no data. For `'traditional'` it uses the Taiwan set where that has the character and the big set otherwise; for `'simplified'` only the big set.
 - `src/shortcuts.js`: recognizes handwriting shortcuts (two textbook strokes written as one). Plain calculation, no page or Hanzi Writer.
+- `src/gestures.js`: tells a long hold or a swipe up on the writing area from a stroke (acted on in `src/quiz.js`). Plain calculation.
 - `src/strokeMatch.js`: judges whether a drawn stroke fits a given textbook stroke, and keeps track of two stroke orders. Plain calculation.
 - `src/frame.js`: works out where and how big a character is being written and moves stroke data there. Plain calculation.
 - `src/lines.js`: shared helpers for lines of points (length, resampling, shape, distance).
