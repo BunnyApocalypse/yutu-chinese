@@ -24,7 +24,7 @@ I am deliberately not explaining how the app works. If you cannot work something
 
 ## Telling me what you find
 
-Email **hanzifeedback.veggie892@passmail.com**, or, if you have a GitHub account, open an issue at https://github.com/BunnyApocalypse/yutu-chinese/issues. The same address is in the app: the cog wheel, then "Help".
+Email **yutufeedback.delicious577@passmail.com**, or, if you have a GitHub account, open an issue at https://github.com/BunnyApocalypse/yutu-chinese/issues. The same address is in the app: the cog wheel, then "Help".
 
 The most useful reports say three things: what you were trying to do, what you did, and what happened. A screenshot helps a lot. Please say which device and browser you use.
 

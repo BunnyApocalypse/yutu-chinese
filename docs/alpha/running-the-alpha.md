@@ -19,7 +19,7 @@ Avoid starting with close friends who want to be kind. If you do use friends, te
 
 - Use the app yourself for a week first. Anything that annoys you will annoy them, and you can fix it before it uses up a tester's patience.
 - Decide the address testers will use and do not change it during the round: their words and progress are stored in their own browser. A new folder on the same site (such as the move from `/hanzi-trainer/` to `/yutu-chinese/`, see `docs/offline.md`) keeps them, except perhaps in an app added to an iPhone's home screen; a new site (a domain of its own) starts empty. Decided on 2026-10-14: **https://bunnyapocalypse.github.io/hanzi-trainer/** (the stable copy).
-- Decide how feedback reaches you. Decided on 2026-10-14: the email alias **hanzifeedback.veggie892@passmail.com**, plus the issue tracker for testers with a GitHub account. One channel is better than three.
+- Decide how feedback reaches you. Decided on 2026-10-14: the email alias **yutufeedback.delicious577@passmail.com**, plus the issue tracker for testers with a GitHub account. One channel is better than three.
 - Check that the app says which version it is, so a report can name it. (It does not yet; see the review of what real users imply.)
 
 ## What to tell testers, and what not to
