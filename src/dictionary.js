@@ -394,15 +394,7 @@ export function lookUpByPinyin(dictionary, text, listed = []) {
       found = withTones;
     }
   }
-  // Variants: the first word of each reading and meanings, listed words
-  // first, is the word; any other not in a list is a variant.
-  const byListThenFile = [...found].sort((a, b) => a.rank - b.rank || a.order - b.order);
-  const seen = new Set();
-  for (const item of byListThenFile) {
-    const said = `${item.entry.pinyin}\t${item.entry.meanings.join('/')}`;
-    item.variant = seen.has(said) && item.rank === Infinity;
-    seen.add(said);
-  }
+  markVariants(found);
   return found
     .sort(
       (a, b) =>
@@ -410,6 +402,160 @@ export function lookUpByPinyin(dictionary, text, listed = []) {
         a.rank - b.rank ||
         Number(isName(a.entry)) - Number(isName(b.entry)) ||
         Number(a.variant) - Number(b.variant) ||
+        b.rarest - a.rarest ||
+        a.entry.traditional.length - b.entry.traditional.length ||
+        a.order - b.order,
+    )
+    .map(({ entry }) => entry);
+}
+
+// Marks the variants among words found (`variant` on each item): the first
+// word of each reading and meanings, listed words first, is the word; any
+// other not in a list is a variant (see lookUpByPinyin).
+function markVariants(found) {
+  const byListThenFile = [...found].sort((a, b) => a.rank - b.rank || a.order - b.order);
+  const seen = new Set();
+  for (const item of byListThenFile) {
+    const said = `${item.entry.pinyin}\t${item.entry.meanings.join('/')}`;
+    item.variant = seen.has(said) && item.rank === Infinity;
+    seen.add(said);
+  }
+}
+
+// Looks words up by characters typed (the Words tab, 2026-10-15): the words
+// written that way (as lookUp), then the longer words that begin that way
+// (老 finds 老師), those of the ready-made lists first in the lists' order,
+// then shorter first, then in the file's order.
+//
+// dictionary: from readDictionary
+// listed:     the words of the ready-made lists, as for lookUpByPinyin
+export function lookUpByCharacters(dictionary, text, listed = []) {
+  const { rank } = factsOf(listed);
+  const exact = lookUp(dictionary, text);
+  // readDictionary files each line under both its forms; once is enough.
+  const lines = new Set();
+  for (const [characters, linesOfWord] of dictionary) {
+    if (characters.length > text.length && characters.startsWith(text)) {
+      for (const line of linesOfWord) {
+        lines.add(line);
+      }
+    }
+  }
+  const longer = [...lines]
+    .map((line, order) => {
+      const entry = entryFromLine(line);
+      return { entry, order, rank: rank.get(`${entry.traditional}|${entry.pinyin}`) ?? Infinity };
+    })
+    .sort(
+      (a, b) =>
+        a.rank - b.rank ||
+        Number(isName(a.entry)) - Number(isName(b.entry)) ||
+        a.entry.traditional.length - b.entry.traditional.length ||
+        a.order - b.order,
+    )
+    .map(({ entry }) => entry);
+  return [...exact, ...longer];
+}
+
+// Every line of the dictionary once, with its meanings in small letters, for
+// looking words up by meaning. Made the first time it is needed, and kept
+// with the dictionary (about 0.1 s on the PC).
+const meaningIndexes = new WeakMap();
+function meaningIndex(dictionary) {
+  if (!meaningIndexes.has(dictionary)) {
+    const lines = new Set();
+    for (const linesOfWord of dictionary.values()) {
+      for (const line of linesOfWord) {
+        lines.add(line);
+      }
+    }
+    // The meanings are the fourth column.
+    const index = [...lines].map((line, order) => {
+      const [, , , meanings] = line.split('\t');
+      return { line, order, meanings: meanings.toLowerCase() };
+    });
+    meaningIndexes.set(dictionary, index);
+  }
+  return meaningIndexes.get(dictionary);
+}
+
+// Looking up by meaning starts from this many letters: fewer find tens of
+// thousands of words ("te" is in 30,000), which helps nobody.
+export const MIN_LETTERS_FOR_MEANING = 3;
+
+// What a meaning is reduced to before it is compared with what was typed:
+// labels such as "(coll.)" and a leading "to", "a" or "the" are left out, so
+// that "teacher" is the whole of "(honorific) teacher" and "eat" of "to eat".
+const bareMeaning = (meaning) =>
+  meaning
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/^\s*(to|a|an|the)\s+/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+// Looks words up by their English meaning (the Words tab, 2026-10-15).
+//
+// dictionary: from readDictionary
+// text:       what was typed, such as "teacher" or "to eat"
+// listed:     the words of the ready-made lists, as for lookUpByPinyin
+//
+// A word is found if one of its meanings has the text at the start of a word
+// ("teach" finds "teacher", "each" does not). The likeliest first:
+//   - words with a meaning that is the text and nothing else (老師 for
+//     "teacher"; one of a meaning's glosses counts, as "to eat" in "to eat;
+//     to consume"), then those with it as a whole word ("head teacher"), then
+//     those where it only begins a word ("teachers' college");
+//   - in each of those, words of the lists first, in the lists' order; then
+//     names; then variants; then words where it is in an earlier meaning;
+//     then by their rarest character, shorter words and the file's order, as
+//     for lookUpByPinyin.
+// Empty with fewer than MIN_LETTERS_FOR_MEANING letters.
+export function lookUpByMeaning(dictionary, text, listed = []) {
+  const wanted = bareMeaning(text.toLowerCase());
+  if (wanted.replace(/[^a-z]/g, '').length < MIN_LETTERS_FOR_MEANING) {
+    return [];
+  }
+  const escaped = wanted.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const atWordStart = new RegExp(`(^|[^a-z])${escaped}`);
+  const asWholeWord = new RegExp(`(^|[^a-z])${escaped}($|[^a-z])`);
+  const { rank, count } = factsOf(listed);
+  const found = [];
+  for (const { line, order, meanings } of meaningIndex(dictionary)) {
+    // A quick look at all its meanings at once, before each is looked at.
+    if (!atWordStart.test(meanings)) {
+      continue;
+    }
+    let best = null; // { match, place }: 0 the whole meaning, 1 a whole word, 2 the start of a word
+    meanings.split('/').forEach((meaning, place) => {
+      // A meaning can hold several glosses: "to eat; to consume".
+      const whole = meaning.split(';').some((gloss) => bareMeaning(gloss) === wanted);
+      const match = whole ? 0 : asWholeWord.test(meaning) ? 1 : atWordStart.test(meaning) ? 2 : null;
+      if (match !== null && (!best || match < best.match)) {
+        best = { match, place };
+      }
+    });
+    if (!best) {
+      continue;
+    }
+    const entry = entryFromLine(line);
+    found.push({
+      entry,
+      order,
+      match: best.match,
+      place: best.place,
+      rank: rank.get(`${entry.traditional}|${entry.pinyin}`) ?? Infinity,
+      rarest: Math.min(...[...entry.traditional].map((char) => count.get(char) || 0)),
+    });
+  }
+  markVariants(found);
+  return found
+    .sort(
+      (a, b) =>
+        a.match - b.match ||
+        a.rank - b.rank ||
+        Number(isName(a.entry)) - Number(isName(b.entry)) ||
+        Number(a.variant) - Number(b.variant) ||
+        a.place - b.place ||
         b.rarest - a.rarest ||
         a.entry.traditional.length - b.entry.traditional.length ||
         a.order - b.order,

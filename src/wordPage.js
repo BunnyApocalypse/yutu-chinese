@@ -13,7 +13,7 @@
 // (data/makemeahanzi/) are separate files, fetched the first time a page is
 // opened and saved for offline use with the other big files.
 
-import { formatPinyin } from './wordList.js';
+import { formatPinyin, wordId } from './wordList.js';
 import { scriptFor } from './words.js';
 import { langFor, fillMixed } from './lang.js';
 import { closeOnTapBeside } from './dialogs.js';
@@ -53,12 +53,15 @@ function element(tag, className, text) {
 // addSentence(sentence, deckId): adds an example sentence to a deck as a
 //                     thing to study (see sentences.js); returns a promise
 //                     for 'added', 'put in deck' or 'already there'
-// defaultDeckId():    the deck first offered for that
+// addEntry(entry, deckId): adds a dictionary entry to a deck as one of your
+//                     words (the Words tab's dictionary, 2026-10-15); returns a
+//                     promise for 'added', 'put in deck' or 'already there'
+// defaultDeckId():    the deck first offered for that and for a sentence
 // practice(word):     opens Free practice with the word
 // showCards(word):    fills in the part of the page that has the word's
 //                     cards and which of them are suspended
 //
-// Returns { open(word), openText(characters) }.
+// Returns { open(word), openText(characters), openEntry(entry) }.
 export function createWordPage({
   getWords,
   getDecks,
@@ -68,6 +71,7 @@ export function createWordPage({
   likeliestEntry,
   edit,
   addSentence,
+  addEntry,
   defaultDeckId,
   practice,
   showCards,
@@ -217,18 +221,7 @@ export function createWordPage({
 
     // The sentence can be studied too: it goes into a deck, in both scripts.
     const adding = element('div', 'page-add-sentence');
-    const deckSelect = element('select', 'deck-select');
-    deckSelect.setAttribute('aria-label', 'Deck to add the sentence to');
-    // Only the learner's own decks are offered: the decks of the ready-made
-    // lists are those lists' words. (If there are no others, the ready-made
-    // lists and their levels, without the groups inside the levels: see
-    // fillDeckSelect.)
-    const own = getDecks().filter((deck) => !readyMadeDeck(deck.id));
-    fillDeckSelect(deckSelect, own.length > 0 ? own : getDecks(), []);
-    const preferred = defaultDeckId();
-    if ([...deckSelect.options].some((option) => option.value === preferred)) {
-      deckSelect.value = preferred;
-    }
+    const deckSelect = deckChooser('Deck to add the sentence to');
     // Worded so that it is plain a card is made (the owner, 2026-10-14:
     // "Study this sentence in" did not say so).
     const addButton = element('button', 'small', 'Add');
@@ -255,6 +248,69 @@ export function createWordPage({
     adding.append(element('span', '', 'Make cards from this sentence in'), deckSelect, addButton);
     section.append(adding, said);
     return section;
+  }
+
+  // A drop-down list of decks to add something to, with the deck first
+  // offered (defaultDeckId) chosen. Only the learner's own decks are offered:
+  // the decks of the ready-made lists are those lists' words. (If there are
+  // no others, the ready-made lists and their levels, without the groups
+  // inside the levels: see fillDeckSelect.)
+  function deckChooser(label) {
+    const deckSelect = element('select', 'deck-select');
+    deckSelect.setAttribute('aria-label', label);
+    const own = getDecks().filter((deck) => !readyMadeDeck(deck.id));
+    fillDeckSelect(deckSelect, own.length > 0 ? own : getDecks(), []);
+    const preferred = defaultDeckId();
+    if ([...deckSelect.options].some((option) => option.value === preferred)) {
+      deckSelect.value = preferred;
+    }
+    return deckSelect;
+  }
+
+  // For a word that is not one of yours: a way to add it to a deck (the
+  // owner, 2026-10-15), in place of being told to type it on a deck's page.
+  // The word gets the dictionary's meaning as a word typed on a deck's page
+  // does (addEntry). With several readings, the one to add is chosen; the
+  // first is the one tapped in the Words tab, or else the likeliest.
+  function showAdding(entries) {
+    const adding = element('div', 'page-add-sentence page-add-word');
+    let readingSelect = null;
+    if (entries.length > 1) {
+      readingSelect = element('select', 'deck-select');
+      readingSelect.setAttribute('aria-label', 'Which reading to add');
+      entries.forEach((entry, index) => {
+        const option = element('option', '', formatPinyin(entry.pinyin));
+        option.value = String(index);
+        readingSelect.append(option);
+      });
+    }
+    const deckSelect = deckChooser('Deck to add the word to');
+    const addButton = element('button', 'small', 'Add');
+    addButton.type = 'button';
+    const said = element('p', 'note');
+    said.setAttribute('role', 'status');
+    addButton.addEventListener('click', async () => {
+      const entry = entries[readingSelect ? Number(readingSelect.value) : 0];
+      addButton.disabled = true;
+      const result = await addEntry(entry, deckSelect.value);
+      const word = getWords().find((own) => own.id === wordId(entry));
+      if (result === 'already there' || !word) {
+        said.textContent = 'This word is already in that deck.';
+        addButton.disabled = false;
+        return;
+      }
+      // Now one of your words: its own page, with its cards.
+      if (dialog.open) {
+        trail[trail.length - 1] = { word };
+        show({ word });
+      }
+    });
+    adding.append(
+      ...(readingSelect ? [element('span', '', 'Add'), readingSelect, element('span', '', 'to your words, in')] : [element('span', '', 'Add to your words, in')]),
+      deckSelect,
+      addButton,
+    );
+    return [adding, said];
   }
 
   // How each character is built. `chars`: the characters to show, written
@@ -326,7 +382,13 @@ export function createWordPage({
     const settings = getSettings();
     // The word as it is stored now: what this was called with may be a copy
     // from before something on the page changed it.
-    const given = target.word || wordWritten(target.text);
+    // A dictionary entry tapped (target.entry) is one of your words only if
+    // it has the same reading: you may have 行 xíng, and this be 行 háng.
+    const given =
+      target.word ||
+      (target.entry
+        ? getWords().find((entry) => entry.id === wordId(target.entry)) || null
+        : wordWritten(target.text));
     const word = given ? getWords().find((entry) => entry.id === given.id) || given : null;
     const parts = [];
     // The word's cards are shown at once, before the files below are waited
@@ -372,8 +434,11 @@ export function createWordPage({
       fillMixed(meaning, word.definition, script);
       parts.push(meaning);
     } else {
-      // Not one of your words: what the dictionary says.
-      const entries = await lookUp(target.text);
+      // Not one of your words: what the dictionary says, the entry tapped
+      // in the Words tab first.
+      const found = await lookUp(target.text);
+      const tapped = target.entry && found.find((entry) => wordId(entry) === wordId(target.entry));
+      const entries = tapped ? [tapped, ...found.filter((entry) => entry !== tapped)] : found;
       shown = { text: target.text, entries };
       const [first] = entries;
       forms = first
@@ -389,7 +454,11 @@ export function createWordPage({
         fillMixed(meaning, `${formatPinyin(entry.pinyin)}: ${entry.meanings.join('; ')}`, script);
         parts.push(meaning);
       }
-      parts.push(element('p', 'hint', 'Not in your words. To add it, type it on a deck\'s page.'));
+      if (entries.length > 0) {
+        parts.push(...showAdding(entries));
+      } else {
+        parts.push(element('p', 'hint', 'Not in your words or the dictionary. To add it, type it on a deck\'s page.'));
+      }
     }
     chars = [...new Set(Array.from(forms.own).filter(isHan))];
 
@@ -651,6 +720,9 @@ export function createWordPage({
     open: (word) => start({ word }),
     // Opens the page for some characters, whatever they are.
     openText: (text) => start({ text }),
+    // Opens the page of a dictionary entry (the Words tab's dictionary), in
+    // the script being learned, with that entry's reading first.
+    openEntry: (entry) => start({ text: entry[getSettings().script], entry }),
     // Fills an element with a learning note whose words can be tapped (for
     // the tip on a card: cardTip.js).
     tappableText,

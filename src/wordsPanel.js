@@ -23,7 +23,7 @@ import {
 import { createDecksPanel, fillDeckSelect } from './decksPanel.js';
 import { createCardsPanel } from './cardsPanel.js';
 import { createWordPage } from './wordPage.js';
-import { langFor } from './lang.js';
+import { langFor, fillMixed } from './lang.js';
 import { ask } from './confirm.js';
 import { isSentence, sentenceId, sentenceRecord, clozeInBoth } from './sentences.js';
 import { isRadical, radicalRecord } from './radicals.js';
@@ -50,6 +50,8 @@ import {
   readDictionary,
   lookUp,
   lookUpByPinyin,
+  lookUpByCharacters,
+  lookUpByMeaning,
   readTypedPinyin,
   proposeMeaning,
   otherScriptForm,
@@ -126,6 +128,11 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
 
   const countElement = byId('word-count');
   const searchInput = byId('word-search');
+  const myWordsOnly = byId('my-words-only');
+  const dictionaryPart = byId('dictionary-part');
+  const dictionaryList = byId('dictionary-list');
+  const dictionaryNote = byId('dictionary-note');
+  const dictionaryMore = byId('dictionary-more');
   const filterSelect = byId('word-filter');
   const sortSelect = byId('word-sort');
   const listElement = byId('word-list');
@@ -319,6 +326,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     },
     edit: (word) => openDialog(words.find((entry) => entry.id === word.id) || word),
     addSentence: (sentence, deckId) => addSentence(sentence, deckId),
+    addEntry: (entry, deckId) => addEntry(entry, deckId),
     // "Practice" on a word's page: Free practice with that word, which is a
     // text box and a button of the page (main.js).
     showCards: (word) => showCardsOnPage(word),
@@ -326,11 +334,12 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       byId('word-input').value = word[scriptFor(word, getSettings())];
       byId('practice-tab').click();
     },
-    // The deck a sentence added from a page goes into unless another is
-    // chosen: the one whose page is open, else the deck the app starts
-    // with, else the first there is.
+    // The deck a sentence or word added from a page goes into unless another
+    // is chosen: the one listed (the deck chosen on the Words tab, or the
+    // one whose page is open on the Decks tab), else the deck the app
+    // starts with, else the first there is.
     defaultDeckId: () =>
-      (openDeck() || decks.find((deck) => deck.id === DEFAULT_DECK.id) || deckTree(decks)[0]?.deck || {}).id,
+      (listDeck() || decks.find((deck) => deck.id === DEFAULT_DECK.id) || deckTree(decks)[0]?.deck || {}).id,
   });
 
   // ---- Sentences ----
@@ -464,6 +473,15 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   // scripts, "學習 · 学习".
   function charactersOf(word) {
     return charactersShown(word, getSettings());
+  }
+
+  // A span of text that may have Chinese in it (a meaning such as "classifier
+  // for 門"), its Chinese marked as Chinese in `script` (lang.js).
+  function mixedSpan(className, text, script) {
+    const element = document.createElement('span');
+    element.className = className;
+    fillMixed(element, text, script);
+    return element;
   }
 
   // The same as a span for a row of a list, each script's part marked with
@@ -632,7 +650,9 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
             ? `No leeches here: no card has been forgotten ${leechLapses} times. (The number is in Settings.)`
             : onlySuspended
               ? 'No suspended cards here.'
-              : 'No words match.';
+              : dictionaryWanted()
+                ? 'None of your words match.'
+                : 'No words match.';
 
     const rows = matching.slice(0, MAX_ROWS).map((word) => {
       const span = (className, text) => {
@@ -648,7 +668,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       button.append(
         charactersElement(word),
         span('entry-pinyin', formatPinyin(word.pinyin)),
-        span('entry-definition', word.definition),
+        mixedSpan('entry-definition', word.definition, scriptFor(word, getSettings())),
       );
       // A word that is in a deck inside this one is marked with that deck.
       const where =
@@ -682,11 +702,141 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       return row;
     });
     listElement.replaceChildren(...rows);
+    searchDictionary();
   }
 
   searchInput.addEventListener('input', renderList);
   filterSelect.addEventListener('change', renderList);
   sortSelect.addEventListener('change', renderList);
+  myWordsOnly.addEventListener('change', renderList);
+
+  // ---- The dictionary under your words (Words tab) ----
+
+  // While something is searched on the Words tab, the dictionary's words
+  // that are not among yours are listed under them, by characters, pinyin
+  // or English meaning, unless "My words only" is ticked (the owner,
+  // 2026-10-15: they kept going there to look up a word to add). A tap opens
+  // the word's page, where it can be added to a deck.
+  //
+  // The dictionary is searched once typing pauses: going through every
+  // English meaning takes 20 to 50 ms on the PC, and several times that on
+  // an old phone, which would make each letter typed stick.
+  const DICTIONARY_PAUSE_MS = 200;
+  const DICTIONARY_ROWS = 10;
+  let dictionaryTimer = null;
+  let dictionaryFound = [];
+  let dictionaryShown = DICTIONARY_ROWS;
+  // What was searched last: the same text again (the list shown afresh
+  // after a word was added) is searched at once, as nothing is being typed.
+  let dictionarySearched = null;
+
+  function dictionaryWanted() {
+    return (
+      view === 'words' &&
+      !myWordsOnly.checked &&
+      filterSelect.value === '' &&
+      !cardsPanel.selecting() &&
+      searchInput.value.trim() !== ''
+    );
+  }
+
+  function searchDictionary() {
+    clearTimeout(dictionaryTimer);
+    if (!dictionaryWanted()) {
+      dictionaryPart.hidden = true;
+      return;
+    }
+    dictionaryPart.hidden = false;
+    const typed = searchInput.value.trim();
+    const again = typed === dictionarySearched && Boolean(dictionary);
+    const pause = again ? 0 : DICTIONARY_PAUSE_MS;
+    if (!again) {
+      dictionaryShown = DICTIONARY_ROWS; // "Show more" starts over
+    }
+    dictionarySearched = typed;
+    dictionaryTimer = setTimeout(async () => {
+      if (!dictionary) {
+        dictionaryNote.textContent = 'Opening the dictionary…';
+      }
+      await loadDictionary();
+      // Typed on meanwhile, or gone elsewhere: a later search takes over.
+      if (searchInput.value.trim() !== typed || !dictionaryWanted()) {
+        return;
+      }
+      if (!dictionary) {
+        dictionaryNote.textContent = 'The dictionary could not be opened.';
+        dictionaryList.replaceChildren();
+        return;
+      }
+      const have = new Set(words.map((word) => word.id));
+      const seen = new Set();
+      dictionaryFound = [
+        ...(/\p{Script=Han}/u.test(typed) ? lookUpByCharacters(dictionary, typed, readyListWords) : []),
+        ...lookUpByPinyin(dictionary, typed, readyListWords),
+        ...lookUpByMeaning(dictionary, typed, readyListWords),
+      ].filter((entry) => {
+        const id = wordId(entry);
+        const fresh = !have.has(id) && !seen.has(id);
+        seen.add(id);
+        return fresh;
+      });
+      showDictionaryRows();
+    }, pause);
+  }
+
+  function showDictionaryRows() {
+    dictionaryNote.textContent = dictionaryFound.length === 0 ? 'No other words found.' : '';
+    dictionaryList.replaceChildren(
+      ...dictionaryFound.slice(0, dictionaryShown).map((entry) => {
+        const row = document.createElement('li');
+        row.append(entryButton(entry, null, () => wordPage.openEntry(entry)));
+        return row;
+      }),
+    );
+    const more = dictionaryFound.length - dictionaryShown;
+    dictionaryMore.hidden = more <= 0;
+    dictionaryMore.textContent = `Show more (${more} more)`;
+  }
+
+  dictionaryMore.addEventListener('click', () => {
+    dictionaryShown += 2 * DICTIONARY_ROWS;
+    showDictionaryRows();
+  });
+
+  // The dictionary is fetched as soon as the search box is tapped on the
+  // Words tab, so that it is usually there by the time a word is typed.
+  searchInput.addEventListener('focus', () => {
+    if (view === 'words' && !myWordsOnly.checked) {
+      loadDictionary();
+    }
+  });
+
+  // Adds a dictionary entry to a deck as one of your words, as a word typed
+  // on a deck's page would be: the meaning proposed from the dictionary's, the
+  // Taiwan reading where it is asked for. A word you have is put in the deck
+  // as well. Returns 'added', 'put in deck' or 'already there'.
+  async function addEntry(entry, deckId) {
+    const asks = asksFor();
+    const checked = checkWord({
+      traditional: entry.traditional,
+      simplified: entry.simplified,
+      pinyin: entry.pinyin,
+      pinyinTaiwan: asks.taiwan ? entry.pinyinTaiwan || '' : '',
+      definition: proposeMeaning(entry.meanings, getSettings().meaningDetail),
+      cardScript: '',
+    });
+    if (checked.problem) {
+      return 'already there';
+    }
+    const { toAdd } = newWordRecords([checked.word], words, Date.now());
+    const existing = toAdd.length === 0 ? words.find((word) => word.id === wordId(checked.word)) : null;
+    if (existing && existing.decks.includes(deckId)) {
+      return 'already there';
+    }
+    await putAll('words', [withDeck(existing || toAdd[0], deckId)]);
+    await afterChange();
+    return existing ? 'put in deck' : 'added';
+  }
 
   // ---- Taking the leeches elsewhere ----
 
@@ -904,8 +1054,9 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   }
 
   // A dictionary entry as a button that fills in the form; `label` is what
-  // its right-hand end says.
-  function entryButton(entry, label) {
+  // its right-hand end says (nothing if null). With `onTap`, a tap does that
+  // instead (the Words tab's dictionary).
+  function entryButton(entry, label, onTap = null) {
     const span = (className, text) => {
       const element = document.createElement('span');
       element.className = className;
@@ -919,14 +1070,15 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     button.append(
       charactersElement(entry),
       span('entry-pinyin', formatPinyin(entry.pinyin)),
-      span(
+      mixedSpan(
         'entry-definition',
         meanings.length > MAX_MEANINGS_LENGTH ? `${meanings.slice(0, MAX_MEANINGS_LENGTH)}…` : meanings,
+        getSettings().script,
       ),
-      span('entry-new', label),
+      ...(label ? [span('entry-new', label)] : []),
     );
-    button.classList.toggle('selected', sameEntry(entry, filledEntry));
-    button.addEventListener('click', () => fillIn(entry));
+    button.classList.toggle('selected', !onTap && sameEntry(entry, filledEntry));
+    button.addEventListener('click', () => (onTap ? onTap() : fillIn(entry)));
     return button;
   }
 

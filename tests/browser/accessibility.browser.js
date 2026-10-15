@@ -16,7 +16,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, waitUntil, addTestWords, openLearn, openDeckPage, reloadApp, ANSWER_YES } from './harness.js';
+import { startApp, startBrowsers, tap, type, waitUntil, addTestWords, openLearn, openDeckPage, reloadApp, ANSWER_YES } from './harness.js';
 
 // Runs in the page; returns a list of what fails, one line each.
 const CHECK = `(() => {
@@ -217,6 +217,16 @@ describe('accessibility', { concurrency: false }, () => {
     await waitUntil(page, `document.getElementById('word-page').open && document.querySelector('#word-page .sentence-word')`, "the word's page");
     await check("a word's page");
     await page.evaluate(`document.getElementById('word-page').close()`);
+    // Searching: the dictionary's words under yours, and the page of one,
+    // with its reading to choose and Add.
+    await type(page, 'word-search', 'gate');
+    await waitUntil(page, `document.querySelectorAll('#dictionary-list li').length > 0`, "the dictionary's words");
+    await check('the dictionary on the Words tab');
+    await page.evaluate(`document.querySelector('#dictionary-list li button').click()`);
+    await waitUntil(page, `document.querySelector('#word-page .page-add-word')`, "a dictionary word's page");
+    await check("a dictionary word's page");
+    await page.evaluate(`document.getElementById('word-page').close()`);
+    await type(page, 'word-search', '');
   });
 
   it('a lesson in Learn', async () => {

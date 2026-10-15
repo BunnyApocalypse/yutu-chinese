@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, type, choose, textOf, waitUntil, openDeckPage } from './harness.js';
+import { startApp, startBrowsers, tap, type, choose, textOf, waitUntil, openDeckPage, isShown } from './harness.js';
 
 // True if an element takes up room on the page: it and everything it is
 // inside are shown, by whatever means.
@@ -108,6 +108,43 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     assert.equal(await page.evaluate(`document.getElementById('word-input').value`), '貓');
     assert.equal(await page.evaluate(`document.getElementById('word-page').open`), false);
     assert.equal(await inView(page, 'word-list'), false);
+  });
+
+  it('searches the dictionary too on the Words tab, and adds a word from there', async () => {
+    const dictionaryRows = `[...document.querySelectorAll('#dictionary-list li .entry-characters')].map((row) => row.textContent)`;
+    await tap(page, 'words-tab');
+    await waitUntil(page, `document.getElementById('word-search').offsetParent !== null`, 'the Words tab');
+    // By English: none of your words, and the dictionary's under them.
+    await type(page, 'word-search', 'teacher');
+    await waitUntil(page, `document.querySelectorAll('#dictionary-list li').length > 0`, 'the dictionary\'s words');
+    assert.equal(await textOf(page, 'word-list-note'), 'None of your words match.');
+    assert.ok((await page.evaluate(dictionaryRows)).slice(0, 3).some((row) => row.startsWith('老師')), 'teacher finds 老師');
+    // By characters and pinyin too; a word you have is not listed again.
+    await type(page, 'word-search', 'mao1');
+    await waitUntil(page, `${rows(1)} && document.querySelectorAll('#dictionary-list li').length > 0`, 'mao1 in both lists');
+    assert.equal((await page.evaluate(dictionaryRows)).some((row) => row.startsWith('貓')), false);
+    await type(page, 'word-search', '老');
+    await waitUntil(page, `${dictionaryRows}.some((row) => row.startsWith('老師'))`, '老 finds 老師');
+
+    // A tap opens the word's page, where it is added to a deck.
+    await page.evaluate(`[...document.querySelectorAll('#dictionary-list li button')].find((row) => row.textContent.startsWith('老師')).click()`);
+    await waitUntil(page, `document.querySelector('#word-page .page-add-word button')`, 'the page with Add');
+    await page.evaluate(`document.querySelector('#word-page .page-add-word button').click()`);
+    // It is one of your words now: its own page, and the list has it.
+    await waitUntil(page, `document.getElementById('word-page').dataset.shown === '老師|lao3shi1'`, 'the word\'s own page');
+    assert.equal(await isShown(page, 'word-page-edit'), true);
+    await page.evaluate(`document.getElementById('word-page').close()`);
+    await waitUntil(page, `[...document.querySelectorAll('#word-list li')].some((row) => row.textContent.startsWith('老師'))`, '老師 among your words');
+    await waitUntil(page, `!${dictionaryRows}.some((row) => row.startsWith('老師'))`, '老師 out of the dictionary\'s list');
+
+    // "My words only" leaves the dictionary out; so does a deck's page.
+    await page.evaluate(`document.getElementById('my-words-only').click()`);
+    await waitUntil(page, `document.getElementById('dictionary-part').hidden`, 'the dictionary gone');
+    await page.evaluate(`document.getElementById('my-words-only').click()`);
+    await waitUntil(page, `!document.getElementById('dictionary-part').hidden`, 'the dictionary back');
+    await tap(page, 'decks-tab');
+    await waitUntil(page, `document.getElementById('dictionary-part').hidden`, 'no dictionary on the Decks tab');
+    await type(page, 'word-search', '');
   });
 
   it('says which version it is, whose work it is built on, and when something goes wrong', async () => {

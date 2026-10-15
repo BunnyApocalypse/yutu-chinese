@@ -302,11 +302,16 @@
                 Deck
                 <select id="words-deck-select" class="deck-select" aria-label="Deck whose words are listed"></select>
               </label>
+              <!-- Searching your words only, or the dictionary too (wordsPanel.js). -->
+              <label class="check-label">
+                <input id="my-words-only" type="checkbox" />
+                My words only
+              </label>
               <!-- Any kind of card for any word, without it counting (main.js). -->
               <button id="practice-tab" class="small" type="button">Free practice</button>
             </div>
           <h2><span id="word-list-title">All your words</span> (<span id="word-count">0</span>)</h2>
-          <input id="word-search" type="search" placeholder="Search characters, pinyin or meaning" aria-label="Search your words" autocomplete="off" autocapitalize="off" />
+          <input id="word-search" type="search" placeholder="Search characters, pinyin or meaning" aria-label="Search words" autocomplete="off" autocapitalize="off" />
           <!-- Which of the words are listed, in what order, and picking several
                of them: side by side in one row (wordsPanel.js, cardsPanel.js). -->
           <div class="list-tools">
@@ -351,6 +356,15 @@
           </div>
           <p id="word-list-note" class="note"></p>
           <ul id="word-list" class="word-list"></ul>
+          <!-- On the Words tab, while searching: the dictionary's words that
+               are not among yours, by characters, pinyin or English; a tap
+               opens the word's page, where it can be added (wordsPanel.js). -->
+          <section id="dictionary-part" class="dictionary-part" hidden>
+            <h3>In the dictionary</h3>
+            <p id="dictionary-note" class="hint" role="status"></p>
+            <ul id="dictionary-list" class="word-list"></ul>
+            <button id="dictionary-more" class="link-button" type="button" hidden>Show more</button>
+          </section>
           </div>
         </section>
       </section>

@@ -74,7 +74,10 @@ describe('the word page', { concurrency: false }, () => {
     await waitUntil(page, shown('門'), 'the page of 門');
     // Not one of the learner's words: the dictionary's entry.
     assert.match(await textOf(page, '#word-page-body .page-meaning'), /^mén: .*gate/);
-    assert.match((await page.evaluate(texts('.hint'))).join(' '), /Not in your words/);
+    // It can be added to a deck from here, in either of its two readings
+    // (the word and the surname), the likeliest first.
+    assert.match(await textOf(page, '#word-page-body .page-add-word'), /^Add.*to your words, in/);
+    assert.deepEqual(await page.evaluate(texts('.page-add-word select:first-of-type option')), ['mén', 'Mén']);
     assert.equal(await isShown(page, 'word-page-edit'), false);
     assert.equal(await isShown(page, 'word-page-back'), true);
     await tap(page, 'word-page-back');

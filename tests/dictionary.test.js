@@ -247,3 +247,62 @@ test('text is split into the longest words the dictionary knows, the rest kept a
     { text: '老', word: true },
   ]);
 });
+
+// Looking a word up by its English meaning
+
+import { lookUpByMeaning } from '../src/dictionary.js';
+
+const BY_MEANING = readDictionary(
+  [
+    '教師\t教师\tjiao4shi1\tteacher',
+    '老師\t老师\tlao3shi1\tteacher/(honorific) teacher',
+    '班主任\t\tban1zhu3ren4\thead teacher; class supervisor',
+    '師範\t师范\tshi1fan4\tteachers\' college',
+    '教\t\tjiao1\tto teach',
+    '吃\t\tchi1\tto eat; to consume/to eat at (a cafeteria etc)',
+    '吃飯\t吃饭\tchi1fan4\tto have a meal; to eat',
+    '海灘\t海滩\thai3tan1\tbeach',
+    '師\t师\tShi1\tsurname Shi/teacher',
+    '',
+  ].join('\n'),
+);
+const MEANING_LISTED = [
+  { traditional: '老師', simplified: '老师', pinyin: 'lao3shi1' },
+  { traditional: '吃', simplified: '吃', pinyin: 'chi1' },
+  { traditional: '吃飯', simplified: '吃饭', pinyin: 'chi1fan4' },
+];
+const meant = (text) => lookUpByMeaning(BY_MEANING, text, MEANING_LISTED).map((entry) => entry.traditional);
+
+test('words are found by meaning, the whole meaning first, then a whole word, then the start of one', () => {
+  // 老師 is in the lists, so before 教師; the name 師 after them; then "head
+  // teacher" (a whole word), then "teachers'" (the start of one).
+  assert.deepEqual(meant('teacher'), ['老師', '教師', '師', '班主任', '師範']);
+  // "to", "a" and "the" are left out; one gloss of a meaning is enough.
+  assert.deepEqual(meant('eat'), ['吃', '吃飯']);
+  assert.deepEqual(meant('to eat'), ['吃', '吃飯']);
+  // Only at the start of a word: "each" is not found in "teacher" or "beach".
+  assert.deepEqual(meant('each'), []);
+  // "teach" is a whole word only in 教; in the rest it begins a word, so
+  // the shorter 師範 comes before 班主任, and the name 師 after both.
+  assert.deepEqual(meant('teach'), ['教', '老師', '教師', '師範', '班主任', '師']);
+  // Fewer than three letters find nothing.
+  assert.deepEqual(meant('te'), []);
+  // Typed in capitals, or with marks a search could not take as they are.
+  assert.deepEqual(meant('TEACHER'), meant('teacher'));
+  assert.deepEqual(meant('teacher('), []);
+});
+
+// Looking a word up by characters typed
+
+import { lookUpByCharacters } from '../src/dictionary.js';
+
+test('characters typed find the words written so, then the longer words beginning so', () => {
+  const dictionary = readDictionary(
+    ['老\t\tlao3\told', '老鼠\t\tlao3shu3\trat', '老師\t老师\tlao3shi1\tteacher', '老百姓\t\tlao3bai3xing4\tcommon people', '姥\t\tlao3\tgrandma', ''].join('\n'),
+  );
+  const listed = [{ traditional: '老師', simplified: '老师', pinyin: 'lao3shi1' }];
+  // 老師 is in the lists; 老鼠 is shorter than 老百姓.
+  assert.deepEqual(lookUpByCharacters(dictionary, '老', listed).map((entry) => entry.traditional), ['老', '老師', '老鼠', '老百姓']);
+  // Either script.
+  assert.deepEqual(lookUpByCharacters(dictionary, '老师', listed).map((entry) => entry.traditional), ['老師']);
+});

@@ -1844,6 +1844,21 @@ button.part.sound .part-role {
   margin-left: auto;
 }
 
+/* A tick box with its words, as tall as the drop-down lists beside it. */
+.list-tools .check-label {
+  min-height: 36px;
+}
+
+/* The dictionary's words under yours, on the Words tab. */
+.dictionary-part {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.dictionary-part h3 {
+  margin: 0 0 4px;
+}
+
 /* A word's cards in its pop-up panel: one line each, the button at the end. */
 .card-rows {
   display: flex;
