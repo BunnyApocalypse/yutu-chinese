@@ -525,12 +525,18 @@ main.focused .top-bar {
   margin: -11.5%;
 }
 
-/* The icon turned dark. A partial invert makes its white paper about the
-   dark look's page (#1b1a18) and its black ink about the dark look's text,
-   where a full one would make them pure black and white. */
+/* Softer than the icon's own white paper and black ink (the owner,
+   2026-10-15: trying beige paper and dark gray, to see how it feels). The
+   light sample: less contrast, and warmed to beige. The dark one: partly
+   inverted to dark gray paper and light ink, and warmed a little. */
+.theme-swatch.light img,
+.theme-swatch.auto img:first-child {
+  filter: contrast(0.85) sepia(0.18) brightness(0.97);
+}
+
 .theme-swatch.dark img,
 .theme-swatch.auto img + img {
-  filter: invert(0.89);
+  filter: invert(0.84) sepia(0.2) contrast(0.95);
 }
 
 /* Both, the dark one over the light one, cut off along the diagonal. */
