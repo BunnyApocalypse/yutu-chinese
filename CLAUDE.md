@@ -113,15 +113,7 @@ Full list in `docs/layout.md`.
 Past session notes are in `docs/history.md`.
 
 - **No new features until the owner's own testing and a first round with testers are done** (agreed 2026-10-13); fixing what testing finds is the work. Exceptions are agreed one by one, like the list below.
-- **Suggestions from the first testing session** (2026-10-14; each to be agreed with the owner before it is built):
-  1. **Done 2026-10-15:** adding a word by its pinyin (`docs/words.md`).
-  2. **Done 2026-10-15:** the stroke count as "3/7", hidden in Review unless a setting shows it (`docs/writing.md`).
-  3. **Done 2026-10-15:** tips of one line each, those about one thing beside it when it first matters (`docs/interface.md`).
-  4. **Done 2026-10-15:** a word of an example sentence shows a popup first (`docs/word-page.md`).
-  5. **Done 2026-10-15:** tone buttons show bare tone marks (`docs/cards.md`).
-  6. **Done another way 2026-10-15:** the words of a note can be tapped for their reading and meaning, so no pinyin is written in (`docs/word-page.md`).
-  7. **Done 2026-10-15:** a message about long-term storage once, after the first word learned (`docs/interface.md`).
-  8. **Free practice under Words, "too many buttons", the Learn screen busy:** for the pass over the looks.
+- **The first testing session's suggestions (2026-10-14) were all built on 2026-10-15** (list and where each is documented: `docs/history.md`), except **Free practice under Words, "too many buttons" and the busy Learn screen: for the pass over the looks**.
 - **An accessibility review, at some point** (the owner, 2026-10-15): screen readers, keyboard use, contrast in both looks, sizes of what is tapped.
 - **The owner has not tried** sentences, combining backups between real devices, and leeches. Ask how it went before building further on them. The rest built on 2026-10-13 and 14 they test as they use it (the owner, 2026-10-15).
 - **The general page of notes for a native speaker** has not been answered (the Taiwan one was; `data/notes/CLAUDE.md`).
