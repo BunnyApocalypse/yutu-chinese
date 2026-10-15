@@ -162,6 +162,9 @@ describe('learning new words', { concurrency: false }, () => {
 
   it('then the outline alone, then from memory, which is graded', { timeout: 60000 }, async () => {
     await waitUntil(page, stepIs('step 4 of 5'), 'step 4');
+    // Which moments are announced for tips from here on (see tips.js).
+    await page.evaluate(`window.announced = [];
+      document.addEventListener('screen-shown', (event) => window.announced.push(event.detail))`);
     await waitForFirstStroke();
     assert.equal(await outlineButton(), 'Hide outline');
     assert.equal(await page.evaluate(DEMO), null);
@@ -178,6 +181,8 @@ describe('learning new words', { concurrency: false }, () => {
     // The stroke count is shown while a word is being taught, graded step included.
     assert.equal(await isShown(page, 'stroke-count'), true);
     await passTest('大');
+    // Only the graded step judges the character, so only it brings the tip about verdicts.
+    assert.deepEqual(await page.evaluate(`window.announced.filter((what) => what === 'verdict')`), ['verdict']);
   });
 
   it('counts the word as learned and hands it to Review', async () => {

@@ -4,6 +4,11 @@
 // is shown once per device; Settings can show them all again, or switch
 // them off.
 //
+// One line each (the owner, 2026-10-15: in testing, tips of two or three
+// sentences went unread). A tip about one thing comes when that thing first
+// matters rather than when its screen opens: the one about overruling a
+// verdict when the first character is judged ('verdict').
+//
 // The rest of the app says which screen has just come up by announcing it:
 //
 //     document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'decks' }));
@@ -18,24 +23,14 @@
 import { getSetting, setSetting } from './db.js';
 
 const TIPS = {
-  review:
-    'Cards come here when they are due. Answer, then grade yourself: Again if you missed it, Good if you knew it. ' +
-    'Where the app can check your answer it suggests a grade, and tapping the card accepts it.',
-  learn:
-    'New words, one at a time: a look, their tones, then writing them with help and from memory. ' +
-    'Already know one? "I know this word" skips it. Words are spoken as you go; Settings can make them quieter.',
-  writing:
-    'Write anywhere in the box, at any size. After each character its box above turns green or red; ' +
-    'tap it if the app got it wrong.',
-  decks:
-    'Your decks. Learn teaches a deck\'s new words; Review goes over what is due. ' +
-    'Ready-made decks has the HSK, the TOCFL and the radicals. Everything else is in the menu, ☰ at the top left.',
-  ready: 'Add one level at a time: each takes a few months to learn.',
-  words:
-    'All your words. Tap one for its page, use Select words to change many at once, ' +
-    'or Free practice to try any card without it counting.',
-  wordPage:
-    'Learning tips, an example sentence, and how each character is built. Tap any character or part to go further.',
+  review: 'Grade yourself after each card; tap the card to take the suggested grade.',
+  learn: 'Already know a word? "I know this word" skips its lesson.',
+  writing: 'Write anywhere in the box, at any size.',
+  verdict: 'Tap a character\'s box above if the app judged it wrong.',
+  decks: 'Everything else is in the menu, ☰ at the top left.',
+  ready: 'Add one level at a time: each takes a few months.',
+  words: 'Tap a word for its page. Free practice tries any card without it counting.',
+  wordPage: 'Tap any character or part to go further.',
 };
 
 const byId = (id) => document.getElementById(id);

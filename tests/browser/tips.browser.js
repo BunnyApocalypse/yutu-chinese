@@ -42,13 +42,13 @@ describe('tips', { concurrency: false }, () => {
     assert.equal(await page.evaluate(tipOpen), false);
 
     await tap(page, 'decks-tab');
-    await waitUntil(page, tipSays('Your decks.'), 'the Decks tip');
+    await waitUntil(page, tipSays('Everything else is in the menu'), 'the Decks tip');
     await tap(page, 'tip-dismiss');
     assert.equal(await page.evaluate(tipOpen), false);
 
     // Each screen its own; one seen does not come back.
     await tap(page, 'words-tab');
-    await waitUntil(page, tipSays('All your words.'), 'the Words tip');
+    await waitUntil(page, tipSays('Tap a word for its page'), 'the Words tip');
     await tap(page, 'tip-dismiss');
     await tap(page, 'decks-tab');
     await tap(page, 'ready-decks-button');
@@ -59,7 +59,7 @@ describe('tips', { concurrency: false }, () => {
   it('keeps a tip on top of a pop-up panel opened after it', async () => {
     // Review's tip is up (not seen yet); then a panel opens over the page.
     await tap(page, 'review-tab');
-    await waitUntil(page, tipSays('Cards come here'), 'the Review tip');
+    await waitUntil(page, tipSays('Grade yourself'), 'the Review tip');
     await tap(page, 'settings-button');
     // The tip is still the topmost thing where its button is.
     assert.equal(
@@ -92,6 +92,12 @@ describe('tips', { concurrency: false }, () => {
     await tap(page, 'words-tab');
     await tap(page, 'practice-tab');
     await waitUntil(page, tipSays('Write anywhere'), 'the writing tip');
+    // A tip can wait for its moment rather than its screen: the one about
+    // overruling a verdict comes when a character is first judged (wordFlow.js
+    // announces that; lesson.browser.js checks that it does).
+    await tap(page, 'tip-dismiss');
+    await page.evaluate(`document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'verdict' }))`);
+    await waitUntil(page, tipSays('Tap a character\'s box'), 'the verdict tip');
     // Switching tips off takes away the one on screen.
     await tap(page, 'settings-button');
     await page.evaluate(`document.getElementById('tips-checkbox').click()`);
