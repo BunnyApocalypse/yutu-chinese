@@ -1247,6 +1247,42 @@ button.word-entry {
   flex: none;
 }
 
+/* A tip beside the thing it is about (tips.js sets where: left and top, and
+   --arrow-x for the arrow). */
+.tip-card.beside-above,
+.tip-card.beside-below {
+  inset: auto;
+  margin: 0;
+  width: min(360px, calc(100vw - 24px));
+  overflow: visible;
+}
+
+/* The arrow: a small square turned on its corner, half hidden behind the
+   card, with the card's border on its two outer sides. */
+.tip-card.beside-above::after,
+.tip-card.beside-below::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--arrow-x, 50%) - 7px);
+  width: 12px;
+  height: 12px;
+  background: #fffdf7;
+  border: 1px solid #d8d1c2;
+  transform: rotate(45deg);
+}
+
+.tip-card.beside-below::after {
+  top: -7px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.tip-card.beside-above::after {
+  bottom: -7px;
+  border-left: none;
+  border-top: none;
+}
+
 /* ---- The word page ---- */
 
 /* While a pop-up panel is open, the page under it does not scroll. A swipe

@@ -181,8 +181,12 @@ describe('learning new words', { concurrency: false }, () => {
     // The stroke count is shown while a word is being taught, graded step included.
     assert.equal(await isShown(page, 'stroke-count'), true);
     await passTest('大');
-    // Only the graded step judges the character, so only it brings the tip about verdicts.
-    assert.deepEqual(await page.evaluate(`window.announced.filter((what) => what === 'verdict')`), ['verdict']);
+    // Each step brings the tip beside "I know this word" (shown once). The
+    // character was judged, but a word of one character has no row of boxes
+    // to overrule it with, so no tip about verdicts.
+    const announced = await page.evaluate('window.announced');
+    assert.ok(announced.includes('lesson'));
+    assert.ok(!announced.includes('verdict'));
   });
 
   it('counts the word as learned and hands it to Review', async () => {

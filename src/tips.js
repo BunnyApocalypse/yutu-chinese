@@ -6,8 +6,8 @@
 //
 // One line each (the owner, 2026-10-15: in testing, tips of two or three
 // sentences went unread). A tip about one thing comes when that thing first
-// matters rather than when its screen opens: the one about overruling a
-// verdict when the first character is judged ('verdict').
+// matters rather than when its screen opens, and beside it, with a small
+// arrow pointing at it (the owner, the same day): see PLACES.
 //
 // The rest of the app says which screen has just come up by announcing it:
 //
@@ -24,14 +24,39 @@ import { getSetting, setSetting } from './db.js';
 
 const TIPS = {
   review: 'Grade yourself after each card; tap the card to take the suggested grade.',
-  learn: 'Already know a word? "I know this word" skips its lesson.',
+  // The first step of a lesson, which shows "I know this word" (review.js).
+  // Until 2026-10-15 this was the Learn tab's tip ('learn'), shown when the
+  // tab opened, before the button was there.
+  lesson: 'Already know a word? "I know this word" skips its lesson.',
   writing: 'Write anywhere in the box, at any size.',
-  verdict: 'Tap a character\'s box above if the app judged it wrong.',
+  // The first character judged in a word of several (wordFlow.js): one
+  // character has no row of boxes, and its grade is its verdict.
+  verdict: 'Tap a character\'s box if the app judged it wrong.',
   decks: 'Everything else is in the menu, ☰ at the top left.',
   ready: 'Add one level at a time: each takes a few months.',
   words: 'Tap a word for its page. Free practice tries any card without it counting.',
   wordPage: 'Tap any character or part to go further.',
 };
+
+// The tips that are about one thing on the screen, and where that is: the
+// element's ID, and on which side of it the tip goes if there is room
+// ('above' or 'below'). The verdict's tip goes above the row of boxes, so as
+// not to cover the writing area while the next character is written. While
+// the element is out of sight, the tip is at the bottom like the others.
+const PLACES = {
+  lesson: { target: 'skip-lesson-button', side: 'below' },
+  verdict: { target: 'word-row', side: 'above' },
+  decks: { target: 'menu-button', side: 'below' },
+};
+
+// The room kept between the tip and the element, and the edge of the screen.
+const GAP = 10;
+const MARGIN = 12;
+
+// How often a tip beside something is moved to follow it (it can move when
+// the page scrolls, the screen turns or another row appears above it).
+// Simpler than watching for each of those, and cheap.
+const FOLLOW_EVERY_MS = 200;
 
 const byId = (id) => document.getElementById(id);
 
@@ -50,19 +75,60 @@ export function createTips() {
   let current = null;
   const waiting = [];
 
+  let following = null; // the timer that keeps a tip beside its element
+
   function open() {
     if (popovers) {
       card.showPopover();
     } else {
       card.hidden = false;
     }
+    place();
+    if (PLACES[current]) {
+      following = setInterval(place, FOLLOW_EVERY_MS);
+    }
   }
   function close() {
+    clearInterval(following);
+    following = null;
     if (popovers) {
       card.hidePopover();
     } else {
       card.hidden = true;
     }
+  }
+
+  // Puts the tip beside its element, if it has one in sight; otherwise at
+  // the bottom of the screen (the style sheet's place for it). Beside means
+  // above or below, on the side PLACES asks for if there is room there, and
+  // as near the element's middle as the screen's edges allow. The class
+  // "beside-above" or "beside-below" says which, for the arrow, and
+  // --arrow-x where along the tip the arrow is.
+  function place() {
+    const where = PLACES[current];
+    const target = where && byId(where.target);
+    const box = target?.getBoundingClientRect();
+    card.classList.remove('beside-above', 'beside-below');
+    card.style.left = '';
+    card.style.top = '';
+    if (!box || box.width === 0 || box.height === 0) {
+      return;
+    }
+    // With the class on, the style sheet gives the tip its width, so its
+    // size can be measured.
+    card.classList.add('beside-below');
+    const width = card.offsetWidth;
+    const height = card.offsetHeight;
+    const roomAbove = box.top - GAP - height >= MARGIN;
+    const roomBelow = box.bottom + GAP + height <= window.innerHeight - MARGIN;
+    const above = where.side === 'above' ? roomAbove || !roomBelow : !roomBelow && roomAbove;
+    const middle = box.left + box.width / 2;
+    const left = Math.min(Math.max(middle - width / 2, MARGIN), window.innerWidth - MARGIN - width);
+    card.classList.toggle('beside-below', !above);
+    card.classList.toggle('beside-above', above);
+    card.style.left = `${left}px`;
+    card.style.top = `${above ? box.top - GAP - height : box.bottom + GAP}px`;
+    card.style.setProperty('--arrow-x', `${middle - left}px`);
   }
 
   // Shows the next tip waiting, unless one is up or the introduction is.
@@ -98,6 +164,7 @@ export function createTips() {
         card.hidePopover();
       }
       card.showPopover();
+      place();
     }
   }
   new MutationObserver((changes) => {
@@ -121,8 +188,8 @@ export function createTips() {
   byId('tip-dismiss').addEventListener('click', () => {
     seen.add(current);
     setSetting('tipsSeen', [...seen]);
-    current = null;
     close();
+    current = null;
     next();
   });
 
@@ -141,8 +208,8 @@ export function createTips() {
       if (!on) {
         waiting.length = 0;
         if (current) {
-          current = null;
           close();
+          current = null;
         }
       }
     },

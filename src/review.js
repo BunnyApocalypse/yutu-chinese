@@ -661,6 +661,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     lessonNote.hidden = false;
     // "I know this word" is offered at every step.
     skipLessonButton.hidden = false;
+    // A tip beside it, the first time (tips.js).
+    document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'lesson' }));
     lessonNextButton.hidden = true;
     stopFlows();
     hideGrades();

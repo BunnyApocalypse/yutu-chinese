@@ -43,12 +43,24 @@ describe('tips', { concurrency: false }, () => {
 
     await tap(page, 'decks-tab');
     await waitUntil(page, tipSays('Everything else is in the menu'), 'the Decks tip');
+    // It is about the menu button, so it sits under it, pointing up at it.
+    assert.deepEqual(
+      await page.evaluate(`(() => {
+        const tip = document.getElementById('tip-card');
+        const button = document.getElementById('menu-button').getBoundingClientRect();
+        const box = tip.getBoundingClientRect();
+        return [tip.classList.contains('beside-below'), box.top > button.bottom, box.top - button.bottom < 20];
+      })()`),
+      [true, true, true],
+    );
     await tap(page, 'tip-dismiss');
     assert.equal(await page.evaluate(tipOpen), false);
 
-    // Each screen its own; one seen does not come back.
+    // Each screen its own; one seen does not come back. A tip about the
+    // whole screen is at the bottom.
     await tap(page, 'words-tab');
     await waitUntil(page, tipSays('Tap a word for its page'), 'the Words tip');
+    assert.equal(await page.evaluate(`document.getElementById('tip-card').className`), 'tip-card');
     await tap(page, 'tip-dismiss');
     await tap(page, 'decks-tab');
     await tap(page, 'ready-decks-button');

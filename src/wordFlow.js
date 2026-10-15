@@ -285,8 +285,11 @@ export function createWordFlow(elements) {
           peeked: Boolean(peekedPerChar[position]),
         });
         passedPerChar[position] = suggestedPerChar[position];
-        // A tip the first time a character is judged (tips.js).
-        document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'verdict' }));
+        // A tip the first time a character is judged in a word of several,
+        // which has a row of boxes to overrule a verdict with (tips.js).
+        if (chars.length > 1) {
+          document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'verdict' }));
+        }
       }
       afterCharFinished();
       // Returned to the quiz, which colors the printed character to match.
