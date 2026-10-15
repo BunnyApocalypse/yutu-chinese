@@ -20,7 +20,7 @@ So far: HSK 3.0 levels 1 (509 words, written as a trial) and 2 (755 words), writ
 
 They were written in October 2026 by an AI model (Anthropic's Claude Sonnet) working to a brief, for this project. For what it says about how characters are built, the model was given two sources and told to use nothing else: the character dictionary of Make Me a Hanzi (`data/makemeahanzi/`) and the glyph-origin sections of the English Wiktionary's entries for the characters. Usage remarks and example sentences are the model's own.
 
-A script checked the form (every word once, lengths, that each sentence contains its word); samples were read by another model and by the project's owner. **No fluent speaker has checked them line by line.** A note may be wrong, and an example sentence may be stiff. They are meant to be corrected by hand: edit the file.
+A script checked the form (every word once, lengths, that each sentence contains its word); samples were read by another model and by the project's owner. **No fluent speaker has checked them line by line.** Native speakers have checked only the notes whose writers were unsure, or that make claims about region, register or politeness: a Taiwanese reader on 2026-10-14, and a mainland reader from 2026-10-15. A note may be wrong, and an example sentence may be stiff. They are meant to be corrected by hand: edit the file.
 
 A note does not name its sources; this file does.
 
