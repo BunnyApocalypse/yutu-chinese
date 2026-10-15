@@ -94,7 +94,7 @@ How each part of the app works, and why, is in `docs/` (index: `docs/README.md`)
 - **To release:** ask the owner first, then `git push origin main:stable` and `gh workflow run deploy.yml --ref main` (a run started by the push to `stable` is refused by the environment's rules).
 - If the deploy fails with "Fetching artifact metadata failed", don't re-run it; start a fresh run with the command above.
 - The repository is `BunnyApocalypse/hanzi-trainer`, with capitals.
-- **Before the session ends, push** (the owner's instruction).
+- **Never push unless the owner has said to** (the owner, 2026-10-15): not `main`, not another branch, not at the end of a session or a background job. Commit freely; say what is committed and not pushed.
 
 ## Layout, in short
 
