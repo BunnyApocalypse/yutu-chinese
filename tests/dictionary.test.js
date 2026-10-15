@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-import { readDictionary, lookUp, proposeMeaning, otherScriptForm } from '../src/dictionary.js';
+import { readDictionary, lookUp, proposeMeaning, otherScriptForm, splitIntoWords } from '../src/dictionary.js';
 import { checkWord, tidyPinyin } from '../src/words.js';
 
 const SMALL = [
@@ -225,4 +225,25 @@ test('in the real dictionary, the common words come first for a single syllable'
   assert.ok(all('shi4').indexOf('丗') > all('shi4').indexOf('逝'), all('shi4').join(''));
   // One letter finds only what is read that way, not every word it begins.
   assert.ok(all('a').length < 30);
+});
+
+test('text is split into the longest words the dictionary knows, the rest kept as it is', () => {
+  const dictionary = readDictionary(
+    ['我們\t我们\two3men5\twe', '老師\t老师\tlao3shi1\tteacher', '的\t\tde5\tof', '老\t\tlao3\told', ''].join('\n'),
+  );
+  const pieces = splitIntoWords(dictionary, 'Put 的 after it: 我们的老师.');
+  assert.deepEqual(pieces, [
+    { text: 'Put ', word: false },
+    { text: '的', word: true },
+    { text: ' after it: ', word: false },
+    { text: '我们', word: true },
+    { text: '的', word: true },
+    { text: '老师', word: true },
+    { text: '.', word: false },
+  ]);
+  // A character that starts no word known is a word by itself.
+  assert.deepEqual(splitIntoWords(dictionary, '你老'), [
+    { text: '你', word: true },
+    { text: '老', word: true },
+  ]);
 });

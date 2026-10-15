@@ -121,6 +121,27 @@ describe('learning new words', { concurrency: false }, () => {
     await waitUntil(page, `document.getElementById('word-page').dataset.shown === '大|da4'`, 'the word\'s page');
     await tap(page, 'word-page-close');
     assert.ok(await page.evaluate(stepIs('step 1 of 5')));
+    // A word of the tip's note can be tapped for its reading and meaning,
+    // without the tap counting as one on the card (which would move on); nor
+    // does the tap that closes the popup.
+    await waitUntil(page, `document.querySelector('#card-face .note-word')`, 'the note\'s words');
+    // A press at `top` pixels from the top of the element, in the middle.
+    const press = async (selector, top) => {
+      const box = await page.evaluate(`JSON.stringify(document.querySelector('${selector}').getBoundingClientRect())`).then(JSON.parse);
+      const y = box.y + (top ?? box.height / 2);
+      for (const type of ['mousePressed', 'mouseReleased']) {
+        await page.send('Input.dispatchMouseEvent', { type, x: box.x + box.width / 2, y, button: 'left', clickCount: 1 });
+      }
+    };
+    const peekOpen = `document.getElementById('word-peek').matches(':popover-open')`;
+    await press('#card-face .note-word');
+    await waitUntil(page, peekOpen, 'the popup');
+    // (Pressed at the top of the card, where the popup is not: a tap there
+    // would otherwise move on.)
+    await press('#card-face', 10);
+    await waitUntil(page, `!${peekOpen}`, 'the popup closed');
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    assert.ok(await page.evaluate(stepIs('step 1 of 5')));
     await tap(page, 'lesson-next-button');
     await waitUntil(page, stepIs('step 2 of 5'), 'step 2');
     assert.match(await textOf(page, 'lesson-note'), /tones/);

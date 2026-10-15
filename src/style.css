@@ -1401,15 +1401,39 @@ html:has(dialog[open]) {
   font-size: 1.5rem;
 }
 
-/* A word of the example sentence: looks like text, taps like a button. */
-button.sentence-word {
-  padding: 0 1px;
+/* A word of the example sentence or of a learning note: looks like text,
+   taps like a button. A tap on a word in a line of text needs no more room
+   than the word: the popup it opens is the bigger target. */
+button.sentence-word,
+button.note-word {
+  /* Exactly as tall as the text around it: without these, the 48px every
+     button has (see "button") pushed the lines of a note apart (the owner,
+     2026-10-15). The dotted line is drawn under the text, not as a border
+     at the bottom of the button. */
+  min-height: 0;
+  padding: 0;
   border: none;
-  border-bottom: 1px dotted #3b6fb6;
   border-radius: 0;
   background: none;
   font: inherit;
+  line-height: inherit;
+  vertical-align: baseline;
   color: inherit;
+  text-decoration: underline dotted #3b6fb6;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+/* Words side by side (我们 的 老师) are told apart by a hair's gap in the
+   dotted line. */
+button.note-word + button.note-word,
+button.note-word + .nowrap {
+  margin-left: 2px;
+}
+
+/* Kept on one line: a word of a note and the punctuation after it. */
+.nowrap {
+  white-space: nowrap;
 }
 
 /* The popup for a word of the example sentence (wordPage.js sets left and

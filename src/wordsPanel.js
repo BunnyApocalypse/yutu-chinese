@@ -52,6 +52,7 @@ import {
   readTypedPinyin,
   proposeMeaning,
   otherScriptForm,
+  splitIntoWords,
 } from './dictionary.js';
 // "?url" makes Vite hand us the file's address instead of its contents, so
 // the dictionary stays a separate file that is only fetched when needed.
@@ -303,6 +304,18 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     lookUp: async (text) => {
       await loadDictionary();
       return dictionary ? lookUp(dictionary, text) : [];
+    },
+    // For the words in a learning note, which can be tapped: the note split
+    // into words, and a word's usual entry (there is no sentence to tell
+    // which of its readings is meant).
+    splitWords: async (text) => {
+      await loadDictionary();
+      return dictionary ? splitIntoWords(dictionary, text) : [{ text, word: false }];
+    },
+    likeliestEntry: async (text) => {
+      await loadDictionary();
+      await loadUsualReadings();
+      return dictionary ? likeliestEntry(lookUp(dictionary, text), text) : null;
     },
     edit: (word) => openDialog(words.find((entry) => entry.id === word.id) || word),
     addSentence: (sentence, deckId) => addSentence(sentence, deckId),
@@ -1629,6 +1642,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   return {
     addReadyLevels,
     noteOf: (word) => wordPage.noteOf(word),
+    tappableText: (element, text) => wordPage.tappableText(element, text),
 
     // Opens a word's panel from elsewhere in the app (Review's "Edit word").
     // Returns a promise for what became of the word once the panel is closed:

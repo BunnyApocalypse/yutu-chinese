@@ -134,6 +134,49 @@ export function lookUp(dictionary, characters) {
   return entries.sort((a, b) => Number(isName(a)) - Number(isName(b)));
 }
 
+// The longest word looked for when splitting text into words.
+const LONGEST_WORD = 6;
+
+// Splits text that has Chinese in it into words, so that each can be tapped:
+// "Put 的 after it: 我们的老师." gives "Put ", 的, " after it: ", 我们,
+// 的, 老师, ".". Where a run of characters goes on, the longest word the
+// dictionary knows is taken from its start, then the next, and so on; a
+// character that starts no word is a word of its own. This is how most
+// simple word splitters work, and it is right nearly always for the short
+// phrases in the learning notes.
+//
+// dictionary: from readDictionary
+//
+// Returns [{ text, word }]: the pieces in order, `word` true for Chinese.
+export function splitIntoWords(dictionary, text) {
+  const isHan = (char) => /\p{Script=Han}/u.test(char);
+  const chars = Array.from(text);
+  const pieces = [];
+  let position = 0;
+  while (position < chars.length) {
+    if (!isHan(chars[position])) {
+      let other = '';
+      while (position < chars.length && !isHan(chars[position])) {
+        other += chars[position];
+        position += 1;
+      }
+      pieces.push({ text: other, word: false });
+      continue;
+    }
+    let length = Math.min(LONGEST_WORD, chars.length - position);
+    while (length > 1) {
+      const candidate = chars.slice(position, position + length);
+      if (candidate.every(isHan) && dictionary.has(candidate.join(''))) {
+        break;
+      }
+      length -= 1;
+    }
+    pieces.push({ text: chars.slice(position, position + length).join(''), word: true });
+    position += length;
+  }
+  return pieces;
+}
+
 // Takes one line of the file apart into an entry (see lookUp).
 function entryFromLine(line) {
   const [traditional, simplified, pinyin, meanings, pinyinTaiwan] = line.split('\t');

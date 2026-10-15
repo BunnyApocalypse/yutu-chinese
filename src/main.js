@@ -603,6 +603,7 @@ async function startUp() {
     (word) => wordsPanel.edit(word),
     (word) => wordsPanel.showWord(word),
     (word) => wordsPanel.noteOf(word),
+    (element, text) => wordsPanel.tappableText(element, text),
   );
 
   await review.load();

@@ -88,13 +88,32 @@ describe('the word page', { concurrency: false }, () => {
     assert.equal(await textOf(page, 'word-peek-pinyin'), 'tóngxué');
     assert.match(await textOf(page, 'word-peek-meaning'), /classmate/);
     assert.equal(await page.evaluate(`document.querySelectorAll('#word-peek .icon-button').length`), 1);
-    // (A press elsewhere, as a finger would: the browser closes the popup.)
-    const area = await page.evaluate(`JSON.stringify(document.querySelector('#word-page-body .page-english').getBoundingClientRect())`).then(JSON.parse);
-    for (const type of ['mousePressed', 'mouseReleased']) {
-      await page.send('Input.dispatchMouseEvent', { type, x: area.x + 5, y: area.y + 5, button: 'left', clickCount: 1 });
-    }
+    // A press elsewhere, as a finger would, closes it and does nothing else:
+    // pressed on Close, the page stays open.
+    const pressClose = async () => {
+      const box = await page.evaluate(`JSON.stringify(document.getElementById('word-page-close').getBoundingClientRect())`).then(JSON.parse);
+      for (const type of ['mousePressed', 'mouseReleased']) {
+        await page.send('Input.dispatchMouseEvent', { type, x: box.x + box.width / 2, y: box.y + box.height / 2, button: 'left', clickCount: 1 });
+      }
+    };
+    await pressClose();
     await waitUntil(page, `!${peekOpen}`, 'the popup closed');
+    assert.ok(await page.evaluate(`document.getElementById('word-page').open`));
     assert.ok(await page.evaluate(shown('我們|wo3men5')));
+    // The words of the learning note can be tapped too, once the dictionary
+    // has split it into words. With no sentence to say which reading is
+    // meant, the usual one is shown: 的 is "de", not "dí".
+    await waitUntil(page, `document.querySelectorAll('#word-page-body .note-word').length > 0`, 'the note\'s words');
+    assert.deepEqual(
+      await page.evaluate(texts('.note-word')),
+      ['我', '们', '的', '我们', '的', '老师'],
+    );
+    await page.evaluate(`document.querySelectorAll('#word-page-body .note-word')[2].click()`);
+    await waitUntil(page, `${peekOpen} && document.getElementById('word-peek-word').textContent === '的'`, 'the popup for 的');
+    assert.equal(await textOf(page, 'word-peek-pinyin'), 'de');
+    await pressClose();
+    await waitUntil(page, `!${peekOpen}`, 'the popup closed');
+
     // "Open its page" goes on to the word's page.
     await page.evaluate(`document.querySelectorAll('#word-page-body .sentence-word')[2].click()`);
     await waitUntil(page, peekOpen, 'the popup again');

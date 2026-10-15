@@ -66,12 +66,14 @@ const RECHECK_MS = 15 * 1000;
 //           { changed, word } (see edit() in wordsPanel.js)
 // showWord(word): opens the word's page
 // noteOf(word): a promise for the word's learning note, or null
+// tappableText(element, text): fills an element with a learning note whose
+//   words can be tapped (see cardTip.js)
 //
 // The deck studied is chosen with `deckSelect`, at the top of Review and
 // Learn (see "Studying one deck").
 //
 // Returns { load, activate, deactivate, practice, refresh }.
-export function createReview(elements, flows, settings, editWord, showWord, noteOf) {
+export function createReview(elements, flows, settings, editWord, showWord, noteOf, tappableText) {
   const {
     deckSelect,
     countsElement,
@@ -579,7 +581,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       .then((note) => {
         if (note && still()) {
           cardFace.classList.add('with-tip');
-          cardFace.append(cardTip(note, script, () => showWord(word)));
+          cardFace.append(cardTip(note, script, () => showWord(word), tappableText));
         }
       })
       .catch(() => {});

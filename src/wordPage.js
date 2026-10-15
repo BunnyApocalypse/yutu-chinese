@@ -57,7 +57,19 @@ function element(tag, className, text) {
 //                     cards and which of them are suspended
 //
 // Returns { open(word), openText(characters) }.
-export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, addSentence, defaultDeckId, practice, showCards }) {
+export function createWordPage({
+  getWords,
+  getDecks,
+  getSettings,
+  lookUp,
+  splitWords,
+  likeliestEntry,
+  edit,
+  addSentence,
+  defaultDeckId,
+  practice,
+  showCards,
+}) {
   const dialog = byId('word-page');
   // The part that scrolls, and inside it what this file fills in. (Under
   // that, for one of the learner's words, are its cards: showCards.)
@@ -161,7 +173,9 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
   function showNote(note, forms) {
     const settings = getSettings();
     const section = element('section', 'page-section');
-    section.append(element('h3', '', 'Learning tips'), element('p', 'page-note', note.note));
+    const noteText = element('p', 'page-note');
+    tappableText(noteText, note.note);
+    section.append(element('h3', '', 'Learning tips'), noteText);
 
     // A note about a part of a character has no example sentence.
     if (!note.example) {
@@ -377,23 +391,29 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
   const PEEK_GAP = 6;
   const PEEK_MARGIN = 12;
 
-  // Shows the popup for a word of the sentence, under the word (or above it,
-  // if there is no room under it). `piece` is from sentenceWords: the word
-  // and its reading in this sentence, with tone marks (null if the sentence's
-  // pinyin did not fit it). The reading in the sentence is the one shown,
-  // since a word with two readings is read one way there.
+  // Shows the popup for a word that was tapped, under the word (or above
+  // it, if there is no room under it). `piece`: { text, pinyin }, the word
+  // and, for a word of an example sentence, its reading there with tone
+  // marks (from sentenceWords; null if the sentence's pinyin did not fit
+  // it), which is the one shown, since a word with two readings is read one
+  // way there. A word of a learning note has no such reading (null): one of
+  // the learner's words shows theirs, any other the usual one (likeliestEntry).
   async function peek(button, piece) {
     peeked = piece;
     const settings = getSettings();
     const own = wordWritten(piece.text);
-    const entries = own ? [] : await lookUp(piece.text);
+    let entry = null;
+    if (!own && piece.pinyin) {
+      // The dictionary's entry for the reading in the sentence, if it has one.
+      const entries = await lookUp(piece.text);
+      const plain = (pinyin) => (pinyin || '').toLowerCase().replace(/\s+/g, '');
+      entry = entries.find((candidate) => plain(formatPinyin(candidate.pinyin)) === plain(piece.pinyin)) || entries[0];
+    } else if (!own) {
+      entry = await likeliestEntry(piece.text);
+    }
     if (peeked !== piece) {
       return; // another word was tapped meanwhile
     }
-    // The dictionary's entry for the reading in the sentence, if it has one.
-    const plain = (pinyin) => (pinyin || '').toLowerCase().replace(/\s+/g, '');
-    const entry =
-      entries.find((candidate) => plain(formatPinyin(candidate.pinyin)) === plain(piece.pinyin)) || entries[0];
 
     byId('word-peek-word').textContent = piece.text;
     // The same regional font as the sentence it is from.
@@ -416,6 +436,12 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
       peekCard.querySelector('.word-peek-line').append(loudspeaker(speakable.word, speakable.reading));
     }
 
+    // Inside the pop-up panel the word is in, if any (outside it nothing can
+    // be tapped), else in the page: a word on a card in Review.
+    const host = button.closest('dialog') || document.body;
+    if (peekCard.parentElement !== host) {
+      host.append(peekCard);
+    }
     peekCard.showPopover();
     const box = button.getBoundingClientRect();
     const width = peekCard.offsetWidth;
@@ -436,10 +462,99 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
   byId('word-peek-open').addEventListener('click', () => {
     const { text } = peeked;
     closePeek();
-    go({ text });
+    // From a word's page, on to the next with Back to return; from a card,
+    // the page opens.
+    if (dialog.open) {
+      go({ text });
+    } else {
+      start({ text });
+    }
   });
   // The popup goes with the page it was opened on.
   dialog.addEventListener('close', closePeek);
+
+  // The tap that closes the popup does nothing else: the browser closes it
+  // on a tap anywhere outside it, and that tap must not also reveal a card's
+  // answer, move on, or open something on the page. Listening in the
+  // "capture" phase (the `true`) hears the tap on its way down, before what
+  // it was aimed at does, so it can be stopped there.
+  let tapClosesPeek = false;
+  document.addEventListener(
+    'pointerdown',
+    (event) => {
+      tapClosesPeek = peekCard.matches(':popover-open') && !peekCard.contains(event.target);
+    },
+    true,
+  );
+  // A finger that scrolled instead of tapping brings no click.
+  document.addEventListener('pointercancel', () => (tapClosesPeek = false), true);
+  for (const type of ['pointerup', 'click']) {
+    document.addEventListener(
+      type,
+      (event) => {
+        if (tapClosesPeek) {
+          event.stopPropagation();
+          event.preventDefault();
+          // The click is the tap's last event: the next one is a tap of its own.
+          if (type === 'click') {
+            tapClosesPeek = false;
+          }
+        }
+      },
+      true,
+    );
+  }
+
+  // A button for a word of a learning note, which shows the popup. On a
+  // card, a tap on the card's face reveals or moves on; a tap on this must
+  // not.
+  function noteWordButton(piece) {
+    const button = element('button', 'note-word', piece.text);
+    button.type = 'button';
+    button.addEventListener('pointerup', (event) => event.stopPropagation());
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      peek(button, { text: piece.text, pinyin: null });
+    });
+    return button;
+  }
+
+  // Fills `target` with `text`, a learning note, whose Chinese words can be
+  // tapped for the popup. The text is there at once; its words become
+  // buttons once the dictionary is there to split it into words (the first
+  // time, it is fetched). The owner asked for this on 2026-10-15, in place of
+  // pinyin written into the notes of the beginner levels.
+  function tappableText(target, text) {
+    target.textContent = text;
+    splitWords(text).then((pieces) => {
+      // (Unless the element was given other text meanwhile, or the text has
+      // no Chinese in it.)
+      if (target.textContent !== text || !pieces.some((piece) => piece.word)) {
+        return;
+      }
+      const parts = [];
+      pieces.forEach((piece, index) => {
+        if (!piece.word) {
+          // Punctuation right after a word went with it (below).
+          const after = pieces[index - 1]?.word ? piece.text.replace(/^[^\s\p{L}\p{N}]+/u, '') : piece.text;
+          parts.push(after);
+          return;
+        }
+        // A word and the punctuation right after it ("们,") are kept on one
+        // line, or the comma could start the next.
+        const next = pieces[index + 1];
+        const punctuation = next && !next.word ? next.text.match(/^[^\s\p{L}\p{N}]+/u)?.[0] : null;
+        if (punctuation) {
+          const together = element('span', 'nowrap');
+          together.append(noteWordButton(piece), punctuation);
+          parts.push(together);
+        } else {
+          parts.push(noteWordButton(piece));
+        }
+      });
+      target.replaceChildren(...parts);
+    });
+  }
 
   // Goes on to another page from the one on screen.
   function go(target) {
@@ -495,5 +610,8 @@ export function createWordPage({ getWords, getDecks, getSettings, lookUp, edit, 
     open: (word) => start({ word }),
     // Opens the page for some characters, whatever they are.
     openText: (text) => start({ text }),
+    // Fills an element with a learning note whose words can be tapped (for
+    // the tip on a card: cardTip.js).
+    tappableText,
   };
 }
