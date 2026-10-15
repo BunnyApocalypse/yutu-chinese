@@ -798,9 +798,12 @@
 
         <!-- A "?" beside a setting shows the explanation named in its aria-controls (settings.js). -->
         <!-- The settings are in groups that fold away, so the panel is short and each
-             thing can be found under a heading. <details> is the browser's own fold-out. -->
+             thing can be found under a heading. <details> is the browser's own fold-out.
+             Regrouped on 2026-10-15 (the owner: Look under "Studying" made no sense):
+             Chinese (what is learned and tested), Daily study, Writing, Look and
+             sound, Your data and backups, Help. -->
         <details id="settings-learning" class="settings-group" open>
-          <summary>What you are learning</summary>
+          <summary>Chinese</summary>
         <div class="setting">
           <span>
             <label for="script-select">Script</label>
@@ -833,14 +836,6 @@
             A few words are read differently in Taiwan and on the mainland: 星期 is xīngqí in Taiwan and xīngqī on the mainland (more on <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">Taiwan's Mandarin</a>). The reading you choose is the one shown and tested. With Taiwan, the mainland reading also appears beside it in small print, because dictionaries file words under it. With Both, cards show both readings and accept either tone. With Mainland China, Taiwan readings are never shown or asked for.
           </p>
         </div>
-        </details>
-
-        <details id="settings-studying" class="settings-group">
-          <summary>Studying</summary>
-        <label class="setting">
-          New words per day (goal)
-          <input id="new-words-input" type="number" min="0" max="50" inputmode="numeric" />
-        </label>
 
         <fieldset class="setting">
           <legend>Card types</legend>
@@ -868,31 +863,35 @@
         </fieldset>
 
         <div class="setting">
+          <span>
+            <label for="meaning-detail-select">Dictionary meanings</label>
+            <button id="meaning-detail-help" class="help-button" type="button" aria-label="What does this setting do?" aria-expanded="false" aria-controls="meaning-detail-hint">?</button>
+          </span>
+          <select id="meaning-detail-select">
+            <option value="first">First only</option>
+            <option value="everyday">Everyday</option>
+            <option value="all">All</option>
+          </select>
+          <p id="meaning-detail-hint" class="hint" hidden>
+            How much of a dictionary entry is filled in as the meaning when you add a word. You can still edit it before saving.<br />
+            <b>First only:</b> just the first meaning.<br />
+            <b>Everyday:</b> every meaning except those marked for a specialist field, such as "(math.)" or "(law)".<br />
+            <b>All:</b> everything the dictionary lists.
+          </p>
+        </div>
+        </details>
+
+        <details id="settings-studying" class="settings-group">
+          <summary>Daily study</summary>
+        <label class="setting">
+          New words per day (goal)
+          <input id="new-words-input" type="number" min="0" max="50" inputmode="numeric" />
+        </label>
+
+        <div class="setting">
           <label><input id="lessons-checkbox" type="checkbox" /> In Review, teach before testing</label>
           <p class="hint">When a word you already know is to be written for the first time (after changing script, say): its tones, then each stroke shown, then the outline, then from memory. Words in the Learn tab are always taught this way.</p>
         </div>
-
-        <div class="setting">
-          <label><input id="stroke-count-checkbox" type="checkbox" /> Show the stroke count in Review</label>
-          <p class="hint">How many strokes the character has, as in "3/7". It is always shown in Learn and Free practice; in Review it is a hint, so it is off unless you want it.</p>
-        </div>
-
-        <label class="setting">
-          Look
-          <select id="theme-select">
-            <option value="auto">Follow device theme</option>
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </select>
-        </label>
-
-        <label class="setting">
-          Handwriting
-          <select id="handwriting-select">
-            <option value="raw">Keep my own strokes (raw input)</option>
-            <option value="snap">Snap to the printed strokes</option>
-          </select>
-        </label>
 
         <label class="setting">
           A card is a leech after
@@ -915,25 +914,43 @@
         </label>
         </details>
 
-        <details id="settings-words" class="settings-group">
-          <summary>Meanings and sound</summary>
-        <div class="setting">
-          <span>
-            <label for="meaning-detail-select">Dictionary meanings</label>
-            <button id="meaning-detail-help" class="help-button" type="button" aria-label="What does this setting do?" aria-expanded="false" aria-controls="meaning-detail-hint">?</button>
-          </span>
-          <select id="meaning-detail-select">
-            <option value="first">First only</option>
-            <option value="everyday">Everyday</option>
-            <option value="all">All</option>
+        <details id="settings-writing" class="settings-group">
+          <summary>Writing</summary>
+        <label class="setting">
+          Handwriting
+          <select id="handwriting-select">
+            <option value="raw">Keep my own strokes (raw input)</option>
+            <option value="snap">Snap to the printed strokes</option>
           </select>
-          <p id="meaning-detail-hint" class="hint" hidden>
-            How much of a dictionary entry is filled in as the meaning when you add a word. You can still edit it before saving.<br />
-            <b>First only:</b> just the first meaning.<br />
-            <b>Everyday:</b> every meaning except those marked for a specialist field, such as "(math.)" or "(law)".<br />
-            <b>All:</b> everything the dictionary lists.
-          </p>
+        </label>
+
+        <div class="setting">
+          <label><input id="stroke-count-checkbox" type="checkbox" /> Show the stroke count in Review</label>
+          <p class="hint">How many strokes the character has, as in "3/7". It is always shown in Learn and Free practice; in Review it is a hint, so it is off unless you want it.</p>
         </div>
+        </details>
+
+        <details id="settings-look" class="settings-group">
+          <summary>Look and sound</summary>
+        <!-- The same three samples as in the introduction (the owner, 2026-10-15). -->
+        <fieldset class="setting theme-picker">
+          <legend>Look</legend>
+          <label class="theme-choice">
+            <input type="radio" name="settings-theme" value="light" />
+            <span class="theme-swatch light" aria-hidden="true"><img src="icons/icon-192.png" alt="" /></span>
+            Light
+          </label>
+          <label class="theme-choice">
+            <input type="radio" name="settings-theme" value="dark" />
+            <span class="theme-swatch dark" aria-hidden="true"><img src="icons/icon-192.png" alt="" /></span>
+            Dark
+          </label>
+          <label class="theme-choice">
+            <input type="radio" name="settings-theme" value="auto" />
+            <span class="theme-swatch auto" aria-hidden="true"><img src="icons/icon-192.png" alt="" /><img src="icons/icon-192.png" alt="" /></span>
+            Follow device theme
+          </label>
+        </fieldset>
 
         <label class="setting">
           Sound

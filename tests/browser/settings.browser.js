@@ -369,17 +369,19 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     // (The DevTools protocol can make the page believe the device is set to dark.)
     const device = (value) =>
       page.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value }] });
-    assert.equal(await page.evaluate(`document.getElementById('theme-select').value`), 'auto');
+    const look = (value) =>
+      page.evaluate(`document.querySelector('input[name="settings-theme"][value="${value}"]').click()`);
+    assert.equal(await page.evaluate(`document.querySelector('input[name="settings-theme"]:checked').value`), 'auto');
     await device('dark');
     await waitUntil(page, `getComputedStyle(document.body).backgroundColor === '${DARK}'`, 'the dark look');
-    await choose(page, 'theme-select', 'light');
+    await look('light');
     assert.equal(await background(), LIGHT);
     await device('light');
-    await choose(page, 'theme-select', 'dark');
+    await look('dark');
     assert.equal(await background(), DARK);
     // The browser's bar on a phone takes the page's color too.
     assert.equal(await page.evaluate(`document.querySelector('meta[name="theme-color"]').content`), '#23221f');
-    await choose(page, 'theme-select', 'auto');
+    await look('auto');
     assert.equal(await background(), LIGHT);
     await device('');
   });

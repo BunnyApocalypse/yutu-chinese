@@ -12,7 +12,7 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 
 // elements: the panel's parts:
 //   panel, openButton, closeButton, scriptSelect, pronunciationSelect,
-//   handwritingSelect, themeSelect, lessonsCheckbox, strokeCountCheckbox, newWordsInput,
+//   handwritingSelect, themeRadios (the three choices of look), lessonsCheckbox, strokeCountCheckbox, newWordsInput,
 //   meaningDetailSelect,
 //   typeCheckboxes (a list of the four checkboxes; each has a
 //   data-card-type attribute saying which type it is)
@@ -76,7 +76,7 @@ export async function createSettings(elements, onChange) {
     scriptSelect,
     pronunciationSelect,
     handwritingSelect,
-    themeSelect,
+    themeRadios,
     lessonsCheckbox,
     strokeCountCheckbox,
     meaningDetailSelect,
@@ -120,7 +120,9 @@ export async function createSettings(elements, onChange) {
     scriptSelect.value = settings.bothScripts ? `both-${settings.script}` : settings.script;
     pronunciationSelect.value = settings.pronunciation;
     handwritingSelect.value = settings.rawInput ? 'raw' : 'snap';
-    themeSelect.value = settings.theme;
+    for (const radio of themeRadios) {
+      radio.checked = radio.value === settings.theme;
+    }
     lessonsCheckbox.checked = settings.lessons;
     strokeCountCheckbox.checked = settings.strokeCountInReview;
     meaningDetailSelect.value = settings.meaningDetail;
@@ -163,7 +165,9 @@ export async function createSettings(elements, onChange) {
     change('rawInput', handwritingSelect.value === 'raw'),
   );
 
-  themeSelect.addEventListener('change', () => change('theme', themeSelect.value));
+  for (const radio of themeRadios) {
+    radio.addEventListener('change', () => change('theme', radio.value));
+  }
 
   lessonsCheckbox.addEventListener('change', () => change('lessons', lessonsCheckbox.checked));
 

@@ -550,7 +550,7 @@ async function startUp() {
       scriptSelect: byId('script-select'),
       pronunciationSelect: byId('pronunciation-select'),
       handwritingSelect: byId('handwriting-select'),
-      themeSelect: byId('theme-select'),
+      themeRadios: [...document.querySelectorAll('input[name="settings-theme"]')],
       lessonsCheckbox: byId('lessons-checkbox'),
       strokeCountCheckbox: byId('stroke-count-checkbox'),
       meaningDetailSelect: byId('meaning-detail-select'),

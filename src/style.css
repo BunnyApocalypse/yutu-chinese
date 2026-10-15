@@ -483,16 +483,16 @@ main.focused .top-bar {
   vertical-align: middle;
 }
 
-/* The choice of look in the introduction: three samples side by side, the
-   chosen one ringed in blue. The radio buttons are kept for the keyboard and
-   screen readers, but out of sight. */
-.welcome fieldset.theme-picker {
+/* The choice of look, in the introduction and in Settings: three samples
+   side by side, the chosen one ringed in blue. The radio buttons are kept
+   for the keyboard and screen readers, but out of sight. */
+fieldset.setting.theme-picker {
   flex-direction: row;
   justify-content: space-around;
   align-items: flex-start;
 }
 
-.welcome fieldset.theme-picker label.theme-choice {
+fieldset.setting.theme-picker label.theme-choice {
   display: flex;
   flex-direction: column;
   align-items: center;
