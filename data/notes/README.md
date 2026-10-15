@@ -26,4 +26,4 @@ A note does not name its sources; this file does.
 
 ## License
 
-Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0), <https://creativecommons.org/licenses/by-sa/4.0/>. Credit: the Hanzi Trainer contributors. The notes draw on Wiktionary (<https://en.wiktionary.org>), whose text is available under CC BY-SA, and on Make Me a Hanzi's dictionary (LGPL). They are not covered by the GPL that applies to the app's code, and are kept as separate data files.
+Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0), <https://creativecommons.org/licenses/by-sa/4.0/>. Credit: the 玉兔中文 (Yutu Chinese) contributors. The notes draw on Wiktionary (<https://en.wiktionary.org>), whose text is available under CC BY-SA, and on Make Me a Hanzi's dictionary (LGPL). They are not covered by the GPL that applies to the app's code, and are kept as separate data files.

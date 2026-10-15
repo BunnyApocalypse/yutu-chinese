@@ -14,7 +14,7 @@ Only the grouping and the group names are this project's own. The words themselv
 
 The grouping and the group names are under the MIT License, like the word lists beside them (the owner's choice, 2026-10-13):
 
-> Copyright (c) 2026 the Hanzi Trainer contributors
+> Copyright (c) 2026 the 玉兔中文 (Yutu Chinese) contributors
 >
 > Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 >

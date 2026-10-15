@@ -4,4 +4,4 @@ The committee's list sorts the words of the four lower levels under twelve topic
 
 One file per level: `tocfl-3.tsv` is level 3 (進階級). The words are given in simplified characters with the pinyin the app stores, which is how the build script finds them; the app shows them in whichever script is being learned.
 
-The grouping and the group names are under the MIT License, with the same notice as in `data/wordlists/hsk/groups/README.md` (Copyright (c) 2026 the Hanzi Trainer contributors). The words themselves are the TOCFL list's; see the README one folder up.
+The grouping and the group names are under the MIT License, with the same notice as in `data/wordlists/hsk/groups/README.md` (Copyright (c) 2026 the 玉兔中文 (Yutu Chinese) contributors). The words themselves are the TOCFL list's; see the README one folder up.
