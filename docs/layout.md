@@ -25,6 +25,7 @@ Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where
 - `src/decksPanel.js`: the decks in the Decks tab: the front page and a deck's page (the line saying where you are, the decks inside, adding one) and Deck settings (rename, move, daily goal, delete). Set up by `src/wordsPanel.js`. Also `fillDeckSelect`, which every list of decks to choose from is filled with.
 - `src/offline.js`, `src/serviceWorker.js`, `scripts/build-offline.js`, `public/manifest.webmanifest`, `.github/workflows/deploy.yml`: offline use and deployment (see that section).
 - `src/welcome.js`, `src/storageAdvice.js`: the introduction shown on first use, and what it says about long-term storage in each browser (see that section).
+- `src/dialogs.js`: pop-up panels that close with a tap beside them.
 - `src/lang.js`: marks Chinese text with its language (`lang`) for screen readers and the regional font.
 - `src/theme.js`: the light or dark look (the "Look" setting); the colors themselves are named at the top of `src/style.css`.
 - `src/storageMessage.js`: the message about long-term storage once per device, after the first word learned.

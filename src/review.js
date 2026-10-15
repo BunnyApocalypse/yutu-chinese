@@ -417,10 +417,14 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // Shows the four grade buttons with the suggested one highlighted.
   function renderGrades() {
     gradeRow.replaceChildren();
-    for (const { value, label } of GRADES) {
+    for (const [index, { value, label }] of GRADES.entries()) {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = value === suggested ? 'grade primary' : 'grade';
+      // Its key on a keyboard (see gradeByKey): shown when the mouse rests
+      // on it, and told to screen readers by aria-keyshortcuts.
+      button.title = `${label} (key ${index + 1})`;
+      button.setAttribute('aria-keyshortcuts', String(index + 1));
       // Each button says when the card would come back.
       const wait = document.createElement('span');
       wait.className = 'wait';
@@ -440,6 +444,29 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     leechNote.hidden = !isLeech(current.card, settings.leechLapses);
     leechSuspendButton.hidden = leechNote.hidden;
   }
+
+  // On a keyboard, the keys 1 to 4 press the grade buttons, Again to Easy
+  // (the owner, 2026-10-15; Anki and Skritter do the same). Only while the
+  // grades are showing and no pop-up panel is open, and not while typing
+  // in a box.
+  function gradeByKey(event) {
+    const number = Number(event.key);
+    if (!Number.isInteger(number) || number < 1 || number > GRADES.length) {
+      return;
+    }
+    const typing = event.target.closest?.('input, select, textarea, [contenteditable]');
+    // (offsetParent is null when the row is not on screen, e.g. while
+    // another tab is open with a card still waiting to be graded.)
+    if (gradeRow.offsetParent === null || typing || event.repeat || event.ctrlKey || event.altKey || event.metaKey) {
+      return;
+    }
+    if (document.querySelector('dialog[open]')) {
+      return;
+    }
+    event.preventDefault();
+    gradeRow.children[number - 1]?.click();
+  }
+  document.addEventListener('keydown', gradeByKey);
 
   // The card has been answered: work out what each grade would do and offer
   // the grade buttons.

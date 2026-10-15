@@ -115,7 +115,7 @@ Past session notes are in `docs/history.md`.
 
 - **No new features until the owner's own testing and a first round with testers are done** (agreed 2026-10-13); fixing what testing finds is the work. Exceptions are agreed one by one, like the list below.
 - **The first testing session's suggestions (2026-10-14) were all built on 2026-10-15** (list and where each is documented: `docs/history.md`), except **Free practice under Words, "too many buttons" and the busy Learn screen: for the pass over the looks**.
-- **The accessibility review was done and fixed on 2026-10-15** (`docs/interface.md`, "Accessibility"). Open: keyboard shortcuts for the grades (a possible feature, not agreed), and checking by hand with VoiceOver or TalkBack.
+- **The accessibility review was done and fixed on 2026-10-15** (`docs/interface.md`, "Accessibility"). Open: checking by hand with VoiceOver or TalkBack.
 - **The owner has not tried** sentences, combining backups between real devices, and leeches. Ask how it went before building further on them. The rest built on 2026-10-13 and 14 they test as they use it (the owner, 2026-10-15).
 - **The general page of notes for a native speaker** has not been answered (the Taiwan one was; `data/notes/CLAUDE.md`).
 - **The TOCFL list has no stated license**: to be reconsidered before a larger audience.

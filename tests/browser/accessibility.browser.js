@@ -258,6 +258,24 @@ describe('accessibility', { concurrency: false }, () => {
     })()`);
     await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
     await check('the grades in Review');
+    // The grades from the keyboard: 3 is Good. Not while a panel is open.
+    const key = async (name) => {
+      await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: name, text: name });
+      await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: name });
+    };
+    const reviews = `new Promise((resolve) => {
+      indexedDB.open('hanzi-trainer').onsuccess = (event) => {
+        event.target.result.transaction('reviews').objectStore('reviews').count().onsuccess = (counted) => resolve(counted.target.result);
+      };
+    })`;
+    const before = await page.evaluate(reviews);
+    await tap(page, 'menu-button');
+    await key('3');
+    assert.equal(await page.evaluate(reviews), before, 'graded behind the menu');
+    await page.evaluate(`document.getElementById('side-menu').close()`);
+    await key('3');
+    await waitUntil(page, `document.getElementById('grade-row').hidden`, 'the card graded');
+    assert.equal(await page.evaluate(reviews), before + 1);
   });
 
   it('Settings and the introduction', async () => {

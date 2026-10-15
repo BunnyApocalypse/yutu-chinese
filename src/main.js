@@ -30,6 +30,7 @@ import { readDictionary, lookUp, DEFAULT_MEANING_DETAIL } from './dictionary.js'
 // when a correction applies ("?url": Vite hands over its address).
 import readingFixesText from '../data/wordlists/reading-fixes.tsv?raw';
 import dictionaryUrl from '../data/cedict/dictionary.tsv?url';
+import { closeOnTapBeside } from './dialogs.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -111,6 +112,7 @@ showVersion();
 // "Credits and licenses", under "Help, feedback and licenses" in Settings.
 byId('credits-button').addEventListener('click', () => byId('credits-dialog').showModal());
 byId('credits-close').addEventListener('click', () => byId('credits-dialog').close());
+closeOnTapBeside(byId('credits-dialog'));
 
 // A long meaning in the prompt above a card is cut off after one line; a tap
 // on it shows the whole of it in a panel.

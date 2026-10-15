@@ -16,6 +16,7 @@
 import { formatPinyin } from './wordList.js';
 import { scriptFor } from './words.js';
 import { langFor, fillMixed } from './lang.js';
+import { closeOnTapBeside } from './dialogs.js';
 import { readingsFor, describeReading } from './tones.js';
 import { parseNotes, noteFor, sentenceWords } from './notes.js';
 import { parseCharacters, structureOf } from './characters.js';
@@ -504,6 +505,8 @@ export function createWordPage({
   });
   // The popup goes with the page it was opened on.
   dialog.addEventListener('close', closePeek);
+  // A tap beside the page closes it too (dialogs.js).
+  closeOnTapBeside(dialog);
 
   // The tap that closes the popup does nothing else: the browser closes it
   // on a tap anywhere outside it, and that tap must not also reveal a card's

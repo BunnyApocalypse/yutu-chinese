@@ -7,6 +7,7 @@ import { CARD_TYPES, DEFAULT_NEW_WORDS_PER_DAY } from './session.js';
 import { DEFAULT_LEECH_LAPSES, MIN_LEECH_LAPSES, MAX_LEECH_LAPSES } from './leeches.js';
 import { speak } from './speech.js';
 import { setTheme } from './theme.js';
+import { closeOnTapBeside } from './dialogs.js';
 
 const MAX_NEW_WORDS_PER_DAY = 50;
 
@@ -252,18 +253,8 @@ export async function createSettings(elements, onChange) {
     panel.showModal();
   });
   closeButton.addEventListener('click', () => panel.close());
-  // A tap beside the panel, on the dimmed page, closes it too (the owner,
-  // 2026-10-15); every setting is saved as soon as it is changed, so
-  // nothing is lost. Such a tap reaches the <dialog> element itself, as does
-  // a tap on the panel's own padding, so where it landed decides.
-  panel.addEventListener('click', (event) => {
-    const box = panel.getBoundingClientRect();
-    const outside =
-      event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom;
-    if (event.target === panel && outside) {
-      panel.close();
-    }
-  });
+  // A tap beside the panel closes it too (dialogs.js).
+  closeOnTapBeside(panel);
 
   fillPanel();
   settings.change = change;
