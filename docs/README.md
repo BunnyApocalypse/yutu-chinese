@@ -18,7 +18,7 @@ CLAUDE.md keeps the rules and an index pointing here.
 | `offline.md` | Offline use and deployment (the PWA) |
 | `interface.md` | The introduction (first use), which also holds the menu, the four tabs, Settings' groups and the structure review |
 | `layout.md` | Layout (every file, one line each) |
-| `goals.md` | Long-term goals · Before other people use it · Skritter import (future) |
+| `goals.md` | Long-term goals · Before other people use it · Skritter import (future) · Translations and other languages (future) |
 | `history.md` | Where the work stands (past sessions) · The first testing session (2026-10-14) · Settled with the owner on 2026-10-13 · Roadmap |
 | `../tests/browser/CLAUDE.md` | Browser tests |
 | `../data/notes/CLAUDE.md` | The notes-writing part of "Where the work stands" |
