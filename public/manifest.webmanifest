@@ -1,7 +1,7 @@
 {
-  "name": "Hanzi Trainer",
-  "short_name": "Hanzi",
-  "description": "Personal, local-first Chinese character writing trainer",
+  "name": "玉兔中文",
+  "short_name": "玉兔中文",
+  "description": "Learn to read and write Chinese words; everything stays on your device",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

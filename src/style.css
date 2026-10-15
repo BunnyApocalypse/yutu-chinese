@@ -532,17 +532,15 @@ fieldset.setting.theme-picker label.theme-choice {
   border-radius: 10px;
 }
 
-/* The icon has a frame and a margin of its own (18 of its 192 pixels on
-   each side); it is shown that much larger, so that only the paper, the
-   grid and the character are in the sample. */
+/* icons/swatch.png: the icon's paper, grid and 兔 in dark ink, without the
+   night sky (drawn by scripts/make-icons.js). */
 .theme-swatch img {
   display: block;
-  width: 123%;
-  height: 123%;
-  margin: -11.5%;
+  width: 100%;
+  height: 100%;
 }
 
-/* Softer than the icon's own white paper and black ink (the owner,
+/* Softer than the picture's own paper and near-black ink (the owner,
    2026-10-15: trying beige paper and dark gray, to see how it feels). The
    light sample: less contrast, and warmed to beige. The dark one: partly
    inverted to dark gray paper and light ink, and warmed a little. */

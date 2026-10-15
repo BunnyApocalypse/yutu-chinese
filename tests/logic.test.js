@@ -552,7 +552,7 @@ test('backups are checked before use', () => {
     settings: [{ key: 'script', value: 'traditional' }],
   };
   assert.doesNotThrow(() => checkBackup(good));
-  assert.throws(() => checkBackup({ hello: 'world' }), /not a Hanzi Trainer backup/);
+  assert.throws(() => checkBackup({ hello: 'world' }), /not a backup from this app/);
   assert.throws(() => checkBackup({ ...good, version: 99 }), /format version 99/);
   assert.throws(() => checkBackup({ ...good, cards: undefined }), /"cards" is missing/);
   assert.throws(() => checkBackup({ ...good, words: [{ name: 'no id' }] }), /has no id/);

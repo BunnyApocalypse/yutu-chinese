@@ -1,6 +1,6 @@
-# Thanks for trying Hanzi Trainer
+# Thanks for trying 玉兔中文
 
-Hanzi Trainer is an app for learning to read and write Chinese characters: it shows you a word's meaning and you write the word, stroke by stroke, with your finger or a stylus, and it brings each word back just before you would forget it. It also has cards for meanings, pinyin and tones.
+玉兔中文 (Yùtù Zhōngwén, "Jade Rabbit Chinese") is an app for learning to read and write Chinese characters: it shows you a word's meaning and you write the word, stroke by stroke, with your finger or a stylus, and it brings each word back just before you would forget it. It also has cards for meanings, pinyin and tones.
 
 This is an early test version made by one person. I am asking you to use it for about two weeks, ten minutes a day, and tell me where it got in your way.
 

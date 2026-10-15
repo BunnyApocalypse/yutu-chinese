@@ -38,7 +38,7 @@ describe('the introduction', { concurrency: false }, () => {
 
   it('opens by itself the first time', async () => {
     assert.equal(await page.evaluate(welcomeOpen), true);
-    assert.equal(await heading(), 'Welcome to Hanzi Trainer');
+    assert.equal(await heading(), 'Welcome to 玉兔中文');
     assert.equal(await textOf(page, 'welcome-progress'), '1 of 5');
     assert.equal(await isShown(page, 'welcome-back'), false);
   });
@@ -156,7 +156,7 @@ describe('the introduction', { concurrency: false }, () => {
     await tap(page, 'settings-button');
     await tap(page, 'welcome-again-button');
     assert.equal(await page.evaluate(welcomeOpen), true);
-    assert.equal(await heading(), 'Welcome to Hanzi Trainer');
+    assert.equal(await heading(), 'Welcome to 玉兔中文');
     await tap(page, 'welcome-next');
     assert.equal(await page.evaluate(`document.querySelector('input[name="welcome-script"]:checked').value`), 'traditional');
     // Skipping changes nothing.

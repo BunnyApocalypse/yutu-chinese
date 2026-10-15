@@ -162,7 +162,7 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     assert.equal(await page.evaluate(`document.getElementById('error-banner').hidden`), false);
     await tap(page, 'error-details-button');
     const details = await page.evaluate(`document.getElementById('error-text').value`);
-    assert.match(details, /^Hanzi Trainer \d+\.\d+\.\d+ \(/);
+    assert.match(details, /^Yutu Chinese \d+\.\d+\.\d+ \(/);
     assert.match(details, /Browser: /);
     assert.match(details, /boom \(somewhere\.js:7\)/);
     await tap(page, 'error-close-button');

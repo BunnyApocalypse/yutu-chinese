@@ -22,7 +22,7 @@ export function watchForErrors({ banner, detailsButton, dialog, textElement, cop
 
   const describe = () =>
     [
-      `Hanzi Trainer ${APP_VERSION}`,
+      `Yutu Chinese ${APP_VERSION}`,
       `Browser: ${navigator.userAgent}`,
       `Screen: ${window.innerWidth} by ${window.innerHeight}`,
       '',

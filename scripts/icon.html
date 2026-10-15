@@ -1,0 +1,135 @@
+<!doctype html>
+<!--
+  The app's icon: 兔 (rabbit) in jade green, written on a full moon that is
+  also a sheet of paper, in the night sky. The name 玉兔 is the Jade Rabbit
+  who lives on the moon.
+
+  Drawn by scripts/make-icons.js, which opens this page in headless Chromium
+  and takes a picture of it. What to draw is said after the "?":
+    kind=icon      the ordinary icon (sky to the edges, the moon large)
+    kind=maskable  for Android, which cuts icons into circles, rounded squares
+                   and so on: the moon is kept inside the middle 80%
+    kind=swatch    the samples of the light and dark looks in the
+                   introduction: only the paper, the grid and the character,
+                   in dark ink (the style sheet tints it for each look)
+    size=192       the picture's width and height in pixels
+
+  The character is in AR PL UKai TW, a Kai-style (brush) font (Fedora
+  package cjkuni-ukai-fonts), as the old 字 icon was. It must be installed.
+  The paper's grain and the moon's darker patches are made by the browser
+  from random noise (feTurbulence), so no picture is copied in.
+-->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: transparent;
+      }
+      svg {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <svg id="icon" width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- The night sky: very dark green, slightly lighter at the top. -->
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#17322c" />
+          <stop offset="1" stop-color="#0e1f1b" />
+        </linearGradient>
+        <!-- A soft glow around the moon. -->
+        <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0.82" stop-color="#f3ead2" stop-opacity="0.35" />
+          <stop offset="1" stop-color="#f3ead2" stop-opacity="0" />
+        </radialGradient>
+        <!-- The paper: cream, lit from the top left, darker at the rim. -->
+        <radialGradient id="paper" cx="0.42" cy="0.38" r="0.7">
+          <stop offset="0" stop-color="#fbf6e8" />
+          <stop offset="0.75" stop-color="#f1e7cd" />
+          <stop offset="1" stop-color="#e3d5b3" />
+        </radialGradient>
+        <!-- The paper's grain: fine noise stretched sideways, faint brown. -->
+        <filter id="grain" x="0" y="0" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.012 0.05" numOctaves="4" seed="7" />
+          <feColorMatrix type="matrix" values="0 0 0 0 0.55  0 0 0 0 0.47  0 0 0 0 0.32  0 0 0 0.55 -0.18" />
+        </filter>
+        <!-- The moon's darker patches: coarse noise, only its peaks kept. -->
+        <filter id="patches" x="0" y="0" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.006" numOctaves="3" seed="3" />
+          <feColorMatrix type="matrix" values="0 0 0 0 0.6  0 0 0 0 0.52  0 0 0 0 0.36  0 0 0 1.1 -0.55" />
+        </filter>
+        <!-- Jade: lighter at the top left, deeper at the bottom right. -->
+        <linearGradient id="jade" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#3f9a74" />
+          <stop offset="0.55" stop-color="#23704f" />
+          <stop offset="1" stop-color="#1a5a3f" />
+        </linearGradient>
+        <clipPath id="moon-shape"><circle id="moon-clip" cx="256" cy="256" r="222" /></clipPath>
+      </defs>
+
+      <g id="sky-layer">
+        <rect width="512" height="512" fill="url(#sky)" />
+        <g fill="#f3ead2" opacity="0.7">
+          <circle cx="58" cy="70" r="2.2" />
+          <circle cx="452" cy="56" r="1.8" />
+          <circle cx="470" cy="424" r="2" />
+          <circle cx="40" cy="454" r="1.6" />
+          <circle cx="24" cy="250" r="1.2" />
+        </g>
+        <circle id="moon-glow" cx="256" cy="256" r="240" fill="url(#glow)" />
+      </g>
+
+      <circle id="moon" cx="256" cy="256" r="222" fill="url(#paper)" />
+      <g id="moon-surface" clip-path="url(#moon-shape)">
+        <rect width="512" height="512" filter="url(#patches)" />
+        <rect width="512" height="512" filter="url(#grain)" />
+        <!-- The writing grid's cross, as on the writing area. -->
+        <g stroke="#b9a983" stroke-width="2.5" stroke-dasharray="12 9" opacity="0.6">
+          <line x1="256" y1="0" x2="256" y2="512" />
+          <line x1="0" y1="256" x2="512" y2="256" />
+        </g>
+      </g>
+
+      <text id="character" x="256" y="262" text-anchor="middle" dominant-baseline="central"
+        font-family="AR PL UKai TW" font-size="320" fill="url(#jade)">兔</text>
+    </svg>
+
+    <script>
+      const options = new URLSearchParams(location.search);
+      const kind = options.get('kind') || 'icon';
+      const size = Number(options.get('size') || 512);
+
+      const icon = document.getElementById('icon');
+      icon.setAttribute('width', size);
+      icon.setAttribute('height', size);
+
+      // Makes the moon (and the character on it) smaller, around the middle.
+      function scaleMoon(factor) {
+        const radius = 222 * factor;
+        document.getElementById('moon').setAttribute('r', radius);
+        document.getElementById('moon-clip').setAttribute('r', radius);
+        document.getElementById('moon-glow').setAttribute('r', radius + 18);
+        const character = document.getElementById('character');
+        character.setAttribute('font-size', 320 * factor);
+        character.setAttribute('y', 256 + 6 * factor);
+      }
+
+      if (kind === 'maskable') {
+        // Android may cut away everything outside a circle of 80% of the
+        // width; 0.86 keeps the moon and its glow inside that.
+        scaleMoon(0.86);
+      }
+
+      if (kind === 'swatch') {
+        // Paper to the edges, no sky, the character in dark ink.
+        document.getElementById('sky-layer').remove();
+        for (const id of ['moon', 'moon-clip']) document.getElementById(id).setAttribute('r', 400);
+        document.getElementById('character').setAttribute('fill', '#1d1c19');
+      }
+    </script>
+  </body>
+</html>

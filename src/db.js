@@ -71,6 +71,8 @@
 // it is not there when the tests run this file in Node.)
 /* global __CHANNEL__ */
 const CHANNEL = typeof __CHANNEL__ === 'undefined' ? '' : __CHANNEL__;
+// From the app's first name, Hanzi Trainer. Renaming the database would
+// leave everyone's words behind in the old one, so it stays.
 const DATABASE_NAME = CHANNEL ? `hanzi-trainer-${CHANNEL}` : 'hanzi-trainer';
 
 // Raise this number when the stores themselves change (a new store, a new
@@ -116,7 +118,7 @@ function openDatabase() {
       // The other way around: this is the later version, and a tab with an
       // earlier one is still open.
       request.onblocked = () =>
-        reject(new Error('Hanzi Trainer is open in another tab in an older version. Close that tab, then reload this one.'));
+        reject(new Error('The app is open in another tab in an older version. Close that tab, then reload this one.'));
     });
   }
   return databasePromise;

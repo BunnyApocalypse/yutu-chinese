@@ -1,4 +1,6 @@
-# Hanzi Trainer
+# 玉兔中文 (Yutu Chinese)
+
+Formerly Hanzi Trainer. 玉兔, the Jade Rabbit, lives on the moon.
 
 A personal, local-first Chinese character writing trainer. It runs entirely in the browser: no account, no server, and it works offline once it has been opened.
 

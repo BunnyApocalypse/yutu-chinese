@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <!-- Makes the page use the phone's real width instead of a zoomed-out desktop layout -->
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Hanzi Trainer</title>
+    <title>玉兔中文</title>
     <!-- The manifest tells a phone how to install the app: its name, icon and colors. -->
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#f5f2ea" />
@@ -526,7 +526,7 @@
         <h2>Credits and licenses</h2>
         <div class="word-page-body credits">
           <p>
-            <b>Hanzi Trainer</b> is free software under the GNU General Public License, version 3. Its source is at
+            <b><span lang="zh-Hant-TW">玉兔中文</span></b> (Yùtù Zhōngwén, “Jade Rabbit Chinese”) is free software under the GNU General Public License, version 3. Its source is at
             <a href="https://github.com/BunnyApocalypse/hanzi-trainer" target="_blank" rel="noopener">github.com/BunnyApocalypse/hanzi-trainer</a>.
             It comes with no warranty.
           </p>
@@ -708,13 +708,13 @@
         <p id="welcome-progress" class="hint"></p>
 
         <section data-step>
-          <h2>Welcome to Hanzi Trainer</h2>
+          <h2>Welcome to <span lang="zh-Hant-TW">玉兔中文</span></h2>
           <p>This app helps you learn to read and write Chinese words. It brings each word back just before you would forget it.</p>
           <p>Everything stays on this device. There is no account, and nothing is sent anywhere.</p>
           <p>The next few screens set the app up and show how it works. It takes about a minute.</p>
           <!-- Shown at once as it is chosen; saved with the rest at the end
                (welcome.js). Each choice is a small sample of the look: the
-               app's icon, in the dark one turned dark, and for "Follow device
+               app's icon (its paper and 兔, icons/swatch.png), in the dark one turned dark, and for "Follow device
                theme" split diagonally (the owner, 2026-10-15). The radio
                buttons are still there, out of sight, for the keyboard and
                screen readers. -->
@@ -722,17 +722,17 @@
             <legend>Look</legend>
             <label class="theme-choice">
               <input type="radio" name="welcome-theme" value="light" />
-              <span class="theme-swatch light" aria-hidden="true"><img src="icons/icon-192.png" alt="" /></span>
+              <span class="theme-swatch light" aria-hidden="true"><img src="icons/swatch.png" alt="" /></span>
               Light
             </label>
             <label class="theme-choice">
               <input type="radio" name="welcome-theme" value="dark" />
-              <span class="theme-swatch dark" aria-hidden="true"><img src="icons/icon-192.png" alt="" /></span>
+              <span class="theme-swatch dark" aria-hidden="true"><img src="icons/swatch.png" alt="" /></span>
               Dark
             </label>
             <label class="theme-choice">
               <input type="radio" name="welcome-theme" value="auto" />
-              <span class="theme-swatch auto" aria-hidden="true"><img src="icons/icon-192.png" alt="" /><img src="icons/icon-192.png" alt="" /></span>
+              <span class="theme-swatch auto" aria-hidden="true"><img src="icons/swatch.png" alt="" /><img src="icons/swatch.png" alt="" /></span>
               Follow device theme
             </label>
           </fieldset>
@@ -966,17 +966,17 @@
           <legend>Look</legend>
           <label class="theme-choice">
             <input type="radio" name="settings-theme" value="light" />
-            <span class="theme-swatch light" aria-hidden="true"><img src="icons/icon-192.png" alt="" /></span>
+            <span class="theme-swatch light" aria-hidden="true"><img src="icons/swatch.png" alt="" /></span>
             Light
           </label>
           <label class="theme-choice">
             <input type="radio" name="settings-theme" value="dark" />
-            <span class="theme-swatch dark" aria-hidden="true"><img src="icons/icon-192.png" alt="" /></span>
+            <span class="theme-swatch dark" aria-hidden="true"><img src="icons/swatch.png" alt="" /></span>
             Dark
           </label>
           <label class="theme-choice">
             <input type="radio" name="settings-theme" value="auto" />
-            <span class="theme-swatch auto" aria-hidden="true"><img src="icons/icon-192.png" alt="" /><img src="icons/icon-192.png" alt="" /></span>
+            <span class="theme-swatch auto" aria-hidden="true"><img src="icons/swatch.png" alt="" /><img src="icons/swatch.png" alt="" /></span>
             Follow device theme
           </label>
         </fieldset>

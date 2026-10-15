@@ -309,13 +309,13 @@ function downloadBackup(backup, label = '') {
   const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  // Named with the local date and time, e.g. hanzi-trainer-backup-2026-10-12-1704.json
+  // Named with the local date and time, e.g. yutu-chinese-backup-2026-10-12-1704.json
   const now = new Date();
   const twoDigits = (number) => String(number).padStart(2, '0');
   const stamp =
     `${now.getFullYear()}-${twoDigits(now.getMonth() + 1)}-${twoDigits(now.getDate())}` +
     `-${twoDigits(now.getHours())}${twoDigits(now.getMinutes())}`;
-  link.download = `hanzi-trainer-backup-${stamp}${label}.json`;
+  link.download = `yutu-chinese-backup-${stamp}${label}.json`;
   link.click();
   URL.revokeObjectURL(link.href);
 }
@@ -403,7 +403,7 @@ importFile.addEventListener('change', async () => {
     checkBackup(chosenBackup);
   } catch (error) {
     // JSON.parse fails with a technical message; checkBackup with a readable one.
-    const reason = error instanceof SyntaxError ? 'This file is not a Hanzi Trainer backup.' : error.message;
+    const reason = error instanceof SyntaxError ? 'This file is not a backup from this app.' : error.message;
     await tell('That file could not be used', `${reason} Nothing was changed.`);
     return;
   }

@@ -13,6 +13,8 @@
 
 import { STORES, getAll, replaceEverything } from './db.js';
 
+// From the app's first name, Hanzi Trainer. It stays, so that every backup
+// made so far can still be read.
 const FORMAT_NAME = 'hanzi-trainer-backup';
 
 // Raise this when the shape of the backup changes, and teach checkBackup()
@@ -39,7 +41,7 @@ export async function buildBackup() {
 // of the app can read. Throws an Error with a readable message if not.
 export function checkBackup(data) {
   if (!data || typeof data !== 'object' || data.format !== FORMAT_NAME) {
-    throw new Error('This file is not a Hanzi Trainer backup.');
+    throw new Error('This file is not a backup from this app.');
   }
   if (!STORES_IN_VERSION[data.version]) {
     throw new Error(

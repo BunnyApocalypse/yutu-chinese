@@ -54,6 +54,7 @@ Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where
 - `src/style.css`: styles, phone-first.
 - `scripts/copy-char-data.js`: fills the two git-ignored stroke data folders, naming files by Unicode number (`學.json` becomes `5b78.json`): `public/char-data/` from `node_modules/hanzi-writer-data/` (about 9,500 characters) and `public/char-data-tw/` from `data/animcjk/graphicsZhHant.txt` (1,013 characters, plus an `index.json` listing them and recording `TAIWAN_SET_VERSION`; raise that number whenever the script changes what it writes, or existing copies will not be regenerated).
 - `scripts/strokeOrder.js`: finds a character's second stroke order by comparing the two data sets. Used by the copy script.
+- `scripts/icon.html`, `scripts/make-icons.js`: the app's icon as an SVG, and the script that draws it into `public/icons/` (run by hand; see "Icons" in `docs/offline.md`).
 - `scripts/build-tone-table.js`, `data/cedict/`: the tone table extracted from CC-CEDICT (run by hand; see above).
 - `scripts/build-word-lists.js`, `data/wordlists/`: the ready-made word lists (run by hand, uses the internet; see "Ready-made word lists").
 - `data/animcjk/`: the animCJK traditional stroke data, copied unchanged from that project at a pinned commit. Its README records the source, license and how to update. This is vendored data, not an npm dependency.

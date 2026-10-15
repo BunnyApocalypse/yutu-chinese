@@ -853,7 +853,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   const scriptOfWord = (word) => scriptFor(word, getSettings());
 
   byId('leech-list-button').addEventListener('click', () => {
-    downloadText(leechList(shownLeeches, scriptOfWord, formatPinyin), 'hanzi-trainer-leeches.tsv');
+    downloadText(leechList(shownLeeches, scriptOfWord, formatPinyin), 'yutu-chinese-leeches.tsv');
   });
 
   // The clipboard is what "copy" fills and "paste" empties. A page may only
@@ -865,7 +865,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       await navigator.clipboard.writeText(prompt);
       listNote.textContent = 'Copied. Paste it into the AI you use.';
     } catch {
-      downloadText(prompt, 'hanzi-trainer-leeches-prompt.txt');
+      downloadText(prompt, 'yutu-chinese-leeches-prompt.txt');
       listNote.textContent = 'It could not be copied here, so it was saved as a file instead.';
     }
   });
