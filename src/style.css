@@ -11,13 +11,13 @@
 :root {
   color-scheme: light;
   --bg: #f5f2ea; /* the page */
-  --surface: #fff; /* buttons, boxes, cards, the writing area */
-  --raised: #fffdf7; /* tips and popups, over the page */
+  --surface: #fbf8f1; /* buttons, boxes, cards, the writing area: paper, not white */
+  --raised: #fdfaf4; /* tips and popups, over the page */
   --pressed: #e9e4d8; /* a button being pressed */
-  --text: #222;
+  --text: #34322d; /* dark gray, not black */
   --text-soft: #4a463d;
   --muted: #6b6557; /* hints and other quieter text */
-  --inverse-text: #fff; /* on something filled with the text's color */
+  --inverse-text: #fbf8f1; /* on something filled with the text's color */
   --accent: #3b6fb6; /* the app's blue: pinyin, links, the current slot */
   --accent-fill: #3b6fb6; /* the blue of a main button */
   --accent-pressed: #315d99;
@@ -34,32 +34,37 @@
   --shadow: rgba(0, 0, 0, 0.18);
   --backdrop: rgba(0, 0, 0, 0.4); /* behind a pop-up panel */
   /* The writing area. */
-  --ink: #222; /* your own strokes */
+  --ink: #34322d; /* your own strokes */
   --grid: #e3ded2; /* the 米字格 guide lines */
   --outline: #d8d3c7; /* "Show outline" */
   --reference: #a9d4b8; /* the printed character under yours, passed */
   --reference-missed: #ecb3a7; /* the same, missed */
 }
 
-/* The dark look. The same values twice: once for "Dark", once for "As the
-   device" on a device set to dark. CSS has no way to say both at once. */
+/* The dark look. The same values twice: once for "Dark", once for "Follow
+   device theme" on a device set to dark. CSS has no way to say both at once.
+
+   Both looks are kept soft (the owner, 2026-10-15, after trying it on the
+   samples where the look is chosen): paper rather than white and dark gray
+   rather than black in the light one, dark gray rather than black in the
+   dark one. */
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --bg: #1b1a18;
-  --surface: #262522;
-  --raised: #2f2d2a;
-  --pressed: #3a3833;
-  --text: #e8e4da;
-  --text-soft: #d3cec2;
+  --bg: #23221f;
+  --surface: #2c2b28;
+  --raised: #34322f;
+  --pressed: #3e3c37;
+  --text: #dcd7cc;
+  --text-soft: #cbc6ba;
   --muted: #a39d8f;
-  --inverse-text: #1b1a18;
+  --inverse-text: #23221f;
   --accent: #8cb4ec;
   --accent-fill: #3d6fb3;
   --accent-pressed: #335f9c;
   --on-accent: #fff;
   --border: #5a564d;
   --border-soft: #46433d;
-  --line: #3a3833;
+  --line: #3e3c37;
   --scrollbar: #5a564d;
   --danger: #ec7a62;
   --danger-bg: #4a2620;
@@ -68,8 +73,8 @@
   --warn: #e0a640;
   --shadow: rgba(0, 0, 0, 0.5);
   --backdrop: rgba(0, 0, 0, 0.6);
-  --ink: #ece8de;
-  --grid: #3a3833;
+  --ink: #dcd7cc;
+  --grid: #403e39;
   --outline: #4d4a43;
   --reference: #2f6343;
   --reference-missed: #74382b;
@@ -78,21 +83,21 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    --bg: #1b1a18;
-    --surface: #262522;
-    --raised: #2f2d2a;
-    --pressed: #3a3833;
-    --text: #e8e4da;
-    --text-soft: #d3cec2;
+    --bg: #23221f;
+    --surface: #2c2b28;
+    --raised: #34322f;
+    --pressed: #3e3c37;
+    --text: #dcd7cc;
+    --text-soft: #cbc6ba;
     --muted: #a39d8f;
-    --inverse-text: #1b1a18;
+    --inverse-text: #23221f;
     --accent: #8cb4ec;
     --accent-fill: #3d6fb3;
     --accent-pressed: #335f9c;
     --on-accent: #fff;
     --border: #5a564d;
     --border-soft: #46433d;
-    --line: #3a3833;
+    --line: #3e3c37;
     --scrollbar: #5a564d;
     --danger: #ec7a62;
     --danger-bg: #4a2620;
@@ -101,8 +106,8 @@
     --warn: #e0a640;
     --shadow: rgba(0, 0, 0, 0.5);
     --backdrop: rgba(0, 0, 0, 0.6);
-    --ink: #ece8de;
-    --grid: #3a3833;
+    --ink: #dcd7cc;
+    --grid: #403e39;
     --outline: #4d4a43;
     --reference: #2f6343;
     --reference-missed: #74382b;
