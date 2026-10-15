@@ -294,6 +294,15 @@ describe('decks', { concurrency: false }, () => {
     await tap(page, 'my-decks-button');
     await waitUntil(page, deckRows(2), 'the two decks');
     assert.match(await textOf(page, '#deck-list li:first-child .deck-entry'), /^TOCFL Novice 1182 words · 0 learned \(0%\) · 11 decks inside$/);
+    // The choosers of a deck to put something in offer the level, not its
+    // eleven topics (the owner, 2026-10-15: the list was far too long).
+    const offered = (id) => page.evaluate(`[...document.getElementById('${id}').options].map((option) => option.value)`);
+    await tap(page, 'words-tab');
+    await tap(page, 'select-words-button');
+    assert.ok((await offered('bulk-deck')).includes('tocfl/Novice 1'));
+    assert.equal((await offered('bulk-deck')).some((id) => id.startsWith('tocfl/Novice 1/')), false);
+    await tap(page, 'select-words-button');
+    await tap(page, 'decks-tab');
   });
 
   it('adds the common radicals, and teaches one that is not a word', { timeout: 60000 }, async () => {

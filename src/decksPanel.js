@@ -20,6 +20,7 @@ import {
   withDeck,
   withoutDecks,
   wordsOnlyIn,
+  isReadyMadeGroup,
   DEFAULT_DECK,
 } from './decks.js';
 
@@ -31,9 +32,19 @@ const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`;
 // in `first` ([{ value, label }]). The choice made is kept if it is still
 // among them.
 //
-// skip: optional; a function saying which decks to leave out
-export function fillDeckSelect(select, decks, first, skip = () => false) {
+// The groups inside the levels of the ready-made lists are always left out:
+// one HSK or TOCFL level brings a dozen of them, and a list of every one
+// was far too long (a tester, 2026-10-14; the owner, 2026-10-15, on the
+// chooser for adding a sentence). They stay on the Decks tab. A group that
+// is the one chosen stays, so that the choice can be seen.
+//
+// options:
+//   skip(deck): true for any other deck to leave out
+//   keep:       the ID of the deck chosen, if the list does not have it yet
+//               (the first time it is filled); otherwise the list's own choice
+export function fillDeckSelect(select, decks, first, { skip = () => false, keep = '' } = {}) {
   const chosen = select.value;
+  const leaveOut = (deck) => skip(deck) || (isReadyMadeGroup(deck.id) && deck.id !== chosen && deck.id !== keep);
   const option = (value, label) => {
     const element = document.createElement('option');
     element.value = value;
@@ -43,7 +54,7 @@ export function fillDeckSelect(select, decks, first, skip = () => false) {
   select.replaceChildren(
     ...first.map(({ value, label }) => option(value, label)),
     ...deckTree(decks)
-      .filter(({ deck }) => !skip(deck))
+      .filter(({ deck }) => !leaveOut(deck))
       .map(({ deck, label }) => option(deck.id, label)),
   );
   if ([...select.options].some((entry) => entry.value === chosen)) {
@@ -263,7 +274,10 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
     byId('deck-dialog-status').textContent = countsOf(deck);
     nameInput.value = deck.name;
     // A deck cannot go inside itself or inside a deck that is inside it.
-    fillDeckSelect(parentSelect, getDecks(), NO_PARENT, (other) => !canBeInside(getDecks(), deck.id, other.id));
+    fillDeckSelect(parentSelect, getDecks(), NO_PARENT, {
+      skip: (other) => !canBeInside(getDecks(), deck.id, other.id),
+      keep: deck.parentId,
+    });
     parentSelect.value = parentOf(deck) ? deck.parentId : '';
     goalInput.value = Number.isInteger(deck.newWordsPerDay) ? deck.newWordsPerDay : '';
     note.textContent = '';

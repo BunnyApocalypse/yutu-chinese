@@ -209,8 +209,9 @@ export function createWordPage({
     const deckSelect = element('select', 'deck-select');
     deckSelect.setAttribute('aria-label', 'Deck to add the sentence to');
     // Only the learner's own decks are offered: the decks of the ready-made
-    // lists are those lists' words, and there are hundreds of them. (All of
-    // them, if there are no others.)
+    // lists are those lists' words. (If there are no others, the ready-made
+    // lists and their levels, without the groups inside the levels: see
+    // fillDeckSelect.)
     const own = getDecks().filter((deck) => !readyMadeDeck(deck.id));
     fillDeckSelect(deckSelect, own.length > 0 ? own : getDecks(), []);
     const preferred = defaultDeckId();

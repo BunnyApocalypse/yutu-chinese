@@ -122,7 +122,6 @@ Past session notes are in `docs/history.md`.
   6. **Done another way 2026-10-15:** the words of a note can be tapped for their reading and meaning, so no pinyin is written in (`docs/word-page.md`).
   7. **Done 2026-10-15:** a message about long-term storage once, after the first word learned (`docs/interface.md`).
   8. **Free practice under Words, "too many buttons", the Learn screen busy:** for the pass over the looks.
-- **The deck chooser is far too long** with a ready-made list added or many decks (the owner, 2026-10-15): every group of every level is an option, e.g. where a sentence from a word's page is added to a deck (`fillDeckSelect` in `src/decksPanel.js`). To be fixed.
 - **An accessibility review, at some point** (the owner, 2026-10-15): screen readers, keyboard use, contrast in both looks, sizes of what is tapped.
 - **The owner has not tried** sentences, combining backups between real devices, and leeches. Ask how it went before building further on them. The rest built on 2026-10-13 and 14 they test as they use it (the owner, 2026-10-15).
 - **The general page of notes for a native speaker** has not been answered (the Taiwan one was; `data/notes/CLAUDE.md`).

@@ -12,7 +12,6 @@ import { allCardIds } from './session.js';
 import { fileCardsByScript } from './scriptCards.js';
 import {
   READY_MADE_LISTS,
-  isReadyMadeGroup,
   missingReadyMadeDecks,
   readyMadeDeck,
   deckTree,
@@ -223,9 +222,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       byId('my-decks-section').hidden = readyMade;
       byId('ready-decks-section').hidden = !readyMade;
     }
-    fillDeckSelect(listDeckSelect, decks, [{ value: '', label: 'All decks' }], (deck) =>
-      isReadyMadeGroup(deck.id) && deck.id !== listDeckId,
-    );
+    fillDeckSelect(listDeckSelect, decks, [{ value: '', label: 'All decks' }], { keep: listDeckId });
     listDeckSelect.value = decks.some((deck) => deck.id === listDeckId) ? listDeckId : '';
   }
   listDeckSelect.addEventListener('change', () => {
