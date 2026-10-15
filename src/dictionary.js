@@ -129,22 +129,249 @@ export function proposeMeaning(meanings, detail = DEFAULT_MEANING_DETAIL) {
 //   and pinyinTaiwan, if the dictionary notes a different Taiwan reading
 // Names (pinyin with a capital, such as a surname) come last.
 export function lookUp(dictionary, characters) {
-  const entries = (dictionary.get(characters) || []).map((line) => {
-    const [traditional, simplified, pinyin, meanings, pinyinTaiwan] = line.split('\t');
-    const entry = {
-      traditional,
-      simplified: simplified || traditional,
-      pinyin,
-      meanings: meanings.split('/'),
-    };
-    if (pinyinTaiwan) {
-      entry.pinyinTaiwan = pinyinTaiwan;
-    }
-    return entry;
-  });
-  const isName = (entry) => /^[A-Z]/.test(entry.pinyin);
+  const entries = (dictionary.get(characters) || []).map(entryFromLine);
   // sort() keeps the file's order among entries that compare equal.
   return entries.sort((a, b) => Number(isName(a)) - Number(isName(b)));
+}
+
+// Takes one line of the file apart into an entry (see lookUp).
+function entryFromLine(line) {
+  const [traditional, simplified, pinyin, meanings, pinyinTaiwan] = line.split('\t');
+  const entry = {
+    traditional,
+    simplified: simplified || traditional,
+    pinyin,
+    meanings: meanings.split('/'),
+  };
+  if (pinyinTaiwan) {
+    entry.pinyinTaiwan = pinyinTaiwan;
+  }
+  return entry;
+}
+
+const isName = (entry) => /^[A-Z]/.test(entry.pinyin);
+
+// ---------------------------------------------------------------------------
+// Looking a word up by its pinyin, for a learner without a Chinese keyboard
+// (2026-10-15: a beginner in testing could not add a word at all).
+
+const TONE_MARKS = {
+  ā: ['a', 1], á: ['a', 2], ǎ: ['a', 3], à: ['a', 4],
+  ē: ['e', 1], é: ['e', 2], ě: ['e', 3], è: ['e', 4],
+  ī: ['i', 1], í: ['i', 2], ǐ: ['i', 3], ì: ['i', 4],
+  ō: ['o', 1], ó: ['o', 2], ǒ: ['o', 3], ò: ['o', 4],
+  ū: ['u', 1], ú: ['u', 2], ǔ: ['u', 3], ù: ['u', 4],
+  ǖ: ['v', 1], ǘ: ['v', 2], ǚ: ['v', 3], ǜ: ['v', 4],
+};
+
+// Reads pinyin as a learner types it: "nihao", "ni hao", "ni3hao3", "nǐhǎo",
+// "lv4", "lü4", "lu:4", with tones on some syllables or none.
+//
+// Returns { letters, tones }, or null if the text is not pinyin (it has
+// characters in it, or anything else but letters, tones and separators):
+//   letters: the letters alone, in lowercase, with v for ü ("nihao")
+//   tones:   [{ at, tone }], one for each tone typed: `at` is the position
+//            in `letters` of a letter of the syllable the tone belongs to
+//            (the last one for a tone number, the vowel for a tone mark),
+//            since without the dictionary nobody can tell where a syllable
+//            of "xian" ends. A neutral tone may be typed as 5 or 0.
+export function readTypedPinyin(text) {
+  let letters = '';
+  const tones = [];
+  for (const char of text.toLowerCase().replace(/u:/g, 'v')) {
+    if (/[a-z]/.test(char)) {
+      letters += char;
+    } else if (char === 'ü') {
+      letters += 'v';
+    } else if (TONE_MARKS[char]) {
+      letters += TONE_MARKS[char][0];
+      tones.push({ at: letters.length - 1, tone: TONE_MARKS[char][1] });
+    } else if (/[0-5]/.test(char) && letters !== '') {
+      tones.push({ at: letters.length - 1, tone: Number(char) || 5 });
+    } else if (!/[\s'’-]/.test(char)) {
+      return null;
+    }
+  }
+  return letters === '' ? null : { letters, tones };
+}
+
+// A reading as stored ("xi1'an1") taken apart: its letters ("xian") and
+// where each syllable lies in them, with its tone.
+function syllablesOf(pinyin) {
+  let letters = '';
+  const syllables = [];
+  for (const [, syllable, tone] of pinyin.toLowerCase().matchAll(/([a-z]+)([1-5])/g)) {
+    syllables.push({ start: letters.length, end: letters.length + syllable.length, tone: Number(tone) });
+    letters += syllable;
+  }
+  return { letters, syllables };
+}
+
+// Whether a reading has every tone that was typed, each in its syllable.
+function hasTones(pinyin, tones) {
+  const { syllables } = syllablesOf(pinyin);
+  return tones.every(({ at, tone }) =>
+    syllables.some((syllable) => syllable.start <= at && at < syllable.end && syllable.tone === tone),
+  );
+}
+
+// The dictionary's lines by their letters without tones, made the first time
+// a word is looked up by its pinyin (which a learner who types characters
+// never does), and kept with the dictionary.
+//   keys:      every set of letters, sorted, to find those beginning with
+//              what is typed quickly
+//   byLetters: Map from letters to [{ line, order }], `order` being the
+//              line's place in the file
+const pinyinIndexes = new WeakMap();
+function pinyinIndex(dictionary) {
+  if (!pinyinIndexes.has(dictionary)) {
+    const byLetters = new Map();
+    // readDictionary files each line under both its forms; once is enough.
+    const lines = new Set();
+    for (const linesOfWord of dictionary.values()) {
+      for (const line of linesOfWord) {
+        lines.add(line);
+      }
+    }
+    let order = 0;
+    for (const line of lines) {
+      const start = line.indexOf('\t', line.indexOf('\t') + 1) + 1;
+      const letters = line
+        .slice(start, line.indexOf('\t', start))
+        .toLowerCase()
+        .replace(/[1-5']/g, '');
+      const sameLetters = byLetters.get(letters);
+      if (sameLetters) {
+        sameLetters.push({ line, order });
+      } else {
+        byLetters.set(letters, [{ line, order }]);
+      }
+      order += 1;
+    }
+    pinyinIndexes.set(dictionary, { keys: [...byLetters.keys()].sort(), byLetters });
+  }
+  return pinyinIndexes.get(dictionary);
+}
+
+// What the ready-made lists say of how common a word is, made once for a
+// set of lists (see lookUpByPinyin) and kept with it.
+//   rank:  Map from a word's ID (`traditional|pinyin`) to its place in the
+//          lists, the first list's words first
+//   count: Map from a character, in either script, to how many listed
+//          words have it
+const listFacts = new WeakMap();
+function factsOf(listed) {
+  if (!listFacts.has(listed)) {
+    const rank = new Map();
+    const count = new Map();
+    for (const word of listed) {
+      const id = `${word.traditional}|${word.pinyin}`;
+      if (word.pinyin === '' || rank.has(id)) {
+        continue;
+      }
+      rank.set(id, rank.size);
+      for (const char of new Set([...word.traditional, ...word.simplified])) {
+        count.set(char, (count.get(char) || 0) + 1);
+      }
+    }
+    listFacts.set(listed, { rank, count });
+  }
+  return listFacts.get(listed);
+}
+
+// Prefix matches only from this many letters on: one letter begins ten
+// thousand words, which is slow on a phone and helps nobody.
+const MIN_LETTERS_FOR_BEGINNINGS = 2;
+
+// Looks a word up by its pinyin, as typed (see readTypedPinyin).
+//
+// dictionary: from readDictionary
+// listed:     the words of the ready-made lists, the list whose order counts
+//             most first: [{ traditional, simplified, pinyin }]. The same
+//             array each time, so what is worked out from it is kept.
+//
+// Returns the entries (as from lookUp) read that way, the likeliest first:
+//   - words read exactly as typed, then words whose reading only begins
+//     that way ("zhongg" finds 中國 before the word is typed out);
+//   - where tones were typed, only words with those tones, unless none has
+//     them (a learner may have the tone wrong);
+//   - in each of those, words of the lists first, in the lists' order (是
+//     before 柿 for "shi4");
+//   - then names (a capital in the reading: 石 Shí the surname; a listed
+//     one, such as 中國 Zhōngguó, keeps its place in the lists);
+//   - then variants: a word in no list with the same reading and meanings as
+//     one that comes before it (丗 for 世). CC-CEDICT's "variant of" entries
+//     were given the meanings of the word they point to when the dictionary
+//     was built (scripts/build-dictionary.js), which is how they are told. A
+//     listed word is never one, so 辭典 (TOCFL) stays beside 詞典.
+//   - the other words by their rarest character, those whose characters
+//     are in many listed words first (义, in 意义 and 主义, before 㑊, in
+//     none); then shorter first; then in the file's order.
+// Empty if the text is not pinyin or nothing is read that way.
+export function lookUpByPinyin(dictionary, text, listed = []) {
+  const typed = readTypedPinyin(text);
+  if (!typed) {
+    return [];
+  }
+  const { keys, byLetters } = pinyinIndex(dictionary);
+  const { rank, count } = factsOf(listed);
+  // The first key that is not before the letters typed (a binary search):
+  // the keys beginning with them follow it.
+  let low = 0;
+  let high = keys.length;
+  while (low < high) {
+    const middle = (low + high) >> 1;
+    if (keys[middle] < typed.letters) {
+      low = middle + 1;
+    } else {
+      high = middle;
+    }
+  }
+  const beginnings = typed.letters.length >= MIN_LETTERS_FOR_BEGINNINGS;
+  let found = [];
+  for (let i = low; i < keys.length && keys[i].startsWith(typed.letters); i += 1) {
+    const exact = keys[i] === typed.letters;
+    if (!exact && !beginnings) {
+      break;
+    }
+    for (const { line, order } of byLetters.get(keys[i])) {
+      const entry = entryFromLine(line);
+      found.push({
+        entry,
+        exact,
+        order,
+        rank: rank.get(`${entry.traditional}|${entry.pinyin}`) ?? Infinity,
+        rarest: Math.min(...[...entry.traditional].map((char) => count.get(char) || 0)),
+      });
+    }
+  }
+  if (typed.tones.length > 0) {
+    const withTones = found.filter(({ entry }) => hasTones(entry.pinyin, typed.tones));
+    if (withTones.length > 0) {
+      found = withTones;
+    }
+  }
+  // Variants: the first word of each reading and meanings, listed words
+  // first, is the word; any other not in a list is a variant.
+  const byListThenFile = [...found].sort((a, b) => a.rank - b.rank || a.order - b.order);
+  const seen = new Set();
+  for (const item of byListThenFile) {
+    const said = `${item.entry.pinyin}\t${item.entry.meanings.join('/')}`;
+    item.variant = seen.has(said) && item.rank === Infinity;
+    seen.add(said);
+  }
+  return found
+    .sort(
+      (a, b) =>
+        Number(b.exact) - Number(a.exact) ||
+        a.rank - b.rank ||
+        Number(isName(a.entry)) - Number(isName(b.entry)) ||
+        Number(a.variant) - Number(b.variant) ||
+        b.rarest - a.rarest ||
+        a.entry.traditional.length - b.entry.traditional.length ||
+        a.order - b.order,
+    )
+    .map(({ entry }) => entry);
 }
 
 // How a word is written in the other script, for someone who only types one.

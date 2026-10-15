@@ -149,6 +149,44 @@ describe('the Decks tab', { concurrency: false }, () => {
     await type(page, 'add-traditional', '');
   });
 
+  it('finds a word by its pinyin, for a learner without a Chinese keyboard', async () => {
+    const entries = `document.querySelectorAll('#add-suggestions .word-entry')`;
+    await type(page, 'add-traditional', 'shi4');
+    await waitUntil(page, `${entries}.length === 8`, 'the first eight words read shì');
+    // The words of the lists first.
+    assert.match(await textOf(page, '#add-suggestions .word-entry'), /^是/);
+    // Nothing is filled in until a word is chosen.
+    assert.equal(await page.evaluate(`document.getElementById('add-pinyin').value`), '');
+    // Tones were typed, so there is no advice to type them.
+    assert.doesNotMatch(await textOf(page, 'add-suggestions'), /Add tone numbers/);
+    await page.evaluate(`document.querySelector('#add-suggestions .more-entries').click()`);
+    await waitUntil(page, `${entries}.length === 16`, 'eight more words');
+
+    await type(page, 'add-traditional', 'shi');
+    await waitUntil(page, `${entries}.length === 8`, 'the list starting again from eight');
+    assert.match(await textOf(page, 'add-suggestions'), /Add tone numbers/);
+
+    // Pinyin left in the box is not added as the word.
+    await page.evaluate(`document.getElementById('add-word-form').requestSubmit()`);
+    assert.match(await textOf(page, 'add-word-note'), /Choose the word from the list/);
+
+    // A word the test list has is marked, and a tap fills in the form.
+    await type(page, 'add-traditional', 'peng you');
+    await waitUntil(page, `${entries}.length > 0`, 'the words read péngyou');
+    assert.match(await textOf(page, '#add-suggestions .word-entry'), /^朋友.*in your words$/);
+    await page.evaluate(`${entries}[0].click()`);
+    const fields = await page.evaluate(`['traditional', 'simplified', 'pinyin'].map(
+      (name) => document.getElementById('add-' + name).value)`);
+    assert.deepEqual(fields, ['朋友', '', 'peng2you5']);
+    assert.notEqual(await page.evaluate(`document.getElementById('add-definition').value`), '');
+    // The box now has characters, so the dictionary's entries for them are listed.
+    assert.match(await textOf(page, '#add-suggestions .word-entry'), /filled in$/);
+    for (const field of ['traditional', 'simplified', 'pinyin', 'definition']) {
+      await type(page, `add-${field}`, '');
+    }
+    await page.evaluate(`document.getElementById('add-word-note').textContent = ''`);
+  });
+
   it('fills in as much of the meaning as the setting asks for', async () => {
     // Types the word, taps its dictionary entry and returns the meaning filled in.
     const meaningFilledIn = async () => {

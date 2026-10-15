@@ -107,7 +107,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     assert.equal(await isShown(page, 'add-simplified'), true);
     assert.equal(await isShown(page, 'add-pinyin-taiwan'), false);
     // The one box left is not labeled with a script.
-    assert.equal(await page.evaluate(`document.getElementById('add-simplified').placeholder`), 'Word or phrase 汉字');
+    assert.equal(await page.evaluate(`document.getElementById('add-simplified').placeholder`), 'Word or phrase: 汉字 or pinyin');
     assert.doesNotMatch(await textOf(page, 'list-hint'), /traditional, pinyin|Taiwan/);
 
     await type(page, 'add-simplified', '图书馆');
@@ -155,7 +155,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
       await waitUntil(page, `${rows(1)} && document.querySelector('#word-list li').textContent.startsWith('${characters}')`, characters);
     }
     assert.equal(await isShown(page, 'add-traditional'), true);
-    assert.equal(await page.evaluate(`document.getElementById('add-traditional').placeholder`), 'Traditional 繁體');
+    assert.equal(await page.evaluate(`document.getElementById('add-traditional').placeholder`), 'Traditional 繁體 or pinyin');
     assert.match(await textOf(page, 'list-hint'), /simplified, traditional, pinyin/);
   });
 
@@ -163,7 +163,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     await choose(page, 'script-select', 'traditional');
     // A setting is saved before it takes effect, which takes a moment.
     await waitUntil(page, `document.getElementById('add-simplified').hidden`, 'the simplified box to go');
-    assert.equal(await page.evaluate(`document.getElementById('add-traditional').placeholder`), 'Word or phrase 漢字');
+    assert.equal(await page.evaluate(`document.getElementById('add-traditional').placeholder`), 'Word or phrase: 漢字 or pinyin');
     await type(page, 'word-search', 'library');
     await waitUntil(page, `${rows(1)} && document.querySelector('#word-list li').textContent.startsWith('圖書館')`);
     assert.doesNotMatch(await textOf(page, '#word-list li'), /图书馆/);

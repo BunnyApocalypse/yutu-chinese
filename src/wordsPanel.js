@@ -45,7 +45,14 @@ import {
   withFormerId,
   tidyPinyin,
 } from './words.js';
-import { readDictionary, lookUp, proposeMeaning, otherScriptForm } from './dictionary.js';
+import {
+  readDictionary,
+  lookUp,
+  lookUpByPinyin,
+  readTypedPinyin,
+  proposeMeaning,
+  otherScriptForm,
+} from './dictionary.js';
 // "?url" makes Vite hand us the file's address instead of its contents, so
 // the dictionary stays a separate file that is only fetched when needed.
 import dictionaryUrl from '../data/cedict/dictionary.tsv?url';
@@ -506,10 +513,11 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       box.placeholder = text;
       box.setAttribute('aria-label', text); // what a screen reader calls the box
     };
-    caption(addFields.traditional, both ? 'Traditional 繁體' : 'Word or phrase 漢字');
+    // Either box also takes pinyin, to choose the word from a list.
+    caption(addFields.traditional, both ? 'Traditional 繁體 or pinyin' : 'Word or phrase: 漢字 or pinyin');
     caption(
       addFields.simplified,
-      both ? `Simplified 简体${asked ? '' : ' (if different)'}` : 'Word or phrase 汉字',
+      both ? `Simplified 简体${asked ? '' : ' (if different)'}` : 'Word or phrase: 汉字 or pinyin',
     );
     editSimplifiedCaption.textContent = both ? 'Simplified' : 'Characters';
     if (!lookedUpField || lookedUpField.hidden) {
@@ -773,6 +781,11 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     filledEntry = entry;
     entryTapped = true;
     fillInCharacters(entry);
+    // Chosen from pinyin typed in the simplified box, a word written the same
+    // in both scripts leaves that box empty: the traditional one has it.
+    if (lookedUpField.value === '') {
+      lookedUpField = addFields.traditional;
+    }
     addFields.pinyin.value = entry.pinyin;
     addFields.pinyinTaiwan.value = asks.taiwan ? entry.pinyinTaiwan || '' : '';
     addFields.definition.value = proposeMeaning(entry.meanings, getSettings().meaningDetail);
@@ -802,6 +815,10 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   // which happens with the dictionary. (The dictionary itself lists a
   // word's readings alphabetically, which says nothing of which is usual.)
   const usualReading = new Map();
+  // The words of both lists, HSK 3.0's first: what lists words looked up by
+  // pinyin the likeliest first (lookUpByPinyin). Replaced, never changed,
+  // since lookUpByPinyin keeps what it works out from it.
+  let readyListWords = [];
   let usualReadingsLoading = null;
   function loadUsualReadings() {
     usualReadingsLoading =
@@ -815,6 +832,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
               }
             }
           }
+          readyListWords = lists.flat();
           showSuggestions();
         });
     return usualReadingsLoading;
@@ -857,15 +875,85 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     showPinyinPreview();
   }
 
+  // A dictionary entry as a button that fills in the form; `label` is what
+  // its right-hand end says.
+  function entryButton(entry, label) {
+    const span = (className, text) => {
+      const element = document.createElement('span');
+      element.className = className;
+      element.textContent = text;
+      return element;
+    };
+    const meanings = entry.meanings.join(' / ');
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'word-entry';
+    button.append(
+      span('entry-characters', charactersOf(entry)),
+      span('entry-pinyin', formatPinyin(entry.pinyin)),
+      span(
+        'entry-definition',
+        meanings.length > MAX_MEANINGS_LENGTH ? `${meanings.slice(0, MAX_MEANINGS_LENGTH)}…` : meanings,
+      ),
+      span('entry-new', label),
+    );
+    button.classList.toggle('selected', sameEntry(entry, filledEntry));
+    button.addEventListener('click', () => fillIn(entry));
+    return button;
+  }
+
+  // How many words read as typed are listed under the box; "Show more"
+  // lists more, and typing starts again from the first few.
+  let pinyinShown = MAX_SUGGESTIONS;
+
+  // What is listed under the box when pinyin is typed in it: the words read
+  // that way, the likeliest first (lookUpByPinyin), to choose from. Nothing
+  // is filled in by itself, since the word is not known until one is chosen.
+  function pinyinSuggestions(typed) {
+    autoFill(null);
+    if (!dictionary) {
+      return [];
+    }
+    const entries = lookUpByPinyin(dictionary, typed, readyListWords);
+    if (entries.length === 0) {
+      return [paragraph('hint', 'No word in the dictionary is read that way. Check the spelling (v for ü), or type the characters.')];
+    }
+    const have = new Set(words.map((word) => word.id));
+    const parts = entries
+      .slice(0, pinyinShown)
+      .map((entry) => entryButton(entry, have.has(wordId(entry)) ? 'in your words' : 'use this'));
+    const more = entries.length - pinyinShown;
+    if (more > 0) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'link-button more-entries';
+      button.textContent = `Show more (${more} more)`;
+      button.addEventListener('click', () => {
+        pinyinShown += MAX_SUGGESTIONS;
+        showSuggestions();
+      });
+      parts.push(button);
+      if (readTypedPinyin(typed).tones.length === 0) {
+        parts.push(paragraph('hint', 'Add tone numbers (shi4) to narrow it down.'));
+      }
+    }
+    return parts;
+  }
+
   // Shows, under the characters typed, the words in the list written the
-  // same way and what the dictionary has for them.
+  // same way and what the dictionary has for them; or, under pinyin typed,
+  // the words read that way.
   function showSuggestions() {
     const typed = lookedUpField.value.trim();
-    const parts = [];
     // Nothing typed: what was filled in by itself goes too.
     if (typed === '' && !entryTapped) {
       autoFill(null);
     }
+    if (readTypedPinyin(typed)) {
+      suggestions.replaceChildren(...pinyinSuggestions(typed));
+      return;
+    }
+    const parts = [];
     if (typed !== '') {
       const alreadyHave = wordsWithSameCharacters({ traditional: typed, simplified: typed }, words);
       for (const word of alreadyHave) {
@@ -880,28 +968,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
         autoFill(likeliestEntry(entries, typed));
       }
       for (const entry of entries.slice(0, MAX_SUGGESTIONS)) {
-        const span = (className, text) => {
-          const element = document.createElement('span');
-          element.className = className;
-          element.textContent = text;
-          return element;
-        };
-        const meanings = entry.meanings.join(' / ');
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'word-entry';
-        button.append(
-          span('entry-characters', charactersOf(entry)),
-          span('entry-pinyin', formatPinyin(entry.pinyin)),
-          span(
-            'entry-definition',
-            meanings.length > MAX_MEANINGS_LENGTH ? `${meanings.slice(0, MAX_MEANINGS_LENGTH)}…` : meanings,
-          ),
-          span('entry-new', sameEntry(entry, filledEntry) ? 'filled in' : 'use this'),
-        );
-        button.classList.toggle('selected', sameEntry(entry, filledEntry));
-        button.addEventListener('click', () => fillIn(entry));
-        parts.push(button);
+        parts.push(entryButton(entry, sameEntry(entry, filledEntry) ? 'filled in' : 'use this'));
       }
       if (dictionary && entries.length === 0 && alreadyHave.length === 0) {
         parts.push(paragraph('hint', 'Not in the dictionary. Fill in the fields yourself.'));
@@ -918,6 +985,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       filledEntry = null; // the characters are no longer the tapped entry's
       entryTapped = false;
       lookedUpField = field;
+      pinyinShown = MAX_SUGGESTIONS;
       loadDictionary(); // in case the text arrived without the box being tapped
       showSuggestions();
     });
@@ -939,6 +1007,11 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     const typed = Object.fromEntries(
       Object.entries(addFields).map(([name, input]) => [name, input.value]),
     );
+    // Pinyin still in the box: the word is to be chosen from the list.
+    if (dictionary && lookUpByPinyin(dictionary, lookedUpField.value.trim()).length > 0) {
+      addNote.textContent = 'Choose the word from the list under the box, or type its characters.';
+      return;
+    }
     const asked = scriptAsked();
     if (asked) {
       // Only one script was typed; the dictionary supplies the other.
