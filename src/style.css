@@ -1215,6 +1215,21 @@ button.word-entry {
    and --arrow-x for the arrow) and the class beside-above or beside-below.
    As a popover it would be centered by the browser, hence inset and margin.
    Without popovers it is a plain card, hidden with the "hidden" attribute. */
+/* The message about long-term storage under "Learn the next word"
+   (storageMessage.js). */
+.storage-message {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border: 1px solid #d8d1c2;
+  border-radius: 12px;
+  background: #fffdf7;
+  text-align: left;
+}
+
+.storage-message p {
+  margin: 0 0 8px;
+}
+
 .tip-card {
   position: fixed;
   inset: auto;

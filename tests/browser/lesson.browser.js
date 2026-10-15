@@ -217,6 +217,13 @@ describe('learning new words', { concurrency: false }, () => {
       '大 is learned: its cards will come up in Review. 1 of 5 today.',
     );
     assert.equal(await textOf(page, 'review-counts'), 'Learned today 1 of 5 · 2 waiting');
+    // The first word learned brings the message about long-term storage,
+    // once: the test browser has not allowed it (an app not installed).
+    await waitUntil(page, `!document.getElementById('storage-message').hidden`, 'the message about storage');
+    assert.match(await textOf(page, 'storage-message-advice'), /install/i);
+    assert.equal(await isShown(page, 'storage-message-keep'), true);
+    await tap(page, 'storage-message-close');
+    assert.equal(await isShown(page, 'storage-message'), false);
     const stored = await inDatabase(`
       stores.words.get('大|da4').onsuccess = (event) => { result.learned = typeof event.target.result.learnedAt; };
       stores.cards.getAllKeys().onsuccess = (event) => { result.cards = event.target.result; };
@@ -262,6 +269,8 @@ describe('learning new words', { concurrency: false }, () => {
     await tap(page, 'settings-close');
     await waitUntil(page, `document.getElementById('review-counts').textContent === 'Learned today 2 of 2 · 1 waiting'`, 'the new goal');
     assert.match(await textOf(page, 'done-message'), /That is today's goal: 2 of 2\. Stop here, or go on if you like\.$/);
+    // The message about long-term storage was shown once and is not again.
+    assert.equal(await isShown(page, 'storage-message'), false);
     await tap(page, 'learn-next-button');
     await waitUntil(page, `${stepIs('step 1 of 5')} && document.getElementById('card-face').textContent.startsWith('上')`, 'the third word');
   });

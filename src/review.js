@@ -919,6 +919,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
           (waiting === 0 ? ' No more words are waiting.' : ''),
         waiting > 0,
       );
+      // The moment for the message about long-term storage (storageMessage.js).
+      document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'learned' }));
     } else if (waiting === 0) {
       showLearnMessage(
         words.length === 0

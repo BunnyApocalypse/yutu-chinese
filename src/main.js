@@ -14,6 +14,7 @@ import { scriptFor, scriptFlagFor } from './words.js';
 import { fileCardsByScript } from './scriptCards.js';
 import { missingReadyMadeDecks, wordsWithListsAsDecks, homeForEveryWord, flattenedReadyMadeDecks } from './decks.js';
 import { setUpOffline, keepData } from './offline.js';
+import { createStorageMessage } from './storageMessage.js';
 import { createWelcome } from './welcome.js';
 import { createTips } from './tips.js';
 import { buildBackup, checkBackup, describeBackup, restoreBackup } from './backup.js';
@@ -613,6 +614,9 @@ async function startUp() {
   // The introduction, the first time the app is opened on a device. It adds
   // the level chosen to start with and ends in Learn; with none, it ends in
   // the Decks tab if there are no words yet.
+  // Once per device, after the first word learned (storageMessage.js).
+  createStorageMessage(keepData);
+
   const welcome = createWelcome({
     settings,
     keepData,

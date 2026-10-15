@@ -120,11 +120,10 @@ Past session notes are in `docs/history.md`.
   4. **Done 2026-10-15:** a word of an example sentence shows a popup first (`docs/word-page.md`).
   5. **Done 2026-10-15:** tone buttons show bare tone marks (`docs/cards.md`).
   6. **Done another way 2026-10-15:** the words of a note can be tapped for their reading and meaning, so no pinyin is written in (`docs/word-page.md`).
-  7. **Long-term storage:** a message once rather than a dot (Chrome grants it only to an installed app, so a dot would stay on).
+  7. **Done 2026-10-15:** a message about long-term storage once, after the first word learned (`docs/interface.md`).
   8. **Free practice under Words, "too many buttons", the Learn screen busy:** for the pass over the looks.
-  9. **Anki:** no sync (AnkiWeb's terms forbid it, and it would need a server); syncing through the learner's own storage reuses the combining of backups; an `.apkg` export could come later and would need a library (ask first).
-  10. **Note-taking in testing:** keep what was seen apart from what to do about it; fill in "While they work" and the time; mark prompted answers; name the file by a code (T1).
-- **The owner has not tried** most of what was built on 2026-10-13 and 14 (combining backups between real devices, sound, sentences, leeches, the card manager, the word page on a phone, the groups of the higher levels, radicals); the full list is in `docs/history.md`. Ask how it went before building further on any of it.
+- **The deck chooser is far too long** with a ready-made list added or many decks (the owner, 2026-10-15): every group of every level is an option, e.g. where a sentence from a word's page is added to a deck (`fillDeckSelect` in `src/decksPanel.js`). To be fixed.
+- **The owner has not tried** sentences, combining backups between real devices, and leeches. Ask how it went before building further on them. The rest built on 2026-10-13 and 14 they test as they use it (the owner, 2026-10-15).
 - **The general page of notes for a native speaker** has not been answered (the Taiwan one was; `data/notes/CLAUDE.md`).
 - **The TOCFL list has no stated license**: to be reconsidered before a larger audience.
 - **Refactoring** (`src/wordsPanel.js` split by screen, old names such as the mode `'words'` and `practice-tab`, colors gathered into named values): after the testers' round, together with the pass over the looks.

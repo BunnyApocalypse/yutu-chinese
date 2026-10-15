@@ -21,9 +21,16 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
   // Starts a Free practice card of this kind for a word of the test word list.
   async function practice(word, kind) {
     await tap(page, 'practice-tab');
+    // Emptied first, so that the new card can be told from the one before,
+    // which is still showing until the new one comes.
+    await page.evaluate(`document.getElementById('card-face').textContent = ''`);
     await type(page, 'word-input', word);
     await choose(page, 'practice-type', kind);
-    await waitUntil(page, `!document.getElementById('card-face').hidden`, 'the card');
+    await waitUntil(
+      page,
+      `!document.getElementById('card-face').hidden && document.getElementById('card-face').textContent !== ''`,
+      'the card',
+    );
   }
 
   // Taps the card, as a finger would.
@@ -208,7 +215,16 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     await choose(page, 'edit-card-script', 'simplified');
     await page.evaluate(`document.getElementById('word-dialog-form').requestSubmit()`);
     await waitUntil(page, `document.querySelector('#word-list li').textContent.startsWith('图书馆 · 圖書館')`, 'simplified first');
-    await practice('圖書館', 'meaning');
+    // Free practice reads the app's own copy of the words, which is read
+    // again from the database a moment after the change, after the list
+    // above shows it: so it is asked until it has caught up.
+    for (let attempt = 0; attempt < 20; attempt++) {
+      await practice('圖書館', 'meaning');
+      if ((await textOf(page, 'card-face')).startsWith('图书馆')) {
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
     assert.match(await textOf(page, 'card-face'), /^图书馆/);
     // The card says it is the odd one out, on every kind of card.
     assert.equal(await textOf(page, 'script-flag'), 'simp. 简体');

@@ -112,6 +112,17 @@
         <!-- In Learn, between two words: on to the next one; in Review, with
              nothing due and words waiting: to Learn (review.js, main.js). -->
         <button id="learn-next-button" class="primary" type="button" hidden>Learn the next word</button>
+        <!-- Once per device, after the first word learned, if the browser
+             may still clear the app's data (storageMessage.js). -->
+        <div id="storage-message" class="storage-message" hidden>
+          <p><b>Keep your words safe.</b> Your words and reviews are kept in this browser, which may clear them to free up space unless it allows long-term storage.</p>
+          <p id="storage-message-advice"></p>
+          <div class="buttons">
+            <button id="storage-message-install" class="small primary" type="button" hidden>Install the app</button>
+            <button id="storage-message-keep" class="small" type="button" hidden>Allow long-term storage</button>
+            <button id="storage-message-close" class="small" type="button">Not now</button>
+          </div>
+        </div>
       </div>
 
       <!-- The Decks tab: the decks, the words in them, and the ready-made

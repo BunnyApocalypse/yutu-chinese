@@ -25,6 +25,7 @@ Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where
 - `src/decksPanel.js`: the decks in the Decks tab: the front page and a deck's page (the line saying where you are, the decks inside, adding one) and Deck settings (rename, move, daily goal, delete). Set up by `src/wordsPanel.js`. Also `fillDeckSelect`, which every list of decks to choose from is filled with.
 - `src/offline.js`, `src/serviceWorker.js`, `scripts/build-offline.js`, `public/manifest.webmanifest`, `.github/workflows/deploy.yml`: offline use and deployment (see that section).
 - `src/welcome.js`, `src/storageAdvice.js`: the introduction shown on first use, and what it says about long-term storage in each browser (see that section).
+- `src/storageMessage.js`: the message about long-term storage once per device, after the first word learned.
 - `src/scriptCards.js`: files writing cards under the script they were learned in (see "Switching script").
 - `src/backup.js`: build, check and restore a backup file.
 - `src/wordPage.js`: the page of a word or character (see "The word page"); `src/notes.js` and `src/characters.js` are the plain calculation behind it (learning notes and example sentences; the parts of characters).
