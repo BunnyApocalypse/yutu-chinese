@@ -241,6 +241,17 @@ dialog.side-menu::backdrop {
   color: var(--inverse-text);
 }
 
+/* How many words wait in Learn, at the right end of its menu item. */
+.menu-count {
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.side-menu-items button.selected .menu-count {
+  color: inherit;
+}
+
 .side-menu-items button svg {
   color: var(--muted);
 }

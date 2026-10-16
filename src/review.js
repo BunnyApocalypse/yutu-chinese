@@ -1196,6 +1196,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       return showNext();
     },
 
+    // How many words wait in Learn for the deck studied (the menu shows it).
+    waitingToLearn() {
+      return learnCounts().waiting;
+    },
+
     // Leaves the page ready for Free practice, which uses the writing parts.
     deactivate() {
       setFocus(false);

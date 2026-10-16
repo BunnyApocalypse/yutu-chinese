@@ -207,6 +207,7 @@ function setMode(newMode) {
   // page".
   for (const [tab, itsMode] of [
     [reviewTab, 'review'],
+    [byId('learn-tab'), 'learn'],
     [practiceTab, 'practice'],
     [wordsTab, 'words'],
     [browseTab, 'browse'],
@@ -250,8 +251,18 @@ function setMode(newMode) {
 // 2026-10-14: two rows of buttons stacked at the top were too much). It is a
 // <dialog>, so the page under it is out of reach and Esc closes it. Choosing
 // anything in it closes it.
+//
+// Learn is in it only when words are waiting, with how many, and opens on the
+// deck chosen in Review (the owner, 2026-10-16: on a day with cards due,
+// Learn was three taps away through Decks; learning still goes with a deck).
 const sideMenu = byId('side-menu');
-byId('menu-button').addEventListener('click', () => sideMenu.showModal());
+byId('menu-button').addEventListener('click', () => {
+  const waiting = review ? review.waitingToLearn() : 0;
+  byId('learn-tab').hidden = waiting === 0 && mode !== 'learn';
+  byId('learn-waiting').textContent = waiting > 0 ? `${waiting} waiting` : '';
+  sideMenu.showModal();
+});
+byId('learn-tab').addEventListener('click', () => setMode('learn'));
 // A tap on the dimmed page beside the panel lands on the dialog itself.
 sideMenu.addEventListener('click', (event) => {
   if (event.target === sideMenu || event.target.closest('button')) {

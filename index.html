@@ -30,6 +30,9 @@
       <dialog id="side-menu" class="side-menu" aria-label="Menu">
         <nav id="main-tabs" class="side-menu-items">
           <button id="review-tab" class="selected" type="button">Review</button>
+          <!-- Only when words are waiting, with how many (main.js; the owner,
+               2026-10-16: two taps to Learn on a day with cards due). -->
+          <button id="learn-tab" type="button" hidden>Learn <span id="learn-waiting" class="menu-count"></span></button>
           <button id="decks-tab" type="button">Decks</button>
           <button id="words-tab" type="button">Words</button>
         </nav>

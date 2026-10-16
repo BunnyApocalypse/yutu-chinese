@@ -169,6 +169,16 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     assert.equal(await page.evaluate(`document.getElementById('error-banner').hidden`), true);
   });
 
+  it('offers Learn in the menu while words are waiting, with how many', async () => {
+    await tap(page, 'menu-button');
+    assert.equal(await isShown(page, 'learn-tab'), true);
+    assert.match(await textOf(page, 'learn-waiting'), /^\d+ waiting$/);
+    await tap(page, 'learn-tab');
+    await waitUntil(page, `document.getElementById('place-title').textContent === 'Learn'`, 'Learn');
+    await waitUntil(page, `document.getElementById('learn-tab').classList.contains('selected')`, 'Learn marked in the menu');
+    await tap(page, 'review-tab');
+  });
+
   it('reminds of a backup with a dot, which can be switched off and on', async () => {
     // Words and no backup, but nothing studied yet: no dot, which in a new
     // learner's first minutes would look like an error.
