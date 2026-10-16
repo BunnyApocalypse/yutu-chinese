@@ -182,7 +182,7 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
   //   'ask':     asking for long-term storage
   //   'none':    nothing (also "Not now")
   // Neither answer is waited for: Firefox puts its question at the top of
-  // the page, which may stay there a while. Both are started before anything
+  // the page (the bottom on a phone), which may stay there a while. Both are started before anything
   // is awaited, while the tap still counts as the person's own doing, which
   // browsers require for such questions.
   async function finish(storageAction) {

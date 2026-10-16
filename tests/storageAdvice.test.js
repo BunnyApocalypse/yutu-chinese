@@ -86,7 +86,10 @@ test('the introduction: one button that does what the browser needs', () => {
   assert.deepEqual(welcomeStorage('chromium', state({ installed: true, canInstall: true })), { action: 'ask', line: '' });
   // Firefox asks the person; on a phone, installing is mentioned as a convenience.
   assert.equal(welcomeStorage('firefox', state()).line, 'Firefox will ask at the top of the page: choose "Allow".');
-  assert.match(welcomeStorage('firefox', state(), true).line, /choose "Allow"\. For an icon of your own, choose Install/);
+  assert.equal(
+    welcomeStorage('firefox', state(), true).line,
+    'Firefox will ask at the bottom of the screen: choose "Allow". For an icon of your own, choose Install in the browser\'s menu (⋮).',
+  );
   // Safari on an iPhone or iPad keeps only a Home Screen app's data; on a Mac nothing to add.
   assert.match(welcomeStorage('safari', state(), true).line, /only keeps them for an app on the Home Screen/);
   assert.deepEqual(welcomeStorage('safari', state()), { action: 'ask', line: '' });

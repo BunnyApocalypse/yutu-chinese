@@ -5,7 +5,8 @@
 // (navigator.storage.persist(); see offline.js). Browsers handle that request
 // very differently, so the app says what to expect and what to do:
 //
-//   Firefox   asks the person, with a question at the top of the page.
+//   Firefox   asks the person, with a question at the top of the page on a
+//             computer and at the bottom of the screen on a phone.
 //   Chromium  (Chrome, Edge, Brave, Samsung Internet, ...) never asks anyone.
 //             It decides by itself, and says yes for an installed app.
 //   Safari    decides by itself too. On an iPhone or iPad it also deletes a
@@ -63,7 +64,7 @@ export function storageAdvice(kind, { canAsk, kept, asked, installed, canInstall
   if (kind === 'firefox') {
     return asked
       ? 'Firefox has not allowed it. If you chose "Block" or "Not now", click the icon at the left end of the address bar, clear the entry for storing data in persistent storage, and tap the button again. ' + BACKUP
-      : 'Firefox will show a question at the top of the page: may this site store data in persistent storage? Choose "Allow".';
+      : 'Firefox will show a question: may this site store data in persistent storage? Choose "Allow".';
   }
   if (kind === 'chromium') {
     if (installed) {
@@ -115,7 +116,8 @@ export function welcomeStorage(kind, { canAsk, kept, installed, canInstall }, mo
       : { action: 'ask', line: `This browser only keeps the words of an installed app: ${INSTALL_HOW}.` };
   }
   if (kind === 'firefox') {
-    const question = 'Firefox will ask at the top of the page: choose "Allow".';
+    // At the bottom of the screen on a phone (the owner, 2026-10-16).
+    const question = `Firefox will ask at the ${mobile ? 'bottom of the screen' : 'top of the page'}: choose "Allow".`;
     return {
       action: 'ask',
       line: mobile ? `${question} For an icon of your own, choose Install in the browser's menu (⋮).` : question,
