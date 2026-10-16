@@ -407,11 +407,6 @@ export function createReview(elements, flows, settings, editWord, showWord, note
           'It will not come up again until you switch it back on in the word\'s panel (Decks tab).',
       );
     }
-    if (current.learning) {
-      // That was the last step of a new word's lesson.
-      await finishLearning();
-      return;
-    }
     showNext();
   }
 
@@ -647,12 +642,15 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // A word is taught before it is tested. In the Learn tab a word that is new
   // altogether goes through the whole lesson: a look at the word, its tones,
   // writing it stroke by stroke as each stroke is shown, writing over the
-  // bare outline, and only then writing it from memory. That last step is the
-  // writing card as it always was: the only step that is graded, and what
-  // starts the card's schedule. In Review, a writing card that is new for a
-  // word already learned (a word from before there was a Learn tab, or one
-  // to be written again in another script) gets the same lesson without the
-  // first look.
+  // bare outline, and then writing it from memory. Nothing in the Learn tab
+  // is graded (the owner, 2026-10-16): all of the word's cards then start in
+  // Review, where it is tested. Until that day the last step was the writing
+  // card itself, graded, so a word just learned had little in Review.
+  //
+  // In Review, a writing card that is new for a word not taught in the Learn
+  // tab (a word from before there was a Learn tab, or one to be written again
+  // in another script) gets the same lesson without the first look. There the
+  // last step is the writing card, graded.
 
   // The lesson in progress: { steps, index }, or null.
   let lesson = null;
@@ -665,6 +663,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     trace: 'Write each stroke as it is shown.',
     outline: 'Again, over the bare outline.',
     test: 'From memory. This one counts.',
+    // The same step in the Learn tab, where it is practice.
+    learnTest: 'Now from memory.',
   };
 
   function endLesson() {
@@ -691,7 +691,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     const step = lesson.steps[lesson.index];
     const kind = isRadical(word) ? 'New radical' : 'New word';
     typeElement.textContent = `${kind} · step ${lesson.index + 1} of ${lesson.steps.length}`;
-    lessonNote.textContent = LESSON_NOTES[step];
+    lessonNote.textContent = LESSON_NOTES[step === 'test' && current.learning ? 'learnTest' : step];
     lessonNote.hidden = false;
     // "I know this word" is offered at every step.
     skipLessonButton.hidden = false;
@@ -703,13 +703,31 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     // A word being learned can be heard at every step.
     offerListen(true);
 
+    const script = scriptFor(word, settings);
     if (step === 'test') {
       pinyinElement.hidden = true;
       showPartsFor('writing');
-      return showWritingCard();
+      if (!current.learning) {
+        return showWritingCard();
+      }
+      // In the Learn tab: from memory, as practice. The character is still
+      // judged, so that writing it well turns it green, and starting again
+      // clears the slate. Nothing is saved.
+      return flows.writing.start(word[script], {
+        script,
+        rawInput: settings.rawInput,
+        hideOutline: true,
+        freshRestart: true,
+        continueLabel: 'Done',
+        judgeChar: (facts) => judgeChar({ ...facts, hintCountsAs: settings.hintCountsAs }),
+        onWordDone() {
+          showPinyin();
+          speakAfterStep();
+        },
+        onContinue: () => nextLessonStep(),
+      });
     }
 
-    const script = scriptFor(word, settings);
     if (step === 'meet') {
       // The word, its reading and its meaning, on the card's face.
       meaningElement.textContent = '';
@@ -772,6 +790,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       rawInput: settings.rawInput,
       showOutline: true,
       demoStrokes: step === 'trace',
+      // Practice: starting again clears the mistakes.
+      freshRestart: true,
       continueLabel: 'Next step',
       // The word is heard each time a step of its lesson is finished.
       onWordDone: speakAfterStep,
@@ -868,6 +888,22 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   // The word just learned, for the screen between two words; null otherwise.
   let justLearned = null;
+
+  // True if the word's writing was taught in the Learn tab, so that its new
+  // writing card in Review needs no lesson: the word was learned there
+  // (`learnedAt`), and its writing card is not one to learn again in the
+  // other script, which has a card of its own already studied. (A word learned
+  // in one script and switched to the other before its writing card was ever
+  // reviewed gets no lesson either; rare enough to leave.)
+  function taughtInLearn(word) {
+    if (word.learnedAt === undefined) {
+      return false;
+    }
+    const script = scriptFor(word, settings);
+    const otherScript = script === 'traditional' ? 'simplified' : 'traditional';
+    const otherId = cardIdFor(word, 'writing', otherScript);
+    return otherId === cardIdFor(word, 'writing', script) || !cards.has(otherId);
+  }
 
   // The word on screen has been through its lesson: mark it as learned.
   async function finishLearning() {
@@ -1132,9 +1168,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     offerListen(current.type === 'writing' || current.type === 'meaning');
 
     if (current.type === 'writing') {
-      // A writing card that is new starts with its lesson.
+      // A writing card that is new starts with its lesson, unless the word
+      // was just taught in the Learn tab.
       // (Not a sentence: tracing its characters would teach little.)
-      if (settings.lessons && !current.card && !isSentence(current.word)) {
+      if (settings.lessons && !current.card && !isSentence(current.word) && !taughtInLearn(current.word)) {
         lesson = { steps: stepsFor(current.word, false), index: 0 };
       }
       const started = lesson ? await showLessonStep() : await showWritingCard();

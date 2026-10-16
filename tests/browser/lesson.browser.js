@@ -53,13 +53,6 @@ describe('learning new words', { concurrency: false }, () => {
     return status;
   }
 
-  // Writes the word on screen from memory and takes the suggested grade.
-  async function passTest(char) {
-    assert.equal(await write(char), 'No mistakes');
-    await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
-    await page.evaluate(`document.querySelector('#grade-row button.primary').click()`);
-  }
-
   // Runs JavaScript in the page with `stores`: the database's stores, by name, open for writing.
   const inDatabase = (body) =>
     page.evaluate(`new Promise((resolve, reject) => {
@@ -181,12 +174,17 @@ describe('learning new words', { concurrency: false }, () => {
     await tap(page, 'next-button');
   });
 
-  it('then the outline alone, then from memory, which is graded', { timeout: 60000 }, async () => {
+  it('then the outline alone, then from memory, as practice', { timeout: 60000 }, async () => {
     await waitUntil(page, stepIs('step 4 of 5'), 'step 4');
     // Which moments are announced for tips from here on (see tips.js).
     await page.evaluate(`window.announced = [];
       document.addEventListener('screen-shown', (event) => window.announced.push(event.detail))`);
+    // "Hide outline" tapped while the step is still loading stays tapped
+    // (it used to be undone once the stroke data had loaded).
+    await tap(page, 'outline-button');
     await waitForFirstStroke();
+    assert.equal(await outlineButton(), 'Show outline');
+    await tap(page, 'outline-button');
     assert.equal(await outlineButton(), 'Hide outline');
     assert.equal(await page.evaluate(DEMO), null);
     assert.equal(await write('大'), 'No mistakes');
@@ -194,20 +192,30 @@ describe('learning new words', { concurrency: false }, () => {
 
     await waitUntil(page, stepIs('step 5 of 5'), 'step 5');
     await waitForFirstStroke();
-    assert.match(await textOf(page, 'lesson-note'), /From memory/);
+    assert.equal(await textOf(page, 'lesson-note'), 'Now from memory.');
     assert.equal(await outlineButton(), 'Show outline');
     // The reading is hidden again. The lesson can still be skipped.
     assert.equal(await isShown(page, 'prompt-pinyin'), false);
     assert.equal(await isShown(page, 'skip-lesson-button'), true);
-    // The stroke count is shown while a word is being taught, graded step included.
+    // The stroke count is shown while a word is being taught, last step included.
     assert.equal(await isShown(page, 'stroke-count'), true);
-    await passTest('大');
+    // A wrong stroke, then starting again: in Learn the slate is wiped, so
+    // a clean attempt has no mistakes (a tester, 2026-10-16).
+    const area = await writingArea(page);
+    const strokes = loadStrokeData('大').medians;
+    assert.match(await drawStroke(page, area, strokes[2]), /1 mistake/);
+    await tap(page, 'restart-button');
+    assert.equal(await write('大'), 'No mistakes');
+    // Nothing is graded in Learn (the owner, 2026-10-16).
+    assert.equal(await isShown(page, 'grade-row'), false);
+    assert.equal(await textOf(page, 'next-button'), 'Done');
     // Each step brings the tip beside "I know this word" (shown once). The
     // character was judged, but a word of one character has no row of boxes
     // to overrule it with, so no tip about verdicts.
     const announced = await page.evaluate('window.announced');
     assert.ok(announced.includes('lesson'));
     assert.ok(!announced.includes('verdict'));
+    await tap(page, 'next-button');
   });
 
   it('counts the word as learned and hands it to Review', async () => {
@@ -228,12 +236,22 @@ describe('learning new words', { concurrency: false }, () => {
       stores.words.get('大|da4').onsuccess = (event) => { result.learned = typeof event.target.result.learnedAt; };
       stores.cards.getAllKeys().onsuccess = (event) => { result.cards = event.target.result; };
     `);
-    assert.deepEqual(stored, { learned: 'number', cards: ['大|da4#writing'] });
-    // Review has its tone card to come (held back for a few minutes after the
-    // writing) and still leaves the other words alone.
+    // Nothing was saved but the word being learned: all its cards start in
+    // Review, straight away, and the other words are left alone.
+    assert.deepEqual(stored, { learned: 'number', cards: [] });
     await tap(page, 'review-tab');
-    await waitUntil(page, `document.getElementById('review-counts').textContent === 'Due 0 · New cards 1'`, 'Review');
-    assert.match(await textOf(page, 'done-message'), /2 words are waiting in Learn\.$/);
+    await waitUntil(page, `document.getElementById('review-counts').textContent.endsWith('New cards 2')`, 'Review');
+    await waitUntil(page, `document.getElementById('card-type').textContent === 'Tone'`, 'its tone card');
+    // Its writing card, once the tone card has been answered a while ago,
+    // comes without the lesson: the word was just taught in Learn.
+    await inDatabase(`
+      // (Today, or 大 would no longer count as learned today.)
+      const longAgo = Date.now() - 10 * 60000;
+      stores.cards.put({ id: '大|da4#tone', wordId: '大|da4', type: 'tone', due: Date.now() + 1e9, firstReviewedAt: longAgo, lastReviewedAt: longAgo, fsrsState: {} });
+    `);
+    await reloadApp(page);
+    await waitUntil(page, `document.getElementById('card-type').textContent === 'Writing'`, 'its writing card');
+    assert.equal(await isShown(page, 'lesson-note'), false);
   });
 
   it('lets a known word skip its lesson altogether', { timeout: 60000 }, async () => {

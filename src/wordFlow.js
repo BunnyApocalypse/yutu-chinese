@@ -422,9 +422,15 @@ export function createWordFlow(elements) {
   }
 
   // Called before the current character is started over: keeps the mistakes
-  // made so far, and notes if the answer had already been seen.
+  // made so far, and notes if the answer had already been seen. With
+  // freshRestart (practice) the slate is wiped instead, so that a clean
+  // attempt counts as one (a tester, 2026-10-16).
   function beforeRedo() {
-    if (charDone) {
+    if (options.freshRestart) {
+      carriedMistakes = 0;
+      peekedPerChar[position] = outlineVisible;
+      hintPerChar[position] = false;
+    } else if (charDone) {
       carriedMistakes = mistakesPerChar[position];
       peekedPerChar[position] = true;
     } else {
@@ -502,6 +508,9 @@ export function createWordFlow(elements) {
     //   showOutline:   true to switch the outline on first
     //   demoStrokes:   true to show each stroke, over and over, until it is
     //                  written (the lesson for a new word, see review.js)
+    //   freshRestart:  true to forget the mistakes, hints and peeks of earlier
+    //                  attempts when a character is started over (practice);
+    //                  otherwise they still count
     //   hideStrokeCount: true to keep the stroke count ("3/7") out of sight,
     //                  since it is a hint (Review, unless a setting says so)
     //   judgeChar({ mistakes, strokes, hintShown, peeked }):
@@ -520,6 +529,15 @@ export function createWordFlow(elements) {
       // Array.from splits text into whole characters. (Plain text.split('')
       // would cut some rare characters in half.) Spaces are dropped.
       const typed = Array.from(text).filter((char) => char.trim() !== '');
+
+      // The outline is set now, before the stroke data has loaded: a tap on
+      // "Hide outline" while it loads (a slow tablet) would otherwise be
+      // undone once it has (a tester, 2026-10-16).
+      if (newOptions.hideOutline) {
+        setOutlineVisible(false);
+      } else if (newOptions.showOutline) {
+        setOutlineVisible(true);
+      }
 
       // Find out which characters have stroke data, loading it at the same time.
       const data = await Promise.all(typed.map((char) => loadCharData(char, newOptions.script)));
@@ -547,11 +565,6 @@ export function createWordFlow(elements) {
       orderPerChar = [];
       skippedPerChar = [];
       finishedPerChar = [];
-      if (options.hideOutline) {
-        setOutlineVisible(false);
-      } else if (options.showOutline) {
-        setOutlineVisible(true);
-      }
       await showCurrentCharacter();
       return true;
     },

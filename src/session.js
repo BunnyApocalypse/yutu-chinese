@@ -279,8 +279,9 @@ export function planSession(words, cards, now, options) {
 //   'trace':   write over the outline, each stroke being shown until it is
 //              written
 //   'outline': write over the outline, without the strokes being shown
-//   'test':    write it from memory. This is the writing card proper, and the
-//              only step that is graded.
+//   'test':    write it from memory. In Review this is the writing card
+//              proper, and the only step that is graded; in the Learn tab it
+//              is practice, and nothing is graded (the owner, 2026-10-16).
 // The three writing steps are left out if writing cards are switched off or
 // the word cannot be written.
 export function lessonSteps({ newWord = false, toneCardsOn, canHaveToneCard, canBeWritten = true }) {

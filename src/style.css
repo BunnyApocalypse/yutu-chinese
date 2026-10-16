@@ -873,11 +873,29 @@ button.slot {
    scroll the page instead. */
 .card-face.drawable {
   touch-action: none;
-  /* A tone card is drawn on, so it looks like the writing area: the same
-     guide lines (two diagonals and a cross, dashed), here as a picture
-     stretched over the card. */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300' preserveAspectRatio='none'%3E%3Cg stroke='%23e3ded2' stroke-dasharray='6 6'%3E%3Cline x1='0' y1='0' x2='300' y2='300'/%3E%3Cline x1='300' y1='0' x2='0' y2='300'/%3E%3Cline x1='150' y1='0' x2='150' y2='300'/%3E%3Cline x1='0' y1='150' x2='300' y2='150'/%3E%3C/g%3E%3C/svg%3E");
-  background-size: 100% 100%;
+  /* Lets the guide lines below sit behind the card's text (z-index: -1)
+     without going behind the card itself. */
+  isolation: isolate;
+}
+
+/* A tone card is drawn on, so it looks like the writing area: the same
+   guide lines (two diagonals and a cross, dashed). A color can't be named
+   inside a picture, so the picture is only a stencil (a "mask": where its
+   lines are, the layer shows) over a layer filled with the guide lines'
+   color, which then follows the look. Until 2026-10-16 the picture had the
+   light look's color written in, and was too bright in the dark look. */
+.card-face.drawable::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--grid);
+  --guide-lines: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300' preserveAspectRatio='none'%3E%3Cg stroke='black' stroke-dasharray='6 6'%3E%3Cline x1='0' y1='0' x2='300' y2='300'/%3E%3Cline x1='300' y1='0' x2='0' y2='300'/%3E%3Cline x1='150' y1='0' x2='150' y2='300'/%3E%3Cline x1='0' y1='150' x2='300' y2='150'/%3E%3C/g%3E%3C/svg%3E");
+  -webkit-mask-image: var(--guide-lines);
+  mask-image: var(--guide-lines);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
 }
 
 /* The layer the tone mark is drawn on. It covers the card and lets touches
@@ -1121,6 +1139,14 @@ button.slot {
   padding: 8px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
+}
+
+/* The heading of a fold-out is tapped, never selected. With a pen, a tap
+   that slides a little starts selecting its text instead, and a tablet then
+   neither opens nor closes the fold (a tester, 2026-10-16). */
+summary {
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .settings-group > summary {

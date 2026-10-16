@@ -80,6 +80,23 @@ The owner watched a tester (an absolute beginner, simplified, an Anki user, on a
 - **Fixed the same day:** a word needs Chinese characters (an English word and "word1" had gone in, `checkWord`); the deck choosers of Review, Learn and Words leave out the groups inside ready-made levels unless one is chosen (`isReadyMadeGroup`; one HSK level brought a dozen); search matches the start of a syllable or of a word of the meaning, so "ta" no longer brings words without "ta" (`matchesSearch`); a tip is moved into a pop-up panel that opens over it, since everything outside a modal panel is out of reach (`placeCard` in `src/tips.js`); the introduction's "Nothing for now" says what it means; the backup reminder can be switched off, after a warning (`backupReminderOff`, a setting of the device).
 - **Seen, not yet acted on (to discuss with the owner):** the tips were not read and dismissed late; a beginner without a Chinese keyboard could not add a word (wanted: finding a word by its pinyin, with a list to choose from); too many buttons, the Learn screen busy; why Free practice is under Words; tone buttons always show "a" (showing the syllable would give the reading away); words of an example sentence tapped by accident (ideas: a small popup with pinyin and meaning first, or a sentence that has to be tapped before its words can be); a beginner did not know 的 in a note (pinyin in beginners' notes?); a separate indicator for long-term storage permission; a stroke counter as a hint; dark mode (already wanted).
 
+## The second testing session (2026-10-16)
+
+The owner watched a tester (a designer, no Chinese, simplified, no study apps before; first on a Mac in Chrome, then on the owner's tablet with a pen) and recorded the talk; notes and transcript in `local/testing/`.
+
+- **Fixed the same day:** "Hide outline" tapped while a step is still loading was undone once it had loaded (`wordFlow.start`); the tone card's guide lines were too bright in the dark look (`docs/pitfalls.md`); the headings of fold-outs can't be selected, since a pen's tap that slides a little selected them instead of opening them (to be checked on the tablet); **nothing in the Learn tab is graded any more, and starting again there wipes the slate** (the tester wrote a character perfectly after starting again and it stayed red; the owner's decision, see `docs/cards.md`).
+- **Seen, to discuss with the owner** (most is for the pass over the looks):
+  - **The introduction has too much text** throughout: one or two sentences a step, about five short steps. The explanation of the scripts (简体/繁體) hidden until asked for. The step about the four kinds of card removed (all on, the choice in Settings). The starting level: "Select your starting level", without the part below. Keeping your data: both buttons kept, far less text. "Skip the introduction" / "without saving" removed from the last step. Someone who skips the introduction has no words at all.
+  - **At most three buttons on a screen** (the tester's rule as a designer): one main button, or two equal ones, and one secondary.
+  - **The Decks tab: "way too many buttons, I have no idea where to click."** Tapping a deck should open or start it; one main "Start learning", Review smaller beside it (reviewing one deck is rare), the rest behind something like "Customize". The Back button was hard to find. The progress bar was tapped to start learning.
+  - **A word's panel mixes facts about the word with what to do to its cards** (suspend, "I know this word", start over); the tester would separate them. The owner disagreed in the session (they often want both at once, as with a leech). Too much text on the word's details after it is learned.
+  - **Tone cards:** that the mark can be drawn was not clear, and the big characters on the card look like something to draw over; the tester would show the word small above, and only "Draw the tone mark" in the area.
+  - **After adding a word, offer to learn it now**; in the preview of a word being added, the characters above the rest.
+  - **Settings as a sidebar or tabs**, one group at a time, rather than a long list; Chinese not open by default.
+  - The tablet in "desktop site" mode looked bad, and a deck did not open on a tap there.
+  - Liked: the writing with one's own strokes, the hints, the information about every word, the progress, looking up English in the Words tab.
+  - The owner's own long-term idea from the session: strokes whose width follows the pen's pressure.
+
 ## Settled with the owner on 2026-10-13
 
 - The Script and Pronunciation settings suit them as built.
