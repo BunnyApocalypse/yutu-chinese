@@ -940,6 +940,20 @@ button.slot {
   color: var(--muted);
 }
 
+/* A tone card, while asking: the character whose tone is asked, smaller
+   than a card's word so that it doesn't look like something to draw over
+   (a tester, 2026-10-16), and under it, large, what to do. */
+.card-face p.tone-char {
+  font-size: 2.6rem;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.face-hint.tone-ask {
+  font-size: 1.3rem;
+  color: var(--text-soft);
+}
+
 .face-pinyin {
   font-size: 1.5rem;
   color: var(--accent);

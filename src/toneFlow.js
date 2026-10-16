@@ -4,6 +4,7 @@
 import { formatPinyin } from './wordList.js';
 import { TONE_LABELS, describeReading } from './tones.js';
 import { recognizeToneMark } from './toneMark.js';
+import { fillMixed, langFor } from './lang.js';
 
 // After a right answer, the next character comes up by itself after this long.
 const MOVE_ON_AFTER_MS = 500;
@@ -84,6 +85,9 @@ export function createToneFlow(elements) {
 
   function renderWordRow() {
     wordRow.replaceChildren();
+    // The row is shown even for a word of one character (wordFlow hides it
+    // then), as the top of a tone card (the owner, 2026-10-16).
+    wordRow.classList.remove('single');
     chars.forEach((char, index) => {
       const slot = document.createElement('span');
       slot.textContent = char;
@@ -113,13 +117,24 @@ export function createToneFlow(elements) {
     showInk([]);
     drawing = null;
     drawAllowedFrom = Date.now() + DRAW_ALLOWED_AFTER_MS;
+    // The character asked about, small, above what to do, large: drawn big
+    // as before, it looked like something to draw over (a tester and the
+    // owner, 2026-10-16).
+    const asked = paragraph('tone-char', chars[position]);
+    asked.lang = langFor(current.script);
     cardFace.replaceChildren(
-      faceWord(chars[position]),
-      paragraph('face-hint', 'Draw the tone mark, or use the buttons'),
+      asked,
+      paragraph('face-hint tone-ask', 'Draw the tone mark here'),
+      paragraph('face-hint', 'or use the buttons below'),
       ink,
     );
-    statusElement.textContent =
-      chars.length > 1 ? `Tone of character ${position + 1} of ${chars.length}` : 'Which tone?';
+    // "Tone of 你 (1 of 2)": the character named, and the count for a word
+    // with the same one twice (谢谢). The owner's wording, 2026-10-16.
+    if (chars.length > 1) {
+      fillMixed(statusElement, `Tone of ${chars[position]} (${position + 1} of ${chars.length})`, current.script);
+    } else {
+      statusElement.textContent = 'Which tone?';
+    }
   }
 
   // Shows the word with its reading and meaning, and how it was answered.

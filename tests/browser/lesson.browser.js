@@ -138,6 +138,14 @@ describe('learning new words', { concurrency: false }, () => {
     await tap(page, 'lesson-next-button');
     await waitUntil(page, stepIs('step 2 of 5'), 'step 2');
     assert.match(await textOf(page, 'lesson-note'), /tones/);
+    // The tone card asks with the character small, over what to do, large;
+    // the row above has the character too, even for a word of one.
+    await waitUntil(page, `document.querySelector('#card-face .tone-char')`, 'the tone card');
+    assert.equal(await textOf(page, 'card-face'), '大Draw the tone mark hereor use the buttons below');
+    assert.equal(await page.evaluate(`document.querySelector('#card-face .tone-char').lang`), 'zh-Hant-TW');
+    assert.equal(await textOf(page, 'status'), 'Which tone?');
+    assert.equal(await page.evaluate(`document.querySelectorAll('#word-row .slot').length`), 1);
+    assert.equal(await page.evaluate(`getComputedStyle(document.getElementById('word-row')).display`), 'flex');
     // The meaning and the reading stay in view while the word is being learned.
     assert.equal(await textOf(page, 'prompt-meaning'), 'big');
     assert.equal(await textOf(page, 'prompt-pinyin'), 'dà');
