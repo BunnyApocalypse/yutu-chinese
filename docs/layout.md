@@ -55,6 +55,7 @@ Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where
 - `scripts/copy-char-data.js`: fills the two git-ignored stroke data folders, naming files by Unicode number (`學.json` becomes `5b78.json`): `public/char-data/` from `node_modules/hanzi-writer-data/` (about 9,500 characters) and `public/char-data-tw/` from `data/animcjk/graphicsZhHant.txt` (1,013 characters, plus an `index.json` listing them and recording `TAIWAN_SET_VERSION`; raise that number whenever the script changes what it writes, or existing copies will not be regenerated).
 - `scripts/strokeOrder.js`: finds a character's second stroke order by comparing the two data sets. Used by the copy script.
 - `redirect/`: the forwarding site published at the old address, `.../hanzi-trainer/`, from a repository of its own (see its README and "The old address" in `docs/offline.md`).
+- `scripts/ux-atlas.js`: the screenshot atlas and layout report, every screen at four sizes in both looks, into `local/ux-atlas/` (run by hand; see `docs/ux-review.md`).
 - `scripts/icon.html`, `scripts/make-icons.js`: the app's icon as an SVG, and the script that draws it into `public/icons/` (run by hand; see "Icons" in `docs/offline.md`).
 - `scripts/build-tone-table.js`, `data/cedict/`: the tone table extracted from CC-CEDICT (run by hand; see above).
 - `scripts/build-word-lists.js`, `data/wordlists/`: the ready-made word lists (run by hand, uses the internet; see "Ready-made word lists").

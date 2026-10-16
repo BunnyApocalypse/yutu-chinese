@@ -62,6 +62,7 @@ How each part of the app works, and why, is in `docs/` (index: `docs/README.md`)
 - HSK, TOCFL and radical lists, reading fixes, groups: `docs/word-lists.md`
 - Service worker, offline packs, the two deployed copies: `docs/offline.md`
 - Introduction, tips, menu, tabs, Settings' groups: `docs/interface.md`
+- The pass over the looks: `docs/ux-review.md` (findings, task steps; pictures of every screen with `node scripts/ux-atlas.js`)
 - Every file, one line each: `docs/layout.md`
 - Long-term goals, testers, Skritter import: `docs/goals.md`
 - Past session notes and the roadmap: `docs/history.md`

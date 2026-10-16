@@ -23,6 +23,9 @@ CLAUDE.md keeps the rules and an index pointing here.
 | `../tests/browser/CLAUDE.md` | Browser tests |
 | `../data/notes/CLAUDE.md` | The notes-writing part of "Where the work stands" |
 
+`ux-review.md` (2026-10-16, not moved from CLAUDE.md) holds the review of the
+interface for the pass over the looks, and how to run the screenshot atlas.
+
 `alpha/` holds what testers are given and how a round is run.
 
 **Keeping these up to date:** when something is built or changed, write the
