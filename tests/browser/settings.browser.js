@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, type, choose, textOf, isShown, waitUntil, addTestWords, openDeckPage } from './harness.js';
+import { startApp, startBrowsers, tap, type, choose, textOf, isShown, waitUntil, addTestWords, openDeckPage, useAddForm } from './harness.js';
 
 // Text for "the Decks tab's list has this many rows".
 const rows = (count) => `document.querySelectorAll('#word-list li').length === ${count}`;
@@ -115,7 +115,9 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     assert.equal(await isShown(page, 'add-pinyin-taiwan'), false);
     // The one box left is not labeled with a script.
     assert.equal(await page.evaluate(`document.getElementById('add-simplified').placeholder`), 'Word or phrase: 汉字 or pinyin');
+    await useAddForm(page, 'add-list-fold');
     assert.doesNotMatch(await textOf(page, 'list-hint'), /traditional, pinyin|Taiwan/);
+    await useAddForm(page, 'add-word-fold');
 
     await type(page, 'add-simplified', '图书馆');
     await waitUntil(page, `document.querySelector('#add-suggestions button') !== null`, 'a dictionary entry');
@@ -147,7 +149,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     await page.evaluate(`document.getElementById('add-word-form').requestSubmit()`);
     await waitUntil(page, `document.getElementById('add-word-note').textContent.startsWith('Added 头发.')`);
 
-    await page.evaluate(`document.querySelector('.add-list').open = true`);
+    await useAddForm(page, 'add-list-fold');
     await type(page, 'list-text', '企鹅\tqi4e2\tpenguin\n孔雀,kong3que4,peacock\n');
     await tap(page, 'check-list-button');
     await waitUntil(page, `document.getElementById('list-report').textContent !== ''`, 'the list report');
@@ -161,8 +163,10 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
       await type(page, 'word-search', search);
       await waitUntil(page, `${rows(1)} && document.querySelector('#word-list li').textContent.startsWith('${characters}')`, characters);
     }
+    await useAddForm(page, 'add-word-fold');
     assert.equal(await isShown(page, 'add-traditional'), true);
     assert.equal(await page.evaluate(`document.getElementById('add-traditional').placeholder`), 'Traditional 繁體 or pinyin');
+    await useAddForm(page, 'add-list-fold');
     assert.match(await textOf(page, 'list-hint'), /simplified, traditional, pinyin/);
   });
 

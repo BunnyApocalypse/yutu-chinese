@@ -139,11 +139,24 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
     }
   }
 
+  // What tapping a deck does (the owner, 2026-10-16, from a tester who
+  // expected a tap to start): learn its waiting words, or once all are
+  // learned review it, or for a deck without words open its page, where
+  // words are added. Returns 'learn', 'review' or 'open'.
+  function mainAction(deck) {
+    const inDeck = wordsIn(deck);
+    if (inDeck.some((word) => !isLearned(word))) {
+      return 'learn';
+    }
+    return inDeck.length > 0 ? 'review' : 'open';
+  }
+
   // The deck a deck is inside, or null (also if that one is not there).
   const parentOf = (deck) => getDecks().find((other) => other.id === deck.parentId) || null;
 
   // The line saying where you are: "Decks › Textbook › Chapter 2". Every
-  // part but the last is a button that goes there.
+  // part but the last is a button that goes there. Shown inside other decks
+  // only.
   function renderPath(current) {
     const above = [];
     for (let deck = current && parentOf(current); deck && !above.includes(deck); deck = parentOf(deck)) {
@@ -161,12 +174,17 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
     const here = document.createElement('span');
     showName(here, current ? current.name : '');
     pathElement.replaceChildren(...parts.flatMap((part) => [part, ' › ']), ...(current ? [here] : []));
-    byId('deck-path-row').hidden = !current;
+    // Only inside another deck: on a deck inside no other it would say what
+    // "‹ Decks" in the top bar says (the owner, 2026-10-16).
+    byId('deck-path-row').hidden = above.length === 0;
   }
 
-  // "Back" goes up one level: to the deck this one is inside, or from a deck
-  // inside no other to the front page.
-  byId('deck-back-button').addEventListener('click', () => {
+  // "‹ Decks" (or the name of the deck above) in the top bar goes up one
+  // level: to the deck this one is inside, or from a deck inside no other to
+  // the front page. In the top bar since 2026-10-16 (a tester did not see
+  // "‹ Back" beside the path).
+  const backButton = byId('deck-back-button');
+  backButton.addEventListener('click', () => {
     const parent = parentOf(getOpenDeck());
     open(parent ? parent.id : null);
   });
@@ -176,12 +194,31 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
     const current = getOpenDeck();
     renderPath(current);
     byId('deck-head').hidden = !current;
-    byId('decks-hint').hidden = Boolean(current);
+    // The way back takes the place of the screen's name in the top bar.
+    backButton.hidden = !current;
+    byId('place-title').hidden = Boolean(current);
     if (current) {
+      const parent = parentOf(current);
+      showName(backButton, `‹ ${parent ? parent.name : 'Decks'}`);
       showName(byId('deck-title'), current.name);
       const counts = countsOf(current);
       byId('deck-counts').textContent = counts.text;
       fillBar(byId('deck-progress'), counts.percent);
+      // One main button: Learn while words wait, then Review, the other
+      // small beside it (the owner, 2026-10-16); "+ Add to deck" (wordsPanel.js)
+      // on a deck without words.
+      const action = mainAction(current);
+      const learning = action !== 'review';
+      const learnButton = byId('deck-learn-button');
+      const reviewButton = byId('deck-review-button');
+      // A deck without words has "+ Add to deck" in their place.
+      byId('deck-add-button').hidden = action !== 'open';
+      reviewButton.hidden = action === 'open';
+      learnButton.hidden = !learning || action === 'open';
+      learnButton.classList.toggle('primary', learning);
+      reviewButton.classList.toggle('primary', !learning);
+      reviewButton.classList.toggle('link-button', learning);
+      reviewButton.textContent = learning ? 'Review' : 'Review this deck';
     }
 
     // The decks right inside the one that is open; on the front page, those
@@ -210,30 +247,36 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
       fillBar(bar, counts.percent);
       const name = span('entry-characters', '');
       showName(name, deck.name);
+      // A tap starts studying the deck (mainAction); › beside it opens its
+      // page. Until 2026-10-16 a tap opened the page, with Learn and Review
+      // as two buttons beside the row.
+      const action = mainAction(deck);
+      const TAP_SAYS = { learn: 'Tap to learn', review: 'Tap to review', open: 'Tap to add words' };
       button.append(
         name,
         span('entry-definition', counts.text + (inside > 0 ? ` · ${plural(inside, 'deck')} inside` : '')),
         bar,
+        span('deck-tap', TAP_SAYS[action]),
       );
-      button.addEventListener('click', () => open(deck.id));
-      // Learning and reviewing start from a deck (the owner, 2026-10-14:
-      // Learn is no longer in the menu).
-      const actions = document.createElement('div');
-      actions.className = 'deck-actions';
-      for (const [label, mode] of [['Learn', 'learn'], ['Review', 'review']]) {
-        const action = document.createElement('button');
-        action.type = 'button';
-        action.className = `small deck-${mode}`;
-        action.textContent = label;
-        action.addEventListener('click', () => study(deck.id, mode));
-        actions.append(action);
-      }
+      button.dataset.action = action;
+      button.addEventListener('click', () => (action === 'open' ? open(deck.id) : study(deck.id, action)));
+      const openButton = document.createElement('button');
+      openButton.type = 'button';
+      openButton.className = 'deck-open';
+      openButton.textContent = '›';
+      openButton.setAttribute('aria-label', `${deck.name}: its words and settings`);
+      openButton.title = 'Its words and settings';
+      openButton.addEventListener('click', () => open(deck.id));
       const row = document.createElement('li');
       row.className = 'deck-row';
-      row.append(button, actions);
+      row.append(button, openButton);
       return row;
     });
     listElement.replaceChildren(...rows);
+    // A tip the first time, beside the first deck's › (tips.js).
+    if (rows.length > 0) {
+      document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'deckRows' }));
+    }
     byId('deck-list-title').textContent = current ? 'Decks inside this one' : 'Decks';
   }
 

@@ -85,7 +85,7 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
 
     // From the deck's page.
     await tap(page, 'decks-tab');
-    await page.evaluate(`[...document.querySelectorAll('#deck-list button')].find((button) => button.textContent.includes('Animals')).click()`);
+    await page.evaluate(`[...document.querySelectorAll('#deck-list li')].find((row) => row.textContent.includes('Animals')).querySelector('.deck-open').click()`);
     await waitUntil(page, `document.getElementById('deck-title').textContent === 'Animals'`, 'the deck\'s page');
     // Its words are listed under its page, without the Words tab's deck
     // chooser; the front page has none.

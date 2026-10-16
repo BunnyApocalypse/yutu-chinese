@@ -245,7 +245,6 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     searchInput.value = '';
     forgetCheckedList();
     addNote.textContent = '';
-    foldAddWord();
     renderDecks();
     renderList();
     showView();
@@ -265,16 +264,6 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     afterChange: () => afterChange(),
     getSettings,
   });
-
-  // "Add a word" is folded away, so that the deck's words are near the top
-  // of its page, except on a deck without words: there, adding one is what
-  // the page is for. Only done when a page is opened, so that the form does
-  // not close under someone adding a deck's first words.
-  function foldAddWord() {
-    const deck = openDeck();
-    const inside = deck ? deckWithInside(decks, deck.id) : null;
-    byId('add-word-fold').open = Boolean(deck) && !words.some((word) => isInDecks(word, inside));
-  }
 
   // Managing cards (cardsPanel.js): the "Cards" fold-out of a word's panel
   // and the bar for several words at once.
@@ -420,22 +409,48 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   function renderDecks() {
     decksPanel.render();
     byId('deck-adding').hidden = !openDeck();
+    // (A deck without words has it as its main button already.)
+    const deck = openDeck();
+    byId('add-to-deck-button').hidden =
+      !deck || !words.some((word) => isInDecks(word, deckWithInside(decks, deck.id)));
     byId('word-list-title').textContent = listDeck() ? 'Words in this deck' : 'All your words';
   }
 
-  // The three ways of adding to a deck (a word, a list, a sentence) are
-  // fold-outs. Opening one closes the others, so that only one form is ever
-  // in the way.
-  const addFolds = [...document.querySelectorAll('#deck-adding > details')];
-  for (const fold of addFolds) {
-    fold.addEventListener('toggle', () => {
-      if (fold.open) {
-        addFolds.filter((other) => other !== fold).forEach((other) => {
-          other.open = false;
-        });
-      }
-    });
+  // ---- Adding to the deck whose page is open ----
+  //
+  // One panel, opened by "+ Add to deck" beside the deck's words (or in the
+  // main button's place on a deck without words), with the three ways of
+  // adding: a word, a list, a sentence (the owner, 2026-10-16: until then
+  // three fold-outs on the deck's page, unlike "+ New deck" beside them).
+  // Three tabs at its top, "One word" open to begin with: the most common
+  // case is ready at once (the owner chose this over a first screen of three
+  // choices, from screenshots of both).
+  const addDialog = byId('add-dialog');
+  const addForms = [...addDialog.querySelectorAll('.add-form')];
+  const addTabs = [...addDialog.querySelectorAll('#add-choices button')];
+
+  // Shows the form with this ID.
+  function showAddForm(id) {
+    for (const form of addForms) {
+      form.hidden = form.id !== id;
+    }
+    for (const tab of addTabs) {
+      tab.setAttribute('aria-current', String(tab.dataset.add === id));
+    }
+    addDialog.scrollTop = 0;
   }
+  for (const tab of addTabs) {
+    tab.addEventListener('click', () => showAddForm(tab.dataset.add));
+  }
+
+  function openAdding() {
+    fillMixed(byId('add-to-deck-name'), openDeck().name, getSettings().script);
+    showAddForm('add-word-fold');
+    addDialog.showModal();
+  }
+  byId('add-to-deck-button').addEventListener('click', openAdding);
+  byId('deck-add-button').addEventListener('click', openAdding);
+  byId('add-close').addEventListener('click', () => addDialog.close());
 
   // ---- The tab's two sections ----
 

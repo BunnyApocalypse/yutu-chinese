@@ -16,7 +16,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, type, waitUntil, addTestWords, openLearn, openDeckPage, reloadApp, ANSWER_YES } from './harness.js';
+import { startApp, startBrowsers, tap, type, waitUntil, addTestWords, openLearn, openDeckPage, reloadApp, ANSWER_YES, useAddForm } from './harness.js';
 
 // Runs in the page; returns a list of what fails, one line each.
 const CHECK = `(() => {
@@ -194,9 +194,14 @@ describe('accessibility', { concurrency: false }, () => {
     await waitUntil(page, `document.querySelector('#deck-list li')`, 'the decks');
     await check('the front page of Decks');
     await openDeckPage(page);
-    // With the ways of adding words unfolded.
-    await page.evaluate(`document.querySelectorAll('.add-list').forEach((group) => { group.open = true; })`);
     await check("a deck's page");
+    // The panel for adding to it, each of its three forms.
+    await tap(page, 'add-to-deck-button');
+    for (const form of ['add-word-fold', 'add-list-fold', 'add-sentence-fold']) {
+      await useAddForm(page, form);
+      await check(`adding to a deck, ${form}`);
+    }
+    await tap(page, 'add-close');
   });
 
   it('the menu', async () => {

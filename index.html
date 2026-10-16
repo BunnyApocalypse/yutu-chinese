@@ -24,6 +24,9 @@
           </svg>
         </button>
         <span id="place-title" class="place-title">Review</span>
+        <!-- On a deck's page, in place of the screen's name: up one level, to
+             the deck it is inside or the front page (decksPanel.js). -->
+        <button id="deck-back-button" class="top-back" type="button" hidden>‹ Decks</button>
       </header>
       <!-- The menu: a panel that slides in from the left (main.js). The
            buttons keep the IDs they had as tabs. -->
@@ -195,27 +198,32 @@
           <!-- What the Decks tab shows of this section: the decks. -->
           <div id="decks-part" class="words-panel">
           <div id="deck-path-row" class="deck-path-row" hidden>
-            <!-- Up one level: to the deck this one is inside, or the front page. -->
-            <button id="deck-back-button" class="small" type="button">‹ Back</button>
             <nav id="deck-path" class="deck-path" aria-label="Where you are"></nav>
           </div>
           <!-- Only on a deck's page. -->
           <div id="deck-head" hidden>
-            <h2 id="deck-title"></h2>
+            <div class="deck-title-row">
+              <h2 id="deck-title"></h2>
+              <button id="deck-settings-button" class="icon-button" type="button" aria-label="Deck settings" title="Deck settings">
+                <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor">
+                  <!-- A cog wheel: eight teeth (a dashed ring) round a ring. -->
+                  <circle cx="12" cy="12" r="8.5" stroke-width="3" stroke-dasharray="3.34 3.34" />
+                  <circle cx="12" cy="12" r="5.5" stroke-width="2.6" />
+                </svg>
+              </button>
+            </div>
             <p id="deck-counts" class="hint"></p>
             <!-- A bar filled as far as the deck's words are learned (decksPanel.js). -->
             <div id="deck-progress" class="deck-progress" hidden></div>
-            <div class="buttons">
-              <button id="deck-review-button" class="small" type="button">Review this deck</button>
-              <button id="deck-learn-button" class="small" type="button">Learn this deck</button>
-              <button id="deck-settings-button" class="small" type="button">Deck settings</button>
+            <!-- One main button, Learn while words wait and then Review, the
+                 other small beside it (decksPanel.js; the owner, 2026-10-16). -->
+            <div class="deck-study">
+              <!-- On a deck without words, in the main button's place (decksPanel.js). -->
+              <button id="deck-add-button" class="primary" type="button" hidden>+ Add to deck</button>
+              <button id="deck-learn-button" class="primary" type="button">Learn this deck</button>
+              <button id="deck-review-button" type="button">Review</button>
             </div>
           </div>
-          <!-- Only on the front page. -->
-          <p id="decks-hint" class="hint">
-            A deck is a group of words: a textbook, say, with a deck inside it for each chapter. Tap a deck to see its
-            words and add to them. A word can be in several decks and is still scheduled once.
-          </p>
 
           <!-- The heading, with the button for a new deck beside it, so that it
                stays in reach however many decks there are. -->
@@ -238,11 +246,21 @@
 
           <!-- Adding words: only on a deck's page, since every word is in a deck. -->
           <div id="deck-adding" class="words-panel" hidden>
-            <!-- <details> is the browser's built-in fold-out: closed until its summary is
-                 tapped. This one is closed so that the deck's words are not far down the
-                 page, and open on a deck without words (wordsPanel.js). -->
-            <details id="add-word-fold" class="add-list">
-            <summary>Add a word</summary>
+            <!-- Adding to the deck whose page is open: one panel, opened by
+                 "+ Add to deck", with three tabs at its top for a word, a list
+                 or a sentence (wordsPanel.js; the owner, 2026-10-16: until then
+                 three fold-outs on the deck's page). -->
+            <dialog id="add-dialog" class="settings-panel add-dialog">
+              <div class="settings-heading">
+                <h2 id="add-title">Add to <span id="add-to-deck-name"></span></h2>
+                <button id="add-close" class="small" type="button">Done</button>
+              </div>
+              <nav id="add-choices" class="add-choices" aria-label="What to add">
+                <button type="button" data-add="add-word-fold">One word</button>
+                <button type="button" data-add="add-list-fold">A list of words</button>
+                <button type="button" data-add="add-sentence-fold">A sentence</button>
+              </nav>
+            <section id="add-word-fold" class="add-form" hidden>
             <form id="add-word-form" class="add-word-form">
               <input id="add-traditional" type="text" placeholder="Traditional 繁體" aria-label="Traditional characters" lang="zh-Hant-TW" autocomplete="off" autocapitalize="off" />
               <input id="add-simplified" type="text" placeholder="Simplified 简体 (if different)" aria-label="Simplified characters, if different" lang="zh-Hans-CN" autocomplete="off" autocapitalize="off" />
@@ -266,10 +284,9 @@
               <button type="submit" class="primary">Add word</button>
               <p id="add-word-note" role="status" class="note"></p>
             </form>
-            </details>
+            </section>
 
-            <details class="add-list">
-              <summary>Add a list of words</summary>
+            <section id="add-list-fold" class="add-form" hidden>
               <!-- Which columns a list has; worded by wordsPanel.js to suit the settings. -->
               <p id="list-hint" class="hint"></p>
               <textarea id="list-text" rows="6" aria-label="Word list" spellcheck="false"></textarea>
@@ -281,11 +298,10 @@
               </div>
               <p id="list-report" role="status" class="note"></p>
               <ul id="list-problems" class="list-problems"></ul>
-            </details>
+            </section>
 
             <!-- A sentence to study (sentences.js). Which boxes show follows the Script setting (wordsPanel.js). -->
-            <details id="add-sentence-fold" class="add-list">
-              <summary>Add a sentence</summary>
+            <section id="add-sentence-fold" class="add-form" hidden>
               <form id="add-sentence-form" class="add-word-form">
                 <input id="sentence-characters" type="text" placeholder="The sentence 句子" aria-label="The sentence" autocomplete="off" autocapitalize="off" />
                 <input id="sentence-other" type="text" placeholder="In the other script (if different)" aria-label="The sentence in the other script, if different" autocomplete="off" autocapitalize="off" />
@@ -295,7 +311,8 @@
                 <button type="submit" class="primary">Add sentence</button>
                 <p id="add-sentence-note" role="status" class="note"></p>
               </form>
-            </details>
+            </section>
+            </dialog>
           </div>
           </div>
 
@@ -317,7 +334,11 @@
               <!-- Any kind of card for any word, without it counting (main.js). -->
               <button id="practice-tab" class="small" type="button">Free practice</button>
             </div>
-          <h2><span id="word-list-title">All your words</span> (<span id="word-count">0</span>)</h2>
+          <div class="list-heading">
+            <h2><span id="word-list-title">All your words</span> (<span id="word-count">0</span>)</h2>
+            <!-- On a deck's page only (wordsPanel.js). -->
+            <button id="add-to-deck-button" class="small" type="button" hidden>+ Add to deck</button>
+          </div>
           <input id="word-search" type="search" placeholder="Search characters, pinyin or meaning" aria-label="Search words" autocomplete="off" autocapitalize="off" />
           <!-- Which of the words are listed, in what order, and picking several
                of them: side by side in one row (wordsPanel.js, cardsPanel.js). -->

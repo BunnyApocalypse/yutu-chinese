@@ -6,7 +6,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, type, choose, textOf, waitUntil, openDeckPage, isShown } from './harness.js';
+import { startApp, startBrowsers, tap, type, choose, textOf, waitUntil, openDeckPage, isShown, useAddForm } from './harness.js';
 
 // Everything in one store of the app's database, read through a connection
 // of the test's own.
@@ -116,6 +116,7 @@ describe('sentences', { concurrency: false }, () => {
 
   it('adds a sentence by hand on a deck\'s page, and changes its meaning', async () => {
     await openDeckPage(page);
+    await useAddForm(page, 'add-sentence-fold');
     await type(page, 'sentence-characters', '你好嗎？');
     await type(page, 'sentence-other', '你好吗？');
     await type(page, 'sentence-meaning', 'How are you');

@@ -33,7 +33,7 @@ Asked for by the owner on 2026-10-13; the screens' wording and the extras noted 
   - **A word's cards are on its page**: the "Cards" and "Suspended cards" fold-outs moved there from the pop-up panel, and ticking a suspended box takes effect at once (`showCardsOnPage` in `src/wordsPanel.js`). The panel is now only a form with Save. It keeps a word's `suspended` as stored.
   - **The app asks in its own panel** before removing, starting over or replacing (`ask` and `tell` in `src/confirm.js`, `confirm-dialog`), with buttons that say what they do. Tests answer it with `ANSWER_YES` from the harness.
   - **"I know this word" sits beside the lesson's note**, so a lesson's writing step fits a phone screen again; and a leech's note in Review has "Suspend this card", which takes the card out ungraded.
-  - **Opening one of "Add a word", "Add a list of words", "Add a sentence" closes the others.**
+  - **Opening one of "Add a word", "Add a list of words", "Add a sentence" closed the others** until 2026-10-16, when they became the three tabs of the panel "+ Add to deck" (`docs/decks.md`).
   - **Not done:** one place for every message (each form still reports in its own spot); merging the pop-up panel into the word's page as an editing mode.
 - **A review of the app's structure was done on 2026-10-13** (by Claude, from screenshots at phone size and counts; nobody else has reviewed it). Its findings, for whoever restructures:
   - The Decks tab does five jobs: moving between decks, adding things (three forms), finding words, managing cards (filters, order, selecting several) and the ready-made lists. A deck's page is over ten screens long with a hundred words on it.

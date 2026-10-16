@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, reloadApp, tap, type, choose, textOf, waitUntil, addTestWords, openDeckPage, openLearn, ANSWER_YES, openSettings } from './harness.js';
+import { startApp, startBrowsers, reloadApp, tap, type, choose, textOf, waitUntil, addTestWords, openDeckPage, openLearn, ANSWER_YES, openSettings, useAddForm } from './harness.js';
 
 // Text for "the Decks tab's list has this many rows".
 const rows = (count) => `document.querySelectorAll('#word-list li').length === ${count}`;
@@ -219,7 +219,7 @@ describe('the Decks tab', { concurrency: false }, () => {
   });
 
   it('adds a list, pasted as CSV', async () => {
-    await page.evaluate(`document.querySelector('.add-list').open = true`);
+    await useAddForm(page, 'add-list-fold');
     await type(
       page,
       'list-text',
@@ -269,7 +269,7 @@ describe('the Decks tab', { concurrency: false }, () => {
     await tap(page, 'my-decks-button');
     await page.evaluate(`document.querySelector('#deck-path button').click()`);
     await waitUntil(page, `document.querySelectorAll('#deck-list li').length === 2`, 'the two decks');
-    assert.match(await textOf(page, '#deck-list li:first-child .deck-entry'), /^HSK 1 \(2\.0\)150 words · 0 learned \(0%\) · 11 decks inside$/);
+    assert.match(await textOf(page, '#deck-list li:first-child .deck-entry'), /^HSK 1 \(2\.0\)150 words · 0 learned \(0%\) · 11 decks insideTap to learn$/);
     assert.equal(await wordCount(page), before + adding);
     // The steps after this one count from the start; they count these in too.
     countAtStart += adding;

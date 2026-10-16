@@ -61,6 +61,9 @@ describe('tips', { concurrency: false }, () => {
     await tap(page, 'settings-close');
     await waitUntil(page, tipSays('Everything else is in the menu'), 'the Decks tip back');
     await tap(page, 'tip-dismiss');
+    // Then the one beside the first deck's › (since 2026-10-16).
+    await waitUntil(page, tipSays('Tap a deck to study it'), 'the tip about deck rows');
+    await tap(page, 'tip-dismiss');
     assert.equal(await page.evaluate(tipOpen), false);
 
     // One seen does not come back; Words has none.

@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, type, choose, textOf, waitUntil, openLearn } from './harness.js';
+import { startApp, startBrowsers, tap, type, choose, textOf, waitUntil, openLearn, useAddForm } from './harness.js';
 
 const rows = (count) => `document.querySelectorAll('#word-list li').length === ${count}`;
 const deckRows = (count) => `document.querySelectorAll('#deck-list li').length === ${count}`;
@@ -37,9 +37,10 @@ describe('decks', { concurrency: false }, () => {
   let browsers;
   let page;
 
-  // Opens the page of a deck listed on the page shown.
+  // Opens the page of a deck listed on the page shown, with the › beside
+  // its row (a tap on the row itself studies it).
   const openDeck = async (name) => {
-    await page.evaluate(`${deckRow(name)}.click()`);
+    await page.evaluate(`${deckRow(name)}.parentElement.querySelector('.deck-open').click()`);
     await waitUntil(page, titleIs(name), `the page of ${name}`);
   };
 
@@ -60,6 +61,7 @@ describe('decks', { concurrency: false }, () => {
 
   // Fills in and sends the Add a word form of the deck's page that is open.
   const addWord = async (traditional, simplified, pinyin, meaning) => {
+    await useAddForm(page, 'add-word-fold');
     await type(page, 'add-traditional', traditional);
     await type(page, 'add-simplified', simplified);
     await type(page, 'add-pinyin', pinyin);
@@ -100,7 +102,10 @@ describe('decks', { concurrency: false }, () => {
     // listed and none opened by itself.
     await waitUntil(page, `document.getElementById('deck-head').hidden && ${deckRows(1)}`, 'the front page');
     await openDeck('Chinese 中文');
-    assert.equal(await textOf(page, 'deck-path'), 'Decks › Chinese 中文');
+    // On a deck inside no other, the way back in the top bar says where it
+    // is; the line "Decks › …" is only shown inside other decks.
+    assert.equal(await textOf(page, 'deck-back-button'), '‹ Decks');
+    assert.equal(await textOf(page, 'deck-path'), '');
     assert.match(await addWord('貓', '猫', 'mao1', 'cat'), /^Added/);
     await waitUntil(page, rows(1));
     assert.deepEqual(await decksOf('貓'), ['chinese']);
@@ -140,7 +145,9 @@ describe('decks', { concurrency: false }, () => {
     assert.equal(await textOf(page, 'deck-path'), 'Decks › Textbook › Chapter 1');
     assert.match(await addWord('狗', '狗', 'gou3', 'dog'), /^Added/);
     await waitUntil(page, rows(1));
-    // "Back" goes up one level.
+    // "‹ Textbook", in the top bar in place of the screen's name, goes up one level.
+    assert.equal(await textOf(page, 'deck-back-button'), '‹ Textbook');
+    assert.equal(await textOf(page, 'place-title'), '');
     await tap(page, 'deck-back-button');
     await waitUntil(page, titleIs('Textbook'), 'back to Textbook');
     await waitUntil(page, rows(1));
@@ -180,6 +187,7 @@ describe('decks', { concurrency: false }, () => {
     assert.equal(await page.evaluate(`document.getElementById('deck-path-row').hidden`), true);
     await addDeck('Animals');
     await openDeck('Animals');
+    await useAddForm(page, 'add-list-fold');
     await type(page, 'list-text', '鸟\t鳥\tniao3\tbird\n狗\t狗\tgou3\tdog\n');
     await tap(page, 'check-list-button');
     await waitUntil(page, `!document.getElementById('add-list-button').hidden`, 'the list to be checked');
@@ -216,6 +224,25 @@ describe('decks', { concurrency: false }, () => {
     await openDeck('Textbook');
     await tap(page, 'deck-review-button');
     await waitUntil(page, `document.getElementById('done-message').textContent.includes('2 words are waiting')`, 'Review for the deck');
+    await tap(page, 'decks-tab');
+  });
+
+  it('studies a deck with a tap on its row', async () => {
+    await waitUntil(page, `document.getElementById('deck-head').hidden`, 'the front page');
+    // The screen's name is back in the top bar, without the way back.
+    assert.equal(await textOf(page, 'place-title'), 'Decks');
+    assert.equal(await textOf(page, 'deck-back-button'), '');
+    // Words wait in it, so a tap learns them; one Learn button on its page,
+    // with Review small beside it.
+    assert.match(await page.evaluate(`${deckRow('Textbook')}.textContent`), /Tap to learn$/);
+    await openDeck('Textbook');
+    assert.equal(await page.evaluate(`document.getElementById('deck-learn-button').classList.contains('primary')`), true);
+    assert.equal(await textOf(page, 'deck-review-button'), 'Review');
+    await tap(page, 'deck-back-button');
+    await waitUntil(page, `document.getElementById('deck-head').hidden`, 'the front page');
+    await page.evaluate(`${deckRow('Textbook')}.click()`);
+    await waitUntil(page, `document.getElementById('place-title').textContent === 'Learn'`, 'Learn');
+    assert.equal(await page.evaluate(`document.getElementById('deck-select').selectedOptions[0].textContent`), 'Textbook');
     await tap(page, 'decks-tab');
   });
 
@@ -293,7 +320,7 @@ describe('decks', { concurrency: false }, () => {
     assert.deepEqual(me.decks, ['tocfl/Novice 1/01']);
     await tap(page, 'my-decks-button');
     await waitUntil(page, deckRows(2), 'the two decks');
-    assert.match(await textOf(page, '#deck-list li:first-child .deck-entry'), /^TOCFL Novice 1182 words · 0 learned \(0%\) · 11 decks inside$/);
+    assert.match(await textOf(page, '#deck-list li:first-child .deck-entry'), /^TOCFL Novice 1182 words · 0 learned \(0%\) · 11 decks insideTap to learn$/);
     // The choosers of a deck to put something in offer the level, not its
     // eleven topics (the owner, 2026-10-15: the list was far too long).
     const offered = (id) => page.evaluate(`[...document.getElementById('${id}').options].map((option) => option.value)`);

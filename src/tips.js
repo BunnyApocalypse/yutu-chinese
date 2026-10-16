@@ -71,6 +71,14 @@ const TIPS = {
     target: '#menu-button',
     side: 'below',
   },
+  // The first deck's ›, the first time decks are listed (decksPanel.js):
+  // a tap on the row starts studying, so the way to a deck's words is not
+  // what it was (2026-10-16).
+  deckRows: {
+    text: 'Tap a deck to study it; › for its words and settings.',
+    target: '#deck-list .deck-open',
+    side: 'below',
+  },
   // The first level's Add button (or the one Add of a list whose levels are
   // ticked), once the list has loaded.
   ready: {

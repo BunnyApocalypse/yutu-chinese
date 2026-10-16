@@ -220,6 +220,10 @@ function setMode(newMode) {
     }
   }
   byId('place-title').textContent = PLACE_TITLES[mode];
+  // A deck's page puts "‹ Decks" in the name's place (decksPanel.js); any
+  // other screen, or Decks coming back to its front page, has the name.
+  byId('place-title').hidden = false;
+  byId('deck-back-button').hidden = true;
   reviewHeader.hidden = !reviewing;
   wordForm.hidden = mode !== 'practice';
   wordsPanelElement.hidden = mode !== 'words' && mode !== 'browse';

@@ -2173,17 +2173,6 @@ button.deck-entry {
   min-width: 0;
 }
 
-.deck-actions {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 6px;
-}
-
-/* Two of them stacked are as tall as the deck's row. */
-.deck-actions button.small {
-  min-height: 32px;
-}
 
 /* A list's heading with a button beside it: "Decks [+ New deck]". */
 .list-heading {
@@ -2245,8 +2234,79 @@ button.path-part {
   font-size: 1.4rem;
 }
 
-#deck-head .buttons {
+/* The deck's name with ⚙ (Deck settings) beside it. */
+.deck-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
+}
+
+#deck-settings-button {
+  color: var(--text-soft);
+}
+
+/* "Learn this deck", wide, with "Review" small beside it; or "Review this
+   deck" alone once every word is learned (decksPanel.js). */
+.deck-study {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 4px 0 8px;
+}
+
+.deck-study button.primary {
+  flex: 1;
+}
+
+.deck-study .link-button {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--accent);
+}
+
+/* The panel for adding to a deck (wordsPanel.js): three tabs at its top,
+   the chosen one filled. */
+.add-dialog {
+  width: min(92vw, 520px);
+}
+
+.add-dialog .settings-heading h2 {
+  flex: 1;
+  min-width: 0;
+}
+
+.add-choices {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.add-choices button {
+  flex: 1;
+  min-height: 40px;
+  padding: 6px 4px;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.add-choices button[aria-current='true'] {
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
+  color: var(--on-accent);
+}
+
+/* "‹ Decks" in the top bar, in place of the screen's name: the way back
+   from a deck's page (the owner, 2026-10-16). */
+button.top-back {
+  min-height: 36px;
+  padding: 0 4px;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 1.15rem;
+  font-weight: 600;
 }
 
 /* The panel for a new deck's name. */
@@ -2260,12 +2320,30 @@ button.path-part {
   font-size: 1.05rem;
 }
 
-/* A deck's row: the deck, which opens its page, and beside it Learn and
-   Review. (An ID selector, so that it wins over list rows in general.) */
+/* A deck's row: the deck, which a tap starts studying, and beside it ›,
+   which opens its page (since 2026-10-16; before, Learn and Review). (An ID
+   selector, so that it wins over list rows in general.) */
 #deck-list li {
   display: flex;
   gap: 8px;
   align-items: stretch;
+}
+
+/* What a tap on the row does: "Tap to learn". */
+.deck-tap {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.9rem;
+  color: var(--accent);
+}
+
+button.deck-open {
+  flex: none;
+  width: 48px;
+  min-height: 0;
+  padding: 0;
+  font-size: 1.6rem;
+  color: var(--text-soft);
 }
 
 /* In the word's pop-up panel: the label above its text box. */

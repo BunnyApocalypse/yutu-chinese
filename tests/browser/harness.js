@@ -414,28 +414,35 @@ export const type = (page, id, text) =>
 // Opens the Decks tab on the page of a deck, where words are added. The tab
 // opens on its front page; this then opens "Chinese 中文", the deck the app
 // starts with, or the first deck listed if that is gone.
+// Picks one of the forms of the panel for adding to a deck, as its tab does:
+// 'add-word-fold', 'add-list-fold' or 'add-sentence-fold'. The forms are in a
+// panel since 2026-10-16, and text in the ones not chosen is hidden, so
+// textOf reads it as ''. The panel itself need not be open for the tests,
+// and is left closed, so that it never covers the writing area.
+export const useAddForm = (page, form) =>
+  page.evaluate(`document.querySelector('#add-choices [data-add="${form}"]').click()`);
+
 export async function openDeckPage(page) {
   await tap(page, 'decks-tab');
   await waitUntil(page, `document.querySelectorAll('#deck-list li').length > 0`, 'the Decks tab');
-  await page.evaluate(`(() => {
-    const decks = [...document.querySelectorAll('#deck-list .deck-entry')];
-    (decks.find((deck) => deck.querySelector('.entry-characters').textContent === 'Chinese 中文') || decks[0]).click();
-  })()`);
-  await waitUntil(page, `!document.getElementById('deck-adding').hidden`, 'a deck\'s page');
-}
-
-// Opens Learn the way a learner does since it left the menu: from the Decks
-// tab's front page, with the Learn button of the row of "Chinese 中文" (the
-// deck the app starts with; the first deck if that is gone). That deck is
-// then the one studied.
-export async function openLearn(page) {
-  await tap(page, 'decks-tab');
-  await waitUntil(page, `document.getElementById('deck-head').hidden && document.querySelector('#deck-list li .deck-learn')`, 'the front page of Decks');
+  // A tap on a deck's row studies it; its › opens its page (since 2026-10-16).
   await page.evaluate(`(() => {
     const rows = [...document.querySelectorAll('#deck-list li')];
     const row = rows.find((li) => li.querySelector('.entry-characters').textContent === 'Chinese 中文') || rows[0];
-    row.querySelector('.deck-learn').click();
+    row.querySelector('.deck-open').click();
   })()`);
+  await waitUntil(page, `!document.getElementById('deck-adding').hidden`, 'a deck\'s page');
+  await useAddForm(page, 'add-word-fold');
+}
+
+// Opens Learn from the Decks tab, on the row of "Chinese 中文" (the deck the
+// app starts with; the first deck if that is gone). That deck is then the
+// one studied. A tap on the row starts Learn while words wait in it, but
+// Review once all are learned, so this goes through the deck's page and its
+// Learn button, which is there either way (hidden once all are learned).
+export async function openLearn(page) {
+  await openDeckPage(page);
+  await tap(page, 'deck-learn-button');
   await waitUntil(page, `document.getElementById('place-title').textContent === 'Learn'`, 'Learn');
 }
 
@@ -446,6 +453,7 @@ export async function addTestWords(page) {
   const list = fs.readFileSync('tests/words.tsv', 'utf8');
   const count = list.split('\n').filter((line) => line.trim() !== '').length;
   await openDeckPage(page);
+  await useAddForm(page, 'add-list-fold');
   await type(page, 'list-text', list);
   await tap(page, 'check-list-button');
   await waitUntil(page, `!document.getElementById('add-list-button').hidden`, 'the list to be checked');
