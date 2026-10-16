@@ -96,6 +96,7 @@ The owner watched a tester (a designer, no Chinese, simplified, no study apps be
   - The tablet in "desktop site" mode looked bad, and a deck did not open on a tap there.
   - Liked: the writing with one's own strokes, the hints, the information about every word, the progress, looking up English in the Words tab.
   - The owner's own long-term idea from the session: strokes whose width follows the pen's pressure.
+- **The owner's answers the same day:** the introduction, the Decks tab, "Learn it now" after adding a word, and Settings one group at a time are **part of the pass over the looks, which comes next**; **each change is discussed with the owner before it is built**. A word's panel stays as it is for now (the feedback noted above). Someone who skips the introduction is left with no words: leave as is. The tone card with the word above the area and only the instruction inside it: tried out, to be decided once seen.
 
 ## Settled with the owner on 2026-10-13
 
