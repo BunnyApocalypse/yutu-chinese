@@ -45,7 +45,7 @@ Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where
 
 - **"3/7" beside the mistakes**, larger and bold (`#stroke-count`, `showProgress` in `src/wordFlow.js`), since 2026-10-15. Before, it was inside a sentence, "Stroke 3 of 7 · no mistakes", and a tester asked for a stroke counter without having seen it. It is emptied once a character is finished or its animation plays.
 - **Hidden in Review, shown in Learn and Free practice** (the owner, 2026-10-15): it is a hint when writing from memory. A lesson shows it at every step, its graded last step included, in Learn and in Review alike. The setting "Show the stroke count in Review" (`strokeCountInReview`, off by default, in Studying) shows it there too. The flow's option is `hideStrokeCount`, set in `showWritingCard` in `src/review.js`.
-- **The browser tests read the count even where it is hidden**: the harness's status line is the count and the rest together ("3/7 · No mistakes"), which is how a test tells that a stroke was taken.
+- **The browser tests read the count even where it is hidden**: the harness's status line is the count and the rest together ("3/7 · No mistakes"), which is how a test tells that a stroke was taken. Before anything is drawn the rest reads "Write the first stroke" instead of "No mistakes" (`showProgress` in `src/wordFlow.js`; UX review, 2026-10-16), unless the word's earlier characters had mistakes.
 
 ## Gestures on the writing area
 

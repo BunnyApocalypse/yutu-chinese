@@ -12,7 +12,7 @@ import { closeOnTapBeside } from './dialogs.js';
 const MAX_NEW_WORDS_PER_DAY = 50;
 
 // elements: the panel's parts:
-//   panel, openButton, closeButton, scriptSelect, pronunciationSelect,
+//   panel, openButton, closeButton, closeTopButton, scriptSelect, pronunciationSelect,
 //   handwritingSelect, themeRadios (the three choices of look), lessonsCheckbox, strokeCountCheckbox,
 //   hintSelect, newWordsInput,
 //   meaningDetailSelect,
@@ -77,6 +77,7 @@ export async function createSettings(elements, onChange) {
     panel,
     openButton,
     closeButton,
+    closeTopButton,
     scriptSelect,
     pronunciationSelect,
     handwritingSelect,
@@ -261,6 +262,7 @@ export async function createSettings(elements, onChange) {
     panel.showModal();
   });
   closeButton.addEventListener('click', () => panel.close());
+  closeTopButton.addEventListener('click', () => panel.close());
   // A tap beside the panel closes it too (dialogs.js).
   closeOnTapBeside(panel);
 

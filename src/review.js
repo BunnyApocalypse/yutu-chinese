@@ -57,7 +57,7 @@ const RECHECK_MS = 15 * 1000;
 // elements: the page elements review controls:
 //   countsElement, typeElement, meaningElement, pinyinElement, pinyinButton,
 //   gradeRow, editWordButton, leechNote, donePanel, doneMessage, studyArea, scriptFlag,
-//   lessonNote, skipLessonButton, lessonNextButton, learnNextButton,
+//   lessonNote, skipLessonButton, lessonNextButton, learnNextButton, addWordsButton,
 //   and the parts of the study area that differ per kind of card:
 //   wordRow, statusRow, strokeCountElement, writingRow, writingButtons, cardFace,
 //   toneButtonRow, orderNote
@@ -97,6 +97,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     skipLessonButton,
     lessonNextButton,
     learnNextButton,
+    addWordsButton,
     wordRow,
     statusRow,
     strokeCountElement,
@@ -892,7 +893,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   // Shows a message where the card would be, and optionally the button that
   // goes on to the next word.
-  function showLearnMessage(message, canGoOn) {
+  // canAdd: also offer "Add words", which opens Decks
+  function showLearnMessage(message, canGoOn, canAdd = false) {
     current = null;
     setFocus(false);
     offerListen(false);
@@ -901,6 +903,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     doneMessage.textContent = message;
     learnNextButton.textContent = 'Learn the next word';
     learnNextButton.hidden = !canGoOn;
+    addWordsButton.hidden = !canAdd;
     donePanel.hidden = false;
   }
 
@@ -955,11 +958,12 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     } else if (waiting === 0) {
       showLearnMessage(
         words.length === 0
-          ? 'You have no words yet. Add some in Decks, in the menu.'
+          ? 'You have no words yet.'
           : studyDeck()
             ? 'No words of this deck are waiting to be learned.'
-            : 'No words are waiting to be learned. Add more in Decks, in the menu.',
+            : 'No words are waiting to be learned.',
         false,
+        words.length === 0 || !studyDeck(),
       );
     } else if (learnedToday >= goal) {
       showLearnMessage(progress, true);
@@ -1059,6 +1063,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     endLesson();
     hideGrades();
     learnNextButton.hidden = true;
+    addWordsButton.hidden = true;
     meaningElement.textContent = '';
     pinyinElement.hidden = true;
     pinyinButton.hidden = true;
@@ -1094,7 +1099,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
           ? ` ${plan.waitingCount} ${plan.waitingCount === 1 ? 'word is' : 'words are'} waiting in Learn.`
           : '';
       if (words.length === 0) {
-        doneMessage.textContent = 'You have no words yet. Add some in Decks, in the menu.';
+        doneMessage.textContent = 'You have no words yet.';
       } else if (studied.length === 0) {
         doneMessage.textContent = 'This deck has no words yet. Put some in it in Decks.';
       } else if (plan.waitingCount === studied.length) {
@@ -1106,6 +1111,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // the way there when words are waiting.
       learnNextButton.textContent = 'Learn new words';
       learnNextButton.hidden = plan.waitingCount === 0;
+      addWordsButton.hidden = words.length > 0;
       donePanel.hidden = false;
       // Cards come back after a few minutes, so keep checking.
       recheckTimer = setTimeout(showNext, RECHECK_MS);
@@ -1201,6 +1207,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       stopFlows();
       donePanel.hidden = true;
       learnNextButton.hidden = true;
+      addWordsButton.hidden = true;
       studyArea.hidden = false;
       endLesson();
       showScriptFlag(null);

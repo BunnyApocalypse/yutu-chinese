@@ -30,7 +30,7 @@ describe('the Decks tab', { concurrency: false }, () => {
     await tap(page, 'review-tab');
     await waitUntil(
       page,
-      `document.getElementById('done-message').textContent === 'You have no words yet. Add some in Decks, in the menu.'`,
+      `document.getElementById('done-message').textContent === 'You have no words yet.'`,
       'the note that there are no words',
     );
     await openDeckPage(page);

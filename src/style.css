@@ -250,6 +250,14 @@ dialog.side-menu::backdrop {
   padding-top: 8px;
 }
 
+/* Under Settings in the menu, when the red dot is on (main.js). */
+.backup-due-line {
+  margin: 0;
+  padding: 0 12px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 /* The two sections of the Decks tab: My decks, Ready-made decks. */
 .section-switch {
   display: flex;
@@ -357,6 +365,25 @@ button.icon-button.no-sound {
 main.focused .counts-row,
 main.focused .place-title {
   display: none;
+}
+
+/* The menu button sits over the left end of the line with the kind of card,
+   so that line keeps clear of it: on a 375px phone "New word · step 5 of 5"
+   with About and Edit ran into it (UX review, 2026-10-16). */
+@media (max-width: 599px) {
+  main.focused .type-row {
+    padding-left: 30px;
+  }
+}
+
+@media (max-width: 389px) {
+  main.focused .type-row {
+    gap: 5px;
+  }
+
+  main.focused .card-type {
+    letter-spacing: 0.02em;
+  }
 }
 
 main.focused .top-bar {
@@ -957,6 +984,22 @@ button.slot {
   align-self: flex-start;
 }
 
+/* When the tip does not fit, "More about this word" stays at the card's
+   bottom edge and the tip scrolls behind it, instead of the link being cut
+   in half there (UX review, 2026-10-16). "Sticky" keeps an element in its
+   place in the flow until scrolling would carry it out of view, and then
+   holds it at the edge. */
+.card-face.with-tip .face-tip-more {
+  position: sticky;
+  bottom: -12px;
+  align-self: stretch;
+  margin: 0 -12px -12px;
+  padding: 6px 12px 10px;
+  text-align: left;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+
 .face-meaning {
   font-size: 1.1rem;
   /* On a card's face a long meaning is cut off after five lines. */
@@ -1128,8 +1171,25 @@ button.menu-button.reminder::after {
 }
 
 .settings-panel h2 {
-  margin: 0 0 12px;
+  margin: 0;
   font-size: 1.2rem;
+}
+
+/* The heading and "Done", held at the top while the panel scrolls. The
+   negative margins reach over the panel's padding of 20px, so that nothing
+   scrolling under the bar shows beside or above it. */
+.settings-heading {
+  position: sticky;
+  top: -20px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: -20px -20px 12px;
+  padding: 14px 20px 10px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border-soft);
 }
 
 .setting {

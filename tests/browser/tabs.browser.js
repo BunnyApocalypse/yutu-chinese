@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, type, choose, textOf, waitUntil, openDeckPage, isShown } from './harness.js';
+import { startApp, startBrowsers, tap, type, choose, textOf, waitUntil, openDeckPage, isShown, reloadApp } from './harness.js';
 
 // True if an element takes up room on the page: it and everything it is
 // inside are shown, by whatever means.
@@ -170,10 +170,31 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
   });
 
   it('reminds of a backup with a dot, which can be switched off and on', async () => {
-    // Words and no backup: the dot is on the menu button and on Settings.
+    // Words and no backup, but nothing studied yet: no dot, which in a new
+    // learner's first minutes would look like an error.
     const dot = `document.getElementById('menu-button').classList.contains('reminder')`;
+    assert.equal(await page.evaluate(dot), false);
+    // A card first studied two days ago (the browser here has not promised
+    // to keep the data, so a day is enough): the dot is on the menu button
+    // and on Settings, and the menu says what it is.
+    const day = 24 * 60 * 60 * 1000;
+    const card = { id: 'test|card#meaning', wordId: 'test|card', type: 'meaning', due: Date.now(), firstReviewedAt: Date.now() - 2 * day, fsrsState: null };
+    await page.evaluate(`new Promise((resolve, reject) => {
+      const request = indexedDB.open('hanzi-trainer');
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const transaction = request.result.transaction(['cards'], 'readwrite');
+        transaction.objectStore('cards').put(${JSON.stringify(card)});
+        transaction.oncomplete = () => {
+          request.result.close();
+          resolve();
+        };
+      };
+    })`);
+    await reloadApp(page);
     await waitUntil(page, dot, 'the reminder');
     assert.equal(await page.evaluate(`document.getElementById('settings-button').classList.contains('reminder')`), true);
+    assert.equal(await page.evaluate(`document.getElementById('backup-due-line').hidden`), false);
     // Switching it off asks first.
     await tap(page, 'settings-button');
     await tap(page, 'backup-reminder-button');

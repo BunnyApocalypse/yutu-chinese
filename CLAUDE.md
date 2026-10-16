@@ -114,8 +114,8 @@ Full list in `docs/layout.md`.
 
 Past session notes are in `docs/history.md`.
 
-- **No new features until the owner's own testing and a first round with testers are done** (agreed 2026-10-13); fixing what testing finds is the work. Exceptions are agreed one by one, like the list below.
-- **The UX review of 2026-10-16 left 17 tasks, each to be discussed with the owner before it is fixed** (list at the top of `docs/history.md`, details in `docs/ux-review.md`). Some may be "plainly broken" and fixed before the pass over the looks; which is the owner's call.
+- **No big new features; improvements to how the app is used are welcome** (the owner, 2026-10-16, ending the freeze agreed on 2026-10-13: the aim is not to get distracted by large additions). Fixing what testing finds is still the main work.
+- **The UX review of 2026-10-16 left 17 tasks** (list at the top of `docs/history.md`, details in `docs/ux-review.md`). Sorted with the owner that day: 1, 2, 3, 8, 11, 17 and part of 6 fixed; 9 kept as it is; 15 to settle; the rest for the pass over the looks.
 - **The first testing session's suggestions (2026-10-14) were all built on 2026-10-15** (list and where each is documented: `docs/history.md`), except **Free practice under Words, "too many buttons" and the busy Learn screen: for the pass over the looks**.
 - **The app is named 玉兔中文** (Yùtù Zhōngwén, "Jade Rabbit Chinese"; the owner, 2026-10-15), at `.../yutu-chinese/`, with a jade 兔 on a paper moon as its icon (`scripts/icon.html`) until a calligrapher's 兔 replaces it. Where Chinese can't be marked with `lang` (plain-text reports, file names) it is "Yutu Chinese". The database (`hanzi-trainer`) and the backup format name (`hanzi-trainer-backup`) keep the old name for good. The move: `docs/offline.md`, "The old address".
 - **Gestures on the writing area** (a must-have for the owner on mobile, breaking the feature freeze) **were built on 2026-10-15**: hold for a hint, swipe up to start again (`docs/writing.md`). Tried by the owner on their phone and released the same day.

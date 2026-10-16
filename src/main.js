@@ -271,6 +271,8 @@ byId('learn-next-button').addEventListener('click', () => {
     setMode('learn');
   }
 });
+// Review or Learn with no words (or none left to learn): words are added in Decks.
+byId('add-words-button').addEventListener('click', () => setMode('words'));
 practiceTab.addEventListener('click', () => setMode('practice'));
 wordsTab.addEventListener('click', () => setMode('words'));
 browseTab.addEventListener('click', () => setMode('browse'));
@@ -333,12 +335,31 @@ exportButton.addEventListener('click', async () => {
 // The reminder can be switched off, at the learner's own risk (a tester
 // had it there all the time and nothing to do about it, 2026-10-14):
 // `backupReminderOff`, a setting of the device.
+// With no backup yet, the first reminder waits a while after the first card
+// was studied: a red dot in a new learner's first minutes looked like an
+// error (UX review, 2026-10-16). How long depends on whether the browser has
+// promised to keep the data (offline.js, "Keeping your data"): if it has, a
+// week; if not, a day, since Safari clears a site that was not opened for
+// 7 days, and a pause that long early on must not find no backup made.
 const BACKUP_DUE_AFTER_MS = 14 * 24 * 60 * 60 * 1000;
+const FIRST_BACKUP_AFTER_MS = { kept: 7 * 24 * 60 * 60 * 1000, notKept: 24 * 60 * 60 * 1000 };
 async function showBackupStatus() {
   const last = await getSetting('lastBackupAt', null);
   const off = await getSetting('backupReminderOff', false);
   const days = last === null ? null : Math.floor((Date.now() - last) / (24 * 60 * 60 * 1000));
-  const due = !off && wordList.length > 0 && (last === null || Date.now() - last > BACKUP_DUE_AFTER_MS);
+  let due = false;
+  if (!off && wordList.length > 0) {
+    if (last !== null) {
+      due = Date.now() - last > BACKUP_DUE_AFTER_MS;
+    } else {
+      const started = (await getAll('cards'))
+        .map((card) => card.firstReviewedAt)
+        .filter((time) => time != null);
+      const kept = Boolean(navigator.storage && navigator.storage.persisted && (await navigator.storage.persisted()));
+      const wait = kept ? FIRST_BACKUP_AFTER_MS.kept : FIRST_BACKUP_AFTER_MS.notKept;
+      due = started.length > 0 && Date.now() - Math.min(...started) > wait;
+    }
+  }
   byId('backup-reminder-button').textContent = off ? 'Remind me about backups again' : 'Stop reminding me';
   byId('backup-reminder-button').hidden = !off && !due;
   byId('backup-status').textContent =
@@ -360,6 +381,9 @@ async function showBackupStatus() {
   const settingsButton = byId('settings-button');
   settingsButton.classList.toggle('reminder', due);
   settingsButton.title = due ? 'Settings (time to make a backup)' : '';
+  // On a phone there is no resting the mouse on a button, so the menu says
+  // in words what the dot is about, under Settings.
+  byId('backup-due-line').hidden = !due;
   byId('settings-data').classList.toggle('reminder', due);
   byId('settings-data').open = due || byId('settings-data').open;
 }
@@ -562,6 +586,7 @@ async function startUp() {
       panel: byId('settings-panel'),
       openButton: byId('settings-button'),
       closeButton: byId('settings-close'),
+      closeTopButton: byId('settings-close-top'),
       scriptSelect: byId('script-select'),
       pronunciationSelect: byId('pronunciation-select'),
       handwritingSelect: byId('handwriting-select'),
@@ -605,6 +630,7 @@ async function startUp() {
       skipLessonButton: byId('skip-lesson-button'),
       lessonNextButton: byId('lesson-next-button'),
       learnNextButton: byId('learn-next-button'),
+      addWordsButton: byId('add-words-button'),
       wordRow: byId('word-row'),
       statusRow: byId('status-row'),
       strokeCountElement: byId('stroke-count'),

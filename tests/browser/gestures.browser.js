@@ -57,7 +57,7 @@ describe('gestures on the writing area', { concurrency: false }, () => {
     await mouse('mouseReleased', middle, { clickCount: 1 });
     // The quiz restarts at the same stroke after a hold, busy meanwhile.
     await waitUntil(page, `!document.getElementById('writing-area').hasAttribute('data-busy')`, 'the quiz restarted');
-    assert.equal(await statusText(page), '1/2 · No mistakes', 'the hold was taken for a stroke');
+    assert.equal(await statusText(page), '1/2 · Write the first stroke', 'the hold was taken for a stroke');
 
     // The character can still be written after the hint.
     const [first] = loadStrokeData('十').medians;
@@ -66,7 +66,7 @@ describe('gestures on the writing area', { concurrency: false }, () => {
 
     // A swipe up, from near the bottom to near the top (in the stroke
     // data's units: y runs upward from -124 to 900).
-    assert.equal(await drawStroke(page, area, [[512, -50], [512, 300], [512, 800]]), '1/2 · No mistakes');
+    assert.equal(await drawStroke(page, area, [[512, -50], [512, 300], [512, 800]]), '1/2 · Write the first stroke');
     assert.equal(await page.evaluate(DRAWN_STROKES), 0);
   });
 

@@ -207,10 +207,14 @@ export function createWordFlow(elements) {
 
   // The stroke being written out of how many: "3/7". With hideStrokeCount
   // the text is still filled in (the browser tests read it), but not shown.
-  function showProgress(strokeNumber, totalStrokes) {
+  // started: false before anything is drawn, when "No mistakes" would be
+  // praise for nothing (UX review, 2026-10-16); mistakes in the word's
+  // earlier characters are still shown then.
+  function showProgress(strokeNumber, totalStrokes, started = true) {
     strokeCountElement.textContent = `${strokeNumber}/${totalStrokes}`;
     strokeCountElement.hidden = Boolean(options.hideStrokeCount);
-    statusElement.textContent = describeMistakes(carriedMistakes + currentMistakes);
+    const mistakes = carriedMistakes + currentMistakes;
+    statusElement.textContent = !started && mistakes === 0 ? 'Write the first stroke' : describeMistakes(mistakes);
   }
 
   // The count is only for while a character is being written.
@@ -261,7 +265,7 @@ export function createWordFlow(elements) {
       nextButton.hidden = true;
       orderNote.hidden = true;
       renderWordRow();
-      showProgress(1, totalStrokes);
+      showProgress(1, totalStrokes, false);
       // A tip the first time, about the gestures on the writing area (tips.js).
       document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'gestures' }));
       options.onCharStart?.();
@@ -269,7 +273,7 @@ export function createWordFlow(elements) {
     onProgress({ strokesDone, totalStrokes, totalMistakes }) {
       currentMistakes = totalMistakes;
       // While the last stroke's completion is being reported, onComplete takes over.
-      showProgress(Math.min(strokesDone + 1, totalStrokes), totalStrokes);
+      showProgress(Math.min(strokesDone + 1, totalStrokes), totalStrokes, strokesDone > 0 || totalMistakes > 0);
     },
     onComplete({ totalMistakes, hintShown, order }) {
       charDone = true;

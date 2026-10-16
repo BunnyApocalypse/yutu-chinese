@@ -42,6 +42,8 @@
             </svg>
             Settings
           </button>
+          <!-- Says what the red dot is about (main.js, showBackupStatus). -->
+          <p id="backup-due-line" class="backup-due-line" hidden>Time to save a backup of your words, in Settings.</p>
         </div>
       </dialog>
 
@@ -112,6 +114,8 @@
         <!-- In Learn, between two words: on to the next one; in Review, with
              nothing due and words waiting: to Learn (review.js, main.js). -->
         <button id="learn-next-button" class="primary" type="button" hidden>Learn the next word</button>
+        <!-- With no words, or none left to learn: to the Decks tab (review.js, main.js). -->
+        <button id="add-words-button" class="primary" type="button" hidden>Add words</button>
         <!-- Once per device, after the first word learned, if the browser
              may still clear the app's data (storageMessage.js). -->
         <div id="storage-message" class="storage-message" hidden>
@@ -811,7 +815,12 @@
 
       <!-- <dialog> is the browser's built-in pop-up panel. It stays hidden until opened by settings.js. -->
       <dialog id="settings-panel" class="settings-panel">
-        <h2>Settings</h2>
+        <!-- Stays at the top while the panel scrolls, so the way out is always
+             in view (UX review, 2026-10-16); "Done" at the bottom is the same. -->
+        <div class="settings-heading">
+          <h2>Settings</h2>
+          <button id="settings-close-top" class="small" type="button">Done</button>
+        </div>
 
         <!-- A "?" beside a setting shows the explanation named in its aria-controls (settings.js). -->
         <!-- The settings are in groups that fold away, so the panel is short and each
