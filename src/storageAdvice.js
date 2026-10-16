@@ -87,3 +87,45 @@ export function storageAdvice(kind, { canAsk, kept, asked, installed, canInstall
     ? `The browser did not allow it. It may once the app is installed: ${INSTALL_HOW}. ${BACKUP}`
     : 'Your browser may ask you to confirm, or decide by itself.';
 }
+
+// The last screen of the introduction: one main button that does what this
+// browser needs, and at most one short line (the owner, 2026-10-16, after a
+// tester found the screen wordy and its buttons too many).
+//
+// kind, state: as for storageAdvice
+// mobile:      true on a phone or tablet (Android, iPhone, iPad)
+//
+// Returns { action, line }:
+//   action: 'install' to show the browser's own "install this app?"
+//           question (Chromium keeps only an installed app's data, and the
+//           app asks again by itself once installed; see offline.js),
+//           'ask' to ask for long-term storage, or 'none' if there is
+//           nothing to ask
+//   line:   a sentence to show, or ''
+export function welcomeStorage(kind, { canAsk, kept, installed, canInstall }, mobile = false) {
+  if (kept) {
+    return { action: 'none', line: 'This browser already keeps them.' };
+  }
+  if (!canAsk) {
+    return { action: 'none', line: 'This browser cannot be asked, so use Export backup in Settings now and then.' };
+  }
+  if (kind === 'chromium' && !installed) {
+    return canInstall
+      ? { action: 'install', line: 'This browser keeps the words of an installed app.' }
+      : { action: 'ask', line: `This browser only keeps the words of an installed app: ${INSTALL_HOW}.` };
+  }
+  if (kind === 'firefox') {
+    const question = 'Firefox will ask at the top of the page: choose "Allow".';
+    return {
+      action: 'ask',
+      line: mobile ? `${question} For an icon of your own, choose Install in the browser's menu (⋮).` : question,
+    };
+  }
+  if (kind === 'safari' && mobile && !installed) {
+    return {
+      action: 'ask',
+      line: 'On an iPhone or iPad, Safari only keeps them for an app on the Home Screen: tap Share, then "Add to Home Screen".',
+    };
+  }
+  return { action: 'ask', line: '' };
+}

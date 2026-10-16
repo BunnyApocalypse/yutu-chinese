@@ -611,6 +611,17 @@ fieldset.setting.theme-picker label.theme-choice {
 }
 
 /* The button that asks for long-term storage sits among the paragraphs. */
+/* An explanation in the introduction, folded away until asked for. */
+.welcome-more {
+  margin: 8px 0;
+}
+
+.welcome-more > summary {
+  color: var(--accent);
+  cursor: pointer;
+  padding: 4px 0;
+}
+
 .welcome section > button {
   margin-bottom: 12px;
 }

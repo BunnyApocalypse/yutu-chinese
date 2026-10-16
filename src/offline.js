@@ -277,7 +277,12 @@ export const keepData = {
   // Shows the browser's own "install this app?" question.
   async install() {
     if (installEvent) {
-      installEvent.prompt();
+      try {
+        // Refused unless the person has just tapped something.
+        await installEvent.prompt();
+      } catch {
+        return; // the question was not shown; the event can still be used
+      }
       await installEvent.userChoice;
       installEvent = null; // an event can only be used once
       tellListeners();

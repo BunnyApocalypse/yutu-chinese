@@ -39,96 +39,76 @@ describe('the introduction', { concurrency: false }, () => {
   it('opens by itself the first time', async () => {
     assert.equal(await page.evaluate(welcomeOpen), true);
     assert.equal(await heading(), 'Welcome to 玉兔中文');
-    assert.equal(await textOf(page, 'welcome-progress'), '1 of 5');
+    assert.equal(await textOf(page, 'welcome-progress'), '1 of 4');
     assert.equal(await isShown(page, 'welcome-back'), false);
   });
 
-  it('sets the script, the pronunciation and the kinds of card', async () => {
+  it('sets the script, with the pronunciation following it, and a first level', async () => {
     await tap(page, 'welcome-next');
     assert.equal(await heading(), 'Which characters are you learning?');
-    // The two scripts are explained, with a link to read more about each.
+    // The two scripts and the pronunciations are explained, folded away, with
+    // a link to read more about each.
     assert.deepEqual(
       await page.evaluate(`[...document.querySelectorAll('#welcome [data-step]:not([hidden]) a')].map((link) => link.getAttribute('href').split('/wiki/')[1])`),
       ['Simplified_Chinese_characters', 'Traditional_Chinese_characters', 'Taiwanese_Mandarin'],
     );
+    assert.equal(await page.evaluate(`[...document.querySelectorAll('#welcome [data-step]:not([hidden]) details')].some((fold) => fold.open)`), false);
     // It starts from the settings as they are: a new device learns simplified
     // and mainland pronunciation only.
+    const pronunciation = `document.querySelector('input[name="welcome-pronunciation"]:checked').value`;
     assert.equal(await page.evaluate(`document.querySelector('input[name="welcome-script"]:checked').value`), 'simplified');
-    assert.equal(await page.evaluate(`document.querySelector('input[name="welcome-pronunciation"]:checked').value`), 'mainlandOnly');
+    assert.equal(await page.evaluate(pronunciation), 'mainlandOnly');
+    assert.equal(await textOf(page, 'welcome-pronunciation-summary'), 'Pronunciation: Mainland China');
+    // The pronunciation follows the script...
     await click('input[name="welcome-script"][value="traditional"]');
+    assert.equal(await page.evaluate(pronunciation), 'taiwan');
+    assert.equal(await textOf(page, 'welcome-pronunciation-summary'), 'Pronunciation: Taiwan');
+    await click('input[name="welcome-script"][value="both-traditional"]');
+    assert.equal(await page.evaluate(pronunciation), 'mainland');
+    // ...until it is chosen by hand.
     await click('input[name="welcome-pronunciation"][value="taiwan"]');
+    await click('input[name="welcome-script"][value="traditional"]');
+    await click('input[name="welcome-script"][value="simplified"]');
+    assert.equal(await page.evaluate(pronunciation), 'taiwan');
+    await click('input[name="welcome-script"][value="traditional"]');
 
     await tap(page, 'welcome-next');
-    assert.equal(await heading(), 'Four kinds of card');
-    // At least one kind has to stay.
-    for (const type of ['meaning', 'pinyin', 'tone', 'writing']) {
-      await click(`[data-welcome-type="${type}"]`);
-    }
-    await tap(page, 'welcome-next');
-    assert.equal(await heading(), 'Four kinds of card');
-    assert.equal(await textOf(page, 'welcome-types-note'), 'Keep at least one kind of card.');
-    for (const type of ['meaning', 'pinyin', 'writing']) {
-      await click(`[data-welcome-type="${type}"]`);
-    }
-
-    await tap(page, 'welcome-next');
-    assert.equal(await heading(), 'Your words');
-    await tap(page, 'welcome-back');
-    assert.equal(await heading(), 'Four kinds of card');
-    await tap(page, 'welcome-next');
-    assert.equal(await heading(), 'Your words');
+    assert.equal(await heading(), 'Select your starting level');
     // A first level is suggested to suit the script and pronunciation chosen.
     const start = `document.querySelector('input[name="welcome-start"]:checked').value`;
     assert.equal(await page.evaluate(start), 'tocfl|Novice 1');
     // Going back to change the script changes the suggestion...
     await tap(page, 'welcome-back');
-    await tap(page, 'welcome-back');
     await click('input[name="welcome-script"][value="simplified"]');
     await click('input[name="welcome-pronunciation"][value="mainlandOnly"]');
-    for (let screen = 0; screen < 2; screen++) {
-      await tap(page, 'welcome-next');
-    }
+    await tap(page, 'welcome-next');
     assert.equal(await page.evaluate(start), 'hsk-3.0|1');
-    await tap(page, 'welcome-back');
     await tap(page, 'welcome-back');
     await click('input[name="welcome-script"][value="traditional"]');
     await click('input[name="welcome-pronunciation"][value="taiwan"]');
-    for (let screen = 0; screen < 2; screen++) {
-      await tap(page, 'welcome-next');
-    }
+    await tap(page, 'welcome-next');
     // ...until one is chosen by hand. This run starts with nothing.
     await click('input[name="welcome-start"][value=""]');
     assert.equal(await page.evaluate(start), '');
   });
 
-  it('explains long-term storage before asking for it', async () => {
+  it('ends with one button that keeps the words, and "Not now"', async () => {
     await tap(page, 'welcome-next');
-    assert.equal(await heading(), 'Keeping your data');
-    assert.equal(await textOf(page, 'welcome-progress'), '5 of 5');
-    // Nothing has been asked yet. The test's browser is a Chromium, which
-    // decides by itself, so the app says to install first.
-    assert.equal(await isShown(page, 'welcome-keep-button'), true);
-    await waitUntil(page, `document.getElementById('welcome-keep-note').textContent !== ''`, 'what to expect');
-    assert.match(await textOf(page, 'welcome-keep-note'), /will not ask you anything.*install the app first/);
-    assert.equal(await page.evaluate(`navigator.storage.persisted()`), false);
-
-    await tap(page, 'welcome-keep-button');
-    // It may say yes or no; either way the app says which, and what to do.
-    await waitUntil(
-      page,
-      `/is allowed|said no/.test(document.getElementById('welcome-keep-note').textContent)`,
-      'the answer',
-    );
-    if (!(await page.evaluate(`navigator.storage.persisted()`))) {
-      assert.match(await textOf(page, 'welcome-keep-note'), /Install the app.*ask again by itself.*Export backup/);
-      // Settings says the same and keeps the button.
-      assert.match(await textOf(page, 'offline-status'), /said no/);
-    }
+    assert.equal(await heading(), 'Keep your words safe');
+    assert.equal(await textOf(page, 'welcome-progress'), '4 of 4');
+    // The test's browser is a Chromium, which keeps only an installed app's
+    // data: the button installs where the browser offers it, and asks otherwise.
+    await waitUntil(page, `document.getElementById('welcome-keep-note').textContent !== ''`, 'the line about this browser');
+    assert.match(await textOf(page, 'welcome-keep-note'), /installed app/);
+    assert.match(await textOf(page, 'welcome-next'), /^(Install the app|Keep my words safe) and start$/);
+    assert.equal(await textOf(page, 'welcome-skip'), 'Not now');
+    // Three buttons at most.
+    assert.equal(await page.evaluate(`[...document.querySelectorAll('#welcome button')].filter((button) => button.offsetParent).length`), 3);
   });
 
   it('ends in the Decks tab with the choices saved', async () => {
-    assert.equal(await textOf(page, 'welcome-next'), 'Add my first words');
-    await tap(page, 'welcome-next');
+    // "Not now" saves the choices; only long-term storage is not asked for.
+    await tap(page, 'welcome-skip');
     await waitUntil(page, `!${welcomeOpen} && document.getElementById('decks-tab').classList.contains('selected')`, 'the Decks tab');
     // One box for the word, in traditional, and one for the Taiwan reading.
     assert.equal(await isShown(page, 'add-simplified'), false);
@@ -145,8 +125,10 @@ describe('the introduction', { concurrency: false }, () => {
     assert.match(await textOf(page, 'pronunciation-hint'), /read differently in Taiwan/);
     assert.deepEqual(
       await page.evaluate(`[...document.querySelectorAll('#settings-panel [data-card-type]')].filter((box) => box.checked).map((box) => box.dataset.cardType)`),
-      ['meaning', 'pinyin', 'writing'],
+      // The kinds of card are no longer chosen in the introduction.
+      ['meaning', 'pinyin', 'tone', 'writing'],
     );
+    assert.equal(await page.evaluate(`navigator.storage.persisted()`), false);
     await tap(page, 'settings-close');
   });
 
@@ -231,16 +213,24 @@ describe('the introduction', { concurrency: false }, () => {
     // To the screen about words. With words on the device already (from the
     // steps before), nothing is suggested; a level chosen is added when the
     // introduction is finished.
-    for (let screen = 0; screen < 3; screen++) {
+    for (let screen = 0; screen < 2; screen++) {
       await tap(page, 'welcome-next');
     }
-    assert.equal(await heading(), 'Your words');
+    assert.equal(await heading(), 'Select your starting level');
     assert.equal(await page.evaluate(`document.querySelector('input[name="welcome-start"]:checked').value`), '');
     await click('input[name="welcome-start"][value="tocfl|Novice 1"]');
     await tap(page, 'welcome-next');
-    assert.equal(await textOf(page, 'welcome-next'), 'Start learning');
+    // The main button does what keeps the words: here it notes that they are
+    // to be kept, so that the app asks again by itself once installed.
+    assert.match(await textOf(page, 'welcome-next'), / and start$/);
     await tap(page, 'welcome-next');
     await waitUntil(page, `!${welcomeOpen} && document.getElementById('place-title').textContent === 'Learn'`, 'Learn');
+    assert.equal(await page.evaluate(`new Promise((resolve) => {
+      const opening = indexedDB.open('hanzi-trainer');
+      opening.onsuccess = () => {
+        opening.result.transaction('settings').objectStore('settings').get('keepDataWanted').onsuccess = (event) => resolve(event.target.result?.value);
+      };
+    })`), true);
     const words = await page.evaluate(`new Promise((resolve) => {
       const opening = indexedDB.open('hanzi-trainer');
       opening.onsuccess = () => {

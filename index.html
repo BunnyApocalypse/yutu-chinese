@@ -714,11 +714,12 @@
       <dialog id="welcome" class="settings-panel welcome">
         <p id="welcome-progress" class="hint"></p>
 
+        <!-- Four short screens, one or two lines of text each (the owner,
+             2026-10-16, after a tester found the introduction far too wordy).
+             Explanations are folded away for whoever wants them. -->
         <section data-step>
           <h2>Welcome to <span lang="zh-Hant-TW">玉兔中文</span></h2>
-          <p>This app helps you learn to read and write Chinese words. It brings each word back just before you would forget it.</p>
-          <p>Everything stays on this device. There is no account, and nothing is sent anywhere.</p>
-          <p>The next few screens set the app up and show how it works. It takes about a minute.</p>
+          <p>Learn to read and write Chinese. Everything stays on this device: no account, nothing sent anywhere.</p>
           <!-- Shown at once as it is chosen; saved with the rest at the end
                (welcome.js). Each choice is a small sample of the look: the
                app's icon (its paper and 兔, icons/swatch.png), in the dark one turned dark, and for "Follow device
@@ -754,65 +755,55 @@
             <label><input type="radio" name="welcome-script" value="both-simplified" /> Both, mostly simplified</label>
             <label><input type="radio" name="welcome-script" value="both-traditional" /> Both, mostly traditional</label>
           </fieldset>
-          <!-- The names link to Wikipedia; a link someone taps is fine under the offline rule. -->
-          <p class="hint"><a href="https://en.wikipedia.org/wiki/Simplified_Chinese_characters" target="_blank" rel="noopener">Simplified</a> characters are used in mainland China, Singapore and Malaysia. <a href="https://en.wikipedia.org/wiki/Traditional_Chinese_characters" target="_blank" rel="noopener">Traditional</a> characters are used in Taiwan, Hong Kong and Macau. Many characters are the same in both; others differ, like <span lang="zh-Hans-CN">学</span> and <span lang="zh-Hant-TW">學</span>. If you are not sure, pick the one used where you plan to read or speak Chinese.</p>
-          <p class="hint">With both, your cards are in the script you mostly use, and you can pick the other one for single words.</p>
-          <fieldset class="setting">
-            <legend>Pronunciation: which standard?</legend>
-            <label><input type="radio" name="welcome-pronunciation" value="mainlandOnly" /> Mainland China (<span lang="zh-Hans-CN">普通话</span>)</label>
-            <label><input type="radio" name="welcome-pronunciation" value="taiwan" /> Taiwan (<span lang="zh-Hant-TW">國語</span>)</label>
-            <!-- "mainland": both readings, the mainland one listed first. -->
-            <label><input type="radio" name="welcome-pronunciation" value="mainland" /> Accept both</label>
-          </fieldset>
-          <p class="hint">A few words are read differently in Taiwan and on the mainland: <span lang="zh-Hant-TW">星期</span> is xīngqí in Taiwan and xīngqī on the mainland (more on <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">Taiwan's Mandarin</a>). The reading you choose is the one shown and tested. With Taiwan, the mainland reading also appears beside it in small print, because dictionaries file words under it. With Accept both, cards show both readings and accept either tone.</p>
-          <p class="hint">You can change all of this later in Settings.</p>
+          <p class="hint">Not sure? Pick the one used where you'll read Chinese.</p>
+          <details class="welcome-more">
+            <summary>What's the difference?</summary>
+            <!-- The names link to Wikipedia; a link someone taps is fine under the offline rule. -->
+            <p class="hint"><a href="https://en.wikipedia.org/wiki/Simplified_Chinese_characters" target="_blank" rel="noopener">Simplified</a> characters are used in mainland China, Singapore and Malaysia. <a href="https://en.wikipedia.org/wiki/Traditional_Chinese_characters" target="_blank" rel="noopener">Traditional</a> characters are used in Taiwan, Hong Kong and Macau. Many characters are the same in both; others differ, like <span lang="zh-Hans-CN">学</span> and <span lang="zh-Hant-TW">學</span>.</p>
+            <p class="hint">With both, your cards are in the script you mostly use, and you can pick the other one for single words.</p>
+          </details>
+          <!-- The pronunciation follows the script chosen until it is changed
+               here by hand (welcome.js; the owner, 2026-10-16). -->
+          <details class="welcome-more">
+            <summary id="welcome-pronunciation-summary">Pronunciation</summary>
+            <fieldset class="setting">
+              <legend>Pronunciation: which standard?</legend>
+              <label><input type="radio" name="welcome-pronunciation" value="mainlandOnly" /> Mainland China (<span lang="zh-Hans-CN">普通话</span>)</label>
+              <label><input type="radio" name="welcome-pronunciation" value="taiwan" /> Taiwan (<span lang="zh-Hant-TW">國語</span>)</label>
+              <!-- "mainland": both readings, the mainland one listed first. -->
+              <label><input type="radio" name="welcome-pronunciation" value="mainland" /> Accept both</label>
+            </fieldset>
+            <p class="hint">A few words are read differently in Taiwan and on the mainland: <span lang="zh-Hant-TW">星期</span> is xīngqí in Taiwan and xīngqī on the mainland (more on <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">Taiwan's Mandarin</a>). The reading you choose is the one shown and tested. With Taiwan, the mainland reading also appears beside it in small print, because dictionaries file words under it. With Accept both, cards show both readings and accept either tone.</p>
+          </details>
         </section>
 
         <section data-step hidden>
-          <h2>Four kinds of card</h2>
-          <p>Each word is practiced in up to four ways. Each kind has its own schedule, so you may know what a word means long before you can write it.</p>
-          <fieldset class="setting">
-            <legend>Cards you want</legend>
-            <label><input type="checkbox" data-welcome-type="meaning" /> <b>Meaning:</b> you see the word and recall what it means.</label>
-            <label><input type="checkbox" data-welcome-type="pinyin" /> <b>Pinyin:</b> you see the word and recall how it is read.</label>
-            <label><input type="checkbox" data-welcome-type="tone" /> <b>Tone:</b> you see the word and give the tone of each character, with a button or by drawing the tone mark.</label>
-            <label><input type="checkbox" data-welcome-type="writing" /> <b>Writing:</b> you see the meaning and write the word, stroke by stroke.</label>
-          </fieldset>
-          <p class="hint">Untick the kinds you don't want. A new word starts with its first kind in this order and gets the others one by one.</p>
-          <p id="welcome-types-note" class="note"></p>
-        </section>
-
-        <section data-step hidden>
-          <h2>Your words</h2>
-          <p>The app starts with no words. To begin with, it can add the first level of one of the two official tests' word lists; the words then wait in <b>Learn</b>, a few a day.</p>
-          <!-- Chosen to suit the script picked above, when this screen is
+          <h2>Select your starting level</h2>
+          <!-- Chosen to suit the script picked before, when this screen is
                reached (welcome.js). The value is a list and a level. -->
           <fieldset class="setting">
             <legend>Start with</legend>
             <label><input type="radio" name="welcome-start" value="hsk-3.0|1" /> HSK 3.0, level 1: mainland China's test, 512 words</label>
             <label><input type="radio" name="welcome-start" value="tocfl|Novice 1" /> TOCFL, Novice 1: Taiwan's test, 182 words</label>
-            <label><input type="radio" name="welcome-start" value="" /> No words for now: I'll add my own later in Decks</label>
+            <label><input type="radio" name="welcome-start" value="" /> None: I'll add my own words</label>
           </fieldset>
-          <p class="hint">Everything is in the menu, ☰ at the top left; each screen explains itself with a short tip the first time. More levels, the radicals, and lists or words of your own can be added any time in <b>Decks</b>. Tap any word there to see its page: its learning tips, an example sentence, and the parts its characters are built from. If something about a word is wrong, <b>Edit</b> on that page corrects it; after you answer one of its cards, <b>About</b> and <b>Edit</b> do the same.</p>
+          <p class="hint">More levels, and words of your own, can be added any time in <b>Decks</b>.</p>
           <p id="welcome-start-note" class="note"></p>
         </section>
 
         <section data-step hidden>
-          <h2>Keeping your data</h2>
-          <p>Your words and your review history are stored in this browser, on this device, and nowhere else.</p>
-          <p>A browser may delete what a site has stored, without asking, when the device runs short of space. To rule that out, the app needs the browser's permission to store its data for the long term.</p>
-          <!-- What this particular browser does when asked, and what to do (storageAdvice.js). -->
-          <p id="welcome-keep-note" class="note"></p>
-          <button id="welcome-install-button" class="small" type="button" hidden>Install the app</button>
-          <button id="welcome-keep-button" class="small primary" type="button">Allow long-term storage</button>
-          <p class="hint">Either way, <b>Export backup</b> in Settings saves everything as one file. Do that now and then; it is also how you move to another device.</p>
-          <p class="hint">The app also saves itself and its stroke data on this device (about 18 MB to download), so it works without a connection. On a phone or tablet, install it from the browser's menu: "Install app" or "Add to Home Screen".</p>
+          <h2>Keep your words safe</h2>
+          <p>Your words are stored only in this browser. Allow it to keep them, so they are never deleted to make space.</p>
+          <!-- What this particular browser needs, in a line (welcomeStorage in storageAdvice.js). -->
+          <p id="welcome-keep-note" class="hint"></p>
         </section>
 
         <div class="buttons">
           <button id="welcome-back" class="small" type="button">Back</button>
           <button id="welcome-next" class="small primary" type="button">Next</button>
         </div>
+        <!-- "Skip the introduction" on the first screens; "Not now" on the last,
+             which finishes without asking for long-term storage (welcome.js). -->
         <button id="welcome-skip" class="link-button" type="button">Skip the introduction</button>
       </dialog>
 

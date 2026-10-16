@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { browserKind, storageAdvice } from '../src/storageAdvice.js';
+import { browserKind, storageAdvice, welcomeStorage } from '../src/storageAdvice.js';
 
 const AGENTS = {
   chromeAndroid: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36',
@@ -71,5 +71,29 @@ test('Safari: the Home Screen is what keeps the data', () => {
 test('a browser that cannot be asked is told to keep backups', () => {
   for (const kind of ['firefox', 'chromium', 'safari', 'other']) {
     assert.match(storageAdvice(kind, state({ canAsk: false })), /no way to ask.*Export backup/);
+  }
+});
+
+test('the introduction: one button that does what the browser needs', () => {
+  // Chromium keeps only an installed app's data: install, by its own question if it offers one.
+  assert.deepEqual(welcomeStorage('chromium', state({ canInstall: true })), {
+    action: 'install',
+    line: 'This browser keeps the words of an installed app.',
+  });
+  const noOffer = welcomeStorage('chromium', state());
+  assert.equal(noOffer.action, 'ask');
+  assert.match(noOffer.line, /only keeps the words of an installed app: open the browser's menu/);
+  assert.deepEqual(welcomeStorage('chromium', state({ installed: true, canInstall: true })), { action: 'ask', line: '' });
+  // Firefox asks the person; on a phone, installing is mentioned as a convenience.
+  assert.equal(welcomeStorage('firefox', state()).line, 'Firefox will ask at the top of the page: choose "Allow".');
+  assert.match(welcomeStorage('firefox', state(), true).line, /choose "Allow"\. For an icon of your own, choose Install/);
+  // Safari on an iPhone or iPad keeps only a Home Screen app's data; on a Mac nothing to add.
+  assert.match(welcomeStorage('safari', state(), true).line, /only keeps them for an app on the Home Screen/);
+  assert.deepEqual(welcomeStorage('safari', state()), { action: 'ask', line: '' });
+  assert.deepEqual(welcomeStorage('safari', state({ installed: true }), true), { action: 'ask', line: '' });
+  // Nothing to ask.
+  for (const kind of ['firefox', 'chromium', 'safari', 'other']) {
+    assert.equal(welcomeStorage(kind, state({ kept: true })).action, 'none');
+    assert.match(welcomeStorage(kind, state({ canAsk: false })).line, /Export backup/);
   }
 });
