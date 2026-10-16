@@ -5,7 +5,9 @@ looks (`docs/interface.md`): a picture of every screen at phone, tablet and
 desktop size in both looks, the layout measured, a review against the usual
 rules of thumb, and the number of steps the common tasks take. Nothing in the
 app was changed. **Each finding is a proposal**, for the owner to sort into
-"plainly broken, fix now" and "for the pass over the looks".
+"plainly broken, fix now" and "for the pass over the looks". **They are on
+the to-do list** at the top of `docs/history.md`, each to be discussed with
+the owner before it is fixed.
 
 ## The atlas
 
