@@ -116,6 +116,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   const pinyinPreview = byId('add-pinyin-preview');
   const suggestions = byId('add-suggestions');
   const addNote = byId('add-word-note');
+  const addLearnNow = byId('add-learn-now');
 
   const listHint = byId('list-hint');
   const listText = byId('list-text');
@@ -316,6 +317,8 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     edit: (word) => openDialog(words.find((entry) => entry.id === word.id) || word),
     addSentence: (sentence, deckId) => addSentence(sentence, deckId),
     addEntry: (entry, deckId) => addEntry(entry, deckId),
+    learnNow: (id, deckId) => learnNow(id, deckId),
+    isLearned: (word) => studiedWordIds.has(word.id),
     // "Practice" on a word's page: Free practice with that word, which is a
     // text box and a button of the page (main.js).
     showCards: (word) => showCardsOnPage(word),
@@ -408,6 +411,18 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   // Shows the decks, and the forms for adding words if a deck's page is open.
   function renderDecks() {
     decksPanel.render();
+    // The way back from a deck's page takes the place of the screen's name in
+    // the top bar, only while that page is on screen: not on the Words tab,
+    // which shares this code, nor under Ready-made decks, nor once another
+    // screen is shown (this runs after changes made from anywhere, and once
+    // put "‹ Decks" over Learn's top line).
+    const onDeckPage =
+      Boolean(openDeck()) &&
+      view === 'decks' &&
+      !byId('words-panel').hidden &&
+      !byId('ready-decks-button').classList.contains('selected');
+    byId('deck-back-button').hidden = !onDeckPage;
+    byId('place-title').hidden = onDeckPage;
     byId('deck-adding').hidden = !openDeck();
     // (A deck without words has it as its main button already.)
     const deck = openDeck();
@@ -445,6 +460,8 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
 
   function openAdding() {
     fillMixed(byId('add-to-deck-name'), openDeck().name, getSettings().script);
+    addLearnNow.hidden = true;
+    addNote.textContent = '';
     showAddForm('add-word-fold');
     addDialog.showModal();
   }
@@ -465,6 +482,8 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       // A tip the first time (tips.js).
       document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'ready' }));
     }
+    // The top bar: the way back from a deck's page only under My decks.
+    renderDecks();
   }
   // "My decks" tapped while a deck's page is open goes back to the front
   // page: it is what the button says.
@@ -1197,6 +1216,32 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     showSuggestions();
   });
 
+  // ---- "Learn it now" ----
+  //
+  // After a word is added (the owner, 2026-10-16, from a tester who wanted to
+  // learn a word just added without looking for it): the word goes to the
+  // front of the line, as "Study next" does, and Learn opens on the deck it
+  // was added to. Offered in the panel for adding and on the word's page
+  // after adding it from the dictionary (wordPage.js).
+  async function learnNow(wordIdToLearn, deckId) {
+    const word = words.find((entry) => entry.id === wordIdToLearn);
+    if (word) {
+      await putAll('words', [{ ...word, order: orderForStudyingNext(words) }]);
+      await afterChange();
+    }
+    studyDeck(deckId, 'learn');
+  }
+
+  let learnNowTarget = null;
+  addLearnNow.addEventListener('click', async () => {
+    const target = learnNowTarget;
+    addDialog.close();
+    await learnNow(target.wordId, target.deckId);
+  });
+  addForm.addEventListener('input', () => {
+    addLearnNow.hidden = true;
+  });
+
   addForm.addEventListener('submit', async (event) => {
     event.preventDefault(); // or the browser would reload the page
     const typed = Object.fromEntries(
@@ -1231,7 +1276,8 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       addNote.textContent = `${name} is already in this deck.`;
       return;
     }
-    await putAll('words', [withDeck(existing || toAdd[0], deck.id)]);
+    const added = withDeck(existing || toAdd[0], deck.id);
+    await putAll('words', [added]);
     addForm.reset();
     filledEntry = null;
     autoValues.clear();
@@ -1243,6 +1289,10 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       ? `${name} was already in your words, as you had it. It is in this deck now too.`
       : `Added ${charactersOf(toAdd[0])}. It waits in Learn, last in line.`;
     await afterChange();
+    // "Learn it now", for a word still to be learned; typing the next word
+    // puts it away.
+    learnNowTarget = studiedWordIds.has(added.id) ? null : { wordId: added.id, deckId: deck.id };
+    addLearnNow.hidden = learnNowTarget === null;
     lookedUpField.focus();
   });
 

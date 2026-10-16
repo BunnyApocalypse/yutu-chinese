@@ -56,6 +56,10 @@ function element(tag, className, text) {
 // addEntry(entry, deckId): adds a dictionary entry to a deck as one of your
 //                     words (the Words tab's dictionary, 2026-10-15); returns a
 //                     promise for 'added', 'put in deck' or 'already there'
+// learnNow(wordId, deckId): "Learn it now" for a word just added from the
+//                     dictionary: the word first in line, and Learn opened
+//                     on that deck
+// isLearned(word):    true once the word has been through Learn (or has a card)
 // defaultDeckId():    the deck first offered for that and for a sentence
 // practice(word):     opens Free practice with the word
 // showCards(word):    fills in the part of the page that has the word's
@@ -72,6 +76,8 @@ export function createWordPage({
   edit,
   addSentence,
   addEntry,
+  learnNow,
+  isLearned,
   defaultDeckId,
   practice,
   showCards,
@@ -299,10 +305,11 @@ export function createWordPage({
         addButton.disabled = false;
         return;
       }
-      // Now one of your words: its own page, with its cards.
+      // Now one of your words: its own page, with its cards, and "Learn it
+      // now" at its top (show).
       if (dialog.open) {
-        trail[trail.length - 1] = { word };
-        show({ word });
+        trail[trail.length - 1] = { word, addedTo: deckSelect.value };
+        show({ word, addedTo: deckSelect.value });
       }
     });
     adding.append(
@@ -473,6 +480,25 @@ export function createWordPage({
       parts.push(built);
     }
 
+    // Just added from the dictionary, and still to be learned: "Learn it now"
+    // (the owner, 2026-10-16). At the top, not among the buttons at the
+    // bottom, which are four already.
+    if (word && target.addedTo && !isLearned(word)) {
+      const added = element('div', 'page-learn-now');
+      const deck = getDecks().find((entry) => entry.id === target.addedTo);
+      const deckName = element('span');
+      fillMixed(deckName, deck ? deck.name : '', settings.script);
+      const learnButton = element('button', 'small', 'Learn it now');
+      learnButton.type = 'button';
+      learnButton.addEventListener('click', () => {
+        dialog.close();
+        learnNow(word.id, target.addedTo);
+      });
+      const said = element('span');
+      said.append('Added to ', deckName);
+      added.append(said, learnButton);
+      parts.unshift(added);
+    }
     body.replaceChildren(...parts);
     scroller.scrollTop = 0;
     backButton.hidden = trail.length < 2;

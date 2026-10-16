@@ -133,7 +133,20 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     // It is one of your words now: its own page, and the list has it.
     await waitUntil(page, `document.getElementById('word-page').dataset.shown === '老師|lao3shi1'`, 'the word\'s own page');
     assert.equal(await isShown(page, 'word-page-edit'), true);
-    await page.evaluate(`document.getElementById('word-page').close()`);
+    // "Learn it now" at its top starts its lesson, on the deck it went into.
+    assert.match(await textOf(page, '#word-page .page-learn-now'), /^Added to .*Learn it now$/);
+    await page.evaluate(`document.querySelector('#word-page .page-learn-now button').click()`);
+    await waitUntil(
+      page,
+      `document.getElementById('place-title').textContent === 'Learn' && document.getElementById('card-face').textContent.startsWith('老師')`,
+      'the lesson for 老師',
+    );
+    // The top bar is Learn's: no "‹ Decks" left over the lesson's top line.
+    assert.equal(await textOf(page, 'deck-back-button'), '');
+    // Back on the Words tab, the top bar has its name, whatever deck was open.
+    await tap(page, 'words-tab');
+    assert.equal(await textOf(page, 'place-title'), 'Words');
+    assert.equal(await textOf(page, 'deck-back-button'), '');
     await waitUntil(page, `[...document.querySelectorAll('#word-list li')].some((row) => row.textContent.startsWith('老師'))`, '老師 among your words');
     await waitUntil(page, `!${dictionaryRows}.some((row) => row.startsWith('老師'))`, '老師 out of the dictionary\'s list');
 

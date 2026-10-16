@@ -194,9 +194,8 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
     const current = getOpenDeck();
     renderPath(current);
     byId('deck-head').hidden = !current;
-    // The way back takes the place of the screen's name in the top bar.
-    backButton.hidden = !current;
-    byId('place-title').hidden = Boolean(current);
+    // (Whether the way back is in the top bar is decided in wordsPanel.js,
+    // which knows whether this page is on screen.)
     if (current) {
       const parent = parentOf(current);
       showName(backButton, `‹ ${parent ? parent.name : 'Decks'}`);

@@ -2297,6 +2297,22 @@ button.path-part {
   color: var(--on-accent);
 }
 
+/* On a word's page just added from the dictionary: a bar of its own above
+   the word, "Added to …" with "Learn it now" at its end (wordPage.js). */
+.page-learn-now {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 20px;
+  padding: 8px 8px 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-soft);
+  font-size: 0.95rem;
+}
+
 /* "‹ Decks" in the top bar, in place of the screen's name: the way back
    from a deck's page (the owner, 2026-10-16). */
 button.top-back {

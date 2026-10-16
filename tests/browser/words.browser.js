@@ -59,6 +59,15 @@ describe('the Decks tab', { concurrency: false }, () => {
     await page.evaluate(`document.getElementById('add-word-form').requestSubmit()`);
     await waitUntil(page, `document.getElementById('word-count').textContent === '${countAtStart + 1}'`);
     assert.match(await textOf(page, 'add-word-note'), /^Added 貓頭鷹/);
+    // A word still to be learned can be learned at once (tested below, in
+    // Learn); typing the next word puts the button away.
+    // (The panel is left closed in the tests, so the button is checked for
+    // being switched on, not for being in view.)
+    const learnNowOn = `!document.getElementById('add-learn-now').hidden`;
+    assert.equal(await page.evaluate(learnNowOn), true);
+    await type(page, 'add-traditional', '貓');
+    assert.equal(await page.evaluate(learnNowOn), false);
+    await type(page, 'add-traditional', '');
   });
 
   it('refuses the same word twice, and a word with bad pinyin', async () => {
