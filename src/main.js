@@ -384,7 +384,7 @@ async function showBackupStatus() {
     (off ? ' Backup reminders are off.' : '');
   // The dot says why it is there to anyone who rests the mouse on the menu
   // button or uses a screen reader, and in Settings the same dot is on the
-  // heading of the group it is about, which is opened.
+  // group it is about, in the list of groups.
   const menuButton = byId('menu-button');
   menuButton.classList.toggle('reminder', due);
   menuButton.title = due ? 'Menu (time to make a backup, in Settings)' : 'Menu';
@@ -395,8 +395,7 @@ async function showBackupStatus() {
   // On a phone there is no resting the mouse on a button, so the menu says
   // in words what the dot is about, under Settings.
   byId('backup-due-line').hidden = !due;
-  byId('settings-data').classList.toggle('reminder', due);
-  byId('settings-data').open = due || byId('settings-data').open;
+  document.querySelector('#settings-nav [data-group="settings-data"]').classList.toggle('reminder', due);
 }
 
 byId('backup-reminder-button').addEventListener('click', async () => {
@@ -597,7 +596,6 @@ async function startUp() {
       panel: byId('settings-panel'),
       openButton: byId('settings-button'),
       closeButton: byId('settings-close'),
-      closeTopButton: byId('settings-close-top'),
       scriptSelect: byId('script-select'),
       pronunciationSelect: byId('pronunciation-select'),
       handwritingSelect: byId('handwriting-select'),

@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, reloadApp, tap, type, choose, textOf, waitUntil, addTestWords, openDeckPage, openLearn, ANSWER_YES } from './harness.js';
+import { startApp, startBrowsers, reloadApp, tap, type, choose, textOf, waitUntil, addTestWords, openDeckPage, openLearn, ANSWER_YES, openSettings } from './harness.js';
 
 // Text for "the Decks tab's list has this many rows".
 const rows = (count) => `document.querySelectorAll('#word-list li').length === ${count}`;
@@ -209,7 +209,7 @@ describe('the Decks tab', { concurrency: false }, () => {
   });
 
   it('explains that setting when its "?" is tapped', async () => {
-    await tap(page, 'settings-button');
+    await openSettings(page, 'settings-learning');
     assert.equal(await textOf(page, 'meaning-detail-hint'), '');
     await tap(page, 'meaning-detail-help');
     assert.match(await textOf(page, 'meaning-detail-hint'), /specialist field/);

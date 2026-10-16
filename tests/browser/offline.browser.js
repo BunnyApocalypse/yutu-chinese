@@ -157,13 +157,15 @@ describe('offline use', { concurrency: false }, () => {
     await page.evaluate(`document.querySelector('#tone-buttons [data-tone="2"]').click()`);
     await waitUntil(page, `document.getElementById('status').textContent === 'All tones right'`, 'the Taiwan tone accepted');
     // And it says how things stand.
-    assert.match(await textOf(page, 'offline-status'), /saved too/);
+    // (Read whether or not Settings is open, where the line is.)
+    const offlineStatus = () => page.evaluate(`document.getElementById('offline-status').textContent`);
+    assert.match(await offlineStatus(), /saved too/);
     // The recordings were asked for on this device, so they still are.
     // (Looking through everything that is saved takes the app a while first.)
     let status = '';
     for (let attempt = 0; attempt < 240 && !/recordings/i.test(status); attempt++) {
       await new Promise((resolve) => setTimeout(resolve, 250));
-      status = await textOf(page, 'offline-status');
+      status = await offlineStatus();
     }
     assert.match(status, /All recordings are saved too\./);
   });

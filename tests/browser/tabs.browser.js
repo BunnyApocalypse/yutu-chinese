@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, type, choose, textOf, waitUntil, openDeckPage, isShown, reloadApp } from './harness.js';
+import { startApp, startBrowsers, tap, type, choose, textOf, waitUntil, openDeckPage, isShown, reloadApp, openSettings } from './harness.js';
 
 // True if an element takes up room on the page: it and everything it is
 // inside are shown, by whatever means.
@@ -148,7 +148,7 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
   });
 
   it('says which version it is, whose work it is built on, and when something goes wrong', async () => {
-    await tap(page, 'settings-button');
+    await openSettings(page, 'settings-help');
     assert.match(await textOf(page, 'app-version'), /^Version \d+\.\d+\.\d+ \(/);
     await tap(page, 'credits-button');
     assert.equal(await page.evaluate(`document.getElementById('credits-dialog').open`), true);
@@ -205,8 +205,12 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     await waitUntil(page, dot, 'the reminder');
     assert.equal(await page.evaluate(`document.getElementById('settings-button').classList.contains('reminder')`), true);
     assert.equal(await page.evaluate(`document.getElementById('backup-due-line').hidden`), false);
-    // Switching it off asks first.
+    // In Settings the dot is on the group it is about, in the list.
     await tap(page, 'settings-button');
+    assert.equal(await page.evaluate(`document.querySelector('#settings-nav [data-group="settings-data"]').classList.contains('reminder')`), true);
+    await tap(page, 'settings-close');
+    // Switching it off asks first.
+    await openSettings(page, 'settings-data');
     await tap(page, 'backup-reminder-button');
     await waitUntil(page, `document.getElementById('confirm-dialog').open`, 'the question');
     await tap(page, 'confirm-yes');

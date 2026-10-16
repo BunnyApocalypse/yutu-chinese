@@ -6,7 +6,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, reloadApp, tap, textOf, isShown, waitUntil } from './harness.js';
+import { startApp, startBrowsers, reloadApp, tap, textOf, isShown, waitUntil, openSettings } from './harness.js';
 
 const welcomeOpen = `document.getElementById('welcome').open`;
 
@@ -114,7 +114,7 @@ describe('the introduction', { concurrency: false }, () => {
     assert.equal(await isShown(page, 'add-simplified'), false);
     assert.equal(await isShown(page, 'add-traditional'), true);
     assert.equal(await isShown(page, 'add-pinyin-taiwan'), true);
-    await tap(page, 'settings-button');
+    await openSettings(page, 'settings-learning');
     assert.equal(await page.evaluate(`document.getElementById('script-select').value`), 'traditional');
     assert.equal(await page.evaluate(`document.getElementById('pronunciation-select').value`), 'taiwan');
     // Settings explains the two settings too, behind their "?" buttons.

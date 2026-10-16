@@ -1158,12 +1158,113 @@ button.slot {
   margin-bottom: 8px;
 }
 
-/* A group of settings that folds away under its heading. */
-.settings-group {
-  margin: 0 0 10px;
-  padding: 8px 12px;
+/* Settings shows one group at a time (settings.js; the owner, 2026-10-16).
+   On a narrow screen, the list of groups or one group, as `data-view` on
+   the panel says; on a wide one, the list at the side and the group beside
+   it. Until that day each group folded away under its heading. */
+#settings-panel {
+  width: min(92vw, 420px);
+}
+
+.settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* A group in the list: a row to tap, with › at its end. */
+.settings-nav button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+}
+
+.settings-nav button::after {
+  content: '›';
+  margin-left: auto;
+  padding-left: 8px;
+  color: var(--muted);
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+#settings-panel[data-view='list'] .settings-pages,
+#settings-panel[data-view='group'] .settings-nav {
+  display: none;
+}
+
+.settings-group h3 {
+  margin: 0 0 16px;
+  font-size: 1.05rem;
+}
+
+/* "‹ Settings": back from a group to the list, in the heading's place. */
+.settings-back {
+  min-height: 32px;
+  padding: 4px 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+}
+
+@media (min-width: 720px) {
+  /* The same height for every group, so that the panel does not jump when
+     another is chosen. */
+  #settings-panel {
+    width: min(92vw, 800px);
+    height: min(90vh, 720px);
+  }
+
+  .settings-body {
+    display: grid;
+    grid-template-columns: 230px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* Both always, side by side; the list stays put while a group scrolls. */
+  #settings-panel[data-view] .settings-nav,
+  #settings-panel[data-view] .settings-pages {
+    display: flex;
+  }
+
+  .settings-pages {
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .settings-nav {
+    position: sticky;
+    top: 60px;
+    gap: 4px;
+  }
+
+  .settings-nav button {
+    padding: 8px 12px;
+    border-color: transparent;
+    background: none;
+    font-weight: normal;
+  }
+
+  .settings-nav button::after {
+    content: none;
+  }
+
+  /* The group that is shown. */
+  .settings-nav button[aria-current='true'] {
+    background: var(--pressed);
+    font-weight: 600;
+  }
 }
 
 /* The heading of a fold-out is tapped, never selected. With a pen, a tap
@@ -1172,16 +1273,6 @@ button.slot {
 summary {
   user-select: none;
   -webkit-user-select: none;
-}
-
-.settings-group > summary {
-  font-weight: 600;
-  cursor: pointer;
-  /* A taller area to tap (at least 24px, the accessibility guidelines'
-     minimum, 2026-10-15) that takes in the group's padding, so that it looks
-     the same. */
-  padding: 6px 0;
-  margin: -6px 0;
 }
 
 /* The volume slider: as tall as the guidelines' minimum area to tap. */
@@ -1193,10 +1284,6 @@ summary {
    above and below a link inside a line of text does not move the lines. */
 .settings-panel .hint a {
   padding: 4px 0;
-}
-
-.settings-group[open] > summary {
-  margin-bottom: 12px;
 }
 
 /* A dot on the menu button: there is something in Settings to see to. */
@@ -1221,15 +1308,21 @@ button.menu-button.reminder::after {
   background: var(--danger);
 }
 
-/* The same dot on the heading of the group of settings it is about. */
-.settings-group.reminder > summary::after {
+/* The same dot on the group of settings it is about, in the list: after
+   its name (`order` puts it there, the › being last). */
+.settings-nav button.reminder::before {
   content: '';
-  display: inline-block;
+  order: 1;
+  flex: none;
   width: 9px;
   height: 9px;
   margin-left: 8px;
   border-radius: 50%;
   background: var(--danger);
+}
+
+.settings-nav button.reminder::after {
+  order: 2;
 }
 
 .settings-panel h2 {

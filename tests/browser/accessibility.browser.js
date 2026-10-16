@@ -292,8 +292,14 @@ describe('accessibility', { concurrency: false }, () => {
     await page.evaluate(ANSWER_YES);
     await tap(page, 'settings-button');
     await waitUntil(page, `document.getElementById('settings-panel').open`, 'Settings');
-    await page.evaluate(`document.querySelectorAll('#settings-panel details').forEach((group) => { group.open = true; })`);
+    // The list of groups, then each group (one at a time since 2026-10-16).
     await check('Settings');
+    const groups = await page.evaluate(`[...document.querySelectorAll('#settings-nav button')].map((button) => button.dataset.group)`);
+    for (const group of groups) {
+      await page.evaluate(`document.querySelector('#settings-nav [data-group="${group}"]').click()`);
+      await check(`Settings, ${group}`);
+      await tap(page, 'settings-back');
+    }
     await tap(page, 'welcome-again-button');
     await waitUntil(page, `document.getElementById('welcome').open`, 'the introduction');
     await check('the introduction');

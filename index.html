@@ -810,20 +810,35 @@
       <!-- <dialog> is the browser's built-in pop-up panel. It stays hidden until opened by settings.js. -->
       <dialog id="settings-panel" class="settings-panel">
         <!-- Stays at the top while the panel scrolls, so the way out is always
-             in view (UX review, 2026-10-16); "Done" at the bottom is the same. -->
+             in view (UX review, 2026-10-16). "‹ Settings" goes back from a
+             group to the list, on a narrow screen (settings.js). -->
         <div class="settings-heading">
-          <h2>Settings</h2>
-          <button id="settings-close-top" class="small" type="button">Done</button>
+          <button id="settings-back" class="settings-back" type="button" hidden>‹ Settings</button>
+          <h2 id="settings-title">Settings</h2>
+          <button id="settings-close" class="small" type="button">Done</button>
         </div>
 
+        <!-- One group at a time (the owner, 2026-10-16, from a tester's
+             suggestion): on a phone, a list of the groups, and a tap shows one;
+             on a wider screen the list stays at the side (settings.js). -->
+        <div class="settings-body">
+        <nav id="settings-nav" class="settings-nav" aria-label="Groups of settings">
+          <button type="button" data-group="settings-learning">Chinese</button>
+          <button type="button" data-group="settings-studying">Daily study</button>
+          <button type="button" data-group="settings-writing">Writing</button>
+          <button type="button" data-group="settings-look">Look and sound</button>
+          <button type="button" data-group="settings-data">Your data and backups</button>
+          <button type="button" data-group="settings-help">Help, feedback and licenses</button>
+        </nav>
+        <div class="settings-pages">
+
         <!-- A "?" beside a setting shows the explanation named in its aria-controls (settings.js). -->
-        <!-- The settings are in groups that fold away, so the panel is short and each
-             thing can be found under a heading. <details> is the browser's own fold-out.
-             Regrouped on 2026-10-15 (the owner: Look under "Studying" made no sense):
-             Chinese (what is learned and tested), Daily study, Writing, Look and
+        <!-- The settings are in groups, so that each thing can be found under a
+             heading; they folded away until 2026-10-16. Regrouped on 2026-10-15
+             (the owner: Look under "Studying" made no sense): Chinese (what is learned and tested), Daily study, Writing, Look and
              sound, Your data and backups, Help. -->
-        <details id="settings-learning" class="settings-group" open>
-          <summary>Chinese</summary>
+        <section id="settings-learning" class="settings-group" hidden>
+          <h3>Chinese</h3>
         <div class="setting">
           <span>
             <label for="script-select">Script</label>
@@ -899,10 +914,10 @@
             <b>All:</b> everything the dictionary lists.
           </p>
         </div>
-        </details>
+        </section>
 
-        <details id="settings-studying" class="settings-group">
-          <summary>Daily study</summary>
+        <section id="settings-studying" class="settings-group" hidden>
+          <h3>Daily study</h3>
         <label class="setting">
           New words per day (goal)
           <input id="new-words-input" type="number" min="0" max="50" inputmode="numeric" />
@@ -932,10 +947,10 @@
             A suspended card no longer comes up in Review, until you switch it back on, on the word's page.
           </span>
         </label>
-        </details>
+        </section>
 
-        <details id="settings-writing" class="settings-group">
-          <summary>Writing</summary>
+        <section id="settings-writing" class="settings-group" hidden>
+          <h3>Writing</h3>
         <label class="setting">
           Handwriting
           <select id="handwriting-select">
@@ -960,10 +975,10 @@
             comes by itself after three misses on a stroke. To start a character again, swipe up on the writing area.
           </span>
         </label>
-        </details>
+        </section>
 
-        <details id="settings-look" class="settings-group">
-          <summary>Look and sound</summary>
+        <section id="settings-look" class="settings-group" hidden>
+          <h3>Look and sound</h3>
         <!-- The same three samples as in the introduction (the owner, 2026-10-15). -->
         <fieldset class="setting theme-picker">
           <legend>Look</legend>
@@ -1003,10 +1018,10 @@
           <input id="volume-input" type="range" min="0" max="100" step="5" aria-label="Volume of the spoken words" />
           <span class="hint">How loud words are spoken, beside whatever else your device is playing.</span>
         </label>
-        </details>
+        </section>
 
-        <details id="settings-data" class="settings-group">
-          <summary>Your data and backups</summary>
+        <section id="settings-data" class="settings-group" hidden>
+          <h3>Your data and backups</h3>
           <!-- How long ago the last backup was made (main.js). -->
           <p id="backup-status" class="hint"></p>
         <div class="setting">
@@ -1027,10 +1042,10 @@
           <!-- Saves every recording on the device (offline.js); they are otherwise kept one by one as they are played. -->
           <button id="save-audio-button" class="small" type="button" hidden>Save all recordings for offline use (about 125 MB)</button>
         </div>
-        </details>
+        </section>
 
-        <details id="settings-help" class="settings-group">
-          <summary>Help, feedback and licenses</summary>
+        <section id="settings-help" class="settings-group" hidden>
+          <h3>Help, feedback and licenses</h3>
         <div class="setting">
           <button id="welcome-again-button" class="small" type="button">Show the introduction again</button>
           <button id="credits-button" class="small" type="button">Credits and licenses</button>
@@ -1052,10 +1067,10 @@
         </p>
         <!-- Which version of the app this is (errors.js). -->
         <p id="app-version" class="hint"></p>
-        </details>
+        </section>
 
-
-        <button id="settings-close" class="primary" type="button">Done</button>
+        </div>
+        </div>
       </dialog>
     </main>
 

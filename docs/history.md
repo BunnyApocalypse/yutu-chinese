@@ -97,6 +97,7 @@ The owner watched a tester (a designer, no Chinese, simplified, no study apps be
   - Liked: the writing with one's own strokes, the hints, the information about every word, the progress, looking up English in the Words tab.
   - The owner's own long-term idea from the session: strokes whose width follows the pen's pressure.
 - **The introduction was shortened later that day** (`docs/interface.md`): four short screens, the pronunciation following the script, one main button on the last screen.
+- **Settings shows one group at a time, later that day** (`docs/interface.md`): a list and a page on a phone, a sidebar on a computer, one Done, the backup dot on the data group's row.
 - **The owner's answers the same day:** the introduction, the Decks tab, "Learn it now" after adding a word, and Settings one group at a time are **part of the pass over the looks, which comes next**; **each change is discussed with the owner before it is built**. A word's panel stays as it is for now (the feedback noted above). Someone who skips the introduction is left with no words: leave as is. The tone card: after two mockups, the owner chose the characters in boxes above the card with "Tone of 你 (1 of 2)", and inside the card the character small above "Draw the tone mark here", large (`docs/cards.md`).
 
 ## Settled with the owner on 2026-10-13

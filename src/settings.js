@@ -12,7 +12,7 @@ import { closeOnTapBeside } from './dialogs.js';
 const MAX_NEW_WORDS_PER_DAY = 50;
 
 // elements: the panel's parts:
-//   panel, openButton, closeButton, closeTopButton, scriptSelect, pronunciationSelect,
+//   panel, openButton, closeButton, scriptSelect, pronunciationSelect,
 //   handwritingSelect, themeRadios (the three choices of look), lessonsCheckbox, strokeCountCheckbox,
 //   hintSelect, newWordsInput,
 //   meaningDetailSelect,
@@ -77,7 +77,6 @@ export async function createSettings(elements, onChange) {
     panel,
     openButton,
     closeButton,
-    closeTopButton,
     scriptSelect,
     pronunciationSelect,
     handwritingSelect,
@@ -256,13 +255,54 @@ export async function createSettings(elements, onChange) {
     });
   }
 
+  // ---- One group at a time ----
+  //
+  // The panel shows one group of settings at a time (the owner, 2026-10-16,
+  // from a tester's suggestion; until then each group folded away). On a
+  // narrow screen it opens on the list of groups, a tap on one shows only
+  // that group, and "‹ Settings" goes back to the list. On a wide screen the
+  // list stays at the side, and the first group is shown to begin with.
+  // `data-view` on the panel ('list' or 'group') tells the style sheet which
+  // to show on a narrow screen.
+  const wide = window.matchMedia('(min-width: 720px)');
+  const navButtons = [...panel.querySelectorAll('#settings-nav button')];
+  const groups = [...panel.querySelectorAll('.settings-group')];
+  const backButton = panel.querySelector('#settings-back');
+  const title = panel.querySelector('#settings-title');
+
+  // Shows the group with this ID, or the list if it is null.
+  function showGroup(id) {
+    for (const group of groups) {
+      group.hidden = group.id !== id;
+    }
+    for (const button of navButtons) {
+      button.setAttribute('aria-current', String(button.dataset.group === id));
+    }
+    panel.dataset.view = id === null ? 'list' : 'group';
+    // "‹ Settings" in place of the title, on a narrow screen inside a group.
+    const inGroup = id !== null && !wide.matches;
+    backButton.hidden = !inGroup;
+    title.hidden = inGroup;
+    panel.scrollTop = 0;
+  }
+
+  for (const button of navButtons) {
+    button.addEventListener('click', () => showGroup(button.dataset.group));
+  }
+  backButton.addEventListener('click', () => showGroup(null));
+  // Turning a tablet can make the screen wide or narrow while it is open.
+  wide.addEventListener('change', () => {
+    const shown = groups.find((group) => !group.hidden);
+    showGroup(shown ? shown.id : wide.matches ? groups[0].id : null);
+  });
+
   // showModal() opens a <dialog> on top of the page and dims the rest.
   openButton.addEventListener('click', () => {
     fillPanel();
+    showGroup(wide.matches ? groups[0].id : null);
     panel.showModal();
   });
   closeButton.addEventListener('click', () => panel.close());
-  closeTopButton.addEventListener('click', () => panel.close());
   // A tap beside the panel closes it too (dialogs.js).
   closeOnTapBeside(panel);
 

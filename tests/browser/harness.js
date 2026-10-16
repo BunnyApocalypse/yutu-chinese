@@ -475,6 +475,14 @@ export const choose = (page, id, value) =>
 
 // The text of the element with this id, or of the first element matching a
 // CSS selector such as '#word-list li'. '' if there is none or it is hidden.
+// Opens Settings on one group of settings, such as 'settings-data'. The
+// groups are shown one at a time since 2026-10-16; text in the others is
+// hidden, so textOf reads it as ''.
+export async function openSettings(page, group) {
+  await tap(page, 'settings-button');
+  await page.evaluate(`document.querySelector('#settings-nav [data-group="${group}"]').click()`);
+}
+
 export const textOf = (page, idOrSelector) =>
   page.evaluate(`(() => {
     const wanted = ${JSON.stringify(idOrSelector)};
