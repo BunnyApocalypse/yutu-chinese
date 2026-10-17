@@ -30,7 +30,8 @@ const cardIdsOfKind = (word, type) => allCardIds(word).filter((id) => id.startsW
 // onWordChanged(word): the word open in the pop-up panel was changed here
 //
 // Returns:
-//   showCardsOf(word): fills the fold-out for the word being opened
+//   showCardsOf(word): fills the fold-out for the word being opened, with
+//                      Start over and Suspend or Resume on each card
 //   selecting():       true while words are being selected
 //   isSelected(word), toggle(word): for the list's rows
 //   refresh():         call when the list has been shown again
@@ -50,6 +51,7 @@ export function createCardsPanel({
 
   const cardList = byId('edit-cards');
   const knowButton = byId('know-word-button');
+  const cardsSummary = byId('edit-cards-summary');
   let openWord = null;
 
   // "due in 3d", "due now", "new"
@@ -78,22 +80,45 @@ export function createCardsPanel({
         describeDue(entry.card, now),
         entry.card ? plural(entry.reviewCount, 'review') : '',
         entry.lapses > 0 ? `forgotten ${plural(entry.lapses, 'time')}` : '',
-        entry.suspended ? 'suspended' : '',
       ].filter(Boolean);
       const text = document.createElement('span');
       text.textContent = ` ${facts.join(' · ')}`;
-      item.append(name, text);
-      if (entry.card) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'small';
-        button.textContent = 'Start over';
-        button.addEventListener('click', () => startOver(entry.type));
-        item.append(button);
+      // "Suspended" by the name, in the color of notes: which card is off
+      // shows at a glance, and the buttons stay plain (the owner asked about
+      // coloring them, 2026-10-17; red and green mean missed and passed).
+      item.classList.toggle('suspended', entry.suspended);
+      item.append(name);
+      if (entry.suspended) {
+        const mark = document.createElement('em');
+        mark.className = 'card-suspended';
+        mark.textContent = 'Suspended';
+        item.append(mark);
       }
+      // Start over (a studied card) and Suspend or Resume, on a line of
+      // their own under the facts (the owner, 2026-10-17: one list for both,
+      // in place of a second fold-out with a checkbox per kind; "Resume"
+      // since it is about as long as "Suspend").
+      const buttons = document.createElement('div');
+      buttons.className = 'card-row-buttons';
+      const button = (label, act) => {
+        const made = document.createElement('button');
+        made.type = 'button';
+        made.className = 'small';
+        made.textContent = label;
+        made.addEventListener('click', act);
+        buttons.append(made);
+      };
+      if (entry.card) {
+        button('Start over', () => startOver(entry.type));
+      }
+      button(entry.suspended ? 'Resume' : 'Suspend', () => setSuspended(entry.type, !entry.suspended));
+      item.append(text, buttons);
       return item;
     });
     cardList.replaceChildren(...rows);
+    // Said on the fold-out while it is closed.
+    const suspendedCount = (word.suspended || []).length;
+    cardsSummary.textContent = suspendedCount > 0 ? `Cards (${suspendedCount} suspended)` : 'Cards';
     // Only offered while a card of a kind that is switched on is still new.
     knowButton.hidden = markedKnown(word, getCards(), getSettings().enabledTypes, scriptOf(word), now, randomId).cards.length === 0;
   }
@@ -119,6 +144,15 @@ export function createCardsPanel({
       return;
     }
     await startCardsOver(withStartedOver(openWord, type, Date.now()), cardIdsOfKind(openWord, type));
+    await afterWordChange();
+  }
+
+  // Suspends one kind of card of the open word, or resumes it, at once. A
+  // word's writing cards in both scripts go together (leeches.js).
+  async function setSuspended(type, on) {
+    const { changedAt, suspended = [], ...rest } = openWord;
+    const kinds = on ? [...new Set([...suspended, type])] : suspended.filter((kind) => kind !== type);
+    await putAll('words', [kinds.length > 0 ? { ...rest, suspended: kinds } : rest]);
     await afterWordChange();
   }
 
@@ -217,7 +251,7 @@ export function createCardsPanel({
         await putAll('words', suspended.map(({ suspended: unused, ...word }) => word));
         return suspended.length;
       },
-      (count) => `Switched the suspended cards of ${plural(count, 'word')} back on.`,
+      (count) => `Resumed the suspended cards of ${plural(count, 'word')}.`,
     ),
   );
 

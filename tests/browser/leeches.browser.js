@@ -148,10 +148,10 @@ describe('leeches', { concurrency: false }, () => {
     // The word's page has its cards; unticking takes effect at once.
     await page.evaluate(`document.querySelector('#word-list li button').click()`);
     await waitUntil(page, `document.getElementById('word-page').dataset.shown === '愛|ai4'`, 'the word\'s page');
-    assert.equal(await textOf(page, 'edit-suspended-summary'), 'Suspended cards (1)');
-    await page.evaluate(`document.querySelector('#edit-suspended input[value="meaning"]').click()`);
+    assert.equal(await textOf(page, 'edit-cards-summary'), 'Cards (1 suspended)');
+    await page.evaluate(`[...document.querySelectorAll('#edit-cards li')].find((row) => row.textContent.startsWith('Meaning')).querySelector('button:last-child').click()`);
     await waitUntil(page, rows(0), 'no suspended cards');
-    assert.equal(await textOf(page, 'edit-suspended-summary'), 'Suspended cards');
+    assert.equal(await textOf(page, 'edit-cards-summary'), 'Cards');
     await tap(page, 'word-page-close');
     const love = (await stored(page, 'words')).find((word) => word.id === '愛|ai4');
     assert.equal(love.suspended, undefined);

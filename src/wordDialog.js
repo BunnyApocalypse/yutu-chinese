@@ -63,47 +63,11 @@ export function createWordDialog(shared) {
       : 'Waiting: you have not learned this word yet. It comes up in Learn.';
   }
 
-  // The checkboxes for suspending a word's cards, one per kind.
-  const suspendedBoxes = [...document.querySelectorAll('#edit-suspended input')];
-  // Says on the closed fold-out how many are ticked.
-  function showSuspendedCount() {
-    const count = suspendedBoxes.filter((box) => box.checked).length;
-    byId('edit-suspended-summary').textContent = count > 0 ? `Suspended cards (${count})` : 'Suspended cards';
-  }
-  // The word whose cards the word page is showing.
-  let cardsWord = null;
-  // Fills in the cards part of a word's page: how its cards stand, and the
-  // boxes for suspending them.
+  // Fills in the cards part of a word's page: how its cards stand, with
+  // Start over and Suspend or Resume on each (cardsPanel.js).
   function showCardsOnPage(word) {
-    cardsWord = word;
-    for (const box of suspendedBoxes) {
-      box.checked = (word.suspended || []).includes(box.value);
-      // A sentence or a radical has no pinyin or tone card to suspend.
-      box.closest('label').hidden =
-        (isSentence(word) || isRadical(word)) && (box.value === 'pinyin' || box.value === 'tone');
-    }
-    byId('edit-suspended-row').open = suspendedBoxes.some((box) => box.checked);
-    showSuspendedCount();
     byId('edit-cards-row').open = false;
     return shared.cardsPanel().showCardsOf(word);
-  }
-  // Ticking a box suspends that kind of card there and then.
-  for (const box of suspendedBoxes) {
-    box.addEventListener('change', async () => {
-      showSuspendedCount();
-      const { changedAt, suspended: unused, ...rest } = cardsWord;
-      const off = suspendedBoxes.filter((entry) => entry.checked).map((entry) => entry.value);
-      const changed = off.length > 0 ? { ...rest, suspended: off } : rest;
-      await putAll('words', [changed]);
-      await shared.afterChange();
-      cardsWord = shared.words().find((word) => word.id === changed.id) || changed;
-      // If the word's pop-up panel is open too, it goes on with the changed word.
-      if (openWord && openWord.id === cardsWord.id) {
-        openWord = cardsWord;
-        dialogResult = { changed: true, word: cardsWord };
-      }
-      shared.cardsPanel().showCardsOf(cardsWord);
-    });
   }
 
   function openDialog(word) {

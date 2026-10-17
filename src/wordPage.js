@@ -480,6 +480,13 @@ export function createWordPage({
       parts.push(built);
     }
 
+    // Opened from a card in Review: a strip under the word for that card,
+    // with Suspend and Start over (UX review, item 16; the owner,
+    // 2026-10-17). The rest of the word's cards are at the bottom, as ever.
+    if (word && target.thisCard && target.thisCard.wordId === word.id) {
+      parts.splice(1, 0, showThisCard(target.thisCard));
+    }
+
     // Just added from the dictionary, and still to be learned: "Learn it now"
     // (the owner, 2026-10-16). At the top, not among the buttons at the
     // bottom, which are four already.
@@ -506,6 +513,32 @@ export function createWordPage({
     practiceButton.hidden = !shown.word;
     // For the browser tests, which wait for a page to be filled in.
     dialog.dataset.shown = word ? word.id : target.text;
+  }
+
+  // The strip for the card the page was opened from (see show).
+  function showThisCard(thisCard) {
+    const strip = element('div', 'page-this-card');
+    const said = element('span');
+    said.append(element('b', '', `This card: ${thisCard.label}`));
+    if (thisCard.facts) {
+      said.append(` · ${thisCard.facts}`);
+    }
+    const buttons = element('div', 'page-this-card-buttons');
+    for (const [label, act] of [
+      ['Suspend', thisCard.suspend],
+      ['Start over', thisCard.startOver],
+    ]) {
+      const button = element('button', 'small', label);
+      button.type = 'button';
+      button.addEventListener('click', async () => {
+        if (await act()) {
+          dialog.close();
+        }
+      });
+      buttons.append(button);
+    }
+    strip.append(said, buttons);
+    return strip;
   }
 
   // ---- A word of the example sentence, tapped ----
@@ -750,8 +783,10 @@ export function createWordPage({
     // The learning note of one of your words, or null (for the tip on a
     // card: cardTip.js). The notes are fetched the first time.
     noteOf: async (word) => noteFor(await loadNotes(), word),
-    // Opens the page of one of your words.
-    open: (word) => start({ word }),
+    // Opens the page of one of your words. thisCard, when opened from a card
+    // in Review: { wordId, label, facts, suspend(), startOver() }, for the
+    // strip at the top; suspend and startOver return true once done.
+    open: (word, thisCard = null) => start({ word, thisCard }),
     // Opens the page for some characters, whatever they are.
     openText: (text) => start({ text }),
     // Opens the page of a dictionary entry (the Words tab's dictionary), in

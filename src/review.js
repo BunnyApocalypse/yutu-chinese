@@ -9,7 +9,7 @@
 // What they share lives here: choosing the next card, the grade buttons, and
 // saving.
 
-import { getAll, putAll, saveReview, saveKnown, randomId } from './db.js';
+import { getAll, putAll, saveReview, saveKnown, startCardsOver, randomId } from './db.js';
 import { gradeOptions, GRADES, AGAIN, GOOD } from './scheduler.js';
 import { deckWithInside, isInDecks, dailyGoal } from './decks.js';
 import { fillDeckSelect } from './decksPanel.js';
@@ -22,13 +22,15 @@ import {
   lessonSteps,
   nextToLearn,
   CARD_TYPES,
+  allCardIds,
 } from './session.js';
 import { toneAnswers, readingsFor, describeReading } from './tones.js';
 import { scriptFor, scriptFlagFor } from './words.js';
 import { fillMixed } from './lang.js';
 import { isLeech, lapsesOf, isSuspended, withSuspended, becameLeech } from './leeches.js';
 import { speak } from './speech.js';
-import { markedKnown } from './cardManager.js';
+import { markedKnown, withStartedOver } from './cardManager.js';
+import { ask } from './confirm.js';
 import { isSentence, sentenceCardTypes, sentenceWriting } from './sentences.js';
 import { isRadical, RADICAL_CARD_TYPES } from './radicals.js';
 import { cardTip } from './cardTip.js';
@@ -65,7 +67,8 @@ const RECHECK_MS = 15 * 1000;
 // settings: the current settings (see settings.js)
 // editWord(word): opens the word's panel to change it; returns a promise for
 //           { changed, word } (see edit() in wordsPanel.js)
-// showWord(word): opens the word's page
+// showWord(word, thisCard): opens the word's page; thisCard, if given, is the
+//                  card it was opened from, for the strip at its top (wordPage.js)
 // noteOf(word): a promise for the word's learning note, or null
 // tappableText(element, text): fills an element with a learning note whose
 //   words can be tapped (see cardTip.js)
@@ -299,10 +302,59 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   // "About this word", shown with the grades: the word's page, with its
   // note, an example sentence and how its characters are built.
+  // Opened from a card, the page has a strip at its top for that card, with
+  // Suspend and Start over (UX review, item 16; the owner, 2026-10-17): from
+  // Words that is five or six taps. Either one takes the card out of Review
+  // there and then, ungraded, and the next one comes, as "Suspend this card"
+  // does for a leech.
   aboutWordButton.addEventListener('click', () => {
-    if (current) {
-      showWord(current.word);
+    if (!current) {
+      return;
     }
+    const shown = current;
+    const { word, type, card } = current;
+    // Free practice has no card of its own to manage, and a card already
+    // graded is done with.
+    const thisCard = practicing || !options
+      ? null
+      : {
+          wordId: word.id,
+          label: typeElement.textContent,
+          facts: lapsesOf(card) > 0 ? `forgotten ${lapsesOf(card)} time${lapsesOf(card) === 1 ? '' : 's'}` : '',
+          // Each returns true once done, and the page then closes.
+          async suspend() {
+            if (current !== shown || !options) {
+              return false;
+            }
+            options = null;
+            await suspend(word, type);
+            showNotice(
+              `Suspended: the ${type} card of ${word[scriptFor(word, settings)]}. ` +
+                'Resume it from the word\'s page (Words tab).',
+            );
+            showNext();
+            return true;
+          },
+          async startOver() {
+            if (current !== shown || !options) {
+              return false;
+            }
+            const confirmed = await ask({
+              question: `Start the ${type} card of this word over?`,
+              detail: 'It becomes a new card, as if never studied. Its reviews are kept in the history but no longer count.',
+              yes: 'Start over',
+            });
+            if (!confirmed || current !== shown || !options) {
+              return false;
+            }
+            options = null;
+            await startOver(word, type);
+            showNotice(`Started over: the ${type} card of ${word[scriptFor(word, settings)]} is new again.`);
+            showNext();
+            return true;
+          },
+        };
+    showWord(word, thisCard);
   });
 
   // "Edit word", shown with the grades: a mistake in a word is usually
@@ -356,7 +408,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     await suspend(word, type);
     showNotice(
       `Suspended: the ${type} card of ${word[scriptFor(word, settings)]}, forgotten ${lapsesOf(card)} times. ` +
-        'Switch it back on from the word\'s page (Words tab).',
+        'Resume it from the word\'s page (Words tab).',
     );
     showNext();
   });
@@ -367,6 +419,19 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     const { changedAt, ...suspended } = withSuspended(word, type);
     await putAll('words', [suspended]);
     words = words.map((entry) => (entry.id === word.id ? suspended : entry));
+  }
+
+  // Starts one kind of card of a word over, here and in the database: the
+  // card is removed and the word notes when (see withStartedOver), in both
+  // scripts for a writing card, as the word's page does (cardsPanel.js).
+  async function startOver(word, type) {
+    const { changedAt, ...startedOver } = withStartedOver(word, type, Date.now());
+    const ids = allCardIds(word).filter((id) => id.startsWith(`${word.id}#${type}`));
+    await startCardsOver(startedOver, ids);
+    words = words.map((entry) => (entry.id === word.id ? startedOver : entry));
+    for (const id of ids) {
+      cards.delete(id);
+    }
   }
 
   // Saves the review with the chosen grade and moves on.
@@ -422,7 +487,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // Said above the next card, until that one is graded.
       showNotice(
         `Suspended: the ${type} card of ${word[scriptFor(word, settings)]}, forgotten ${lapsesOf(newCard)} times. ` +
-          'It will not come up again until you switch it back on in the word\'s panel (Decks tab).',
+          'It will not come up again until you resume it from the word\'s page (Words tab).',
       );
     }
     showNext();

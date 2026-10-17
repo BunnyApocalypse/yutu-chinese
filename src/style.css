@@ -2353,16 +2353,35 @@ button.part.sound .part-role {
   font-size: var(--size-small);
 }
 
+/* A card's name and facts, then its buttons on a line of their own, at the
+   right (the owner chose it from pictures, 2026-10-17). */
 .card-rows li {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-small);
+  align-items: baseline;
+  gap: var(--space-tiny) var(--space-small);
+  padding: var(--space-small) 0;
+  border-bottom: 1px solid var(--line);
 }
 
 .card-rows li span {
-  flex: 1;
+  flex: 1 1 60%;
   color: var(--muted);
+}
+
+/* "Suspended" beside a suspended card's name (cardsPanel.js). Not faded:
+   faded text would fall under the contrast kept everywhere. */
+.card-suspended {
+  color: var(--warn);
+  font-style: normal;
+  font-weight: 600;
+}
+
+.card-row-buttons {
+  display: flex;
+  flex-basis: 100%;
+  justify-content: flex-end;
+  gap: var(--space-small);
 }
 
 /* A word picked while several are being selected. */
@@ -2568,6 +2587,32 @@ button.path-part {
 
 /* On a word's page just added from the dictionary: a bar of its own above
    the word, "Added to …" with "Learn it now" at its end (wordPage.js). */
+/* The card the page was opened from, in Review, with Suspend and Start over
+   (wordPage.js). Like "Learn it now" above, but under the word. */
+.page-this-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-small) var(--space-medium);
+  margin: 0 0 var(--space-large);
+  padding: var(--space-small) var(--space-small) var(--space-small) var(--space-large);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-soft);
+  font-size: var(--size-body);
+}
+
+.page-this-card b {
+  color: var(--text);
+}
+
+.page-this-card-buttons {
+  display: flex;
+  gap: var(--space-small);
+}
+
 .page-learn-now {
   display: flex;
   align-items: center;

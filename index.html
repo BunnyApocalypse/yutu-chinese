@@ -369,7 +369,7 @@
               <button id="bulk-all-button" class="small" type="button">Select all listed</button>
               <button id="bulk-know-button" class="small" type="button" data-needs-selection>I know these</button>
               <button id="bulk-suspend-button" class="small" type="button" data-needs-selection>Suspend</button>
-              <button id="bulk-unsuspend-button" class="small" type="button" data-needs-selection>Switch back on</button>
+              <button id="bulk-unsuspend-button" class="small" type="button" data-needs-selection>Resume</button>
               <button id="bulk-start-over-button" class="small danger" type="button" data-needs-selection>Start over</button>
               <button id="bulk-remove-button" class="small danger" type="button" data-needs-selection>Remove</button>
             </div>
@@ -634,27 +634,16 @@
           <div id="word-page-cards" hidden>
           <!-- How each of the word's cards stands (cardsPanel.js). -->
           <details id="edit-cards-row" class="add-list">
-            <summary>Cards</summary>
+            <summary id="edit-cards-summary">Cards</summary>
             <ul id="edit-cards" class="card-rows"></ul>
             <div class="buttons">
               <button id="know-word-button" class="small" type="button">I know this word already</button>
             </div>
             <p class="hint">
-              <b>Start over</b> makes a card new again. <b>I know this word already</b> answers its new cards "Easy",
+              <b>Start over</b> makes a card new again. <b>Suspend</b> keeps a card from coming up, with its history
+              and schedule, until resumed. <b>I know this word already</b> answers its new cards "Easy",
               so the word skips its lesson and the cards come up in Review in some days.
             </p>
-          </details>
-          <!-- One checkbox per kind of card: ticked ones do not come up in Review. -->
-          <details id="edit-suspended-row" class="add-list">
-            <summary id="edit-suspended-summary">Suspended cards</summary>
-            <fieldset id="edit-suspended" class="setting">
-              <legend>Do not show me this word's</legend>
-              <label><input type="checkbox" value="meaning" /> meaning card</label>
-              <label><input type="checkbox" value="pinyin" /> pinyin card</label>
-              <label><input type="checkbox" value="tone" /> tone card</label>
-              <label><input type="checkbox" value="writing" /> writing card</label>
-            </fieldset>
-            <p class="hint">A suspended card keeps its history and its schedule; it just does not come up until you untick it here. Ticking or unticking takes effect at once.</p>
           </details>
           </div>
         </div>
@@ -971,7 +960,7 @@
             <option value="suspend">Suspend it</option>
           </select>
           <span class="hint">
-            A suspended card no longer comes up in Review, until you switch it back on, on the word's page.
+            A suspended card no longer comes up in Review, until you resume it, on the word's page.
           </span>
         </label>
         </section>

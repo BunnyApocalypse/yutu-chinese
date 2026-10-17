@@ -67,10 +67,10 @@ describe('managing cards', { concurrency: false }, () => {
     await page.evaluate(`document.querySelectorAll('#word-list li button')[1].click(); document.getElementById('word-page-edit').click()`);
     await waitUntil(page, `document.querySelectorAll('#edit-cards li').length === 4`, 'the four cards');
     assert.deepEqual(await page.evaluate(cardRows), [
-      'Meaning not studied yet',
-      'Pinyin not studied yet',
-      'Tones not studied yet',
-      'Writing (traditional) not studied yet',
+      'Meaning not studied yetSuspend',
+      'Pinyin not studied yetSuspend',
+      'Tones not studied yetSuspend',
+      'Writing (traditional) not studied yetSuspend',
     ]);
     await tap(page, 'know-word-button');
     await waitUntil(page, `document.getElementById('know-word-button').hidden`, 'the word marked as known');
@@ -79,13 +79,13 @@ describe('managing cards', { concurrency: false }, () => {
     const reviews = await stored(page, 'reviews');
     assert.deepEqual(reviews.map((review) => [review.grade, review.markedKnown]), Array(4).fill([4, true]));
     assert.equal(typeof (await stored(page, 'words')).find((word) => word.id === '愛|ai4').learnedAt, 'number');
-    assert.match((await page.evaluate(cardRows))[0], /^Meaning due in \d+d · 1 reviewStart over$/);
+    assert.match((await page.evaluate(cardRows))[0], /^Meaning due in \d+d · 1 reviewStart overSuspend$/);
     assert.match(await textOf(page, 'word-dialog-status'), /^You have learned this word/);
   });
 
   it('starts a card over', async () => {
     await page.evaluate(`document.querySelector('#edit-cards li button').click()`);
-    await waitUntil(page, `document.querySelector('#edit-cards li').textContent === 'Meaning not studied yet'`, 'the card new again');
+    await waitUntil(page, `document.querySelector('#edit-cards li').textContent === 'Meaning not studied yetSuspend'`, 'the card new again');
     assert.equal((await stored(page, 'cards')).length, 3);
     // The review is kept; the word notes when the card was started over.
     assert.equal((await stored(page, 'reviews')).length, 4);
@@ -126,7 +126,7 @@ describe('managing cards', { concurrency: false }, () => {
     await waitUntil(page, note('Suspended every card of 2 words.'), 'the words suspended');
     assert.deepEqual((await stored(page, 'words')).map((word) => word.suspended.length), [4, 4]);
     await tap(page, 'bulk-unsuspend-button');
-    await waitUntil(page, note('Switched the suspended cards of 2 words back on.'), 'the cards back on');
+    await waitUntil(page, note('Resumed the suspended cards of 2 words.'), 'the cards back on');
     assert.deepEqual((await stored(page, 'words')).map((word) => word.suspended), [undefined, undefined]);
 
     // 貓 has four new cards and 愛 the one that was started over.
@@ -179,5 +179,84 @@ describe('managing cards', { concurrency: false }, () => {
     assert.deepEqual(saved.formerIds, ['愛|ai3']);
     assert.equal(saved.learnedAt, 12345);
     assert.deepEqual(saved.startedOverAt, { meaning: 678 });
+  });
+
+  it('suspends or starts over the card on screen, from its word\'s page in Review', async () => {
+    // Its cards all studied, and only the one of this kind due.
+    const onlyDue = (type) =>
+      page.evaluate(`new Promise((resolve) => {
+        indexedDB.open('hanzi-trainer').onsuccess = (event) => {
+          const tx = event.target.result.transaction('cards', 'readwrite');
+          const store = tx.objectStore('cards');
+          store.getAll().onsuccess = (all) => {
+            for (const card of all.target.result) {
+              // Reviewed long ago: one just reviewed is held back a while.
+              store.put({ ...card, due: card.type === '${type}' ? 0 : Date.now() + 365 * 86400000, lastReviewedAt: 1 });
+            }
+          };
+          tx.oncomplete = resolve;
+        };
+      })`);
+    // The card answered, its word's page opened with About.
+    const openFromCard = async (kind) => {
+      await reloadApp(page);
+      await page.evaluate(ANSWER_YES);
+      await tap(page, 'review-tab');
+      await waitUntil(page, `document.getElementById('card-type').textContent === '${kind}'`, `the ${kind} card`);
+      await page.evaluate(`document.getElementById('card-face').dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))`);
+      await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
+      await tap(page, 'about-word-button');
+      await waitUntil(page, `document.querySelector('#word-page .page-this-card')`, 'the strip for this card');
+    };
+    const stripButton = (label) =>
+      page.evaluate(`[...document.querySelectorAll('.page-this-card button')].find((b) => b.textContent === '${label}').click()`);
+
+    // Its pinyin card switched back on, then all its cards studied at once.
+    await page.evaluate(`new Promise((resolve) => {
+      indexedDB.open('hanzi-trainer').onsuccess = (event) => {
+        const tx = event.target.result.transaction('words', 'readwrite');
+        const store = tx.objectStore('words');
+        store.get('愛|ai4').onsuccess = (got) => {
+          const { suspended, ...word } = got.target.result;
+          store.put(word);
+        };
+        tx.oncomplete = resolve;
+      };
+    })`);
+    await reloadApp(page);
+    await page.evaluate(ANSWER_YES);
+    await tap(page, 'words-tab');
+    await waitUntil(page, rows(1));
+    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await waitUntil(page, `document.getElementById('word-page').open && !document.getElementById('know-word-button').hidden`, "the word's page");
+    await tap(page, 'know-word-button');
+    await waitUntil(page, `document.getElementById('know-word-button').hidden`, 'the word marked as known');
+    await tap(page, 'word-page-close');
+
+    // Suspend first: a card started over is new, and comes before the others.
+    await onlyDue('pinyin');
+    await openFromCard('Pinyin');
+    await stripButton('Suspend');
+    await waitUntil(page, `!document.getElementById('word-page').open`, 'the page to close');
+    assert.match(await textOf(page, 'review-notice'), /^Suspended: the pinyin card of 愛/);
+    assert.deepEqual((await stored(page, 'words')).find((word) => word.id === '愛|ai4').suspended, ['pinyin']);
+
+    // Start over (the question answered yes by ANSWER_YES).
+    await onlyDue('meaning');
+    await openFromCard('Meaning');
+    assert.match(await textOf(page, '#word-page .page-this-card'), /^This card: Meaning/);
+    await stripButton('Start over');
+    await waitUntil(page, `!document.getElementById('word-page').open`, 'the page to close');
+    assert.match(await textOf(page, 'review-notice'), /^Started over: the meaning card of 愛 is new again/);
+    assert.deepEqual((await stored(page, 'cards')).map((card) => card.type).sort(), ['pinyin', 'tone', 'writing']);
+    const love = (await stored(page, 'words')).find((word) => word.id === '愛|ai4');
+    assert.ok(love.startedOverAt.meaning > 678);
+    // The page opened from the Words tab has no such strip.
+    await tap(page, 'words-tab');
+    await waitUntil(page, rows(1));
+    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await waitUntil(page, `document.getElementById('word-page').dataset.shown === '愛|ai4'`, "the word's page");
+    assert.equal(await page.evaluate(`document.querySelector('#word-page .page-this-card')`), null);
+    await tap(page, 'word-page-close');
   });
 });

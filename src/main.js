@@ -670,7 +670,7 @@ async function startUp() {
     { writing: flow, tone: toneFlow, recall: recallCard },
     settings,
     (word) => wordsPanel.edit(word),
-    (word) => wordsPanel.showWord(word),
+    (word, thisCard) => wordsPanel.showWord(word, thisCard),
     (word) => wordsPanel.noteOf(word),
     (element, text) => wordsPanel.tappableText(element, text),
   );

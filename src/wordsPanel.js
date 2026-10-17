@@ -761,11 +761,11 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     },
 
     // Opens a word's page from elsewhere in the app (Review's "About this
-    // word").
-    async showWord(word) {
+    // word"); thisCard: the card it was opened from (see wordPage.js).
+    async showWord(word, thisCard = null) {
       applySettings();
       await load();
-      wordPage.open(words.find((entry) => entry.id === word.id) || word);
+      wordPage.open(words.find((entry) => entry.id === word.id) || word, thisCard);
     },
 
     async show(newView) {
