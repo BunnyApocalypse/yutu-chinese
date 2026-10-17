@@ -1052,6 +1052,24 @@ button.slot {
   scrollbar-color: var(--scrollbar) transparent;
 }
 
+/* When the tip fits (a tablet, a short tip), the word and the tip are
+   centered in the room above "More about this word", which stays at the
+   card's bottom edge as it does on a phone (the owner, 2026-10-17, from
+   pictures: until then everything sat at the top with the card's lower part
+   empty). An empty layer above the word and the tip itself share the room
+   left over; when nothing is left over, the card starts at the top and
+   scrolls, as before. The negative margin takes back the gap that the
+   empty layer would add. */
+.card-face.with-tip:not(.drawable)::before {
+  content: '';
+  flex-grow: 1;
+  margin-bottom: calc(-1 * var(--space-small));
+}
+
+.card-face.with-tip > .face-tip {
+  flex-grow: 1;
+}
+
 /* In a column of fixed height, a part that hides its overflow (the clamped
    meaning) would otherwise shrink to nothing; the face scrolls instead. */
 .card-face.with-tip > * {
@@ -1113,7 +1131,8 @@ button.slot {
   position: sticky;
   bottom: -12px;
   align-self: stretch;
-  margin: 0 calc(-1 * var(--space-medium)) calc(-1 * var(--space-medium));
+  /* "auto" above: pushed to the bottom edge when the tip fits. */
+  margin: auto calc(-1 * var(--space-medium)) calc(-1 * var(--space-medium));
   padding: var(--space-small) var(--space-medium) var(--space-medium);
   text-align: left;
   background: var(--surface);
