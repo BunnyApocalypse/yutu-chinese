@@ -433,8 +433,15 @@ async function walk(page, sizeName, size, shots) {
     await tap(page, 'settings-button');
     await waitUntil(page, `document.getElementById('settings-panel').open`, 'Settings');
     await shoot('17-settings', 'Settings, as it opens');
-    await page.evaluate(`document.querySelectorAll('#settings-panel details').forEach((group) => { group.open = true; })`);
-    await shoot('18-settings-open', 'Settings, every group unfolded');
+    // One group at a time, as Settings shows them (2026-10-16): on a phone
+    // the group in place of the list, on a wide screen beside it.
+    const groups = await page.evaluate(`[...document.querySelectorAll('#settings-nav [data-group]')].map((b) => [b.dataset.group, b.textContent.trim()])`);
+    for (const [index, [group, name]] of groups.entries()) {
+      await page.evaluate(`document.querySelector('#settings-nav [data-group="${group}"]').click()`);
+      await waitUntil(page, `!document.getElementById('${group}').hidden`, `the group ${name}`);
+      await shoot(`18-settings-${index + 1}`, `Settings: ${name}`);
+    }
+    await page.evaluate(`document.getElementById('settings-back')?.click()`);
     await tap(page, 'welcome-again-button');
     await waitUntil(page, `document.getElementById('welcome').open`, 'the introduction');
     for (let screen = 1; screen <= 8; screen++) {

@@ -34,6 +34,8 @@ Free practice under Words (four taps) is already on the list for the pass over t
 - **One pass over the wording**, so the same thing has one name everywhere ("About" and "More about this word", for example), with short labels.
 - **A small "done" screen at the end of Review**, with today's count and when the next cards are due, in place of the line "All done for now…"; it leaves a place for the streak and the bunny later, without building them.
 
+- **Two looks of the app's own, "Yutu light" and "Yutu dark"** (the owner, 2026-10-17): colors drawn from the jade rabbit and the paper moon of the icon (jade greens, the moon's paper and silver, a night sky), beside the plain Light and Dark of today, or in their place: to be decided with the owner from samples. Since 2026-10-15 every color is named once at the top of `src/style.css` with a light and a dark value, so a look is a third and fourth set of values plus a choice in the Look setting (`theme`, `src/theme.js`), the samples in the introduction and Settings, and Hanzi Writer's colors (`themeColor` in `src/quiz.js`). To settle: whether jade replaces the blue of main buttons, links and pinyin (it must keep 4.5:1 contrast, and red and green already mean missed and passed in the writing area), and whether the plain looks stay.
+
 **The order:** (1) the shared styles; (2) the study screen: items 5, 6, 10 and 12, the tablet layout and the font; (3) the managing screens: items 4 and 16 and where Free practice goes; (4) the wording and the done screen. `node scripts/ux-atlas.js` before and after each step, to compare.
 
 **The refactoring is done in parts, each just before the step that needs it**, with no change to how anything behaves:
