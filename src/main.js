@@ -224,6 +224,7 @@ function setMode(newMode) {
   // other screen, or Decks coming back to its front page, has the name.
   byId('place-title').hidden = false;
   byId('deck-back-button').hidden = true;
+  byId('practice-back-button').hidden = true;
   reviewHeader.hidden = !reviewing;
   wordForm.hidden = mode !== 'practice';
   wordsPanelElement.hidden = mode !== 'decks' && mode !== 'words';
@@ -288,10 +289,22 @@ byId('learn-next-button').addEventListener('click', () => {
 });
 // Review or Learn with no words (or none left to learn): words are added in Decks.
 byId('add-words-button').addEventListener('click', () => setMode('decks'));
-// Free practice is opened from Settings (and from a word's page).
+// Free practice is opened from Settings' Writing group, "Try writing with
+// these settings" (and from a word's page, which taps the same button). From
+// Settings, "‹ Settings" in the top bar goes back there, as the owner
+// expected (2026-10-17).
 practiceButton.addEventListener('click', () => {
+  const fromSettings = byId('settings-panel').open;
   byId('settings-panel').close();
   setMode('practice');
+  if (fromSettings) {
+    byId('place-title').hidden = true;
+    byId('practice-back-button').hidden = false;
+  }
+});
+byId('practice-back-button').addEventListener('click', () => {
+  byId('settings-button').click();
+  document.querySelector('#settings-nav [data-group="settings-writing"]').click();
 });
 decksTab.addEventListener('click', () => setMode('decks'));
 wordsTab.addEventListener('click', () => setMode('words'));

@@ -102,6 +102,11 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     await waitUntil(page, `document.getElementById('practice-button').offsetParent !== null`, 'the button in Settings');
     await tap(page, 'practice-button');
     await waitUntil(page, `!document.getElementById('settings-panel').open && !document.getElementById('word-form').hidden`, 'Free practice');
+    // "‹ Settings" in the top bar goes back to the Writing group.
+    assert.equal(await isShown(page, 'practice-back-button'), true);
+    await tap(page, 'practice-back-button');
+    await waitUntil(page, `document.getElementById('settings-panel').open && !document.getElementById('settings-writing').hidden`, 'Settings, Writing');
+    await tap(page, 'settings-close');
     await tap(page, 'words-tab');
     await waitUntil(page, `document.getElementById('word-list').offsetParent !== null`, 'the Words tab');
     await page.evaluate(`document.querySelector('#word-list li button').click()`);
@@ -112,6 +117,9 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     assert.equal(await page.evaluate(`document.getElementById('word-input').value`), '貓');
     assert.equal(await page.evaluate(`document.getElementById('word-page').open`), false);
     assert.equal(await inView(page, 'word-list'), false);
+    // From a word's page there is no way back to Settings, but the name.
+    assert.equal(await isShown(page, 'practice-back-button'), false);
+    assert.equal(await isShown(page, 'place-title'), true);
   });
 
   it('searches the dictionary too on the Words tab, and adds a word from there', async () => {
