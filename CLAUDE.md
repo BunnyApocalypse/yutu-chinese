@@ -87,7 +87,7 @@ How each part of the app works, and why, is in `docs/` (index: `docs/README.md`)
 - **A new source of data or code** gets its README with source and license, and a line in "Credits and licenses" (`credits-dialog` in `index.html`).
 - **Nothing that identifies a tester** goes into the repository (names, contacts, identifying quotes): say "a tester". Testing notes live in the git-ignored `local/testing/`.
 - **Content from Skritter stays on the owner's devices**: never commit an export or anything derived from one; `exports/` is git-ignored; print counts, not words.
-- **Looks are not worked on** until the pass over the looks, except what is plainly broken. **Colors are named once at the top of `src/style.css`, with a light and a dark value**; use `var(--name)` (add a name, in both looks, if none fits), never a color written out (`docs/interface.md`, "Dark mode"). **The writing area must stay the biggest thing on the screen** and the same size in every step; room is found by trimming the rows around it (`docs/pitfalls.md`).
+- **Looks are not worked on** until the pass over the looks, except what is plainly broken. **Colors are named once at the top of `src/style.css`, with a light and a dark value, and so are sizes of text, space and corners and the height of what is tapped**; use `var(--name)` (add a name, in both looks for a color, only if none fits), never a color or size written out (`docs/interface.md`, "Dark mode" and "Shared sizes"). Buttons are of four kinds: `primary` (one a screen), plain, quiet `link-button`, `danger`. **The writing area must stay the biggest thing on the screen** and the same size in every step; room is found by trimming the rows around it (`docs/pitfalls.md`).
 
 ## Deploying
 

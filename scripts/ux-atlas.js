@@ -19,6 +19,9 @@
 // nothing is measured after a resize a real device would not have.
 //
 // SIZES=phone node scripts/ux-atlas.js runs one size only.
+// To compare a change in the looks before making it: TRY_CSS adds a few
+// lines of style to every screen, and OUT puts the pictures elsewhere, e.g.
+//   SIZES=phone OUT=local/ux-atlas-blue TRY_CSS=':root{--quiet-text:var(--accent)}' node scripts/ux-atlas.js
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -39,7 +42,7 @@ import {
   ANSWER_YES,
 } from '../tests/browser/harness.js';
 
-const OUT = 'local/ux-atlas';
+const OUT = process.env.OUT || 'local/ux-atlas';
 const ALL_SIZES = {
   phone: { width: 390, height: 844, mobile: true },
   // A small phone (the iPhone SE's size), where room is shortest.
@@ -204,6 +207,10 @@ async function walk(page, sizeName, size, shots) {
 
   // Takes the screen as it is now: measured once, pictured in both looks.
   async function shoot(key, title) {
+    if (process.env.TRY_CSS) {
+      // Added again whenever the page has been reloaded since.
+      await page.evaluate(`document.getElementById('try-css') || document.head.append(Object.assign(document.createElement('style'), { id: 'try-css', textContent: ${JSON.stringify(process.env.TRY_CSS)} }))`);
+    }
     await sleep(350); // animations of pop-ups and Hanzi Writer settle
     const measures = await page.evaluate(MEASURE);
     const pictures = {};

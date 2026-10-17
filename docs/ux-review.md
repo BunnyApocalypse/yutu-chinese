@@ -12,7 +12,11 @@ the owner before it is fixed.
 ## The atlas
 
 - **Run it:** `node scripts/ux-atlas.js` (about three minutes), then open
-  `local/ux-atlas/index.html` in a browser. `SIZES=phone` runs one size. It
+  `local/ux-atlas/index.html` in a browser. `SIZES=phone` runs one size.
+  To compare a change before making it, `TRY_CSS` adds a few lines of style
+  to every screen and `OUT` puts the pictures in another folder (example at
+  the top of the script); the first use, 2026-10-17, set the quiet buttons
+  gray beside blue (`local/quiet-compare/`). It
   needs what the browser tests need (Chromium on the computer, the stroke
   data copied), and adds no dependency: it uses `tests/browser/harness.js`.
 - **What it does:** starts the app in a fresh profile in four headless

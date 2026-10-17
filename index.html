@@ -370,8 +370,8 @@
               <button id="bulk-know-button" class="small" type="button" data-needs-selection>I know these</button>
               <button id="bulk-suspend-button" class="small" type="button" data-needs-selection>Suspend</button>
               <button id="bulk-unsuspend-button" class="small" type="button" data-needs-selection>Switch back on</button>
-              <button id="bulk-start-over-button" class="small" type="button" data-needs-selection>Start over</button>
-              <button id="bulk-remove-button" class="small" type="button" data-needs-selection>Remove</button>
+              <button id="bulk-start-over-button" class="small danger" type="button" data-needs-selection>Start over</button>
+              <button id="bulk-remove-button" class="small danger" type="button" data-needs-selection>Remove</button>
             </div>
             <div class="buttons">
               <select id="bulk-deck" aria-label="Deck to put the selected words in"></select>
@@ -527,7 +527,7 @@
           <div class="buttons">
             <button type="submit" class="small primary">Save</button>
             <button id="study-next-button" class="small" type="button">Study next</button>
-            <button id="remove-word-button" class="small" type="button">Remove</button>
+            <button id="remove-word-button" class="small danger" type="button">Remove</button>
             <button id="word-dialog-close" class="small" type="button">Close</button>
           </div>
         </form>
@@ -697,7 +697,7 @@
           <p id="deck-dialog-note" role="status" class="note"></p>
           <div id="deck-buttons" class="buttons">
             <button type="submit" class="small primary">Save</button>
-            <button id="deck-delete-button" class="small" type="button">Delete</button>
+            <button id="deck-delete-button" class="small danger" type="button">Delete</button>
             <button id="deck-dialog-close" class="small" type="button">Close</button>
           </div>
           <!-- Shown in place of the buttons once Delete is tapped. -->
@@ -705,7 +705,7 @@
             <p id="deck-delete-text"></p>
             <div class="buttons">
               <button id="deck-delete-keep" class="small" type="button">Delete the deck, keep the words</button>
-              <button id="deck-delete-words" class="small" type="button"></button>
+              <button id="deck-delete-words" class="small danger" type="button"></button>
               <button id="deck-delete-cancel" class="small" type="button">Don't delete</button>
             </div>
           </div>
@@ -721,7 +721,7 @@
         <p id="import-combine-text"></p>
         <div class="buttons">
           <button id="import-combine-button" class="small primary" type="button">Combine with this device</button>
-          <button id="import-replace-button" class="small" type="button">Replace everything on this device</button>
+          <button id="import-replace-button" class="small danger" type="button">Replace everything on this device</button>
           <button id="import-cancel-button" class="small" type="button">Cancel</button>
         </div>
         <p class="hint">
