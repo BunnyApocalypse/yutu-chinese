@@ -92,14 +92,14 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     await waitUntil(page, `document.getElementById('word-list').offsetParent !== null && ${rows(1)}`, 'the deck\'s word under its page');
     assert.equal(await inView(page, 'word-search'), true);
     assert.equal(await inView(page, 'words-deck-select'), false);
-    assert.equal(await inView(page, 'practice-tab'), false);
+    assert.equal(await inView(page, 'practice-button'), false);
     await tap(page, 'my-decks-button');
     await waitUntil(page, `document.getElementById('word-list').offsetParent === null`, 'no words on the front page');
   });
 
   it('reaches Free practice from the Words tab and from a word\'s page', async () => {
     await tap(page, 'words-tab');
-    await waitUntil(page, `document.getElementById('practice-tab').offsetParent !== null`, 'the Words tab');
+    await waitUntil(page, `document.getElementById('practice-button').offsetParent !== null`, 'the Words tab');
     await page.evaluate(`document.querySelector('#word-list li button').click()`);
     await waitUntil(page, `document.getElementById('word-page').dataset.shown === '貓|mao1'`, 'the word\'s page');
     await tap(page, 'word-page-practice');

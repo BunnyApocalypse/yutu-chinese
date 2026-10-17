@@ -280,7 +280,7 @@ async function walk(page, sizeName, size, shots) {
   });
 
   await step('Free practice', async () => {
-    await tap(page, 'practice-tab');
+    await tap(page, 'practice-button');
     await waitUntil(page, `document.getElementById('stroke-count').textContent.startsWith('1/')`, 'Free practice');
     await shoot('02-free-practice', 'Free practice, its default word');
   });

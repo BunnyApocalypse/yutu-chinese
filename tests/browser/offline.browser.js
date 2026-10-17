@@ -31,7 +31,7 @@ describe('offline use', { concurrency: false }, () => {
 
   // Writes the first stroke of a character in Free practice and returns the status line.
   async function writeFirstStroke(char) {
-    await tap(page, 'practice-tab');
+    await tap(page, 'practice-button');
     await startWriting(page, char);
     const area = await writingArea(page);
     return drawStroke(page, area, loadStrokeData(char).medians[0]);
@@ -144,7 +144,7 @@ describe('offline use', { concurrency: false }, () => {
     await waitUntil(page, `document.querySelector('#add-suggestions button') !== null`, 'a dictionary entry');
     assert.match(await textOf(page, '#add-suggestions button'), /library/);
     // Tone cards need the tone table, which is part of the app's own files.
-    await tap(page, 'practice-tab');
+    await tap(page, 'practice-button');
     await type(page, 'word-input', '星期');
     await page.evaluate(`(() => {
       const kind = document.getElementById('practice-type');

@@ -20,7 +20,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
 
   // Starts a Free practice card of this kind for a word of the test word list.
   async function practice(word, kind) {
-    await tap(page, 'practice-tab');
+    await tap(page, 'practice-button');
     // Emptied first, so that the new card can be told from the one before,
     // which is still showing until the new one comes.
     await page.evaluate(`document.getElementById('card-face').textContent = ''`);
@@ -414,7 +414,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     // Page.enable switches on the part of the DevTools protocol the next command belongs to.
     await page.send('Page.enable');
     await page.send('Page.addScriptToEvaluateOnNewDocument', {
-      source: `document.addEventListener('DOMContentLoaded', () => document.getElementById('practice-tab').click())`,
+      source: `document.addEventListener('DOMContentLoaded', () => document.getElementById('practice-button').click())`,
     });
     await page.evaluate('window.loadedBefore = true');
     await page.send('Page.reload');
@@ -424,7 +424,7 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
       await new Promise((resolve) => setTimeout(resolve, 100));
       started = await page
         .evaluate(`!window.loadedBefore &&
-          document.getElementById('practice-tab').classList.contains('selected') &&
+          document.getElementById('practice-button').classList.contains('selected') &&
           document.getElementById('stroke-count').textContent.startsWith('1/')`)
         .catch(() => false);
     }

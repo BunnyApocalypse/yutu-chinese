@@ -364,7 +364,7 @@ async function openFreePractice(page, appUrl, keepWelcome = false) {
           tips.dispatchEvent(new Event('change', { bubbles: true }));
           return '';
         }
-        const tab = document.getElementById('practice-tab');
+        const tab = document.getElementById('practice-button');
         if (started && !tab.classList.contains('selected')) {
           tab.click();
         }
@@ -459,7 +459,7 @@ export async function addTestWords(page) {
   await waitUntil(page, `!document.getElementById('add-list-button').hidden`, 'the list to be checked');
   await tap(page, 'add-list-button');
   await waitUntil(page, `document.getElementById('word-count').textContent === '${count}'`, 'the test words');
-  await tap(page, 'practice-tab');
+  await tap(page, 'practice-button');
   await waitInPage(page, `(${STATUS}).startsWith('1/') && ${NOT_BUSY}`, 5000);
 }
 

@@ -106,7 +106,7 @@ describe('tips', { concurrency: false }, () => {
     // character brings none.
     // (The tab starts a card of its own; that one is waited for first, or it
     // could come up after 我們 and take its place.)
-    await tap(page, 'practice-tab');
+    await tap(page, 'practice-button');
     await waitUntil(page, `document.getElementById('stroke-count').textContent.startsWith('1/')`, 'Free practice');
     await waitUntil(page, tipSays('Hold still on the writing area'), 'the gestures tip');
     assert.deepEqual(await page.evaluate(besideOf('#restart-button')), ['below', 10]);

@@ -268,7 +268,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     showCards: (word) => wordDialog.showCardsOnPage(word),
     practice: (word) => {
       byId('word-input').value = word[scriptFor(word, getSettings())];
-      byId('practice-tab').click();
+      byId('practice-button').click();
     },
     // The deck a sentence or word added from a page goes into unless another
     // is chosen: the one listed (the deck chosen on the Words tab, or the

@@ -6,7 +6,10 @@ Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where
 
 - `index.html`: the single page.
 - `src/main.js`: entry point; the four tabs (Review, Learn, Decks, Words) and Free practice, backup buttons.
-- `src/wordsPanel.js`: the Decks tab (called the Words tab until 2026-10-13): its two sections, the words of the deck whose page is open (add a word, add a list, search), the ready-made decks, and a pop-up panel per word to change it, study it next or remove it.
+- `src/wordsPanel.js`: the Decks and Words tabs (the Decks tab was called the Words tab until 2026-10-13): what each tab shows, a deck's page with its words, the list of words with its filters and order, the dictionary's words under yours while searching, the panel "+ Add to deck" with its three tabs, and "Learn it now". It sets up the files below and hands each what it needs. Until 2026-10-17 everything below was in it too (1,940 lines, now about 800).
+- `src/addWordForm.js`: adding one word (the dictionary filling in as you type, the entries to choose from, a word chosen by its pinyin); `src/addListForm.js`: adding a list of words; `src/addSentenceForm.js`: adding a sentence; `src/readyDecks.js`: the Ready-made decks section (HSK, TOCFL, the radicals).
+- `src/wordDialog.js`: a word's pop-up panel (change, study next, remove), and a word's cards and suspend boxes on its page. It carries over by hand what is not in its form (`CLAUDE.md`).
+- `src/dictionaryLoader.js`: the dictionary, the usual readings and the ready-made lists, each fetched once (no page code); `src/wordRows.js`: a word or dictionary entry as a row of a list.
 - `src/words.js`: the plain calculation behind the Decks tab: checking a typed word, reading a TSV or CSV list, working out which words are new, searching.
 - `src/dictionary.js`: looks a word up in the dictionary, by its characters or its pinyin, and proposes a meaning. Plain calculation.
 - `scripts/build-dictionary.js`, `data/cedict/dictionary.tsv`: the dictionary made from CC-CEDICT (run by hand, uses the internet, like the tone table script). About 124,000 entries, 8.4 MB.
