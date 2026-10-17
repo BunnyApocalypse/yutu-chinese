@@ -26,11 +26,12 @@
   --muted: #625f50; /* hints and other quieter text */
   --inverse-text: #fbf6e8; /* on something filled with the text's color */
   --accent: #1f6b4b; /* the app's jade: pinyin, links, the current slot */
-  /* A main button is blue-teal, not jade: jade would make "Again" after a
-     missed character look like praise, next to the green of "passed" (the
-     owner, 2026-10-17, from pictures of jade, ink and blue-teal). */
-  --accent-fill: #1e5c70;
-  --accent-pressed: #174a5b;
+  /* A main button is a moonlit slate blue, not jade: jade would make
+     "Again" after a missed character look like praise, next to the green
+     of "passed" (the owner, 2026-10-17, from pictures of jade, ink and
+     blue-teal, then of blue-teal, night-sky indigo and slate). */
+  --accent-fill: #4f6380;
+  --accent-pressed: #42546d;
   --on-accent: #fff; /* text on a main button or the red */
   --border: #b9a983;
   /* The edge of a text box or drop-down list: darker than other edges, as
@@ -42,7 +43,9 @@
   --scrollbar: #cbbb93;
   --danger: #b5402a; /* missed, leeches, the reminder dot: seal red */
   --danger-fill: #b5402a; /* behind white text: the bar saying something went wrong */
-  --danger-bg: #f5dccf;
+  /* Behind a missed character's box: darker than the passed one's, so the
+     two differ for color-blind eyes too (with the ✓ and ✕ on the boxes). */
+  --danger-bg: #ecbcae;
   /* Passed, progress: a leaf green, yellower than the jade so the two are
      told apart. */
   --success: #3f8f2f;
@@ -56,7 +59,7 @@
   --grid: #e3d8bb; /* the 米字格 guide lines */
   --outline: #d7cba9; /* "Show outline" */
   --reference: #b4d69a; /* the printed character under yours, passed */
-  --reference-missed: #e9b2a3; /* the same, missed */
+  --reference-missed: #c26a55; /* the same, missed: darker than passed, for color-blind eyes */
 }
 
 /* The dark look. The same values twice: once for "Dark", once for "Follow
@@ -78,8 +81,8 @@
   --muted: #a9a68f;
   --inverse-text: #1d2120;
   --accent: #7cc4a3;
-  --accent-fill: #347a90;
-  --accent-pressed: #2a6578;
+  --accent-fill: #5c7290;
+  --accent-pressed: #4e627d;
   --on-accent: #fff;
   --border: #525a56;
   --field-border: #7c8581;
@@ -88,7 +91,7 @@
   --scrollbar: #525a56;
   --danger: #ef8169;
   --danger-fill: #b23f2a;
-  --danger-bg: #4a2620;
+  --danger-bg: #7a3426;
   --success: #a5cf62;
   --success-text: #a5cf62;
   --success-bg: #2a3a1d;
@@ -99,7 +102,7 @@
   --grid: #3a403d;
   --outline: #4a514e;
   --reference: #4a6b2c;
-  --reference-missed: #74382b;
+  --reference-missed: #c4624a;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -115,8 +118,8 @@
     --muted: #a9a68f;
     --inverse-text: #1d2120;
     --accent: #7cc4a3;
-    --accent-fill: #347a90;
-    --accent-pressed: #2a6578;
+    --accent-fill: #5c7290;
+    --accent-pressed: #4e627d;
     --on-accent: #fff;
     --border: #525a56;
     --field-border: #7c8581;
@@ -125,7 +128,7 @@
     --scrollbar: #525a56;
     --danger: #ef8169;
     --danger-fill: #b23f2a;
-    --danger-bg: #4a2620;
+    --danger-bg: #7a3426;
     --success: #a5cf62;
     --success-text: #a5cf62;
     --success-bg: #2a3a1d;
@@ -136,7 +139,7 @@
     --grid: #3a403d;
     --outline: #4a514e;
     --reference: #4a6b2c;
-    --reference-missed: #74382b;
+    --reference-missed: #c4624a;
   }
 }
 
@@ -841,7 +844,7 @@ fieldset.setting.theme-picker label.theme-choice {
 
 /* The text's own color with an underline (the owner, 2026-10-17, from
    pictures of three ways): the underline says it can be tapped, and color
-   is left to pinyin (jade) and the main button (blue-teal). Until then the
+   is left to pinyin (jade) and the main button (slate blue). Until then the
    faint gray of hints, which looked like fine print. */
 :root {
   --quiet-text: var(--text);
@@ -1076,6 +1079,43 @@ select {
 .slot.missed {
   border-color: var(--danger);
   background: var(--danger-bg);
+}
+
+/* A ✓ or ✕ on the corner of a judged box, so that passed and missed are
+   told apart without their colors: red and green look alike to many
+   color-blind people (the owner, 2026-10-17, from pictures with a
+   simulation of red-green color blindness; with the lightness of the two
+   made different too, in the colors at the top). The mark is sized for
+   its place, like the slots themselves. */
+.slot.passed,
+.slot.missed {
+  position: relative;
+}
+
+.slot.passed::after,
+.slot.missed::after {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font: bold var(--size-tiny)/1 system-ui, sans-serif;
+}
+
+.slot.passed::after {
+  content: '✓';
+  background: var(--success-text);
+  color: var(--surface);
+}
+
+.slot.missed::after {
+  content: '✕';
+  background: var(--danger-fill);
+  color: var(--on-accent);
 }
 
 /* A finished character's slot can be tapped to change its verdict
@@ -1810,7 +1850,7 @@ button.grade .wait {
   opacity: 0.75;
 }
 
-/* On the blue-teal of the main grade, faded white is too faint to read. */
+/* On the slate blue of the main grade, faded white is too faint to read. */
 button.grade.primary .wait {
   opacity: 1;
 }
