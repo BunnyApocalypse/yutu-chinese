@@ -97,8 +97,8 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
   });
 
   it('reaches Free practice from Settings and from a word\'s page', async () => {
-    // In Settings' last group, and Settings closes.
-    await openSettings(page, 'settings-help');
+    // In Settings' Writing group, and Settings closes.
+    await openSettings(page, 'settings-writing');
     await waitUntil(page, `document.getElementById('practice-button').offsetParent !== null`, 'the button in Settings');
     await tap(page, 'practice-button');
     await waitUntil(page, `!document.getElementById('settings-panel').open && !document.getElementById('word-form').hidden`, 'Free practice');
