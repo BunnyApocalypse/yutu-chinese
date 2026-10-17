@@ -836,6 +836,12 @@ select {
   border: 2px solid var(--accent);
 }
 
+/* A character still to be written, shown faintly where it is on screen
+   anyway (a lesson's tracing and outline steps). */
+.slot.preview {
+  color: var(--muted);
+}
+
 /* A character that was skipped, not written. */
 .slot.skipped {
   border-style: dashed;

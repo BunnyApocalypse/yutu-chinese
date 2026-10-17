@@ -790,6 +790,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       rawInput: settings.rawInput,
       showOutline: true,
       demoStrokes: step === 'trace',
+      // The character is on screen in these steps, so the slots can show it.
+      showCharacters: step === 'trace' || step === 'outline',
       // Practice: starting again clears the mistakes.
       freshRestart: true,
       continueLabel: 'Next step',

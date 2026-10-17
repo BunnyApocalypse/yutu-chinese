@@ -147,8 +147,10 @@ export function createWordFlow(elements) {
       const finished = Boolean(finishedPerChar[index]);
       const hasVerdict = finished && passedPerChar[index] !== undefined;
       const slot = document.createElement(hasVerdict ? 'button' : 'span');
-      slot.textContent = finished ? char : '·';
+      const preview = !finished && Boolean(options.showCharacters);
+      slot.textContent = finished || preview ? char : '·';
       slot.className = 'slot';
+      slot.classList.toggle('preview', preview);
       if (hasVerdict) {
         slot.type = 'button';
         const verdict = passedPerChar[index] ? 'got it' : 'missed';
@@ -508,6 +510,10 @@ export function createWordFlow(elements) {
     //   showOutline:   true to switch the outline on first
     //   demoStrokes:   true to show each stroke, over and over, until it is
     //                  written (the lesson for a new word, see review.js)
+    //   showCharacters: true to show the characters still to be written in
+    //                  their slots, faintly, instead of "·": for steps where
+    //                  the character is on screen anyway (a lesson's tracing
+    //                  and outline steps; UX review item 12, 2026-10-17)
     //   freshRestart:  true to forget the mistakes, hints and peeks of earlier
     //                  attempts when a character is started over (practice);
     //                  otherwise they still count
