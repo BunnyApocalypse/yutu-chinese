@@ -121,7 +121,7 @@ Past session notes are in `docs/history.md`. **Start with its handover from 2026
 - **Gestures on the writing area** (a must-have for the owner on mobile, breaking the feature freeze) **were built on 2026-10-15**: hold for a hint, swipe up to start again (`docs/writing.md`). Tried by the owner on their phone and released the same day.
 - **The accessibility review was done and fixed on 2026-10-15** (`docs/interface.md`, "Accessibility"). Open: checking by hand with VoiceOver or TalkBack.
 - **The owner has not tried** sentences, combining backups between real devices, and leeches. Ask how it went before building further on them. The rest built on 2026-10-13 and 14 they test as they use it (the owner, 2026-10-15).
-- **The general page of notes for a native speaker** is being answered by a mainland reader in batches: #1 to #20 worked in on 2026-10-15, #21 to #131 to come (`data/notes/CLAUDE.md`).
+- **The general page of notes for a native speaker** is being answered by a mainland reader in batches: #1 to #20 worked in on 2026-10-15, #21 to #42 on 2026-10-17, #43 to #131 to come (`data/notes/CLAUDE.md`).
 - **The TOCFL list has no stated license**: to be reconsidered before a larger audience.
 - **The pass over the looks** goes in an agreed order (2026-10-17; `docs/history.md`, after the UX review's tasks): shared styles, the study screen and the managing screens done (2026-10-17: the top bar stays, item 16, Free practice in Settings); the wording next. `src/wordsPanel.js` was split by screen on 2026-10-17 (`docs/layout.md`), and the modes renamed (`'decks'`, `'words'`; `practice-button`).
 - **The owner's real study is still in Skritter**; the Skritter scheduling data (GDPR request, 2026-10-12) has not arrived.
