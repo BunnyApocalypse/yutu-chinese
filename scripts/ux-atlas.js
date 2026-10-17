@@ -203,6 +203,18 @@ const TEST_WORDS = fs
 async function walk(page, sizeName, size, shots) {
   const log = (text) => console.log(`[${sizeName}] ${text}`);
   await page.send('Emulation.setDeviceMetricsOverride', { ...size, deviceScaleFactor: 1 });
+  if (process.env.TRY_CSS) {
+    // From the page's first moment too, for what the app measures as it
+    // starts (the writing area's size, say).
+    await page.send('Page.addScriptToEvaluateOnNewDocument', {
+      // As soon as the page has a head, before the app's code runs.
+      source: `new MutationObserver((changes, watcher) => {
+        if (!document.head) return;
+        watcher.disconnect();
+        document.head.append(Object.assign(document.createElement('style'), { id: 'try-css', textContent: ${JSON.stringify(process.env.TRY_CSS)} }));
+      }).observe(document, { childList: true, subtree: true })`,
+    });
+  }
   await reloadApp(page);
 
   // Takes the screen as it is now: measured once, pictured in both looks.

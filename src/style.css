@@ -161,6 +161,11 @@
      Google recommend at least) for a small one and other controls. */
   --tap: 48px;
   --tap-small: 44px;
+
+  /* The width the arrows beside the writing area take, both together with
+     their gaps (.side-arrow, .writing-row). chooseSize in wordFlow.js reads
+     it, so the area is as wide as what is left. */
+  --arrow-room: 64px;
 }
 
 * {

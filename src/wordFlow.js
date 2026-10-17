@@ -20,8 +20,10 @@ const TAP_TO_CONTINUE_DELAY_MS = 200;
 
 // As big as fits on the screen, leaving room for everything above and below.
 function chooseSize() {
-  // 32 for the page's margins, 64 for the arrows on either side of the area.
-  const fitsWidth = window.innerWidth - 32 - 64;
+  // 32 for the page's margins, and the room of the arrows on either side of
+  // the area, named in style.css (--arrow-room).
+  const arrowRoom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-room')) || 0;
+  const fitsWidth = window.innerWidth - 32 - arrowRoom;
   // The writing area has one size, and everything else has fixed room
   // above and below it, so that the area never moves or changes size from
   // one card or one step of a lesson to the next (the owner's rule,
@@ -226,8 +228,13 @@ export function createWordFlow(elements) {
     const mistakes = carriedMistakes + currentMistakes;
     const status = !started && mistakes === 0 ? 'Write the first stroke' : describeMistakes(mistakes);
     // While practicing, the line says so, so that it is not taken for the
-    // card's own result.
-    statusElement.textContent = practicing ? `Practice · ${status.toLowerCase()}` : status;
+    // card's own result; short, or on a small phone it wraps beside the
+    // boxes and moves the writing area down.
+    if (practicing) {
+      statusElement.textContent = !started && mistakes === 0 ? 'Practice' : `Practice · ${status.toLowerCase()}`;
+      return;
+    }
+    statusElement.textContent = status;
   }
 
   // The count is only for while a character is being written.
