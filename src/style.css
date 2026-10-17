@@ -694,8 +694,12 @@ fieldset.setting.theme-picker label.theme-choice {
   text-underline-offset: 0.2em;
 }
 
+/* The text's own color with an underline (the owner, 2026-10-17, from
+   pictures of three ways): the underline says it can be tapped, and blue
+   is left to pinyin and the main button. Until then the faint gray of
+   hints, which looked like fine print. */
 :root {
-  --quiet-text: var(--muted);
+  --quiet-text: var(--text);
   --quiet-line: underline;
 }
 
