@@ -2632,11 +2632,11 @@ button.path-part {
 /* The arrow alone, before a screen's name ("‹ Practicing 你"): as wide as
    it is tall, to be tapped. */
 button.top-back.top-back-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: var(--tap-small);
   margin-right: calc(-1 * var(--space-small));
-  /* Alone, the arrow is thin beside the name: a size up. */
-  font-size: var(--size-big);
-  line-height: 1;
 }
 
 button.top-back {

@@ -124,7 +124,7 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     assert.equal(await textOf(page, 'place-title'), 'Practicing 貓');
     assert.equal(await isShown(page, 'word-input'), false);
     assert.equal(await isShown(page, 'practice-note'), true);
-    assert.equal(await textOf(page, 'practice-word-back'), '‹');
+    assert.equal(await page.evaluate(`document.getElementById('practice-word-back').getAttribute('aria-label')`), 'Back to the page of 貓');
     await tap(page, 'practice-word-back');
     await waitUntil(page, `document.getElementById('word-page').dataset.shown === '貓|mao1'`, 'the word\'s page again');
     await tap(page, 'word-page-close');
