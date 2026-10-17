@@ -104,7 +104,7 @@ describe('decks', { concurrency: false }, () => {
     await openDeck('Chinese 中文');
     // On a deck inside no other, the way back in the top bar says where it
     // is; the line "Decks › …" is only shown inside other decks.
-    assert.equal(await textOf(page, 'deck-back-button'), '‹ Decks');
+    assert.equal(await textOf(page, 'deck-back-button'), 'Decks');
     assert.equal(await textOf(page, 'deck-path'), '');
     assert.match(await addWord('貓', '猫', 'mao1', 'cat'), /^Added/);
     await waitUntil(page, rows(1));
@@ -146,7 +146,7 @@ describe('decks', { concurrency: false }, () => {
     assert.match(await addWord('狗', '狗', 'gou3', 'dog'), /^Added/);
     await waitUntil(page, rows(1));
     // "‹ Textbook", in the top bar in place of the screen's name, goes up one level.
-    assert.equal(await textOf(page, 'deck-back-button'), '‹ Textbook');
+    assert.equal(await textOf(page, 'deck-back-button'), 'Textbook');
     assert.equal(await textOf(page, 'place-title'), '');
     await tap(page, 'deck-back-button');
     await waitUntil(page, titleIs('Textbook'), 'back to Textbook');

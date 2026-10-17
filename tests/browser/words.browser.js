@@ -328,7 +328,7 @@ describe('the Decks tab', { concurrency: false }, () => {
     assert.equal(await page.evaluate(barTop), 0);
     const back = await page.evaluate(`(() => {
       const box = document.getElementById('deck-back-button').getBoundingClientRect();
-      return document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2).id;
+      return document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2).closest('button')?.id;
     })()`);
     assert.equal(back, 'deck-back-button');
     await page.evaluate(`scrollTo(0, 0)`);

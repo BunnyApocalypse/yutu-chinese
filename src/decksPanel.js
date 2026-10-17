@@ -198,7 +198,8 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
     // which knows whether this page is on screen.)
     if (current) {
       const parent = parentOf(current);
-      showName(backButton, `‹ ${parent ? parent.name : 'Decks'}`);
+      // The arrow before it is drawn (index.html); only the name changes.
+      showName(byId('deck-back-label'), parent ? parent.name : 'Decks');
       showName(byId('deck-title'), current.name);
       const counts = countsOf(current);
       byId('deck-counts').textContent = counts.text;

@@ -25,19 +25,17 @@
         </button>
         <!-- In Free practice opened with "Practice" on a word's page: back to
              that page, before the name "Practicing 你" (main.js). -->
-        <button id="practice-word-back" class="top-back top-back-arrow" type="button" hidden>
-          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-            <!-- An arrow pointing left, drawn so it is as heavy as the menu's lines (a "‹" in the font was thin). -->
-            <path d="M15 5 L8 12 L15 19" />
-          </svg>
-        </button>
+        <button id="practice-word-back" class="top-back top-back-arrow" type="button" hidden><svg class="back-arrow" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19" /></svg></button>
         <span id="place-title" class="place-title">Review</span>
         <!-- On a deck's page, in place of the screen's name: up one level, to
              the deck it is inside or the front page (decksPanel.js). -->
-        <button id="deck-back-button" class="top-back" type="button" hidden>‹ Decks</button>
+        <!-- The arrow of the three ways back here is drawn, as heavy as the
+             menu's lines (the owner, 2026-10-17: a "‹" in the font was too
+             small), and the same in all three. -->
+        <button id="deck-back-button" class="top-back" type="button" hidden><svg class="back-arrow" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19" /></svg><span id="deck-back-label">Decks</span></button>
         <!-- In Free practice opened from Settings: back to Settings' Writing
              group, where it was opened (main.js). -->
-        <button id="practice-back-button" class="top-back" type="button" hidden>‹ Settings</button>
+        <button id="practice-back-button" class="top-back" type="button" hidden><svg class="back-arrow" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19" /></svg><span>Settings</span></button>
       </header>
       <!-- The menu: a panel that slides in from the left (main.js). The
            buttons keep the IDs they had as tabs. -->
