@@ -23,26 +23,24 @@ import { createWordDialog } from './wordDialog.js';
 import { createSentenceForm } from './addSentenceForm.js';
 import { createListForm } from './addListForm.js';
 import { createReadyDecks } from './readyDecks.js';
-import { langFor, fillMixed } from './lang.js';
+import { createAddWordForm } from './addWordForm.js';
+import { charactersElement, mixedSpan, entryRow } from './wordRows.js';
+import { fillMixed } from './lang.js';
 import { lapsesOf } from './leeches.js';
 import { findLeeches, describeLeech, describeSuspended, leechList, leechPrompt } from './leeches.js';
 import {
   checkWord,
   newWordRecords,
-  wordsWithSameCharacters,
   orderForStudyingNext,
   matchesSearch,
   charactersShown,
-  scriptsShown,
   scriptFor,
-  tidyPinyin,
 } from './words.js';
 import {
   lookUp,
   lookUpByPinyin,
   lookUpByCharacters,
   lookUpByMeaning,
-  readTypedPinyin,
   proposeMeaning,
   splitIntoWords,
 } from './dictionary.js';
@@ -50,10 +48,6 @@ import {
 // With thousands of words, building a row for each would make the page slow,
 // so only this many are shown at a time; the search box narrows them down.
 const MAX_ROWS = 200;
-// How many dictionary entries are offered for the characters typed, and how
-// much of each entry's list of meanings is shown.
-const MAX_SUGGESTIONS = 8;
-const MAX_MEANINGS_LENGTH = 140;
 
 const byId = (id) => document.getElementById(id);
 
@@ -79,19 +73,6 @@ const byId = (id) => document.getElementById(id);
 // one of the two tabs is opened ('decks' or 'words') or a setting has
 // changed (without a view: the one that was showing).
 export function createWordsPanel(onChange, getSettings, studyDeck) {
-  const addForm = byId('add-word-form');
-  const addFields = {
-    traditional: byId('add-traditional'),
-    simplified: byId('add-simplified'),
-    pinyin: byId('add-pinyin'),
-    pinyinTaiwan: byId('add-pinyin-taiwan'),
-    definition: byId('add-definition'),
-    cardScript: byId('add-card-script'),
-  };
-  const pinyinPreview = byId('add-pinyin-preview');
-  const suggestions = byId('add-suggestions');
-  const addNote = byId('add-word-note');
-  const addLearnNow = byId('add-learn-now');
 
 
   const countElement = byId('word-count');
@@ -132,11 +113,10 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   // The dictionary and the ready-made lists, fetched once (dictionaryLoader.js).
   // When the dictionary or the usual readings arrive, the add form's
   // suggestions are shown afresh.
-  const dictionaryLoader = createDictionaryLoader(() => showSuggestions());
+  const dictionaryLoader = createDictionaryLoader(() => addWordForm.showSuggestions());
   const loadDictionary = dictionaryLoader.load;
   const loadUsualReadings = dictionaryLoader.loadUsualReadings;
   const likeliestEntry = dictionaryLoader.likeliestEntry;
-  const completeForms = dictionaryLoader.completeForms;
   const getDictionary = dictionaryLoader.get;
 
   async function load() {
@@ -199,7 +179,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     openDeckId = deckId;
     searchInput.value = '';
     listForm.forget();
-    addNote.textContent = '';
+    addWordForm.clearNote();
     renderDecks();
     renderList();
     showView();
@@ -306,6 +286,23 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   );
   const readyDecks = createReadyDecks({ words: () => words, getSettings, afterChange: () => afterChange() }, dictionaryLoader);
 
+  // Adding one word (addWordForm.js).
+  const addWordForm = createAddWordForm(
+    {
+      words: () => words,
+      isLearned: (id) => studiedWordIds.has(id),
+      getSettings,
+      asksFor: () => asksFor(),
+      charactersOf: (word) => charactersOf(word),
+      openDeck: () => openDeck(),
+      afterChange: () => afterChange(),
+      applySettings: () => applySettings(),
+      learnNow: (id, deckId) => learnNow(id, deckId),
+      closeAdding: () => addDialog.close(),
+    },
+    dictionaryLoader,
+  );
+
   // Adding a sentence (addSentenceForm.js).
   const sentenceForm = createSentenceForm({
     words: () => words,
@@ -367,8 +364,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
 
   function openAdding() {
     fillMixed(byId('add-to-deck-name'), openDeck().name, getSettings().script);
-    addLearnNow.hidden = true;
-    addNote.textContent = '';
+    addWordForm.clearNote();
     showAddForm('add-word-fold');
     addDialog.showModal();
   }
@@ -415,30 +411,6 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     return charactersShown(word, getSettings());
   }
 
-  // A span of text that may have Chinese in it (a meaning such as "classifier
-  // for 門"), its Chinese marked as Chinese in `script` (lang.js).
-  function mixedSpan(className, text, script) {
-    const element = document.createElement('span');
-    element.className = className;
-    fillMixed(element, text, script);
-    return element;
-  }
-
-  // The same as a span for a row of a list, each script's part marked with
-  // its language (lang.js), so that a screen reader reads it as Chinese.
-  function charactersElement(word) {
-    const element = document.createElement('span');
-    element.className = 'entry-characters';
-    const parts = scriptsShown(word, getSettings()).map((script) => {
-      const part = document.createElement('span');
-      part.lang = langFor(script);
-      part.textContent = word[script];
-      return part;
-    });
-    element.append(...parts.flatMap((part, index) => (index > 0 ? [' · ', part] : [part])));
-    return element;
-  }
-
   // Which of the two scripts and of the Taiwan readings are asked for.
   function asksFor() {
     const { script, bothScripts, pronunciation } = getSettings();
@@ -449,14 +421,6 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     };
   }
 
-  // The one script the Add a word form asks for: 'traditional' or
-  // 'simplified'; null if it asks for both. That is the script being learned
-  // or, with both learned, the one chosen for this word under "Cards in".
-  function scriptAsked() {
-    const { script, bothScripts } = getSettings();
-    return bothScripts ? addFields.cardScript.value || null : script;
-  }
-
   // Fits the forms and their wording to the settings.
   // The boxes for a word's readings are named by region, and with Taiwan's
   // pronunciation chosen its box comes first (the owner, 2026-10-14: the two
@@ -465,55 +429,17 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   function showReadingBoxes(taiwanAsked) {
     const taiwanFirst = getSettings().pronunciation === 'taiwan';
     const pinyinLabel = taiwanAsked ? 'Mainland reading' : 'Pinyin';
-    // (The example shows the tone numbers; spelled out, it did not fit a phone.)
-    addFields.pinyin.placeholder = `${pinyinLabel}: xue2xi2`;
-    addFields.pinyin.setAttribute('aria-label', `${pinyinLabel}, with tone numbers`);
-    if (taiwanFirst) {
-      addFields.pinyin.before(addFields.pinyinTaiwan);
-    } else {
-      pinyinPreview.after(addFields.pinyinTaiwan);
-    }
+    addWordForm.placeReadingBoxes(taiwanFirst, pinyinLabel);
     wordDialog.placeReadingBoxes(taiwanFirst, pinyinLabel);
   }
 
   function applySettings() {
     const asks = asksFor();
     const both = asks.traditional && asks.simplified;
-    const asked = scriptAsked();
     showReadingBoxes(asks.taiwan);
-    // A box that is out of sight is also emptied, so nothing stale is used.
-    const showBox = (box, shown) => {
-      box.hidden = !shown;
-      if (!shown) {
-        box.value = '';
-      }
-    };
-    showBox(addFields.traditional, asked !== 'simplified');
-    showBox(addFields.simplified, asked !== 'traditional');
-    showBox(addFields.pinyinTaiwan, asks.taiwan);
-    // With one script learned there is nothing to tell apart, so its box is
-    // simply where the word goes.
-    const caption = (box, text) => {
-      box.placeholder = text;
-      box.setAttribute('aria-label', text); // what a screen reader calls the box
-    };
-    // Either box also takes pinyin, to choose the word from a list.
-    caption(addFields.traditional, both ? 'Traditional 繁體 or pinyin' : 'Word or phrase: 漢字 or pinyin');
-    caption(
-      addFields.simplified,
-      both ? `Simplified 简体${asked ? '' : ' (if different)'}` : 'Word or phrase: 汉字 or pinyin',
-    );
-    if (!lookedUpField || lookedUpField.hidden) {
-      lookedUpField = asked === 'simplified' ? addFields.simplified : addFields.traditional;
-    }
+    addWordForm.applySettings(asks, both);
     wordDialog.applySettings(asks, both);
     sentenceForm.applySettings(both);
-    // A word can only have a script of its own while both are being learned.
-    byId('add-card-script-row').hidden = !both;
-    if (!both) {
-      addFields.cardScript.value = '';
-    }
-
     listForm.applySettings(asks, both);
   }
 
@@ -596,7 +522,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       button.type = 'button';
       button.className = 'word-entry';
       button.append(
-        charactersElement(word),
+        charactersElement(word, getSettings()),
         span('entry-pinyin', formatPinyin(word.pinyin)),
         mixedSpan('entry-definition', word.definition, scriptFor(word, getSettings())),
       );
@@ -721,7 +647,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     dictionaryList.replaceChildren(
       ...dictionaryFound.slice(0, dictionaryShown).map((entry) => {
         const row = document.createElement('li');
-        row.append(entryButton(entry, null, () => wordPage.openEntry(entry)));
+        row.append(entryRow(entry, null, getSettings(), { onTap: () => wordPage.openEntry(entry) }));
         return row;
       }),
     );
@@ -802,248 +728,6 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     }
   });
 
-  // ---- Adding one word ----
-
-  // Shows the pinyin with tone marks as it is typed, to check it by eye.
-  function showPinyinPreview() {
-    pinyinPreview.textContent = formatPinyin(addFields.pinyin.value.trim());
-  }
-  addFields.pinyin.addEventListener('input', showPinyinPreview);
-
-  // ---- The dictionary ----
-
-  // The characters field last typed in, which is what gets looked up.
-  let lookedUpField = null;
-  // The dictionary entry the fields were last filled in from, by itself or
-  // by a tap, until the characters are typed over.
-  let filledEntry = null;
-  // Whether that entry was tapped, rather than chosen by itself (a tapped
-  // one is kept; one chosen by itself gives way to a likelier one).
-  let entryTapped = false;
-  // What was last put in each field by itself (see autoFill), so that a
-  // field the learner has typed in is told apart and left alone.
-  const autoValues = new Map();
-
-  const paragraph = (className, text) => {
-    const element = document.createElement('p');
-    element.className = className;
-    element.textContent = text;
-    return element;
-  };
-
-  // Puts a dictionary entry into the fields, ready to be edited.
-  // Puts a dictionary entry's characters into the box or boxes on show.
-  function fillInCharacters(entry) {
-    const asked = scriptAsked();
-    if (asked) {
-      // The other script is worked out when the word is added (completeForms).
-      addFields[asked].value = entry[asked];
-    } else {
-      addFields.traditional.value = entry.traditional;
-      addFields.simplified.value = entry.simplified === entry.traditional ? '' : entry.simplified;
-    }
-  }
-
-  function fillIn(entry) {
-    const asks = asksFor();
-    filledEntry = entry;
-    entryTapped = true;
-    fillInCharacters(entry);
-    // Chosen from pinyin typed in the simplified box, a word written the same
-    // in both scripts leaves that box empty: the traditional one has it.
-    if (lookedUpField.value === '') {
-      lookedUpField = addFields.traditional;
-    }
-    addFields.pinyin.value = entry.pinyin;
-    addFields.pinyinTaiwan.value = asks.taiwan ? entry.pinyinTaiwan || '' : '';
-    addFields.definition.value = proposeMeaning(entry.meanings, getSettings().meaningDetail);
-    // What a tap put there may be replaced by itself, as when filled in by
-    // itself, should the characters be typed over.
-    for (const field of [addFields.pinyin, addFields.pinyinTaiwan, addFields.definition]) {
-      autoValues.set(field, field.value);
-    }
-    showPinyinPreview();
-    addNote.textContent = '';
-    showSuggestions();
-    // The meaning is the part most likely to want changing.
-    addFields.definition.focus();
-  }
-
-  // Fills in the reading and meaning by themselves as the characters are
-  // typed, from the dictionary's first entry for them (the owner,
-  // 2026-10-14: having to tap an entry was one step too many); the entries
-  // listed under the box can still be tapped for another reading. A field
-  // the learner has typed in is left as it is, and so is the box being
-  // typed in; with `entry` null (nothing in the dictionary) what was filled
-  // in by itself is taken out again.
-  // Each lookup gives new records, so entries are compared by what they say.
-  const sameEntry = (a, b) =>
-    Boolean(a && b) && a.traditional === b.traditional && a.simplified === b.simplified && a.pinyin === b.pinyin;
-
-  function autoFill(entry) {
-    const asks = asksFor();
-    const put = (field, value) => {
-      const free = field.value === '' || field.value === autoValues.get(field);
-      if (free) {
-        field.value = value;
-        autoValues.set(field, value);
-      }
-    };
-    filledEntry = entry;
-    entryTapped = false;
-    put(addFields.pinyin, entry ? entry.pinyin : '');
-    put(addFields.pinyinTaiwan, entry && asks.taiwan ? entry.pinyinTaiwan || '' : '');
-    put(addFields.definition, entry ? proposeMeaning(entry.meanings, getSettings().meaningDetail) : '');
-    // The other script's box, where both are asked for. (The simplified
-    // box is left empty when the forms are the same, as its caption says.)
-    if (!scriptAsked()) {
-      if (lookedUpField === addFields.traditional) {
-        put(addFields.simplified, entry && entry.simplified !== entry.traditional ? entry.simplified : '');
-      } else {
-        put(addFields.traditional, entry ? entry.traditional : '');
-      }
-    }
-    showPinyinPreview();
-  }
-
-  // A dictionary entry as a button that fills in the form; `label` is what
-  // its right-hand end says (nothing if null). With `onTap`, a tap does that
-  // instead (the Words tab's dictionary).
-  function entryButton(entry, label, onTap = null) {
-    const span = (className, text) => {
-      const element = document.createElement('span');
-      element.className = className;
-      element.textContent = text;
-      return element;
-    };
-    const meanings = entry.meanings.join(' / ');
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'word-entry';
-    button.append(
-      charactersElement(entry),
-      span('entry-pinyin', formatPinyin(entry.pinyin)),
-      mixedSpan(
-        'entry-definition',
-        meanings.length > MAX_MEANINGS_LENGTH ? `${meanings.slice(0, MAX_MEANINGS_LENGTH)}…` : meanings,
-        getSettings().script,
-      ),
-      ...(label ? [span('entry-new', label)] : []),
-    );
-    button.classList.toggle('selected', !onTap && sameEntry(entry, filledEntry));
-    button.addEventListener('click', () => (onTap ? onTap() : fillIn(entry)));
-    return button;
-  }
-
-  // How many words read as typed are listed under the box; "Show more"
-  // lists more, and typing starts again from the first few.
-  let pinyinShown = MAX_SUGGESTIONS;
-
-  // What is listed under the box when pinyin is typed in it: the words read
-  // that way, the likeliest first (lookUpByPinyin), to choose from. Nothing
-  // is filled in by itself, since the word is not known until one is chosen.
-  function pinyinSuggestions(typed) {
-    autoFill(null);
-    const dictionary = getDictionary();
-    if (!dictionary) {
-      return [];
-    }
-    const entries = lookUpByPinyin(dictionary, typed, dictionaryLoader.readyListWords());
-    if (entries.length === 0) {
-      return [paragraph('hint', 'No word in the dictionary is read that way. Check the spelling (v for ü), or type the characters.')];
-    }
-    const have = new Set(words.map((word) => word.id));
-    const parts = entries
-      .slice(0, pinyinShown)
-      .map((entry) => entryButton(entry, have.has(wordId(entry)) ? 'in your words' : 'use this'));
-    const more = entries.length - pinyinShown;
-    if (more > 0) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'link-button more-entries';
-      button.textContent = `Show more (${more} more)`;
-      button.addEventListener('click', () => {
-        pinyinShown += MAX_SUGGESTIONS;
-        showSuggestions();
-      });
-      parts.push(button);
-      if (readTypedPinyin(typed).tones.length === 0) {
-        parts.push(paragraph('hint', 'Add tone numbers (shi4) to narrow it down.'));
-      }
-    }
-    return parts;
-  }
-
-  // Shows, under the characters typed, the words in the list written the
-  // same way and what the dictionary has for them; or, under pinyin typed,
-  // the words read that way.
-  function showSuggestions() {
-    // The form has not been set up yet (nothing typed since the app
-    // started): nothing to suggest. Called then when the usual readings
-    // have loaded for a word of a learning note tapped on a card, and until
-    // 2026-10-17 it threw there, so the word's popup did not open.
-    if (!lookedUpField) {
-      return;
-    }
-    const typed = lookedUpField.value.trim();
-    const dictionary = getDictionary();
-    // Nothing typed: what was filled in by itself goes too.
-    if (typed === '' && !entryTapped) {
-      autoFill(null);
-    }
-    if (readTypedPinyin(typed)) {
-      suggestions.replaceChildren(...pinyinSuggestions(typed));
-      return;
-    }
-    const parts = [];
-    if (typed !== '') {
-      const alreadyHave = wordsWithSameCharacters({ traditional: typed, simplified: typed }, words);
-      for (const word of alreadyHave) {
-        parts.push(
-          paragraph('note', `Already in your words: ${charactersOf(word)} ${formatPinyin(word.pinyin)} (${word.definition})`),
-        );
-      }
-      const entries = dictionary ? lookUp(dictionary, typed) : [];
-      // The fields follow the characters typed, unless an entry was tapped
-      // for these very characters.
-      if (dictionary && !(entryTapped && entries.some((entry) => sameEntry(entry, filledEntry)))) {
-        autoFill(likeliestEntry(entries, typed));
-      }
-      for (const entry of entries.slice(0, MAX_SUGGESTIONS)) {
-        parts.push(entryButton(entry, sameEntry(entry, filledEntry) ? 'filled in' : 'use this'));
-      }
-      if (dictionary && entries.length === 0 && alreadyHave.length === 0) {
-        parts.push(paragraph('hint', 'Not in the dictionary. Fill in the fields yourself.'));
-      }
-    }
-    suggestions.replaceChildren(...parts);
-  }
-
-  for (const field of [addFields.traditional, addFields.simplified]) {
-    // Fetch the dictionary as soon as a word is about to be typed, so it is
-    // usually there by the time the characters are.
-    field.addEventListener('focus', loadDictionary);
-    field.addEventListener('input', () => {
-      filledEntry = null; // the characters are no longer the tapped entry's
-      entryTapped = false;
-      lookedUpField = field;
-      pinyinShown = MAX_SUGGESTIONS;
-      loadDictionary(); // in case the text arrived without the box being tapped
-      showSuggestions();
-    });
-  }
-
-  // Choosing a script for the word leaves only that script's box. What was
-  // typed in the other box goes with it; characters that came from a
-  // dictionary entry are put back in the script now asked for.
-  addFields.cardScript.addEventListener('change', () => {
-    applySettings();
-    if (filledEntry) {
-      fillInCharacters(filledEntry);
-    }
-    showSuggestions();
-  });
-
   // ---- "Learn it now" ----
   //
   // After a word is added (the owner, 2026-10-16, from a tester who wanted to
@@ -1059,71 +743,6 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     }
     studyDeck(deckId, 'learn');
   }
-
-  let learnNowTarget = null;
-  addLearnNow.addEventListener('click', async () => {
-    const target = learnNowTarget;
-    addDialog.close();
-    await learnNow(target.wordId, target.deckId);
-  });
-  addForm.addEventListener('input', () => {
-    addLearnNow.hidden = true;
-  });
-
-  addForm.addEventListener('submit', async (event) => {
-    event.preventDefault(); // or the browser would reload the page
-    const typed = Object.fromEntries(
-      Object.entries(addFields).map(([name, input]) => [name, input.value]),
-    );
-    // Pinyin still in the box: the word is to be chosen from the list.
-    const dictionary = getDictionary();
-    if (dictionary && lookUpByPinyin(dictionary, lookedUpField.value.trim()).length > 0) {
-      addNote.textContent = 'Choose the word from the list under the box, or type its characters.';
-      return;
-    }
-    const asked = scriptAsked();
-    if (asked) {
-      // Only one script was typed; the dictionary supplies the other.
-      await loadDictionary();
-      Object.assign(
-        typed,
-        completeForms(asked, typed[asked].trim(), tidyPinyin(typed.pinyin.trim()) || '', filledEntry),
-      );
-    }
-    const checked = checkWord(typed);
-    if (checked.problem) {
-      addNote.textContent = checked.problem;
-      return;
-    }
-    // The word goes into the deck whose page is open.
-    const deck = openDeck();
-    const { toAdd } = newWordRecords([checked.word], words, Date.now());
-    const name = `${charactersOf(checked.word)} (${formatPinyin(checked.word.pinyin)})`;
-    // A word that is there already is put in this deck as well.
-    const existing = toAdd.length === 0 ? words.find((word) => word.id === wordId(checked.word)) : null;
-    if (existing && existing.decks.includes(deck.id)) {
-      addNote.textContent = `${name} is already in this deck.`;
-      return;
-    }
-    const added = withDeck(existing || toAdd[0], deck.id);
-    await putAll('words', [added]);
-    addForm.reset();
-    filledEntry = null;
-    autoValues.clear();
-    applySettings(); // "Cards in" is back to "As in Settings", so both boxes are
-
-    pinyinPreview.textContent = '';
-    suggestions.replaceChildren();
-    addNote.textContent = existing
-      ? `${name} was already in your words, as you had it. It is in this deck now too.`
-      : `Added ${charactersOf(toAdd[0])}. It waits in Learn, last in line.`;
-    await afterChange();
-    // "Learn it now", for a word still to be learned; typing the next word
-    // puts it away.
-    learnNowTarget = studiedWordIds.has(added.id) ? null : { wordId: added.id, deckId: deck.id };
-    addLearnNow.hidden = learnNowTarget === null;
-    lookedUpField.focus();
-  });
 
   return {
     addReadyLevels: (listId, levels) => readyDecks.addReadyLevels(listId, levels),
@@ -1177,7 +796,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       renderDecks();
       showView();
       renderList();
-      showSuggestions();
+      addWordForm.showSuggestions();
     },
   };
 }
