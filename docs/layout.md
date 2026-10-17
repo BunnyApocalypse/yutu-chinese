@@ -67,7 +67,8 @@ Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where
 - `tests/browser/harness.js`: what the browser tests share: serving the app, starting the browsers, drawing strokes, reading the status line.
 - `tests/browser/writing-grid.browser.js`: writes 15 characters in both stroke orders at seven positions and sizes.
 - `tests/browser/words.browser.js`: the Decks tab from adding a word to finding it in Review.
-- `tests/browser/settings.browser.js`: the Script and Pronunciation settings, on cards and on the Decks tab.
+- `tests/browser/settings.browser.js`: the Script and Pronunciation settings, on cards and on the Decks tab; then the Look, raw input and saving a backup.
+- `tests/browser/review.browser.js`: grading in Review: the suggested grade, what a grade saves, the hint setting and Card types.
 - `tests/browser/lesson.browser.js`, `tests/browser/welcome.browser.js`, `tests/browser/offline.browser.js`: the Learn tab and its lesson, the introduction, and offline use.
 - `tests/browser/database.browser.js`: a database from before brought up to date, and what is kept for merging (removal marks, `changedAt`, `formerIds`).
 - `tests/decks.test.js`: tests for `src/decks.js`.

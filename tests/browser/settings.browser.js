@@ -1,19 +1,38 @@
-// The Script and Pronunciation settings in a real browser: someone learning
-// one script, or mainland pronunciation only, is not asked for or shown the
-// rest, on the Decks tab and on cards.
+// Settings in a real browser. Mostly Script and Pronunciation: someone
+// learning one script, or mainland pronunciation only, is not asked for or
+// shown the rest, on the Decks tab and on cards. Then the Look, raw input,
+// saving a backup, and closing the panel. (The hint setting and Card types
+// are in review.browser.js, the rest beside what they change.)
 //
 // Run with: npm run test:browser
 
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, type, choose, textOf, isShown, waitUntil, addTestWords, openDeckPage, useAddForm } from './harness.js';
+import {
+  startApp,
+  startBrowsers,
+  startWriting,
+  writingArea,
+  drawStroke,
+  loadStrokeData,
+  openSettings,
+  tap,
+  type,
+  choose,
+  textOf,
+  isShown,
+  waitUntil,
+  addTestWords,
+  openDeckPage,
+  useAddForm,
+} from './harness.js';
 
 // Text for "the Decks tab's list has this many rows".
 const rows = (count) => `document.querySelectorAll('#word-list li').length === ${count}`;
 
 // One browser, and the steps in order: each builds on the one before.
-describe('the Script and Pronunciation settings', { concurrency: false }, () => {
+describe('settings', { concurrency: false }, () => {
   let app;
   let browsers;
   let page;
@@ -406,6 +425,63 @@ describe('the Script and Pronunciation settings', { concurrency: false }, () => 
     // On the dimmed page above it: it closes.
     await tapAt(box.x + 4, box.y / 2);
     await waitUntil(page, `!${isOpen}`, 'Settings to close');
+  });
+
+  it('keeps drawn strokes on screen with raw input, and shows the printed ones when snapping', async () => {
+    const drawn = `document.querySelectorAll('#writing-area .drawn-strokes path').length`;
+    // Writes the first stroke of 十 (the same in both scripts) in Free practice.
+    const writeFirstStroke = async () => {
+      await tap(page, 'practice-button');
+      await startWriting(page, '十');
+      const area = await writingArea(page);
+      assert.equal(await drawStroke(page, area, loadStrokeData('十').medians[0]), '2/2 · No mistakes');
+    };
+    // Raw input is the default.
+    assert.equal(await page.evaluate(`document.getElementById('handwriting-select').value`), 'raw');
+    await writeFirstStroke();
+    assert.equal(await page.evaluate(drawn), 1);
+
+    await openSettings(page, 'settings-writing');
+    await choose(page, 'handwriting-select', 'snap');
+    await tap(page, 'settings-close');
+    // The setting is saved before it takes effect, so a stroke is written
+    // again until it is kept off the screen.
+    let kept = 1;
+    for (let attempt = 0; attempt < 5 && kept !== 0; attempt++) {
+      await writeFirstStroke();
+      kept = await page.evaluate(drawn);
+    }
+    assert.equal(kept, 0, 'the drawn stroke stayed on screen');
+
+    await openSettings(page, 'settings-writing');
+    await choose(page, 'handwriting-select', 'raw');
+    await tap(page, 'settings-close');
+  });
+
+  it('saves a backup of everything as a file, and says when', async () => {
+    // The file is caught on its way to the browser's downloads.
+    await page.evaluate(`(() => {
+      URL.createObjectURL = (blob) => {
+        window.savedBackup = blob;
+        return 'blob:caught';
+      };
+      URL.revokeObjectURL = () => {};
+      HTMLAnchorElement.prototype.click = function () {
+        window.savedName = this.download;
+      };
+    })()`);
+    await openSettings(page, 'settings-data');
+    assert.match(await textOf(page, 'backup-status'), /^No backup has been made on this device yet\./);
+    await tap(page, 'export-button');
+    await waitUntil(page, `window.savedBackup !== undefined && window.savedName !== undefined`, 'the backup file');
+    assert.match(await page.evaluate('window.savedName'), /^yutu-chinese-backup-\d{4}-\d\d-\d\d-\d{4}\.json$/);
+    const backup = JSON.parse(await page.evaluate('window.savedBackup.text()'));
+    assert.equal(backup.format, 'hanzi-trainer-backup');
+    const words = await page.evaluate(`document.getElementById('word-count').textContent`);
+    assert.equal(backup.words.length, Number(words));
+    assert.ok(backup.reviews.length > 0, 'the reviews are in the backup');
+    await waitUntil(page, `document.getElementById('backup-status').textContent.startsWith('Last backup: today.')`, 'the time of the backup');
+    await tap(page, 'settings-close');
   });
 
   it('opens a tab that was tapped before the app had started', async () => {
