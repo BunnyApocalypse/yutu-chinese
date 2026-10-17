@@ -220,7 +220,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   pinyinButton.addEventListener('click', showPinyin);
 
   // Practicing again (see practiceWhenDone in wordFlow.js): the grades stay
-  // where they are, and Restart, Show outline and Animate come back under
+  // where they are, and Clear, Show outline and Animate come back under
   // them (the owner, 2026-10-17: above, they would push the grades down).
   function startPractice() {
     practiceAgainButton.hidden = true;
@@ -557,7 +557,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     options = gradeOptions(current.card ? current.card.fsrsState : null, finishedAt);
     suggested = suggestedGrade;
     answerDetails = details;
-    // Once answered, only the grades are under the card: Restart, Show
+    // Once answered, only the grades are under the card: Clear, Show
     // outline and Animate, or the tone buttons, are no use any more (UX
     // review item 10; the owner chose this from pictures on 2026-10-17, over
     // keeping Animate as a quiet button). The next card's showPartsFor
@@ -632,7 +632,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       judgeChar: (facts) => judgeChar({ ...facts, hintCountsAs: settings.hintCountsAs }),
       // Starting a character over after the word was finished (the back
       // arrow to a skipped one) takes the grade buttons away
-      // again until it is finished once more, and brings back Restart, Show
+      // again until it is finished once more, and brings back Clear, Show
       // outline and Animate, which offerGrades put away.
       onCharStart: () => {
         hideGrades();

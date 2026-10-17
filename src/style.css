@@ -1730,7 +1730,7 @@ button.small {
   margin-top: 0;
 }
 
-/* Practicing a written word again (review.js): Restart, Show outline and
+/* Practicing a written word again (review.js): Clear, Show outline and
    Animate come back under the grades, so the grades do not move. */
 .study-area.practicing #writing-buttons {
   order: 1;

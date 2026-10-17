@@ -102,7 +102,7 @@ describe('tips', { concurrency: false }, () => {
     await tap(page, 'words-tab');
     assert.equal(await page.evaluate(tipOpen), false);
     // The first character written brings the tip about the gestures, below
-    // Restart so as to leave the writing area clear; once put away, the next
+    // Clear the character so as to leave the writing area empty; once put away, the next
     // character brings none.
     // (The tab starts a card of its own; that one is waited for first, or it
     // could come up after 我們 and take its place.)

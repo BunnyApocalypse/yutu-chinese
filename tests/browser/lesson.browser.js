@@ -336,7 +336,7 @@ describe('learning new words', { concurrency: false }, () => {
     // The plain writing card of 下 from the test before, written cleanly.
     await write('下');
     await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
-    assert.equal(await isShown(page, 'writing-buttons'), false, 'Restart, Show outline and Animate are put away');
+    assert.equal(await isShown(page, 'writing-buttons'), false, 'Clear, Show outline and Animate are put away');
     assert.equal(await isShown(page, 'practice-again-button'), true);
     const suggested = `document.querySelector('#grade-row button.primary').firstChild.textContent`;
     assert.equal(await page.evaluate(suggested), 'Good');

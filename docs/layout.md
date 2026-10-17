@@ -19,7 +19,7 @@ Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where
 - `src/toneMark.js`: recognizes a drawn tone mark (level, rising, down-then-up, falling, dot). Plain calculation.
 - `src/tones.js`: which reading of a word applies (Taiwan or mainland), lining syllables up with characters, and which tones are accepted. Plain calculation.
 - `src/settings.js`: the settings and their panel.
-- `src/wordFlow.js`: writing a word one character after another (slot row, status line, Restart / Outline / Animate / Next, tap to continue). Shared by both modes; tracks mistakes, hints and peeking per character, and in Review shows each character's verdict.
+- `src/wordFlow.js`: writing a word one character after another (slot row, status line, Clear / Outline / Animate / Next, tap to continue). Shared by both modes; tracks mistakes, hints and peeking per character, and in Review shows each character's verdict.
 - `src/quiz.js`: the only file that imports Hanzi Writer. It reports plain results (strokes done, mistakes, hint shown) through handler functions. One Hanzi Writer instance is reused for all characters via `setCharacter()`.
 - `src/scheduler.js`: the only file that imports `ts-fsrs`. `gradeOptions(fsrsState, now)` returns what each of the four grades would do to a card.
 - `src/session.js`: plain calculation, no page or database: which card is next (`planSession`), the suggested grade for writing (`suggestGrade`, `judgeChar`), the 4:00 day boundary, the daily new-word limit, the hold between cards of one word.

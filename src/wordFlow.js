@@ -1,5 +1,5 @@
 // Writing a word: one character after another in the writing area, with the
-// row of slots, the status line and the Restart / Outline / Animate / Next
+// row of slots, the status line and the Clear / Outline / Animate / Next
 // buttons. Used by both Review and Free practice; each tells the flow what to
 // do when the word is finished.
 //
@@ -144,7 +144,7 @@ export function createWordFlow(elements) {
   let finishedPerChar = []; // true once the character has been written or skipped
 
   // Mistakes on the current character so far in this attempt, and mistakes
-  // from earlier attempts at it (before Restart or Animate was pressed).
+  // from earlier attempts at it (before Clear or Animate was pressed).
   // Starting over doesn't wipe the slate.
   let currentMistakes = 0;
   let carriedMistakes = 0;
@@ -576,7 +576,7 @@ export function createWordFlow(elements) {
     }
   });
 
-  // The Restart button, or a swipe up on the writing area: the mistakes made
+  // The Clear button, or a swipe up on the writing area: the mistakes made
   // so far still count.
   function startOver() {
     if (options.practiceWhenDone && wordFinished()) {

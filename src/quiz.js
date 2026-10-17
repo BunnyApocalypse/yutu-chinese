@@ -84,7 +84,7 @@ const PADDING_SHARE = 0.06;
 //       printed character red instead of green
 //   onAnimateStart()
 //   onWipe()  a swipe up asked to start the character again (gestures.js);
-//       the flow does what its Restart button does
+//       the flow does what its Clear button does
 //
 // Returns an object with functions to control the quiz. Call showCharacter()
 // to begin.
