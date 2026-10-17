@@ -23,6 +23,7 @@ import {
 import { createDecksPanel, fillDeckSelect } from './decksPanel.js';
 import { createCardsPanel } from './cardsPanel.js';
 import { createWordPage } from './wordPage.js';
+import { createDictionaryLoader } from './dictionaryLoader.js';
 import { langFor, fillMixed } from './lang.js';
 import { ask } from './confirm.js';
 import { isSentence, sentenceId, sentenceRecord, clozeInBoth } from './sentences.js';
@@ -39,7 +40,6 @@ import {
   charactersShown,
   scriptsShown,
   scriptFor,
-  parseReadyList,
   levelsOfReadyList,
   listTag,
   groupName,
@@ -47,28 +47,14 @@ import {
   tidyPinyin,
 } from './words.js';
 import {
-  readDictionary,
   lookUp,
   lookUpByPinyin,
   lookUpByCharacters,
   lookUpByMeaning,
   readTypedPinyin,
   proposeMeaning,
-  otherScriptForm,
   splitIntoWords,
 } from './dictionary.js';
-// "?url" makes Vite hand us the file's address instead of its contents, so
-// the dictionary stays a separate file that is only fetched when needed.
-import dictionaryUrl from '../data/cedict/dictionary.tsv?url';
-// The ready-made lists are separate files in the same way (data/wordlists/).
-import hsk3Url from '../data/wordlists/hsk/hsk-3.0.tsv?url';
-import hsk2Url from '../data/wordlists/hsk/hsk-2.0.tsv?url';
-import tocflUrl from '../data/wordlists/tocfl/tocfl.tsv?url';
-import radicalsUrl from '../data/wordlists/radicals/radicals.tsv?url';
-
-// Where each ready-made list is fetched from, by the `data-list` of its row
-// in the Ready-made decks section (index.html).
-const READY_LIST_URLS = { 'hsk-3.0': hsk3Url, 'hsk-2.0': hsk2Url, tocfl: tocflUrl, radicals: radicalsUrl };
 
 // With thousands of words, building a row for each would make the page slow,
 // so only this many are shown at a time; the search box narrows them down.
@@ -185,6 +171,17 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   // What became of it, for edit(): see there.
   let dialogResult = null;
 
+  // The dictionary and the ready-made lists, fetched once (dictionaryLoader.js).
+  // When the dictionary or the usual readings arrive, the add form's
+  // suggestions are shown afresh.
+  const dictionaryLoader = createDictionaryLoader(() => showSuggestions());
+  const loadDictionary = dictionaryLoader.load;
+  const loadUsualReadings = dictionaryLoader.loadUsualReadings;
+  const readyEntries = dictionaryLoader.readyEntries;
+  const likeliestEntry = dictionaryLoader.likeliestEntry;
+  const completeForms = dictionaryLoader.completeForms;
+  const getDictionary = dictionaryLoader.get;
+
   async function load() {
     words = (await getAll('words')).sort((a, b) => a.order - b.order);
     decks = await getAll('decks');
@@ -300,6 +297,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     getSettings,
     lookUp: async (text) => {
       await loadDictionary();
+      const dictionary = getDictionary();
       return dictionary ? lookUp(dictionary, text) : [];
     },
     // For the words in a learning note, which can be tapped: the note split
@@ -307,11 +305,13 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     // which of its readings is meant).
     splitWords: async (text) => {
       await loadDictionary();
+      const dictionary = getDictionary();
       return dictionary ? splitIntoWords(dictionary, text) : [{ text, word: false }];
     },
     likeliestEntry: async (text) => {
       await loadDictionary();
       await loadUsualReadings();
+      const dictionary = getDictionary();
       return dictionary ? likeliestEntry(lookUp(dictionary, text), text) : null;
     },
     edit: (word) => openDialog(words.find((entry) => entry.id === word.id) || word),
@@ -782,17 +782,19 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     }
     dictionaryPart.hidden = false;
     const typed = searchInput.value.trim();
-    const again = typed === dictionarySearched && Boolean(dictionary);
+    const again = typed === dictionarySearched && Boolean(getDictionary());
     const pause = again ? 0 : DICTIONARY_PAUSE_MS;
     if (!again) {
       dictionaryShown = DICTIONARY_ROWS; // "Show more" starts over
     }
     dictionarySearched = typed;
     dictionaryTimer = setTimeout(async () => {
-      if (!dictionary) {
+      if (!getDictionary()) {
         dictionaryNote.textContent = 'Opening the dictionary…';
       }
       await loadDictionary();
+      const dictionary = getDictionary();
+      const readyListWords = dictionaryLoader.readyListWords();
       // Typed on meanwhile, or gone elsewhere: a later search takes over.
       if (searchInput.value.trim() !== typed || !dictionaryWanted()) {
         return;
@@ -914,10 +916,6 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
 
   // ---- The dictionary ----
 
-  // The dictionary once it has been fetched (see dictionary.js), and the
-  // fetch itself, so it is only made once.
-  let dictionary = null;
-  let dictionaryLoading = null;
   // The characters field last typed in, which is what gets looked up.
   let lookedUpField = null;
   // The dictionary entry the fields were last filled in from, by itself or
@@ -929,44 +927,6 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   // What was last put in each field by itself (see autoFill), so that a
   // field the learner has typed in is told apart and left alone.
   const autoValues = new Map();
-
-  // Returns a promise that is done once the dictionary is there, or could
-  // not be fetched.
-  function loadDictionary() {
-    if (!dictionaryLoading) {
-      dictionaryLoading = fetch(dictionaryUrl)
-        .then((response) => response.text())
-        .then((text) => {
-          dictionary = readDictionary(text);
-          showSuggestions();
-          loadUsualReadings();
-        })
-        // Without the dictionary the fields are simply filled in by hand.
-        .catch(() => {
-          dictionaryLoading = null;
-        });
-    }
-    return dictionaryLoading;
-  }
-
-  // How a word typed in one script is written in both, for someone who is
-  // only asked for one (`script` says which): from `tapped`, the dictionary entry that was tapped to
-  // fill in the fields (if one was) or, failing that, from the dictionary's
-  // entries for those characters. Where the dictionary cannot tell, both are
-  // taken to be the same.
-  //
-  // Returns { traditional, simplified }.
-  function completeForms(script, characters, pinyin, tapped = null) {
-    const other = script === 'traditional' ? 'simplified' : 'traditional';
-    const entries = [
-      ...(tapped ? [tapped] : []),
-      ...(dictionary ? lookUp(dictionary, characters) : []),
-    ];
-    return {
-      [script]: characters,
-      [other]: otherScriptForm(entries, script, characters, pinyin),
-    };
-  }
 
   const paragraph = (className, text) => {
     const element = document.createElement('p');
@@ -1020,43 +980,6 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   // the learner has typed in is left as it is, and so is the box being
   // typed in; with `entry` null (nothing in the dictionary) what was filled
   // in by itself is taken out again.
-  // The reading a word usually has, where the dictionary has several: the
-  // first one the HSK 3.0 list gives it (the list goes from the lowest level
-  // up, so that is the reading learned first: 行 xíng, not háng), else the
-  // TOCFL list's. By either form; filled in once both lists are fetched,
-  // which happens with the dictionary. (The dictionary itself lists a
-  // word's readings alphabetically, which says nothing of which is usual.)
-  const usualReading = new Map();
-  // The words of both lists, HSK 3.0's first: what lists words looked up by
-  // pinyin the likeliest first (lookUpByPinyin). Replaced, never changed,
-  // since lookUpByPinyin keeps what it works out from it.
-  let readyListWords = [];
-  let usualReadingsLoading = null;
-  function loadUsualReadings() {
-    usualReadingsLoading =
-      usualReadingsLoading ||
-      Promise.all(['hsk-3.0', 'tocfl'].map((listId) => readyEntries(listId).catch(() => [])))
-        .then((lists) => {
-          for (const entry of lists.flat()) {
-            for (const form of [entry.simplified, entry.traditional]) {
-              if (!usualReading.has(form)) {
-                usualReading.set(form, entry.pinyin);
-              }
-            }
-          }
-          readyListWords = lists.flat();
-          showSuggestions();
-        });
-    return usualReadingsLoading;
-  }
-
-  // The entry to fill in by itself: the one with the usual reading, if the
-  // lists know it, otherwise the dictionary's first.
-  function likeliestEntry(entries, typed) {
-    const usual = usualReading.get(typed);
-    return entries.find((entry) => entry.pinyin === usual) || entries[0] || null;
-  }
-
   // Each lookup gives new records, so entries are compared by what they say.
   const sameEntry = (a, b) =>
     Boolean(a && b) && a.traditional === b.traditional && a.simplified === b.simplified && a.pinyin === b.pinyin;
@@ -1125,10 +1048,11 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   // is filled in by itself, since the word is not known until one is chosen.
   function pinyinSuggestions(typed) {
     autoFill(null);
+    const dictionary = getDictionary();
     if (!dictionary) {
       return [];
     }
-    const entries = lookUpByPinyin(dictionary, typed, readyListWords);
+    const entries = lookUpByPinyin(dictionary, typed, dictionaryLoader.readyListWords());
     if (entries.length === 0) {
       return [paragraph('hint', 'No word in the dictionary is read that way. Check the spelling (v for ü), or type the characters.')];
     }
@@ -1166,6 +1090,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       return;
     }
     const typed = lookedUpField.value.trim();
+    const dictionary = getDictionary();
     // Nothing typed: what was filled in by itself goes too.
     if (typed === '' && !entryTapped) {
       autoFill(null);
@@ -1255,6 +1180,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       Object.entries(addFields).map(([name, input]) => [name, input.value]),
     );
     // Pinyin still in the box: the word is to be chosen from the list.
+    const dictionary = getDictionary();
     if (dictionary && lookUpByPinyin(dictionary, lookedUpField.value.trim()).length > 0) {
       addNote.textContent = 'Choose the word from the list under the box, or type its characters.';
       return;
@@ -1414,17 +1340,6 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   const readyLevels = byId('ready-levels');
   const readyReport = byId('ready-report');
 
-  // The lists fetched so far: list ID → its entries (see parseReadyList).
-  const readyLists = new Map();
-
-  async function readyEntries(listId) {
-    if (!readyLists.has(listId)) {
-      const response = await fetch(READY_LIST_URLS[listId]);
-      readyLists.set(listId, parseReadyList(await response.text()));
-    }
-    return readyLists.get(listId);
-  }
-
   // Lists the levels of the chosen list, one row each with how many of its
   // words are new and a button that adds it (the owner, 2026-10-14: a level
   // is months of work, so levels are added one at a time). The levels of a
@@ -1523,6 +1438,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     readyReport.textContent = 'Adding…';
     // Meanings come from the dictionary, as for a word typed by hand.
     await loadDictionary();
+    const dictionary = getDictionary();
     const { meaningDetail } = getSettings();
     const candidates = [];
     const tags = new Map(); // word ID → the tag for this list and level
