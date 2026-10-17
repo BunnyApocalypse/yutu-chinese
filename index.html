@@ -29,9 +29,9 @@
         <span id="place-title" class="place-title">Review</span>
         <!-- On a deck's page, in place of the screen's name: up one level, to
              the deck it is inside or the front page (decksPanel.js). -->
-        <!-- The arrow of the three ways back here is drawn, as heavy as the
+        <!-- Every arrow in the app, back or on, is drawn, as heavy as the
              menu's lines (the owner, 2026-10-17: a "‹" in the font was too
-             small), and the same in all three. -->
+             small), and they all match: the same path wherever one is. -->
         <button id="deck-back-button" class="top-back" type="button" hidden><svg class="back-arrow" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19" /></svg><span id="deck-back-label">Decks</span></button>
         <!-- In Free practice opened from Settings: back to Settings' Writing
              group, where it was opened (main.js). -->
@@ -430,9 +430,9 @@
         <!-- Hanzi Writer draws the character into this SVG. wordFlow.js sets its size and adds the guide grid. -->
         <div id="writing-row" class="writing-row">
           <!-- Beside the writing area: go back to a character skipped by accident, and skip the current character. -->
-          <button id="back-button" class="side-arrow" type="button" aria-label="Go back to the skipped character" title="Go back to the skipped character">‹</button>
+          <button id="back-button" class="side-arrow" type="button" aria-label="Go back to the skipped character" title="Go back to the skipped character"><svg class="side-arrow-icon" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19" /></svg></button>
           <svg id="writing-area" class="writing-area"></svg>
-          <button id="skip-button" class="side-arrow" type="button" aria-label="Skip this character" title="Skip this character (counts as known)">›</button>
+          <button id="skip-button" class="side-arrow" type="button" aria-label="Skip this character" title="Skip this character (counts as known)"><svg class="side-arrow-icon" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5 L16 12 L9 19" /></svg></button>
         </div>
 
         <!-- Takes the writing area's place on tone, pinyin and meaning cards: shows the
@@ -657,7 +657,7 @@
           </div>
         </div>
         <div class="buttons">
-          <button id="word-page-back" class="small" type="button" hidden>‹ Back</button>
+          <button id="word-page-back" class="small with-arrow" type="button" hidden><svg class="back-arrow" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19" /></svg><span>Back</span></button>
           <button id="word-page-practice" class="small" type="button" hidden>Practice</button>
           <button id="word-page-edit" class="small" type="button" hidden>Edit</button>
           <button id="word-page-close" class="small primary" type="button">Close</button>
@@ -838,7 +838,7 @@
              in view (UX review, 2026-10-16). "‹ Settings" goes back from a
              group to the list, on a narrow screen (settings.js). -->
         <div class="settings-heading">
-          <button id="settings-back" class="settings-back" type="button" hidden>‹ Settings</button>
+          <button id="settings-back" class="settings-back" type="button" hidden><svg class="back-arrow" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19" /></svg><span>Settings</span></button>
           <h2 id="settings-title">Settings</h2>
           <button id="settings-close" class="small" type="button">Done</button>
         </div>

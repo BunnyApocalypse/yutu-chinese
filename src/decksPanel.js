@@ -263,7 +263,10 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
       const openButton = document.createElement('button');
       openButton.type = 'button';
       openButton.className = 'deck-open';
-      openButton.textContent = '›';
+      // Drawn, as are all the app's arrows (index.html).
+      openButton.innerHTML =
+        '<svg class="back-arrow" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" ' +
+        'stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5 L16 12 L9 19" /></svg>';
       openButton.setAttribute('aria-label', `${deck.name}: its words and settings`);
       openButton.title = 'Its words and settings';
       openButton.addEventListener('click', () => open(deck.id));

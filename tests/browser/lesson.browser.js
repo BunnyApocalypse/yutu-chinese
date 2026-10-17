@@ -142,7 +142,7 @@ describe('learning new words', { concurrency: false }, () => {
     // the row above has the character too, even for a word of one.
     await waitUntil(page, `document.querySelector('#card-face .tone-char')`, 'the tone card');
     // (‹ and › are the arrows, hidden here: a word of one character.)
-    assert.equal(await textOf(page, 'card-face'), '大Draw the tone mark hereor use the buttons below‹›');
+    assert.equal(await textOf(page, 'card-face'), '大Draw the tone mark hereor use the buttons below');
     assert.equal(await page.evaluate(`document.querySelectorAll('#card-face .face-arrow:not(.unavailable)').length`), 0);
     assert.equal(await page.evaluate(`document.querySelector('#card-face .tone-char').lang`), 'zh-Hant-TW');
     assert.equal(await textOf(page, 'status'), 'Which tone?');

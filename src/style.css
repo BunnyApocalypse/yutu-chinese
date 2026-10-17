@@ -952,15 +952,21 @@ select {
   top: 50%;
   transform: translateY(-50%);
   z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 28px;
   min-height: 72px;
-  padding: 0 0 var(--space-small);
+  padding: 0;
   border: none;
   background: transparent;
-  font-size: 2.6rem;
-  line-height: 1;
   color: var(--accent);
   opacity: 0.6;
+}
+
+/* The drawn arrow (index.html, toneFlow.js), never squeezed. */
+.side-arrow-icon {
+  flex: none;
 }
 
 #back-button {
@@ -1456,6 +1462,9 @@ button.slot {
 
 /* "‹ Settings": back from a group to the list, in the heading's place. */
 .settings-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
   min-height: var(--tap-small);
   padding: var(--space-tiny) 0;
   border: none;
@@ -2635,9 +2644,16 @@ button.top-back.top-back-arrow {
   margin-right: calc(-1 * var(--space-small));
 }
 
-/* The drawn arrow of the ways back in the top bar (index.html). */
-button.top-back .back-arrow {
+/* The drawn arrow of the ways back (index.html). */
+.back-arrow {
   flex: none;
+}
+
+/* A small button with the drawn arrow before its word ("‹ Back"). */
+button.with-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
 }
 
 /* "‹ Decks" in the top bar, in place of the screen's name: the way back
@@ -2685,11 +2701,13 @@ button.top-back {
 }
 
 button.deck-open {
+  display: flex;
   flex: none;
+  align-items: center;
+  justify-content: center;
   width: 48px;
   min-height: 0;
   padding: 0;
-  font-size: 1.6rem;
   color: var(--text-soft);
 }
 
