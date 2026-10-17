@@ -691,6 +691,26 @@ main.focused .top-bar {
   vertical-align: middle;
 }
 
+/* Back and Next held at the bottom edge while a screen scrolls: on a phone
+   held sideways, or with "What's the difference?" open (UX review, item 7;
+   the owner, 2026-10-17). The negative margins reach over the panel's
+   padding, as Settings' heading does at the top, so that nothing scrolling
+   under the bar shows beside or below it. The line above it shows only while
+   something is hidden under it (`covering`, welcome.js). */
+.welcome-bar {
+  position: sticky;
+  bottom: calc(-1 * var(--space-huge));
+  z-index: 1;
+  margin: var(--space-large) calc(-1 * var(--space-huge)) 0;
+  padding: var(--space-medium) var(--space-huge);
+  background: var(--bg);
+  border-top: 1px solid transparent;
+}
+
+.welcome-bar.covering {
+  border-top-color: var(--border);
+}
+
 /* The choice of look, in the introduction and in Settings: three samples
    side by side, the chosen one ringed in blue. The radio buttons are kept
    for the keyboard and screen readers, but out of sight. */

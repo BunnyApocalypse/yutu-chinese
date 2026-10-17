@@ -92,6 +92,24 @@ describe('the introduction', { concurrency: false }, () => {
     assert.equal(await page.evaluate(start), '');
   });
 
+  it('keeps Back and Next in view on a phone held sideways', async () => {
+    await tap(page, 'welcome-back');
+    assert.equal(await heading(), 'Which characters are you learning?');
+    await page.send('Emulation.setDeviceMetricsOverride', { width: 844, height: 390, deviceScaleFactor: 1, mobile: true });
+    const nextInView = `document.getElementById('welcome-next').getBoundingClientRect().bottom <= innerHeight`;
+    const covering = `document.getElementById('welcome-bar').classList.contains('covering')`;
+    await waitUntil(page, covering, 'the line above Back and Next');
+    assert.equal(await page.evaluate(nextInView), true);
+    // At the bottom nothing is hidden under the bar, so the line goes.
+    await page.evaluate(`document.getElementById('welcome').scrollTop = 9999`);
+    await waitUntil(page, `!(${covering})`, 'no line at the bottom');
+    // Upright, the screen fits: no line.
+    await page.send('Emulation.setDeviceMetricsOverride', { width: 393, height: 800, deviceScaleFactor: 1, mobile: true });
+    await waitUntil(page, `!(${covering})`, 'no line upright');
+    assert.equal(await page.evaluate(nextInView), true);
+    await tap(page, 'welcome-next');
+  });
+
   it('ends with one button that keeps the words, and "Not now"', async () => {
     await tap(page, 'welcome-next');
     assert.equal(await heading(), 'Keep your words safe');

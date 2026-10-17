@@ -28,6 +28,7 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
   const backButton = byId('welcome-back');
   const nextButton = byId('welcome-next');
   const skipButton = byId('welcome-skip');
+  const bar = byId('welcome-bar');
   const keepNote = byId('welcome-keep-note');
   const startRadios = [...dialog.querySelectorAll('input[name="welcome-start"]')];
   // Whether the level to start with was chosen by hand; until it is, it
@@ -134,7 +135,21 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
     skipButton.hidden = last && !willAsk;
     // Each screen starts at its top, whatever was scrolled before.
     dialog.scrollTop = 0;
+    showCovering();
   }
+
+  // The line above Back and Next (style.css, .welcome-bar), while there is
+  // more of the screen below them to scroll to. Looked at again when the
+  // panel scrolls, a fold opens or closes, or the screen turns. ("toggle"
+  // does not travel up from the fold to the panel, so it is caught on the
+  // way down: the `true` below. "passive" tells the browser this never stops
+  // the scrolling.)
+  function showCovering() {
+    bar.classList.toggle('covering', dialog.scrollTop + dialog.clientHeight < dialog.scrollHeight - 1);
+  }
+  dialog.addEventListener('scroll', showCovering, { passive: true });
+  dialog.addEventListener('toggle', showCovering, true);
+  window.addEventListener('resize', showCovering);
 
   // The last screen: what this browser needs to keep the words, as
   // welcomeStorage() works it out, and a line about it.
@@ -241,6 +256,8 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
     showStep();
     // showModal() opens a <dialog> on top of the page and dims the rest.
     dialog.showModal();
+    // Only now does the panel have a size to measure.
+    showCovering();
   }
 
   return {
