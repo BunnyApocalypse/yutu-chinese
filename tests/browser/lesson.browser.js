@@ -109,7 +109,7 @@ describe('learning new words', { concurrency: false }, () => {
     // The word, its reading and meaning, and once the notes are there, its tip.
     await waitUntil(page, `document.querySelector('#card-face .face-tip')`, 'the tip');
     assert.match(await textOf(page, 'card-face'), /^大dàbig"Big"\./);
-    // "More about this word" opens its page, and the lesson stays where it was.
+    // "About this word" opens its page, and the lesson stays where it was.
     await page.evaluate(`document.querySelector('#card-face .face-tip-more').click()`);
     await waitUntil(page, `document.getElementById('word-page').dataset.shown === '大|da4'`, 'the word\'s page');
     await tap(page, 'word-page-close');

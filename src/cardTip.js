@@ -2,7 +2,7 @@
 // a lesson, and under the answer of a meaning or pinyin card (review.js and
 // recallCard.js). Asked for by the owner on 2026-10-14, who feared learners
 // would take a long time to find the tips on the word's page. It shows the
-// start of the tip and the example sentence, with "More about this word",
+// start of the tip and the example sentence, with "About this word",
 // which opens the word's page.
 
 function paragraph(className, text) {
@@ -34,7 +34,7 @@ export function cardTip(note, script, onMore, tappableText) {
   const more = document.createElement('button');
   more.type = 'button';
   more.className = 'link-button face-tip-more';
-  more.textContent = 'More about this word';
+  more.textContent = 'About this word';
   // A tap on the card's face reveals or moves on; a tap on this must not.
   more.addEventListener('pointerup', (event) => event.stopPropagation());
   more.addEventListener('click', (event) => {

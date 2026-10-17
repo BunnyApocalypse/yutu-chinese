@@ -1222,7 +1222,7 @@ button.slot {
 }
 
 /* When the tip fits (a tablet, a short tip), the word and the tip are
-   centered in the room above "More about this word", which stays at the
+   centered in the room above "About this word", which stays at the
    card's bottom edge as it does on a phone (the owner, 2026-10-17, from
    pictures: until then everything sat at the top with the card's lower part
    empty). An empty layer above the word and the tip itself share the room
@@ -1291,7 +1291,7 @@ button.slot {
   min-height: 0;
 }
 
-/* When the tip does not fit, "More about this word" stays at the card's
+/* When the tip does not fit, "About this word" stays at the card's
    bottom edge and the tip scrolls behind it, instead of the link being cut
    in half there (UX review, 2026-10-16). "Sticky" keeps an element in its
    place in the flow until scrolling would carry it out of view, and then

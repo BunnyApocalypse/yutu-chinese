@@ -126,7 +126,7 @@ describe('the word page', { concurrency: false }, () => {
     await page.evaluate(`document.querySelector('#word-list li button').click()`);
     await waitUntil(page, `document.getElementById('word-page').open && ${shown('我們|wo3men5')} && document.querySelector('#word-page-body .sentence-word')`, 'the word\'s page again');
 
-    // "Open its page" goes on to the word's page.
+    // "About this word" goes on to the word's page.
     await page.evaluate(`document.querySelectorAll('#word-page-body .sentence-word')[2].click()`);
     await waitUntil(page, peekOpen, 'the popup again');
     await tap(page, 'word-peek-open');
