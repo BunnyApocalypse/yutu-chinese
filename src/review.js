@@ -474,6 +474,13 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     options = gradeOptions(current.card ? current.card.fsrsState : null, finishedAt);
     suggested = suggestedGrade;
     answerDetails = details;
+    // Once answered, only the grades are under the card: Restart, Show
+    // outline and Animate, or the tone buttons, are no use any more (UX
+    // review item 10; the owner chose this from pictures on 2026-10-17, over
+    // keeping Animate as a quiet button). The next card's showPartsFor
+    // brings back what it needs.
+    writingButtons.hidden = true;
+    toneButtonRow.hidden = true;
     renderGrades();
     // A tip beside them, the first time (tips.js).
     document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'grades' }));
@@ -537,9 +544,14 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       hideStrokeCount: !settings.strokeCountInReview && lesson === null,
       // How a hint counts is a setting (the owner, 2026-10-15).
       judgeChar: (facts) => judgeChar({ ...facts, hintCountsAs: settings.hintCountsAs }),
-      // Starting a character over after the word was finished takes the grade
-      // buttons away again until it is finished once more.
-      onCharStart: hideGrades,
+      // Starting a character over after the word was finished (the back
+      // arrow to a skipped one) takes the grade buttons away
+      // again until it is finished once more, and brings back Restart, Show
+      // outline and Animate, which offerGrades put away.
+      onCharStart: () => {
+        hideGrades();
+        writingButtons.hidden = false;
+      },
       onWordDone(result) {
         showPinyin();
         // The gap is filled in: the whole sentence is shown.

@@ -28,7 +28,7 @@ the owner before it is fixed.
   word's page and its Cards fold-out, the word's pop-up panel, the dictionary
   search and a dictionary word, every step of a lesson for 我們 (with raw
   input halfway through a character), the screen between two words, Review's
-  writing and meaning cards with their grades, Settings (as it opens, then
+  one card of each kind (meaning, pinyin, tone, writing; only that kind made due, since Review shows one card of a word at a time) before and after answering, Settings (as it opens, then
   each of its six groups, as it shows them one at a time since 2026-10-16;
   until 2026-10-17 a picture with every group unfolded, as it no longer
   looks) and the screens of the introduction.

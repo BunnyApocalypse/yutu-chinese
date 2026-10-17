@@ -329,4 +329,15 @@ describe('learning new words', { concurrency: false }, () => {
     await waitUntil(page, `!document.getElementById('stroke-count').hidden`, 'the stroke count');
     assert.equal(await textOf(page, 'stroke-count'), '1/3');
   });
+
+  it('once written, shows only the grades', { timeout: 60000 }, async () => {
+    // The plain writing card of 下 from the test before.
+    await waitForFirstStroke();
+    const area = await writingArea(page);
+    for (const median of loadStrokeData('下').medians) {
+      await drawStroke(page, area, median);
+    }
+    await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
+    assert.equal(await isShown(page, 'writing-buttons'), false, 'Restart, Show outline and Animate are put away');
+  });
 });

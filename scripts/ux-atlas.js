@@ -387,51 +387,50 @@ async function walk(page, sizeName, size, shots) {
     }
   });
 
-  // Review: the learned word's cards made due, and the first few taken.
-  await step('Review', async () => {
-    await page.evaluate(`new Promise((resolve, reject) => {
-      const opening = indexedDB.open('hanzi-trainer');
-      opening.onsuccess = () => {
-        const tx = opening.result.transaction('cards', 'readwrite');
-        const store = tx.objectStore('cards');
-        store.getAll().onsuccess = (event) => {
-          for (const card of event.target.result) store.put({ ...card, due: 0, lastReviewedAt: 1 });
+  // Review: one card of each kind. Only the cards of that kind are made
+  // due, since Review shows one card of a word at a time and meaning cards
+  // come first (until 2026-10-17 eight cards in a row showed only those).
+  for (const type of ['meaning', 'pinyin', 'tone', 'writing']) {
+    await step(`Review, a ${type} card`, async () => {
+      await page.evaluate(`new Promise((resolve, reject) => {
+        const opening = indexedDB.open('hanzi-trainer');
+        opening.onsuccess = () => {
+          const tx = opening.result.transaction('cards', 'readwrite');
+          const store = tx.objectStore('cards');
+          store.getAll().onsuccess = (event) => {
+            for (const card of event.target.result) {
+              const due = card.type === '${type}' ? 0 : Date.now() + 365 * 86400000;
+              store.put({ ...card, due, lastReviewedAt: 1 });
+            }
+          };
+          tx.oncomplete = resolve;
+          tx.onerror = () => reject(tx.error);
         };
-        tx.oncomplete = resolve;
-        tx.onerror = () => reject(tx.error);
-      };
-    })`);
-    await reloadApp(page);
-    await tap(page, 'review-tab');
-    const seen = new Set();
-    for (let card = 0; card < 8; card++) {
+      })`);
+      await reloadApp(page);
+      await tap(page, 'review-tab');
       await waitUntil(page, `!document.getElementById('study-area').hidden && document.getElementById('card-type').textContent !== ''`, 'a card');
       const kind = (await page.evaluate(`document.getElementById('card-type').textContent`)).trim();
-      const short = kind.split(/\s/)[0].toLowerCase();
-      const first = !seen.has(short);
-      seen.add(short);
-      if (first) await shoot(`16-review-${short}`, `Review: ${kind}`);
-      // The answer: a tap on a meaning or pinyin card, a tone given, or the
-      // word written.
-      if (/writ/i.test(kind)) {
+      await shoot(`16-review-${type}`, `Review: ${kind}`);
+      // The answer: the word written, a tone given, or a tap on the card.
+      if (type === 'writing') {
         await writeWord(await currentWord(), async (index, strokeIndex) => {
-          if (first && index === 0 && strokeIndex === 2) await shoot(`16-review-${short}-writing`, `Review: ${kind}, partly written`);
+          if (index === 0 && strokeIndex === 2) await shoot(`16-review-${type}-writing`, `Review: ${kind}, partly written`);
         });
+      } else if (type === 'tone') {
+        for (const tone of tonesOf((await currentWord()).pinyin)) {
+          await page.evaluate(`document.querySelector('#tone-buttons [data-tone="${tone}"]').click()`);
+          await sleep(800);
+        }
       } else {
-        // The answer: a tone given on a tone card, a tap on the others.
-        await page.evaluate(`(() => {
-          const tone = document.querySelector('#tone-buttons:not([hidden]) [data-tone]');
-          if (tone && tone.offsetParent) tone.click();
-          else document.getElementById('card-face').dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
-        })()`);
+        await page.evaluate(`document.getElementById('card-face').dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))`);
       }
       await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
-      if (first) await shoot(`16-review-${short}-grades`, `Review: ${kind}, answered, with the grades`);
+      await shoot(`16-review-${type}-grades`, `Review: ${kind}, answered, with the grades`);
       await page.evaluate(`document.querySelector('#grade-row button.primary').click()`);
       await sleep(400);
-      if (await page.evaluate(`!document.getElementById('done-panel').hidden`)) break;
-    }
-  });
+    });
+  }
 
   await step('Settings and the introduction', async () => {
     await page.evaluate(ANSWER_YES);
