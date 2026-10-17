@@ -192,6 +192,42 @@ main {
   position: relative;
 }
 
+/* Held sideways (data-layout="wide", set by wordFlow.js when it gains): the
+   writing area, or a card's face, in a column of its own, and everything
+   else in a column beside it (the owner, 2026-10-17). The area is taken out
+   of the flow and placed on the right; main keeps that room free with its
+   padding, and the rest flows in the column beside it, as it does on a
+   phone, on the left. Nothing in that column can move the area (in a first draft, as a
+   grid, text widening the column shifted the area under the pen).
+   --wide-side is the pair's margin on each side, so that the two columns
+   (the area, the gap, 360px) are centered together; WIDE_SIDE_COLUMN in
+   wordFlow.js is the 360 and the gap. */
+:root[data-layout='wide'] {
+  --wide-side: max(var(--space-large), calc((100vw - var(--area-size) - 360px - var(--space-huge)) / 2));
+}
+
+:root[data-layout='wide'] main:has(> .study-area:not([hidden])) {
+  padding-left: var(--wide-side);
+  padding-right: calc(var(--wide-side) + var(--area-size) + var(--space-huge));
+}
+
+/* On the right (the owner chose it from pictures, 2026-10-17): the menu
+   button stays clear of it, and for a right hand the buttons are on the
+   side away from the pen. */
+:root[data-layout='wide'] main:has(> .study-area:not([hidden])) #writing-row,
+:root[data-layout='wide'] main:has(> .study-area:not([hidden])) #card-face {
+  position: absolute;
+  top: var(--space-large);
+  right: var(--wide-side);
+}
+
+/* A card's face is zoomed (see .card-face), and so is where it is placed:
+   divided by as much, it lands where the writing area does. */
+:root[data-layout='wide'] main:has(> .study-area:not([hidden])) #card-face {
+  top: calc(var(--space-large) / var(--face-zoom, 1));
+  right: calc(var(--wide-side) / var(--face-zoom, 1));
+}
+
 /* ---- The top bar and the menu ---- */
 
 /* The menu button and the name of the screen, at the top of the page. */
@@ -1004,11 +1040,17 @@ button.slot {
   /* Exactly as big as the writing area, edge and padding included, so that
      the two take the same place on the page. */
   box-sizing: border-box;
-  width: var(--area-size, 300px);
-  height: var(--area-size, 300px);
+  /* Its text grows with it above a phone's size (the owner, 2026-10-17: on
+     a big card, text of a phone's size looked lost). The whole card is
+     drawn bigger ("zoom", by --face-zoom, set with --area-size in
+     wordFlow.js) from a size divided by as much, so that it comes out as big
+     as the writing area, and its edge as thin. */
+  zoom: var(--face-zoom, 1);
+  width: calc(var(--area-size, 300px) / var(--face-zoom, 1));
+  height: calc(var(--area-size, 300px) / var(--face-zoom, 1));
   padding: var(--space-medium);
   background: var(--surface);
-  border: 2px solid var(--border);
+  border: calc(2px / var(--face-zoom, 1)) solid var(--border);
   border-radius: var(--radius);
   text-align: center;
   /* Tapping the card is how you reveal and continue; don't select its text instead. */

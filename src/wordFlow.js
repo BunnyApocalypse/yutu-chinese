@@ -38,8 +38,25 @@ function chooseSize() {
   // The area is the point of the app: if a row is added, find its room in
   // the rows there are, do not raise this number.
   const fitsHeight = window.innerHeight - 380;
-  return Math.max(200, Math.min(fitsWidth, fitsHeight, 640));
+  const oneColumn = Math.max(200, Math.min(fitsWidth, fitsHeight, 640));
+  // Held sideways (a tablet or phone in landscape, a computer), the area can
+  // be much bigger in a column of its own, beside everything else (the
+  // owner, 2026-10-17: "we wont be able to stop people from going into
+  // landscape"). Only where that gains clearly, and never on an upright
+  // screen.
+  const twoColumns = Math.min(window.innerHeight - WIDE_ROOM_ABOVE_BELOW, window.innerWidth - 32 - WIDE_SIDE_COLUMN, WIDE_MAX);
+  wide = window.innerWidth > window.innerHeight && twoColumns >= oneColumn + 60;
+  return wide ? twoColumns : oneColumn;
 }
+
+// The layout in two columns (style.css, data-layout="wide"): the room above
+// and below the area (main's padding and a little), the width of the column
+// beside it with its gap, and the area's largest size there.
+const WIDE_ROOM_ABOVE_BELOW = 40;
+const WIDE_SIDE_COLUMN = 360 + 24;
+const WIDE_MAX = 760;
+// Whether chooseSize chose two columns.
+let wide = false;
 
 // Whether the arrows fit beside an area of `size`, in the margins left over:
 // on a tablet or a computer, where the area is as big as it gets or limited
@@ -47,7 +64,8 @@ function chooseSize() {
 // --arrow-room in style.css is the room they need beside it.
 function arrowsBeside(size) {
   const arrowRoom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-room')) || 0;
-  return window.innerWidth - 32 - size >= arrowRoom;
+  // In two columns the other column is beside the area: over its edges.
+  return !wide && window.innerWidth - 32 - size >= arrowRoom;
 }
 
 // Draws the 米字格 guide lines (two diagonals, one vertical, one horizontal).
@@ -479,6 +497,7 @@ export function createWordFlow(elements) {
     }
     writingArea.replaceChildren();
     const size = chooseSize();
+    document.documentElement.dataset.layout = wide ? 'wide' : 'narrow';
     const beside = arrowsBeside(size);
     writingArea.parentElement.classList.toggle('arrows-beside', beside);
     // The tone card's arrows follow the same rule (toneFlow.js, style.css).
@@ -487,6 +506,8 @@ export function createWordFlow(elements) {
     writingArea.setAttribute('height', size);
     // Lets the style sheet give the card face (see style.css) the same size.
     document.documentElement.style.setProperty('--area-size', `${size}px`);
+    // Its text grows with it above a phone's size (style.css, .card-face).
+    document.documentElement.style.setProperty('--face-zoom', String(Math.max(1, size / 400)));
     drawGrid(writingArea, size);
     quiz = createQuiz(writingArea, size, quizHandlers);
     quiz.setOutlineVisible(outlineVisible);

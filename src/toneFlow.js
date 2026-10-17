@@ -110,10 +110,19 @@ export function createToneFlow(elements) {
     inkPath.setAttribute('d', points.length === 1 ? `${d} l 0.1 0` : d);
   }
 
-  // Where a touch is, measured from the corner of the ink layer.
+  // How much bigger the card is drawn than its own size (its "zoom" on a
+  // big screen, style.css): what the screen measures is divided by it to
+  // get the card's own units, in which the ink is drawn.
+  function zoomOf() {
+    return cardFace.getBoundingClientRect().width / cardFace.offsetWidth || 1;
+  }
+
+  // Where a touch is, measured from the corner of the ink layer, in the
+  // card's own units.
   function pointOf(event) {
     const box = ink.getBoundingClientRect();
-    return { x: event.clientX - box.left, y: event.clientY - box.top };
+    const zoom = zoomOf();
+    return { x: (event.clientX - box.left) / zoom, y: (event.clientY - box.top) / zoom };
   }
 
   function renderWordRow() {
@@ -161,7 +170,8 @@ export function createToneFlow(elements) {
     cardFace.replaceChildren(
       asked,
       paragraph('face-hint tone-ask', 'Draw the tone mark here'),
-      paragraph('face-hint', 'or use the buttons below'),
+      // In two columns (a screen held sideways) the buttons are to the left.
+      paragraph('face-hint', document.documentElement.dataset.layout === 'wide' ? 'or use the buttons on the left' : 'or use the buttons below'),
       ink,
       backArrow,
       skipArrow,
@@ -308,7 +318,7 @@ export function createToneFlow(elements) {
   function finishDrawing() {
     const points = drawing;
     drawing = null;
-    const tone = recognizeToneMark(points, ink.getBoundingClientRect().width);
+    const tone = recognizeToneMark(points, ink.getBoundingClientRect().width / zoomOf());
     if (tone === null) {
       statusElement.textContent = 'Mark not recognized. Try again, or use the buttons.';
       clearInkTimer = setTimeout(() => showInk([]), CLEAR_UNRECOGNIZED_AFTER_MS);

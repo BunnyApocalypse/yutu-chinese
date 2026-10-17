@@ -49,6 +49,9 @@ const ALL_SIZES = {
   small: { width: 375, height: 667, mobile: true },
   tablet: { width: 820, height: 1180, mobile: true },
   desktop: { width: 1440, height: 900, mobile: false },
+  // Held sideways (since 2026-10-17, for the layout in two columns).
+  'tablet-wide': { width: 1180, height: 820, mobile: true },
+  'phone-wide': { width: 844, height: 390, mobile: true },
 };
 const SIZES = Object.fromEntries(
   Object.entries(ALL_SIZES).filter(([name]) => !process.env.SIZES || process.env.SIZES.split(',').includes(name)),
