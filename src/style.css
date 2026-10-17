@@ -889,6 +889,27 @@ select {
   right: 2px;
 }
 
+/* The tone card's arrows (toneFlow.js): over its edges or beside it, as
+   the writing area's. */
+.card-face .face-arrow {
+  left: 2px;
+}
+
+.card-face .face-arrow#tone-skip-button {
+  left: auto;
+  right: 2px;
+}
+
+:root[data-arrows='beside'] .card-face .face-arrow {
+  left: calc(-28px - var(--space-tiny));
+  opacity: 1;
+}
+
+:root[data-arrows='beside'] .card-face .face-arrow#tone-skip-button {
+  left: auto;
+  right: calc(-28px - var(--space-tiny));
+}
+
 .writing-row.arrows-beside {
   gap: var(--space-tiny);
 }

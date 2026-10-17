@@ -59,6 +59,39 @@ export function createToneFlow(elements) {
   let state = 'asking';
   let tapAllowedFrom = 0;
   let moveOnTimer = null;
+  // Skipped characters, counted as right (the › arrow), and whether the
+  // character asked now was answered before and is only practice (gone
+  // back to with the ‹ arrow): its first answer stands (the owner,
+  // 2026-10-17, as for writing in wordFlow.js).
+  let skippedPerChar = [];
+  let practicing = false;
+  // True once onDone has been called: going back afterwards is practice.
+  let doneOnce = false;
+
+  // The arrows, over the card's edges or beside it as on the writing area
+  // (style.css, data-arrows): back to the character before, and on past
+  // this one. Put on the card's face with each question, since the face is
+  // refilled.
+  function arrow(id, label, text) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.id = id;
+    button.className = 'side-arrow face-arrow';
+    button.textContent = text;
+    button.setAttribute('aria-label', label);
+    button.title = label;
+    // Not a stroke of a tone mark, nor a tap on the card.
+    button.addEventListener('pointerdown', (event) => event.stopPropagation());
+    button.addEventListener('pointerup', (event) => event.stopPropagation());
+    return button;
+  }
+  const backArrow = arrow('tone-back-button', 'Go back to the character before', '‹');
+  const skipArrow = arrow('tone-skip-button', 'Skip this character (counts as right)', '›');
+
+  function showArrows() {
+    backArrow.classList.toggle('unavailable', !(state === 'asking' && position > 0));
+    skipArrow.classList.toggle('unavailable', !(state === 'asking' && chars.length > 1));
+  }
 
   // Drawing the tone mark. The "ink" is a see-through layer over the card
   // that shows the stroke while it is being drawn.
@@ -98,6 +131,9 @@ export function createToneFlow(elements) {
       if (passedPerChar[index] !== undefined) {
         slot.classList.add(passedPerChar[index] ? 'passed' : 'missed');
       }
+      if (skippedPerChar[index]) {
+        slot.classList.add('skipped');
+      }
       wordRow.appendChild(slot);
     });
   }
@@ -127,15 +163,53 @@ export function createToneFlow(elements) {
       paragraph('face-hint tone-ask', 'Draw the tone mark here'),
       paragraph('face-hint', 'or use the buttons below'),
       ink,
+      backArrow,
+      skipArrow,
     );
+    showArrows();
     // "Tone of 你 (1 of 2)": the character named, and the count for a word
     // with the same one twice (谢谢). The owner's wording, 2026-10-16.
+    const practice = practicing ? 'Practice · ' : '';
     if (chars.length > 1) {
-      fillMixed(statusElement, `Tone of ${chars[position]} (${position + 1} of ${chars.length})`, current.script);
+      fillMixed(statusElement, `${practice}Tone of ${chars[position]} (${position + 1} of ${chars.length})`, current.script);
     } else {
-      statusElement.textContent = 'Which tone?';
+      statusElement.textContent = `${practice}Which tone?`;
     }
   }
+
+  // Asks the character at `index`: practice if it was answered before.
+  function askAt(index) {
+    clearTimeout(moveOnTimer);
+    position = index;
+    // A skipped one is answered after all, as on the writing area.
+    practicing = givenTones[index] !== undefined;
+    ask();
+  }
+
+  // The › arrow: on past this character, counted as right if it had no
+  // answer yet. Not on the result once all are answered (the arrows are
+  // only on a question).
+  function skip() {
+    if (!current || state !== 'asking' || chars.length < 2) {
+      return;
+    }
+    if (!practicing) {
+      skippedPerChar[position] = true;
+      passedPerChar[position] = true;
+      variantPerChar[position] = false;
+    }
+    moveOn();
+  }
+
+  function goBack() {
+    if (!current || state !== 'asking' || position === 0) {
+      return;
+    }
+    askAt(position - 1);
+  }
+
+  backArrow.addEventListener('click', goBack);
+  skipArrow.addEventListener('click', skip);
 
   // Shows the word with its reading and meaning, and how it was answered.
   function showResult() {
@@ -150,7 +224,8 @@ export function createToneFlow(elements) {
     // If the tones given differ from the listed reading, show what was
     // answered: the syllables with the tones that were chosen.
     const answered = formatPinyin(
-      current.answers.map((answer, index) => answer.syllable.slice(0, -1) + givenTones[index]).join(''),
+      // A skipped character is shown with its listed tone.
+      current.answers.map((answer, index) => (givenTones[index] === undefined ? answer.syllable : answer.syllable.slice(0, -1) + givenTones[index])).join(''),
     );
     const listedFirst = formatPinyin(current.answers.map((answer) => answer.syllable).join(''));
     if (wrong > 0) {
@@ -169,10 +244,15 @@ export function createToneFlow(elements) {
 
   function finish() {
     state = 'done';
+    practicing = false;
     tapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
     nextButton.hidden = true;
     renderWordRow();
     showResult();
+    if (doneOnce) {
+      return; // gone back after it was done: the answers stand as given
+    }
+    doneOnce = true;
     current.onDone({
       givenTones: [...givenTones],
       passedPerChar: [...passedPerChar],
@@ -183,8 +263,7 @@ export function createToneFlow(elements) {
   function moveOn() {
     clearTimeout(moveOnTimer);
     if (position < chars.length - 1) {
-      position += 1;
-      ask();
+      askAt(position + 1);
     } else {
       finish();
     }
@@ -198,9 +277,13 @@ export function createToneFlow(elements) {
     const expected = current.answers[position];
     const listed = expected.tones.includes(tone);
     const passed = listed || expected.variantTones.includes(tone);
-    givenTones[position] = tone;
-    passedPerChar[position] = passed;
-    variantPerChar[position] = passed && !listed;
+    // Practice (a character gone back to) keeps its first answer.
+    if (!practicing) {
+      skippedPerChar[position] = false;
+      givenTones[position] = tone;
+      passedPerChar[position] = passed;
+      variantPerChar[position] = passed && !listed;
+    }
     renderWordRow();
 
     // Show the syllable with its tone mark, green or red.
@@ -306,6 +389,9 @@ export function createToneFlow(elements) {
       givenTones = [];
       passedPerChar = [];
       variantPerChar = [];
+      skippedPerChar = [];
+      practicing = false;
+      doneOnce = false;
       ask();
     },
 

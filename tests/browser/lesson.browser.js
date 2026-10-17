@@ -141,7 +141,9 @@ describe('learning new words', { concurrency: false }, () => {
     // The tone card asks with the character small, over what to do, large;
     // the row above has the character too, even for a word of one.
     await waitUntil(page, `document.querySelector('#card-face .tone-char')`, 'the tone card');
-    assert.equal(await textOf(page, 'card-face'), '大Draw the tone mark hereor use the buttons below');
+    // (‹ and › are the arrows, hidden here: a word of one character.)
+    assert.equal(await textOf(page, 'card-face'), '大Draw the tone mark hereor use the buttons below‹›');
+    assert.equal(await page.evaluate(`document.querySelectorAll('#card-face .face-arrow:not(.unavailable)').length`), 0);
     assert.equal(await page.evaluate(`document.querySelector('#card-face .tone-char').lang`), 'zh-Hant-TW');
     assert.equal(await textOf(page, 'status'), 'Which tone?');
     assert.equal(await page.evaluate(`document.querySelectorAll('#word-row .slot').length`), 1);
@@ -374,7 +376,7 @@ describe('learning new words', { concurrency: false }, () => {
     await page.evaluate(`document.querySelector('#grade-row button.primary').click()`);
     await waitUntil(page, `document.getElementById('grade-row').hidden`, 'the card graded');
     const { reviews } = await inDatabase(`stores.reviews.getAll().onsuccess = (e) => { result.reviews = e.target.result; };`);
-    const last = reviews.filter((review) => review.cardId === '下|xia4#writing').pop();
+    const last = reviews.filter((review) => review.cardId === '下|xia4#writing').sort((a, b) => a.time - b.time).pop();
     assert.equal(last.grade, 3);
     assert.equal(last.suggestedGrade, 3);
     assert.deepEqual(last.mistakesPerChar, [0]);
@@ -430,9 +432,84 @@ describe('learning new words', { concurrency: false }, () => {
     await page.evaluate(`document.querySelector('#grade-row button.primary').click()`);
     await waitUntil(page, `document.getElementById('grade-row').hidden`, 'the card graded');
     const { reviews } = await inDatabase(`stores.reviews.getAll().onsuccess = (e) => { result.reviews = e.target.result; };`);
-    const last = reviews.filter((review) => review.cardId === '小孩|xiao3hai2#writing').pop();
+    const last = reviews.filter((review) => review.cardId === '小孩|xiao3hai2#writing').sort((a, b) => a.time - b.time).pop();
     assert.equal(last.suggestedGrade, 2);
     assert.deepEqual(last.mistakesPerChar, [0, 1]);
     assert.deepEqual(last.passedPerChar, [true, true]);
+  });
+
+  it('has the arrows on a tone card too: skip counts as right, going back is practice', { timeout: 60000 }, async () => {
+    // Only 小孩's tone card comes up: made new again (the one stored above
+    // has no scheduling state to grade), the others not due and reviewed long
+    // ago (a word's cards hold each other back for a while after one of them
+    // is reviewed), and only tone cards on (cards never studied, such as
+    // 大's writing card, would come up as new ones).
+    const toneDue = `
+      stores.settings.put({ key: 'enabledTypes', value: ['tone'] });
+      stores.cards.getAll().onsuccess = (event) => {
+        for (const card of event.target.result) {
+          if (card.id === '小孩|xiao3hai2#tone') {
+            stores.cards.delete(card.id);
+          } else {
+            stores.cards.put({ ...card, due: Date.now() + 1e9, lastReviewedAt: 1 });
+          }
+        }
+      };`;
+    const lastToneReview = async () => {
+      const { reviews } = await inDatabase(`stores.reviews.getAll().onsuccess = (e) => { result.reviews = e.target.result; };`);
+      // Review IDs are random: the newest is the one with the latest time.
+      return reviews.filter((review) => review.cardId === '小孩|xiao3hai2#tone').sort((a, b) => a.time - b.time).pop();
+    };
+    const toneButton = (tone) => page.evaluate(`document.querySelector('#tone-buttons [data-tone="${tone}"]').click()`);
+    const asked = (text) => `document.getElementById('status').textContent === ${JSON.stringify(text)}`;
+    const shownArrow = (id) => `!document.getElementById('${id}').classList.contains('unavailable')`;
+
+    await inDatabase(toneDue);
+    await reloadApp(page);
+    await tap(page, 'review-tab');
+    await waitUntil(page, asked('Tone of 小 (1 of 2)'), 'the tone card');
+    assert.equal(await page.evaluate(shownArrow('tone-back-button')), false);
+    assert.equal(await page.evaluate(shownArrow('tone-skip-button')), true);
+    // 小 answered wrong, then back to it: practice, answered right.
+    await toneButton(1);
+    await page.evaluate(`document.getElementById('tone-next-button').click()`);
+    await waitUntil(page, asked('Tone of 孩 (2 of 2)'), '孩');
+    await new Promise((resolve) => setTimeout(resolve, 350)); // touches are ignored at first
+    await page.evaluate(`document.getElementById('tone-back-button').click()`);
+    await waitUntil(page, asked('Practice · Tone of 小 (1 of 2)'), '小 again, as practice');
+    await toneButton(3);
+    await waitUntil(page, asked('Tone of 孩 (2 of 2)'), '孩 again');
+    await toneButton(2);
+    await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
+    await page.evaluate(`document.querySelector('#grade-row button.primary').click()`);
+    await waitUntil(page, `document.getElementById('grade-row').hidden`, 'the card graded');
+    let review;
+    for (let attempt = 0; attempt < 50 && !review; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      review = await lastToneReview();
+    }
+    assert.deepEqual(review.passedPerChar, [false, true], 'the first answer stands');
+
+    // Again, 小 skipped: counted as right.
+    await inDatabase(toneDue);
+    await reloadApp(page);
+    await tap(page, 'review-tab');
+    await waitUntil(page, asked('Tone of 小 (1 of 2)'), 'the tone card again');
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    await page.evaluate(`document.getElementById('tone-skip-button').click()`);
+    await waitUntil(page, asked('Tone of 孩 (2 of 2)'), '孩');
+    assert.equal(await page.evaluate(`document.querySelector('#word-row .slot').classList.contains('skipped')`), true);
+    await toneButton(2);
+    await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
+    assert.doesNotMatch(await textOf(page, 'card-face'), /undefined/);
+    await page.evaluate(`document.querySelector('#grade-row button.primary').click()`);
+    await waitUntil(page, `document.getElementById('grade-row').hidden`, 'the card graded');
+    // The review is saved a moment after the grades go: wait for the new one.
+    const firstId = review.id;
+    for (let attempt = 0; attempt < 50 && review.id === firstId; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      review = await lastToneReview();
+    }
+    assert.deepEqual(review.passedPerChar, [true, true]);
   });
 });

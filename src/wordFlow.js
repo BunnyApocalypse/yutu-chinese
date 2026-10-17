@@ -479,7 +479,10 @@ export function createWordFlow(elements) {
     }
     writingArea.replaceChildren();
     const size = chooseSize();
-    writingArea.parentElement.classList.toggle('arrows-beside', arrowsBeside(size));
+    const beside = arrowsBeside(size);
+    writingArea.parentElement.classList.toggle('arrows-beside', beside);
+    // The tone card's arrows follow the same rule (toneFlow.js, style.css).
+    document.documentElement.dataset.arrows = beside ? 'beside' : 'over';
     writingArea.setAttribute('width', size);
     writingArea.setAttribute('height', size);
     // Lets the style sheet give the card face (see style.css) the same size.
