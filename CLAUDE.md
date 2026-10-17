@@ -112,7 +112,7 @@ Full list in `docs/layout.md`.
 
 ## Where the work stands
 
-Past session notes are in `docs/history.md`.
+Past session notes are in `docs/history.md`. **Start with its handover from 2026-10-17** (at the top of "Where the work stands"): nothing pushed, and what is waiting for the owner.
 
 - **No big new features; improvements to how the app is used are welcome** (the owner, 2026-10-16, ending the freeze agreed on 2026-10-13: the aim is not to get distracted by large additions). Fixing what testing finds is still the main work.
 - **The UX review of 2026-10-16 left 17 tasks** (list at the top of `docs/history.md`, details in `docs/ux-review.md`). Sorted with the owner that day: 1, 2, 3, 8, 11, 15, 17 and part of 6 fixed; 9 kept as it is; the rest for the pass over the looks.
