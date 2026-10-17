@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, type, choose, textOf, waitUntil, openDeckPage, ANSWER_YES } from './harness.js';
+import { startApp, startBrowsers, reloadApp, tap, type, choose, textOf, waitUntil, openDeckPage, ANSWER_YES } from './harness.js';
 
 // Everything in one store of the app's database, read through a connection
 // of the test's own.
@@ -100,6 +100,7 @@ describe('managing cards', { concurrency: false }, () => {
     assert.equal(typeof saved.learnedAt, 'number');
   });
 
+
   it('orders the list by what is due next', async () => {
     const first = `document.querySelector('#word-list li .entry-characters').textContent`;
     assert.match(await page.evaluate(first), /^貓/);
@@ -146,5 +147,37 @@ describe('managing cards', { concurrency: false }, () => {
     assert.match(await textOf(page, 'bulk-count'), /^0 words selected/);
     await tap(page, 'select-words-button');
     assert.equal(await page.evaluate(`document.getElementById('bulk-bar').hidden`), true);
+  });
+
+  it("keeps a word's decks, suspended cards and former IDs when its panel is saved", async () => {
+    // The panel rebuilds the word from its form, so what is not in the form
+    // is carried over by hand (CLAUDE.md): a word with all of it, put in as
+    // other screens or devices would.
+    await page.evaluate(`new Promise((resolve) => {
+      indexedDB.open('hanzi-trainer').onsuccess = (event) => {
+        const tx = event.target.result.transaction(['words', 'decks'], 'readwrite');
+        tx.objectStore('decks').put({ id: 'second-deck', name: 'Second', parentId: null, order: 1 });
+        tx.objectStore('words').put({
+          id: '愛|ai4', traditional: '愛', simplified: '爱', pinyin: 'ai4', definition: 'to love', order: 0, addedAt: 1,
+          decks: ['second-deck'], suspended: ['pinyin'], formerIds: ['愛|ai3'], learnedAt: 12345, startedOverAt: { meaning: 678 },
+        });
+        tx.oncomplete = resolve;
+      };
+    })`);
+    await reloadApp(page);
+    await tap(page, 'words-tab');
+    await waitUntil(page, rows(1));
+    await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
+    await waitUntil(page, `document.getElementById('word-dialog').open`, 'the panel');
+    await type(page, 'edit-definition', 'to love; affection');
+    await page.evaluate(`document.getElementById('word-dialog-form').requestSubmit()`);
+    await waitUntil(page, `!document.getElementById('word-dialog').open`, 'the panel to close');
+    const saved = (await stored(page, 'words')).find((word) => word.id === '愛|ai4');
+    assert.equal(saved.definition, 'to love; affection');
+    assert.deepEqual(saved.decks, ['second-deck']);
+    assert.deepEqual(saved.suspended, ['pinyin']);
+    assert.deepEqual(saved.formerIds, ['愛|ai3']);
+    assert.equal(saved.learnedAt, 12345);
+    assert.deepEqual(saved.startedOverAt, { meaning: 678 });
   });
 });
