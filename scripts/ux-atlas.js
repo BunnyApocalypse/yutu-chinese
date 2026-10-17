@@ -215,7 +215,12 @@ async function walk(page, sizeName, size, shots) {
     const measures = await page.evaluate(MEASURE);
     const pictures = {};
     for (const look of ['light', 'dark']) {
-      await page.evaluate(`document.documentElement.dataset.theme = '${look}'`);
+      // The look is changed as theme.js changes it, with its event: the
+      // writing area's colors are values, set again on that event. Without
+      // it, the outline kept the browser's own look (dark in headless
+      // Chromium) and looked like ink in the light pictures (until
+      // 2026-10-17).
+      await page.evaluate(`document.documentElement.dataset.theme = '${look}'; document.dispatchEvent(new CustomEvent('theme-changed'))`);
       await sleep(120);
       // The whole page, below the bottom of the screen too (a pop-up scrolls
       // inside itself and is pictured as seen).
@@ -231,7 +236,7 @@ async function walk(page, sizeName, size, shots) {
       fs.writeFileSync(path.join(OUT, file), Buffer.from(data, 'base64'));
       pictures[look] = file;
     }
-    await page.evaluate(`delete document.documentElement.dataset.theme`);
+    await page.evaluate(`delete document.documentElement.dataset.theme; document.dispatchEvent(new CustomEvent('theme-changed'))`);
     shots.push({ key, title, size: sizeName, measures, pictures });
     log(`${key}: ${measures.controls} controls, ${measures.belowFold.length} below the fold`);
   }

@@ -39,6 +39,7 @@ the owner before it is fixed.
   rule is 24px), anything sticking out sideways, text cut off, text under
   12px, and the writing area's size. Everything is also in
   `local/ux-atlas/report.json`.
+- **Until 2026-10-17 the writing area's outline was wrong in the light pictures**: the atlas changed the look without the app's `theme-changed` event, so Hanzi Writer kept the dark look's colors (headless Chromium starts dark) and the outline looked like ink. Found by the owner checking the app itself; pictures taken before then show it.
 - **It is not a test:** nothing fails. Run it again after a change to the
   looks and compare. A step that cannot be reached is listed at the top of
   the page with a picture of where it stopped (`failed-*.png`).
