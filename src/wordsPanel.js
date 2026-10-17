@@ -23,8 +23,8 @@ import { createCardsPanel } from './cardsPanel.js';
 import { createWordPage } from './wordPage.js';
 import { createDictionaryLoader } from './dictionaryLoader.js';
 import { createWordDialog } from './wordDialog.js';
+import { createSentenceForm } from './addSentenceForm.js';
 import { langFor, fillMixed } from './lang.js';
-import { sentenceId, sentenceRecord, clozeInBoth } from './sentences.js';
 import { radicalRecord } from './radicals.js';
 import { lapsesOf } from './leeches.js';
 import { findLeeches, describeLeech, describeSuspended, leechList, leechPrompt } from './leeches.js';
@@ -300,7 +300,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       return dictionary ? likeliestEntry(lookUp(dictionary, text), text) : null;
     },
     edit: (word) => wordDialog.open(words.find((entry) => entry.id === word.id) || word),
-    addSentence: (sentence, deckId) => addSentence(sentence, deckId),
+    addSentence: (sentence, deckId) => sentenceForm.addSentence(sentence, deckId),
     addEntry: (entry, deckId) => addEntry(entry, deckId),
     learnNow: (id, deckId) => learnNow(id, deckId),
     isLearned: (word) => studiedWordIds.has(word.id),
@@ -319,79 +319,14 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       (listDeck() || decks.find((deck) => deck.id === DEFAULT_DECK.id) || deckTree(decks)[0]?.deck || {}).id,
   });
 
-  // ---- Sentences ----
-
-  // Adds a sentence to a deck (see sentenceRecord in sentences.js for what
-  // `sentence` holds). One that is there already is put in the deck as well.
-  // Returns 'added', 'put in deck' or 'already there'.
-  async function addSentence(sentence, deckId) {
-    const existing = words.find((word) => word.id === sentenceId(sentence.traditional));
-    if (existing) {
-      if ((existing.decks || []).includes(deckId)) {
-        return 'already there';
-      }
-      await putAll('words', [withDeck(existing, deckId)]);
-      await afterChange();
-      return 'put in deck';
-    }
-    const order = words.reduce((highest, word) => Math.max(highest, word.order), -1) + 1;
-    await putAll('words', [sentenceRecord(sentence, order, deckId, Date.now())]);
-    await afterChange();
-    return 'added';
-  }
-
-  // The form on a deck's page. The first box is the sentence in the script
-  // that cards are shown in; the second, only there while both scripts are
-  // learned, the same sentence in the other one.
-  const sentenceFields = {
-    characters: byId('sentence-characters'),
-    other: byId('sentence-other'),
-    pinyin: byId('sentence-pinyin'),
-    meaning: byId('sentence-meaning'),
-    cloze: byId('sentence-cloze'),
-  };
-  const sentenceNote = byId('add-sentence-note');
-  byId('add-sentence-form').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const settings = getSettings();
-    const own = sentenceFields.characters.value.trim();
-    const other = sentenceFields.other.value.trim() || own;
-    const meaning = sentenceFields.meaning.value.trim();
-    const clozeOwn = sentenceFields.cloze.value.trim();
-    if (own === '' || meaning === '') {
-      sentenceNote.textContent = 'A sentence needs its characters and what it means.';
-      return;
-    }
-    if (clozeOwn !== '' && !own.includes(clozeOwn)) {
-      sentenceNote.textContent = `"${clozeOwn}" is not in the sentence.`;
-      return;
-    }
-    const cloze = clozeInBoth(own, other, clozeOwn);
-    const inScript = (ownForm, otherForm) =>
-      settings.script === 'traditional'
-        ? { traditional: ownForm, simplified: otherForm }
-        : { traditional: otherForm, simplified: ownForm };
-    const result = await addSentence(
-      {
-        ...inScript(own, other),
-        pinyin: sentenceFields.pinyin.value.trim(),
-        definition: meaning,
-        ...(cloze ? { cloze: inScript(cloze.own, cloze.other) } : {}),
-      },
-      openDeck().id,
-    );
-    sentenceNote.textContent =
-      result === 'added'
-        ? `Added: ${own} Its cards come up in Review.`
-        : result === 'put in deck'
-          ? 'You had this sentence already. It is in this deck now too.'
-          : 'This sentence is already in this deck.';
-    if (result === 'added') {
-      for (const field of Object.values(sentenceFields)) {
-        field.value = '';
-      }
-    }
+  // Adding a sentence (addSentenceForm.js).
+  const sentenceForm = createSentenceForm({
+    words: () => words,
+    getSettings,
+    openDeck: () => openDeck(),
+    afterChange: () => afterChange(),
   });
+
 
   // Shows the decks, and the forms for adding words if a deck's page is open.
   function renderDecks() {
@@ -586,7 +521,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       lookedUpField = asked === 'simplified' ? addFields.simplified : addFields.traditional;
     }
     wordDialog.applySettings(asks, both);
-    sentenceFields.other.hidden = !both;
+    sentenceForm.applySettings(both);
     // A word can only have a script of its own while both are being learned.
     byId('add-card-script-row').hidden = !both;
     if (!both) {
