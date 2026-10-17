@@ -977,6 +977,10 @@ export function createQuiz(target, size, handlers) {
 
     restart: start,
 
+    // Whether a hint has been shown for the character being written, for
+    // when it is left before it is finished (wordFlow.js keeps it).
+    hintShownNow: () => hintShown,
+
     // Switches showing the next stroke on or off; see showDemo. It takes
     // effect from the next character or restart.
     setDemoStrokes(on) {

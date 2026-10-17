@@ -184,32 +184,31 @@ export function createWordFlow(elements) {
 
   // The two arrows beside the writing area.
   //
-  // Skip (right) moves past the current character without writing it and
-  // counts it as passed, for when only another character of the word needs
-  // the practice. It only makes sense in a word of several characters, and
-  // only while the current one is still to be written.
+  // Right: on the character being written, skip it (move past without
+  // writing it, counted as passed), for when only another character of the
+  // word needs the practice. On a character already written (practicing it,
+  // or the word finished), simply go to the next one.
   //
-  // Back (left) undoes a skip made by accident: it returns to the most recent
-  // skipped character before this point, even after the word is finished.
+  // Left: go to the character before, always (the owner, 2026-10-17: "If im
+  // writing 小孩子 and i struggle remembering 孩, i might want to review the
+  // full word before returning to 孩"). Written ones are practiced again
+  // there, which changes nothing (see practicing); a skipped one is written
+  // after all. Until 2026-10-17 it only undid a skip.
   function canSkip() {
-    return !charDone && !practicing && chars.length > 1;
+    return finishedPerChar[position] ? position < chars.length - 1 : !charDone && chars.length > 1;
   }
 
-  // The character the back arrow would return to: the nearest skipped one at
-  // or before the current position, or -1 if there is none.
+  // The character the back arrow goes to, or -1 if there is none: the one
+  // before; or this one, once it is finished, if it was skipped.
   function backTarget() {
-    // The current character only counts once it is finished (skipped as the
-    // last one); while it is being written, look before it.
-    for (let index = charDone ? position : position - 1; index >= 0; index--) {
-      if (skippedPerChar[index]) {
-        return index;
-      }
+    if (charDone && skippedPerChar[position]) {
+      return position;
     }
-    return -1;
+    return position - 1;
   }
 
   function canGoBack() {
-    return !practicing && backTarget() !== -1;
+    return backTarget() !== -1;
   }
 
   function showArrows() {
@@ -277,7 +276,9 @@ export function createWordFlow(elements) {
       currentMistakes = 0;
       if (practicing) {
         carriedMistakes = 0;
-        nextButton.hidden = true;
+        // The way on stays where the word is finished (a lesson's "Next
+        // step"); Review has none, its grades are the way on.
+        nextButton.hidden = !(wordFinished() && options.continueLabel);
         orderNote.hidden = true;
         renderWordRow(); // the arrows do nothing while practicing
         showProgress(1, totalStrokes, false);
@@ -310,6 +311,11 @@ export function createWordFlow(elements) {
         orderNote.hidden = order !== 'mainland';
         hideProgress();
         statusElement.textContent = `Practice · ${describeMistakes(totalMistakes).toLowerCase()}`;
+        // Back to the character still being written, as after a real one.
+        if (!wordFinished()) {
+          nextButton.textContent = 'Next';
+          nextButton.hidden = false;
+        }
         // The printed character keeps the color of the verdict that stands.
         return passedPerChar[position];
       }
@@ -380,6 +386,10 @@ export function createWordFlow(elements) {
     if (!canSkip()) {
       return;
     }
+    if (finishedPerChar[position]) {
+      goTo(position + 1);
+      return;
+    }
     skippedPerChar[position] = true;
     // Mistakes made before skipping still count toward the word.
     mistakesPerChar[position] = carriedMistakes + currentMistakes;
@@ -409,19 +419,38 @@ export function createWordFlow(elements) {
   // The back button: return to the character that was skipped, to write it.
   function goBack() {
     const target = backTarget();
-    if (target === -1 || practicing) {
-      return;
+    if (target !== -1) {
+      goTo(target);
     }
-    position = target;
+  }
+
+  // Moves to the character at `index`, by the arrows. Nothing about leaving
+  // or returning is held against you:
+  // - a character left before it is finished keeps the mistakes (and a
+  //   hint) made on it so far, and its attempt goes on when it is reached
+  //   again;
+  // - a character already written is practiced (see practicing);
+  // - a skipped one is written after all: the skip's verdict is forgotten,
+  //   the mistakes made on it before it was skipped are kept.
+  function goTo(index) {
+    if (!finishedPerChar[position]) {
+      mistakesPerChar[position] = carriedMistakes + currentMistakes;
+      hintPerChar[position] = Boolean(hintPerChar[position]) || quiz.hintShownNow();
+    }
+    const wasPracticing = practicing;
+    position = index;
     charDone = false;
-    // Forget the verdict the skip gave it, but keep any mistakes made on it
-    // before it was skipped. Going back is for undoing a slip, so it is not
-    // held against you as having seen the answer.
-    const mistakesBeforeSkip = mistakesPerChar[position] || 0;
-    passedPerChar[position] = undefined;
-    suggestedPerChar[position] = undefined;
+    practicing = Boolean(finishedPerChar[index]) && !skippedPerChar[index];
+    if (wasPracticing && !practicing) {
+      options.onPracticeEnd?.();
+    }
+    if (skippedPerChar[index]) {
+      passedPerChar[index] = undefined;
+      suggestedPerChar[index] = undefined;
+    }
+    const soFar = practicing ? 0 : mistakesPerChar[index] || 0;
     showCurrentCharacter();
-    carriedMistakes = mistakesBeforeSkip;
+    carriedMistakes = soFar;
   }
 
   backButton.addEventListener('click', goBack);
@@ -477,12 +506,8 @@ export function createWordFlow(elements) {
 
   // The Next button, or a tap on the writing area once a character is done.
   function goOn() {
-    if (practicing) {
-      return; // practice never grades or moves on (see practicing)
-    }
     if (!wordFinished()) {
-      position = nextUnfinished();
-      showCurrentCharacter();
+      goTo(nextUnfinished());
     } else {
       options.onContinue?.();
     }
@@ -512,7 +537,8 @@ export function createWordFlow(elements) {
   // writing area itself: a swipe up once the character is done is taken by
   // the quiz there and goes no further, so it is not also a tap (quiz.js).
   writingArea.parentElement.addEventListener('pointerup', (event) => {
-    if (writingArea.contains(event.target) && charDone && Date.now() >= tapAllowedFrom) {
+    // Not while practicing: a tap there never grades or moves on.
+    if (writingArea.contains(event.target) && charDone && !practicing && Date.now() >= tapAllowedFrom) {
       goOn();
     }
   });
@@ -574,7 +600,10 @@ export function createWordFlow(elements) {
     //                  again once the word is finished, as practice that
     //                  changes nothing (see practicing; Review)
     //   onCharStart(): a character starts (or starts over)
-    //   onPracticeStart(): practicing again begins (see practiceAgain)
+    //   onPracticeStart(): practicing a written character begins (see
+    //                  practiceAgain, goTo)
+    //   onPracticeEnd(): the arrows went from practicing back to the
+    //                  character still being written
     //   onWordDone(result): the last character was finished. `result` has
     //                  mistakes, mistakesPerChar, passedPerChar,
     //                  suggestedPerChar, hintPerChar, orderPerChar,

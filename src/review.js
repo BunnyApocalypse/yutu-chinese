@@ -577,6 +577,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // swipe up), which changes nothing.
       practiceWhenDone: true,
       onPracticeStart: startPractice,
+      // Back from practicing an earlier character to the one still to be
+      // written (the arrows, wordFlow.js).
+      onPracticeEnd: endPractice,
       onWordDone(result) {
         showPinyin();
         // The gap is filled in: the whole sentence is shown.

@@ -380,4 +380,59 @@ describe('learning new words', { concurrency: false }, () => {
     assert.deepEqual(last.mistakesPerChar, [0]);
     assert.deepEqual(last.passedPerChar, [true]);
   });
+
+  it('goes back to a written character as practice, which changes nothing', { timeout: 90000 }, async () => {
+    // 小孩: its writing card new (lessons are off since the test above), the
+    // rest out of the way.
+    await inDatabase(`
+      stores.cards.getAll().onsuccess = (event) => {
+        for (const card of event.target.result) stores.cards.put({ ...card, due: Date.now() + 1e9 });
+      };
+      const longAgo = Date.now() - 86400000;
+      stores.words.put({ id: '小孩|xiao3hai2', traditional: '小孩', simplified: '小孩', pinyin: 'xiao3hai2', definition: 'child', order: -6, addedAt: 1 });
+      stores.cards.put({ id: '小孩|xiao3hai2#tone', wordId: '小孩|xiao3hai2', type: 'tone', due: Date.now() + 1e9, firstReviewedAt: longAgo, lastReviewedAt: longAgo, fsrsState: {} });
+    `);
+    await reloadApp(page);
+    await tap(page, 'review-tab');
+    await waitUntil(page, `document.getElementById('prompt-meaning').textContent === 'child'`, 'the word in Review');
+    const arrowShown = (id) => `!document.getElementById('${id}').classList.contains('unavailable')`;
+    // On the first character there is nothing before it.
+    await waitForFirstStroke();
+    assert.equal(await page.evaluate(arrowShown('back-button')), false);
+    await write('小');
+    await tap(page, 'next-button');
+    // 孩, with one wrong stroke; then back to 小, which is there to go to.
+    await waitForFirstStroke();
+    const area = await writingArea(page);
+    assert.match(await drawStroke(page, area, [[100, 100], [900, 800]]), /1 mistake/);
+    assert.equal(await page.evaluate(arrowShown('back-button')), true);
+    await tap(page, 'back-button');
+    await waitForFirstStroke();
+    assert.equal(await textOf(page, 'status'), 'Practice');
+    // Practicing 小 with a mistake: nothing of it counts.
+    await drawStroke(page, area, [[100, 100], [900, 800]]);
+    assert.match(await write('小'), /^Practice · /);
+    // Forward again: 孩 goes on, with its one mistake from before.
+    await tap(page, 'skip-button');
+    await waitForFirstStroke();
+    assert.equal(await textOf(page, 'status'), '1 mistake');
+    await write('孩');
+    await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
+    const suggested = `document.querySelector('#grade-row button.primary').firstChild.textContent`;
+    assert.equal(await page.evaluate(suggested), 'Hard');
+    // Once the word is done, back again: practice, the grades stay.
+    await tap(page, 'back-button');
+    await waitForFirstStroke();
+    assert.equal(await textOf(page, 'status'), 'Practice');
+    assert.equal(await isShown(page, 'grade-row'), true);
+    assert.equal(await page.evaluate(suggested), 'Hard');
+
+    await page.evaluate(`document.querySelector('#grade-row button.primary').click()`);
+    await waitUntil(page, `document.getElementById('grade-row').hidden`, 'the card graded');
+    const { reviews } = await inDatabase(`stores.reviews.getAll().onsuccess = (e) => { result.reviews = e.target.result; };`);
+    const last = reviews.filter((review) => review.cardId === '小孩|xiao3hai2#writing').pop();
+    assert.equal(last.suggestedGrade, 2);
+    assert.deepEqual(last.mistakesPerChar, [0, 1]);
+    assert.deepEqual(last.passedPerChar, [true, true]);
+  });
 });
