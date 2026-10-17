@@ -980,7 +980,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     if (learning) {
       justLearned = null;
       const { learnedToday, waiting } = learnCounts();
-      countsElement.textContent = `Learned today ${learnedToday} of ${goalForToday()} · ${waiting} waiting`;
+      countsElement.textContent = `${learnedToday} of ${goalForToday()} learned today · ${waiting} waiting`;
       startNextWord();
     } else {
       showNext();
@@ -1085,7 +1085,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   function showNextToLearn() {
     const { learnedToday, waiting } = learnCounts();
     const goal = goalForToday();
-    countsElement.textContent = `Learned today ${learnedToday} of ${goal} · ${waiting} waiting`;
+    countsElement.textContent = `${learnedToday} of ${goal} learned today · ${waiting} waiting`;
     const progress =
       learnedToday >= goal && goal > 0
         ? `That is today's goal: ${learnedToday} of ${goal}. Stop here, or go on if you like.`

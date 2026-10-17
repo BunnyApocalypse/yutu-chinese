@@ -211,12 +211,12 @@ describe('decks', { concurrency: false }, () => {
     await tap(page, 'deck-learn-button');
     await waitUntil(page, `document.getElementById('place-title').textContent === 'Learn'`, 'Learn');
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('狗')`, 'the word of the deck');
-    assert.match(await textOf(page, 'review-counts'), /of 7 · 1 waiting/);
+    assert.match(await textOf(page, 'review-counts'), /of 7 learned today · 1 waiting/);
     assert.equal(await page.evaluate(`document.getElementById('deck-select').selectedOptions[0].textContent`), 'Textbook › Chapter 1');
     // All words: the first one added comes first, toward the goal in Settings.
     await choose(page, 'deck-select', '');
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('貓')`, 'the first word');
-    assert.match(await textOf(page, 'review-counts'), /of 5 · 3 waiting/);
+    assert.match(await textOf(page, 'review-counts'), /of 5 learned today · 3 waiting/);
 
     // "Review this deck" does the same for Review. A deck includes the decks inside it.
     await tap(page, 'decks-tab');

@@ -102,7 +102,7 @@ describe('learning new words', { concurrency: false }, () => {
     assert.equal(await isShown(page, 'learn-next-button'), true);
     await tap(page, 'learn-next-button');
     await waitUntil(page, stepIs('step 1 of 5'), 'the first word');
-    assert.equal(await textOf(page, 'review-counts'), 'Learned today 0 of 5 · 3 waiting');
+    assert.equal(await textOf(page, 'review-counts'), '0 of 5 learned today · 3 waiting');
   });
 
   it('starts with a look at the word and its learning tip, then its tones as practice', async () => {
@@ -234,7 +234,7 @@ describe('learning new words', { concurrency: false }, () => {
       await textOf(page, 'done-message'),
       '大 is learned: its cards will come up in Review. 1 of 5 today.',
     );
-    assert.equal(await textOf(page, 'review-counts'), 'Learned today 1 of 5 · 2 waiting');
+    assert.equal(await textOf(page, 'review-counts'), '1 of 5 learned today · 2 waiting');
     // The first word learned brings the message about long-term storage,
     // once: the test browser has not allowed it (an app not installed).
     await waitUntil(page, `!document.getElementById('storage-message').hidden`, 'the message about storage');
@@ -271,7 +271,7 @@ describe('learning new words', { concurrency: false }, () => {
     await tap(page, 'skip-lesson-button');
     // Nothing is written: the next word comes at once.
     await waitUntil(page, `${stepIs('step 1 of 5')} && document.getElementById('card-face').textContent.startsWith('上')`, 'the word after it');
-    assert.equal(await textOf(page, 'review-counts'), 'Learned today 2 of 5 · 1 waiting');
+    assert.equal(await textOf(page, 'review-counts'), '2 of 5 learned today · 1 waiting');
     // The word is learned, and each of its cards was answered "Easy".
     const stored = await inDatabase(`
       stores.words.get('小|xiao3').onsuccess = (event) => { result.learned = typeof event.target.result.learnedAt; };
@@ -295,7 +295,7 @@ describe('learning new words', { concurrency: false }, () => {
       box.dispatchEvent(new Event('change', { bubbles: true }));
     })()`);
     await tap(page, 'settings-close');
-    await waitUntil(page, `document.getElementById('review-counts').textContent === 'Learned today 2 of 2 · 1 waiting'`, 'the new goal');
+    await waitUntil(page, `document.getElementById('review-counts').textContent === '2 of 2 learned today · 1 waiting'`, 'the new goal');
     assert.match(await textOf(page, 'done-message'), /That is today's goal: 2 of 2\. Stop here, or go on if you like\.$/);
     // The message about long-term storage was shown once and is not again.
     assert.equal(await isShown(page, 'storage-message'), false);
