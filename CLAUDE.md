@@ -102,7 +102,7 @@ How each part of the app works, and why, is in `docs/` (index: `docs/README.md`)
 Full list in `docs/layout.md`.
 
 - `index.html`, `src/main.js` (start-up, the menu and modes, backups), `src/style.css`.
-- Decks and Words tabs: `src/wordsPanel.js` (about 1,600 lines; serves both tabs, the add forms, the pop-up panel), `src/decksPanel.js`, `src/cardsPanel.js`, `src/wordPage.js`.
+- Decks and Words tabs: `src/wordsPanel.js` (about 1,900 lines; serves both tabs, the add forms, the pop-up panel), `src/decksPanel.js`, `src/cardsPanel.js`, `src/wordPage.js`.
 - Review and Learn: `src/review.js`, with `src/wordFlow.js` (writing a word), `src/recallCard.js`, `src/toneFlow.js`, `src/cardTip.js`.
 - Writing: `src/quiz.js` (the only file importing Hanzi Writer), `src/charData.js` (the only place stroke data is loaded), `src/shortcuts.js`, `src/strokeMatch.js`, `src/frame.js`, `src/lines.js`.
 - Storage: `src/db.js` (store layout documented at its top), `src/backup.js`, `src/merge.js`, `src/offline.js`, `src/serviceWorker.js`.
@@ -123,5 +123,5 @@ Past session notes are in `docs/history.md`.
 - **The owner has not tried** sentences, combining backups between real devices, and leeches. Ask how it went before building further on them. The rest built on 2026-10-13 and 14 they test as they use it (the owner, 2026-10-15).
 - **The general page of notes for a native speaker** is being answered by a mainland reader in batches: #1 to #20 worked in on 2026-10-15, #21 to #131 to come (`data/notes/CLAUDE.md`).
 - **The TOCFL list has no stated license**: to be reconsidered before a larger audience.
-- **Refactoring** (`src/wordsPanel.js` split by screen, old names such as the mode `'words'` and `practice-tab`): after the testers' round, together with the pass over the looks.
+- **The pass over the looks and the refactoring** have an agreed order (2026-10-17; `docs/history.md`, after the UX review's tasks): shared styles, the study screen, the managing screens, wording; `src/wordsPanel.js` is split by screen (old names such as the mode `'words'` and `practice-tab` renamed) just before the managing screens, after browser tests for them are added.
 - **The owner's real study is still in Skritter**; the Skritter scheduling data (GDPR request, 2026-10-12) has not arrived.

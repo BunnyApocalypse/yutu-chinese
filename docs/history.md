@@ -26,6 +26,23 @@ Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where
 
 Free practice under Words (four taps) is already on the list for the pass over the looks (item 8 below).
 
+**Claude's suggestions for the pass over the looks, and where the refactoring fits** (2026-10-17; the owner agreed to the plan, each change still to be discussed before it is built):
+
+- **Shared styles first:** three kinds of button (main, secondary, quiet), a few spacing steps and text sizes, named once at the top of `src/style.css` as the colors are. That makes the tester's rule of at most three buttons something the code follows; items 10, 13 and 14 above mostly fall out of it.
+- **A handwriting-style font (楷体) for the characters being learned** (the prompt, the word page, the lists; the rest of the interface stays as it is). Outside the writing area characters are shown in `system-ui, sans-serif`, which draws some parts unlike written forms (言, 令, 糸, 心). Apple and Windows devices have a 楷体 font to ask for; Android has none, so one would have to come with the app (LXGW WenKai, with a Taiwan version, SIL Open Font License, several MB): new data with its own license, the owner's call.
+- **A layout for a tablet in landscape:** the writing area on the left, the prompt and grades on the right, so it can be much bigger than 520px (the owner writes on a tablet with a stylus; the tablet in "desktop site" mode looked bad in the second testing session). Together with item 5, since both change how the writing area is sized.
+- **One pass over the wording**, so the same thing has one name everywhere ("About" and "More about this word", for example), with short labels.
+- **A small "done" screen at the end of Review**, with today's count and when the next cards are due, in place of the line "All done for now…"; it leaves a place for the streak and the bunny later, without building them.
+
+**The order:** (1) the shared styles; (2) the study screen: items 5, 6, 10 and 12, the tablet layout and the font; (3) the managing screens: items 4 and 16 and where Free practice goes; (4) the wording and the done screen. `node scripts/ux-atlas.js` before and after each step, to compare.
+
+**The refactoring is done in parts, each just before the step that needs it**, with no change to how anything behaves:
+
+- **Before step 3: `src/wordsPanel.js` (1,933 lines) split by screen** (Decks tab, Words tab, the add panel, the word's pop-up panel), with the old names (the mode `'words'`, `practice-tab`) renamed at the same time. First a few browser tests for those screens (open a deck, add a word, edit it, suspend a card), since the suite covers writing well and those screens less; then small commits, both test suites after each.
+- **During step 2: `src/review.js` (1,269 lines) tidied only where a change needs it** (`docs/pitfalls.md`).
+- **Left alone: `src/quiz.js`** and the writing code: they work, the browser tests cover them, and the pass barely touches them.
+- Not first, because the shared styles are mostly CSS and the screens' new shape is not settled yet; not last, because the managing screens are where the pass is likeliest to break something in a file that size.
+
 **For the session after 2026-10-14, first of all** (put here at the owner's request, from Claude's suggestions after the first testing session and the question of Anki sync; each still to be agreed with the owner before it is built):
 
 1. **Done on 2026-10-15** (see "The word list"): **Adding a word by its pinyin**, for a learner without a Chinese keyboard: the characters box also takes pinyin and lists the dictionary's words read that way, usual readings first (HSK and TOCFL), to choose from. Claude's advice: build this first; it is what stopped the beginner in testing.
