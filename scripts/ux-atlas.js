@@ -280,9 +280,20 @@ async function walk(page, sizeName, size, shots) {
     await shoot('04-decks', 'Decks, the front page');
     await openDeckPage(page);
     await shoot('05-deck-page', "A deck's page");
-    await page.evaluate(`document.querySelectorAll('.add-list').forEach((group) => { group.open = true; })`);
-    await shoot('06-deck-page-adding', "A deck's page, the ways of adding words unfolded");
-    await page.evaluate(`document.querySelectorAll('.add-list').forEach((group) => { group.open = false; })`);
+    // "+ Add to deck": the panel for adding, on each of its three tabs.
+    await tap(page, 'add-to-deck-button');
+    await waitUntil(page, `document.getElementById('add-dialog').open`, 'the panel for adding');
+    const tabs = [
+      ['add-word-fold', 'word', 'one word'],
+      ['add-list-fold', 'list', 'a list of words'],
+      ['add-sentence-fold', 'sentence', 'a sentence'],
+    ];
+    for (const [fold, short, title] of tabs) {
+      await page.evaluate(`document.querySelector('#add-choices [data-add="${fold}"]').click()`);
+      await waitUntil(page, `!document.getElementById('${fold}').hidden`, `the tab for ${title}`);
+      await shoot(`06-deck-add-${short}`, `"+ Add to deck", adding ${title}`);
+    }
+    await tap(page, 'add-close');
   });
 
   await step('Words', async () => {

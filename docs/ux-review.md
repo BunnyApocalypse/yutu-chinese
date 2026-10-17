@@ -21,8 +21,10 @@ the owner before it is fixed.
   data copied), and adds no dependency: it uses `tests/browser/harness.js`.
 - **What it does:** starts the app in a fresh profile in four headless
   browsers at once, one per size (phone 390×844, small phone 375×667, tablet
-  820×1180, desktop 1440×900), adds the test words, and walks 35 screens: Review empty, Free
-  practice, the menu, Decks, a deck's page (folded and unfolded), Words, a
+  820×1180, desktop 1440×900), adds the test words, and walks 37 screens: Review empty, Free
+  practice, the menu, Decks, a deck's page, "+ Add to deck" on each of its
+  three tabs (until 2026-10-17 the deck's page with its fold-outs for adding
+  open, which the panel replaced), Words, a
   word's page and its Cards fold-out, the word's pop-up panel, the dictionary
   search and a dictionary word, every step of a lesson for 我們 (with raw
   input halfway through a character), the screen between two words, Review's
