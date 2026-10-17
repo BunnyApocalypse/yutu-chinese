@@ -77,6 +77,11 @@ describe('offline use', { concurrency: false }, () => {
       page.evaluate(`caches.open('offline-audio').then((cache) => cache.match(new URL('${file}', location.href).href)).then((found) => Boolean(found))`);
     await waitUntil(page, `document.getElementById('offline-status').textContent.includes('Recordings of words are kept once played.')`, 'the line about recordings');
     assert.equal(await saved('audio/w/5b66-4e60.mp3'), false);
+    // The button is shown only once the app listens for its tap, a moment
+    // after the line above. A tap before that did nothing, which made this
+    // test (and the last one, which expects the recordings asked for) fail
+    // now and then in a full run, with the computer busy.
+    await waitUntil(page, `!document.getElementById('save-audio-button').hidden`, 'the button for the recordings');
     await tap(page, 'save-audio-button');
     let status = '';
     for (let attempt = 0; attempt < 600 && !/All recordings are saved too/.test(status); attempt++) {
