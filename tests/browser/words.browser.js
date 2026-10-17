@@ -63,8 +63,9 @@ describe('the Decks tab', { concurrency: false }, () => {
     // Learn); typing the next word puts the button away.
     // (The panel is left closed in the tests, so the button is checked for
     // being switched on, not for being in view.)
+    // It is switched on just after the count is updated, so it is waited for.
     const learnNowOn = `!document.getElementById('add-learn-now').hidden`;
-    assert.equal(await page.evaluate(learnNowOn), true);
+    await waitUntil(page, learnNowOn, '"Learn it now"');
     await type(page, 'add-traditional', '貓');
     assert.equal(await page.evaluate(learnNowOn), false);
     await type(page, 'add-traditional', '');
