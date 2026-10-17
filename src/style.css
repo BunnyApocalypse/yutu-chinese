@@ -165,7 +165,7 @@
   /* The width the arrows beside the writing area take, both together with
      their gaps (.side-arrow, .writing-row). chooseSize in wordFlow.js reads
      it, so the area is as wide as what is left. */
-  --arrow-room: 0px; /* over the area's edges since 2026-10-17 */
+  --arrow-room: 64px;
 }
 
 * {
@@ -853,12 +853,12 @@ select {
 }
 
 /* The writing area with a thin arrow over each side: back on the left, skip
-   on the right. Over the area's edges, where strokes rarely go, rather than
-   beside it, so that the area can take the whole width (on a usual phone
-   358px instead of 294; the owner chose this from pictures on 2026-10-17,
-   to try on their phone). An arrow that does not apply is hidden and
-   catches no touches, so it only stands in the way in a word of several
-   characters while one is still to be written. */
+   on the right. On a phone they are over the area's edges, where strokes
+   rarely go, so that the area can take the whole width (on a usual phone
+   358px instead of 294; the owner, 2026-10-17, from pictures, and tried on
+   their phone). An arrow that does not apply is hidden and catches no
+   touches. Where there is room in the margins (a tablet, a computer), they
+   are beside it, as before (.arrows-beside, set by wordFlow.js). */
 .writing-row {
   position: relative;
   display: flex;
@@ -887,6 +887,17 @@ select {
 
 #skip-button {
   right: 2px;
+}
+
+.writing-row.arrows-beside {
+  gap: var(--space-tiny);
+}
+
+.writing-row.arrows-beside .side-arrow {
+  position: static;
+  transform: none;
+  min-height: 96px;
+  opacity: 1;
 }
 
 .side-arrow:active {

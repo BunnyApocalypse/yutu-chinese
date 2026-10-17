@@ -20,10 +20,9 @@ const TAP_TO_CONTINUE_DELAY_MS = 200;
 
 // As big as fits on the screen, leaving room for everything above and below.
 function chooseSize() {
-  // 32 for the page's margins, and the room of the arrows on either side of
-  // the area, named in style.css (--arrow-room).
-  const arrowRoom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-room')) || 0;
-  const fitsWidth = window.innerWidth - 32 - arrowRoom;
+  // 32 for the page's margins. The arrows go over the area's edges when the
+  // width is what limits it (see arrowsBeside).
+  const fitsWidth = window.innerWidth - 32;
   // The writing area has one size, and everything else has fixed room
   // above and below it, so that the area never moves or changes size from
   // one card or one step of a lesson to the next (the owner's rule,
@@ -40,6 +39,15 @@ function chooseSize() {
   // the rows there are, do not raise this number.
   const fitsHeight = window.innerHeight - 380;
   return Math.max(200, Math.min(fitsWidth, fitsHeight, 640));
+}
+
+// Whether the arrows fit beside an area of `size`, in the margins left over:
+// on a tablet or a computer, where the area is as big as it gets or limited
+// by the height (the owner, 2026-10-17). Otherwise they go over its edges.
+// --arrow-room in style.css is the room they need beside it.
+function arrowsBeside(size) {
+  const arrowRoom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--arrow-room')) || 0;
+  return window.innerWidth - 32 - size >= arrowRoom;
 }
 
 // Draws the 米字格 guide lines (two diagonals, one vertical, one horizontal).
@@ -471,6 +479,7 @@ export function createWordFlow(elements) {
     }
     writingArea.replaceChildren();
     const size = chooseSize();
+    writingArea.parentElement.classList.toggle('arrows-beside', arrowsBeside(size));
     writingArea.setAttribute('width', size);
     writingArea.setAttribute('height', size);
     // Lets the style sheet give the card face (see style.css) the same size.
