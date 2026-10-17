@@ -185,6 +185,8 @@ main {
   align-items: center;
   gap: var(--space-medium);
   padding: var(--space-large);
+  /* main's left padding, which the top bar reaches over (.top-bar). */
+  --main-left: var(--space-large);
 }
 
 /* main is what the menu button is placed against while a card is up. */
@@ -207,6 +209,7 @@ main {
 }
 
 :root[data-layout='wide'] main:has(> .study-area:not([hidden])) {
+  --main-left: var(--wide-side);
   padding-left: var(--wide-side);
   padding-right: calc(var(--wide-side) + var(--area-size) + var(--space-huge));
 }
@@ -249,6 +252,27 @@ main {
   align-self: stretch;
   margin: -10px 0 0 -10px;
   min-height: 36px;
+}
+
+/* The top bar stays at the top of the window while the page scrolls, so
+   that the menu and "‹ Decks" can be reached from far down a long list (the
+   owner, 2026-10-17, from pictures). It reaches over main's padding, so that
+   nothing scrolling under it shows beside or above it, and the menu button
+   stays where it was (the 10px of .top-bar's margin above). Not while a card
+   is up: then only the menu button is there, in the corner. */
+main:not(.focused) > .top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: calc(-1 * var(--space-large)) calc(-1 * var(--space-large)) 0 calc(-1 * var(--main-left));
+  padding: 6px var(--space-large) 6px calc(var(--main-left) - 10px);
+  background: var(--bg);
+}
+
+/* A line under the bar, once the page is scrolled (main.js), where the
+   list meets it. */
+main:not(.focused) > .top-bar.scrolled {
+  box-shadow: 0 1px 0 var(--line);
 }
 
 .place-title {

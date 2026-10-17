@@ -311,4 +311,26 @@ describe('the Decks tab', { concurrency: false }, () => {
     await type(page, 'word-search', 'peacock');
     await waitUntil(page, rows(1));
   });
+
+  it('keeps the top bar at the top of the window down a long list', async () => {
+    await type(page, 'word-search', '');
+    await openDeckPage(page);
+    await tap(page, 'add-close');
+    await waitUntil(page, `document.documentElement.scrollHeight > innerHeight * 3`, 'a long list');
+    const barTop = `document.querySelector('.top-bar').getBoundingClientRect().top`;
+    // At the top of the page, no line under it.
+    await page.evaluate(`scrollTo(0, 0)`);
+    await waitUntil(page, `!document.querySelector('.top-bar').classList.contains('scrolled')`, 'no line at the top');
+    assert.equal(await page.evaluate(barTop), 0);
+    await page.evaluate(`scrollTo(0, 2000)`);
+    // The line under it once scrolled, and "‹ Decks" still there to tap.
+    await waitUntil(page, `document.querySelector('.top-bar').classList.contains('scrolled')`, 'the line under the bar');
+    assert.equal(await page.evaluate(barTop), 0);
+    const back = await page.evaluate(`(() => {
+      const box = document.getElementById('deck-back-button').getBoundingClientRect();
+      return document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2).id;
+    })()`);
+    assert.equal(back, 'deck-back-button');
+    await page.evaluate(`scrollTo(0, 0)`);
+  });
 });

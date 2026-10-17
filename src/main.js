@@ -487,6 +487,17 @@ byId('import-replace-button').addEventListener('click', async () => {
   window.location.reload();
 });
 
+// ---- The top bar while scrolling ----
+
+// The top bar stays at the top of the window (style.css, .top-bar); once the
+// page is scrolled, a line under it shows where the list goes under it.
+// "passive" tells the browser this never stops the scrolling, so it can
+// scroll without waiting for it.
+const topBar = document.querySelector('.top-bar');
+window.addEventListener('scroll', () => {
+  topBar.classList.toggle('scrolled', window.scrollY > 0);
+}, { passive: true });
+
 // ---- Screen rotation ----
 
 // Rebuild the writing area when the screen is rotated. Only the width is
