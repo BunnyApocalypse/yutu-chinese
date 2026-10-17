@@ -387,8 +387,8 @@ describe('settings', { concurrency: false }, () => {
 
   it('follows the device\'s light or dark look, unless the Look setting says otherwise', async () => {
     const background = () => page.evaluate(`getComputedStyle(document.body).backgroundColor`);
-    const LIGHT = 'rgb(245, 242, 234)';
-    const DARK = 'rgb(35, 34, 31)';
+    const LIGHT = 'rgb(241, 233, 212)';
+    const DARK = 'rgb(29, 33, 32)';
     // (The DevTools protocol can make the page believe the device is set to dark.)
     const device = (value) =>
       page.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value }] });
@@ -403,7 +403,7 @@ describe('settings', { concurrency: false }, () => {
     await look('dark');
     assert.equal(await background(), DARK);
     // The browser's bar on a phone takes the page's color too.
-    assert.equal(await page.evaluate(`document.querySelector('meta[name="theme-color"]').content`), '#23221f');
+    assert.equal(await page.evaluate(`document.querySelector('meta[name="theme-color"]').content`), '#1d2120');
     await look('auto');
     assert.equal(await background(), LIGHT);
     await device('');

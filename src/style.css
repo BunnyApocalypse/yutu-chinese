@@ -5,47 +5,58 @@
    var(--name). The writing area's colors are read by the code too (quiz.js,
    theme.js), so they are here as well.
 
+   The two looks are the app's own, Yutu light and Yutu dark (the owner,
+   2026-10-17, from pictures beside the plain ones, which they replace):
+   colors from the icon, the jade rabbit on a paper moon. Light is the
+   moon's paper with ink; dark is a dark gray with a hint of green, with the
+   moon's paper for text and strokes.
+
    Which look is used: the "Look" setting (theme.js) puts data-theme="light"
    or "dark" on the page; with "As the device" it puts neither, and the
    device's own setting decides (prefers-color-scheme). */
 :root {
   color-scheme: light;
-  --bg: #f5f2ea; /* the page */
-  --surface: #fbf8f1; /* buttons, boxes, cards, the writing area: paper, not white */
-  --raised: #fdfaf4; /* tips and popups, over the page */
-  --pressed: #e9e4d8; /* a button being pressed */
-  --selected: #e2eaf5; /* behind the tab or place chosen: a tint of the blue */
-  --text: #34322d; /* dark gray, not black */
-  --text-soft: #4a463d;
-  --muted: #6b6557; /* hints and other quieter text */
-  --inverse-text: #fbf8f1; /* on something filled with the text's color */
-  --accent: #3b6fb6; /* the app's blue: pinyin, links, the current slot */
-  --accent-fill: #3b6fb6; /* the blue of a main button */
-  --accent-pressed: #315d99;
-  --on-accent: #fff; /* text on the blue or the red */
-  --border: #b9b2a3;
+  --bg: #f1e9d4; /* the page: the moon's paper */
+  --surface: #fbf6e8; /* buttons, boxes, cards, the writing area: paper, not white */
+  --raised: #fdf9ef; /* tips and popups, over the page */
+  --pressed: #e5dabd; /* a button being pressed */
+  --selected: #d9e9de; /* behind the tab or place chosen: a tint of the jade */
+  --text: #2a2d29; /* ink, not black */
+  --text-soft: #3e413b;
+  --muted: #625f50; /* hints and other quieter text */
+  --inverse-text: #fbf6e8; /* on something filled with the text's color */
+  --accent: #1f6b4b; /* the app's jade: pinyin, links, the current slot */
+  /* A main button is blue-teal, not jade: jade would make "Again" after a
+     missed character look like praise, next to the green of "passed" (the
+     owner, 2026-10-17, from pictures of jade, ink and blue-teal). */
+  --accent-fill: #1e5c70;
+  --accent-pressed: #174a5b;
+  --on-accent: #fff; /* text on a main button or the red */
+  --border: #b9a983;
   /* The edge of a text box or drop-down list: darker than other edges, as
      it is what shows where the box is (3:1 against what is around it, the
      accessibility guidelines' minimum, 2026-10-15). */
-  --field-border: #8a8374;
-  --border-soft: #d8d1c2;
-  --line: #ddd7c9; /* lines between parts */
-  --scrollbar: #c9c1ae;
-  --danger: #c2452d; /* missed, leeches, the reminder dot */
-  --danger-fill: #c2452d; /* behind white text: the bar saying something went wrong */
-  --danger-bg: #f9dfd9;
-  --success: #3b9c5a; /* passed, progress */
-  --success-text: #2e7a46; /* the same as text, darker to be read (4.5:1) */
-  --success-bg: #dff1e4;
-  --warn: #8a5a00; /* notes and "new" */
-  --shadow: rgba(0, 0, 0, 0.18);
-  --backdrop: rgba(0, 0, 0, 0.4); /* behind a pop-up panel */
+  --field-border: #8a7c5a;
+  --border-soft: #d9cba8;
+  --line: #ddd0b1; /* lines between parts */
+  --scrollbar: #cbbb93;
+  --danger: #b5402a; /* missed, leeches, the reminder dot: seal red */
+  --danger-fill: #b5402a; /* behind white text: the bar saying something went wrong */
+  --danger-bg: #f5dccf;
+  /* Passed, progress: a leaf green, yellower than the jade so the two are
+     told apart. */
+  --success: #3f8f2f;
+  --success-text: #346f27; /* the same as text, darker to be read (4.5:1) */
+  --success-bg: #e2eecf;
+  --warn: #855600; /* notes and "new" */
+  --shadow: rgba(40, 30, 0, 0.2);
+  --backdrop: rgba(14, 31, 27, 0.45); /* behind a pop-up panel */
   /* The writing area. */
-  --ink: #34322d; /* your own strokes */
-  --grid: #e3ded2; /* the 米字格 guide lines */
-  --outline: #d8d3c7; /* "Show outline" */
-  --reference: #a9d4b8; /* the printed character under yours, passed */
-  --reference-missed: #ecb3a7; /* the same, missed */
+  --ink: #2a2d29; /* your own strokes */
+  --grid: #e3d8bb; /* the 米字格 guide lines */
+  --outline: #d7cba9; /* "Show outline" */
+  --reference: #b4d69a; /* the printed character under yours, passed */
+  --reference-missed: #e9b2a3; /* the same, missed */
 }
 
 /* The dark look. The same values twice: once for "Dark", once for "Follow
@@ -57,74 +68,74 @@
    dark one. */
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --bg: #23221f;
-  --surface: #2c2b28;
-  --raised: #34322f;
-  --pressed: #3e3c37;
-  --selected: #2a3546;
-  --text: #dcd7cc;
-  --text-soft: #cbc6ba;
-  --muted: #a39d8f;
-  --inverse-text: #23221f;
-  --accent: #8cb4ec;
-  --accent-fill: #3d6fb3;
-  --accent-pressed: #335f9c;
+  --bg: #1d2120;
+  --surface: #252a28;
+  --raised: #2c3230;
+  --pressed: #363c3a;
+  --selected: #243a31;
+  --text: #ece3cb;
+  --text-soft: #dcd3bb;
+  --muted: #a9a68f;
+  --inverse-text: #1d2120;
+  --accent: #7cc4a3;
+  --accent-fill: #347a90;
+  --accent-pressed: #2a6578;
   --on-accent: #fff;
-  --border: #5a564d;
-  --field-border: #807b6f;
-  --border-soft: #46433d;
-  --line: #3e3c37;
-  --scrollbar: #5a564d;
-  --danger: #ec7a62;
+  --border: #525a56;
+  --field-border: #7c8581;
+  --border-soft: #3d4441;
+  --line: #363c3a;
+  --scrollbar: #525a56;
+  --danger: #ef8169;
   --danger-fill: #b23f2a;
   --danger-bg: #4a2620;
-  --success: #62c286;
-  --success-text: #62c286;
-  --success-bg: #1f3a28;
-  --warn: #e0a640;
+  --success: #a5cf62;
+  --success-text: #a5cf62;
+  --success-bg: #2a3a1d;
+  --warn: #e6c27a;
   --shadow: rgba(0, 0, 0, 0.5);
   --backdrop: rgba(0, 0, 0, 0.6);
-  --ink: #dcd7cc;
-  --grid: #403e39;
-  --outline: #4d4a43;
-  --reference: #2f6343;
+  --ink: #ece3cb;
+  --grid: #3a403d;
+  --outline: #4a514e;
+  --reference: #4a6b2c;
   --reference-missed: #74382b;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    --bg: #23221f;
-    --surface: #2c2b28;
-    --raised: #34322f;
-    --pressed: #3e3c37;
-    --selected: #2a3546;
-    --text: #dcd7cc;
-    --text-soft: #cbc6ba;
-    --muted: #a39d8f;
-    --inverse-text: #23221f;
-    --accent: #8cb4ec;
-    --accent-fill: #3d6fb3;
-    --accent-pressed: #335f9c;
+    --bg: #1d2120;
+    --surface: #252a28;
+    --raised: #2c3230;
+    --pressed: #363c3a;
+    --selected: #243a31;
+    --text: #ece3cb;
+    --text-soft: #dcd3bb;
+    --muted: #a9a68f;
+    --inverse-text: #1d2120;
+    --accent: #7cc4a3;
+    --accent-fill: #347a90;
+    --accent-pressed: #2a6578;
     --on-accent: #fff;
-    --border: #5a564d;
-    --field-border: #807b6f;
-    --border-soft: #46433d;
-    --line: #3e3c37;
-    --scrollbar: #5a564d;
-    --danger: #ec7a62;
+    --border: #525a56;
+    --field-border: #7c8581;
+    --border-soft: #3d4441;
+    --line: #363c3a;
+    --scrollbar: #525a56;
+    --danger: #ef8169;
     --danger-fill: #b23f2a;
     --danger-bg: #4a2620;
-    --success: #62c286;
-    --success-text: #62c286;
-    --success-bg: #1f3a28;
-    --warn: #e0a640;
+    --success: #a5cf62;
+    --success-text: #a5cf62;
+    --success-bg: #2a3a1d;
+    --warn: #e6c27a;
     --shadow: rgba(0, 0, 0, 0.5);
     --backdrop: rgba(0, 0, 0, 0.6);
-    --ink: #dcd7cc;
-    --grid: #403e39;
-    --outline: #4d4a43;
-    --reference: #2f6343;
+    --ink: #ece3cb;
+    --grid: #3a403d;
+    --outline: #4a514e;
+    --reference: #4a6b2c;
     --reference-missed: #74382b;
   }
 }
@@ -392,7 +403,7 @@ dialog.side-menu::backdrop {
 }
 
 /* What is chosen among tabs, the places in the menu and Settings' groups
-   looks the same everywhere: a tint of the blue, a blue edge, bold (the
+   looks the same everywhere: a tint of the jade, a jade edge, bold (the
    owner, 2026-10-17, from pictures; until then a dark fill here and in the
    menu, a blue fill like a main button in "+ Add to deck", and gray in
    Settings). Never a fill like the main button's, so that a screen keeps
@@ -664,7 +675,7 @@ main.focused .top-bar {
   }
 }
 
-/* Links inside explanations, in the app's blue. */
+/* Links inside explanations, in the app's jade. */
 .hint a {
   color: var(--accent);
 }
@@ -712,7 +723,7 @@ main.focused .top-bar {
 }
 
 /* The choice of look, in the introduction and in Settings: three samples
-   side by side, the chosen one ringed in blue. The radio buttons are kept
+   side by side, the chosen one ringed in jade. The radio buttons are kept
    for the keyboard and screen readers, but out of sight. */
 fieldset.setting.theme-picker {
   flex-direction: row;
@@ -759,7 +770,9 @@ fieldset.setting.theme-picker label.theme-choice {
 /* Softer than the picture's own paper and near-black ink (the owner,
    2026-10-15: trying beige paper and dark gray, to see how it feels). The
    light sample: less contrast, and warmed to beige. The dark one: partly
-   inverted to dark gray paper and light ink, and warmed a little. */
+   inverted to dark paper and light ink, then turned (an inverted beige is
+   blue) to Yutu dark's gray with a hint of green and its paper-colored ink
+   (2026-10-17, chosen by Claude from five tries beside the page). */
 .theme-swatch.light img,
 .theme-swatch.auto img:first-child {
   filter: contrast(0.85) sepia(0.18) brightness(0.97);
@@ -767,7 +780,7 @@ fieldset.setting.theme-picker label.theme-choice {
 
 .theme-swatch.dark img,
 .theme-swatch.auto img + img {
-  filter: invert(0.84) sepia(0.2) contrast(0.95);
+  filter: invert(0.9) hue-rotate(180deg) sepia(0.5) hue-rotate(40deg) saturate(0.4) contrast(0.92) brightness(0.9);
 }
 
 /* Both, the dark one over the light one, cut off along the diagonal. */
@@ -827,9 +840,9 @@ fieldset.setting.theme-picker label.theme-choice {
 }
 
 /* The text's own color with an underline (the owner, 2026-10-17, from
-   pictures of three ways): the underline says it can be tapped, and blue
-   is left to pinyin and the main button. Until then the faint gray of
-   hints, which looked like fine print. */
+   pictures of three ways): the underline says it can be tapped, and color
+   is left to pinyin (jade) and the main button (blue-teal). Until then the
+   faint gray of hints, which looked like fine print. */
 :root {
   --quiet-text: var(--text);
   --quiet-line: underline;
@@ -1797,7 +1810,7 @@ button.grade .wait {
   opacity: 0.75;
 }
 
-/* On the blue of the main grade, faded white is too faint to read. */
+/* On the blue-teal of the main grade, faded white is too faint to read. */
 button.grade.primary .wait {
   opacity: 1;
 }
