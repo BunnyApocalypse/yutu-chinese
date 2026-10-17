@@ -221,6 +221,13 @@ main {
   right: var(--wide-side);
 }
 
+/* The line with the kind of card keeps clear of the menu button in the
+   window's corner, where the column starts close to the window's edge (a
+   tablet held sideways), as it does on a phone (main.focused .type-row). */
+:root[data-layout='wide'] main.focused .type-row {
+  padding-left: max(0px, calc(46px - var(--wide-side)));
+}
+
 /* A card's face is zoomed (see .card-face), and so is where it is placed:
    divided by as much, it lands where the writing area does. */
 :root[data-layout='wide'] main:has(> .study-area:not([hidden])) #card-face {
@@ -403,12 +410,27 @@ dialog.side-menu::backdrop {
 
 /* The kind of card with the loudspeaker beside it. The row is as tall as
    the button whether the button is there or not, so the page does not jump. */
+/* The kind of card at the left end, the loudspeaker at the right end, and
+   between them what comes and goes (Show pinyin, About, Edit), so that
+   nothing that stays moves when they do (UX review item 6; the owner chose
+   this from pictures on 2026-10-17, with the loudspeaker last since it is
+   the one always there). Until then the line was centered, and the kind of
+   card shifted left when About and Edit appeared. */
 .type-row {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  align-self: stretch;
   gap: var(--space-small);
   min-height: 36px;
+}
+
+.type-row .card-type {
+  margin-right: auto;
+}
+
+.type-row #listen-button {
+  order: 1;
 }
 
 /* A round button with only a picture on it. */
