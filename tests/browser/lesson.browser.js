@@ -250,7 +250,7 @@ describe('learning new words', { concurrency: false }, () => {
     // Review, straight away, and the other words are left alone.
     assert.deepEqual(stored, { learned: 'number', cards: [] });
     await tap(page, 'review-tab');
-    await waitUntil(page, `document.getElementById('review-counts').textContent.endsWith('New cards 2')`, 'Review');
+    await waitUntil(page, `document.getElementById('review-counts').textContent.endsWith('2 new')`, 'Review');
     await waitUntil(page, `document.getElementById('card-type').textContent === 'Tone'`, 'its tone card');
     // Its writing card, once the tone card has been answered a while ago,
     // comes without the lesson: the word was just taught in Learn.

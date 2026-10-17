@@ -1226,9 +1226,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       scriptOf: (word) => scriptFor(word, settings),
     });
     countsElement.textContent =
-      `Due ${plan.dueCount} · New cards ${plan.newCardCount}` +
+      `${plan.dueCount} to review · ${plan.newCardCount} new` +
       // Writing cards to be learned again after a change of script.
-      (plan.newWordsLeftToday > 0 ? ` · To write again ${plan.newWordsLeftToday}` : '');
+      (plan.newWordsLeftToday > 0 ? ` · ${plan.newWordsLeftToday} to write again` : '');
 
     if (!plan.next) {
       current = null;
