@@ -685,6 +685,13 @@ export function createQuiz(target, size, handlers) {
     return writing && busyCount === 0;
   }
 
+  // Once the character is written, a swipe up still starts it again (to
+  // practice it, in Review: wordFlow.js), but nothing else is a gesture.
+  let completed = false;
+  function canSwipeWhenDone() {
+    return completed && !writing && busyCount === 0;
+  }
+
   // The finger or pen was held still for HOLD_MS, as far as the page has
   // heard. If the timer came late, the page was busy (unpacking the offline
   // data, say) and movements may still be waiting to be handed on: wait a
@@ -727,7 +734,7 @@ export function createQuiz(target, size, handlers) {
   target.addEventListener('pointerdown', (event) => {
     endPress();
     // Only the first finger, and only the main mouse button.
-    if (!event.isPrimary || event.button !== 0 || !canTakeGesture()) {
+    if (!event.isPrimary || event.button !== 0 || !(canTakeGesture() || canSwipeWhenDone())) {
       return;
     }
     const dueAt = performance.now() + HOLD_MS;
@@ -756,10 +763,15 @@ export function createQuiz(target, size, handlers) {
     const next = charData?.medians[strokesDone];
     const strict = Boolean(next) && risesSteeply(next);
     const swipedUp = !press.taken && canTakeGesture() && isSwipeUp(press.points, size, strict);
+    const swipedUpWhenDone = !press.taken && canSwipeWhenDone() && isSwipeUp(press.points, size, false);
     endPress();
     if (swipedUp) {
       writing = false;
       writer.cancelQuiz();
+      handlers.onWipe();
+    } else if (swipedUpWhenDone) {
+      // Not also a tap, which would move on (wordFlow.js listens further up).
+      event.stopPropagation();
       handlers.onWipe();
     }
   });
@@ -770,6 +782,7 @@ export function createQuiz(target, size, handlers) {
   // Starts (or restarts) the quiz for the current character, from a clean slate.
   async function start() {
     clearTimeout(afterAnimationTimer);
+    completed = false;
     drawnLayer.replaceChildren();
     mistakes = 0;
     strokesDone = 0;
@@ -900,6 +913,7 @@ export function createQuiz(target, size, handlers) {
       },
       onComplete: () => {
         writing = false;
+        completed = true;
         let order = null;
         if (baseData.altOrder) {
           order = isStandardOrder(sequence) ? 'moe' : 'mainland';
@@ -986,6 +1000,7 @@ export function createQuiz(target, size, handlers) {
     async reveal() {
       clearTimeout(afterAnimationTimer);
       writing = false;
+      completed = true;
       writer.cancelQuiz();
       await setPrintedColor(() => referenceColor(true));
       writer.showCharacter();
@@ -1002,6 +1017,7 @@ export function createQuiz(target, size, handlers) {
     async animate() {
       clearTimeout(afterAnimationTimer);
       writing = false;
+      completed = false;
       writer.cancelQuiz();
       drawnLayer.replaceChildren();
       demoLayer.replaceChildren();

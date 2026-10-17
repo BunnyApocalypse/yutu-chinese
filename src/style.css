@@ -1573,6 +1573,21 @@ button.small {
 
 /* The four grade buttons share the row equally, so they always fit side by
    side on a phone. Each shows the grade with the waiting time underneath. */
+/* Close under the grades: the study area's gap is space enough. */
+#practice-again-button {
+  margin-top: 0;
+}
+
+/* Practicing a written word again (review.js): Restart, Show outline and
+   Animate come back under the grades, so the grades do not move. */
+.study-area.practicing #writing-buttons {
+  order: 1;
+}
+
+.study-area.practicing > :is(#leech-note, #leech-suspend-button, #order-note) {
+  order: 2;
+}
+
 .grade-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

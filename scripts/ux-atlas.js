@@ -427,6 +427,12 @@ async function walk(page, sizeName, size, shots) {
       }
       await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
       await shoot(`16-review-${type}-grades`, `Review: ${kind}, answered, with the grades`);
+      if (type === 'writing') {
+        // Practicing it again: the tools come back under the grades.
+        await tap(page, 'practice-again-button');
+        await waitUntil(page, `document.getElementById('study-area').classList.contains('practicing')`, 'practice');
+        await shoot('16-review-writing-practice', `Review: ${kind}, practicing it again`);
+      }
       await page.evaluate(`document.querySelector('#grade-row button.primary').click()`);
       await sleep(400);
     });

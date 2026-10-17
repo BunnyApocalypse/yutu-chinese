@@ -629,6 +629,7 @@ async function startUp() {
       pinyinElement: byId('prompt-pinyin'),
       pinyinButton: byId('pinyin-button'),
       gradeRow: byId('grade-row'),
+      practiceAgainButton: byId('practice-again-button'),
       editWordButton: byId('edit-word-button'),
       aboutWordButton: byId('about-word-button'),
       leechNote: byId('leech-note'),

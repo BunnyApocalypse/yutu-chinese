@@ -56,7 +56,7 @@ const RECHECK_MS = 15 * 1000;
 
 // elements: the page elements review controls:
 //   countsElement, typeElement, meaningElement, pinyinElement, pinyinButton,
-//   gradeRow, editWordButton, leechNote, donePanel, doneMessage, studyArea, scriptFlag,
+//   gradeRow, practiceAgainButton, editWordButton, leechNote, donePanel, doneMessage, studyArea, scriptFlag,
 //   lessonNote, skipLessonButton, lessonNextButton, learnNextButton, addWordsButton,
 //   and the parts of the study area that differ per kind of card:
 //   wordRow, statusRow, strokeCountElement, writingRow, writingButtons, cardFace,
@@ -83,6 +83,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     pinyinElement,
     pinyinButton,
     gradeRow,
+    practiceAgainButton,
     editWordButton,
     aboutWordButton,
     leechNote,
@@ -149,6 +150,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     const tone = type === 'tone';
     writingRow.hidden = !writing;
     writingButtons.hidden = !writing;
+    endPractice();
     cardFace.hidden = writing;
     toneButtonRow.hidden = !tone;
     // The row of slots and the status line belong to writing and tone cards.
@@ -214,8 +216,24 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   pinyinButton.addEventListener('click', showPinyin);
 
+  // Practicing again (see practiceWhenDone in wordFlow.js): the grades stay
+  // where they are, and Restart, Show outline and Animate come back under
+  // them (the owner, 2026-10-17: above, they would push the grades down).
+  function startPractice() {
+    practiceAgainButton.hidden = true;
+    writingButtons.hidden = false;
+    studyArea.classList.add('practicing');
+  }
+
+  function endPractice() {
+    studyArea.classList.remove('practicing');
+  }
+
+  practiceAgainButton.addEventListener('click', () => flows.writing.practiceAgain());
+
   function hideGrades() {
     gradeRow.hidden = true;
+    practiceAgainButton.hidden = true;
     editWordButton.hidden = true;
     aboutWordButton.hidden = true;
     leechNote.hidden = true;
@@ -481,6 +499,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     // brings back what it needs.
     writingButtons.hidden = true;
     toneButtonRow.hidden = true;
+    // A written word can be practiced again, as often as wanted, without
+    // changing its grade (the owner, 2026-10-17).
+    practiceAgainButton.hidden = writingRow.hidden;
     renderGrades();
     // A tip beside them, the first time (tips.js).
     document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'grades' }));
@@ -552,6 +573,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         hideGrades();
         writingButtons.hidden = false;
       },
+      // Once written, it can be practiced again (practice-again-button, or a
+      // swipe up), which changes nothing.
+      practiceWhenDone: true,
+      onPracticeStart: startPractice,
       onWordDone(result) {
         showPinyin();
         // The gap is filled in: the whole sentence is shown.

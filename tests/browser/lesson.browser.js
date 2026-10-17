@@ -330,14 +330,54 @@ describe('learning new words', { concurrency: false }, () => {
     assert.equal(await textOf(page, 'stroke-count'), '1/3');
   });
 
-  it('once written, shows only the grades', { timeout: 60000 }, async () => {
-    // The plain writing card of 下 from the test before.
-    await waitForFirstStroke();
-    const area = await writingArea(page);
-    for (const median of loadStrokeData('下').medians) {
-      await drawStroke(page, area, median);
-    }
+  it('once written, shows only the grades, and practicing again changes nothing', { timeout: 60000 }, async () => {
+    // The plain writing card of 下 from the test before, written cleanly.
+    await write('下');
     await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
     assert.equal(await isShown(page, 'writing-buttons'), false, 'Restart, Show outline and Animate are put away');
+    assert.equal(await isShown(page, 'practice-again-button'), true);
+    const suggested = `document.querySelector('#grade-row button.primary').firstChild.textContent`;
+    assert.equal(await page.evaluate(suggested), 'Good');
+    const reviewCount = () => inDatabase(`stores.reviews.count().onsuccess = (e) => { result.count = e.target.result; };`).then((result) => result.count);
+    const reviewsBefore = await reviewCount();
+    const gradesTop = `Math.round(document.getElementById('grade-row').getBoundingClientRect().top)`;
+    const top = await page.evaluate(gradesTop);
+
+    // Practice: the tools come back under the grades, which stay put.
+    await tap(page, 'practice-again-button');
+    await waitForFirstStroke();
+    assert.equal(await isShown(page, 'writing-buttons'), true);
+    assert.equal(await isShown(page, 'grade-row'), true);
+    assert.equal(await isShown(page, 'practice-again-button'), false);
+    assert.equal(await page.evaluate(gradesTop), top, 'the grades did not move');
+    assert.ok(
+      await page.evaluate(`document.getElementById('writing-buttons').getBoundingClientRect().top > document.getElementById('grade-row').getBoundingClientRect().bottom`),
+      'the tools are under the grades',
+    );
+    // A wrong stroke, the outline, then the character: none of it counts.
+    const area = await writingArea(page);
+    await drawStroke(page, area, [[100, 100], [900, 800]]);
+    await tap(page, 'outline-button');
+    assert.match(await write('下'), /^Practice · /);
+    assert.equal(await page.evaluate(suggested), 'Good');
+    // A tap on the writing area does not grade while practicing.
+    await page.evaluate(`document.getElementById('writing-area').dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))`);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    assert.equal(await isShown(page, 'grade-row'), true);
+    assert.equal(await reviewCount(), reviewsBefore);
+    // A swipe up starts the practice again.
+    await drawStroke(page, area, [[512, -50], [512, 300], [512, 800]]);
+    await waitForFirstStroke();
+    assert.equal(await page.evaluate(suggested), 'Good');
+
+    // Graded: the review is the first writing's, Good with no mistakes.
+    await page.evaluate(`document.querySelector('#grade-row button.primary').click()`);
+    await waitUntil(page, `document.getElementById('grade-row').hidden`, 'the card graded');
+    const { reviews } = await inDatabase(`stores.reviews.getAll().onsuccess = (e) => { result.reviews = e.target.result; };`);
+    const last = reviews.filter((review) => review.cardId === '下|xia4#writing').pop();
+    assert.equal(last.grade, 3);
+    assert.equal(last.suggestedGrade, 3);
+    assert.deepEqual(last.mistakesPerChar, [0]);
+    assert.deepEqual(last.passedPerChar, [true]);
   });
 });

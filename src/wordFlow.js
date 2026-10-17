@@ -126,6 +126,14 @@ export function createWordFlow(elements) {
   let tapAllowedFrom = 0;
 
   let outlineVisible = false;
+
+  // Practicing the character on screen again after the word was finished
+  // (options.practiceWhenDone, Review; the owner, 2026-10-17: "I need to
+  // practice this one a few times to make sure that it stays in my head").
+  // Nothing written while practicing changes what is known about the word:
+  // its mistakes, hints, verdicts and suggested grade stay as they were, and
+  // a tap on the writing area does not move on.
+  let practicing = false;
   let quiz = null;
 
   // What the current mode wants; see start().
@@ -182,7 +190,7 @@ export function createWordFlow(elements) {
   // Back (left) undoes a skip made by accident: it returns to the most recent
   // skipped character before this point, even after the word is finished.
   function canSkip() {
-    return !charDone && chars.length > 1;
+    return !charDone && !practicing && chars.length > 1;
   }
 
   // The character the back arrow would return to: the nearest skipped one at
@@ -199,7 +207,7 @@ export function createWordFlow(elements) {
   }
 
   function canGoBack() {
-    return backTarget() !== -1;
+    return !practicing && backTarget() !== -1;
   }
 
   function showArrows() {
@@ -216,7 +224,10 @@ export function createWordFlow(elements) {
     strokeCountElement.textContent = `${strokeNumber}/${totalStrokes}`;
     strokeCountElement.hidden = Boolean(options.hideStrokeCount);
     const mistakes = carriedMistakes + currentMistakes;
-    statusElement.textContent = !started && mistakes === 0 ? 'Write the first stroke' : describeMistakes(mistakes);
+    const status = !started && mistakes === 0 ? 'Write the first stroke' : describeMistakes(mistakes);
+    // While practicing, the line says so, so that it is not taken for the
+    // card's own result.
+    statusElement.textContent = practicing ? `Practice · ${status.toLowerCase()}` : status;
   }
 
   // The count is only for while a character is being written.
@@ -257,6 +268,15 @@ export function createWordFlow(elements) {
     onStart({ totalStrokes }) {
       charDone = false;
       currentMistakes = 0;
+      if (practicing) {
+        carriedMistakes = 0;
+        nextButton.hidden = true;
+        orderNote.hidden = true;
+        renderWordRow(); // the arrows do nothing while practicing
+        showProgress(1, totalStrokes, false);
+        options.onPracticeStart?.();
+        return;
+      }
       strokesPerChar[position] = totalStrokes;
       // Starting the character (again) means it is being written after all.
       skippedPerChar[position] = false;
@@ -279,6 +299,13 @@ export function createWordFlow(elements) {
     },
     onComplete({ totalMistakes, hintShown, order }) {
       charDone = true;
+      if (practicing) {
+        orderNote.hidden = order !== 'mainland';
+        hideProgress();
+        statusElement.textContent = `Practice · ${describeMistakes(totalMistakes).toLowerCase()}`;
+        // The printed character keeps the color of the verdict that stands.
+        return passedPerChar[position];
+      }
       finishedPerChar[position] = true;
       orderPerChar[position] = order;
       // Writing the mainland order is accepted; the note only points out that
@@ -375,7 +402,7 @@ export function createWordFlow(elements) {
   // The back button: return to the character that was skipped, to write it.
   function goBack() {
     const target = backTarget();
-    if (target === -1) {
+    if (target === -1 || practicing) {
       return;
     }
     position = target;
@@ -396,7 +423,7 @@ export function createWordFlow(elements) {
     outlineVisible = visible;
     quiz.setOutlineVisible(visible);
     outlineButton.textContent = visible ? 'Hide outline' : 'Show outline';
-    if (visible && chars.length > 0) {
+    if (visible && chars.length > 0 && !practicing) {
       peekedPerChar[position] = true;
     }
   }
@@ -443,6 +470,9 @@ export function createWordFlow(elements) {
 
   // The Next button, or a tap on the writing area once a character is done.
   function goOn() {
+    if (practicing) {
+      return; // practice never grades or moves on (see practicing)
+    }
     if (!wordFinished()) {
       position = nextUnfinished();
       showCurrentCharacter();
@@ -470,8 +500,12 @@ export function createWordFlow(elements) {
   // "pointerup" fires when a finger, stylus or mouse button is lifted. A plain
   // "click" listener would not work here: Hanzi Writer blocks the click that
   // browsers normally produce from a touch on the writing area.
-  writingArea.addEventListener('pointerup', () => {
-    if (charDone && Date.now() >= tapAllowedFrom) {
+  //
+  // It listens on the writing area's row, which hears the event after the
+  // writing area itself: a swipe up once the character is done is taken by
+  // the quiz there and goes no further, so it is not also a tap (quiz.js).
+  writingArea.parentElement.addEventListener('pointerup', (event) => {
+    if (writingArea.contains(event.target) && charDone && Date.now() >= tapAllowedFrom) {
       goOn();
     }
   });
@@ -479,7 +513,12 @@ export function createWordFlow(elements) {
   // The Restart button, or a swipe up on the writing area: the mistakes made
   // so far still count.
   function startOver() {
-    beforeRedo();
+    if (options.practiceWhenDone && wordFinished()) {
+      practicing = true;
+    }
+    if (!practicing) {
+      beforeRedo();
+    }
     quiz.restart();
   }
 
@@ -488,8 +527,10 @@ export function createWordFlow(elements) {
   outlineButton.addEventListener('click', () => setOutlineVisible(!outlineVisible));
 
   animateButton.addEventListener('click', () => {
-    beforeRedo();
-    peekedPerChar[position] = true;
+    if (!practicing) {
+      beforeRedo();
+      peekedPerChar[position] = true;
+    }
     quiz.animate();
   });
 
@@ -522,7 +563,11 @@ export function createWordFlow(elements) {
     //   judgeChar({ mistakes, strokes, hintShown, peeked }):
     //                  returns true if the character counts as passed. Leave
     //                  it out for no verdicts at all (Free practice).
+    //   practiceWhenDone: true to let the character on screen be written
+    //                  again once the word is finished, as practice that
+    //                  changes nothing (see practicing; Review)
     //   onCharStart(): a character starts (or starts over)
+    //   onPracticeStart(): practicing again begins (see practiceAgain)
     //   onWordDone(result): the last character was finished. `result` has
     //                  mistakes, mistakesPerChar, passedPerChar,
     //                  suggestedPerChar, hintPerChar, orderPerChar,
@@ -557,6 +602,7 @@ export function createWordFlow(elements) {
       }
 
       options = newOptions;
+      practicing = false;
       // Tells the browser which regional font to use for the characters in
       // the slot row. Without it, a phone may show Japanese or mainland shapes.
       wordRow.lang = options.script === 'traditional' ? 'zh-Hant-TW' : 'zh-Hans-CN';
@@ -573,6 +619,14 @@ export function createWordFlow(elements) {
       finishedPerChar = [];
       await showCurrentCharacter();
       return true;
+    },
+
+    // Writes the character on screen again, as practice (see practicing).
+    // Only once the word is finished, and only where practiceWhenDone is set.
+    practiceAgain() {
+      if (options.practiceWhenDone && wordFinished()) {
+        startOver();
+      }
     },
 
     // Rebuilds the writing area at a size that fits the screen now, and starts
