@@ -288,7 +288,11 @@ byId('learn-next-button').addEventListener('click', () => {
 });
 // Review or Learn with no words (or none left to learn): words are added in Decks.
 byId('add-words-button').addEventListener('click', () => setMode('decks'));
-practiceButton.addEventListener('click', () => setMode('practice'));
+// Free practice is opened from Settings (and from a word's page).
+practiceButton.addEventListener('click', () => {
+  byId('settings-panel').close();
+  setMode('practice');
+});
 decksTab.addEventListener('click', () => setMode('decks'));
 wordsTab.addEventListener('click', () => setMode('words'));
 
