@@ -731,7 +731,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
   //
   // After a word is added (the owner, 2026-10-16, from a tester who wanted to
   // learn a word just added without looking for it): the word goes to the
-  // front of the line, as "Study next" does, and Learn opens on the deck it
+  // front of the line, as "Learn this word next" does, and Learn opens on the deck it
   // was added to. Offered in the panel for adding and on the word's page
   // after adding it from the dictionary (wordPage.js).
   async function learnNow(wordIdToLearn, deckId) {

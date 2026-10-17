@@ -140,7 +140,7 @@ async function loadWordList() {
 }
 
 // The Decks tab. After it changes anything, Review and Free practice read
-// the words afresh. Its "Review this deck" and "Learn this deck" buttons
+// the words afresh. Its "Review this deck" and "Learn new words" buttons
 // choose the deck and open that tab.
 const wordsPanel = createWordsPanel(
   async () => {

@@ -1,5 +1,5 @@
 // A word's pop-up panel: changing it (its characters, readings, meaning,
-// decks), moving it to the front of the line ("Study next"), removing it; and
+// decks), moving it to the front of the line ("Learn this word next"), removing it; and
 // on a word's page, how its cards stand and the boxes for suspending them.
 // Moved here from wordsPanel.js on 2026-10-17, when it was split by screen;
 // the two share the word that is open.
