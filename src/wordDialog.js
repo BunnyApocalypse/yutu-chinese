@@ -234,7 +234,7 @@ export function createWordDialog(shared) {
       if (sentence.id === openWord.id) {
         await putAll('words', [sentence]);
       } else if (shared.words().some((word) => word.id === sentence.id)) {
-        dialogNote.textContent = 'This sentence is already in your shared.words().';
+        dialogNote.textContent = 'This sentence is already in your words.';
         return;
       } else {
         // Its characters changed, and its ID with them: its cards and
@@ -318,7 +318,7 @@ export function createWordDialog(shared) {
       await putAll('words', [saved]);
     } else if (shared.words().some((word) => word.id === saved.id)) {
       dialogNote.textContent =
-        `${shared.charactersOf(saved)} (${formatPinyin(saved.pinyin)}) is already in your shared.words().`;
+        `${shared.charactersOf(saved)} (${formatPinyin(saved.pinyin)}) is already in your words.`;
       return;
     } else {
       await renameWord(openWord.id, withFormerId(saved, openWord));

@@ -9,9 +9,6 @@
 import { getAll, putAll } from './db.js';
 import { formatPinyin, wordId } from './wordList.js';
 import {
-  READY_MADE_LISTS,
-  missingReadyMadeDecks,
-  readyMadeDeck,
   deckTree,
   deckWithInside,
   isInDecks,
@@ -24,13 +21,13 @@ import { createWordPage } from './wordPage.js';
 import { createDictionaryLoader } from './dictionaryLoader.js';
 import { createWordDialog } from './wordDialog.js';
 import { createSentenceForm } from './addSentenceForm.js';
+import { createListForm } from './addListForm.js';
+import { createReadyDecks } from './readyDecks.js';
 import { langFor, fillMixed } from './lang.js';
-import { radicalRecord } from './radicals.js';
 import { lapsesOf } from './leeches.js';
 import { findLeeches, describeLeech, describeSuspended, leechList, leechPrompt } from './leeches.js';
 import {
   checkWord,
-  readWordList,
   newWordRecords,
   wordsWithSameCharacters,
   orderForStudyingNext,
@@ -38,9 +35,6 @@ import {
   charactersShown,
   scriptsShown,
   scriptFor,
-  levelsOfReadyList,
-  listTag,
-  groupName,
   tidyPinyin,
 } from './words.js';
 import {
@@ -56,8 +50,6 @@ import {
 // With thousands of words, building a row for each would make the page slow,
 // so only this many are shown at a time; the search box narrows them down.
 const MAX_ROWS = 200;
-// How many unreadable lines of a pasted list are spelled out.
-const MAX_PROBLEMS_SHOWN = 20;
 // How many dictionary entries are offered for the characters typed, and how
 // much of each entry's list of meanings is shown.
 const MAX_SUGGESTIONS = 8;
@@ -101,14 +93,6 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   const addNote = byId('add-word-note');
   const addLearnNow = byId('add-learn-now');
 
-  const listHint = byId('list-hint');
-  const listText = byId('list-text');
-  const listFileButton = byId('list-file-button');
-  const listFile = byId('list-file');
-  const checkListButton = byId('check-list-button');
-  const listReport = byId('list-report');
-  const listProblems = byId('list-problems');
-  const addListButton = byId('add-list-button');
 
   const countElement = byId('word-count');
   const searchInput = byId('word-search');
@@ -144,10 +128,6 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   let openDeckId;
   // The IDs of the words that have been learned.
   let studiedWordIds = new Set();
-  // The checked words of a pasted list, waiting for "Add", and every word
-  // that could be read from it, those already there included.
-  let listToAdd = [];
-  let listRead = [];
 
   // The dictionary and the ready-made lists, fetched once (dictionaryLoader.js).
   // When the dictionary or the usual readings arrive, the add form's
@@ -155,7 +135,6 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   const dictionaryLoader = createDictionaryLoader(() => showSuggestions());
   const loadDictionary = dictionaryLoader.load;
   const loadUsualReadings = dictionaryLoader.loadUsualReadings;
-  const readyEntries = dictionaryLoader.readyEntries;
   const likeliestEntry = dictionaryLoader.likeliestEntry;
   const completeForms = dictionaryLoader.completeForms;
   const getDictionary = dictionaryLoader.get;
@@ -219,7 +198,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   function openDeckPage(deckId) {
     openDeckId = deckId;
     searchInput.value = '';
-    forgetCheckedList();
+    listForm.forget();
     addNote.textContent = '';
     renderDecks();
     renderList();
@@ -319,6 +298,14 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       (listDeck() || decks.find((deck) => deck.id === DEFAULT_DECK.id) || deckTree(decks)[0]?.deck || {}).id,
   });
 
+  // Adding a list of words, and the ready-made decks (addListForm.js,
+  // readyDecks.js).
+  const listForm = createListForm(
+    { words: () => words, getSettings, openDeck: () => openDeck(), afterChange: () => afterChange() },
+    dictionaryLoader,
+  );
+  const readyDecks = createReadyDecks({ words: () => words, getSettings, afterChange: () => afterChange() }, dictionaryLoader);
+
   // Adding a sentence (addSentenceForm.js).
   const sentenceForm = createSentenceForm({
     words: () => words,
@@ -397,8 +384,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     byId('my-decks-section').hidden = readyMade;
     byId('ready-decks-section').hidden = !readyMade;
     if (readyMade) {
-      readyReport.textContent = '';
-      showReadyLevels();
+      readyDecks.show();
       // A tip the first time (tips.js).
       document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'ready' }));
     }
@@ -528,10 +514,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       addFields.cardScript.value = '';
     }
 
-    const taiwanColumn = asks.taiwan ? ', and optionally the Taiwan reading' : '';
-    listHint.textContent = both
-      ? `One word per line, as in a TSV or CSV file: simplified, traditional, pinyin with tone numbers, meaning${taiwanColumn}, separated by tabs or commas. With one column of characters instead of two, the other script is looked up in the dictionary.`
-      : `One word per line, as in a TSV or CSV file: characters, pinyin with tone numbers, meaning${taiwanColumn}, separated by tabs or commas. A list with two columns of characters (simplified, then traditional) works too.`;
+    listForm.applySettings(asks, both);
   }
 
   // ---- The list of words ----
@@ -1142,271 +1125,8 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     lookedUpField.focus();
   });
 
-  // ---- Adding a list ----
-
-  function forgetCheckedList() {
-    listToAdd = [];
-    listRead = [];
-    addListButton.hidden = true;
-    listReport.textContent = '';
-    listProblems.replaceChildren();
-  }
-
-  // The real file chooser is a hidden <input type="file">; the visible button opens it.
-  listFileButton.addEventListener('click', () => listFile.click());
-  listFile.addEventListener('change', async () => {
-    const file = listFile.files[0];
-    listFile.value = ''; // so choosing the same file again still counts
-    if (file) {
-      listText.value = await file.text();
-      forgetCheckedList();
-    }
-  });
-
-  // A list changed after it was checked has to be checked again.
-  listText.addEventListener('input', forgetCheckedList);
-
-  const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`;
-
-  checkListButton.addEventListener('click', async () => {
-    forgetCheckedList();
-    // A line with one column of characters has its other script looked up.
-    await loadDictionary();
-    const { words: readable, problems } = readWordList(listText.value, (characters, pinyin) =>
-      completeForms(getSettings().script, characters, pinyin),
-    );
-    const { toAdd, alreadyHave } = newWordRecords(readable, words, Date.now());
-    if (readable.length === 0 && problems.length === 0) {
-      listReport.textContent = 'There is nothing in the box yet.';
-      return;
-    }
-    // New words written like a word already in the list, but read differently.
-    const sameCharacters = toAdd.filter((word) => wordsWithSameCharacters(word, words).length > 0);
-    listReport.textContent =
-      `${plural(toAdd.length, 'new word')}, ${alreadyHave} you already have, ` +
-      `${plural(problems.length, 'line')} that can't be read.` +
-      (sameCharacters.length > 0
-        ? ` Of the new words, ${sameCharacters.length} ${sameCharacters.length === 1 ? 'has' : 'have'} the same` +
-          ` characters as a word you already have, with another reading:` +
-          ` ${sameCharacters.slice(0, 10).map((word) => word[scriptFor(word, getSettings())]).join(', ')}` +
-          `${sameCharacters.length > 10 ? ', …' : ''}.`
-        : '');
-    const shown = problems.slice(0, MAX_PROBLEMS_SHOWN).map(({ lineNumber, text, problem }) => {
-      const item = document.createElement('li');
-      item.textContent = `Line ${lineNumber} (${text.slice(0, 30)}): ${problem}`;
-      return item;
-    });
-    if (problems.length > MAX_PROBLEMS_SHOWN) {
-      const more = document.createElement('li');
-      more.textContent = `… and ${problems.length - MAX_PROBLEMS_SHOWN} more.`;
-      shown.push(more);
-    }
-    listProblems.replaceChildren(...shown);
-
-    listToAdd = toAdd;
-    listRead = readable;
-    showAddListButton();
-  });
-
-  // The words of the checked list that are in your words already, but not
-  // in the deck whose page is open. Adding the list puts them in it too.
-  function listedButNotInDeck() {
-    const deckId = openDeck().id;
-    const listed = new Set(listRead.map((word) => wordId(word)));
-    return words.filter((word) => listed.has(word.id) && !word.decks.includes(deckId));
-  }
-
-  // A list is worth adding even if every word in it is there already: they
-  // are put in this deck.
-  function showAddListButton() {
-    const toFile = listedButNotInDeck().length;
-    addListButton.textContent =
-      listToAdd.length > 0 || toFile === 0
-        ? `Add ${plural(listToAdd.length, 'word')}`
-        : `Put ${plural(toFile, 'word')} in this deck`;
-    addListButton.hidden = listToAdd.length === 0 && toFile === 0;
-  }
-
-  addListButton.addEventListener('click', async () => {
-    // Worked out again here, in case the list of words changed since the check.
-    const { toAdd } = newWordRecords(listToAdd, words, Date.now());
-    // Everything goes into the deck whose page is open, the words of the
-    // list that were there already too.
-    const deckId = openDeck().id;
-    const alreadyThere = listedButNotInDeck();
-    await putAll('words', [...toAdd, ...alreadyThere].map((word) => withDeck(word, deckId)));
-    forgetCheckedList();
-    listText.value = '';
-    listReport.textContent =
-      `Added ${plural(toAdd.length, 'word')}.` +
-      (toAdd.length > 0 ? ' They wait in Learn.' : '') +
-      (alreadyThere.length > 0 ? ` ${plural(alreadyThere.length, 'word')} you already had went into this deck.` : '');
-    await afterChange();
-  });
-
-  // ---- Adding a ready-made list ----
-
-  // The rows to choose a list with, and the list chosen: the first to begin
-  // with.
-  const readyRows = [...document.querySelectorAll('#ready-list button')];
-  let readyListId = readyRows[0].dataset.list;
-  const readyLevels = byId('ready-levels');
-  const readyReport = byId('ready-report');
-
-  // Lists the levels of the chosen list, one row each with how many of its
-  // words are new and a button that adds it (the owner, 2026-10-14: a level
-  // is months of work, so levels are added one at a time). The levels of a
-  // list that keeps a deck of its own with its levels inside (the radicals)
-  // get a checkbox each instead, and one button under them that adds the
-  // ones ticked, since they make one deck.
-  async function showReadyLevels() {
-    const listId = readyListId;
-    for (const row of readyRows) {
-      const chosen = row.dataset.list === listId;
-      row.classList.toggle('selected', chosen);
-      // Says to a screen reader which row is the chosen one.
-      row.setAttribute('aria-pressed', chosen);
-      if (chosen) {
-        byId('ready-levels-title').textContent = `Levels of ${row.firstElementChild.textContent}`;
-      }
-    }
-    let entries;
-    try {
-      entries = await readyEntries(listId);
-    } catch {
-      readyLevels.replaceChildren();
-      readyReport.textContent = 'The list could not be fetched. It needs a connection the first time.';
-      return;
-    }
-    if (listId !== readyListId) {
-      return; // another list was tapped while this one was being fetched
-    }
-    const together = !READY_MADE_LISTS.find((list) => list.id === listId).levelName;
-    byId('ready-levels-hint').textContent = together
-      ? `What you add goes into the deck ${readyMadeDeck(listId).name} under My decks, with a deck for each level inside it.`
-      : 'Each level you add becomes a deck of its own under My decks. Where a level is divided into smaller groups of words, each group is a deck inside it.';
-    const rows = levelsOfReadyList(entries, words).map(({ level, count, newCount }) => {
-      const row = document.createElement('li');
-      const text = document.createElement('span');
-      // TOCFL has two levels with names of their own before its level 1.
-      text.textContent =
-        `${/^\d/.test(level) ? `Level ${level}` : level}: ${plural(count, 'word')}` +
-        (newCount === count ? '' : newCount === 0 ? ', all in your words already' : `, ${newCount} new`);
-      if (together) {
-        const box = document.createElement('input');
-        box.type = 'checkbox';
-        box.value = level;
-        box.addEventListener('change', () => {
-          addTogether.disabled = !readyLevels.querySelector('input:checked');
-        });
-        const label = document.createElement('label');
-        label.append(box, text);
-        row.append(label);
-        return row;
-      }
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'small';
-      button.textContent = 'Add';
-      button.dataset.level = level;
-      button.addEventListener('click', () => addReadyLevels(listId, [level]));
-      row.append(text, button);
-      return row;
-    });
-    // The one button for the levels ticked.
-    const addTogether = document.createElement('button');
-    addTogether.type = 'button';
-    addTogether.className = 'small primary';
-    addTogether.id = 'add-ready-button';
-    addTogether.textContent = 'Add';
-    addTogether.disabled = true;
-    addTogether.addEventListener('click', () =>
-      addReadyLevels(listId, [...readyLevels.querySelectorAll('input:checked')].map((box) => box.value)),
-    );
-    if (together) {
-      const row = document.createElement('li');
-      row.append(addTogether);
-      rows.push(row);
-    }
-    readyLevels.replaceChildren(...rows);
-  }
-
-  for (const row of readyRows) {
-    row.addEventListener('click', () => {
-      readyListId = row.dataset.list;
-      readyReport.textContent = '';
-      showReadyLevels();
-    });
-  }
-
-  // Adds levels of a list: their new words at the end of the queue, lowest
-  // level first, and the words that were there already into their decks as
-  // well. Also used by the introduction (welcome.js), through the panel's
-  // addReadyLevels. Returns how many words were added.
-  async function addReadyLevels(listId, levels) {
-    const entries = (await readyEntries(listId)).filter((entry) => levels.includes(entry.level));
-    for (const button of readyLevels.querySelectorAll('button')) {
-      button.disabled = true;
-    }
-    readyReport.textContent = 'Adding…';
-    // Meanings come from the dictionary, as for a word typed by hand.
-    await loadDictionary();
-    const dictionary = getDictionary();
-    const { meaningDetail } = getSettings();
-    const candidates = [];
-    const tags = new Map(); // word ID → the tag for this list and level
-    const groupNames = new Map(); // a group's deck ID → its name
-    let noMeaning = 0;
-    for (const entry of entries) {
-      // A line with no reading is a radical of its own, with its meaning in
-      // the list (see radicals.js).
-      if (entry.pinyin === '') {
-        const radical = radicalRecord(entry);
-        candidates.push(radical);
-        tags.set(radical.id, listTag(listId, entry.level, entry.group));
-        continue;
-      }
-      const inDictionary = dictionary ? lookUp(dictionary, entry.traditional) : [];
-      const sameWord = inDictionary.find(
-        (found) => found.traditional === entry.traditional && found.pinyin === entry.pinyin,
-      );
-      const definition = sameWord
-        ? proposeMeaning(sameWord.meanings, meaningDetail)
-        : entry.meaning || (inDictionary[0] ? proposeMeaning(inDictionary[0].meanings, meaningDetail) : '');
-      const checked = checkWord({ ...entry, definition });
-      if (!checked.word) {
-        noMeaning += 1; // only without the dictionary, for want of a meaning
-        continue;
-      }
-      candidates.push(checked.word);
-      const tag = listTag(listId, entry.level, entry.group);
-      tags.set(wordId(checked.word), tag);
-      if (entry.group !== '') {
-        groupNames.set(tag, groupName(entry.group));
-      }
-    }
-    const withTag = (word) => ({ ...word, decks: [...new Set([...(word.decks || []), tags.get(word.id)])] });
-    const { toAdd, alreadyHave } = newWordRecords(candidates, words, Date.now());
-    // Words that were there already are put in the level's deck too.
-    const marked = words.filter((word) => tags.has(word.id) && !(word.decks || []).includes(tags.get(word.id)));
-    const tagged = [...toAdd, ...marked].map(withTag);
-    await putAll('words', tagged);
-    // The level (and the list, for the radicals) become decks, if they are
-    // not there yet.
-    await putAll('decks', missingReadyMadeDecks(tagged, await getAll('decks'), groupNames));
-    await afterChange();
-    await showReadyLevels();
-    readyReport.textContent =
-      `Added ${plural(toAdd.length, 'word')}` +
-      (alreadyHave > 0 ? `; ${alreadyHave} you already had` : '') +
-      (noMeaning > 0 ? `; ${noMeaning} left out because the dictionary could not be fetched for their meaning` : '') +
-      `. They are in the deck ${(readyMadeDeck(listId) || readyMadeDeck(listTag(listId, levels[0]))).name} under My decks, and wait in Learn, last in line.`;
-    return toAdd.length;
-  }
-
-
   return {
-    addReadyLevels,
+    addReadyLevels: (listId, levels) => readyDecks.addReadyLevels(listId, levels),
     noteOf: (word) => wordPage.noteOf(word),
     tappableText: (element, text) => wordPage.tappableText(element, text),
 
