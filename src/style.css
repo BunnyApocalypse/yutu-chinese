@@ -14,6 +14,7 @@
   --surface: #fbf8f1; /* buttons, boxes, cards, the writing area: paper, not white */
   --raised: #fdfaf4; /* tips and popups, over the page */
   --pressed: #e9e4d8; /* a button being pressed */
+  --selected: #e2eaf5; /* behind the tab or place chosen: a tint of the blue */
   --text: #34322d; /* dark gray, not black */
   --text-soft: #4a463d;
   --muted: #6b6557; /* hints and other quieter text */
@@ -60,6 +61,7 @@
   --surface: #2c2b28;
   --raised: #34322f;
   --pressed: #3e3c37;
+  --selected: #2a3546;
   --text: #dcd7cc;
   --text-soft: #cbc6ba;
   --muted: #a39d8f;
@@ -96,6 +98,7 @@
     --surface: #2c2b28;
     --raised: #34322f;
     --pressed: #3e3c37;
+    --selected: #2a3546;
     --text: #dcd7cc;
     --text-soft: #cbc6ba;
     --muted: #a39d8f;
@@ -271,8 +274,9 @@ dialog.side-menu::backdrop {
 }
 
 .side-menu-items button.selected {
-  background: var(--text);
-  color: var(--inverse-text);
+  background: var(--selected);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  font-weight: 600;
 }
 
 /* How many words wait in Learn, at the right end of its menu item. */
@@ -315,10 +319,16 @@ dialog.side-menu::backdrop {
   white-space: nowrap;
 }
 
+/* What is chosen among tabs, the places in the menu and Settings' groups
+   looks the same everywhere: a tint of the blue, a blue edge, bold (the
+   owner, 2026-10-17, from pictures; until then a dark fill here and in the
+   menu, a blue fill like a main button in "+ Add to deck", and gray in
+   Settings). Never a fill like the main button's, so that a screen keeps
+   one main button. */
 .section-switch button.selected {
-  border-color: var(--text);
-  background: var(--text);
-  color: var(--inverse-text);
+  border-color: var(--accent);
+  background: var(--selected);
+  font-weight: 600;
 }
 
 .review-header {
@@ -1351,7 +1361,7 @@ button.slot {
 
   /* The group that is shown. */
   .settings-nav button[aria-current='true'] {
-    background: var(--pressed);
+    background: var(--selected);
     font-weight: 600;
   }
 }
@@ -2387,9 +2397,9 @@ button.path-part {
 }
 
 .add-choices button[aria-current='true'] {
-  background: var(--accent-fill);
-  border-color: var(--accent-fill);
-  color: var(--on-accent);
+  background: var(--selected);
+  border-color: var(--accent);
+  font-weight: 600;
 }
 
 /* On a word's page just added from the dictionary: a bar of its own above
