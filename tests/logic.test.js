@@ -145,6 +145,25 @@ test('due cards come before new ones, longest overdue first', () => {
   assert.equal(plan.nextDueAt, now + 30 * MINUTE);
 });
 
+test('the cards reviewed today and those coming later today and tomorrow are counted by the study day', () => {
+  const now = at('2026-10-12T22:00:00');
+  const cards = new Map([
+    // Reviewed today (the day began at 4:00), coming back later today.
+    studied('w0', 'writing', { due: at('2026-10-13T02:00:00'), first: at('2026-10-10T09:00:00'), last: at('2026-10-12T21:00:00') }),
+    // Reviewed today, coming back tomorrow (from 4:00 on the 13th).
+    studied('w1', 'writing', { due: at('2026-10-13T04:00:00'), first: at('2026-10-12T05:00:00') }),
+    // Reviewed yesterday, due on the day after tomorrow.
+    studied('w2', 'writing', { due: at('2026-10-14T04:00:00'), first: at('2026-10-12T03:00:00') }),
+    // Tomorrow, just before the day after begins.
+    studied('w3', 'writing', { due: at('2026-10-14T03:59:00'), first: at('2026-10-01T09:00:00') }),
+  ]);
+  const plan = planSession(makeWords(4), cards, now, WRITING_ONLY);
+  assert.equal(plan.next, null);
+  assert.equal(plan.reviewedToday, 2);
+  assert.equal(plan.laterToday, 1);
+  assert.equal(plan.tomorrow, 2);
+});
+
 test('the words learned today are counted by the study day', () => {
   const now = at('2026-10-12T10:00:00');
   const words = makeWords(30).map((word, index) => (index < 5 ? { ...word, learnedAt: now - 10 * MINUTE } : word));

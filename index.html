@@ -127,7 +127,9 @@
 
       <!-- Review mode, when nothing is due -->
       <div id="done-panel" class="done-panel" hidden>
-        <p id="done-message" role="status"></p>
+        <!-- A line of text, or at the end of Review a short summary of the day
+             (doneSummary in review.js). -->
+        <div id="done-message" role="status"></div>
         <!-- In Learn, between two words: on to the next one; in Review, with
              nothing due and words waiting: to Learn (review.js, main.js). -->
         <button id="learn-next-button" class="primary" type="button" hidden>Learn the next word</button>

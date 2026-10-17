@@ -56,6 +56,8 @@ const TYPE_LABELS = {
 // While waiting for the next card to become due, look again this often.
 const RECHECK_MS = 15 * 1000;
 
+const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`;
+
 // elements: the page elements review controls:
 //   countsElement, typeElement, meaningElement, pinyinElement, pinyinButton,
 //   gradeRow, practiceAgainButton, editWordButton, leechNote, donePanel, doneMessage, studyArea, scriptFlag,
@@ -1179,20 +1181,60 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     return true;
   }
 
+  // When the next card comes, for the summary at the end of Review.
   function describeWait(nextDueAt, now) {
     if (nextDueAt === null) {
-      return 'Nothing is scheduled yet.';
+      return 'Nothing is scheduled yet';
     }
     const minutes = Math.ceil((nextDueAt - now) / 60000);
     if (minutes <= 60) {
-      return `Next review in ${minutes <= 1 ? 'about a minute' : `${minutes} minutes`}.`;
+      return `Next card in ${minutes <= 1 ? 'about a minute' : `${minutes} minutes`}`;
+    }
+    if (minutes < 12 * 60) {
+      const hours = Math.round(minutes / 60);
+      return `Next card in about ${hours} ${hours === 1 ? 'hour' : 'hours'}`;
     }
     const when = new Date(nextDueAt).toLocaleString([], {
       weekday: 'short',
       hour: '2-digit',
       minute: '2-digit',
     });
-    return `Next review: ${when}.`;
+    return `Next card: ${when}`;
+  }
+
+  // The end of Review (UX review, 2026-10-17; the owner said yes to it): a
+  // heading, how many cards were reviewed today, when the next comes and how
+  // many more today and tomorrow, and the words waiting in Learn. A small
+  // screen of its own, with room for more later (a streak, the rabbit).
+  function doneSummary(plan, now, waiting) {
+    const line = (text, className) => {
+      const element = document.createElement('p');
+      element.textContent = text;
+      if (className) {
+        element.className = className;
+      }
+      return element;
+    };
+    const heading = document.createElement('h2');
+    heading.className = 'done-heading';
+    heading.textContent = 'All done for now';
+    const parts = [heading];
+    if (plan.reviewedToday > 0) {
+      parts.push(line(`You reviewed ${plural(plan.reviewedToday, 'card')} today.`));
+    }
+    const coming = [describeWait(plan.nextDueAt, now)];
+    if (plan.laterToday > 1) {
+      // The next card is one of those later today.
+      coming.push(`${plan.laterToday - 1} more later today`);
+    }
+    if (plan.tomorrow > 0) {
+      coming.push(`${plan.tomorrow} tomorrow`);
+    }
+    parts.push(line(coming.join(' · '), 'done-next'));
+    if (waiting) {
+      parts.push(line(waiting));
+    }
+    return parts;
   }
 
   // Works out what is next and puts it on screen.
@@ -1248,7 +1290,14 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       } else if (plan.waitingCount === studied.length) {
         doneMessage.textContent = `Nothing to review yet.${waiting}`;
       } else {
-        doneMessage.textContent = `All done for now. ${describeWait(plan.nextDueAt, now)}${waiting}`;
+        // Review looks again every few seconds: put the summary in only
+        // when it has changed, or it would be read out again each time.
+        const summary = doneSummary(plan, now, waiting.trim());
+        const fresh = document.createElement('div');
+        fresh.append(...summary);
+        if (fresh.innerHTML !== doneMessage.innerHTML) {
+          doneMessage.replaceChildren(...fresh.childNodes);
+        }
       }
       // Learn is not in the menu (it is opened from a deck), so Review offers
       // the way there when words are waiting.

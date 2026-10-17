@@ -133,6 +133,9 @@ export function nextToLearn(words, cards) {
 //   learnedToday: how many words were learned (or first studied) today
 //   waitingCount: how many words are waiting to be learned
 //   nextDueAt:    when something next becomes available, or null
+//   reviewedToday: how many cards were reviewed this study day
+//   laterToday:   how many cards become available later this study day
+//   tomorrow:     how many cards become available on the next study day
 export function planSession(words, cards, now, options) {
   const {
     newWordsPerDay,
@@ -141,6 +144,10 @@ export function planSession(words, cards, now, options) {
     scriptOf = () => 'traditional',
   } = options;
   const dayStart = startOfStudyDay(now);
+  // A study day is not always 24 hours (summer time), so the next one's
+  // start is found from a moment well inside it.
+  const tomorrowStart = startOfStudyDay(dayStart + 36 * 60 * 60 * 1000);
+  const dayAfterStart = startOfStudyDay(tomorrowStart + 36 * 60 * 60 * 1000);
   // Introduce a word's cards in the standard order, whatever order the
   // enabled types were given in.
   const types = CARD_TYPES.filter((type) => enabledTypes.includes(type));
@@ -152,10 +159,19 @@ export function planSession(words, cards, now, options) {
   let nextDueAt = null;
   let introducedToday = 0;
   let newCardCount = 0;
+  let reviewedToday = 0;
+  let laterToday = 0;
+  let tomorrow = 0;
 
+  // Called once for each card that is not available yet.
   const noteAvailableAt = (time) => {
     if (nextDueAt === null || time < nextDueAt) {
       nextDueAt = time;
+    }
+    if (time < tomorrowStart) {
+      laterToday += 1;
+    } else if (time < dayAfterStart) {
+      tomorrow += 1;
     }
   };
 
@@ -165,6 +181,7 @@ export function planSession(words, cards, now, options) {
     // they still count for when the word was introduced and last seen.
     // That goes for cards in the other script too.
     const studied = allCardIds(word).map((id) => cards.get(id)).filter(Boolean);
+    reviewedToday += studied.filter((card) => lastReviewOf(card) >= dayStart).length;
     const wanted = types.filter((type) => hasCardType(word, type));
     const script = scriptOf(word);
     const otherScript = script === 'traditional' ? 'simplified' : 'traditional';
@@ -266,6 +283,9 @@ export function planSession(words, cards, now, options) {
     learnedToday: introducedToday,
     waitingCount,
     nextDueAt,
+    reviewedToday,
+    laterToday,
+    tomorrow,
   };
 }
 

@@ -606,6 +606,21 @@ main.focused .top-bar {
   text-align: center;
 }
 
+/* The summary at the end of Review (doneSummary in review.js): a heading,
+   today's count, and what comes next in the quieter color. */
+.done-heading {
+  margin: 0 0 var(--space-large);
+  font-size: var(--size-title);
+}
+
+.done-panel p {
+  margin: 0 0 var(--space-small);
+}
+
+.done-next {
+  color: var(--muted);
+}
+
 /* The same column layout as the page, for the part that is hidden when
    there is nothing to review. */
 .study-area {
