@@ -152,6 +152,8 @@ const wordsPanel = createWordsPanel(
     await settings.change('studyDeck', deckId);
     await setMode(newMode);
   },
+  (word) => practiceWord(word),
+  () => mode !== 'review' && mode !== 'learn',
 );
 
 // Free practice: any kind of card for what is in the text box. Nothing is
@@ -198,7 +200,8 @@ function startFreePractice() {
 
 practiceType.addEventListener('change', startFreePractice);
 
-function setMode(newMode) {
+// keepPlace: back to Decks or Words as they were left (practiceWord).
+function setMode(newMode, { keepPlace = false } = {}) {
   mode = newMode;
   // Review and Learn share the top of the page and the study area.
   const reviewing = mode === 'review' || mode === 'learn';
@@ -225,6 +228,12 @@ function setMode(newMode) {
   byId('place-title').hidden = false;
   byId('deck-back-button').hidden = true;
   byId('practice-back-button').hidden = true;
+  byId('practice-word-back').hidden = true;
+  // The text box and its button, which practicing one word puts away
+  // (practiceWord); the line saying nothing counts, on every practice screen.
+  wordInput.hidden = false;
+  byId('practice-go').hidden = false;
+  byId('practice-note').hidden = mode !== 'practice';
   reviewHeader.hidden = !reviewing;
   wordForm.hidden = mode !== 'practice';
   wordsPanelElement.hidden = mode !== 'decks' && mode !== 'words';
@@ -244,7 +253,7 @@ function setMode(newMode) {
   if (mode === 'decks' || mode === 'words') {
     // The Decks tab and the Words tab have the page to themselves.
     byId('study-area').hidden = true;
-    return wordsPanel.show(mode);
+    return wordsPanel.show(mode, { keepPlace });
   }
   return startFreePractice();
 }
@@ -301,6 +310,37 @@ practiceButton.addEventListener('click', () => {
     byId('place-title').hidden = true;
     byId('practice-back-button').hidden = false;
   }
+});
+// "Practice" on a word's page: that word alone, with no text box to type
+// another, and "‹ Practicing 你" in the top bar, the arrow going back to
+// where the page was opened, the page open again (the owner, 2026-10-17: the
+// word alone as the way back read as a link to it, and back has to bring the
+// deck or list back, not only the page). The kind of card can still be
+// chosen. Not offered in Review or Learn (canPractice above).
+let practicedWord = null;
+// Where the word's page was opened: { mode, scrollY }.
+let practicedFrom = null;
+async function practiceWord(word) {
+  const script = scriptFor(word, settings);
+  wordInput.value = word[script];
+  practicedWord = word;
+  practicedFrom = { mode, scrollY: window.scrollY };
+  await setMode('practice');
+  wordInput.hidden = true;
+  byId('practice-go').hidden = true;
+  fillMixed(byId('place-title'), `Practicing ${word[script]}`, script);
+  const back = byId('practice-word-back');
+  back.setAttribute('aria-label', `Back to the page of ${word[script]}`);
+  back.title = 'Back to its page';
+  back.hidden = false;
+}
+byId('practice-word-back').addEventListener('click', async () => {
+  if (!practicedWord) {
+    return;
+  }
+  await setMode(practicedFrom.mode, { keepPlace: true });
+  window.scrollTo(0, practicedFrom.scrollY);
+  wordsPanel.showWord(practicedWord);
 });
 byId('practice-back-button').addEventListener('click', () => {
   byId('settings-button').click();

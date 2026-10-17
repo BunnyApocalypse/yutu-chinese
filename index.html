@@ -23,6 +23,9 @@
             <rect x="3" y="5" width="18" height="2.2" rx="1.1" /><rect x="3" y="10.9" width="18" height="2.2" rx="1.1" /><rect x="3" y="16.8" width="18" height="2.2" rx="1.1" />
           </svg>
         </button>
+        <!-- In Free practice opened with "Practice" on a word's page: back to
+             that page, before the name "Practicing 你" (main.js). -->
+        <button id="practice-word-back" class="top-back top-back-arrow" type="button" hidden>‹</button>
         <span id="place-title" class="place-title">Review</span>
         <!-- On a deck's page, in place of the screen's name: up one level, to
              the deck it is inside or the front page (decksPanel.js). -->
@@ -113,8 +116,10 @@
           <option value="pinyin">Pinyin</option>
           <option value="meaning">Meaning</option>
         </select>
-        <button type="submit">Practice</button>
+        <button id="practice-go" type="submit">Practice</button>
       </form>
+      <!-- Said on every practice screen (the owner, 2026-10-17). -->
+      <p id="practice-note" class="hint practice-note" hidden>Practice only: nothing here counts as a review.</p>
       <p id="note" role="status" class="note"></p>
 
       <!-- Review mode, when nothing is due -->

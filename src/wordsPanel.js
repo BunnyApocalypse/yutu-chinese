@@ -64,6 +64,8 @@ const byId = (id) => document.getElementById(id);
 //
 // studyDeck(deckId, mode): shows Review ('review') or Learn ('learn') with
 //           that deck chosen
+// practiceWord(word): Free practice with that word ("Practice" on its page)
+// canPractice(): whether a word's page offers that now (not in Review or Learn)
 //
 // The panel serves two tabs. The Decks tab shows the decks: choosing one,
 // adding to it, studying it. The Words tab shows the words: finding them,
@@ -72,7 +74,7 @@ const byId = (id) => document.getElementById(id);
 // Returns { show(view), edit(word), showWord(word) }; call show() whenever
 // one of the two tabs is opened ('decks' or 'words') or a setting has
 // changed (without a view: the one that was showing).
-export function createWordsPanel(onChange, getSettings, studyDeck) {
+export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord, canPractice) {
 
 
   const countElement = byId('word-count');
@@ -263,13 +265,10 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
     addEntry: (entry, deckId) => addEntry(entry, deckId),
     learnNow: (id, deckId) => learnNow(id, deckId),
     isLearned: (word) => studiedWordIds.has(word.id),
-    // "Practice" on a word's page: Free practice with that word, which is a
-    // text box and a button of the page (main.js).
     showCards: (word) => wordDialog.showCardsOnPage(word),
-    practice: (word) => {
-      byId('word-input').value = word[scriptFor(word, getSettings())];
-      byId('practice-button').click();
-    },
+    // "Practice" on a word's page: Free practice with that word (main.js).
+    practice: (word) => practiceWord(word),
+    canPractice,
     // The deck a sentence or word added from a page goes into unless another
     // is chosen: the one listed (the deck chosen on the Words tab, or the
     // one whose page is open on the Decks tab), else the deck the app
@@ -768,8 +767,13 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
       wordPage.open(words.find((entry) => entry.id === word.id) || word, thisCard);
     },
 
-    async show(newView) {
+    // keepPlace: coming back from practicing a word (main.js), to the deck
+    // page or list as it was left, not the front page.
+    async show(newView, { keepPlace = false } = {}) {
       view = newView || view;
+      if (keepPlace) {
+        newView = undefined;
+      }
       // Coming to the Decks tab always shows My decks (the owner,
       // 2026-10-14), whichever section was showing before. Done before
       // anything is waited for, so a tap on Ready-made decks right after is

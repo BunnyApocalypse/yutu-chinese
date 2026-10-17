@@ -62,6 +62,8 @@ function element(tag, className, text) {
 // isLearned(word):    true once the word has been through Learn (or has a card)
 // defaultDeckId():    the deck first offered for that and for a sentence
 // practice(word):     opens Free practice with the word
+// canPractice():      false where leaving for it would lose something
+//                     (Review and Learn): "Practice" is not offered
 // showCards(word):    fills in the part of the page that has the word's
 //                     cards and which of them are suspended
 //
@@ -80,6 +82,7 @@ export function createWordPage({
   isLearned,
   defaultDeckId,
   practice,
+  canPractice,
   showCards,
 }) {
   const dialog = byId('word-page');
@@ -510,7 +513,7 @@ export function createWordPage({
     scroller.scrollTop = 0;
     backButton.hidden = trail.length < 2;
     editButton.hidden = !shown.word;
-    practiceButton.hidden = !shown.word;
+    practiceButton.hidden = !shown.word || !canPractice();
     // For the browser tests, which wait for a page to be filled in.
     dialog.dataset.shown = word ? word.id : target.text;
   }
@@ -767,7 +770,7 @@ export function createWordPage({
     // The buttons work at once; the rest is filled in as the files arrive.
     shown = target.word ? { word: target.word } : { text: target.text, entries: [] };
     editButton.hidden = !target.word;
-    practiceButton.hidden = !target.word;
+    practiceButton.hidden = !target.word || !canPractice();
     backButton.hidden = true;
     body.replaceChildren();
     delete dialog.dataset.shown;

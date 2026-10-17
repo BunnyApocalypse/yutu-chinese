@@ -2629,6 +2629,16 @@ button.path-part {
 
 /* "‹ Decks" in the top bar, in place of the screen's name: the way back
    from a deck's page (the owner, 2026-10-16). */
+/* The arrow alone, before a screen's name ("‹ Practicing 你"): as wide as
+   it is tall, to be tapped. */
+button.top-back.top-back-arrow {
+  min-width: var(--tap-small);
+  margin-right: calc(-1 * var(--space-small));
+  /* Alone, the arrow is thin beside the name: a size up. */
+  font-size: var(--size-big);
+  line-height: 1;
+}
+
 button.top-back {
   min-height: var(--tap-small);
   padding: 0 var(--space-tiny);

@@ -117,9 +117,49 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     assert.equal(await page.evaluate(`document.getElementById('word-input').value`), '貓');
     assert.equal(await page.evaluate(`document.getElementById('word-page').open`), false);
     assert.equal(await inView(page, 'word-list'), false);
-    // From a word's page there is no way back to Settings, but the name.
+    // That word alone: no box to type another, a line saying nothing
+    // counts, and "‹ Practicing 貓" in the top bar, the arrow going back to
+    // its page.
     assert.equal(await isShown(page, 'practice-back-button'), false);
-    assert.equal(await isShown(page, 'place-title'), true);
+    assert.equal(await textOf(page, 'place-title'), 'Practicing 貓');
+    assert.equal(await isShown(page, 'word-input'), false);
+    assert.equal(await isShown(page, 'practice-note'), true);
+    assert.equal(await textOf(page, 'practice-word-back'), '‹');
+    await tap(page, 'practice-word-back');
+    await waitUntil(page, `document.getElementById('word-page').dataset.shown === '貓|mao1'`, 'the word\'s page again');
+    await tap(page, 'word-page-close');
+    // Any other screen puts all that away.
+    await tap(page, 'words-tab');
+    assert.equal(await textOf(page, 'place-title'), 'Words');
+    assert.equal(await isShown(page, 'practice-word-back'), false);
+    assert.equal(await isShown(page, 'practice-note'), false);
+  });
+
+  it('comes back from practicing a word to the deck\'s page it was opened on', async () => {
+    await tap(page, 'decks-tab');
+    await page.evaluate(`[...document.querySelectorAll('#deck-list li')].find((row) => row.textContent.includes('Animals')).querySelector('.deck-open').click()`);
+    await waitUntil(page, `document.getElementById('deck-title').textContent === 'Animals'`, 'the deck\'s page');
+    await waitUntil(page, rows(1), 'its word');
+    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await waitUntil(page, `document.getElementById('word-page').dataset.shown === '貓|mao1'`, 'the word\'s page');
+    await tap(page, 'word-page-practice');
+    await waitUntil(page, `document.getElementById('stroke-count').textContent.startsWith('1/')`, 'Free practice');
+    await tap(page, 'practice-word-back');
+    // The deck's page, not the front page of Decks, with the word's page over it.
+    await waitUntil(page, `document.getElementById('word-page').dataset.shown === '貓|mao1'`, 'the word\'s page again');
+    assert.equal(await textOf(page, 'deck-title'), 'Animals');
+    assert.equal(await inView(page, 'deck-head'), true);
+    assert.equal(await isShown(page, 'deck-back-button'), true);
+    await tap(page, 'word-page-close');
+  });
+
+  it('does not offer Practice on a word\'s page opened in Review', async () => {
+    await tap(page, 'review-tab');
+    // A word's page opened while Review is the screen (as About does).
+    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await waitUntil(page, `document.getElementById('word-page').dataset.shown`, 'a word\'s page');
+    assert.equal(await isShown(page, 'word-page-practice'), false);
+    await tap(page, 'word-page-close');
   });
 
   it('searches the dictionary too on the Words tab, and adds a word from there', async () => {
