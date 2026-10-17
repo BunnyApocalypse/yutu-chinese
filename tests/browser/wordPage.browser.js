@@ -118,6 +118,13 @@ describe('the word page', { concurrency: false }, () => {
     assert.equal(await textOf(page, 'word-peek-pinyin'), 'de');
     await pressClose();
     await waitUntil(page, `!${peekOpen}`, 'the popup closed');
+    // The page closed (here by Escape) takes its popup with it.
+    await page.evaluate(`document.querySelectorAll('#word-page-body .note-word')[2].click()`);
+    await waitUntil(page, peekOpen, 'the popup for 的 again');
+    await page.evaluate(`document.getElementById('word-page').close()`);
+    await waitUntil(page, `!${peekOpen}`, 'the popup gone with the page');
+    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await waitUntil(page, `document.getElementById('word-page').open && ${shown('我們|wo3men5')} && document.querySelector('#word-page-body .sentence-word')`, 'the word\'s page again');
 
     // "Open its page" goes on to the word's page.
     await page.evaluate(`document.querySelectorAll('#word-page-body .sentence-word')[2].click()`);

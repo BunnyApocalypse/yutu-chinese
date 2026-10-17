@@ -598,8 +598,16 @@ export function createWordPage({
       start({ text });
     }
   });
-  // The popup goes with the page it was opened on.
-  dialog.addEventListener('close', closePeek);
+  // The popup goes with the page it was opened on, and only then: the page's
+  // "close" event can come late, after a word on a card under it was
+  // tapped, and it closed that word's popup, so the next tap went to the card
+  // (a lesson moved on; found 2026-10-17 by a browser test failing one run in
+  // five).
+  dialog.addEventListener('close', () => {
+    if (dialog.contains(peekCard)) {
+      closePeek();
+    }
+  });
   // A tap beside the page closes it too (dialogs.js).
   closeOnTapBeside(dialog);
 

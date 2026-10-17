@@ -1158,6 +1158,13 @@ export function createWordsPanel(onChange, getSettings, studyDeck) {
   // same way and what the dictionary has for them; or, under pinyin typed,
   // the words read that way.
   function showSuggestions() {
+    // The form has not been set up yet (nothing typed since the app
+    // started): nothing to suggest. Called then when the usual readings
+    // have loaded for a word of a learning note tapped on a card, and until
+    // 2026-10-17 it threw there, so the word's popup did not open.
+    if (!lookedUpField) {
+      return;
+    }
     const typed = lookedUpField.value.trim();
     // Nothing typed: what was filled in by itself goes too.
     if (typed === '' && !entryTapped) {
