@@ -451,7 +451,9 @@ dialog.side-menu::backdrop {
 }
 
 .card-type {
-  font-size: var(--size-tiny);
+  /* A size up from the other labels (the owner, 2026-10-18: too small on a
+     laptop). */
+  font-size: var(--size-small);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -570,6 +572,13 @@ main.focused #study-back-label {
 
   main.focused .card-type {
     letter-spacing: 0.02em;
+  }
+
+  /* And the other labels' size again in Review, or with About and Edit
+     beside it "New word · step 5 of 5" takes two lines (measured at 360
+     and 375px; at 390 it fits). Learn has neither, so it keeps its size. */
+  main.focused:not(.learning) .card-type {
+    font-size: var(--size-tiny);
   }
 }
 
