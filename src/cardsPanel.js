@@ -7,7 +7,7 @@ import { putAll, removeWords, startCardsOver, saveKnown, randomId } from './db.j
 import { CARD_TYPES, allCardIds, formatInterval } from './session.js';
 import { cardsOfWord, withStartedOver, markedKnown } from './cardManager.js';
 import { fillDeckSelect } from './decksPanel.js';
-import { withDeck, withoutDecks, deckWithInside } from './decks.js';
+import { withDeck, withoutDecks, deckWithInside, readyMadeDeck } from './decks.js';
 import { ask } from './confirm.js';
 
 const byId = (id) => document.getElementById(id);
@@ -192,10 +192,15 @@ export function createCardsPanel({
     for (const button of bar.querySelectorAll('button[data-needs-selection]')) {
       button.disabled = selected.size === 0;
     }
-    fillDeckSelect(deckSelect, getDecks(), []);
+    // Only the learner's own decks: the ready-made ones are as their lists
+    // have them (the owner, 2026-10-18). With none, no row to add to one.
+    const own = getDecks().filter((deck) => !readyMadeDeck(deck.id));
+    fillDeckSelect(deckSelect, own, []);
+    deckSelect.parentElement.hidden = own.length === 0;
     // Moving takes the words out of the deck listed: there is none to take
-    // them out of when all words are listed.
-    moveButton.hidden = !getListDeck();
+    // them out of when all words are listed, and a ready-made one keeps them.
+    const from = getListDeck();
+    moveButton.hidden = !from || readyMadeDeck(from.id) !== null;
   }
 
   // Starts or stops selecting; `first`, a word to start with selected
@@ -311,7 +316,7 @@ export function createCardsPanel({
   moveButton.addEventListener('click', () => {
     const deck = getDecks().find((entry) => entry.id === deckSelect.value);
     const from = getListDeck();
-    if (!deck || !from) {
+    if (!deck || !from || readyMadeDeck(from.id)) {
       return;
     }
     const inside = deckWithInside(getDecks(), from.id);

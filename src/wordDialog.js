@@ -12,7 +12,7 @@ import { putAll, removeWord, renameWord } from './db.js';
 import { formatPinyin, wordId } from './wordList.js';
 import { allCardIds } from './session.js';
 import { fileCardsByScript } from './scriptCards.js';
-import { deckTree } from './decks.js';
+import { deckTree, readyMadeDeck } from './decks.js';
 import { ask } from './confirm.js';
 import { isSentence, sentenceId, clozeInBoth } from './sentences.js';
 import { isRadical } from './radicals.js';
@@ -107,8 +107,14 @@ export function createWordDialog(shared) {
     editPinyinTaiwan.value = word.pinyinTaiwan || '';
     editPinyinAlso.value = word.pinyinAlso || '';
     editCardScript.value = word.cardScript || '';
-    // One checkbox per deck, in the fold-out "Decks".
-    const boxes = deckTree(shared.decks()).map(({ deck, label: name }) => {
+    // One checkbox per deck of the learner's own, in the fold-out "Decks".
+    // The ready-made decks are not changed here (the owner, 2026-10-18: a
+    // level is as the list has it): the word's are named under the boxes,
+    // and kept as they are when it is saved (decksAfter).
+    const tree = deckTree(shared.decks());
+    const own = tree.filter(({ deck }) => !readyMadeDeck(deck.id));
+    tickable = new Set(own.map(({ deck }) => deck.id));
+    const boxes = own.map(({ deck, label: name }) => {
       const box = document.createElement('input');
       box.type = 'checkbox';
       box.value = deck.id;
@@ -118,8 +124,15 @@ export function createWordDialog(shared) {
       label.append(box, ` ${name}`);
       return label;
     });
+    const readyMadeNames = tree
+      .filter(({ deck }) => !tickable.has(deck.id) && (word.decks || []).includes(deck.id))
+      .map(({ label: name }) => name);
+    const readyMadeLine = document.createElement('p');
+    readyMadeLine.className = 'hint';
+    readyMadeLine.textContent = `Also in the ready-made ${readyMadeNames.length === 1 ? 'deck' : 'decks'} ${readyMadeNames.join(', ')}.`;
+    readyMadeLine.hidden = readyMadeNames.length === 0;
     // The first child is the fieldset's caption, which stays.
-    editDecks.replaceChildren(editDecks.firstElementChild, ...boxes);
+    editDecks.replaceChildren(editDecks.firstElementChild, ...boxes, readyMadeLine);
     byId('edit-decks-row').hidden = false;
     byId('edit-decks-row').open = false;
     showDeckCount();
@@ -130,13 +143,21 @@ export function createWordDialog(shared) {
     dialog.showModal();
   }
 
+  // The IDs of the decks with a box in the word's panel: the learner's own.
+  let tickable = new Set();
+
   // The decks ticked in the word's panel.
   const tickedDecks = () => [...editDecks.querySelectorAll('input:checked')].map((box) => box.value);
+
+  // The decks the word is in once saved: those ticked, and those it is in
+  // that have no box (the ready-made ones, and any not stored, which should
+  // not happen). The IDs it had before are kept.
+  const decksAfter = () => [...(openWord.decks || []).filter((id) => !tickable.has(id)), ...tickedDecks()];
 
   // Says on the fold-out how many decks the word is in, so it need not be
   // opened to see.
   function showDeckCount() {
-    const count = tickedDecks().length;
+    const count = decksAfter().length;
     byId('edit-decks-summary').textContent = count === 0 ? 'Decks: in none' : `Decks: in ${count}`;
   }
 
@@ -169,12 +190,11 @@ export function createWordDialog(shared) {
         dialogNote.textContent = `"${clozeTyped}" is not in the sentence.`;
         return;
       }
-      if (tickedDecks().length === 0) {
+      if (decksAfter().length === 0) {
         byId('edit-decks-row').open = true;
         dialogNote.textContent = 'A sentence has to be in at least one deck. To be rid of it, use Remove.';
         return;
       }
-      const there = new Set(shared.decks().map((deck) => deck.id));
       const { changedAt, suspended: wasSuspended, cloze: oldCloze, ...kept } = openWord;
       const sentence = {
         ...kept,
@@ -183,7 +203,7 @@ export function createWordDialog(shared) {
         simplified,
         pinyin: editPinyin.value.trim(),
         definition,
-        decks: [...(openWord.decks || []).filter((id) => !there.has(id)), ...tickedDecks()],
+        decks: decksAfter(),
       };
       if (cloze) {
         sentence.cloze =
@@ -217,17 +237,16 @@ export function createWordDialog(shared) {
         dialogNote.textContent = 'A radical needs its meaning.';
         return;
       }
-      if (tickedDecks().length === 0) {
+      if (decksAfter().length === 0) {
         byId('edit-decks-row').open = true;
         dialogNote.textContent = 'A radical has to be in at least one deck. To be rid of it, use Remove.';
         return;
       }
-      const there = new Set(shared.decks().map((deck) => deck.id));
       const { changedAt, ...kept } = openWord;
       const radical = {
         ...kept,
         definition,
-        decks: [...(openWord.decks || []).filter((id) => !there.has(id)), ...tickedDecks()],
+        decks: decksAfter(),
       };
       await putAll('words', [radical]);
       await shared.afterChange();
@@ -256,15 +275,12 @@ export function createWordDialog(shared) {
       order: openWord.order,
       addedAt: openWord.addedAt,
     };
-    // The decks ticked, and any the word is in that are not there to tick
-    // (which should not happen). The IDs it had before are kept.
-    const known = new Set(shared.decks().map((deck) => deck.id));
-    if (tickedDecks().length === 0) {
+    if (decksAfter().length === 0) {
       byId('edit-decks-row').open = true;
       dialogNote.textContent = 'A word has to be in at least one deck. To be rid of the word, use Remove.';
       return;
     }
-    saved.decks = [...(openWord.decks || []).filter((id) => !known.has(id)), ...tickedDecks()];
+    saved.decks = decksAfter();
     if (openWord.formerIds) {
       saved.formerIds = openWord.formerIds;
     }

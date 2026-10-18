@@ -350,14 +350,32 @@ describe('decks', { concurrency: false }, () => {
     await tap(page, 'my-decks-button');
     await waitUntil(page, deckRows(2), 'the two decks');
     assert.match(await textOf(page, '#deck-list li:first-child .deck-entry'), /^TOCFL Novice 1182 words · 0 learned \(0%\) · 11 decks insideTap to learn$/);
-    // The choosers of a deck to put something in offer the level, not its
-    // eleven topics (the owner, 2026-10-15: the list was far too long).
+    // The bar for several words offers only the learner's own decks: a
+    // ready-made one is as its list has it (the owner, 2026-10-18).
     const offered = (id) => page.evaluate(`[...document.getElementById('${id}').options].map((option) => option.value)`);
     await tap(page, 'words-tab');
     await tap(page, 'select-words-button');
-    assert.ok((await offered('bulk-deck')).includes('tocfl/Novice 1'));
-    assert.equal((await offered('bulk-deck')).some((id) => id.startsWith('tocfl/Novice 1/')), false);
+    assert.ok((await offered('bulk-deck')).length > 0);
+    assert.equal((await offered('bulk-deck')).some((id) => id.startsWith('tocfl/')), false);
     await tap(page, 'select-words-button');
+
+    // A word of the level: its example sentence goes into the word's topic
+    // to begin with, and its panel's boxes are the learner's own decks, the
+    // level named under them.
+    const japan = (await stored(page, 'words')).find((word) => word.id === '日本|Ri4ben3');
+    await type(page, 'word-search', '日本');
+    await page.evaluate(`[...document.querySelectorAll('#word-list li button')].find((row) => row.dataset.wordId === '日本|Ri4ben3' || row.querySelector('.entry-pinyin')?.textContent === 'Rìběn').click()`);
+    await waitUntil(page, `document.getElementById('word-page').dataset.shown === '日本|Ri4ben3'`, "日本's page");
+    await waitUntil(page, `document.querySelector('#word-page-body .page-add-sentence select') !== null`, 'the way to add its sentence');
+    assert.equal(await page.evaluate(`document.querySelector('#word-page-body .page-add-sentence select').value`), japan.decks[0]);
+    assert.ok(japan.decks[0].startsWith('tocfl/Novice 1/'));
+    await tap(page, 'word-page-edit');
+    const boxes = await page.evaluate(`[...document.querySelectorAll('#edit-decks input')].map((box) => box.value)`);
+    assert.ok(boxes.length > 0);
+    assert.equal(boxes.some((id) => id.startsWith('tocfl/')), false);
+    assert.match(await page.evaluate(`document.querySelector('#edit-decks .hint').textContent`), /^Also in the ready-made deck TOCFL Novice 1 › /);
+    await tap(page, 'word-dialog-close');
+    await type(page, 'word-search', '');
     await tap(page, 'decks-tab');
   });
 

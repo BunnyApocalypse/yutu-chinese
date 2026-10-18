@@ -20,7 +20,7 @@ import { closeOnTapBeside } from './dialogs.js';
 import { readingsFor, describeReading } from './tones.js';
 import { parseNotes, noteFor, sentenceWords } from './notes.js';
 import { parseCharacters, structureOf } from './characters.js';
-import { deckTree, readyMadeDeck } from './decks.js';
+import { deckTree, readyMadeDeck, isReadyMadeGroup } from './decks.js';
 import { fillDeckSelect } from './decksPanel.js';
 import { speak } from './speech.js';
 import { isRadical } from './radicals.js';
@@ -262,7 +262,7 @@ export function createWordPage({
       return section;
     }
     const adding = element('div', 'page-add-sentence');
-    const deckSelect = deckChooser('Deck to add the sentence to');
+    const deckSelect = deckChooser('Deck to add the sentence to', shown.word);
     // Worded so that it is plain a card is made (the owner, 2026-10-14:
     // "Study this sentence in" did not say so).
     const addButton = element('button', 'small', 'Add');
@@ -338,12 +338,36 @@ export function createWordPage({
   // the decks of the ready-made lists are those lists' words. (If there are
   // no others, the ready-made lists and their levels, without the groups
   // inside the levels: see fillDeckSelect.)
-  function deckChooser(label) {
+  //
+  // For a word's example sentence (`word`, the learner's word), the decks
+  // the word is in are offered too, and chosen to begin with: the
+  // ready-made group it is in, else its level, else a deck of the learner's
+  // own (the owner, 2026-10-18: the sentence of a level's word belongs in
+  // its group, the one way into a ready-made deck besides its own page).
+  function deckChooser(label, word = null) {
     const deckSelect = element('select', 'deck-select');
     deckSelect.setAttribute('aria-label', label);
     const own = getDecks().filter((deck) => !readyMadeDeck(deck.id));
+    const stored = new Set(getDecks().map((deck) => deck.id));
+    const wordDecks = (word?.decks || []).filter((id) => stored.has(id));
+    const readyMade = wordDecks.filter((id) => readyMadeDeck(id));
+    if (readyMade.length > 0) {
+      // Each with its whole path ("TOCFL Novice 1 › Family"), in tree order.
+      const offered = new Set([...own.map((deck) => deck.id), ...readyMade]);
+      deckSelect.replaceChildren(
+        ...deckTree(getDecks())
+          .filter(({ deck }) => offered.has(deck.id))
+          .map(({ deck, label: name }) => {
+            const option = element('option', '', name);
+            option.value = deck.id;
+            return option;
+          }),
+      );
+      deckSelect.value = readyMade.find(isReadyMadeGroup) || readyMade[0];
+      return deckSelect;
+    }
     fillDeckSelect(deckSelect, own.length > 0 ? own : getDecks(), []);
-    const preferred = defaultDeckId();
+    const preferred = wordDecks[0] || defaultDeckId();
     if ([...deckSelect.options].some((option) => option.value === preferred)) {
       deckSelect.value = preferred;
     }
