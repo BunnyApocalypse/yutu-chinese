@@ -1665,6 +1665,13 @@ button.slot {
   margin-bottom: var(--space-small);
 }
 
+/* "Something not working, or an idea?" centered over its Send feedback,
+   which stands on a line of its own. */
+.hint.whats-new-feedback {
+  margin-top: var(--space-large);
+  text-align: center;
+}
+
 /* The feedback address is one long word; on a phone it may break anywhere. */
 .feedback-address {
   overflow-wrap: anywhere;
