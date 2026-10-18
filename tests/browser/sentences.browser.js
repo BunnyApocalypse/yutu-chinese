@@ -84,6 +84,8 @@ describe('sentences', { concurrency: false }, () => {
   it('lets the words of a sentence be tapped at the top of its own page', async () => {
     await type(page, 'word-search', '是同學');
     await waitUntil(page, `document.querySelectorAll('#word-list li').length === 1`, 'the sentence in the list');
+    // Its row says it is a sentence, so it is not taken for 我們 again.
+    assert.equal(await textOf(page, '#word-list li .entry-new'), 'sentence');
     await page.evaluate(`document.querySelector('#word-list li button').click()`);
     await waitUntil(
       page,

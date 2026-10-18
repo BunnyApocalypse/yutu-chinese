@@ -43,6 +43,8 @@ import {
   proposeMeaning,
   splitIntoWords,
 } from './dictionary.js';
+import { isSentence } from './sentences.js';
+import { isRadical } from './radicals.js';
 
 // With thousands of words, building a row for each would make the page slow,
 // so only this many are shown at a time; the search box narrows them down.
@@ -581,8 +583,12 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
           ? `in ${nameOf.get(word.decks.find((id) => inside.has(id)))}`
           : '';
       const waiting = studiedWordIds.has(word.id) ? '' : 'waiting';
-      if (where || waiting) {
-        button.append(span('entry-new', [where, waiting].filter(Boolean).join(' · ')));
+      // A sentence or a radical says so: a sentence beginning with a word in
+      // the list read as that word added twice (tester 2, 2026-10-17; the
+      // owner, 2026-10-18).
+      const kind = isSentence(word) ? 'sentence' : isRadical(word) ? 'radical' : '';
+      if (kind || where || waiting) {
+        button.append(span('entry-new', [kind, where, waiting].filter(Boolean).join(' · ')));
       }
       for (const leech of leechesOf.get(word.id) || []) {
         button.append(span('entry-leech', describeLeech(leech)));
