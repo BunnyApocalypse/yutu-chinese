@@ -1995,6 +1995,11 @@ button.small {
   margin-top: 0;
 }
 
+/* The app's name in the storage message stays on one line. */
+#storage-message-advice [lang] {
+  white-space: nowrap;
+}
+
 /* A lesson's step once written (putToolsAway in review.js): only the way
    on stays. */
 #writing-buttons.tools-away > :not(.primary) {

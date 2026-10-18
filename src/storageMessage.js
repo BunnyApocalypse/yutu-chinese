@@ -8,7 +8,7 @@
 //
 // What it says depends on the browser, as in the introduction and Settings
 // (storageAdvice.js). Like the introduction's last screen, it has one line
-// and one main button that does what this browser needs (welcomeStorage),
+// and one main button that does what this browser needs (storageMessageLine),
 // beside "Not now" (roadmap item 1, draft of 2026-10-18: there were three
 // buttons and a long paragraph). Once that button has been tapped, the line
 // says what happened (storageAdvice). Review announces the moment:
@@ -18,7 +18,8 @@
 // on the screen between two words in Learn, just after one was learned.
 
 import { getSetting, setSetting } from './db.js';
-import { storageAdvice, welcomeStorage } from './storageAdvice.js';
+import { fillMixed } from './lang.js';
+import { storageAdvice, storageMessageLine } from './storageAdvice.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -38,11 +39,11 @@ export function createStorageMessage(keepData) {
     if (state.kept) {
       return false;
     }
-    const plan = welcomeStorage(keepData.kind, state, mobile);
+    const plan = storageMessageLine(keepData.kind, state, mobile);
     action = plan.action;
     // Once asked, the full advice says what happened and what to do next.
-    advice.textContent = state.asked ? storageAdvice(keepData.kind, state) : plan.line;
-    advice.hidden = advice.textContent === '';
+    // The app's name is marked as Chinese, as elsewhere (zh-Hant-TW).
+    fillMixed(advice, state.asked ? storageAdvice(keepData.kind, state) : plan.line, 'traditional');
     keepButton.textContent = action === 'install' ? 'Install the app' : 'Keep my words safe';
     keepButton.hidden = action === 'none' || state.asked;
     return true;

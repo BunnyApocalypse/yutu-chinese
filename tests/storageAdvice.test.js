@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { browserKind, storageAdvice, welcomeStorage } from '../src/storageAdvice.js';
+import { browserKind, storageAdvice, storageMessageLine, welcomeStorage } from '../src/storageAdvice.js';
 
 const AGENTS = {
   chromeAndroid: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36',
@@ -99,4 +99,26 @@ test('the introduction: one button that does what the browser needs', () => {
     assert.equal(welcomeStorage(kind, state({ kept: true })).action, 'none');
     assert.match(welcomeStorage(kind, state({ canAsk: false })).line, /Export backup/);
   }
+});
+
+test('the message after the first word learned: one line and one action for each browser', () => {
+  const notKept = { canAsk: true, kept: false, installed: false, canInstall: false };
+  assert.deepEqual(storageMessageLine('chromium', { ...notKept, kept: true }), { action: 'none', line: '' });
+  // Chrome with its own install question: the button installs.
+  const chrome = storageMessageLine('chromium', { ...notKept, canInstall: true });
+  assert.equal(chrome.action, 'install');
+  assert.equal(chrome.line, "Install 玉兔中文 as an app so your browser doesn't delete them.");
+  // Without it, the browser's menu is pointed to.
+  assert.match(storageMessageLine('chromium', notKept).line, /Install app/);
+  assert.equal(storageMessageLine('chromium', { ...notKept, installed: true }).action, 'ask');
+  assert.equal(storageMessageLine('firefox', notKept).line, "When Firefox asks, choose Allow so it doesn't delete them.");
+  // An iPhone: nothing to tap, only the Home Screen.
+  const phone = storageMessageLine('safari', notKept, true);
+  assert.equal(phone.action, 'none');
+  assert.match(phone.line, /Home Screen/);
+  assert.equal(storageMessageLine('safari', notKept, false).action, 'ask');
+  // No way to ask: backups.
+  const none = storageMessageLine('other', { ...notKept, canAsk: false });
+  assert.equal(none.action, 'none');
+  assert.match(none.line, /backup/);
 });

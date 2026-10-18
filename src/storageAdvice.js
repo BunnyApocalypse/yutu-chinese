@@ -131,3 +131,33 @@ export function welcomeStorage(kind, { canAsk, kept, installed, canInstall }, mo
   }
   return { action: 'ask', line: '' };
 }
+
+// The message after the first word learned (storageMessage.js): one line
+// after "Keep your words safe." and one main button that does what this
+// browser needs (the owner chose the wording on 2026-10-18).
+//
+// kind, state, mobile: as for welcomeStorage
+//
+// Returns { action, line }, with action as for welcomeStorage. The line
+// names the app as 玉兔中文, to be marked as Chinese where it is shown.
+export function storageMessageLine(kind, { canAsk, kept, installed, canInstall }, mobile = false) {
+  if (kept) {
+    return { action: 'none', line: '' };
+  }
+  if (!canAsk) {
+    return { action: 'none', line: 'Your browser may delete them, so save a backup now and then (Settings › Your data and backups).' };
+  }
+  if (kind === 'chromium' && !installed) {
+    return canInstall
+      ? { action: 'install', line: "Install 玉兔中文 as an app so your browser doesn't delete them." }
+      : { action: 'ask', line: `Install 玉兔中文 as an app so your browser doesn't delete them: ${INSTALL_HOW}.` };
+  }
+  if (kind === 'firefox') {
+    return { action: 'ask', line: "When Firefox asks, choose Allow so it doesn't delete them." };
+  }
+  if (kind === 'safari' && mobile && !installed) {
+    // Nothing the app can do itself: no button.
+    return { action: 'none', line: "Add 玉兔中文 to your Home Screen (Share › Add to Home Screen) so Safari doesn't delete them." };
+  }
+  return { action: 'ask', line: "Tap below so your browser doesn't delete them." };
+}
