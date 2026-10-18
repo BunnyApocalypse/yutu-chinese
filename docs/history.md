@@ -4,7 +4,12 @@ Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where
 
 ## Where the work stands
 
-**Handover from the third session of 2026-10-18.** Read this first; the earlier ones of that day follow it.
+**Handover from the fourth session of 2026-10-18.** Read this first; the earlier ones of that day follow it.
+
+- **Roadmap item 1 done** ("too many buttons", the busy Learn screen; the list in "Roadmap" below), merged into `main`, **not pushed or released**. Both suites passing (187 unit tests, 309 browser tests). Next on the roadmap: item 2, easy to try without studying it first.
+- **To know:** the browser test "goes back to the word's page" (`repeatLesson.browser.js`) waited on a mark left from before the lesson and failed under load; it now clears the mark first. The one-off pictures of 這 and 是 (`local/shoot-about.js`, `local/about-pictures/`) and the atlas's `local/ux-atlas-draft/` can be deleted.
+
+**Handover from the third session of 2026-10-18.**
 
 - **Released to test and stable** (the owner's word): roadmap item 10, "What's new" after an update and "Send feedback" in the menu (`docs/interface.md`), with the first entry of `src/changes.js` (October 18, 2026). Both suites passing (186 unit tests, 309 browser tests). A mascot for the streaks screen added to the near-term roadmap (likely November).
 - **To know:** every release now needs its entry at the top of `src/changes.js` (CLAUDE.md, "Deploying"). The picture script of this session was deleted.
@@ -200,7 +205,7 @@ Agreed with the owner on 2026-10-18. **The first release** means the app's first
 
 **Before the first release**, roughly in this order:
 
-1. **"Too many buttons" and the busy Learn screen** (from the first testing session): the last change to the layout, so that what follows is built into it.
+1. **Done on 2026-10-18:** **"Too many buttons" and the busy Learn screen** (from the first testing session). Much was already done in the pass over the looks; what was left, found from the atlas's pictures: Learn's writing tools put away once a step is written (`docs/cards.md`), the storage message after the first word shortened to one line and two buttons (`docs/interface.md`), the count said once between two words, and "About this word" inside every answered card in place of "About" in the top line (`docs/cards.md`). Clear, Show outline and Animate while writing left as they are (the owner: three is within the tester's rule).
 2. **Easy to try without studying it first** (tester 2's main point): someone arriving from a link should be writing a character within a minute.
 3. **Streaks** (details under "Earlier roadmap" below, "Nudges"). To settle: what counts as a day studied and when it ends; whether a day of Learn alone counts (nothing in Learn is saved today, `docs/cards.md`); whether a missed day breaks it; reminders, which only the device itself could send; where it shows; turning it off.
 4. **Recording how long each review takes**, even if the progress tab comes later, so that the tab has real data when it arrives. As Anki does, a review counts at most a set time (Anki: 60 seconds). Old reviews just lack the field, so the store layout needn't change.
