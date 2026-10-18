@@ -4,7 +4,12 @@ Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where
 
 ## Where the work stands
 
-**Handover from the second session of 2026-10-18.** Read this first; the first handover of that day follows it.
+**Handover from the third session of 2026-10-18.** Read this first; the earlier ones of that day follow it.
+
+- **Released to test and stable** (the owner's word): roadmap item 10, "What's new" after an update and "Send feedback" in the menu (`docs/interface.md`), with the first entry of `src/changes.js` (October 18, 2026). Both suites passing (186 unit tests, 309 browser tests). A mascot for the streaks screen added to the near-term roadmap (likely November).
+- **To know:** every release now needs its entry at the top of `src/changes.js` (CLAUDE.md, "Deploying"). The picture script of this session was deleted.
+
+**Handover from the second session of 2026-10-18.**
 
 - **Everything released to test and stable** (the owner's word), both suites passing (181 unit tests, 306 browser tests). Nothing is waiting to be pushed.
 - **Tester 2's review (2026-10-17) is done:** B1 to B4 fixed, R1 to R14 built or dropped (R9). Built this session: R3/R4 and R6 (`docs/cards.md`, "Select words" and "Repeating a lesson"); the card's top line on the corner's center line, centered in Learn, a size bigger (`docs/pitfalls.md`); selecting ending on leaving the list; the ready-made decks as their lists have them (`docs/decks.md`); a late "close" of the question panel no longer answering the next question (`src/confirm.js`).
