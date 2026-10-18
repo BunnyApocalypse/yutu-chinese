@@ -6,6 +6,14 @@
 // was built.
 export const CHANGES = [
   {
+    id: '2026-10-18-2',
+    items: [
+      'Learning a word is calmer: once a step is written, only the button to go on stays, with "Practice again" under it.',
+      'After you answer a card, "About this word" is now at the bottom of the card itself, on every kind of card.',
+      'The reminder to keep your words safe is shorter.',
+    ],
+  },
+  {
     id: '2026-10-18',
     items: [
       'From now on, this list shows what has changed each time the app is updated.',

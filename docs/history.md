@@ -6,7 +6,7 @@ Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where
 
 **Handover from the fourth session of 2026-10-18.** Read this first; the earlier ones of that day follow it.
 
-- **Roadmap item 1 done** ("too many buttons", the busy Learn screen; the list in "Roadmap" below), merged into `main`, **not pushed or released**. Both suites passing (187 unit tests, 309 browser tests). Next on the roadmap: item 2, easy to try without studying it first.
+- **Roadmap item 1 done** ("too many buttons", the busy Learn screen; the list in "Roadmap" below), **released to test and stable** (the owner's word), with its "What's new" entry. Both suites passing (187 unit tests, 309 browser tests). Next on the roadmap: item 2, easy to try without studying it first.
 - **To know:** the browser test "goes back to the word's page" (`repeatLesson.browser.js`) waited on a mark left from before the lesson and failed under load; it now clears the mark first. The one-off pictures of 這 and 是 (`local/shoot-about.js`, `local/about-pictures/`) and the atlas's `local/ux-atlas-draft/` can be deleted.
 
 **Handover from the third session of 2026-10-18.**
