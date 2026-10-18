@@ -1491,6 +1491,24 @@ button.slot {
   min-height: 0;
 }
 
+/* "About this word" once a card is answered (showCardAbout in review.js),
+   at the bottom left inside the card's frame, where a learning note has its
+   own: over the writing area's edge (the writing row is as wide as the
+   screen on a phone, so the area's left edge is worked out from its size),
+   or inside the face of the other kinds. */
+.card-about {
+  position: absolute;
+  bottom: 0;
+  left: calc(50% - var(--area-size, 300px) / 2);
+  z-index: 1;
+  min-height: 0;
+  padding: var(--space-small) var(--space-medium) var(--space-medium);
+}
+
+.card-face > .card-about {
+  left: 0;
+}
+
 /* When the tip does not fit, "About this word" stays at the card's
    bottom edge and the tip scrolls behind it, instead of the link being cut
    in half there (UX review, 2026-10-16). "Sticky" keeps an element in its

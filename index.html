@@ -455,6 +455,10 @@
           <button id="back-button" class="side-arrow" type="button" aria-label="Go back to the skipped character" title="Go back to the skipped character"><svg class="side-arrow-icon" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19" /></svg></button>
           <svg id="writing-area" class="writing-area"></svg>
           <button id="skip-button" class="side-arrow" type="button" aria-label="Skip this character" title="Skip this character (counts as known)"><svg class="side-arrow-icon" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5 L16 12 L9 19" /></svg></button>
+          <!-- Once a card is answered, "About this word" at the bottom of the
+               writing area; on the other kinds it is moved into the card's
+               face (showCardAbout in review.js). -->
+          <button id="card-about-button" class="link-button card-about" type="button" hidden>About this word</button>
         </div>
 
         <!-- Takes the writing area's place on tone, pinyin and meaning cards: shows the

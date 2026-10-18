@@ -262,7 +262,8 @@ describe('managing cards', { concurrency: false }, () => {
       await waitUntil(page, `document.getElementById('card-type').textContent === '${kind}'`, `the ${kind} card`);
       await page.evaluate(`document.getElementById('card-face').dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))`);
       await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
-      await tap(page, 'about-word-button');
+      // "About this word" in the card: the learning note's, or the card's own.
+      await page.evaluate(`(document.querySelector('#card-face .face-tip-more') || document.getElementById('card-about-button')).click()`);
       await waitUntil(page, `document.querySelector('#word-page .page-this-card')`, 'the strip for this card');
     };
     const stripButton = (label) =>

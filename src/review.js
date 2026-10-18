@@ -139,6 +139,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // gets no grade buttons, and nothing is saved.
   let practicing = false;
   let recheckTimer = null;
+  // "About this word" inside the card's frame (showCardAbout).
+  const cardAboutButton = document.getElementById('card-about-button');
 
   // The card on screen: { word, type, card }, with card null if never studied.
   let current = null;
@@ -230,6 +232,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // them (the owner, 2026-10-17: above, they would push the grades down).
   function startPractice() {
     practiceAgainButton.hidden = true;
+    // Out of the way of the writing while practicing.
+    cardAboutButton.hidden = true;
     writingButtons.hidden = false;
     studyArea.classList.add('practicing');
   }
@@ -254,6 +258,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     practiceAgainButton.hidden = true;
     editWordButton.hidden = true;
     aboutWordButton.hidden = true;
+    cardAboutButton.hidden = true;
     leechNote.hidden = true;
     leechSuspendButton.hidden = true;
     options = null;
@@ -322,7 +327,31 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // Words that is five or six taps. Either one takes the card out of Review
   // there and then, ungraded, and the next one comes, as "Suspend this card"
   // does for a leech.
-  aboutWordButton.addEventListener('click', () => {
+  // "About this word" inside the card's frame once it is answered, on every
+  // kind of card (the owner, 2026-10-18: as on a meaning card, where it was
+  // at the bottom of the learning note; it replaces "About" in the top
+  // line). On a writing card it lies over the writing area's bottom edge;
+  // on the other kinds it is moved into the card's face. A learning note on
+  // the face brings its own (cardTip.js), which does the same.
+  function showCardAbout() {
+    cardAboutButton.textContent = isSentence(current.word) ? 'About this sentence' : 'About this word';
+    if (!writingRow.hidden) {
+      writingRow.append(cardAboutButton);
+      cardAboutButton.hidden = false;
+      return;
+    }
+    cardFace.append(cardAboutButton);
+    cardAboutButton.hidden = Boolean(cardFace.querySelector('.face-tip-more'));
+  }
+  // A tap on it must not also count as a tap on the card's face.
+  cardAboutButton.addEventListener('pointerup', (event) => event.stopPropagation());
+  cardAboutButton.addEventListener('click', (event) => {
+    event.stopPropagation();
+    openAbout();
+  });
+
+  aboutWordButton.addEventListener('click', () => openAbout());
+  function openAbout() {
     if (!current) {
       return;
     }
@@ -370,7 +399,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
           },
         };
     showWord(word, thisCard);
-  });
+  }
 
   // "Edit word", shown with the grades: a mistake in a word is usually
   // noticed when its answer is on screen. Opens the word's panel.
@@ -529,7 +558,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     }
     gradeRow.hidden = false;
     editWordButton.hidden = false;
-    aboutWordButton.hidden = false;
+    showCardAbout();
     offerListen(true);
     // A card that keeps being forgotten is pointed out, now that its answer
     // is in view: the moment to think of a way to remember it.
@@ -728,7 +757,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       .then((note) => {
         if (note && still()) {
           cardFace.classList.add('with-tip');
-          cardFace.append(cardTip(note, script, () => showWord(word), tappableText));
+          cardFace.append(cardTip(note, script, openAbout, tappableText));
+          // The note's own "About this word" takes the place of the card's.
+          cardAboutButton.hidden = true;
         }
       })
       .catch(() => {});
