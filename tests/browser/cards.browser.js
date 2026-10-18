@@ -150,14 +150,22 @@ describe('managing cards', { concurrency: false }, () => {
     await tap(page, 'bulk-move-button');
     await waitUntil(page, note('Moved 2 words to Chinese'), 'the words moved back');
     assert.deepEqual((await stored(page, 'words')).map((word) => word.decks), [[home], [home]]);
-    await tap(page, 'select-words-button');
 
-    // With all words listed there is no deck to move them out of.
+    // A deck added while selecting can be chosen at once.
+    await type(page, 'add-deck-name', 'Birds');
+    await page.evaluate(`document.getElementById('add-deck-form').requestSubmit()`);
+    await waitUntil(page, `[...document.getElementById('bulk-deck').options].some((option) => option.textContent.includes('Birds'))`, 'Birds in the bar');
+
+    // Leaving the deck's page ends selecting (the owner, 2026-10-18: it was
+    // still on when they came back).
     await tap(page, 'words-tab');
+    assert.equal(await page.evaluate(`document.getElementById('bulk-bar').hidden`), true);
+    // With all words listed there is no deck to move them out of.
     await tap(page, 'select-words-button');
     assert.equal(await page.evaluate(`document.getElementById('bulk-move-button').hidden`), true);
-    await tap(page, 'select-words-button');
     await openDeckPage(page);
+    assert.equal(await page.evaluate(`document.getElementById('bulk-bar').hidden`), true);
+    assert.equal(await textOf(page, 'select-words-button'), 'Select words');
   });
 
   it('does one thing to several words at once', async () => {

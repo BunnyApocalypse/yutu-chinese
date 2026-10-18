@@ -360,6 +360,13 @@ export function createCardsPanel({
       showBar();
     },
     startSelecting: (word) => setSelecting(true, word),
+    // Ends selecting, if it is on; the caller shows the list again.
+    stopSelecting() {
+      selecting = false;
+      selected = new Set();
+      note.textContent = '';
+      showBar();
+    },
     refresh: showBar,
   };
 }

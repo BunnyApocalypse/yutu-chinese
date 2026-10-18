@@ -177,6 +177,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
   }
   listDeckSelect.addEventListener('change', () => {
     listDeckId = listDeckSelect.value;
+    cardsPanel.stopSelecting(); // another list
     renderList();
   });
 
@@ -190,6 +191,9 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
   function openDeckPage(deckId) {
     cameFromWord = null;
     openDeckId = deckId;
+    // Selecting belongs to the list it was started on: left behind with it
+    // (the owner, 2026-10-18: back on the deck later, it was still on).
+    cardsPanel.stopSelecting();
     searchInput.value = '';
     listForm.forget();
     addWordForm.clearNote();
@@ -454,6 +458,8 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     await load();
     renderDecks();
     renderList();
+    // The bar's deck chooser, for a deck added or renamed meanwhile.
+    cardsPanel.refresh();
     await onChange();
   }
 
@@ -848,9 +854,11 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
       if (newView === 'decks') {
         showSection(false);
       }
-      // Another screen: a deck opened from a word's page goes up as usual.
+      // Another screen: a deck opened from a word's page goes up as usual,
+      // and selecting ends, as on leaving a deck's page.
       if (newView) {
         cameFromWord = null;
+        cardsPanel.stopSelecting();
       }
       // Coming to the Decks tab always shows the front page, with the decks,
       // and never opens one by itself (the owner, 2026-10-14: having
