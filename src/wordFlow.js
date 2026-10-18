@@ -97,6 +97,13 @@ function describeMistakes(count) {
   return count === 1 ? '1 mistake' : `${count} mistakes`;
 }
 
+// "2nd", "3rd", "4th"… for "on the 2nd try".
+function ordinal(number) {
+  const tens = number % 100;
+  const suffix = tens >= 11 && tens <= 13 ? 'th' : { 1: 'st', 2: 'nd', 3: 'rd' }[number % 10] || 'th';
+  return `${number}${suffix}`;
+}
+
 function sum(numbers) {
   return numbers.reduce((total, number) => total + number, 0);
 }
@@ -142,6 +149,10 @@ export function createWordFlow(elements) {
   //                        accepted stroke orders, otherwise null
   let skippedPerChar = []; // true where the character was skipped, not written
   let finishedPerChar = []; // true once the character has been written or skipped
+  let retriesPerChar = []; // where starting again wipes the slate: how many
+  //                          times it was started again after a mistake or a
+  //                          hint, so that "✓ 2nd try" can say it was not
+  //                          right at first (tester 2, 2026-10-17)
 
   // Mistakes on the current character so far in this attempt, and mistakes
   // from earlier attempts at it (before Clear or Animate was pressed).
@@ -187,9 +198,13 @@ export function createWordFlow(elements) {
       slot.textContent = finished || preview ? char : '·';
       slot.className = 'slot';
       slot.classList.toggle('preview', preview);
+      // Passed only after starting again: the badge says on which try.
+      const retried = hasVerdict && passedPerChar[index] && retriesPerChar[index] > 0;
       if (hasVerdict) {
         slot.type = 'button';
-        const verdict = passedPerChar[index] ? 'got it' : 'missed';
+        const verdict = passedPerChar[index]
+          ? `got it${retried ? ` on the ${ordinal(retriesPerChar[index] + 1)} try` : ''}`
+          : 'missed';
         slot.title = `${char}: ${verdict}. Tap to change.`;
         slot.setAttribute('aria-label', slot.title);
         slot.addEventListener('click', () => setVerdict(index, !passedPerChar[index]));
@@ -199,6 +214,10 @@ export function createWordFlow(elements) {
       }
       if (hasVerdict) {
         slot.classList.add(passedPerChar[index] ? 'passed' : 'missed');
+      }
+      if (retried) {
+        slot.classList.add('retried');
+        slot.dataset.try = retriesPerChar[index] + 1;
       }
       if (skippedPerChar[index]) {
         slot.classList.add('skipped');
@@ -369,9 +388,10 @@ export function createWordFlow(elements) {
         }
       }
       afterCharFinished();
-      // Returned to the quiz, which colors the printed character to match.
-      // In Free practice there is no verdict and this is undefined.
-      return passedPerChar[position];
+      // Returned to the quiz, which colors the printed character to match:
+      // amber for right only after starting again. In Free practice there is
+      // no verdict and this is undefined.
+      return passedPerChar[position] && retriesPerChar[position] > 0 ? 'retried' : passedPerChar[position];
     },
     onAnimateStart() {
       nextButton.hidden = true;
@@ -390,7 +410,8 @@ export function createWordFlow(elements) {
     hideProgress();
     statusElement.textContent = skippedPerChar[position]
       ? 'Skipped'
-      : describeMistakes(mistakesPerChar[position]);
+      : describeMistakes(mistakesPerChar[position]) +
+        (passedPerChar[position] && retriesPerChar[position] > 0 ? ` · ${ordinal(retriesPerChar[position] + 1)} try` : '');
 
     if (!wordFinished()) {
       nextButton.textContent = 'Next';
@@ -525,6 +546,9 @@ export function createWordFlow(elements) {
   // attempt counts as one (a tester, 2026-10-16).
   function beforeRedo() {
     if (options.freshRestart) {
+      if (carriedMistakes + currentMistakes > 0 || hintPerChar[position] || quiz.hintShownNow()) {
+        retriesPerChar[position] = (retriesPerChar[position] || 0) + 1;
+      }
       carriedMistakes = 0;
       peekedPerChar[position] = outlineVisible;
       hintPerChar[position] = false;
@@ -686,6 +710,7 @@ export function createWordFlow(elements) {
       orderPerChar = [];
       skippedPerChar = [];
       finishedPerChar = [];
+      retriesPerChar = [];
       await showCurrentCharacter();
       return true;
     },

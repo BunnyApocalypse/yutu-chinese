@@ -62,6 +62,7 @@ const INVISIBLE = 'rgba(0, 0, 0, 0)';
 // or red if the character was judged as missed.
 const reference = () => themeColor('--reference');
 const referenceMissed = () => themeColor('--reference-missed');
+const referenceRetried = () => themeColor('--reference-retried');
 
 // Nothing shows where a character will be until its first stroke is written,
 // so the first stroke may land anywhere, at any reasonable size: only its
@@ -90,7 +91,8 @@ const PADDING_SHARE = 0.06;
 //       order is 'moe' or 'mainland' for a character with two accepted
 //       stroke orders, saying which was written, and null for any other
 //       may return false to say the character was missed, which turns the
-//       printed character red instead of green
+//       printed character red instead of green, or 'retried' for right only
+//       after starting again, which turns it amber
 //   onAnimateStart()
 //   onWipe()  a swipe up asked to start the character again (gestures.js);
 //       the flow does what its Clear button does
@@ -299,6 +301,9 @@ export function createQuiz(target, size, handlers) {
   function referenceColor(passed) {
     if (passed === false) {
       return referenceMissed();
+    }
+    if (passed === 'retried') {
+      return rawInput ? referenceRetried() : ink();
     }
     return rawInput ? reference() : ink();
   }

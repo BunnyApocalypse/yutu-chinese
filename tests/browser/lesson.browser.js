@@ -210,12 +210,13 @@ describe('learning new words', { concurrency: false }, () => {
     // The stroke count is shown while a word is being taught, last step included.
     assert.equal(await isShown(page, 'stroke-count'), true);
     // A wrong stroke, then starting again: in Learn the slate is wiped, so
-    // a clean attempt has no mistakes (a tester, 2026-10-16).
+    // a clean attempt has no mistakes (a tester, 2026-10-16), but it says it
+    // was not right at first (tester 2, 2026-10-17).
     const area = await writingArea(page);
     const strokes = loadStrokeData('大').medians;
     assert.match(await drawStroke(page, area, strokes[2]), /1 mistake/);
     await tap(page, 'restart-button');
-    assert.equal(await write('大'), 'No mistakes');
+    assert.equal(await write('大'), 'No mistakes · 2nd try');
     // Nothing is graded in Learn (the owner, 2026-10-16).
     assert.equal(await isShown(page, 'grade-row'), false);
     assert.equal(await textOf(page, 'next-button'), 'Done');

@@ -52,6 +52,7 @@
   --success-text: #346f27; /* the same as text, darker to be read (4.5:1) */
   --success-bg: #e2eecf;
   --warn: #855600; /* notes and "new" */
+  --retried-bg: #f2e0b0; /* a box right only after starting again, edged with --warn */
   --shadow: rgba(40, 30, 0, 0.2);
   --backdrop: rgba(14, 31, 27, 0.45); /* behind a pop-up panel */
   /* The writing area. */
@@ -60,6 +61,7 @@
   --outline: #d7cba9; /* "Show outline" */
   --reference: #b4d69a; /* the printed character under yours, passed */
   --reference-missed: #c26a55; /* the same, missed: darker than passed, for color-blind eyes */
+  --reference-retried: #e0bf72; /* the same, right only after starting again (Learn) */
 }
 
 /* The dark look. The same values twice: once for "Dark", once for "Follow
@@ -96,6 +98,7 @@
   --success-text: #a5cf62;
   --success-bg: #2a3a1d;
   --warn: #e6c27a;
+  --retried-bg: #4a3b17;
   --shadow: rgba(0, 0, 0, 0.5);
   --backdrop: rgba(0, 0, 0, 0.6);
   --ink: #ece3cb;
@@ -103,6 +106,7 @@
   --outline: #4a514e;
   --reference: #4a6b2c;
   --reference-missed: #c4624a;
+  --reference-retried: #8a6a24;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -133,6 +137,7 @@
     --success-text: #a5cf62;
     --success-bg: #2a3a1d;
     --warn: #e6c27a;
+    --retried-bg: #4a3b17;
     --shadow: rgba(0, 0, 0, 0.5);
     --backdrop: rgba(0, 0, 0, 0.6);
     --ink: #ece3cb;
@@ -140,6 +145,7 @@
     --outline: #4a514e;
     --reference: #4a6b2c;
     --reference-missed: #c4624a;
+    --reference-retried: #8a6a24;
   }
 }
 
@@ -1131,6 +1137,23 @@ select {
   content: '✕';
   background: var(--danger-fill);
   color: var(--on-accent);
+}
+
+/* Passed only after starting again, in a lesson's practice (wordFlow.js):
+   amber, not green ("you got it right, but not on the first try": the
+   owner, 2026-10-18), with "✓2", a little wider. */
+.slot.passed.retried {
+  border-color: var(--warn);
+  background: var(--retried-bg);
+}
+
+.slot.passed.retried::after {
+  content: '✓' attr(data-try);
+  width: auto;
+  padding: 0 var(--space-tiny);
+  border-radius: 9px;
+  background: var(--warn);
+  color: var(--surface);
 }
 
 /* A finished character's slot can be tapped to change its verdict
