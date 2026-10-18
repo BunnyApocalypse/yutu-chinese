@@ -159,6 +159,12 @@ export function createQuiz(target, size, handlers) {
   // you move on before it runs out.
   let afterAnimationTimer = null;
 
+  // True while Animate plays, and while the finished character stays up
+  // after it. A stroke begun then stops it and is written (catchStroke).
+  let animating = false;
+  // Settles once the quiz start() began is taking strokes.
+  let quizReady = Promise.resolve();
+
   // While Hanzi Writer is being handed stroke data (at the start of a
   // character, and when the order or frame changes partway), a stroke drawn
   // would be lost. That takes a few hundredths of a second, too short for a
@@ -795,8 +801,72 @@ export function createQuiz(target, size, handlers) {
     writer.highlightStroke(next);
   }
 
+  // ---- A stroke begun during Animate ----
+  //
+  // Writing stops the animation and is taken as a stroke (tester 2,
+  // 2026-10-17, found waiting for it "a bit annoying"; the owner,
+  // 2026-10-18). Hanzi Writer only listens once its quiz runs, and starting
+  // it takes a moment. The browser's own "mousedown" or "touchstart" for the
+  // touch comes after the "pointerdown" heard here, and may reach Hanzi
+  // Writer once it listens (the quiz can start that quickly), or not. If not,
+  // the points drawn until then, kept here, are handed to it as mouse events,
+  // which it reads as it reads a finger or a pen. The rest of the stroke
+  // reaches it as usual.
+
+  // The stroke begun during the animation, until the quiz takes it:
+  // { points, ended, ready, heard }, or null. `heard`: the browser's own
+  // start of the stroke came once the quiz was ready.
+  let caught = null;
+
+  for (const type of ['mousedown', 'touchstart']) {
+    target.addEventListener(
+      type,
+      (event) => {
+        if (caught?.ready && event.isTrusted) {
+          caught.heard = true;
+        }
+      },
+      { capture: true, passive: true },
+    );
+  }
+
+  async function catchStroke(event) {
+    const caughtNow = { points: [pointOf(event)], ended: false, ready: false, heard: false };
+    caught = caughtNow;
+    await start();
+    await quizReady;
+    caughtNow.ready = true;
+    // One turn of the page's work, for the browser's own start of the stroke.
+    await new Promise((resolve) => setTimeout(resolve));
+    // Started again meanwhile (another stroke begun, Clear): that one wins.
+    if (caught !== caughtNow) {
+      return;
+    }
+    caught = null;
+    if (caughtNow.heard) {
+      return;
+    }
+    const box = target.getBoundingClientRect();
+    const fire = (type, point) =>
+      target.dispatchEvent(
+        new MouseEvent(type, { bubbles: true, cancelable: true, clientX: box.left + point.x, clientY: box.top + point.y }),
+      );
+    fire('mousedown', caughtNow.points[0]);
+    for (const point of caughtNow.points.slice(1)) {
+      fire('mousemove', point);
+    }
+    // Lifted already: Hanzi Writer hears the end of a stroke on the page.
+    if (caughtNow.ended) {
+      document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    }
+  }
+
   target.addEventListener('pointerdown', (event) => {
     endPress();
+    if (animating && event.isPrimary && event.button === 0) {
+      catchStroke(event);
+      return;
+    }
     // Only the first finger, and only the main mouse button.
     if (!event.isPrimary || event.button !== 0 || !(canTakeGesture() || canSwipeWhenDone())) {
       return;
@@ -806,6 +876,9 @@ export function createQuiz(target, size, handlers) {
   });
 
   target.addEventListener('pointermove', (event) => {
+    if (caught && event.isPrimary) {
+      caught.points.push(pointOf(event));
+    }
     if (!press || press.taken || !event.isPrimary) {
       return;
     }
@@ -819,6 +892,9 @@ export function createQuiz(target, size, handlers) {
   });
 
   target.addEventListener('pointerup', (event) => {
+    if (caught && event.isPrimary) {
+      caught.ended = true;
+    }
     if (!press || !event.isPrimary) {
       return;
     }
@@ -841,11 +917,17 @@ export function createQuiz(target, size, handlers) {
   });
 
   // The system took the touch away (for a gesture of its own, say).
-  target.addEventListener('pointercancel', endPress);
+  target.addEventListener('pointercancel', (event) => {
+    if (caught && event.isPrimary) {
+      caught.ended = true;
+    }
+    endPress();
+  });
 
   // Starts (or restarts) the quiz for the current character, from a clean slate.
   async function start() {
     clearTimeout(afterAnimationTimer);
+    animating = false;
     completed = false;
     drawnLayer.replaceChildren();
     mistakes = 0;
@@ -860,7 +942,7 @@ export function createQuiz(target, size, handlers) {
       if (outlineVisible) {
         writer.showOutline({ duration: 0 });
       }
-      runQuiz(0);
+      quizReady = runQuiz(0);
       showDemo(0);
     } finally {
       setBusy(false);
@@ -1068,6 +1150,7 @@ export function createQuiz(target, size, handlers) {
     // written. Used when a character is skipped.
     async reveal() {
       clearTimeout(afterAnimationTimer);
+      animating = false;
       writing = false;
       completed = true;
       writer.cancelQuiz();
@@ -1085,6 +1168,7 @@ export function createQuiz(target, size, handlers) {
     // the centered character in the standard order.
     async animate() {
       clearTimeout(afterAnimationTimer);
+      animating = true;
       writing = false;
       completed = false;
       writer.cancelQuiz();
@@ -1097,7 +1181,9 @@ export function createQuiz(target, size, handlers) {
       writer.animateCharacter({
         // The animation is canceled if you move to another character meanwhile.
         onComplete: (result) => {
-          if (!result.canceled) {
+          // Not if the quiz started meanwhile (a stroke begun, Clear): the
+          // animation is not called off by it, and would start it again.
+          if (!result.canceled && animating) {
             // Leave the finished character up for a moment before clearing it.
             afterAnimationTimer = setTimeout(start, PAUSE_AFTER_ANIMATION_MS);
           }
@@ -1108,6 +1194,7 @@ export function createQuiz(target, size, handlers) {
     // Stops this quiz for good. Used when the writing area is rebuilt at a new size.
     destroy() {
       clearTimeout(afterAnimationTimer);
+      animating = false;
       writing = false;
       endPress();
       if (writer) {

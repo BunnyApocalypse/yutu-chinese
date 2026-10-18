@@ -1,6 +1,7 @@
 // The gestures on the writing area (src/gestures.js) in a real browser: a
 // long hold shows the next stroke as a hint without counting as a stroke,
-// and a swipe up starts the character again.
+// and a swipe up starts the character again. And a stroke begun during
+// Animate.
 //
 // Run with: npm run test:browser
 
@@ -19,6 +20,7 @@ import {
 } from './harness.js';
 
 const HINT_SHOWN = `document.getElementById('writing-area').hasAttribute('data-hint-shown')`;
+const STATUS_IS = (text) => `[document.getElementById('stroke-count').textContent, document.getElementById('status').textContent].filter(Boolean).join(' · ') === ${JSON.stringify(text)}`;
 const DRAWN_STROKES = `document.querySelectorAll('#writing-area .drawn-strokes path').length`;
 
 describe('gestures on the writing area', { concurrency: false }, () => {
@@ -68,6 +70,41 @@ describe('gestures on the writing area', { concurrency: false }, () => {
     // data's units: y runs upward from -124 to 900).
     assert.equal(await drawStroke(page, area, [[512, -50], [512, 300], [512, 800]]), '1/2 · Write the first stroke');
     assert.equal(await page.evaluate(DRAWN_STROKES), 0);
+  });
+
+  it('a stroke begun during Animate stops it and is written', async () => {
+    // Tester 2, 2026-10-17: the writing area waited for the animation.
+    await startWriting(page, '十');
+    const area = await writingArea(page);
+    await page.evaluate(`document.getElementById('animate-button').click()`);
+    await waitUntil(page, `document.getElementById('status').textContent === 'Watch the stroke order…'`, 'the animation');
+    const [first, second] = loadStrokeData('十').medians;
+    await drawStroke(page, area, first);
+    // (The line says "1/2" first, as the quiz starts, then the stroke counts.)
+    await waitUntil(page, `${STATUS_IS('2/2 · No mistakes')}`, 'the first stroke taken');
+    assert.equal(await page.evaluate(DRAWN_STROKES), 1);
+    // The quiz goes on as usual, and the animation does not come back.
+    assert.equal(await drawStroke(page, area, second), 'No mistakes');
+
+    // A stroke whose start never reaches Hanzi Writer by itself (pointer
+    // events alone, made in the page, as when a finger's "touchstart" comes
+    // before the quiz listens): the points kept are handed on.
+    await page.evaluate(`document.getElementById('animate-button').click()`);
+    await waitUntil(page, `document.getElementById('status').textContent === 'Watch the stroke order…'`, 'the animation again');
+    const padding = area.size * 0.06;
+    const scale = (area.size - 2 * padding) / 1024;
+    const onScreen = first.map(([x, y]) => ({ x: area.x + padding + x * scale, y: area.y + padding + (900 - y) * scale }));
+    await page.evaluate(`(() => {
+      const area = document.getElementById('writing-area');
+      const points = ${JSON.stringify(onScreen)};
+      const fire = (type, point) => area.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, isPrimary: true, button: type === 'pointermove' ? -1 : 0, clientX: point.x, clientY: point.y,
+      }));
+      fire('pointerdown', points[0]);
+      for (const point of points.slice(1)) fire('pointermove', point);
+      fire('pointerup', points.at(-1));
+    })()`);
+    await waitUntil(page, `${STATUS_IS('2/2 · No mistakes')}`, 'the stroke handed on');
   });
 
   it('before a steeply rising stroke, a swipe up must be longer', async () => {
