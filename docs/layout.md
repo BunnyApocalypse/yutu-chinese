@@ -1,12 +1,10 @@
 # Every file, one line each
 
-Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where each former section is now.
-
 ## Layout
 
 - `index.html`: the single page.
 - `src/main.js`: entry point; the four tabs (Review, Learn, Decks, Words) and Free practice, backup buttons.
-- `src/wordsPanel.js`: the Decks and Words tabs (the Decks tab was called the Words tab until 2026-10-13): what each tab shows, a deck's page with its words, the list of words with its filters and order, the dictionary's words under yours while searching, the panel "+ Add to deck" with its three tabs, and "Learn it now". It sets up the files below and hands each what it needs. Until 2026-10-17 everything below was in it too (1,940 lines, now about 800).
+- `src/wordsPanel.js`: the Decks and Words tabs: what each tab shows, a deck's page with its words, the list of words with its filters and order, the dictionary's words under yours while searching, the panel "+ Add to deck" with its three tabs, and "Learn it now". It sets up the files below and hands each what it needs.
 - `src/addWordForm.js`: adding one word (the dictionary filling in as you type, the entries to choose from, a word chosen by its pinyin); `src/addListForm.js`: adding a list of words; `src/addSentenceForm.js`: adding a sentence; `src/readyDecks.js`: the Ready-made decks section (HSK, TOCFL, the radicals).
 - `src/wordDialog.js`: a word's pop-up panel (change, study next, remove), and a word's cards and suspend boxes on its page. It carries over by hand what is not in its form (`CLAUDE.md`).
 - `src/dictionaryLoader.js`: the dictionary, the usual readings and the ready-made lists, each fetched once (no page code); `src/wordRows.js`: a word or dictionary entry as a row of a list.
@@ -26,29 +24,29 @@ Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where
 - `src/db.js`: small promise wrapper around IndexedDB. The store layout is documented at the top of the file.
 - `src/decks.js`: the plain calculation behind decks: the tree, which words are in a deck, a deck's daily goal, the decks of the ready-made lists.
 - `src/decksPanel.js`: the decks in the Decks tab: the front page and a deck's page (the line saying where you are, the decks inside, adding one) and Deck settings (rename, move, daily goal, delete). Set up by `src/wordsPanel.js`. Also `fillDeckSelect`, which every list of decks to choose from is filled with.
-- `src/offline.js`, `src/serviceWorker.js`, `scripts/build-offline.js`, `public/manifest.webmanifest`, `.github/workflows/deploy.yml`: offline use and deployment (see that section).
-- `src/welcome.js`, `src/storageAdvice.js`: the introduction shown on first use, and what it says about long-term storage in each browser (see that section).
+- `src/offline.js`, `src/serviceWorker.js`, `scripts/build-offline.js`, `public/manifest.webmanifest`, `.github/workflows/deploy.yml`: offline use and deployment (`docs/offline.md`).
+- `src/welcome.js`, `src/storageAdvice.js`: the introduction shown on first use, and what it says about long-term storage in each browser (`docs/interface.md`).
 - `src/dialogs.js`: pop-up panels that close with a tap beside them.
 - `src/changes.js`, `src/whatsNew.js`, `src/feedback.js`: the list of what changed in each release (a new entry for every release), the "What's new" pop-up, and "Send feedback" (`docs/interface.md`).
 - `src/lang.js`: marks Chinese text with its language (`lang`) for screen readers and the regional font.
 - `src/theme.js`: the light or dark look (the "Look" setting); the colors themselves are named at the top of `src/style.css`.
 - `src/storageMessage.js`: the message about long-term storage once per device, after the first word learned.
-- `src/scriptCards.js`: files writing cards under the script they were learned in (see "Switching script").
+- `src/scriptCards.js`: files writing cards under the script they were learned in (`docs/cards.md`).
 - `src/backup.js`: build, check and restore a backup file.
-- `src/wordPage.js`: the page of a word or character (see "The word page"); `src/notes.js` and `src/characters.js` are the plain calculation behind it (learning notes and example sentences; the parts of characters).
+- `src/wordPage.js`: the page of a word or character (`docs/word-page.md`); `src/notes.js` and `src/characters.js` are the plain calculation behind it (learning notes and example sentences; the parts of characters).
 - `data/notes/`: learning notes and example sentences per level, CC BY-SA 4.0. `local/`: development-only downloads, git-ignored.
 - `src/confirm.js`: the app's own panel for asking before something that cannot be undone.
-- `src/sentences.js`: sentences as things to study (see "Sentences"). Plain calculation.
-- `src/speechPlan.js`, `src/speech.js`: speaking a word (see "Hearing a word"): which recordings to play, as plain calculation, and playing them.
+- `src/sentences.js`: sentences as things to study (`docs/word-page.md`). Plain calculation.
+- `src/speechPlan.js`, `src/speech.js`: speaking a word (`docs/word-page.md`): which recordings to play, as plain calculation, and playing them.
 - `scripts/copy-audio.js`, `data/audio-cmn/`: the recordings, and the script that puts them in the git-ignored `public/audio/` under plain file names with an `index.json` listing them.
-- `data/makemeahanzi/`: how each character is built (parts, radical, meaning part and sound part), LGPL-3.0. Not used by the app yet; it is for the word page.
-- `src/cardManager.js`, `src/cardsPanel.js`: managing cards by hand (see "Managing cards"): the plain calculation, and its page side in the Decks tab.
-- `src/leeches.js`: which cards are leeches, suspended cards, and the two leech exports (see "Leeches and suspended cards"). Plain calculation.
-- `src/merge.js`: combines what is on the device with a backup from another device (see "Combining backups"). Plain calculation.
-- `src/readingFixes.js`, `data/wordlists/reading-fixes.tsv`: readings put right in the ready-made lists, and carrying them over to words a device has already (see "Ready-made word lists"). Plain calculation; tested in `tests/readingFixes.test.js` and `tests/browser/database.browser.js`.
-- `src/radicals.js`, `scripts/build-radicals.js`, `data/wordlists/radicals/`: the ready-made deck of radicals (see "Radicals"). Tested in `tests/radicals.test.js` and the last test of `tests/browser/decks.browser.js`.
+- `data/makemeahanzi/`: how each character is built (parts, radical, meaning part and sound part), LGPL-3.0; used by the word page.
+- `src/cardManager.js`, `src/cardsPanel.js`: managing cards by hand (`docs/cards.md`): the plain calculation, and its page side in the Decks tab.
+- `src/leeches.js`: which cards are leeches, suspended cards, and the two leech exports (`docs/cards.md`). Plain calculation.
+- `src/merge.js`: combines what is on the device with a backup from another device (`docs/merging.md`). Plain calculation.
+- `src/readingFixes.js`, `data/wordlists/reading-fixes.tsv`: readings put right in the ready-made lists, and carrying them over to words a device has already (`docs/word-lists.md`). Plain calculation; tested in `tests/readingFixes.test.js` and `tests/browser/database.browser.js`.
+- `src/radicals.js`, `scripts/build-radicals.js`, `data/wordlists/radicals/`: the ready-made deck of radicals (`docs/word-lists.md`). Tested in `tests/radicals.test.js` and the last test of `tests/browser/decks.browser.js`.
 - `src/wordList.js`: parses the four-column TSV word list format (same as Skritter's export) and converts numbered pinyin to tone marks.
-- `tests/words.tsv`: 109 common words, hand-written, for the tests only. The app itself starts with no words (the owner's decision, 2026-10-13: this list had been loaded into every new database, and they did not want test words in their app). Browser tests that need words add it through the Decks tab (`addTestWords` in the harness).
+- `tests/words.tsv`: 109 common words, hand-written, for the tests only. The app itself starts with no words. Browser tests that need words add it through the Decks tab (`addTestWords` in the harness).
 - `src/charData.js`: the only place stroke data is loaded from. `loadCharData(char, script)` returns `null` when a character has no data. For `'traditional'` it uses the Taiwan set where that has the character and the big set otherwise; for `'simplified'` only the big set.
 - `src/shortcuts.js`: recognizes handwriting shortcuts (two textbook strokes written as one). Plain calculation, no page or Hanzi Writer.
 - `src/gestures.js`: tells a long hold or a swipe up on the writing area from a stroke (acted on in `src/quiz.js`). Plain calculation.
@@ -61,8 +59,8 @@ Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where
 - `redirect/`: the forwarding site published at the old address, `.../hanzi-trainer/`, from a repository of its own (see its README and "The old address" in `docs/offline.md`).
 - `scripts/ux-atlas.js`: the screenshot atlas and layout report, every screen at four sizes in both looks, into `local/ux-atlas/` (run by hand; see `docs/ux-review.md`).
 - `scripts/icon.html`, `scripts/make-icons.js`: the app's icon as an SVG, and the script that draws it into `public/icons/` (run by hand; see "Icons" in `docs/offline.md`).
-- `scripts/build-tone-table.js`, `data/cedict/`: the tone table extracted from CC-CEDICT (run by hand; see above).
-- `scripts/build-word-lists.js`, `data/wordlists/`: the ready-made word lists (run by hand, uses the internet; see "Ready-made word lists").
+- `scripts/build-tone-table.js`, `data/cedict/`: the tone table extracted from CC-CEDICT (run by hand; `docs/words.md`).
+- `scripts/build-word-lists.js`, `data/wordlists/`: the ready-made word lists (run by hand, uses the internet; `docs/word-lists.md`).
 - `data/animcjk/`: the animCJK traditional stroke data, copied unchanged from that project at a pinned commit. Its README records the source, license and how to update. This is vendored data, not an npm dependency.
 - `tests/logic.test.js`, `tests/shortcuts.test.js`, `tests/strokeOrder.test.js`, `tests/toneMark.test.js`, `tests/frame.test.js`, `tests/storageAdvice.test.js`: tests for the plain-calculation code.
 - `tests/browser/harness.js`: what the browser tests share: serving the app, starting the browsers, drawing strokes, reading the status line.

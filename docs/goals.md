@@ -1,69 +1,43 @@
 # Long-term goals, testers and the Skritter import
 
-Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where each former section is now.
-
 ## Long-term goals
 
-Agreed with the owner on 2026-10-13, in the conversation that had been put first on the to-do list.
+Agreed with the owner on 2026-10-13.
 
 - **Who it is for:** the owner first, and any learner who wants it ("If I am putting the effort into this, why not share it?"). Wording, defaults and help text should work for a stranger.
-- **Nobody's data is ever held by us.** The owner does not want to make or run a sync server or touch anyone's data, unless that becomes necessary. Everything stays on the device.
-- **Sync without a server:** first merging backups by hand; as a very long-term goal, syncing through storage the learner already has (Google Drive, Proton Drive, iCloud, OneDrive). Both are the same merge with a different way of moving the file, so the merge is built once.
+- **Nobody's data is ever held by us.** The owner does not want to run a sync server or touch anyone's data, unless that becomes necessary. Everything stays on the device.
+- **Sync without a server:** first combining backups by hand (built, `docs/merging.md`); as a very long-term goal, syncing through storage the learner already has (Google Drive, Proton Drive, iCloud, OneDrive). Both are the same merge with a different way of moving the file.
 - **Better than Skritter where Anki is:** decks and sub-decks, managing cards, flagging leeches, a choice of scheduling (retention, parameters), and everything portable. Leeches can be exported as a list, and as a prompt for an AI to make mnemonics from.
-- **A word can be in several decks and has one schedule.** Studying a deck filters the same cards.
-- **Sentences and audio:** hearing the word and sentence cards (without audio) are core. Listening cards, example sentences on a word's answer page and audio for sentences are nice to have.
-- **The hard constraints are open to change** (vanilla JavaScript, no framework, few dependencies) if a change makes the app easier to grow or to contribute to. Nothing planned needs one yet, so they stand until a concrete case comes up; each change is still asked for first.
-- **Order of work:**
-  1. **Done on 2026-10-13:** settle the data model for decks and merging (see "Ready for merging"). The Skritter scheduling data has not arrived, so the import was not looked at.
-  2. **Done on 2026-10-13:** decks, with the Decks tab in place of the Words tab (see "Decks"). Swapped with merging that day: the owner is only testing for now, so decks were of more use to them first.
-  3. **Done on 2026-10-13:** merge backups (see "Combining backups").
-  4. Leeches with their export, and a card manager.
-  5. Sentences and audio.
-  6. Statistics.
-  - The Skritter import comes whenever the GDPR data arrives. Dark mode and collapsing long meanings fit in between.
-- **Consequences for the data model**, as Claude sees them: a removed word or card must leave a mark, or a merge brings it back; records need the time they were last changed; a corrected word's old ID must be remembered; and a card's schedule should be recomputable from its reviews, which also serves changed scheduling, leeches and statistics.
-- **Sharing raises the bar on licensing.** The TOCFL list has no stated license (see "Ready-made word lists").
+- **A word can be in several decks and has one schedule.**
+- **Sentences and audio:** hearing the word and sentence cards are core; listening cards and audio for sentences are nice to have.
+- **The hard constraints are open to change** (vanilla JavaScript, no framework, few dependencies) if a change makes the app easier to grow or contribute to. Nothing planned needs one yet; each change is still asked for first.
+- **What this means for the data model:** a removed word or card must leave a mark, or a merge brings it back; records carry the time they were last changed; a corrected word's old ID is remembered; a card's schedule can be recomputed from its reviews, which also serves changed scheduling, leeches and statistics.
+- **Sharing raises the bar on licensing.** The TOCFL list has no stated license (`docs/word-lists.md`; roadmap item 8).
 
-## Before other people use it
+## Sharing the app
 
-A review by Claude on 2026-10-13 of what having testers changes; the decisions are the owner's and were open when this was written. `docs/alpha/` has what to give testers and how to run a first round.
-
-- **The site is where everyone's data lives.** Words and progress are kept by the browser per site (`bunnyapocalypse.github.io`), not per folder. Moving to a new folder (a renamed repository) keeps them, except perhaps in an app added to an iPhone's home screen, which has storage of its own; moving to a new site (a domain of its own) leaves every tester with an empty app unless they export first. (Corrected on 2026-10-15: this said "per address" before.)
-- **Done on 2026-10-13: a stable copy and a test copy** (see "Offline use and deployment").
-- **Done on 2026-10-13: the app says which version it is** (Settings, Help; number from `package.json`, the latest change's short name and date; `src/errors.js`), **and shows errors**: anything nothing else caught brings up a red line at the bottom with "Details", a panel with the version, browser and what failed, to copy into a report (`watchForErrors`). A list of what changed between versions, shown after an update, since 2026-10-18 (`src/changes.js`, `docs/interface.md`, "What's new").
-- **Done on 2026-10-13: the IDs of the group decks no longer hold the groups' names** (see "Ready-made word lists").
-- **Done on 2026-10-13: "Credits and licenses"** under "Help, feedback and licenses" in Settings (`credits-dialog` in `index.html`). **A new source of data or code has to be added there** as well as getting its README.
-- **The TOCFL list has no stated license.** The owner takes that risk for the testers' round (2026-10-13) and wants it **considered again before the app goes to a larger audience**.
-- **The address and the name stay as they are for now** (the owner, 2026-10-14): testers use https://bunnyapocalypse.github.io/hanzi-trainer/ (since 2026-10-15 `.../yutu-chinese/`; see below). GitHub Pages' limits (1 GB per published site, a soft 100 GB of traffic a month) are the thing to watch; the two copies come to about 565 MB.
-- **The app needs a new name before any new users** (the owner, 2026-10-15): there are many other "hanzi-trainer" projects. A renamed repository moves the address.
-- **The name is 玉兔中文** (the owner, 2026-10-15), Yùtù Zhōngwén, "Jade Rabbit Chinese". Chosen from Claude's suggestions after checking for clashes the same day: Zitie (字帖) is a LaTeX package and many copybook tools; Yong (永) an iOS Chinese dictionary app; "Eight Strokes" free but generic. Nothing called 玉兔中文, 玉兔華語, "Yutu Chinese" or "Jade Rabbit Chinese" was found (only the moon rover and a YouTube tool called plain "yutu"). 中文 rather than 華語 because it is written the same in both scripts. In the app the name is 玉兔中文, marked as Chinese; "Yutu Chinese" where Chinese can't be marked (the error report's first line, downloaded file names). **The repository was renamed `BunnyApocalypse/yutu-chinese` on 2026-10-15** (the owner), and the old address forwards to the new one (`docs/offline.md`, "The old address"); the database and backup format keep their old names for good.
-- **Feedback** (2026-10-14): the email alias yutufeedback.delicious577@passmail.com (since 2026-10-15, with the name 玉兔中文) and the repository's issue tracker. Both are in `docs/alpha/` and under Help in Settings.
-- **Reconsider refactoring the code once the testers' round is over** (the owner, 2026-10-13); see the note on the code below.
-- **What does not need deciding now:** scheduling settings (cards can be rebuilt from reviews), looks, and the database's layout, which has version numbers and upgrade code already.
-- **The code** (asked about by the owner the same day): works and is tested, but `src/wordsPanel.js` (about 1,400 lines) now serves two tabs, three forms and a pop-up panel; some names are behind the times (the mode `'words'` is the Decks tab, `practice-tab` is no longer a tab, `edit-cards` is on the word's page); most browser tests read the word list while it is out of view; and colors and sizes are written out all over `src/style.css`. Claude's advice: leave it until the testers' feedback has settled the structure, then split `wordsPanel.js` by what the screen shows and rename, in one go with the pass over the looks.
+- **The site is where everyone's data lives.** Browsers keep data per site (`bunnyapocalypse.github.io`), not per folder: a renamed repository keeps it (except perhaps an app on an iPhone's home screen, which has storage of its own); **a new domain would leave every user with an empty app** unless they export first.
+- **A stable and a test copy** (`docs/offline.md`); the app says its version (Settings, Help; from `package.json`, the latest change's name and date, `src/errors.js`), and anything uncaught brings up a red line with "Details" to copy into a report (`watchForErrors`).
+- **"Credits and licenses"** under Help (`credits-dialog` in `index.html`): every source of data or code has a line there.
+- **GitHub Pages' limits** (1 GB a site, a soft 100 GB of traffic a month) are the thing to watch; the two copies come to about 565 MB.
+- **The name 玉兔中文** was chosen on 2026-10-15 after checking for clashes: nothing called 玉兔中文, 玉兔華語, "Yutu Chinese" or "Jade Rabbit Chinese" was found. 中文 rather than 華語 because it is written the same in both scripts. The repository moved to `BunnyApocalypse/yutu-chinese`, the old address forwarding (`docs/offline.md`, "The old address").
+- **Feedback:** the email alias yutufeedback.delicious577@passmail.com and the repository's issue tracker, both under "Send feedback" (`docs/interface.md`). `docs/alpha/` has what was given to testers.
+- **Not deciding now:** scheduling settings (cards can be rebuilt from reviews) and the database's layout (versioned, with upgrade code).
 
 ## Skritter import (future)
 
-The owner wants to bring their Skritter data across eventually rather than start from scratch. Don't build it early, but keep it in mind whenever the data model is designed: it should hold words as well as single characters, both scripts, and per-item review history and scheduling state. Look at a real Skritter export before finalising the IndexedDB schema. Personal exports go in `exports/`, which is git-ignored.
+The owner wants to bring their Skritter data across eventually, but not the word list without its scheduling (the GDPR request of 2026-10-12 hasn't been answered). Keep it in mind when the data model changes: words as well as single characters, both scripts, per-item review history and scheduling state. Look at a real export first. Personal exports go in the git-ignored `exports/`.
 
 ## Translations and other languages (future)
 
 Discussed with the owner on 2026-10-15. Nothing built yet.
 
-- **Why** (the owner, 2026-10-15): the first batch of users will largely be native German speakers, and accessibility to learners worldwide in general.
-- **What** (the owner, 2026-10-15): **translate the interface, and use a dictionary in the learner's language where a license-compatible one exists.** The learning notes and example sentences stay in English; the owner does not want to generate them again. Where no good dictionary exists, the interface alone is still worth translating, with English meanings.
-- **Which languages:** German first, other major languages later.
-- **When** (the owner, 2026-10-15): a long-term goal, not urgent. German comes after the testers' round, so that round is in English.
-
+- **Why:** many early users will be native German speakers, and learners worldwide in general.
+- **What:** **translate the interface, and use a dictionary in the learner's language where a license-compatible one exists.** The learning notes and example sentences stay in English (the owner doesn't want to generate them again). Where no good dictionary exists, the interface alone is still worth translating.
+- **Which and when:** German first, other major languages later; a long-term goal, after the first release (roadmap, "Nice to have").
 - **Four layers, very different in cost:**
-  1. **The interface** (buttons, Settings, tips, introduction, errors): written straight into `index.html` and the JS files (about 165 places set text in code), not gathered anywhere. Doable without a dependency: one file of strings per language (`en.js`, `de.js`, …), a small `t('key')` lookup, a `data-text` attribute on static HTML filled in at start-up, the browser's own `Intl` for plurals, dates and numbers, and the page's `lang` following the language (the Chinese `lang` marking is unchanged). The lasting cost: every new button or message has to be written in every language; a test can catch missing keys but not write them. The docs name things by their English labels, which stays fine as long as English is the reference language.
-  2. **Dictionary meanings:** CC-CEDICT (`data/cedict/`, about 124,000 entries) is English only. Another language needs another dictionary, not a translation. German (HanDeDict) and French (CFDICT) exist under CC BY-SA in the same format; most other languages have none, a much smaller one, or one without a clear license, to check one by one. Search by meaning (`lookUpByMeaning`) leaves out English words ("to", "a", "the"), so each language needs its own such list.
-  3. **Learning notes and example sentences** (`data/notes/`, about 6,000 lines, 320,000 words of English): a content project. Claude can draft, but someone who speaks the language has to check it, as with the Taiwan notes. A middle step: a translated interface with English notes, notes translated level by level (HSK 1 and 2 first).
-  4. **Smaller data:** TOCFL topic names, radical meanings, the lists' group names.
-- **Claude's advice, before the owner's answers:** nothing now (it is a feature, and the interface's wording keeps changing until the pass over the looks); gather all interface text into one English strings file during the refactor after the testers' round, then add languages.
-- **Things to settle when it is built:**
-  - **HanDeDict's license and state** must be checked before use (believed CC BY-SA, edited by volunteers and not updated for years; quality, size and readings against CC-CEDICT to be compared). It goes in its own folder with its README, and in "Credits and licenses".
-  - **A word's meaning is copied into the word when it is added**, so the dictionary language decides the meaning of words added from then on. Words already added keep theirs; whether switching language offers to change them is to be decided.
-  - **Search by meaning** needs each language's own short words left out (German "der", "die", "das", "sich", …), and perhaps English meanings searched as well.
-  - **Fallback:** a string missing in a language shows the English one, and a test lists what is missing.
-  - **The language is chosen in Settings**, starting from the browser's language; whether it belongs to the device (`DEVICE_SETTINGS`) is to be decided.
+  1. **The interface:** text is written straight into `index.html` and the JS files (about 165 places), not gathered anywhere. Doable without a dependency: one file of strings per language (`en.js`, `de.js`), a small `t('key')` lookup, a `data-text` attribute on static HTML filled in at start-up, `Intl` for plurals, dates and numbers, and the page's `lang` following the language (the Chinese `lang` marking unchanged). The lasting cost: every new button or message in every language; a test can catch missing keys but not write them.
+  2. **Dictionary meanings:** CC-CEDICT is English only; another language needs another dictionary. German (HanDeDict) and French (CFDICT) exist under CC BY-SA in the same format; most others have none, a smaller one, or no clear license.
+  3. **Learning notes** (`data/notes/`, about 320,000 words): a content project, needing a speaker of the language to check; English notes with a translated interface is a middle step.
+  4. **Smaller data:** TOCFL topic names, radical meanings, group names.
+- **To settle when built:** HanDeDict's license and quality (believed CC BY-SA, unmaintained for years; its own folder and README); a word's meaning is copied in when added, so whether switching language offers to change existing words; each language's short words left out of search by meaning (German "der", "die", "das", "sich"); a missing string falls back to English, with a test listing what's missing; the language chosen in Settings from the browser's language, and whether it is a device setting.
