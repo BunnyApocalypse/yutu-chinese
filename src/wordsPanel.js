@@ -24,7 +24,7 @@ import { createSentenceForm } from './addSentenceForm.js';
 import { createListForm } from './addListForm.js';
 import { createReadyDecks } from './readyDecks.js';
 import { createAddWordForm } from './addWordForm.js';
-import { charactersElement, mixedSpan, entryRow } from './wordRows.js';
+import { charactersElement, mixedSpan, entryRow, whenHeld } from './wordRows.js';
 import { fillMixed } from './lang.js';
 import { lapsesOf } from './leeches.js';
 import { findLeeches, describeLeech, describeSuspended, leechList, leechPrompt } from './leeches.js';
@@ -249,6 +249,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     },
     scriptOf: (word) => scriptFor(word, getSettings()),
     getListed: () => listedWords,
+    getListDeck: () => listDeck(),
     showList: () => renderList(),
     afterChange: () => afterChange(),
     // The word open in the pop-up panel was changed from the fold-out.
@@ -600,6 +601,17 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
       // While words are being selected, a tap picks the word instead of
       // opening its panel.
       button.classList.toggle('selected', cardsPanel.selecting() && cardsPanel.isSelected(word));
+      // Holding a row starts selecting, with that word (tester 2's R3; the
+      // owner, 2026-10-18); while selecting, it picks the word as a tap does.
+      // Before the tap's listener, which it can stop.
+      whenHeld(button, () => {
+        if (cardsPanel.selecting()) {
+          cardsPanel.toggle(word);
+          button.classList.toggle('selected', cardsPanel.isSelected(word));
+        } else {
+          cardsPanel.startSelecting(word);
+        }
+      });
       button.addEventListener('click', () => {
         if (cardsPanel.selecting()) {
           cardsPanel.toggle(word);

@@ -114,7 +114,7 @@ Full list in `docs/layout.md`.
 
 Past session notes are in `docs/history.md`. **Start with its handover from 2026-10-18** (at the top of "Where the work stands"): nothing pushed, and what is next.
 
-- **The second session with tester 2 (2026-10-17)** left bugs B1 to B4 (all fixed) and points R1 to R14, sorted with the owner on 2026-10-18: all done or dropped except **R3/R4 (selecting words) and R6 (going through a lesson again), next** (`docs/history.md`, at the top).
+- **The second session with tester 2 (2026-10-17)** left bugs B1 to B4 (all fixed) and points R1 to R14, sorted with the owner on 2026-10-18: all done or dropped except **R6 (going through a lesson again), next** (`docs/history.md`, at the top).
 - **No big new features; improvements to how the app is used are welcome** (the owner, 2026-10-16, ending the freeze agreed on 2026-10-13: the aim is not to get distracted by large additions). Fixing what testing finds is still the main work.
 - **The UX review of 2026-10-16 left 17 tasks** (list at the top of `docs/history.md`, details in `docs/ux-review.md`). Sorted with the owner that day: 1, 2, 3, 8, 11, 15, 17 and part of 6 fixed; 9 kept as it is; the rest for the pass over the looks.
 - **The first testing session's suggestions (2026-10-14) were all built on 2026-10-15** (list and where each is documented: `docs/history.md`), except **"too many buttons" and the busy Learn screen: for the pass over the looks** (Free practice moved to Settings on 2026-10-17).

@@ -111,6 +111,55 @@ describe('managing cards', { concurrency: false }, () => {
     await waitUntil(page, `${first}.startsWith('貓')`, 'the learning order again');
   });
 
+  it('starts selecting when a row is held, and moves words to another deck', async () => {
+    // A deck inside the one whose page is open.
+    const deckCount = await page.evaluate(`document.querySelectorAll('#deck-list li').length`);
+    await type(page, 'add-deck-name', 'Animals');
+    await page.evaluate(`document.getElementById('add-deck-form').requestSubmit()`);
+    await waitUntil(page, `document.querySelectorAll('#deck-list li').length === ${deckCount + 1}`, 'the deck Animals');
+
+    // Held for longer than a long press: selecting starts, with that word.
+    await page.evaluate(`(() => {
+      const row = document.querySelector('#word-list li button');
+      row.dispatchEvent(new PointerEvent('pointerdown', { button: 0, bubbles: true }));
+      window.heldRow = row;
+    })()`);
+    await waitUntil(page, `!document.getElementById('bulk-bar').hidden`, 'selecting, from a held row');
+    await page.evaluate(`heldRow.dispatchEvent(new PointerEvent('pointerup', { bubbles: true })); heldRow.click()`);
+    assert.match(await textOf(page, 'bulk-count'), /^1 word selected/);
+    // The tap that ends the hold neither opens the word nor unselects it.
+    assert.equal(await page.evaluate(`document.getElementById('word-page').open`), false);
+    assert.equal(await page.evaluate(`document.querySelectorAll('#word-list button.selected').length`), 1);
+    // A row held only briefly is a tap: it picks the word.
+    await page.evaluate(`document.querySelectorAll('#word-list li button')[1].click()`);
+    assert.match(await textOf(page, 'bulk-count'), /^2 words selected/);
+
+    // Moved into Animals: out of the deck listed, still in its list.
+    const deckId = (name) =>
+      page.evaluate(`[...document.getElementById('bulk-deck').options].find((option) => option.textContent.trim().endsWith(${JSON.stringify(name)})).value`);
+    const animals = await deckId('Animals');
+    const home = await deckId('Chinese 中文');
+    assert.equal(await page.evaluate(`document.getElementById('bulk-move-button').hidden`), false);
+    await choose(page, 'bulk-deck', animals);
+    await tap(page, 'bulk-move-button');
+    await waitUntil(page, note('Moved 2 words to Animals.'), 'the words moved');
+    assert.deepEqual((await stored(page, 'words')).map((word) => word.decks), [[animals], [animals]]);
+    await waitUntil(page, rows(2), 'the words still listed');
+    // And back.
+    await choose(page, 'bulk-deck', home);
+    await tap(page, 'bulk-move-button');
+    await waitUntil(page, note('Moved 2 words to Chinese'), 'the words moved back');
+    assert.deepEqual((await stored(page, 'words')).map((word) => word.decks), [[home], [home]]);
+    await tap(page, 'select-words-button');
+
+    // With all words listed there is no deck to move them out of.
+    await tap(page, 'words-tab');
+    await tap(page, 'select-words-button');
+    assert.equal(await page.evaluate(`document.getElementById('bulk-move-button').hidden`), true);
+    await tap(page, 'select-words-button');
+    await openDeckPage(page);
+  });
+
   it('does one thing to several words at once', async () => {
     await tap(page, 'select-words-button');
     assert.equal(await page.evaluate(`document.getElementById('bulk-suspend-button').disabled`), true);

@@ -7,7 +7,7 @@ import { putAll, removeWords, startCardsOver, saveKnown, randomId } from './db.j
 import { CARD_TYPES, allCardIds, formatInterval } from './session.js';
 import { cardsOfWord, withStartedOver, markedKnown } from './cardManager.js';
 import { fillDeckSelect } from './decksPanel.js';
-import { withDeck } from './decks.js';
+import { withDeck, withoutDecks, deckWithInside } from './decks.js';
 import { ask } from './confirm.js';
 
 const byId = (id) => document.getElementById(id);
@@ -43,6 +43,7 @@ export function createCardsPanel({
   getReviews,
   scriptOf,
   getListed,
+  getListDeck,
   showList,
   afterChange,
   onWordChanged,
@@ -177,6 +178,7 @@ export function createCardsPanel({
   const countElement = byId('bulk-count');
   const note = byId('bulk-note');
   const deckSelect = byId('bulk-deck');
+  const moveButton = byId('bulk-move-button');
   let selecting = false;
   // The IDs of the selected words.
   let selected = new Set();
@@ -191,15 +193,22 @@ export function createCardsPanel({
       button.disabled = selected.size === 0;
     }
     fillDeckSelect(deckSelect, getDecks(), []);
+    // Moving takes the words out of the deck listed: there is none to take
+    // them out of when all words are listed.
+    moveButton.hidden = !getListDeck();
   }
 
-  selectButton.addEventListener('click', () => {
-    selecting = !selecting;
-    selected = new Set();
+  // Starts or stops selecting; `first`, a word to start with selected
+  // (holding a row, wordsPanel.js).
+  function setSelecting(on, first = null) {
+    selecting = on;
+    selected = new Set(first ? [first.id] : []);
     note.textContent = '';
     showBar();
     showList();
-  });
+  }
+
+  selectButton.addEventListener('click', () => setSelecting(!selecting));
 
   byId('bulk-all-button').addEventListener('click', () => {
     selected = new Set(getListed().map((word) => word.id));
@@ -292,6 +301,33 @@ export function createCardsPanel({
     );
   });
 
+  // Whether two records of a word are in the same decks.
+  const sameDecks = (a, b) => [...(a.decks || [])].sort().join() === [...(b.decks || [])].sort().join();
+
+  // Out of the deck listed and every deck inside it (the list shows their
+  // words too), and into the one chosen (tester 2's R4, 2026-10-17: moving
+  // words from a deck's page; the owner, 2026-10-18). Into a deck inside the
+  // one listed, they stay in the list, in that deck.
+  moveButton.addEventListener('click', () => {
+    const deck = getDecks().find((entry) => entry.id === deckSelect.value);
+    const from = getListDeck();
+    if (!deck || !from) {
+      return;
+    }
+    const inside = deckWithInside(getDecks(), from.id);
+    act(
+      async (words) => {
+        const moved = words
+          .map((word) => [word, withDeck(withoutDecks(word, inside), deck.id)])
+          .filter(([word, after]) => !sameDecks(word, after))
+          .map(([, after]) => after);
+        await putAll('words', moved);
+        return moved.length;
+      },
+      (count) => `Moved ${plural(count, 'word')} to ${deck.name}.`,
+    );
+  });
+
   byId('bulk-remove-button').addEventListener('click', async () => {
     const confirmed = await ask({
       question: `Remove ${plural(selected.size, 'word')} from your words altogether?`,
@@ -323,6 +359,7 @@ export function createCardsPanel({
       note.textContent = '';
       showBar();
     },
+    startSelecting: (word) => setSelecting(true, word),
     refresh: showBar,
   };
 }

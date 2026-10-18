@@ -2117,6 +2117,10 @@ button.word-entry {
   width: 100%;
   padding: var(--space-small) var(--space-medium);
   text-align: left;
+  /* Held, a row starts selecting (whenHeld in wordRows.js): not the
+     phone's own long press, which selects text or shows a menu (iPhone). */
+  -webkit-touch-callout: none;
+  user-select: none;
 }
 
 .entry-characters {

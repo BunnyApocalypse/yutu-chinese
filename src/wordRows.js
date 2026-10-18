@@ -64,3 +64,65 @@ export function entryRow(entry, label, settings, { selected = false, onTap }) {
   button.addEventListener('click', onTap);
   return button;
 }
+
+// How long a finger rests on a row before it counts as held, in ms: about
+// what phones wait before a long press does something.
+const HOLD_MS = 500;
+// How far it may wander meanwhile, in px: further is scrolling, not holding.
+const HOLD_SLACK = 10;
+
+// Calls `onHold` when the element is held down (finger, pen or mouse), as
+// phones start selecting when a row is held (tester 2's R3, 2026-10-17).
+// The tap that the browser may send when it is let go is swallowed, so the
+// row is not also opened. "pointerdown" and the rest are the browser's
+// events for any kind of pointer.
+export function whenHeld(element, onHold) {
+  let timer = null;
+  let start = null;
+  let held = false;
+  const stop = () => {
+    clearTimeout(timer);
+    timer = null;
+  };
+  element.addEventListener('pointerdown', (event) => {
+    held = false;
+    // Only the main button of a mouse.
+    if (event.button !== 0) {
+      return;
+    }
+    start = { x: event.clientX, y: event.clientY };
+    timer = setTimeout(() => {
+      timer = null;
+      held = true;
+      // A short buzz where the phone can (Android; iPhones cannot).
+      navigator.vibrate?.(20);
+      onHold();
+    }, HOLD_MS);
+  });
+  element.addEventListener('pointermove', (event) => {
+    if (timer && Math.hypot(event.clientX - start.x, event.clientY - start.y) > HOLD_SLACK) {
+      stop();
+    }
+  });
+  element.addEventListener('pointerup', stop);
+  element.addEventListener('pointercancel', stop);
+  element.addEventListener('pointerleave', stop);
+  // The menu a long press brings up (Android), or a right click: not on a
+  // row being held.
+  element.addEventListener('contextmenu', (event) => {
+    if (held || timer) {
+      event.preventDefault();
+    }
+  });
+  // "capture": before the row's own click listener, which it stops.
+  element.addEventListener(
+    'click',
+    (event) => {
+      if (held) {
+        held = false;
+        event.stopImmediatePropagation();
+      }
+    },
+    { capture: true },
+  );
+}
