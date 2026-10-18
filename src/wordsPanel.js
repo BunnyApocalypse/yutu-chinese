@@ -370,7 +370,12 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     if (cameFromWord) {
       fillMixed(byId('deck-back-label'), 'Back', getSettings().script);
     }
-    byId('place-title').hidden = onDeckPage;
+    // Only while Decks or Words is on screen: this also runs after changes
+    // made from Review, whose top bar may have its own way back in the
+    // name's place (main.js).
+    if (!byId('words-panel').hidden) {
+      byId('place-title').hidden = onDeckPage;
+    }
     byId('deck-adding').hidden = !openDeck();
     // (A deck without words has it as its main button already.)
     const deck = openDeck();

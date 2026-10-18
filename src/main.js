@@ -150,7 +150,17 @@ const wordsPanel = createWordsPanel(
   () => settings,
   async (deckId, newMode) => {
     await settings.change('studyDeck', deckId);
-    await setMode(newMode);
+    studiedFrom = { mode, scrollY: window.scrollY };
+    // setMode sets the top bar at once, before it waits for the cards; the
+    // way back goes in at once too, not after them.
+    const shown = setMode(newMode);
+    // "Learn it now" can come from the Words tab too.
+    if (studiedFrom.mode === 'decks' || studiedFrom.mode === 'words') {
+      byId('study-back-label').textContent = studiedFrom.mode === 'words' ? 'Words' : 'Decks';
+      byId('place-title').hidden = true;
+      byId('study-back-button').hidden = false;
+    }
+    await shown;
   },
   (word) => practiceWord(word),
   () => mode !== 'review' && mode !== 'learn',
@@ -231,6 +241,7 @@ function setMode(newMode, { keepPlace = false } = {}) {
   byId('deck-back-button').hidden = true;
   byId('practice-back-button').hidden = true;
   byId('practice-word-back').hidden = true;
+  byId('study-back-button').hidden = true;
   // The text box and its button, which practicing one word puts away
   // (practiceWord); the line saying nothing counts, on every practice screen.
   wordInput.hidden = false;
@@ -345,6 +356,17 @@ byId('practice-word-back').addEventListener('click', async () => {
   await setMode(practicedFrom.mode, { keepPlace: true });
   window.scrollTo(0, practicedFrom.scrollY);
   wordsPanel.showWord(practicedWord);
+});
+// A deck studied from Decks (its row, or Learn and Review on its page; or
+// "Learn it now" from Decks or Words): "‹ Decks" (or "‹ Words") in the top
+// bar in place of the screen's name, back there as it was left, a deck's
+// page open if it was (tester 2, 2026-10-17: there was no
+// way back; the owner, 2026-10-18). Any other way to another screen puts it
+// away (setMode).
+let studiedFrom = null;
+byId('study-back-button').addEventListener('click', async () => {
+  await setMode(studiedFrom.mode, { keepPlace: true });
+  window.scrollTo(0, studiedFrom.scrollY);
 });
 byId('practice-back-button').addEventListener('click', () => {
   byId('settings-button').click();

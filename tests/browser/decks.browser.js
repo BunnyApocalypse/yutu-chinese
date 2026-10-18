@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, type, choose, textOf, waitUntil, openLearn, useAddForm } from './harness.js';
+import { startApp, startBrowsers, tap, type, choose, textOf, isShown, waitUntil, openLearn, useAddForm } from './harness.js';
 
 const rows = (count) => `document.querySelectorAll('#word-list li').length === ${count}`;
 const deckRows = (count) => `document.querySelectorAll('#deck-list li').length === ${count}`;
@@ -243,6 +243,28 @@ describe('decks', { concurrency: false }, () => {
     await page.evaluate(`${deckRow('Textbook')}.click()`);
     await waitUntil(page, `document.getElementById('place-title').textContent === 'Learn'`, 'Learn');
     assert.equal(await page.evaluate(`document.getElementById('deck-select').selectedOptions[0].textContent`), 'Textbook');
+    // "‹ Decks" in place of the screen's name goes back to the front page
+    // (tester 2, 2026-10-17: there was no way back).
+    assert.equal(await isShown(page, 'place-title'), false);
+    assert.equal(await textOf(page, 'study-back-button'), 'Decks');
+    await tap(page, 'study-back-button');
+    await waitUntil(page, `!document.getElementById('words-panel').hidden && document.getElementById('deck-head').hidden`, 'the front page');
+    assert.equal(await isShown(page, 'study-back-button'), false);
+    assert.equal(await textOf(page, 'place-title'), 'Decks');
+    // From a deck's page, back to that page.
+    await openDeck('Textbook');
+    await tap(page, 'deck-review-button');
+    await waitUntil(page, `document.getElementById('place-title').textContent === 'Review'`, 'Review');
+    await tap(page, 'study-back-button');
+    await waitUntil(page, `${titleIs('Textbook')} && !document.getElementById('deck-back-button').hidden`, 'the deck page again');
+    await tap(page, 'deck-back-button');
+    // Another way to another screen puts it away.
+    await page.evaluate(`${deckRow('Textbook')}.click()`);
+    await waitUntil(page, `document.getElementById('place-title').textContent === 'Learn'`, 'Learn');
+    await tap(page, 'review-tab');
+    await waitUntil(page, `document.getElementById('place-title').textContent === 'Review'`, 'Review');
+    assert.equal(await isShown(page, 'study-back-button'), false);
+    assert.equal(await isShown(page, 'place-title'), true);
     await tap(page, 'decks-tab');
   });
 
