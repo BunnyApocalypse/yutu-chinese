@@ -151,7 +151,10 @@ describe('leeches', { concurrency: false }, () => {
     assert.equal(await textOf(page, 'edit-cards-summary'), 'Cards (1 suspended)');
     await page.evaluate(`[...document.querySelectorAll('#edit-cards li')].find((row) => row.textContent.startsWith('Meaning')).querySelector('button:last-child').click()`);
     await waitUntil(page, rows(0), 'no suspended cards');
-    assert.equal(await textOf(page, 'edit-cards-summary'), 'Cards');
+    // The list and the page's heading of its cards are updated one after the
+    // other, so the heading is waited for too (it failed now and then in a
+    // full run).
+    await waitUntil(page, `document.getElementById('edit-cards-summary').textContent === 'Cards'`, 'the heading without "suspended"');
     await tap(page, 'word-page-close');
     const love = (await stored(page, 'words')).find((word) => word.id === '愛|ai4');
     assert.equal(love.suspended, undefined);

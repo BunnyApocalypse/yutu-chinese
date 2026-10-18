@@ -121,7 +121,10 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     // counts, and "‹ Practicing 貓" in the top bar, the arrow going back to
     // its page.
     assert.equal(await isShown(page, 'practice-back-button'), false);
-    assert.equal(await textOf(page, 'place-title'), 'Practicing 貓');
+    // The title is put up once the writing area has started (practiceWord in
+    // src/main.js), a moment after the stroke count: waited for, as it was
+    // read too early now and then in a full run.
+    await waitUntil(page, `document.getElementById('place-title').textContent === 'Practicing 貓'`, 'the title');
     assert.equal(await isShown(page, 'word-input'), false);
     assert.equal(await isShown(page, 'practice-note'), true);
     assert.equal(await page.evaluate(`document.getElementById('practice-word-back').getAttribute('aria-label')`), 'Back to the page of 貓');
