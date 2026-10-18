@@ -62,6 +62,14 @@
           </button>
           <!-- Says what the red dot is about (main.js, showBackupStatus). -->
           <p id="backup-due-line" class="backup-due-line" hidden>Time to save a backup of your words, in Settings.</p>
+          <!-- Where strangers find it (the owner, 2026-10-18; feedback.js). -->
+          <button id="feedback-button" type="button">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+              <!-- A speech bubble. -->
+              <path d="M4 5h16v11H10l-5 4v-4H4z" />
+            </svg>
+            Send feedback
+          </button>
         </div>
       </dialog>
 
@@ -637,6 +645,36 @@
         <button id="credits-close" class="dialog-close" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 
+      <!-- What changed since the app was last opened on this device, or the
+           whole list from Settings (whatsNew.js, src/changes.js). -->
+      <dialog id="whats-new-dialog" class="settings-panel">
+        <h2>What's new</h2>
+        <p id="whats-new-intro" class="hint">Since you last opened the app:</p>
+        <div id="whats-new-list" class="whats-new-list"></div>
+        <p class="hint">
+          Something not working, or an idea?
+          <button id="whats-new-feedback" class="link-button" type="button">Send feedback</button>
+        </p>
+        <button id="whats-new-close" class="dialog-close" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
+      </dialog>
+
+      <!-- How to reach the people making the app, from the menu (feedback.js). -->
+      <dialog id="feedback-dialog" class="settings-panel">
+        <h2>Send feedback</h2>
+        <p>Something broken or confusing, a question, an idea: every message helps make the app better.</p>
+        <div class="buttons">
+          <button id="feedback-email" class="small primary" type="button">Write an email</button>
+          <button id="feedback-issue" class="small" type="button">Open an issue on GitHub</button>
+        </div>
+        <p class="hint">
+          The email opens in your mail app, with which version of the app this is and which device and
+          browser you use already written in. Nothing about your words or your studying is in it.
+          The address is <span class="feedback-address">yutufeedback.delicious577@passmail.com</span>.
+          An issue on GitHub needs a GitHub account.
+        </p>
+        <button id="feedback-close" class="dialog-close" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
+      </dialog>
+
       <!-- Asks before something that cannot be undone (confirm.js). -->
       <dialog id="confirm-dialog" class="settings-panel">
         <h2 id="confirm-question"></h2>
@@ -1104,6 +1142,8 @@
           <h3>Help, feedback and licenses</h3>
         <div class="setting">
           <button id="welcome-again-button" class="small" type="button">Show the introduction again</button>
+          <button id="whats-new-button" class="small" type="button">What's new</button>
+          <button id="settings-feedback-button" class="small" type="button">Send feedback</button>
           <button id="credits-button" class="small" type="button">Credits and licenses</button>
         </div>
         <!-- The tips shown the first time each screen is opened (tips.js). -->
@@ -1113,13 +1153,6 @@
         <div class="setting">
           <button id="tips-again-button" class="small" type="button">Show all tips again</button>
         </div>
-        <p class="hint">
-          Send feedback, questions or a report of something broken to
-          <a href="mailto:yutufeedback.delicious577@passmail.com">yutufeedback.delicious577@passmail.com</a>,
-          or open an issue at
-          <a href="https://github.com/BunnyApocalypse/yutu-chinese/issues" target="_blank" rel="noopener">github.com/BunnyApocalypse/yutu-chinese/issues</a>.
-          Please say which version this is (below) and which device and browser you use.
-        </p>
         <!-- Which version of the app this is (errors.js). -->
         <p id="app-version" class="hint"></p>
         </section>

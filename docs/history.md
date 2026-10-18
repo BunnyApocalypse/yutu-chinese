@@ -204,7 +204,7 @@ Agreed with the owner on 2026-10-18. **The first release** means the app's first
 7. **Data safety, seen by a stranger:** that everything stays on their device, why backups matter, Safari clearing a site not opened for 7 days.
 8. **The TOCFL list's license** settled: permission asked, the list hidden until then, or the risk taken knowingly.
 9. **The owner trying sentences, combining backups between real devices, and leeches.**
-10. **What changed between versions**, shown to returning users, and **a way to give feedback** that strangers find.
+10. **Done on 2026-10-18:** **what changed between versions**, shown to returning users, and **a way to give feedback** that strangers find (`docs/interface.md`, "What's new" and "Send feedback").
 
 **Near-term:**
 

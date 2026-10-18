@@ -1644,6 +1644,32 @@ button.slot {
   margin-bottom: var(--space-small);
 }
 
+/* "What's new" (whatsNew.js): each release's date, then its lines. Long
+   lists scroll inside the pop-up, which keeps its ✕ in view. */
+.whats-new-list {
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.whats-new-list h3 {
+  margin: var(--space-medium) 0 var(--space-tiny);
+  font-size: var(--size-body);
+}
+
+.whats-new-list ul {
+  margin: 0;
+  padding-left: var(--space-large);
+}
+
+.whats-new-list li {
+  margin-bottom: var(--space-small);
+}
+
+/* The feedback address is one long word; on a phone it may break anywhere. */
+.feedback-address {
+  overflow-wrap: anywhere;
+}
+
 /* Settings shows one group at a time (settings.js; the owner, 2026-10-16).
    On a narrow screen, the list of groups or one group, as `data-view` on
    the panel says; on a wide one, the list at the side and the group beside

@@ -31,6 +31,8 @@ import { readDictionary, lookUp, DEFAULT_MEANING_DETAIL } from './dictionary.js'
 import readingFixesText from '../data/wordlists/reading-fixes.tsv?raw';
 import dictionaryUrl from '../data/cedict/dictionary.tsv?url';
 import { closeOnTapBeside } from './dialogs.js';
+import { createFeedback } from './feedback.js';
+import { createWhatsNew } from './whatsNew.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -123,6 +125,14 @@ document.addEventListener('click', (event) => {
   }
 });
 closeOnTapBeside(byId('credits-dialog'));
+
+// "Send feedback", in the menu and under Help in Settings, and "What's new",
+// shown by itself at start-up after an update (startUp below) and under Help.
+const feedback = createFeedback();
+const whatsNew = createWhatsNew(feedback.open);
+byId('feedback-button').addEventListener('click', feedback.open);
+byId('settings-feedback-button').addEventListener('click', feedback.open);
+byId('whats-new-button').addEventListener('click', whatsNew.openAll);
 
 // A long meaning in the prompt above a card is cut off after one line; a tap
 // on it shows the whole of it in a panel.
@@ -871,7 +881,11 @@ async function startUp() {
   if (settings.script === 'simplified' && wordInput.value === '學') {
     wordInput.value = '学';
   }
+  const firstUse = !(await getSetting('welcomeDone', false));
   await welcome.openIfFirstTime();
+  // What changed since the app was last opened here. Before the screen is
+  // shown, so that its tip waits for this to be closed (tips.js).
+  whatsNew.openIfNew(firstUse);
 
   // Review, unless another tab was tapped in the meantime.
   await setMode(mode);

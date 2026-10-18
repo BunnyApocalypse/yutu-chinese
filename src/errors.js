@@ -14,6 +14,17 @@ export const APP_VERSION = __APP_VERSION__ + (__CHANNEL__ ? `, ${__CHANNEL__} ve
 
 const byId = (id) => document.getElementById(id);
 
+// Which version, browser and screen size this is: the first lines of an
+// error's details and of a feedback email (feedback.js). Nothing about the
+// person's words or studying.
+export function aboutThisDevice() {
+  return [
+    `Yutu Chinese ${APP_VERSION}`,
+    `Browser: ${navigator.userAgent}`,
+    `Screen: ${window.innerWidth} by ${window.innerHeight}`,
+  ].join('\n');
+}
+
 // elements: the line at the bottom (`banner`), its "Details" button, and the
 // panel with the text and its "Copy" and "Close" buttons.
 export function watchForErrors({ banner, detailsButton, dialog, textElement, copyButton, closeButton }) {
@@ -22,9 +33,7 @@ export function watchForErrors({ banner, detailsButton, dialog, textElement, cop
 
   const describe = () =>
     [
-      `Yutu Chinese ${APP_VERSION}`,
-      `Browser: ${navigator.userAgent}`,
-      `Screen: ${window.innerWidth} by ${window.innerHeight}`,
+      aboutThisDevice(),
       '',
       ...errors.map((error) => `${error.when}\n${error.what}`),
     ].join('\n');

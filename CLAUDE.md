@@ -92,7 +92,7 @@ How each part of the app works, and why, is in `docs/` (index: `docs/README.md`)
 ## Deploying
 
 - Two copies: **stable** from the `stable` branch at https://bunnyapocalypse.github.io/yutu-chinese/ (testers, and the owner's data), **test** from `main` at `.../yutu-chinese/test/`. The old address, `.../hanzi-trainer/`, forwards there from a repository of its own (`redirect/`). Pushing `main` publishes the test copy.
-- **To release:** ask the owner first, then `git push origin main:stable` and `gh workflow run deploy.yml --ref main` (a run started by the push to `stable` is refused by the environment's rules).
+- **To release:** ask the owner first, write the release's entry at the top of `src/changes.js` (what a learner will notice, a few lines; it is the "What's new" pop-up), then `git push origin main:stable` and `gh workflow run deploy.yml --ref main` (a run started by the push to `stable` is refused by the environment's rules).
 - If the deploy fails with "Fetching artifact metadata failed", don't re-run it; start a fresh run with the command above.
 - The repository is `BunnyApocalypse/yutu-chinese`, with capitals. `BunnyApocalypse/hanzi-trainer` is now only the forwarding site; never push the app there.
 - **Never push unless the owner has said to** (the owner, 2026-10-15): not `main`, not another branch, not at the end of a session or a background job. Commit freely; say what is committed and not pushed.
