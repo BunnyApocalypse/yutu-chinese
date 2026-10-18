@@ -332,7 +332,7 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
   function openDialog(deck) {
     openDeck = deck;
     byId('deck-dialog-title').textContent = deck.name;
-    byId('deck-dialog-status').textContent = countsOf(deck);
+    byId('deck-dialog-status').textContent = countsOf(deck).text;
     nameInput.value = deck.name;
     // A deck cannot go inside itself or inside a deck that is inside it.
     fillDeckSelect(parentSelect, getDecks(), NO_PARENT, {

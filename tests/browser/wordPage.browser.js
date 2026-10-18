@@ -146,4 +146,21 @@ describe('the word page', { concurrency: false }, () => {
     assert.equal(await page.evaluate(`document.getElementById('edit-definition').value`), 'we; us');
     await tap(page, 'word-dialog-close');
   });
+
+  it('removes the word with Remove beside Edit, once asked', async () => {
+    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await waitUntil(page, shown('我們|wo3men5'), "the word's page");
+    // Kept when the question is answered no, or closed with its ✕.
+    await tap(page, 'word-page-remove');
+    await waitUntil(page, `document.getElementById('confirm-dialog').open`, 'the question');
+    assert.equal(await textOf(page, 'confirm-question'), 'Remove 我們 · 我们 from your words?');
+    await page.evaluate(`document.querySelector('#confirm-dialog .dialog-close').click()`);
+    await waitUntil(page, `!document.getElementById('confirm-dialog').open`, 'the question closed');
+    assert.equal(await page.evaluate(`document.getElementById('word-page').open`), true);
+    assert.equal(await page.evaluate(`document.querySelectorAll('#word-list li').length`), 1);
+    await tap(page, 'word-page-remove');
+    await waitUntil(page, `document.getElementById('confirm-dialog').open`, 'the question again');
+    await tap(page, 'confirm-yes');
+    await waitUntil(page, `!document.getElementById('word-page').open && document.querySelectorAll('#word-list li').length === 0`, 'the word removed');
+  });
 });

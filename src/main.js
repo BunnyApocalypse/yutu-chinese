@@ -112,6 +112,16 @@ showVersion();
 // "Credits and licenses", under "Help, feedback and licenses" in Settings.
 byId('credits-button').addEventListener('click', () => byId('credits-dialog').showModal());
 byId('credits-close').addEventListener('click', () => byId('credits-dialog').close());
+// Every pop-up has a ✕ in its top corner (tester 2, 2026-10-17: a tap beside
+// it closes it too, but people look for the ✕; the owner, 2026-10-18). Where
+// it replaced a Close button it took that button's id, and so its listener;
+// where a Cancel stays, the ✕ does what it does (data-same-as).
+document.addEventListener('click', (event) => {
+  const cross = event.target.closest?.('.dialog-close[data-same-as]');
+  if (cross) {
+    byId(cross.dataset.sameAs).click();
+  }
+});
 closeOnTapBeside(byId('credits-dialog'));
 
 // A long meaning in the prompt above a card is cut off after one line; a tap

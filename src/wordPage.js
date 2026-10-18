@@ -62,6 +62,7 @@ function element(tag, className, text) {
 //                     on that deck
 // isLearned(word):    true once the word has been through Learn (or has a card)
 // defaultDeckId():    the deck first offered for that and for a sentence
+// remove(word):       asks, then removes the word; true if it was removed
 // practice(word):     opens Free practice with the word
 // canPractice():      false where leaving for it would lose something
 //                     (Review and Learn): "Practice" is not offered, and
@@ -80,6 +81,7 @@ export function createWordPage({
   splitWords,
   likeliestEntry,
   edit,
+  remove,
   addSentence,
   addEntry,
   learnNow,
@@ -99,6 +101,7 @@ export function createWordPage({
   const backButton = byId('word-page-back');
   const editButton = byId('word-page-edit');
   const practiceButton = byId('word-page-practice');
+  const removeButton = byId('word-page-remove');
 
   // The big files, fetched once. A file that cannot be fetched is left out:
   // the page then simply has less on it.
@@ -576,6 +579,7 @@ export function createWordPage({
     backButton.hidden = trail.length < 2;
     editButton.hidden = !shown.word;
     practiceButton.hidden = !shown.word || !canPractice();
+    removeButton.hidden = !shown.word || !canPractice();
     // For the browser tests, which wait for a page to be filled in.
     dialog.dataset.shown = word ? word.id : target.text;
   }
@@ -818,6 +822,19 @@ export function createWordPage({
     edit(word);
   });
 
+  // Remove, beside Edit (tester 2, 2026-10-17: removing a word should not
+  // need Edit first; the owner, 2026-10-18). Asked first, as in the word's
+  // panel; the page closes once it is gone. Not in Review or Learn, as
+  // Practice is not (canPractice): there the card shown is the word's.
+  removeButton.addEventListener('click', async () => {
+    if (!dialog.open || !shown.word) {
+      return;
+    }
+    if (await remove(shown.word)) {
+      dialog.close();
+    }
+  });
+
   practiceButton.addEventListener('click', () => {
     if (!dialog.open || !shown.word) {
       return;
@@ -833,6 +850,7 @@ export function createWordPage({
     shown = target.word ? { word: target.word } : { text: target.text, entries: [] };
     editButton.hidden = !target.word;
     practiceButton.hidden = !target.word || !canPractice();
+    removeButton.hidden = !target.word || !canPractice();
     backButton.hidden = true;
     body.replaceChildren();
     delete dialog.dataset.shown;

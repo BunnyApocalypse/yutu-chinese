@@ -258,6 +258,7 @@
                 <button class="small primary" type="submit">Create deck</button>
               </div>
             </form>
+            <button data-same-as="new-deck-cancel" class="dialog-close" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
           </dialog>
 
           <!-- Adding words: only on a deck's page, since every word is in a deck. -->
@@ -546,9 +547,9 @@
             <button type="submit" class="small primary">Save</button>
             <button id="study-next-button" class="small" type="button">Learn this word next</button>
             <button id="remove-word-button" class="small danger" type="button">Remove</button>
-            <button id="word-dialog-close" class="small" type="button">Close</button>
           </div>
         </form>
+        <button id="word-dialog-close" class="dialog-close" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 
       <!-- Says when something has gone wrong, and offers the details to copy (errors.js). -->
@@ -565,8 +566,8 @@
         <textarea id="error-text" rows="8" readonly aria-label="Details of what went wrong"></textarea>
         <div class="buttons">
           <button id="error-copy-button" class="small primary" type="button">Copy</button>
-          <button id="error-close-button" class="small" type="button">Close</button>
         </div>
+        <button id="error-close-button" class="dialog-close" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 
       <!-- Whose work the app is built on. Each of these asks to be credited where it is used. -->
@@ -623,9 +624,7 @@
             </li>
           </ul>
         </div>
-        <div class="buttons">
-          <button id="credits-close" class="small primary" type="button">Close</button>
-        </div>
+        <button id="credits-close" class="dialog-close" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 
       <!-- Asks before something that cannot be undone (confirm.js). -->
@@ -636,6 +635,7 @@
           <button id="confirm-yes" class="small primary" type="button"></button>
           <button id="confirm-no" class="small" type="button"></button>
         </div>
+        <button data-same-as="confirm-no" class="dialog-close" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 
       <!-- Everything about one word or character, to read: wordPage.js fills it in. -->
@@ -665,8 +665,9 @@
           <button id="word-page-back" class="small with-arrow" type="button" hidden><svg class="back-arrow" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19" /></svg><span>Back</span></button>
           <button id="word-page-practice" class="small" type="button" hidden>Practice</button>
           <button id="word-page-edit" class="small" type="button" hidden>Edit</button>
-          <button id="word-page-close" class="small primary" type="button">Close</button>
+          <button id="word-page-remove" class="small danger" type="button" hidden>Remove</button>
         </div>
+        <button id="word-page-close" class="dialog-close" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
 
         <!-- A word of the example sentence, tapped: its reading and meaning,
              under it, with "About this word" (wordPage.js). popover="auto" makes
@@ -705,7 +706,6 @@
           <div id="deck-buttons" class="buttons">
             <button type="submit" class="small primary">Save</button>
             <button id="deck-delete-button" class="small danger" type="button">Delete deck</button>
-            <button id="deck-dialog-close" class="small" type="button">Close</button>
           </div>
           <!-- Shown in place of the buttons once Delete is tapped. -->
           <div id="deck-delete-choice" hidden>
@@ -717,6 +717,7 @@
             </div>
           </div>
         </form>
+        <button id="deck-dialog-close" class="dialog-close" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 
       <!-- Shown once a backup file has been chosen with "Import backup": what is
@@ -737,6 +738,7 @@
           <b>Replace</b> throws away what is on this device and puts the backup in its place.
         </p>
         <p id="import-note" role="status" class="note"></p>
+        <button data-same-as="import-cancel-button" class="dialog-close" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 
       <!-- The introduction shown the first time the app is opened: a few screens,

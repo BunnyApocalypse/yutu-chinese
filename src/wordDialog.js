@@ -304,17 +304,26 @@ export function createWordDialog(shared) {
     dialog.close();
   });
 
-  byId('remove-word-button').addEventListener('click', async () => {
+  // Asks, then removes the word with its cards (not its reviews). Returns
+  // true if it was removed. Here, and on a word's page (wordPage.js).
+  async function removeAsked(word) {
     const confirmed = await ask({
-      question: `Remove ${shared.charactersOf(openWord)} from your words?`,
+      question: `Remove ${shared.charactersOf(word)} from your words?`,
       detail: 'Its cards and their schedule are removed too. Your review history is kept.',
       yes: 'Remove',
     });
     if (!confirmed) {
+      return false;
+    }
+    await removeWord(word.id, allCardIds(word));
+    await shared.afterChange();
+    return true;
+  }
+
+  byId('remove-word-button').addEventListener('click', async () => {
+    if (!(await removeAsked(openWord))) {
       return;
     }
-    await removeWord(openWord.id, allCardIds(openWord));
-    await shared.afterChange();
     dialogResult = { changed: true, word: null };
     dialog.close();
   });
@@ -323,6 +332,7 @@ export function createWordDialog(shared) {
 
   return {
     open: openDialog,
+    remove: removeAsked,
 
     // Opens the panel and returns a promise for what became of the word
     // once it is closed:

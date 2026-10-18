@@ -197,6 +197,25 @@ describe('the Decks tab', { concurrency: false }, () => {
     await page.evaluate(`document.getElementById('add-word-note').textContent = ''`);
   });
 
+  it('finds a word by its meaning, for a learner who knows only the English', async () => {
+    // Tester 2, 2026-10-17: "piano", without knowing gāngqín.
+    const entries = `document.querySelectorAll('#add-suggestions .word-entry')`;
+    await type(page, 'add-traditional', 'piano');
+    await waitUntil(page, `${entries}.length > 0`, 'the words meaning piano');
+    assert.match(await textOf(page, '#add-suggestions .word-entry'), /^鋼琴/);
+    assert.equal(await page.evaluate(`document.getElementById('add-pinyin').value`), '');
+    // Not added as the word itself.
+    await page.evaluate(`document.getElementById('add-word-form').requestSubmit()`);
+    assert.match(await textOf(page, 'add-word-note'), /Choose the word from the list/);
+    // English that is no pinyin at all, with a hyphen.
+    await type(page, 'add-traditional', 'well-known');
+    await waitUntil(page, `${entries}.length > 0`, 'the words meaning well-known');
+    await type(page, 'add-traditional', 'qwzx');
+    await waitUntil(page, `document.getElementById('add-suggestions').textContent.includes('read that way or means that')`, 'nothing found');
+    await type(page, 'add-traditional', '');
+    await page.evaluate(`document.getElementById('add-word-note').textContent = ''`);
+  });
+
   it('fills in as much of the meaning as the setting asks for', async () => {
     // Types the word, taps its dictionary entry and returns the meaning filled in.
     const meaningFilledIn = async () => {

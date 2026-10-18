@@ -137,6 +137,8 @@ describe('decks', { concurrency: false }, () => {
       await page.evaluate(`[...document.getElementById('deck-parent').options].map((entry) => entry.textContent)`),
       ['No other deck', 'Chinese 中文'],
     );
+    // Its counts under its name (said "[object Object]" until 2026-10-18).
+    assert.match(await textOf(page, 'deck-dialog-status'), /^\d+ words? · 0 learned/);
     await tap(page, 'deck-dialog-close');
   });
 

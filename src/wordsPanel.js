@@ -38,9 +38,8 @@ import {
 } from './words.js';
 import {
   lookUp,
-  lookUpByPinyin,
   lookUpByCharacters,
-  lookUpByMeaning,
+  lookUpByLetters,
   proposeMeaning,
   splitIntoWords,
 } from './dictionary.js';
@@ -293,6 +292,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
       return dictionary ? likeliestEntry(lookUp(dictionary, text), text) : null;
     },
     edit: (word) => wordDialog.open(words.find((entry) => entry.id === word.id) || word),
+    remove: (word) => wordDialog.remove(words.find((entry) => entry.id === word.id) || word),
     addSentence: (sentence, deckId) => sentenceForm.addSentence(sentence, deckId),
     addEntry: (entry, deckId) => addEntry(entry, deckId),
     learnNow: (id, deckId) => learnNow(id, deckId),
@@ -679,8 +679,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
       const seen = new Set();
       dictionaryFound = [
         ...(/\p{Script=Han}/u.test(typed) ? lookUpByCharacters(dictionary, typed, readyListWords) : []),
-        ...lookUpByPinyin(dictionary, typed, readyListWords),
-        ...lookUpByMeaning(dictionary, typed, readyListWords),
+        ...lookUpByLetters(dictionary, typed, readyListWords),
       ].filter((entry) => {
         const id = wordId(entry);
         const fresh = !have.has(id) && !seen.has(id);

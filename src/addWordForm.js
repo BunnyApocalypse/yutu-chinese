@@ -9,7 +9,7 @@ import { formatPinyin, wordId } from './wordList.js';
 import { withDeck } from './decks.js';
 import { entryRow } from './wordRows.js';
 import { checkWord, newWordRecords, wordsWithSameCharacters, tidyPinyin } from './words.js';
-import { lookUp, lookUpByPinyin, readTypedPinyin, proposeMeaning } from './dictionary.js';
+import { lookUp, lookUpByLetters, readTypedPinyin, proposeMeaning } from './dictionary.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -157,18 +157,31 @@ export function createAddWordForm(shared, dictionaryLoader) {
   // lists more, and typing starts again from the first few.
   let pinyinShown = MAX_SUGGESTIONS;
 
-  // What is listed under the box when pinyin is typed in it: the words read
-  // that way, the likeliest first (lookUpByPinyin), to choose from. Nothing
-  // is filled in by itself, since the word is not known until one is chosen.
-  function pinyinSuggestions(typed) {
+  // Whether what is typed in the box is pinyin or English, not characters:
+  // letters, with no Chinese among them.
+  const isLatin = (typed) =>
+    Boolean(readTypedPinyin(typed)) || (/[a-z]/i.test(typed) && !/\p{Script=Han}/u.test(typed));
+
+  // The dictionary's words for pinyin or English typed in the box: read
+  // that way or with that meaning (lookUpByLetters; tester 2, 2026-10-17,
+  // wanted to add "piano" without knowing its pinyin, as the Words tab's
+  // search allows; the owner, 2026-10-18).
+  function latinEntries(dictionary, typed) {
+    return lookUpByLetters(dictionary, typed, dictionaryLoader.readyListWords());
+  }
+
+  // What is listed under the box when pinyin or English is typed in it
+  // (latinEntries), to choose from. Nothing is filled in by itself, since the
+  // word is not known until one is chosen.
+  function latinSuggestions(typed) {
     autoFill(null);
     const dictionary = dictionaryLoader.get();
     if (!dictionary) {
       return [];
     }
-    const entries = lookUpByPinyin(dictionary, typed, dictionaryLoader.readyListWords());
+    const entries = latinEntries(dictionary, typed);
     if (entries.length === 0) {
-      return [paragraph('hint', 'No word in the dictionary is read that way. Check the spelling (v for ü), or type the characters.')];
+      return [paragraph('hint', 'No word in the dictionary is read that way or means that. Check the spelling (v for ü), or type the characters.')];
     }
     const have = new Set(shared.words().map((word) => word.id));
     const parts = entries
@@ -185,7 +198,8 @@ export function createAddWordForm(shared, dictionaryLoader) {
         showSuggestions();
       });
       parts.push(button);
-      if (readTypedPinyin(typed).tones.length === 0) {
+      const pinyin = readTypedPinyin(typed);
+      if (pinyin && pinyin.tones.length === 0) {
         parts.push(paragraph('hint', 'Add tone numbers (shi4) to narrow it down.'));
       }
     }
@@ -209,8 +223,8 @@ export function createAddWordForm(shared, dictionaryLoader) {
     if (typed === '' && !entryTapped) {
       autoFill(null);
     }
-    if (readTypedPinyin(typed)) {
-      suggestions.replaceChildren(...pinyinSuggestions(typed));
+    if (isLatin(typed)) {
+      suggestions.replaceChildren(...latinSuggestions(typed));
       return;
     }
     const parts = [];
@@ -277,9 +291,11 @@ export function createAddWordForm(shared, dictionaryLoader) {
     const typed = Object.fromEntries(
       Object.entries(addFields).map(([name, input]) => [name, input.value]),
     );
-    // Pinyin still in the box: the word is to be chosen from the list.
+    // Pinyin or English still in the box: the word is to be chosen from the
+    // list.
     const dictionary = dictionaryLoader.get();
-    if (dictionary && lookUpByPinyin(dictionary, lookedUpField.value.trim()).length > 0) {
+    const inBox = lookedUpField.value.trim();
+    if (dictionary && isLatin(inBox) && latinEntries(dictionary, inBox).length > 0) {
       addNote.textContent = 'Choose the word from the list under the box, or type its characters.';
       return;
     }
@@ -357,11 +373,12 @@ export function createAddWordForm(shared, dictionaryLoader) {
         box.placeholder = text;
         box.setAttribute('aria-label', text); // what a screen reader calls the box
       };
-      // Either box also takes pinyin, to choose the word from a list.
-      caption(addFields.traditional, both ? 'Traditional 繁體 or pinyin' : 'Word or phrase: 漢字 or pinyin');
+      // Either box also takes pinyin or English, to choose the word from a
+      // list.
+      caption(addFields.traditional, both ? 'Traditional 繁體, pinyin or English' : 'Word: 漢字, pinyin or English');
       caption(
         addFields.simplified,
-        both ? `Simplified 简体${asked ? '' : ' (if different)'}` : 'Word or phrase: 汉字 or pinyin',
+        both ? `Simplified 简体${asked ? '' : ' (if different)'}` : 'Word: 汉字, pinyin or English',
       );
       if (!lookedUpField || lookedUpField.hidden) {
         lookedUpField = asked === 'simplified' ? addFields.simplified : addFields.traditional;

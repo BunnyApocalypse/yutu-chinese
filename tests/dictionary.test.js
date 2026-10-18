@@ -292,6 +292,32 @@ test('words are found by meaning, the whole meaning first, then a whole word, th
   assert.deepEqual(meant('teacher('), []);
 });
 
+// Looking a word up by letters typed: pinyin or English
+
+import { lookUpByLetters } from '../src/dictionary.js';
+
+test('letters typed find words read so, then words meaning so, then readings that only begin so', () => {
+  const dictionary = readDictionary(
+    [
+      '鋼琴\t钢琴\tgang1qin2\tpiano',
+      "駢偶\t骈偶\tpian2'ou3\tparallel and antithetical (style)",
+      '片\t\tpian4\tthin piece; flake',
+      '偏\t\tpian1\tinclined to one side',
+      '',
+    ].join('\n'),
+  );
+  const found = (text) => lookUpByLetters(dictionary, text).map((entry) => entry.traditional);
+  // "piano" begins the reading of 駢偶, but it means 鋼琴.
+  assert.deepEqual(found('piano'), ['鋼琴', '駢偶']);
+  // Read exactly so first: 片 and 偏, then 駢偶, whose reading only begins so.
+  assert.deepEqual(found('pian').slice(-1), ['駢偶']);
+  assert.deepEqual(new Set(found('pian').slice(0, 2)), new Set(['片', '偏']));
+  // English that is not pinyin at all.
+  assert.deepEqual(found('flake'), ['片']);
+  // Each word once: 鋼琴 is read gangqin and means nothing like it.
+  assert.deepEqual(found('gangqin'), ['鋼琴']);
+});
+
 // Looking a word up by characters typed
 
 import { lookUpByCharacters } from '../src/dictionary.js';

@@ -409,6 +409,33 @@ export function lookUpByPinyin(dictionary, text, listed = []) {
     .map(({ entry }) => entry);
 }
 
+// Looks a word up by letters typed, which may be pinyin or English: the
+// add form's box (addWordForm.js) and the Words tab's search. Each word
+// once, in this order:
+//   - words read exactly as typed (lookUpByPinyin);
+//   - words with that meaning (lookUpByMeaning);
+//   - words whose reading only begins as typed. They come after the
+//     meanings since English typed often begins a reading: "piano" begins
+//     pián'ǒu, and those words buried 鋼琴 (2026-10-18).
+// listed: as for lookUpByPinyin.
+export function lookUpByLetters(dictionary, text, listed = []) {
+  const typed = readTypedPinyin(text);
+  const readings = lookUpByPinyin(dictionary, text, listed);
+  // The letters of a reading as the index has them (pinyinIndex).
+  const isExact = (entry) => typed && entry.pinyin.toLowerCase().replace(/[1-5']/g, '') === typed.letters;
+  const seen = new Set();
+  return [
+    ...readings.filter(isExact),
+    ...lookUpByMeaning(dictionary, text, listed),
+    ...readings.filter((entry) => !isExact(entry)),
+  ].filter((entry) => {
+    const id = `${entry.traditional}|${entry.pinyin}`;
+    const fresh = !seen.has(id);
+    seen.add(id);
+    return fresh;
+  });
+}
+
 // Marks the variants among words found (`variant` on each item): the first
 // word of each reading and meanings, listed words first, is the word; any
 // other not in a list is a variant (see lookUpByPinyin).

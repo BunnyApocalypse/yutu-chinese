@@ -1491,6 +1491,38 @@ button.slot {
   color: var(--text);
 }
 
+/* The ✕ in a pop-up's top corner (main.js). Last in the panel, so that
+   opening it does not put the keyboard's focus on it before the first field,
+   and held in the corner by position: absolute (an open pop-up is placed
+   fixed, so the ✕ is placed within it). Quiet, in the text's color: seen at
+   about 22px, tapped at 44px. */
+.dialog-close {
+  position: absolute;
+  top: var(--space-small);
+  right: var(--space-small);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap-small);
+  height: var(--tap-small);
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+}
+
+.dialog-close:active {
+  background: var(--pressed);
+}
+
+/* A pop-up's heading keeps clear of the ✕. */
+.settings-panel:has(> .dialog-close) > h2,
+.settings-panel:has(> .dialog-close) > form > h2 {
+  padding-right: var(--space-huge);
+}
+
 /* The dimmed page behind the open panel. */
 .settings-panel::backdrop {
   background: var(--backdrop);

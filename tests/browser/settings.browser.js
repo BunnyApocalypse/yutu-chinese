@@ -133,7 +133,7 @@ describe('settings', { concurrency: false }, () => {
     assert.equal(await isShown(page, 'add-simplified'), true);
     assert.equal(await isShown(page, 'add-pinyin-taiwan'), false);
     // The one box left is not labeled with a script.
-    assert.equal(await page.evaluate(`document.getElementById('add-simplified').placeholder`), 'Word or phrase: 汉字 or pinyin');
+    assert.equal(await page.evaluate(`document.getElementById('add-simplified').placeholder`), 'Word: 汉字, pinyin or English');
     await useAddForm(page, 'add-list-fold');
     assert.doesNotMatch(await textOf(page, 'list-hint'), /traditional, pinyin|Taiwan/);
     await useAddForm(page, 'add-word-fold');
@@ -184,7 +184,7 @@ describe('settings', { concurrency: false }, () => {
     }
     await useAddForm(page, 'add-word-fold');
     assert.equal(await isShown(page, 'add-traditional'), true);
-    assert.equal(await page.evaluate(`document.getElementById('add-traditional').placeholder`), 'Traditional 繁體 or pinyin');
+    assert.equal(await page.evaluate(`document.getElementById('add-traditional').placeholder`), 'Traditional 繁體, pinyin or English');
     await useAddForm(page, 'add-list-fold');
     assert.match(await textOf(page, 'list-hint'), /simplified, traditional, pinyin/);
   });
@@ -193,7 +193,7 @@ describe('settings', { concurrency: false }, () => {
     await choose(page, 'script-select', 'traditional');
     // A setting is saved before it takes effect, which takes a moment.
     await waitUntil(page, `document.getElementById('add-simplified').hidden`, 'the simplified box to go');
-    assert.equal(await page.evaluate(`document.getElementById('add-traditional').placeholder`), 'Word or phrase: 漢字 or pinyin');
+    assert.equal(await page.evaluate(`document.getElementById('add-traditional').placeholder`), 'Word: 漢字, pinyin or English');
     await type(page, 'word-search', 'library');
     await waitUntil(page, `${rows(1)} && document.querySelector('#word-list li').textContent.startsWith('圖書館')`);
     assert.doesNotMatch(await textOf(page, '#word-list li'), /图书馆/);
