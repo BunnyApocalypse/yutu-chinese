@@ -38,7 +38,7 @@ const TIPS = {
   // The first time the grades are offered (review.js), in Review or at a
   // lesson's graded step.
   grades: {
-    text: 'Grade yourself after each card; tap the card to take the suggested grade.',
+    text: 'How was this card? Choose, or tap the card to take the suggestion.',
     target: '#grade-row',
     side: 'below',
   },
@@ -89,7 +89,7 @@ const TIPS = {
   // Below the first character's parts: above them it would cover the
   // character itself, which can be tapped too.
   wordPage: {
-    text: 'Tap any character or part to go further.',
+    text: 'Tap a character or part to see more about it.',
     target: '#word-page .character-parts',
     side: 'below',
   },
