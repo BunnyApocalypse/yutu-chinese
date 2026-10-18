@@ -249,6 +249,11 @@ describe('decks', { concurrency: false }, () => {
     // (tester 2, 2026-10-17: there was no way back).
     assert.equal(await isShown(page, 'place-title'), false);
     assert.equal(await textOf(page, 'study-back-button'), 'Decks');
+    // While a card is up, the arrow alone takes the menu button's place.
+    await waitUntil(page, `document.querySelector('main').classList.contains('focused')`, 'a card up');
+    assert.equal(await page.evaluate(`getComputedStyle(document.getElementById('menu-button')).display`), 'none');
+    assert.equal(await page.evaluate(`getComputedStyle(document.getElementById('study-back-label')).display`), 'none');
+    assert.equal(await page.evaluate(`document.getElementById('study-back-button').getAttribute('aria-label')`), 'Back to Decks');
     await tap(page, 'study-back-button');
     await waitUntil(page, `!document.getElementById('words-panel').hidden && document.getElementById('deck-head').hidden`, 'the front page');
     assert.equal(await isShown(page, 'study-back-button'), false);

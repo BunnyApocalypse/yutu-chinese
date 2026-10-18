@@ -542,8 +542,15 @@ button.icon-button.no-sound {
    away, so that the writing area can have their room ("focused" on main,
    set by review.js). The menu button stays, in the upper left corner. */
 main.focused .counts-row,
-main.focused .place-title,
-main.focused #study-back-button {
+main.focused .place-title {
+  display: none;
+}
+
+/* Studying a deck opened from Decks, the corner has the way back in place
+   of the menu button: the arrow alone, where ☰ was (tester 2, 2026-10-17,
+   could not go back; the owner, 2026-10-18). Decks has the menu. */
+main.focused .top-bar:has(#study-back-button:not([hidden])) .menu-button,
+main.focused #study-back-label {
   display: none;
 }
 

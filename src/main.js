@@ -166,7 +166,11 @@ const wordsPanel = createWordsPanel(
     const shown = setMode(newMode);
     // "Learn it now" can come from the Words tab too.
     if (studiedFrom.mode === 'decks' || studiedFrom.mode === 'words') {
-      byId('study-back-label').textContent = studiedFrom.mode === 'words' ? 'Words' : 'Decks';
+      const backTo = studiedFrom.mode === 'words' ? 'Words' : 'Decks';
+      byId('study-back-label').textContent = backTo;
+      // Its name for a screen reader, also while a card is up, when the
+      // arrow is alone in the corner.
+      byId('study-back-button').setAttribute('aria-label', `Back to ${backTo}`);
       byId('place-title').hidden = true;
       byId('study-back-button').hidden = false;
     }
