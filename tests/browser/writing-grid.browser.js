@@ -82,9 +82,16 @@ async function writeChar(page, char, strokeOrder, position, random) {
   let status = '';
   let strokesDrawn = 0;
   for (const strokeNum of strokeOrder) {
+    // If the app has shrunk the strokes so far, to fit a character begun too
+    // big (zoomToFit in src/frame.js), a hand goes on next to them, at their
+    // new size.
+    const zoom = await page.evaluate(
+      `document.getElementById('writing-area').getAttribute('data-zoom')`,
+    );
+    const [zoomScale, zoomX, zoomY] = zoom ? zoom.split(' ').map(Number) : [1, 0, 0];
     const points = data.medians[strokeNum].map(([x, y]) => [
-      position.scale * x + position.dx + (random() * 2 - 1) * JITTER,
-      position.scale * y + position.dy + (random() * 2 - 1) * JITTER,
+      zoomScale * (position.scale * x + position.dx) + zoomX + (random() * 2 - 1) * JITTER,
+      zoomScale * (position.scale * y + position.dy) + zoomY + (random() * 2 - 1) * JITTER,
     ]);
     status = await drawStroke(page, area, points);
     strokesDrawn += 1;
@@ -94,7 +101,12 @@ async function writeChar(page, char, strokeOrder, position, random) {
       break;
     }
   }
-  return { status, strokesDrawn, orderNoteShown: await isShown(page, 'order-note') };
+  return {
+    status,
+    strokesDrawn,
+    orderNoteShown: await isShown(page, 'order-note'),
+    zoomed: await page.evaluate(`document.getElementById('writing-area').hasAttribute('data-zoom')`),
+  };
 }
 
 describe('writing grid', { concurrency: BROWSER_COUNT }, () => {
@@ -158,5 +170,30 @@ describe('writing grid', { concurrency: BROWSER_COUNT }, () => {
         });
       }
     }
+  }
+
+  // A character begun so big that the rest of it would land beyond the
+  // writing area: the strokes so far shrink to make room (a tester, twice,
+  // 2026-10-17). Its left part is written 1.5 times the size, so big that
+  // strokes of the right part would begin beyond the area; the rest is
+  // written next to it as it then is.
+  const TOO_BIG = {
+    鋼: { scale: 1.5, dx: 0, dy: -310 },
+    好: { scale: 1.5, dx: 190, dy: -250 },
+  };
+  for (const [char, position] of Object.entries(TOO_BIG)) {
+    const name = `${char} begun too big is zoomed out and can be finished`;
+    it(name, { timeout: 120000 }, async () => {
+      const { medians } = loadStrokeData(char);
+      assert.ok(!canBeWritten(medians, position), 'without zooming out, this could not be finished');
+      const strokeOrder = medians.map((median, index) => index);
+      const result = await browsers.use((page) => writeChar(page, char, strokeOrder, position, makeRandom(name)));
+      assert.equal(
+        result.status,
+        'No mistakes',
+        `stroke ${result.strokesDrawn} of ${strokeOrder.length} was not accepted`,
+      );
+      assert.ok(result.zoomed, 'the strokes should have been shrunk');
+    });
   }
 });

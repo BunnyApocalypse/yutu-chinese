@@ -15,7 +15,16 @@
 import HanziWriter from 'hanzi-writer';
 import { loadCharData } from './charData.js';
 import { isShortcutStroke, joinedLine } from './shortcuts.js';
-import { fitFrame, applyFrame, framesDiffer, sizeIsKnown, NO_FRAME } from './frame.js';
+import {
+  fitFrame,
+  applyFrame,
+  framesDiffer,
+  sizeIsKnown,
+  extentOf,
+  zoomToFit,
+  combineFrames,
+  NO_FRAME,
+} from './frame.js';
 import { toPoints, resample, averageDistance } from './lines.js';
 import { themeColor } from './theme.js';
 import { HOLD_MS, HOLD_STILLNESS_PX, isSwipeUp, risesSteeply } from './gestures.js';
@@ -111,6 +120,10 @@ export function createQuiz(target, size, handlers) {
   // baseData moved into that frame.
   let frame = NO_FRAME;
   let framedData = null;
+  // The box around the character's printed strokes (see zoomToFit), and the
+  // zoom applied so far to what has been written of it, for the browser tests.
+  let extent = null;
+  let zoomSoFar = NO_FRAME;
   // The strokes accepted so far. For each:
   //   position:    how many strokes had been written before it
   //   strokeCount: how many textbook strokes it covered (2 for a joined stroke)
@@ -228,6 +241,8 @@ export function createQuiz(target, size, handlers) {
     path.setAttribute('stroke-width', penWidth);
     path.setAttribute('stroke-linecap', 'round');
     path.setAttribute('stroke-linejoin', 'round');
+    // The line keeps its width when the strokes are shrunk (zoomInk).
+    path.setAttribute('vector-effect', 'non-scaling-stroke');
     drawnLayer.appendChild(path);
   }
 
@@ -341,6 +356,7 @@ export function createQuiz(target, size, handlers) {
     frame = NO_FRAME;
     framedData = baseData;
     acceptedStrokes = [];
+    noteZoom(NO_FRAME);
     if (changed) {
       await giveWriter(baseData);
     }
@@ -394,9 +410,58 @@ export function createQuiz(target, size, handlers) {
     if (!framesDiffer(fitted, frame)) {
       return false;
     }
-    frame = fitted;
-    framedData = applyFrame(baseData, frame);
+    useFrame(fitted);
     return true;
+  }
+
+  // Moves the reference into `newFrame`. If the whole character would no
+  // longer fit in the writing area there, first zooms out: the strokes
+  // written so far shrink on screen, and the frame and the strokes'
+  // recorded points with them, so that everything stays as it was relative
+  // to everything else (see zoomToFit in frame.js). Not before the size
+  // being written is known: the first stroke says only where.
+  function useFrame(newFrame) {
+    frame = newFrame;
+    const zoom = sizeIsKnown(acceptedStrokes) ? zoomToFit(extent, frame) : null;
+    if (zoom) {
+      frame = combineFrames(zoom, frame);
+      acceptedStrokes = acceptedStrokes.map((entry) => ({ ...entry, drawn: moved(entry.drawn, zoom) }));
+      zoomInk(zoom);
+      noteZoom(combineFrames(zoom, zoomSoFar));
+    }
+    framedData = applyFrame(baseData, frame);
+  }
+
+  // Shrinks the strokes on screen as `zoom` shrinks the stroke data. The
+  // strokes are on screen in pixels, and the data's units run upward from
+  // -124 inside the padding (as for demoLayer above), so the zoom is turned
+  // into pixels first. They are put into a group of their own, which slides
+  // into place (.drawn-strokes > g in style.css); a later zoom puts that
+  // group into another, so zooms add up.
+  function zoomInk(zoom) {
+    const top = size - padding - 124 * unit; // where y = 0 is, in pixels
+    const shiftX = (1 - zoom.scale) * padding + unit * zoom.dx;
+    const shiftY = (1 - zoom.scale) * top - unit * zoom.dy;
+    const group = document.createElementNS(SVG_NAMESPACE, 'g');
+    group.append(...drawnLayer.childNodes);
+    drawnLayer.appendChild(group);
+    // The browser must see the group unmoved before it is moved, or it
+    // jumps instead of sliding. Asking for its style makes the browser
+    // take note of it as it is.
+    getComputedStyle(group).transform;
+    group.style.transform = `matrix(${zoom.scale}, 0, 0, ${zoom.scale}, ${shiftX}, ${shiftY})`;
+  }
+
+  // Keeps the zoom so far on the writing area as `data-zoom` ("scale dx dy",
+  // in the data's units), so that a browser test can write the rest of a
+  // character where a hand would, next to the shrunk strokes.
+  function noteZoom(zoom) {
+    zoomSoFar = zoom;
+    if (zoom === NO_FRAME) {
+      target.removeAttribute('data-zoom');
+    } else {
+      target.setAttribute('data-zoom', `${zoom.scale} ${zoom.dx} ${zoom.dy}`);
+    }
   }
 
   // ---- Two accepted stroke orders ----
@@ -641,11 +706,10 @@ export function createQuiz(target, size, handlers) {
     const written = stroke.strokeNum + 1;
     sequence = reading.sequence;
     acceptedStrokes = reading.accepted;
-    if (reading.frame !== frame) {
-      frame = reading.frame;
-      framedData = applyFrame(baseData, frame);
-    }
     noteAccepted(stroke.strokeNum, [reading.strokeNum], stroke.drawnPath.points);
+    if (reading.frame !== frame) {
+      useFrame(reading.frame);
+    }
     refitFrame();
     reportProgress({ strokesDone: written, totalStrokes, totalMistakes: mistakes });
     // This never happens at the last stroke, so there is always more to come.
@@ -945,6 +1009,7 @@ export function createQuiz(target, size, handlers) {
       frame = NO_FRAME;
       framedData = data;
       acceptedStrokes = [];
+      extent = extentOf(data);
 
       if (!writer) {
         writer = HanziWriter.create(target, char, {

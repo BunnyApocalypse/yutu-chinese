@@ -644,6 +644,14 @@ main.focused .top-bar {
   gap: var(--space-medium);
 }
 
+/* Your strokes shrinking when a character begun too big would not fit (zoomInk
+   in quiz.js): they slide into place quickly, so that it is clear what moved. */
+@media (prefers-reduced-motion: no-preference) {
+  .drawn-strokes > g {
+    transition: transform 0.2s ease-out;
+  }
+}
+
 /* The lesson's demonstration of the next stroke (see showDemo in quiz.js): a
    thick line along the stroke, cut to the stroke's shape, drawn again and
    again. The line counts as having length 1 (its pathLength), so a dash of 1

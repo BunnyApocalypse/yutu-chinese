@@ -104,6 +104,84 @@ export function fitFrame(pairs) {
   return { scale, dx, dy };
 }
 
+// ---- Zooming out when the character would not fit ----
+//
+// A character begun big (the left part of 鋼 across half the box) is expected
+// to go on at that size, so its other part lands beyond the writing area,
+// where no stroke can be drawn. When that happens the strokes written so far
+// are shrunk, and the reference with them, until the whole character fits
+// again: as if the writer had stepped back from the paper.
+
+// Where a character may reach: the box the stroke data is drawn in (0 to
+// 1024 across, -124 to 900 upward) and halfway into the margin the writing
+// area leaves around it (PADDING_SHARE in quiz.js, about 70 units).
+export const ROOM = { left: -35, right: 1059, bottom: -159, top: 935 };
+// A zoom leaves the character this much inside the room, so that a writer
+// who goes on a little big is not zoomed after every stroke.
+const ZOOM_SLACK = 25;
+
+// The box around everything a character's printed outlines cover:
+// { left, right, bottom, top } in the data's units.
+export function extentOf(charData) {
+  const numbers = charData.strokes.join(' ').match(/-?\d*\.?\d+(?:e-?\d+)?/gi).map(Number);
+  // The numbers come in x, y pairs (see moveOutline).
+  const xs = numbers.filter((number, index) => index % 2 === 0);
+  const ys = numbers.filter((number, index) => index % 2 === 1);
+  return { left: Math.min(...xs), right: Math.max(...xs), bottom: Math.min(...ys), top: Math.max(...ys) };
+}
+
+// The frame that does `inner` first and then `outer`.
+export function combineFrames(outer, inner) {
+  return {
+    scale: outer.scale * inner.scale,
+    dx: outer.scale * inner.dx + outer.dx,
+    dy: outer.scale * inner.dy + outer.dy,
+  };
+}
+
+// If a character whose outlines cover `extent` (from extentOf) would reach
+// beyond the writing area in `frame`, returns the zoom that brings it back:
+// a frame (as above) to apply to everything written so far, and to `frame`.
+// Otherwise returns null.
+//
+// It shrinks toward the middle of the box, not toward where there is room,
+// so that the movement gives away as little as possible about where the
+// rest of the character goes (the owner, 2026-10-18, worried about an
+// accidental hint). Only if that is not enough does it also shift.
+export function zoomToFit(extent, frame) {
+  const left = frame.scale * extent.left + frame.dx;
+  const right = frame.scale * extent.right + frame.dx;
+  const bottom = frame.scale * extent.bottom + frame.dy;
+  const top = frame.scale * extent.top + frame.dy;
+  if (left >= ROOM.left && right <= ROOM.right && bottom >= ROOM.bottom && top <= ROOM.top) {
+    return null;
+  }
+  const target = {
+    left: ROOM.left + ZOOM_SLACK,
+    right: ROOM.right - ZOOM_SLACK,
+    bottom: ROOM.bottom + ZOOM_SLACK,
+    top: ROOM.top - ZOOM_SLACK,
+  };
+  const scale = Math.min(1, (target.right - target.left) / (right - left), (target.top - target.bottom) / (top - bottom));
+  // Shrunk toward the middle of the box.
+  let dx = (1 - scale) * BOX_CENTER.x;
+  let dy = (1 - scale) * BOX_CENTER.y;
+  // Then moved in from whichever edge it is still beyond. It is now no wider
+  // or taller than the target, so it is beyond one edge of each pair at most.
+  const shiftInto = (low, high, targetLow, targetHigh) => {
+    if (low < targetLow) {
+      return targetLow - low;
+    }
+    if (high > targetHigh) {
+      return targetHigh - high;
+    }
+    return 0;
+  };
+  dx += shiftInto(scale * left + dx, scale * right + dx, target.left, target.right);
+  dy += shiftInto(scale * bottom + dy, scale * top + dy, target.bottom, target.top);
+  return { scale, dx, dy };
+}
+
 // A new fit is only worth acting on if it differs from the frame in use by
 // more than these.
 const SCALE_DIFFERENCE_THAT_MATTERS = 0.03;

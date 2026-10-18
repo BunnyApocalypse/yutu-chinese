@@ -4,7 +4,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-import { fitFrame, applyFrame, framesDiffer, NO_FRAME } from '../src/frame.js';
+import {
+  fitFrame,
+  applyFrame,
+  framesDiffer,
+  extentOf,
+  combineFrames,
+  zoomToFit,
+  ROOM,
+  NO_FRAME,
+} from '../src/frame.js';
 import { toPoints, resample, averageDistance } from '../src/lines.js';
 
 const taiwanData = new Map();
@@ -143,4 +152,89 @@ test('following the frame brings later strokes close to where they are expected'
   // Hanzi Writer wants a stroke within about 260 units on average; aim well inside that.
   const withinReach = withFrame.filter((distance) => distance <= 130).length / withFrame.length;
   assert.ok(withinReach > 0.98, `share within reach: ${withinReach}`);
+});
+
+// ---- Zooming out ----
+
+// True if a character covering `extent` stays within the writing area's room
+// in `frame`.
+function fitsInRoom(extent, frame) {
+  return (
+    frame.scale * extent.left + frame.dx >= ROOM.left - 0.01 &&
+    frame.scale * extent.right + frame.dx <= ROOM.right + 0.01 &&
+    frame.scale * extent.bottom + frame.dy >= ROOM.bottom - 0.01 &&
+    frame.scale * extent.top + frame.dy <= ROOM.top + 0.01
+  );
+}
+
+test('the box around a character covers its outlines', () => {
+  const data = { strokes: ['M 100 200 Q 150 250 200 -20 Z', 'M 600 700 L 50 300 Z'] };
+  assert.deepEqual(extentOf(data), { left: 50, right: 600, bottom: -20, top: 700 });
+});
+
+test('combining frames does one and then the other', () => {
+  const inner = { scale: 1.2, dx: -30, dy: 40 };
+  const outer = { scale: 0.8, dx: 100, dy: -10 };
+  const both = combineFrames(outer, inner);
+  const point = { x: 300, y: 500 };
+  const once = { x: inner.scale * point.x + inner.dx, y: inner.scale * point.y + inner.dy };
+  const twice = { x: outer.scale * once.x + outer.dx, y: outer.scale * once.y + outer.dy };
+  assert.ok(Math.abs(both.scale * point.x + both.dx - twice.x) < 1e-9);
+  assert.ok(Math.abs(both.scale * point.y + both.dy - twice.y) < 1e-9);
+});
+
+test('a character that fits is not zoomed', () => {
+  for (const data of taiwanData.values()) {
+    assert.equal(zoomToFit(extentOf(data), NO_FRAME), null, data.character);
+  }
+  // Written a little big, but still within the room.
+  assert.equal(zoomToFit(extentOf(taiwanData.get('麼')), { scale: 1.05, dx: -20, dy: -20 }), null);
+});
+
+test('the left part of 鋼 written big zooms out until the right part fits', () => {
+  // 鋼 is not in the Taiwan set; the app takes it from the big set.
+  const data = JSON.parse(fs.readFileSync('node_modules/hanzi-writer-data/鋼.json', 'utf8'));
+  const random = makeRandom(5);
+  // 金 is its first 8 strokes. Written 1.4 times the size, its left edge
+  // kept where it is.
+  const written = { scale: 1.4, dx: -40, dy: -155 };
+  const frame = fitFrame(pairsFor(data.medians.slice(0, 8), written, random));
+  const extent = extentOf(data);
+  assert.ok(!fitsInRoom(extent, frame), 'the right part should reach beyond the area');
+  const zoom = zoomToFit(extent, frame);
+  assert.ok(zoom.scale < 0.95, JSON.stringify(zoom));
+  assert.ok(fitsInRoom(extent, combineFrames(zoom, frame)));
+});
+
+test('a zoom always brings the whole character into the room', () => {
+  // Every frame the fit can give: up to 1.5 times the size, the middle moved
+  // up to 320 units.
+  const frames = [];
+  for (const scale of [0.4, 0.8, 1, 1.2, 1.5]) {
+    for (let angle = 0; angle < 360; angle += 45) {
+      const radians = (angle * Math.PI) / 180;
+      const moveX = 320 * Math.cos(radians);
+      const moveY = 320 * Math.sin(radians);
+      frames.push({ scale, dx: 512 - scale * 512 + moveX, dy: 388 - scale * 388 + moveY });
+    }
+  }
+  for (const char of '麼學這為校國謝機電聽好明') {
+    const extent = extentOf(taiwanData.get(char));
+    for (const frame of frames) {
+      const zoom = zoomToFit(extent, frame);
+      const after = zoom ? combineFrames(zoom, frame) : frame;
+      assert.ok(fitsInRoom(extent, after), `${char} in ${JSON.stringify(frame)}`);
+      if (zoom) {
+        assert.ok(zoom.scale <= 1);
+      }
+    }
+  }
+});
+
+test('a zoom shrinks toward the middle of the box, so it says nothing about where the rest goes', () => {
+  // A character centered and too big in every direction shrinks in place.
+  const extent = { left: 0, right: 1024, bottom: -124, top: 900 };
+  const zoom = zoomToFit(extent, { scale: 1.3, dx: 512 - 1.3 * 512, dy: 388 - 1.3 * 388 });
+  assert.ok(Math.abs(zoom.scale * 512 + zoom.dx - 512) < 1e-9);
+  assert.ok(Math.abs(zoom.scale * 388 + zoom.dy - 388) < 1e-9);
 });
