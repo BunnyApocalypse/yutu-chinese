@@ -8,7 +8,7 @@ Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where
 
 - **Everything released to test and stable** (the owner's word), both suites passing (181 unit tests, 306 browser tests). Nothing is waiting to be pushed.
 - **Tester 2's review (2026-10-17) is done:** B1 to B4 fixed, R1 to R14 built or dropped (R9). Built this session: R3/R4 and R6 (`docs/cards.md`, "Select words" and "Repeating a lesson"); the card's top line on the corner's center line, centered in Learn, a size bigger (`docs/pitfalls.md`); selecting ending on leaving the list; the ready-made decks as their lists have them (`docs/decks.md`); a late "close" of the question panel no longer answering the next question (`src/confirm.js`).
-- **Open, none of it agreed yet:** a streak system (the owner's idea; a big feature, theirs to decide); the tester's point that people must be able to try the app without studying it first (worth watching someone new before sharing it with a department or a center); "Show more" past a list's first 200 words (`MAX_ROWS`); the UX review's tasks left for the pass over the looks.
+- **Open:** the roadmap agreed on 2026-10-18 ("Roadmap" below), with what comes before the first release to real users.
 - **To know:** don't change files while the browser suite runs (below). Pictures for a decision are made with small scripts using the test harness (`startApp`, `startBrowsers`, `Page.captureScreenshot`), in the session's scratchpad or `local/`; the one-off ones of 2026-10-17 and 18 were deleted once their points were built, as were the atlas's pictures (`node scripts/ux-atlas.js` makes them again).
 
 **Handover from the first session of 2026-10-18** (the owner ended it to start afresh).
@@ -190,6 +190,38 @@ The owner watched a tester (a designer, no Chinese, simplified, no study apps be
 - The Skritter exports in `exports/` are plain word lists (a TSV and a CSV). The scheduling data from the GDPR request has not arrived.
 
 ## Roadmap
+
+Agreed with the owner on 2026-10-18. **The first release** means the app's first users beyond testers: a small group of learners and an online language-learning community, without advertising. They are strangers who try the app on their own, so the first release is about first impressions and keeping their data safe. **Changes to the layout come before it** (the owner: no big UX changes once there are real users, if it can be avoided). Each item is planned with the owner before it is built.
+
+**Before the first release**, roughly in this order:
+
+1. **"Too many buttons" and the busy Learn screen** (from the first testing session): the last change to the layout, so that what follows is built into it.
+2. **Easy to try without studying it first** (tester 2's main point): someone arriving from a link should be writing a character within a minute.
+3. **Streaks** (details under "Earlier roadmap" below, "Nudges"). To settle: what counts as a day studied and when it ends; whether a day of Learn alone counts (nothing in Learn is saved today, `docs/cards.md`); whether a missed day breaks it; reminders, which only the device itself could send; where it shows; turning it off.
+4. **Recording how long each review takes**, even if the progress tab comes later, so that the tab has real data when it arrives. As Anki does, a review counts at most a set time (Anki: 60 seconds). Old reviews just lack the field, so the store layout needn't change.
+5. **Importing an Anki deck (.apkg)** (details under "Earlier roadmap" below). Needs libraries to read the file (a zip holding an SQLite database, newer ones compressed with zstd): dependencies to ask about. Open: what to do with the writing cards.
+6. **The finished 兔 logo**, from a calligrapher, in place of the drawn one (`scripts/icon.html`). Takes an artist's time, so to be started early; its license must allow its use in the app.
+7. **Data safety, seen by a stranger:** that everything stays on their device, why backups matter, Safari clearing a site not opened for 7 days.
+8. **The TOCFL list's license** settled: permission asked, the list hidden until then, or the risk taken knowingly.
+9. **The owner trying sentences, combining backups between real devices, and leeches.**
+10. **What changed between versions**, shown to returning users, and **a way to give feedback** that strangers find.
+
+**Near-term:**
+
+- **A progress tab, inspired by Anki's** (the owner, 2026-10-18): time spent studying, streaks, words learned and so on.
+- "Show more" past a list's first 200 words (`MAX_ROWS`).
+- A setting for target retention.
+
+**Nice to have:**
+
+- Checking by hand with VoiceOver or TalkBack, the phones' screen readers (`docs/interface.md`, "Accessibility").
+- A German interface, then other languages (`docs/goals.md`, "Translations").
+- The Skritter import, if the GDPR data arrives.
+- A mode for going from 繁體 to 簡體 or back; mainland, Hong Kong or Taiwan traditional forms; zhuyin; longer shortcuts (more strokes joined, reordered or dropped); syncing through storage the learner already has.
+
+## Earlier roadmap (2026-10-12 to 2026-10-17)
+
+Kept for the details of what was built and what was asked; what is still open is in "Roadmap" above.
 
 1. **Done:** one hardcoded character, stroke-by-stroke quiz with grading, reachable from a phone over the LAN.
 2. **Done:** raw input, lenient grading, optional 2-stroke 子.

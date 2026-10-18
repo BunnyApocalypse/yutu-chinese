@@ -114,7 +114,7 @@ Full list in `docs/layout.md`.
 
 Past session notes are in `docs/history.md`. **Start with its latest handover** (at the top of "Where the work stands"): everything released, and what is open.
 
-- **Both testing sessions are done** (2026-10-14 and 2026-10-17, `docs/history.md`), and so is the pass over the looks (2026-10-17). **Open, not agreed:** a streak system (the owner's idea), making the app easy to try without studying it first, "Show more" past a list's first 200 words.
+- **Both testing sessions are done** (2026-10-14 and 2026-10-17, `docs/history.md`), and so is the pass over the looks (2026-10-17). **The roadmap was agreed on 2026-10-18** (`docs/history.md`, "Roadmap"): what comes before the first release to real users, near-term, and nice to have. Changes to the layout go first.
 - **The app is named 玉兔中文** (Yùtù Zhōngwén, "Jade Rabbit Chinese"; the owner, 2026-10-15), at `.../yutu-chinese/`, with a jade 兔 on a paper moon as its icon (`scripts/icon.html`) until a calligrapher's 兔 replaces it. Where Chinese can't be marked with `lang` (plain-text reports, file names) it is "Yutu Chinese". The database (`hanzi-trainer`) and the backup format name (`hanzi-trainer-backup`) keep the old name for good. The move: `docs/offline.md`, "The old address".
 - **Gestures on the writing area** (a must-have for the owner on mobile) **were built on 2026-10-15**: hold for a hint, swipe up to start again (`docs/writing.md`). Tried by the owner on their phone and released the same day.
 - **The accessibility review was done and fixed on 2026-10-15** (`docs/interface.md`, "Accessibility"). Open: checking by hand with VoiceOver or TalkBack.
