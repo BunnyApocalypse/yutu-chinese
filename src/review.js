@@ -1382,6 +1382,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     async activate(newMode = 'review') {
       active = true;
       mode = newMode;
+      // The style sheet centers the kind of card in Learn (main.learning).
+      page.classList.toggle('learning', mode === 'learn');
       tappedSinceArriving = false;
       justLearned = null;
       await loading;
@@ -1397,6 +1399,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     // Leaves the page ready for Free practice, which uses the writing parts.
     deactivate() {
       setFocus(false);
+      page.classList.remove('learning');
       showNotice('');
       offerListen(false);
       active = false;

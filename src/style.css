@@ -573,6 +573,37 @@ main.focused #study-back-label {
   }
 }
 
+/* While a card is up, its first line (the kind of card and the
+   loudspeaker) moves up to the corner, so that the menu button or the arrow
+   there is on the same line, centered with it: the corner's buttons are 36px
+   from 6px down, and so is the line (the owner, 2026-10-18: the arrow sat
+   10px above it). The corner itself does not move, on any screen. */
+main.focused {
+  padding-top: 6px;
+}
+
+/* In Learn the kind of card is centered ("New word · step 3 of 5"), with the
+   loudspeaker at the right end (the owner, 2026-10-18). About, Edit and Show
+   pinyin never come up there (nothing is graded), so nothing can run into
+   it. In Review it stays at the left end, out of their way (.type-row).
+   :root, to come after the wide layout's padding (above) as well. */
+:root main.focused.learning .type-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  padding-left: 0;
+}
+
+main.focused.learning .type-row .card-type {
+  grid-column: 2;
+  margin-right: 0;
+  text-align: center;
+}
+
+main.focused.learning .type-row #listen-button {
+  grid-column: 3;
+  justify-self: end;
+}
+
 main.focused .top-bar {
   position: absolute;
   top: 6px;
