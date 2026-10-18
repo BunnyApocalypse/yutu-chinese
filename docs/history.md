@@ -13,7 +13,34 @@ Moved word for word from CLAUDE.md on 2026-10-15; see `docs/README.md` for where
   - **Done later that day: the top bar stays while scrolling** (the owner said yes to the draft; `docs/interface.md`, "The menu"), with the line under it only once scrolled, and a browser test (`words.browser.js`). Pictures as built in `local/sticky-built/` (`node local/sticky-built/shoot.js`).
   - **UX item 16 done later that day** (`docs/cards.md`). **Free practice moved to Settings later that day** (the owner: mostly a debugging tool; `docs/interface.md`). Step 3, the managing screens, is done. **Step 4, the wording and the end of Review, done later that day** (the owner said yes to each proposal and looked at the pictures, `local/wording/index.html`; `docs/interface.md`, "One name for each thing" and "The end of Review"). That ends the agreed order; what is left for the pass over the looks is the Yutu looks (item 7 turned out done already). **The Yutu looks were built later that day**, replacing the plain Light and Dark (`docs/interface.md`, "Dark mode").
   - **Words beyond the first 200 of a list** can only be reached by searching (`MAX_ROWS`); a "Show more" would fix it. Raised with the owner, not decided.
+  - **Bugs from the second session with tester 2 (2026-10-17)**, to fix (all the session's points are listed under "To review" below, B1 to B3 among them):
+    - **B1. A character started too big runs off the writing area** (happened twice to the tester, a beginner): the first strokes were so large that the rest of the character had no room. The tester suggested zooming out by itself rather than refusing the stroke; the owner agreed. Read `docs/writing.md` and `docs/pitfalls.md` first: it touches how drawn strokes are fitted to Hanzi Writer's frame.
+    - **B2. "Practicing <word>" gives the answer away** when practicing a word's writing (`place-title`, `src/main.js`). To settle: "Practicing a word", or blanks filled in once it is written.
+    - **B3. The add button stays live on the page of a word already added.** To settle: hide it or grey it out (the tester: remove it, to simplify).
 - **To know:** the offline browser tests' occasional failure in a full run was found and fixed later that day (noted below). The screenshot atlas (`node scripts/ux-atlas.js`, `docs/ux-review.md`) now has six sizes, `TRY_CSS` to try a style first, and pictures one Review card of each kind; the owner chooses from pictures side by side, built in `local/`. Changing many lines by pattern went wrong once that day (text in messages changed too): rename only exact places, and compare the strings and comments with the original afterwards.
+
+**To review: the second session with tester 2 (2026-10-17)** (the owner showed the tester the app after the changes made from their first session; the transcript is in `local/testing/`). Each to be discussed with the owner before it is built. B1 to B3 are the bugs in the handover above.
+
+- **B1 to B3:** see above.
+- **Agreed with the tester during the session:**
+  - **R1. Adding a word by its English meaning** (the tester wanted to add "piano" without knowing its pinyin). The Words tab already searches meanings (`lookUpByMeaning`, `docs/words.md`); the add form does not.
+  - **R2. "Delete" as a button of its own on a card**, not only inside Edit.
+  - **R3. Holding a word in a list starts selecting** (as "Select words" does), as phones do elsewhere.
+  - **R4. Selecting several words from a deck's list, then moving them to a deck or editing them together.**
+  - **R5. Shorter wording when grading yourself**, for example "How was this card? Choose, or tap the card to take the suggestion." Again, Hard, Good and Easy stay (the owner: learners coming from Anki know them).
+  - **R6. Going through Learn again for words already learned**, for a learner who wants many guided repetitions before feeling comfortable (the owner: perhaps a button in the menu).
+  - **R7. Learn showing mistakes:** a character written right only after starting again turns green, and the tester wanted to see that it was not right at first. Weigh against the owner's decision of 2026-10-16 that nothing in Learn is graded (`docs/cards.md`).
+  - **R8. A back button** on a screen where the tester could not go back (the review screen, it seems; which one to be checked).
+- **Smaller points, several for the pass over the looks:**
+  - **R9. "About this word" is too big** and competes with the card's text.
+  - **R10. The wording of the hint that a tap shows more information** (the owner: "we should change the wording"; which element is not clear from the recording).
+  - **R11. "My words only" seemed to do nothing**: it only changes something when searching for a word not in your words. A clearer label, or a note.
+  - **R12. Keep a ✕ on every pop-up**, even though a tap outside closes it.
+  - **R13. A sentence in a deck's list was taken for the same word added twice**: perhaps set sentences apart in the list.
+  - **R14. An animation the tester found "a bit annoying"** (the owner: it turns itself off after playing once). Unclear from the recording; ask the tester.
+- **Liked by the tester:** the simpler menu, all settings in one place, the bigger writing area (strokes feel more accurate), adding to a deck, the back button.
+- **Mentioned by the owner, not agreed:** a streak system. That is a big new feature, so it needs the owner's decision first (see CLAUDE.md, "Where the work stands").
+- **For the audience:** the owner means to share the app with a university's Chinese department and a local Chinese center, so with learners who are not very serious. The tester's main point: people must be able to try it without studying it first.
 
 **From the UX review of 2026-10-16** (`docs/ux-review.md`; the owner asked for each finding to be noted as a task, **to be discussed with them first, then fixed**). The numbers are the review's; the question to settle comes first in each. **Sorted with the owner on 2026-10-16:** 1, 2, 3, 8, 11, 15, 17 and the small phone's part of 6 fixed that day (marked **Done**); 9 kept as it is; 4, 5, 7, 10, 12, 13, 14, 16 and the rest of 6 for the pass over the looks.
 
