@@ -241,13 +241,14 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     await waitUntil(page, `[...document.querySelectorAll('#word-list li')].some((row) => row.textContent.startsWith('老師'))`, '老師 among your words');
     await waitUntil(page, `!${dictionaryRows}.some((row) => row.startsWith('老師'))`, '老師 out of the dictionary\'s list');
 
-    // "My words only" leaves the dictionary out; so does a deck's page.
-    await page.evaluate(`document.getElementById('my-words-only').click()`);
+    // "Dictionary results" switched off leaves the dictionary out; so does a deck's page.
+    await page.evaluate(`document.getElementById('dictionary-results').click()`);
     await waitUntil(page, `document.getElementById('dictionary-part').hidden`, 'the dictionary gone');
-    await page.evaluate(`document.getElementById('my-words-only').click()`);
+    await page.evaluate(`document.getElementById('dictionary-results').click()`);
     await waitUntil(page, `!document.getElementById('dictionary-part').hidden`, 'the dictionary back');
     await tap(page, 'decks-tab');
     await waitUntil(page, `document.getElementById('dictionary-part').hidden`, 'no dictionary on the Decks tab');
+    await type(page, 'word-search', '');
     await type(page, 'word-search', '');
   });
 

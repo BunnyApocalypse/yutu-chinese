@@ -83,7 +83,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
 
   const countElement = byId('word-count');
   const searchInput = byId('word-search');
-  const myWordsOnly = byId('my-words-only');
+  const dictionaryResults = byId('dictionary-results');
   const dictionaryPart = byId('dictionary-part');
   const dictionaryList = byId('dictionary-list');
   const dictionaryNote = byId('dictionary-note');
@@ -619,13 +619,13 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
   searchInput.addEventListener('input', renderList);
   filterSelect.addEventListener('change', renderList);
   sortSelect.addEventListener('change', renderList);
-  myWordsOnly.addEventListener('change', renderList);
+  dictionaryResults.addEventListener('change', renderList);
 
   // ---- The dictionary under your words (Words tab) ----
 
   // While something is searched on the Words tab, the dictionary's words
   // that are not among yours are listed under them, by characters, pinyin
-  // or English meaning, unless "My words only" is ticked (the owner,
+  // or English meaning, unless "Dictionary results" is switched off (the owner,
   // 2026-10-15: they kept going there to look up a word to add). A tap opens
   // the word's page, where it can be added to a deck.
   //
@@ -644,7 +644,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
   function dictionaryWanted() {
     return (
       view === 'words' &&
-      !myWordsOnly.checked &&
+      dictionaryResults.checked &&
       filterSelect.value === '' &&
       !cardsPanel.selecting() &&
       searchInput.value.trim() !== ''
@@ -718,7 +718,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
   // The dictionary is fetched as soon as the search box is tapped on the
   // Words tab, so that it is usually there by the time a word is typed.
   searchInput.addEventListener('focus', () => {
-    if (view === 'words' && !myWordsOnly.checked) {
+    if (view === 'words' && dictionaryResults.checked) {
       loadDictionary();
     }
   });

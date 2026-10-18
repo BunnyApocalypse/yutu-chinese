@@ -345,10 +345,15 @@
                 Deck
                 <select id="words-deck-select" class="deck-select" aria-label="Deck whose words are listed"></select>
               </label>
-              <!-- Searching your words only, or the dictionary too (wordsPanel.js). -->
-              <label class="check-label">
-                <input id="my-words-only" type="checkbox" />
-                My words only
+              <!-- Searching the dictionary too, or your words only (wordsPanel.js):
+                   an on/off switch, on to begin with. A checkbox "My words only"
+                   until 2026-10-18: a tester ticked it with nothing searched,
+                   saw nothing change and took it for broken; the owner chose a
+                   switch named for what it shows. role="switch" makes a screen
+                   reader say "on" and "off" instead of "checked". -->
+              <label class="switch-label">
+                Dictionary results
+                <input id="dictionary-results" class="switch" type="checkbox" role="switch" checked />
               </label>
             </div>
           <div class="list-heading">
