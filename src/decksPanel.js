@@ -72,9 +72,11 @@ export function fillDeckSelect(select, decks, first, { skip = () => false, keep 
 // afterChange: called after anything was saved, to read it all afresh and
 //              show it (which calls render() here)
 // getSettings: returns the current settings (see settings.js)
+// goBack():    called first by the top bar's way back; true if it went back
+//              itself (to the word's page a deck was opened from)
 //
 // Returns { render() }.
-export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getOpenDeck, open, study, afterChange, getSettings }) {
+export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getOpenDeck, open, study, afterChange, getSettings, goBack }) {
   const listElement = byId('deck-list');
   const pathElement = byId('deck-path');
   const addForm = byId('add-deck-form');
@@ -185,6 +187,9 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
   // "‹ Back" beside the path).
   const backButton = byId('deck-back-button');
   backButton.addEventListener('click', () => {
+    if (goBack()) {
+      return;
+    }
     const parent = parentOf(getOpenDeck());
     open(parent ? parent.id : null);
   });

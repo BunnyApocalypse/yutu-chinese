@@ -154,6 +154,8 @@ const wordsPanel = createWordsPanel(
   },
   (word) => practiceWord(word),
   () => mode !== 'review' && mode !== 'learn',
+  (newMode, options) => setMode(newMode, options),
+  () => mode,
 );
 
 // Free practice: any kind of card for what is in the text box. Nothing is

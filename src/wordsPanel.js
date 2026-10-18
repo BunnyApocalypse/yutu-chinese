@@ -66,6 +66,9 @@ const byId = (id) => document.getElementById(id);
 //           that deck chosen
 // practiceWord(word): Free practice with that word ("Practice" on its page)
 // canPractice(): whether a word's page offers that now (not in Review or Learn)
+// setMode(mode, options): shows another screen (setMode in main.js);
+//           returns a promise
+// getMode(): the screen showing ('decks', 'words', 'practice', ...)
 //
 // The panel serves two tabs. The Decks tab shows the decks: choosing one,
 // adding to it, studying it. The Words tab shows the words: finding them,
@@ -74,7 +77,7 @@ const byId = (id) => document.getElementById(id);
 // Returns { show(view), edit(word), showWord(word) }; call show() whenever
 // one of the two tabs is opened ('decks' or 'words') or a setting has
 // changed (without a view: the one that was showing).
-export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord, canPractice) {
+export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord, canPractice, setMode, getMode) {
 
 
   const countElement = byId('word-count');
@@ -176,8 +179,15 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     renderList();
   });
 
+  // A deck's page opened from a deck's box on a word's page: where that
+  // page was, so that the top bar's "‹ Back" brings it back, as "Practice"
+  // does (the owner, 2026-10-18: going up to Decks lost the place).
+  // { mode, deckId, scrollY, word }; null once anything else is opened.
+  let cameFromWord = null;
+
   // Opens a deck's page, or the front page (null), at its top.
   function openDeckPage(deckId) {
+    cameFromWord = null;
     openDeckId = deckId;
     searchInput.value = '';
     listForm.forget();
@@ -200,7 +210,29 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     study: studyDeck,
     afterChange: () => afterChange(),
     getSettings,
+    goBack: () => {
+      if (!cameFromWord) {
+        return false;
+      }
+      goBackToWord(cameFromWord);
+      return true;
+    },
   });
+
+  // Back from a deck's page to the word's page it was opened from: the
+  // screen, the deck page or list and the scroll as they were.
+  async function goBackToWord(from) {
+    cameFromWord = null;
+    await setMode(from.mode, { keepPlace: true });
+    if (from.mode === 'decks' || from.mode === 'words') {
+      openDeckId = from.deckId;
+      renderDecks();
+      showView();
+      renderList();
+      window.scrollTo(0, from.scrollY);
+    }
+    wordPage.open(words.find((entry) => entry.id === from.word.id) || from.word);
+  }
 
   // Managing cards (cardsPanel.js): the "Cards" fold-out of a word's panel
   // and the bar for several words at once.
@@ -269,6 +301,15 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     // "Practice" on a word's page: Free practice with that word (main.js).
     practice: (word) => practiceWord(word),
     canPractice,
+    // A tap on a deck's box on a word's page: that deck's page, with the
+    // way back going to the word's page (cameFromWord).
+    showDeck: async (deckId, word) => {
+      const from = { mode: getMode(), deckId: openDeckId, scrollY: window.scrollY, word };
+      await setMode('decks');
+      openDeckPage(deckId);
+      cameFromWord = from;
+      renderDecks();
+    },
     // The deck a sentence or word added from a page goes into unless another
     // is chosen: the one listed (the deck chosen on the Words tab, or the
     // one whose page is open on the Decks tab), else the deck the app
@@ -325,6 +366,10 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
       !byId('words-panel').hidden &&
       !byId('ready-decks-button').classList.contains('selected');
     byId('deck-back-button').hidden = !onDeckPage;
+    // Opened from a word's page, the way back goes there (cameFromWord).
+    if (cameFromWord) {
+      fillMixed(byId('deck-back-label'), 'Back', getSettings().script);
+    }
     byId('place-title').hidden = onDeckPage;
     byId('deck-adding').hidden = !openDeck();
     // (A deck without words has it as its main button already.)
@@ -780,6 +825,10 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
       // not undone.
       if (newView === 'decks') {
         showSection(false);
+      }
+      // Another screen: a deck opened from a word's page goes up as usual.
+      if (newView) {
+        cameFromWord = null;
       }
       // Coming to the Decks tab always shows the front page, with the decks,
       // and never opens one by itself (the owner, 2026-10-14: having

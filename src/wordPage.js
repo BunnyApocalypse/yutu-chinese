@@ -64,7 +64,10 @@ function element(tag, className, text) {
 // defaultDeckId():    the deck first offered for that and for a sentence
 // practice(word):     opens Free practice with the word
 // canPractice():      false where leaving for it would lose something
-//                     (Review and Learn): "Practice" is not offered
+//                     (Review and Learn): "Practice" is not offered, and
+//                     the deck boxes do not open their deck
+// showDeck(deckId, word): opens the Decks tab on that deck's page, the way
+//                     back going to this word's page
 // showCards(word):    fills in the part of the page that has the word's
 //                     cards and which of them are suspended
 //
@@ -84,6 +87,7 @@ export function createWordPage({
   defaultDeckId,
   practice,
   canPractice,
+  showDeck,
   showCards,
 }) {
   const dialog = byId('word-page');
@@ -286,22 +290,32 @@ export function createWordPage({
   // The decks a word is in, each in a box, as "HSK 3.0 › Level 1 › Family";
   // null if it is in none. Under a word's heading, and under an example
   // sentence that is one of your words.
+  //
+  // "Deck:" before them, since a box alone did not say what it was (the
+  // owner, 2026-10-18: a deck named "Chinese 中文" under a sentence could
+  // read as a label of its language). A tap on a box opens that deck's
+  // page, except where leaving would lose a card or lesson (Review and
+  // Learn, as for "Practice"): there they are plain boxes.
   function deckChips(word) {
-    const labels = deckTree(getDecks())
-      .filter(({ deck }) => (word.decks || []).includes(deck.id))
-      .map(({ label }) => label);
-    if (labels.length === 0) {
+    const rows = deckTree(getDecks()).filter(({ deck }) => (word.decks || []).includes(deck.id));
+    if (rows.length === 0) {
       return null;
     }
     const chips = element('div', 'page-chips');
-    // The boxes say what they are only by where they are, so a screen
-    // reader is told.
-    chips.setAttribute('role', 'group');
-    chips.setAttribute('aria-label', labels.length > 1 ? 'In your decks' : 'In your deck');
+    chips.append(element('span', 'chips-label', rows.length > 1 ? 'Decks:' : 'Deck:'));
+    const canLeave = canPractice();
     // (A deck's name has no script of its own: the learner's is taken.)
-    for (const label of labels) {
-      const chip = element('span', 'chip');
+    for (const { deck, label } of rows) {
+      const chip = element(canLeave ? 'button' : 'span', canLeave ? 'chip chip-button' : 'chip');
       fillMixed(chip, label, getSettings().script);
+      if (canLeave) {
+        chip.type = 'button';
+        chip.title = 'Open this deck';
+        chip.addEventListener('click', () => {
+          dialog.close();
+          showDeck(deck.id, word);
+        });
+      }
       chips.append(chip);
     }
     return chips;

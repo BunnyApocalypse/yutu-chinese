@@ -157,12 +157,47 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     await tap(page, 'word-page-close');
   });
 
+  it('opens a deck from its box on a word\'s page', async () => {
+    await tap(page, 'words-tab');
+    await waitUntil(page, `document.getElementById('word-list').offsetParent !== null`, 'the Words tab');
+    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await waitUntil(page, `document.getElementById('word-page').dataset.shown === '貓|mao1'`, 'the word\'s page');
+    // "Decks:" says what the boxes are (貓 is in two).
+    assert.equal(await textOf(page, '#word-page-body .chips-label'), 'Decks:');
+    await page.evaluate(`[...document.querySelectorAll('#word-page-body .chip-button')].find((chip) => chip.textContent.endsWith('Animals')).click()`);
+    await waitUntil(page, `document.getElementById('deck-title').textContent === 'Animals'`, 'the deck\'s page');
+    assert.equal(await page.evaluate(`document.getElementById('word-page').open`), false);
+    // "‹ Back" in the top bar goes back to the word's page on the Words
+    // tab, not up to the decks.
+    assert.equal(await textOf(page, 'deck-back-label'), 'Back');
+    await tap(page, 'deck-back-button');
+    await waitUntil(page, `document.getElementById('word-page').dataset.shown === '貓|mao1' && document.getElementById('word-page').open`, 'the word\'s page again');
+    assert.equal(await textOf(page, 'place-title'), 'Words');
+    await tap(page, 'word-page-close');
+    // From a deck's page, back to that deck's page.
+    await tap(page, 'decks-tab');
+    await page.evaluate(`[...document.querySelectorAll('#deck-list li')].find((row) => row.textContent.includes('Animals')).querySelector('.deck-open').click()`);
+    await waitUntil(page, `document.getElementById('deck-title').textContent === 'Animals' && ${rows(1)}`, 'the deck\'s page');
+    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await waitUntil(page, `document.getElementById('word-page').dataset.shown === '貓|mao1'`, 'the word\'s page');
+    await page.evaluate(`[...document.querySelectorAll('#word-page-body .chip-button')].find((chip) => !chip.textContent.endsWith('Animals')).click()`);
+    await waitUntil(page, `document.getElementById('deck-title').textContent !== 'Animals' && !document.getElementById('word-page').open`, 'the other deck\'s page');
+    await tap(page, 'deck-back-button');
+    await waitUntil(page, `document.getElementById('word-page').open && document.getElementById('deck-title').textContent === 'Animals'`, 'Animals and the word\'s page again');
+    await tap(page, 'word-page-close');
+    // Then the way back goes up as usual.
+    assert.equal(await textOf(page, 'deck-back-label'), 'Decks');
+  });
+
   it('does not offer Practice on a word\'s page opened in Review', async () => {
     await tap(page, 'review-tab');
     // A word's page opened while Review is the screen (as About does).
     await page.evaluate(`document.querySelector('#word-list li button').click()`);
     await waitUntil(page, `document.getElementById('word-page').dataset.shown`, 'a word\'s page');
     assert.equal(await isShown(page, 'word-page-practice'), false);
+    // Nor do its deck boxes open the deck: leaving would lose the card.
+    assert.equal(await page.evaluate(`document.querySelectorAll('#word-page-body .chip').length > 0`), true);
+    assert.equal(await page.evaluate(`document.querySelectorAll('#word-page-body .chip-button').length`), 0);
     await tap(page, 'word-page-close');
   });
 
