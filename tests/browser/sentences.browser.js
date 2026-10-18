@@ -75,6 +75,32 @@ describe('sentences', { concurrency: false }, () => {
     assert.equal((await stored(page, 'words')).length, 2);
   });
 
+  it('lets the words of a sentence be tapped at the top of its own page', async () => {
+    await type(page, 'word-search', '是同學');
+    await waitUntil(page, `document.querySelectorAll('#word-list li').length === 1`, 'the sentence in the list');
+    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await waitUntil(
+      page,
+      `document.getElementById('word-page').dataset.shown === '我們是同學。|sentence' && document.querySelector('#word-page-body .page-word .sentence-word')`,
+      'the sentence\'s page',
+    );
+    const heading = (selector) =>
+      page.evaluate(`[...document.querySelectorAll('#word-page-body .page-heading ${selector}')].map((part) => part.textContent)`);
+    // Its words, split by its pinyin; the full stop is plain text.
+    assert.deepEqual(await heading('.page-word:not(.second) .sentence-word'), ['我們', '是', '同學']);
+    assert.deepEqual(await heading('.page-word:not(.second)'), ['我們是同學。']);
+
+    await page.evaluate(`document.querySelectorAll('#word-page-body .page-word .sentence-word')[2].click()`);
+    await waitUntil(
+      page,
+      `document.getElementById('word-peek').matches(':popover-open') && document.getElementById('word-peek-word').textContent === '同學'`,
+      'the popup for 同學',
+    );
+    assert.equal(await textOf(page, 'word-peek-pinyin'), 'tóngxué');
+    await tap(page, 'word-page-close');
+    await type(page, 'word-search', '');
+  });
+
   it('asks for the missing word, or for the whole sentence, on its writing card', async () => {
     // Only the writing card, to begin with.
     await tap(page, 'settings-button');

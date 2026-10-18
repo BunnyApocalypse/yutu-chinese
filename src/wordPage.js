@@ -24,6 +24,7 @@ import { deckTree, readyMadeDeck } from './decks.js';
 import { fillDeckSelect } from './decksPanel.js';
 import { speak } from './speech.js';
 import { isRadical } from './radicals.js';
+import { isSentence } from './sentences.js';
 // "?url" makes Vite hand us each file's address instead of its contents.
 import charactersUrl from '../data/makemeahanzi/dictionary.txt?url';
 
@@ -155,15 +156,39 @@ export function createWordPage({
 
   // ---- The parts of the page ----
 
-  // The characters, big, in the script or scripts being learned.
-  function showHeading(forms, reading, other, speakable) {
+  // Puts a sentence into `line` with each of its words a button that shows
+  // the word's popup (peek); punctuation is plain text. `pinyin` is the
+  // sentence's, which says where its words begin and end and how each is
+  // read there (sentenceWords).
+  function fillSentence(line, sentence, pinyin) {
+    for (const piece of sentenceWords(sentence, pinyin)) {
+      if (Array.from(piece.text).some(isHan)) {
+        const button = element('button', 'sentence-word', piece.text);
+        button.type = 'button';
+        button.addEventListener('click', () => peek(button, piece));
+        line.append(button);
+      } else {
+        line.append(piece.text);
+      }
+    }
+  }
+
+  // The characters, big, in the script or scripts being learned. For a
+  // sentence, `sentencePinyin` is its pinyin, and its words can be tapped
+  // as those of an example sentence can (the owner, 2026-10-18).
+  function showHeading(forms, reading, other, speakable, sentencePinyin = null) {
     const settings = getSettings();
     const heading = element('div', 'page-heading');
     const shownForms = settings.bothScripts
       ? [...new Set([forms[settings.script], forms[settings.script === 'traditional' ? 'simplified' : 'traditional']])]
       : [forms.own];
     shownForms.forEach((form, index) => {
-      const characters = element('p', index === 0 ? 'page-word' : 'page-word second', form);
+      const characters = element('p', index === 0 ? 'page-word' : 'page-word second');
+      if (sentencePinyin === null) {
+        characters.textContent = form;
+      } else {
+        fillSentence(characters, form, sentencePinyin);
+      }
       // A sentence is shown smaller than a word, so that it fits.
       characters.classList.toggle('long', Array.from(form).length > 6);
       // Tells the browser which regional font to use.
@@ -213,17 +238,8 @@ export function createWordPage({
         label.lang = 'en';
         line.append(label);
       }
-      // Each word of the sentence can be tapped; punctuation is plain text.
-      for (const piece of sentenceWords(sentence, note.example.pinyin)) {
-        if (Array.from(piece.text).some(isHan)) {
-          const button = element('button', 'sentence-word', piece.text);
-          button.type = 'button';
-          button.addEventListener('click', () => peek(button, piece));
-          line.append(button);
-        } else {
-          line.append(piece.text);
-        }
-      }
+      // Each word of the sentence can be tapped.
+      fillSentence(line, sentence, note.example.pinyin);
       section.append(line);
     });
     section.append(element('p', 'page-pinyin', note.example.pinyin), element('p', 'page-english', note.example.english));
@@ -424,6 +440,7 @@ export function createWordPage({
           described.main,
           described.other,
           isRadical(word) ? null : { word, reading: readingsFor(word, settings.pronunciation, null).primary },
+          isSentence(word) ? word.pinyin : null,
         ),
       );
       // The decks it is in, as "HSK 3.0 › Level 1 › Family".
