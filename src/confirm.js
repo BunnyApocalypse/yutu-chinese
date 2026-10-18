@@ -15,33 +15,57 @@ const byId = (id) => document.getElementById(id);
 //
 // Returns a promise for true if the first button was tapped, false for the
 // other one or the Esc key.
+// The question being asked: { answer, resolve }, until the panel closes.
+let asking = null;
+
 export function ask({ question, detail = '', yes, no = 'Cancel' }) {
   const dialog = byId('confirm-dialog');
-  const yesButton = byId('confirm-yes');
-  const noButton = byId('confirm-no');
+  listenOnce(dialog);
   byId('confirm-question').textContent = question;
   byId('confirm-detail').textContent = detail;
-  yesButton.textContent = yes;
+  byId('confirm-yes').textContent = yes;
+  const noButton = byId('confirm-no');
   noButton.textContent = no || '';
   noButton.hidden = !no;
+  // A question asked again straight after the last one closed: the last
+  // one's "close" has not come yet (the browser sends it a moment later),
+  // so it is answered here, and that late "close" is ignored (below).
+  if (asking) {
+    asking.resolve(asking.answer);
+  }
   return new Promise((resolve) => {
-    let answer = false;
-    const onYes = () => {
-      answer = true;
-      dialog.close();
-    };
-    const onNo = () => dialog.close();
-    // "close" comes however the panel was closed, the Esc key included.
-    const onClose = () => {
-      yesButton.removeEventListener('click', onYes);
-      noButton.removeEventListener('click', onNo);
-      resolve(answer);
-    };
-    yesButton.addEventListener('click', onYes);
-    noButton.addEventListener('click', onNo);
-    dialog.addEventListener('close', onClose, { once: true });
+    asking = { answer: false, resolve };
     // showModal() puts it on top of whatever panel is already open.
     dialog.showModal();
+  });
+}
+
+// The panel's buttons and its "close" are listened to once, for every
+// question, rather than by each question in turn: a late "close" would
+// otherwise reach the next question's listeners and answer it "no" (it
+// did, in the browser tests, when Remove was tapped again at once).
+let listening = false;
+function listenOnce(dialog) {
+  if (listening) {
+    return;
+  }
+  listening = true;
+  byId('confirm-yes').addEventListener('click', () => {
+    if (asking) {
+      asking.answer = true;
+    }
+    dialog.close();
+  });
+  byId('confirm-no').addEventListener('click', () => dialog.close());
+  // "close" comes however the panel was closed, the Esc key and its ✕
+  // included. Open again by then, it belongs to a question already answered.
+  dialog.addEventListener('close', () => {
+    if (dialog.open || !asking) {
+      return;
+    }
+    const { answer, resolve } = asking;
+    asking = null;
+    resolve(answer);
   });
 }
 
