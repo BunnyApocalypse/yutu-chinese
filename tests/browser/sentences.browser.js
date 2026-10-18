@@ -58,7 +58,7 @@ describe('sentences', { concurrency: false }, () => {
     await waitUntil(page, `document.getElementById('word-page').dataset.shown === '我們|wo3men5'`, 'the word\'s page');
 
     await page.evaluate(`document.querySelector('#word-page-body .page-add-sentence button').click()`);
-    await waitUntil(page, `document.querySelector('#word-page-body .page-section .note').textContent.startsWith('Added')`, 'the sentence added');
+    await waitUntil(page, `[...document.querySelectorAll('#word-page-body .page-section .note')].some((line) => line.textContent.startsWith('Added'))`, 'the sentence added');
     const sentence = (await stored(page, 'words')).find((word) => word.kind === 'sentence');
     assert.equal(sentence.id, '我們是同學。|sentence');
     assert.equal(sentence.simplified, '我们是同学。');
@@ -68,9 +68,15 @@ describe('sentences', { concurrency: false }, () => {
     assert.deepEqual(sentence.cloze, { traditional: '我們', simplified: '我们' });
     assert.deepEqual(sentence.decks, ['chinese']);
     assert.equal(typeof sentence.learnedAt, 'number');
-    // A second tap adds nothing.
-    await page.evaluate(`document.querySelector('#word-page-body .page-add-sentence button').click()`);
-    await waitUntil(page, `document.querySelector('#word-page-body .page-section .note').textContent.startsWith('This sentence is already')`, 'said so');
+    // The way to add it is gone, its deck in a box in its place, and so it
+    // stays when the page is opened again.
+    const studiedChips = `[...document.querySelectorAll('#word-page-body .page-sentence-studied .chip')].length`;
+    assert.equal(await page.evaluate(`document.querySelector('#word-page-body .page-add-sentence')`), null);
+    assert.equal(await page.evaluate(studiedChips), 1);
+    await tap(page, 'word-page-close');
+    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await waitUntil(page, `document.querySelector('#word-page-body .page-sentence-studied') !== null`, 'the line again');
+    assert.equal(await page.evaluate(`document.querySelector('#word-page-body .page-add-sentence')`), null);
     await tap(page, 'word-page-close');
     assert.equal((await stored(page, 'words')).length, 2);
   });

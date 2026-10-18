@@ -2225,6 +2225,11 @@ html:has(dialog[open]) {
   margin: var(--space-small) 0;
 }
 
+/* Under an example sentence, which is not centered: its decks on the left. */
+.page-chips.page-sentence-studied {
+  justify-content: flex-start;
+}
+
 .chip {
   padding: 2px var(--space-small);
   border: 1px solid var(--border);

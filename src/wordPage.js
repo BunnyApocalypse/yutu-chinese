@@ -24,7 +24,7 @@ import { deckTree, readyMadeDeck } from './decks.js';
 import { fillDeckSelect } from './decksPanel.js';
 import { speak } from './speech.js';
 import { isRadical } from './radicals.js';
-import { isSentence } from './sentences.js';
+import { isSentence, sentenceId } from './sentences.js';
 // "?url" makes Vite hand us each file's address instead of its contents.
 import charactersUrl from '../data/makemeahanzi/dictionary.txt?url';
 
@@ -245,6 +245,15 @@ export function createWordPage({
     section.append(element('p', 'page-pinyin', note.example.pinyin), element('p', 'page-english', note.example.english));
 
     // The sentence can be studied too: it goes into a deck, in both scripts.
+    // Once it is one of yours, a line saying so in place of the way to add
+    // it (tester 2, 2026-10-17: a live Add for a sentence already added was
+    // puzzling; the owner chose this on 2026-10-18). Putting it in another
+    // deck too is then done from the deck's page.
+    const studied = () => getWords().find((word) => word.id === sentenceId(note.example.traditional));
+    if (studied()) {
+      section.append(sentenceStudiedLine(studied()));
+      return section;
+    }
     const adding = element('div', 'page-add-sentence');
     const deckSelect = deckChooser('Deck to add the sentence to');
     // Worded so that it is plain a card is made (the owner, 2026-10-14:
@@ -263,16 +272,48 @@ export function createWordPage({
         },
         deckSelect.value,
       );
-      said.textContent =
-        result === 'added'
-          ? 'Added. Its cards come up in Review.'
-          : result === 'put in deck'
-            ? 'You had this sentence already. It is in that deck now too.'
-            : 'This sentence is already in that deck.';
+      const word = studied();
+      if (word) {
+        adding.replaceWith(sentenceStudiedLine(word));
+      }
+      said.textContent = result === 'added' ? 'Added. Its cards come up in Review.' : '';
     });
     adding.append(element('span', '', 'Make cards from this sentence in'), deckSelect, addButton);
     section.append(adding, said);
     return section;
+  }
+
+  // The decks a word is in, each in a box, as "HSK 3.0 › Level 1 › Family";
+  // null if it is in none. Under a word's heading, and under an example
+  // sentence that is one of your words.
+  function deckChips(word) {
+    const labels = deckTree(getDecks())
+      .filter(({ deck }) => (word.decks || []).includes(deck.id))
+      .map(({ label }) => label);
+    if (labels.length === 0) {
+      return null;
+    }
+    const chips = element('div', 'page-chips');
+    // The boxes say what they are only by where they are, so a screen
+    // reader is told.
+    chips.setAttribute('role', 'group');
+    chips.setAttribute('aria-label', labels.length > 1 ? 'In your decks' : 'In your deck');
+    // (A deck's name has no script of its own: the learner's is taken.)
+    for (const label of labels) {
+      const chip = element('span', 'chip');
+      fillMixed(chip, label, getSettings().script);
+      chips.append(chip);
+    }
+    return chips;
+  }
+
+  // For an example sentence that is one of your words: its decks, in boxes
+  // as under a word's heading (the owner, 2026-10-18, in place of a line of
+  // text). `word` is the sentence. A sentence in no deck shows nothing.
+  function sentenceStudiedLine(word) {
+    const chips = deckChips(word) || element('div');
+    chips.classList.add('page-sentence-studied');
+    return chips;
   }
 
   // A drop-down list of decks to add something to, with the deck first
@@ -443,18 +484,8 @@ export function createWordPage({
           isSentence(word) ? word.pinyin : null,
         ),
       );
-      // The decks it is in, as "HSK 3.0 › Level 1 › Family".
-      const labels = deckTree(getDecks())
-        .filter(({ deck }) => (word.decks || []).includes(deck.id))
-        .map(({ label }) => label);
-      if (labels.length > 0) {
-        const chips = element('div', 'page-chips');
-        // (A deck's name has no script of its own: the learner's is taken.)
-        for (const label of labels) {
-          const chip = element('span', 'chip');
-          fillMixed(chip, label, settings.script);
-          chips.append(chip);
-        }
+      const chips = deckChips(word);
+      if (chips) {
         parts.push(chips);
       }
       const meaning = element('p', 'page-meaning');
