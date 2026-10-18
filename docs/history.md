@@ -211,6 +211,7 @@ Agreed with the owner on 2026-10-18. **The first release** means the app's first
 - **A progress tab, inspired by Anki's** (the owner, 2026-10-18): time spent studying, streaks, words learned and so on.
 - "Show more" past a list's first 200 words (`MAX_ROWS`).
 - A setting for target retention.
+- **A mascot**, mainly for the streaks screen (the owner, 2026-10-18; likely some time in November 2026).
 
 **Nice to have:**
 
