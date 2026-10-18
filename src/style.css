@@ -2759,7 +2759,7 @@ button.path-part {
   font-size: var(--size-body);
 }
 
-/* The arrow alone, before a screen's name ("‹ Practicing 你"): as wide as
+/* The arrow alone, before a screen's name ("‹ Practicing a word"): as wide as
    it is tall, to be tapped. */
 button.top-back.top-back-arrow {
   justify-content: center;
@@ -2781,7 +2781,7 @@ button.with-arrow {
 
 /* "‹ Decks" in the top bar, in place of the screen's name: the way back
    from a deck's page (the owner, 2026-10-16); "‹ Settings" and the arrow
-   before "Practicing 你" look the same (2026-10-17). */
+   before "Practicing a word" look the same (2026-10-17). */
 button.top-back {
   display: inline-flex;
   align-items: center;

@@ -118,16 +118,17 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     assert.equal(await page.evaluate(`document.getElementById('word-page').open`), false);
     assert.equal(await inView(page, 'word-list'), false);
     // That word alone: no box to type another, a line saying nothing
-    // counts, and "‹ Practicing 貓" in the top bar, the arrow going back to
+    // counts, and "‹ Practicing a word" in the top bar (not naming it, which
+    // would give the answer away), the arrow going back to
     // its page.
     assert.equal(await isShown(page, 'practice-back-button'), false);
     // The title is put up once the writing area has started (practiceWord in
     // src/main.js), a moment after the stroke count: waited for, as it was
     // read too early now and then in a full run.
-    await waitUntil(page, `document.getElementById('place-title').textContent === 'Practicing 貓'`, 'the title');
+    await waitUntil(page, `document.getElementById('place-title').textContent === 'Practicing a word'`, 'the title');
     assert.equal(await isShown(page, 'word-input'), false);
     assert.equal(await isShown(page, 'practice-note'), true);
-    assert.equal(await page.evaluate(`document.getElementById('practice-word-back').getAttribute('aria-label')`), 'Back to the page of 貓');
+    assert.equal(await page.evaluate(`document.getElementById('practice-word-back').getAttribute('aria-label')`), "Back to the word's page");
     await tap(page, 'practice-word-back');
     await waitUntil(page, `document.getElementById('word-page').dataset.shown === '貓|mao1'`, 'the word\'s page again');
     await tap(page, 'word-page-close');

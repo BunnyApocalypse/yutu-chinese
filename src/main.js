@@ -312,11 +312,13 @@ practiceButton.addEventListener('click', () => {
   }
 });
 // "Practice" on a word's page: that word alone, with no text box to type
-// another, and "‹ Practicing 你" in the top bar, the arrow going back to
+// another, and "‹ Practicing a word" in the top bar, the arrow going back to
 // where the page was opened, the page open again (the owner, 2026-10-17: the
 // word alone as the way back read as a link to it, and back has to bring the
 // deck or list back, not only the page). The kind of card can still be
-// chosen. Not offered in Review or Learn (canPractice above).
+// chosen. Not offered in Review or Learn (canPractice above). The title
+// does not name the word, since writing it is the test (tester 2,
+// 2026-10-17; the owner chose the plain wording on 2026-10-18).
 let practicedWord = null;
 // Where the word's page was opened: { mode, scrollY }.
 let practicedFrom = null;
@@ -328,9 +330,9 @@ async function practiceWord(word) {
   await setMode('practice');
   wordInput.hidden = true;
   byId('practice-go').hidden = true;
-  fillMixed(byId('place-title'), `Practicing ${word[script]}`, script);
+  byId('place-title').textContent = 'Practicing a word';
   const back = byId('practice-word-back');
-  back.setAttribute('aria-label', `Back to the page of ${word[script]}`);
+  back.setAttribute('aria-label', "Back to the word's page");
   back.title = 'Back to its page';
   back.hidden = false;
 }
