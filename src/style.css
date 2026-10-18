@@ -1299,6 +1299,33 @@ button.slot {
   color: var(--danger);
 }
 
+/* The same ✓ or ✕ as on the judged boxes (below), after the syllable shown
+   once a tone is answered, so that its green or red is not the only sign. */
+.face-pinyin.passed::after,
+.face-pinyin.missed::after {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5em;
+  height: 1.5em;
+  margin-left: var(--space-small);
+  vertical-align: 0.15em;
+  border-radius: 50%;
+  font: bold var(--size-small)/1 system-ui, sans-serif;
+}
+
+.face-pinyin.passed::after {
+  content: '✓';
+  background: var(--success-text);
+  color: var(--surface);
+}
+
+.face-pinyin.missed::after {
+  content: '✕';
+  background: var(--danger-fill);
+  color: var(--on-accent);
+}
+
 /* A card's face with a word's learning tip on it (cardTip.js): from the top,
    scrolling if it does not fit, and the meaning above it kept shorter. */
 .card-face.with-tip {
