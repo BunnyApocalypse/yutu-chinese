@@ -177,9 +177,10 @@ const wordsPanel = createWordsPanel(
     await shown;
   },
   (word) => practiceWord(word),
-  () => mode !== 'review' && mode !== 'learn',
+  () => mode !== 'review' && mode !== 'learn' && mode !== 'lesson',
   (newMode, options) => setMode(newMode, options),
   () => mode,
+  (word) => repeatLesson(word),
 );
 
 // Free practice: any kind of card for what is in the text box. Nothing is
@@ -229,8 +230,9 @@ practiceType.addEventListener('change', startFreePractice);
 // keepPlace: back to Decks or Words as they were left (practiceWord).
 function setMode(newMode, { keepPlace = false } = {}) {
   mode = newMode;
-  // Review and Learn share the top of the page and the study area.
-  const reviewing = mode === 'review' || mode === 'learn';
+  // Review, Learn and a lesson repeated share the top of the page and the
+  // study area.
+  const reviewing = mode === 'review' || mode === 'learn' || mode === 'lesson';
   // The menu's item for the place shown is marked: by color ("selected"),
   // and for screen readers by aria-current, which they read as "current
   // page".
@@ -272,8 +274,10 @@ function setMode(newMode, { keepPlace = false } = {}) {
   }
   if (reviewing) {
     // A tip the first time (tips.js).
-    document.dispatchEvent(new CustomEvent('screen-shown', { detail: mode }));
-    return review.activate(mode);
+    if (mode !== 'lesson') {
+      document.dispatchEvent(new CustomEvent('screen-shown', { detail: mode }));
+    }
+    return review.activate(mode, { word: repeatedWord });
   }
   // Stops any card being shown and brings the study area back for writing.
   review.deactivate();
@@ -312,7 +316,14 @@ sideMenu.addEventListener('click', (event) => {
 });
 
 // The name of each screen, in the top bar.
-const PLACE_TITLES = { review: 'Review', learn: 'Learn', practice: 'Free practice', decks: 'Decks', words: 'Words' };
+const PLACE_TITLES = {
+  review: 'Review',
+  learn: 'Learn',
+  lesson: 'Repeating a lesson',
+  practice: 'Free practice',
+  decks: 'Decks',
+  words: 'Words',
+};
 
 reviewTab.addEventListener('click', () => setMode('review'));
 // Learn is opened from a deck (its row in Decks, or its page), and from
@@ -379,8 +390,43 @@ byId('practice-word-back').addEventListener('click', async () => {
 // away (setMode).
 let studiedFrom = null;
 byId('study-back-button').addEventListener('click', async () => {
+  if (mode === 'lesson') {
+    backFromLesson();
+    return;
+  }
   await setMode(studiedFrom.mode, { keepPlace: true });
   window.scrollTo(0, studiedFrom.scrollY);
+});
+
+// "Repeat lesson" on the page of a word already learned (tester 2's R6; the
+// owner, 2026-10-18): its lesson again, as practice, nothing saved
+// (review.js). The way back is the one of a deck studied from Decks, "‹ Back"
+// in the top bar (the arrow alone while a card is up), as from a deck's page
+// opened from a word's page; it goes back to where the page was opened, the
+// page open again, as from "Practice". "Back to the word" at the end does
+// the same.
+let repeatedWord = null;
+// Where the word's page was opened: { mode, scrollY }.
+let repeatedFrom = null;
+async function repeatLesson(word) {
+  repeatedWord = word;
+  repeatedFrom = { mode, scrollY: window.scrollY };
+  const shown = setMode('lesson');
+  byId('study-back-label').textContent = 'Back';
+  byId('study-back-button').setAttribute('aria-label', "Back to the word's page");
+  byId('place-title').hidden = true;
+  byId('study-back-button').hidden = false;
+  await shown;
+}
+async function backFromLesson() {
+  await setMode(repeatedFrom.mode, { keepPlace: true });
+  window.scrollTo(0, repeatedFrom.scrollY);
+  wordsPanel.showWord(repeatedWord);
+}
+byId('lesson-back-button').addEventListener('click', () => {
+  if (mode === 'lesson') {
+    backFromLesson();
+  }
 });
 byId('practice-back-button').addEventListener('click', () => {
   byId('settings-button').click();
@@ -404,7 +450,7 @@ function onSettingsChange() {
   loadWordList(); // the suggestions are in the script being learned
   if (mode === 'decks' || mode === 'words') {
     wordsPanel.show();
-  } else if (mode === 'review' || mode === 'learn') {
+  } else if (mode === 'review' || mode === 'learn' || mode === 'lesson') {
     review.refresh();
   } else if (mode === 'practice') {
     startFreePractice();
@@ -753,6 +799,8 @@ async function startUp() {
       lessonNextButton: byId('lesson-next-button'),
       learnNextButton: byId('learn-next-button'),
       addWordsButton: byId('add-words-button'),
+      lessonBackButton: byId('lesson-back-button'),
+      countsRow: document.querySelector('.counts-row'),
       wordRow: byId('word-row'),
       statusRow: byId('status-row'),
       strokeCountElement: byId('stroke-count'),

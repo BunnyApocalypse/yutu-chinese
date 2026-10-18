@@ -62,6 +62,7 @@ const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`;
 //   countsElement, typeElement, meaningElement, pinyinElement, pinyinButton,
 //   gradeRow, practiceAgainButton, editWordButton, leechNote, donePanel, doneMessage, studyArea, scriptFlag,
 //   lessonNote, skipLessonButton, lessonNextButton, learnNextButton, addWordsButton,
+//   lessonBackButton, countsRow,
 //   and the parts of the study area that differ per kind of card:
 //   wordRow, statusRow, strokeCountElement, writingRow, writingButtons, cardFace,
 //   toneButtonRow, orderNote
@@ -104,6 +105,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     lessonNextButton,
     learnNextButton,
     addWordsButton,
+    lessonBackButton,
+    countsRow,
     wordRow,
     statusRow,
     strokeCountElement,
@@ -766,6 +769,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     // Kept short: each shares a line with "I know this word", and a second
     // line pushes the writing area down the screen.
     meet: 'A new word: have a look.',
+    // The same step in a lesson repeated, of a word already learned.
+    meetAgain: 'Have another look.',
     tone: 'First its tones.',
     trace: 'Write each stroke as it is shown.',
     outline: 'Again, over the bare outline.',
@@ -796,12 +801,16 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   async function showLessonStep() {
     const { word } = current;
     const step = lesson.steps[lesson.index];
-    const kind = isRadical(word) ? 'New radical' : 'New word';
+    // A lesson repeated is of a word already learned, not a new one (the
+    // owner, 2026-10-18).
+    const kind = current.repeating ? 'Repeat lesson' : isRadical(word) ? 'New radical' : 'New word';
     typeElement.textContent = `${kind} · step ${lesson.index + 1} of ${lesson.steps.length}`;
-    lessonNote.textContent = LESSON_NOTES[step === 'test' && current.learning ? 'learnTest' : step];
+    const note = step === 'test' && current.learning ? 'learnTest' : step === 'meet' && current.repeating ? 'meetAgain' : step;
+    lessonNote.textContent = LESSON_NOTES[note];
     lessonNote.hidden = false;
-    // "I know this word" is offered at every step.
-    skipLessonButton.hidden = false;
+    // "I know this word" is offered at every step, but not in a lesson
+    // repeated, which saves nothing.
+    skipLessonButton.hidden = Boolean(current.repeating);
     // A tip beside it, the first time (tips.js).
     document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'lesson' }));
     lessonNextButton.hidden = true;
@@ -910,6 +919,12 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   async function nextLessonStep(toIndex = lesson.index + 1) {
     const shown = current;
+    if (toIndex >= lesson.steps.length && current.repeating) {
+      endLesson();
+      stopFlows();
+      showRepeatDone();
+      return;
+    }
     if (toIndex >= lesson.steps.length) {
       // A lesson without writing (writing cards are off, or the word has no
       // stroke data) ends here; with writing it ends when the test is graded.
@@ -958,7 +973,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // how the day stands: someone going through a list they half know would
   // otherwise be stopped at every word.
   skipLessonButton.addEventListener('click', async () => {
-    if (!lesson || !current) {
+    // (Not offered in a lesson repeated, which saves nothing.)
+    if (!lesson || !current || current.repeating) {
       return;
     }
     const { word, learning } = current;
@@ -1049,6 +1065,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     learnNextButton.textContent = 'Learn the next word';
     learnNextButton.hidden = !canGoOn;
     addWordsButton.hidden = !canAdd;
+    lessonBackButton.hidden = true;
     donePanel.hidden = false;
   }
 
@@ -1077,8 +1094,46 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   learnNextButton.addEventListener('click', () => {
     if (mode === 'learn') {
       startNextWord();
+    } else if (mode === 'lesson') {
+      startRepeat();
     }
   });
+
+  // ---- Repeating a word's lesson ----
+  //
+  // "Repeat lesson" on the page of a word already learned (tester 2's R6,
+  // 2026-10-17: a learner wanting more guided rounds before feeling at ease;
+  // the owner, 2026-10-18): the lesson of the Learn tab for that word alone,
+  // as practice. Nothing is saved: no review, no learnedAt, the schedule as
+  // it was, and no "I know this word", which would grade the word's cards.
+  // At the end, "Repeat lesson" again; the way back to the word's page is in
+  // the top bar and beside it (main.js).
+
+  // The word whose lesson is repeated, in the mode 'lesson'.
+  let repeatedWord = null;
+
+  async function startRepeat() {
+    const word = words.find((entry) => entry.id === repeatedWord.id) || repeatedWord;
+    current = { word, type: 'writing', card: null, learning: true, repeating: true };
+    setFocus(true);
+    lesson = { steps: stepsFor(word, true), index: 0 };
+    donePanel.hidden = true;
+    lessonBackButton.hidden = true;
+    studyArea.hidden = false;
+    showScriptFlag(word);
+    const shown = current;
+    if (!(await showLessonStep()) && current === shown) {
+      // No stroke data after all: the lesson starts again without writing.
+      unwritable.add(word.id);
+      startRepeat();
+    }
+  }
+
+  function showRepeatDone() {
+    showLearnMessage('Lesson done.', true);
+    learnNextButton.textContent = 'Repeat lesson';
+    lessonBackButton.hidden = false;
+  }
 
   // What the Learn tab shows: the next word's lesson or, between two words
   // and when there is nothing to learn, a message.
@@ -1249,11 +1304,16 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     hideGrades();
     learnNextButton.hidden = true;
     addWordsButton.hidden = true;
+    lessonBackButton.hidden = true;
     meaningElement.textContent = '';
     pinyinElement.hidden = true;
     pinyinButton.hidden = true;
     if (mode === 'learn') {
       showNextToLearn();
+      return;
+    }
+    if (mode === 'lesson') {
+      startRepeat();
       return;
     }
     justLearned = null;
@@ -1378,12 +1438,17 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     // changed a moment ago), that is waited for, or the card shown would be
     // chosen from what was there before.
     //
-    // newMode: 'review', or 'learn' for the Learn tab
-    async activate(newMode = 'review') {
+    // newMode: 'review', 'learn' for the Learn tab, or 'lesson' for
+    //          repeating `word`'s lesson ("Repeat lesson" on its page)
+    async activate(newMode = 'review', { word = null } = {}) {
       active = true;
       mode = newMode;
-      // The style sheet centers the kind of card in Learn (main.learning).
-      page.classList.toggle('learning', mode === 'learn');
+      repeatedWord = word;
+      // The style sheet centers the kind of card in Learn (main.learning),
+      // and in a lesson repeated, which looks the same.
+      page.classList.toggle('learning', mode === 'learn' || mode === 'lesson');
+      // A lesson repeated has no deck or counts: it is one word's.
+      countsRow.hidden = mode === 'lesson';
       tappedSinceArriving = false;
       justLearned = null;
       await loading;
@@ -1400,6 +1465,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     deactivate() {
       setFocus(false);
       page.classList.remove('learning');
+      countsRow.hidden = false;
       showNotice('');
       offerListen(false);
       active = false;

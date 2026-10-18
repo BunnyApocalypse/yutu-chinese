@@ -138,6 +138,9 @@
         <button id="learn-next-button" class="primary" type="button" hidden>Learn the next word</button>
         <!-- With no words, or none left to learn: to the Decks tab (review.js, main.js). -->
         <button id="add-words-button" class="primary" type="button" hidden>Add words</button>
+        <!-- At the end of a lesson repeated: back to the word's page, as the
+             top bar's "‹ Back" (review.js, main.js). -->
+        <button id="lesson-back-button" type="button" hidden>Back to the word</button>
         <!-- Once per device, after the first word learned, if the browser
              may still clear the app's data (storageMessage.js). -->
         <div id="storage-message" class="storage-message" hidden>
@@ -671,6 +674,9 @@
         <div class="buttons">
           <button id="word-page-back" class="small with-arrow" type="button" hidden><svg class="back-arrow" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19" /></svg><span>Back</span></button>
           <button id="word-page-practice" class="small" type="button" hidden>Practice</button>
+          <!-- "Repeat lesson" for a word learned, "Learn it now" for one
+               still waiting (wordPage.js). -->
+          <button id="word-page-lesson" class="small" type="button" hidden>Repeat lesson</button>
           <button id="word-page-edit" class="small" type="button" hidden>Edit</button>
           <button id="word-page-remove" class="small danger" type="button" hidden>Remove</button>
         </div>

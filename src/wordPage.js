@@ -64,6 +64,10 @@ function element(tag, className, text) {
 // defaultDeckId():    the deck first offered for that and for a sentence
 // remove(word):       asks, then removes the word; true if it was removed
 // practice(word):     opens Free practice with the word
+// repeatLesson(word): goes through the lesson of a word already learned
+//                     again, as practice (main.js)
+// learnWordNow(word): "Learn it now" for a word still waiting: first in
+//                     line, and Learn opened on a deck it is in
 // canPractice():      false where leaving for it would lose something
 //                     (Review and Learn): "Practice" is not offered, and
 //                     the deck boxes do not open their deck
@@ -88,6 +92,8 @@ export function createWordPage({
   isLearned,
   defaultDeckId,
   practice,
+  repeatLesson,
+  learnWordNow,
   canPractice,
   showDeck,
   showCards,
@@ -102,6 +108,18 @@ export function createWordPage({
   const editButton = byId('word-page-edit');
   const practiceButton = byId('word-page-practice');
   const removeButton = byId('word-page-remove');
+  const lessonButton = byId('word-page-lesson');
+
+  // Beside Practice (tester 2's R6; the owner, 2026-10-18): a word or
+  // radical learned can go through its lesson again, and one still waiting
+  // is offered its lesson in Learn. Not for a sentence, which has no lesson,
+  // nor in Review or Learn (canPractice). `learnNowAbove`: the page already
+  // has "Learn it now" at its top (a word just added).
+  function showLessonButton(word, learnNowAbove = false) {
+    const learned = word && isLearned(word);
+    lessonButton.textContent = learned ? 'Repeat lesson' : 'Learn it now';
+    lessonButton.hidden = !word || isSentence(word) || !canPractice() || (!learned && learnNowAbove);
+  }
 
   // The big files, fetched once. A file that cannot be fetched is left out:
   // the page then simply has less on it.
@@ -604,6 +622,7 @@ export function createWordPage({
     editButton.hidden = !shown.word;
     practiceButton.hidden = !shown.word || !canPractice();
     removeButton.hidden = !shown.word || !canPractice();
+    showLessonButton(shown.word, Boolean(word && target.addedTo));
     // For the browser tests, which wait for a page to be filled in.
     dialog.dataset.shown = word ? word.id : target.text;
   }
@@ -859,6 +878,19 @@ export function createWordPage({
     }
   });
 
+  lessonButton.addEventListener('click', () => {
+    if (!dialog.open || !shown.word) {
+      return;
+    }
+    const { word } = shown;
+    dialog.close();
+    if (isLearned(word)) {
+      repeatLesson(word);
+    } else {
+      learnWordNow(word);
+    }
+  });
+
   practiceButton.addEventListener('click', () => {
     if (!dialog.open || !shown.word) {
       return;
@@ -875,6 +907,7 @@ export function createWordPage({
     editButton.hidden = !target.word;
     practiceButton.hidden = !target.word || !canPractice();
     removeButton.hidden = !target.word || !canPractice();
+    showLessonButton(target.word);
     backButton.hidden = true;
     body.replaceChildren();
     delete dialog.dataset.shown;

@@ -70,6 +70,8 @@ const byId = (id) => document.getElementById(id);
 // setMode(mode, options): shows another screen (setMode in main.js);
 //           returns a promise
 // getMode(): the screen showing ('decks', 'words', 'practice', ...)
+// repeatLesson(word): the lesson of a word already learned, again, as
+//           practice ("Repeat lesson" on its page; main.js)
 //
 // The panel serves two tabs. The Decks tab shows the decks: choosing one,
 // adding to it, studying it. The Words tab shows the words: finding them,
@@ -78,7 +80,7 @@ const byId = (id) => document.getElementById(id);
 // Returns { show(view), edit(word), showWord(word) }; call show() whenever
 // one of the two tabs is opened ('decks' or 'words') or a setting has
 // changed (without a view: the one that was showing).
-export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord, canPractice, setMode, getMode) {
+export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord, canPractice, setMode, getMode, repeatLesson) {
 
 
   const countElement = byId('word-count');
@@ -307,6 +309,14 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     showCards: (word) => wordDialog.showCardsOnPage(word),
     // "Practice" on a word's page: Free practice with that word (main.js).
     practice: (word) => practiceWord(word),
+    repeatLesson: (word) => repeatLesson(word),
+    // Learn opened on the deck listed if the word is in it (or in a deck
+    // inside it), else the first deck the word is in.
+    learnWordNow: (word) => {
+      const deck = listDeck();
+      const inList = deck && isInDecks(word, deckWithInside(decks, deck.id));
+      return learnNow(word.id, inList ? deck.id : (word.decks || [])[0] || '');
+    },
     canPractice,
     // A tap on a deck's box on a word's page: that deck's page, with the
     // way back going to the word's page (cameFromWord).
