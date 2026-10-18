@@ -715,10 +715,11 @@ export function createWordFlow(elements) {
       return true;
     },
 
-    // Writes the character on screen again, as practice (see practicing).
-    // Only once the word is finished, and only where practiceWhenDone is set.
+    // Writes the character on screen again once the word is finished: as
+    // practice that changes nothing where practiceWhenDone is set (see
+    // practicing; Review), otherwise the same as Clear (a lesson's steps).
     practiceAgain() {
-      if (options.practiceWhenDone && wordFinished()) {
+      if (wordFinished()) {
         startOver();
       }
     },

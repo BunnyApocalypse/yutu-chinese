@@ -1995,6 +1995,12 @@ button.small {
   margin-top: 0;
 }
 
+/* A lesson's step once written (putToolsAway in review.js): only the way
+   on stays. */
+#writing-buttons.tools-away > :not(.primary) {
+  display: none;
+}
+
 /* Practicing a written word again (review.js): Clear, Show outline and
    Animate come back under the grades, so the grades do not move. */
 .study-area.practicing #writing-buttons {

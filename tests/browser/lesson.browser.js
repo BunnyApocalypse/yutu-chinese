@@ -233,7 +233,7 @@ describe('learning new words', { concurrency: false }, () => {
     await waitUntil(page, `!document.getElementById('learn-next-button').hidden`, 'the screen between two words');
     assert.equal(
       await textOf(page, 'done-message'),
-      '大 is learned: its cards will come up in Review. 1 of 5 today.',
+      '大 is learned: its cards will come up in Review.',
     );
     assert.equal(await textOf(page, 'review-counts'), '1 of 5 learned today · 2 waiting');
     // The first word learned brings the message about long-term storage,

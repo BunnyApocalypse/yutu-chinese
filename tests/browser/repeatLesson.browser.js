@@ -137,6 +137,10 @@ describe('repeating a lesson', { concurrency: false }, () => {
   });
 
   it("goes back to the word's page, where it was opened", async () => {
+    // The page's mark is still there from before the lesson: without
+    // clearing it, the wait below would end before the page is open again,
+    // and its late filling-in would land on the next page opened.
+    await page.evaluate(`delete document.getElementById('word-page').dataset.shown`);
     await tap(page, 'study-back-button');
     await waitUntil(page, `document.getElementById('word-page').dataset.shown === '大|da4'`, "the word's page again");
     assert.equal(await isShown(page, 'words-part'), true);

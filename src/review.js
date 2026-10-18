@@ -158,6 +158,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     const tone = type === 'tone';
     writingRow.hidden = !writing;
     writingButtons.hidden = !writing;
+    writingButtons.classList.remove('tools-away');
     endPractice();
     cardFace.hidden = writing;
     toneButtonRow.hidden = !tone;
@@ -235,6 +236,15 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   function endPractice() {
     studyArea.classList.remove('practicing');
+  }
+
+  // In a lesson's writing steps, once the word is written, Clear, Show
+  // outline and Animate are put away and only the way on stays ("Next step"
+  // or "Done"), with "Practice again" under it, as in Review once answered
+  // (roadmap item 1, draft of 2026-10-18). Writing it again brings them back.
+  function putToolsAway(away) {
+    writingButtons.classList.toggle('tools-away', away);
+    practiceAgainButton.hidden = !away;
   }
 
   practiceAgainButton.addEventListener('click', () => flows.writing.practiceAgain());
@@ -836,8 +846,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         freshRestart: true,
         continueLabel: 'Done',
         judgeChar: (facts) => judgeChar({ ...facts, hintCountsAs: settings.hintCountsAs }),
+        onCharStart: () => putToolsAway(false),
         onWordDone() {
           showPinyin();
+          putToolsAway(true);
           speakAfterStep();
         },
         onContinue: () => nextLessonStep(),
@@ -911,8 +923,12 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // Practice: starting again clears the mistakes.
       freshRestart: true,
       continueLabel: 'Next step',
+      onCharStart: () => putToolsAway(false),
       // The word is heard each time a step of its lesson is finished.
-      onWordDone: speakAfterStep,
+      onWordDone() {
+        putToolsAway(true);
+        speakAfterStep();
+      },
       onContinue: () => nextLessonStep(),
     });
   }
@@ -1149,7 +1165,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     if (justLearned) {
       const name = justLearned[scriptFor(justLearned, settings)];
       showLearnMessage(
-        `${name} is learned: its cards will come up in Review. ${progress}` +
+        // The count is on the line above; only reaching the goal is said here
+        // (the owner, 2026-10-18: "1 of 5 today" twice on one screen).
+        `${name} is learned: its cards will come up in Review.` +
+          (learnedToday >= goal && goal > 0 ? ` ${progress}` : '') +
           (waiting === 0 ? ' No more words are waiting.' : ''),
         waiting > 0,
       );
