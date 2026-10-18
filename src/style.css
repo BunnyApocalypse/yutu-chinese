@@ -179,6 +179,8 @@
      minimum (checked by accessibility.browser.js): a deck's box on a word's
      page. */
   --tap-least: 24px;
+  /* The top bar's height, the same on every screen. */
+  --top-bar: 36px;
 
   /* The width the arrows beside the writing area take, both together with
      their gaps (.side-arrow, .writing-row). chooseSize in wordFlow.js reads
@@ -269,7 +271,7 @@ main {
      main.focused .top-bar has below. */
   align-self: stretch;
   margin: -10px 0 0 -10px;
-  min-height: 36px;
+  min-height: var(--top-bar);
 }
 
 /* The top bar stays at the top of the window while the page scrolls, so
@@ -2813,6 +2815,10 @@ button.top-back {
   align-items: center;
   gap: 2px;
   min-height: var(--tap-small);
+  /* Tall enough to tap, but the extra spills over above and below, so the
+     top bar is no taller with it than with a screen's name (the owner,
+     2026-10-18: a deck's page had a thicker bar, by 8px). */
+  margin: calc((var(--top-bar) - var(--tap-small)) / 2) 0;
   padding: 0 var(--space-tiny);
   border: none;
   background: none;
