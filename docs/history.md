@@ -50,6 +50,7 @@ Agreed with the owner on 2026-10-18. **The first release** means the first users
 - A setting for target retention.
 - **An Android app through F-Droid** (the owner, 2026-10-19), alongside the web app, which stays: the same app wrapped for Android (likely Capacitor, MIT; a dependency to approve when planned), so its data is the app's own and no browser can delete it. F-Droid first (free, and it builds GPL apps from source); the Play Store and iPhone/iPad only if heavily requested (the Play Store needs a closed test with 12 testers for 14 days; Apple needs a Mac and $99 a year). The app's data is separate from the website's: moving over is Export backup, then restore.
 - **A mascot**, mainly for the streaks screen (the owner, 2026-10-18; likely November 2026): a bunny, commissioned from an artist, happy or sad with the streak.
+- **The streak screen without interrupting** (the owner, 2026-10-19; not now): today it opens in the middle of Review or Learn as soon as the day counts. Rather: a small mark that doesn't stop studying when the day counts, and the full screen once the session is over (the end of Review, or leaving Learn). To plan with the owner.
 
 **Nice to have:**
 
