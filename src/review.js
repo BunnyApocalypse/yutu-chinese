@@ -34,6 +34,7 @@ import { ask } from './confirm.js';
 import { isSentence, sentenceCardTypes, sentenceWriting } from './sentences.js';
 import { isRadical, RADICAL_CARD_TYPES } from './radicals.js';
 import { cardTip } from './cardTip.js';
+import { studyByDay, streakAt, streakLine, studyDayKey } from './streak.js';
 
 // The same for a sentence, which has two kinds of card (see sentences.js).
 const SENTENCE_LABELS = {
@@ -75,12 +76,14 @@ const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`;
 // noteOf(word): a promise for the word's learning note, or null
 // tappableText(element, text): fills an element with a learning note whose
 //   words can be tapped (see cardTip.js)
+// streakScreen: the pop-up for a day that counts for the streak
+//   (streakScreen.js)
 //
 // The deck studied is chosen with `deckSelect`, at the top of Review and
 // Learn (see "Studying one deck").
 //
 // Returns { load, activate, deactivate, practice, refresh }.
-export function createReview(elements, flows, settings, editWord, showWord, noteOf, tappableText) {
+export function createReview(elements, flows, settings, editWord, showWord, noteOf, tappableText, streakScreen) {
   const {
     deckSelect,
     countsElement,
@@ -123,6 +126,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   let decks = [];
   // Card ID → card, for every card that has been studied.
   const cards = new Map();
+  // When each review was made and of which card, for the streak (streak.js):
+  // { cardId, wordId, time, markedKnown }, the rest of each review left out.
+  let reviewTimes = [];
   // The tone table (see data/cedict/README.md), loaded at startup. Supplies
   // Taiwan readings and tone variants.
   let toneTable = null;
@@ -527,6 +533,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     };
     await saveReview(newCard, review);
     cards.set(newCard.id, newCard);
+    reviewTimes.push(reviewTime(review));
     // Forgotten once too often: with that setting, the card is suspended.
     if (settings.leechAction === 'suspend' && becameLeech(card, newCard, settings.leechLapses)) {
       await suspend(word, type);
@@ -537,6 +544,25 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       );
     }
     showNext();
+    showStreakIfNew();
+  }
+
+  // ---- Streaks (streak.js) ----
+
+  const reviewTime = ({ cardId, wordId, time, markedKnown }) => ({ cardId, wordId, time, markedKnown });
+  const streakGoal = () => ({ cards: settings.streakCards, words: settings.streakWords });
+
+  function streakNow(now) {
+    return streakAt(studyByDay(reviewTimes, words), now, streakGoal());
+  }
+
+  // The first time today that enough was studied, from Review or Learn:
+  // the streak screen.
+  function showStreakIfNew() {
+    if (settings.streaks) {
+      const now = Date.now();
+      streakScreen.showIfNew(streakNow(now), studyDayKey(now));
+    }
   }
 
   // Shows the four grade buttons with the suggested one highlighted.
@@ -1039,6 +1065,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     for (const card of known.cards) {
       cards.set(card.id, card);
     }
+    reviewTimes.push(...known.reviews.map(reviewTime));
     words = words.map((entry) => (entry.id === word.id ? known.word : entry));
     stopFlows();
     endLesson();
@@ -1086,6 +1113,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     words = words.map((word) => (word.id === learned.id ? learned : word));
     justLearned = learned;
     showNext();
+    showStreakIfNew();
   }
 
   function learnCounts() {
@@ -1347,6 +1375,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     if (plan.reviewedToday > 0) {
       parts.push(line(`You reviewed ${plural(plan.reviewedToday, 'card')} today.`));
     }
+    const streak = settings.streaks ? streakLine(streakNow(now), streakGoal()) : '';
+    if (streak) {
+      parts.push(line(streak, 'done-streak'));
+    }
     const coming = [describeWait(plan.nextDueAt, now)];
     if (plan.laterToday > 1) {
       // The next card is one of those later today.
@@ -1486,6 +1518,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         const newWords = await getAll('words');
         const newCards = await getAll('cards');
         const newDecks = await getAll('decks');
+        const newReviewTimes = (await getAll('reviews')).map(reviewTime);
         // import() fetches the table as its own file, so it doesn't make the
         // main program bigger. If it can't be loaded, tones are judged
         // against the word list alone.
@@ -1499,6 +1532,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         decks = newDecks;
         showDeckChoice();
         toneTable = table;
+        reviewTimes = newReviewTimes;
         cards.clear();
         for (const card of newCards) {
           cards.set(card.id, card);

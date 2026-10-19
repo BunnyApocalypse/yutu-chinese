@@ -13,6 +13,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -119,10 +120,22 @@ process.on('exit', () => {
 //                          (waiting for it, if it is a promise)
 //   errors                 the uncaught errors the page has thrown
 //   close()
+// Where the test browsers keep their files: inside the project, in local/
+// (left out of the repository, and not watched by the dev server), never
+// elsewhere on the computer (the owner, 2026-10-19, after finding the files
+// the tests had saved in ~/Downloads). Each browser's folder is removed when
+// it stops.
+const TEST_BROWSERS_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'local', 'test-browsers');
+
 async function launchBrowser() {
-  // Each browser gets its own empty profile folder, so each has its own
-  // IndexedDB and settings, and nothing of yours is touched.
-  const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'hanzi-trainer-test-'));
+  // Each browser gets its own folder: an empty profile, so each has its own
+  // IndexedDB and settings and nothing of yours is touched, and a place for
+  // the files the app saves (backups, the leech prompt), which would
+  // otherwise go to the Downloads folder.
+  fs.mkdirSync(TEST_BROWSERS_DIR, { recursive: true });
+  const folder = fs.mkdtempSync(path.join(TEST_BROWSERS_DIR, 'browser-'));
+  const profile = path.join(folder, 'profile');
+  const downloads = path.join(folder, 'downloads');
   const child = spawn(
     findBrowser(),
     [
@@ -149,7 +162,7 @@ async function launchBrowser() {
       } catch {
         // already gone
       }
-      fs.rmSync(profile, { recursive: true, force: true, maxRetries: 3 });
+      fs.rmSync(folder, { recursive: true, force: true, maxRetries: 3 });
     },
   };
   runningBrowsers.add(browser);
@@ -216,6 +229,8 @@ async function launchBrowser() {
   }
 
   await send('Runtime.enable'); // needed to be told about the page's errors
+  // Files the app saves go into the browser's own folder (see above).
+  await send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: downloads });
   await send('Emulation.setDeviceMetricsOverride', { ...SCREEN, deviceScaleFactor: 1, mobile: true });
 
   return {
@@ -362,6 +377,14 @@ async function openFreePractice(page, appUrl, keepWelcome = false) {
         if (started && !${keepWelcome} && tips.checked) {
           tips.checked = false;
           tips.dispatchEvent(new Event('change', { bubbles: true }));
+          return '';
+        }
+        // Likewise the streak screen, which a test learning or grading
+        // enough in a day would set off (streak.browser.js turns it on).
+        const streaks = document.getElementById('streaks-checkbox');
+        if (started && !${keepWelcome} && streaks.checked) {
+          streaks.checked = false;
+          streaks.dispatchEvent(new Event('change', { bubbles: true }));
           return '';
         }
         const tab = document.getElementById('practice-button');

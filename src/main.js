@@ -33,6 +33,7 @@ import dictionaryUrl from '../data/cedict/dictionary.tsv?url';
 import { closeOnTapBeside } from './dialogs.js';
 import { createFeedback } from './feedback.js';
 import { createWhatsNew } from './whatsNew.js';
+import { createStreakScreen } from './streakScreen.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -800,6 +801,10 @@ async function startUp() {
       newWordsInput: byId('new-words-input'),
       leechInput: byId('leech-input'),
       leechActionSelect: byId('leech-action-select'),
+      streaksCheckbox: byId('streaks-checkbox'),
+      streakCardsInput: byId('streak-cards-input'),
+      streakWordsInput: byId('streak-words-input'),
+      streakGoal: byId('streak-goal'),
       soundSelect: byId('sound-select'),
       volumeInput: byId('volume-input'),
       sentenceReadingCheckbox: byId('sentence-reading-checkbox'),
@@ -855,6 +860,7 @@ async function startUp() {
     (word, thisCard) => wordsPanel.showWord(word, thisCard),
     (word) => wordsPanel.noteOf(word),
     (element, text) => wordsPanel.tappableText(element, text),
+    createStreakScreen(),
   );
 
   await review.load();

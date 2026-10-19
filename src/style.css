@@ -1675,6 +1675,55 @@ button.slot {
   margin-bottom: var(--space-small);
 }
 
+/* The streak screen (streakScreen.js): the number of days large, centered,
+   with a place above it for the mascot once it is drawn. */
+.streak-dialog {
+  text-align: center;
+}
+
+.streak-mascot {
+  width: 160px;
+  height: 160px;
+  margin: 0 auto var(--space-medium);
+  background: center / contain no-repeat;
+}
+
+.streak-number {
+  margin: var(--space-large) 0 0;
+  font-size: 3.5rem; /* a large number keeps its own size */
+  font-weight: bold;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.streak-label {
+  margin: var(--space-tiny) 0 var(--space-large);
+  font-size: var(--size-title);
+}
+
+.streak-detail {
+  margin: 0 0 var(--space-huge);
+}
+
+.streak-detail p {
+  margin: 0 0 var(--space-tiny);
+}
+
+.streak-dialog > .primary {
+  width: min(100%, 16em);
+}
+
+/* "A day counts after 10 cards reviewed or 2 words learned" runs as one
+   sentence, the two boxes inside it. */
+.setting.streak-goal:not([hidden]) {
+  display: block;
+  line-height: 2.4;
+}
+
+.setting.streak-goal input[type='number'] {
+  width: 4.5em;
+}
+
 /* "What's new" (whatsNew.js): each release's date, then its lines. Long
    lists scroll inside the pop-up, which keeps its ✕ in view. */
 .whats-new-list {

@@ -16,7 +16,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, type, waitUntil, addTestWords, openLearn, openDeckPage, reloadApp, ANSWER_YES, useAddForm } from './harness.js';
+import { startApp, startBrowsers, tap, type, waitUntil, addTestWords, openLearn, openDeckPage, reloadApp, ANSWER_YES, useAddForm, openSettings } from './harness.js';
 
 // Runs in the page; returns a list of what fails, one line each.
 const CHECK = `(() => {
@@ -291,6 +291,31 @@ describe('accessibility', { concurrency: false }, () => {
     await key('3');
     await waitUntil(page, `document.getElementById('grade-row').hidden`, 'the card graded');
     assert.equal(await page.evaluate(reviews), before + 1);
+  });
+
+  it('the streak screen, and its settings', async () => {
+    // Filled in by hand: what is in it is tested in streak.browser.js.
+    await page.evaluate(`(() => {
+      document.getElementById('streak-number').textContent = '12';
+      document.getElementById('streak-label').textContent = 'days in a row';
+      document.getElementById('streak-detail').textContent = 'Today counts: 10 cards reviewed. Your best yet.';
+      document.getElementById('streak-dialog').showModal();
+    })()`);
+    await check('the streak screen');
+    await tap(page, 'streak-continue');
+    // The browser tests start with streaks off, which hides how much makes a
+    // day count; on for this check, and off again after.
+    const setStreaks = (on) =>
+      page.evaluate(`(() => {
+        const box = document.getElementById('streaks-checkbox');
+        box.checked = ${on};
+        box.dispatchEvent(new Event('change', { bubbles: true }));
+      })()`);
+    await openSettings(page, 'settings-studying');
+    await setStreaks(true);
+    await check('Settings, streaks on');
+    await setStreaks(false);
+    await tap(page, 'settings-close');
   });
 
   it('Settings and the introduction', async () => {

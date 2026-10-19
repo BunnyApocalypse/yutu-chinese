@@ -673,6 +673,18 @@
         <button id="whats-new-close" class="dialog-close" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 
+      <!-- The first time each study day that enough was studied for the
+           streak (streakScreen.js, src/streak.js). -->
+      <dialog id="streak-dialog" class="settings-panel streak-dialog" aria-labelledby="streak-label">
+        <!-- The mascot goes here once drawn; data-mood says which picture. -->
+        <div id="streak-mascot" class="streak-mascot" data-mood="happy" aria-hidden="true" hidden></div>
+        <p id="streak-number" class="streak-number"></p>
+        <h2 id="streak-label" class="streak-label"></h2>
+        <div id="streak-detail" class="streak-detail"></div>
+        <button id="streak-continue" class="primary" type="button">Continue</button>
+        <button id="streak-close" class="dialog-close" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
+      </dialog>
+
       <!-- How to reach the people making the app, from the menu (feedback.js). -->
       <dialog id="feedback-dialog" class="settings-panel">
         <h2>Send feedback</h2>
@@ -1095,6 +1107,19 @@
             A suspended card no longer comes up in Review, until you resume it, on the word's page.
           </span>
         </label>
+
+        <div class="setting">
+          <label><input id="streaks-checkbox" type="checkbox" /> Count a streak of days studied</label>
+          <p class="hint">A pop-up the first time each day that you have studied enough, and a line at the end of Review.</p>
+        </div>
+
+        <p id="streak-goal" class="setting streak-goal">
+          A day counts after
+          <input id="streak-cards-input" type="number" min="1" max="500" inputmode="numeric" aria-label="Cards to review for a day to count" />
+          cards reviewed or
+          <input id="streak-words-input" type="number" min="1" max="50" inputmode="numeric" aria-label="Words to learn for a day to count" />
+          words learned.
+        </p>
         </section>
 
         <section id="settings-writing" class="settings-group" hidden>

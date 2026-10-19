@@ -8,6 +8,12 @@ import { DEFAULT_LEECH_LAPSES, MIN_LEECH_LAPSES, MAX_LEECH_LAPSES } from './leec
 import { speak } from './speech.js';
 import { setTheme } from './theme.js';
 import { closeOnTapBeside } from './dialogs.js';
+import {
+  DEFAULT_STREAK_CARDS,
+  DEFAULT_STREAK_WORDS,
+  MAX_STREAK_CARDS,
+  MAX_STREAK_WORDS,
+} from './streak.js';
 
 const MAX_NEW_WORDS_PER_DAY = 50;
 
@@ -66,6 +72,10 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //                   out as a leech (see leeches.js)
 //   leechAction:    'flag' to only point a leech out, 'suspend' to also
 //                   suspend the card when it becomes one
+//   streaks:        true to count a streak of days studied (streak.js): the
+//                   streak screen and its line at the end of Review
+//   streakCards, streakWords: how many cards reviewed, or words learned, make
+//                   a day count for the streak
 //   enabledTypes:   the card types switched on, e.g. ['meaning', 'writing']
 //   studyDeck:      the ID of the deck studied in Review and Learn, or ''
 //                   for all words. Chosen at the top of those two tabs, not
@@ -88,6 +98,10 @@ export async function createSettings(elements, onChange) {
     newWordsInput,
     leechInput,
     leechActionSelect,
+    streaksCheckbox,
+    streakCardsInput,
+    streakWordsInput,
+    streakGoal,
     soundSelect,
     volumeInput,
     sentenceReadingCheckbox,
@@ -110,6 +124,9 @@ export async function createSettings(elements, onChange) {
     newWordsPerDay: await getSetting('newWordsPerDay', DEFAULT_NEW_WORDS_PER_DAY),
     leechLapses: await getSetting('leechLapses', DEFAULT_LEECH_LAPSES),
     leechAction: await getSetting('leechAction', 'flag'),
+    streaks: await getSetting('streaks', true),
+    streakCards: await getSetting('streakCards', DEFAULT_STREAK_CARDS),
+    streakWords: await getSetting('streakWords', DEFAULT_STREAK_WORDS),
     sound: await getSetting('sound', 'auto'),
     volume: await getSetting('volume', 1),
     sentenceReading: await getSetting('sentenceReading', true),
@@ -136,6 +153,11 @@ export async function createSettings(elements, onChange) {
     newWordsInput.value = settings.newWordsPerDay;
     leechInput.value = settings.leechLapses;
     leechActionSelect.value = settings.leechAction;
+    streaksCheckbox.checked = settings.streaks;
+    streakCardsInput.value = settings.streakCards;
+    streakWordsInput.value = settings.streakWords;
+    // How much makes a day count matters only with streaks on.
+    streakGoal.hidden = !settings.streaks;
     soundSelect.value = settings.sound;
     volumeInput.value = Math.round(settings.volume * 100);
     sentenceReadingCheckbox.checked = settings.sentenceReading;
@@ -242,6 +264,21 @@ export async function createSettings(elements, onChange) {
     leechInput.value = value;
     change('leechLapses', value);
   });
+
+  streaksCheckbox.addEventListener('change', () => {
+    streakGoal.hidden = !streaksCheckbox.checked;
+    change('streaks', streaksCheckbox.checked);
+  });
+  // Whatever was typed, a whole number from 1 up to the largest allowed.
+  const streakNumber = (input, key, max) =>
+    input.addEventListener('change', () => {
+      const typed = Math.round(Number(input.value));
+      const value = Number.isFinite(typed) ? Math.min(max, Math.max(1, typed)) : settings[key];
+      input.value = value;
+      change(key, value);
+    });
+  streakNumber(streakCardsInput, 'streakCards', MAX_STREAK_CARDS);
+  streakNumber(streakWordsInput, 'streakWords', MAX_STREAK_WORDS);
 
   for (const checkbox of typeCheckboxes) {
     checkbox.addEventListener('change', () => {
