@@ -98,6 +98,9 @@ test('Safari: the Home Screen or the Dock is what keeps the data, and words are 
 test('a browser that cannot be asked is told to keep backups', () => {
   for (const kind of ['firefox', 'chromium', 'safari', 'other']) {
     assert.match(storageAdvice(kind, state({ canAsk: false })), /no way to ask.*Export backup/);
+    // In Settings, Export backup is just above; elsewhere it is in Settings.
+    assert.match(storageAdvice(kind, state({ canAsk: false })), /Export backup in Settings/);
+    assert.match(storageAdvice(kind, state({ canAsk: false }), false, true), /Export backup above/);
   }
 });
 
@@ -107,10 +110,9 @@ test('the introduction: one button that does what the browser needs', () => {
     action: 'install',
     line: 'This browser keeps the words of an installed app.',
   });
-  // Without it no button can install: the screen just starts, and says how.
-  const noOffer = welcomeStorage('chromium', state());
-  assert.equal(noOffer.action, 'later');
-  assert.match(noOffer.line, /only keeps the words of an installed app: open the browser's menu/);
+  // Without it no button can install: the screen is the steps, as in Safari.
+  assert.deepEqual(welcomeStorage('chromium', state()), { action: 'later', line: '', addTo: 'installComputer' });
+  assert.deepEqual(welcomeStorage('chromium', state(), true), { action: 'later', line: '', addTo: 'installPhone' });
   assert.deepEqual(welcomeStorage('chromium', state({ installed: true, canInstall: true })), { action: 'ask', line: '' });
   // Firefox asks the person; on a phone, installing is mentioned as a convenience.
   assert.equal(welcomeStorage('firefox', state()).line, 'Firefox will ask at the top of the page: choose "Allow".');

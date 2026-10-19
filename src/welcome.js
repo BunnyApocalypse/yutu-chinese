@@ -31,11 +31,14 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
   const skipButton = byId('welcome-skip');
   const bar = byId('welcome-bar');
   const keepNote = byId('welcome-keep-note');
-  // The last screen's text: in general, or Safari's steps (index.html).
+  // The last screen's text: in general, or the steps to install in Safari
+  // or in a Chromium browser without its install question (index.html).
   const keepTexts = {
     general: byId('welcome-keep-general'),
     homeScreen: byId('welcome-keep-home-screen'),
     dock: byId('welcome-keep-dock'),
+    installPhone: byId('welcome-keep-install-phone'),
+    installComputer: byId('welcome-keep-install-computer'),
   };
   const startRadios = [...dialog.querySelectorAll('input[name="welcome-start"]')];
   // Whether the level to start with was chosen by hand; until it is, it
@@ -134,14 +137,17 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
     // tester and the owner, 2026-10-16).
     // ('later' starts as usual, with nothing to say "Not now" to.)
     const willAsk = last && (storagePlan.action === 'install' || storagePlan.action === 'ask');
-    // In Safari the steps above are what to do; starting here is the
+    // Where the screen is steps to install (Safari, or Chromium without its
+    // install question), they are what to do; starting here is the
     // exception, so its button is not the main one.
-    const safariSteps = last && Boolean(storagePlan.addTo);
-    nextButton.classList.toggle('primary', !safariSteps);
+    const installSteps = last && Boolean(storagePlan.addTo);
+    nextButton.classList.toggle('primary', !installSteps);
     nextButton.textContent = !last
       ? 'Next'
-      : safariSteps
-        ? 'Start in Safari anyway'
+      : installSteps
+        ? keepData.kind === 'safari'
+          ? 'Start in Safari anyway'
+          : 'Start in the browser anyway'
         : storagePlan.action === 'install'
         ? 'Install the app and start'
         : storagePlan.action === 'ask'

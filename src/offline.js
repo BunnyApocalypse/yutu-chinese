@@ -322,7 +322,8 @@ export async function setUpOffline({ statusElement, keepElement, updateButton, k
   // Long-term storage: say how it stands and what to do about it.
   const showKeeping = async () => {
     const keeping = await keepData.state();
-    keepElement.textContent = storageAdvice(keepData.kind, keeping, keepData.mobile);
+    // (inSettings: Export backup is just above this line.)
+    keepElement.textContent = storageAdvice(keepData.kind, keeping, keepData.mobile, true);
     // "Allow long-term storage" only where tapping it can help: not in
     // Chrome before the app is installed (it says no until then), nor in
     // Safari outside the Home Screen or the Dock (only putting it there

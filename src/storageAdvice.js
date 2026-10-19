@@ -53,7 +53,10 @@ export function isMobile(userAgent, maxTouchPoints = 0) {
 const INSTALL_HOW = 'open the browser\'s menu and choose "Install app" or "Add to Home screen"';
 // Safari's app on the Home Screen or in the Dock starts with nothing.
 const BRING_OVER = 'Words studied here in Safari don\'t come along by themselves: use Export backup here, then Import backup in the app.';
-const BACKUP = 'Until then, use Export backup in Settings now and then.';
+// The advice to make backups meanwhile. `where` says where Export backup
+// is: 'in Settings' in the reminder, 'above' in Settings itself, where the
+// button is just above the advice.
+const backup = (where, start = 'Until then, use') => `${start} Export backup ${where} now and then.`;
 
 // The advice to show.
 //
@@ -65,14 +68,16 @@ const BACKUP = 'Until then, use Export backup in Settings now and then.';
 //   installed:  true if the app is running as an installed app
 //   canInstall: true if the app can offer its own "Install the app" button
 // mobile: true on a phone or tablet (isMobile)
+// inSettings: true when shown in Settings, beside Export backup
 //
 // Returns a sentence or two.
-export function storageAdvice(kind, { canAsk, kept, asked, installed, canInstall }, mobile = false) {
+export function storageAdvice(kind, { canAsk, kept, asked, installed, canInstall }, mobile = false, inSettings = false) {
+  const BACKUP = backup(inSettings ? 'above' : 'in Settings');
   if (kept) {
     return 'Long-term storage is allowed: the browser will not clear this data to free up space.';
   }
   if (!canAsk) {
-    return `This browser has no way to ask for long-term storage. ${BACKUP.replace('Until then, use', 'Use')}`;
+    return `This browser has no way to ask for long-term storage. ${backup(inSettings ? 'above' : 'in Settings', 'Use')}`;
   }
   const install = canInstall ? 'tap "Install the app" below' : INSTALL_HOW;
 
@@ -94,7 +99,7 @@ export function storageAdvice(kind, { canAsk, kept, asked, installed, canInstall
   if (kind === 'safari') {
     return installed
       ? asked
-        ? 'Safari has not confirmed it, but data of an app on the Home Screen is kept. ' + BACKUP.replace('Until then, use', 'Still, use')
+        ? 'Safari has not confirmed it, but data of an app on the Home Screen is kept. ' + backup(inSettings ? 'above' : 'in Settings', 'Still, use')
         : 'Safari decides by itself. Data of an app on the Home Screen, like this one, is kept.'
       : 'Safari decides by itself, and it deletes a site\'s data after about a week without a visit. ' +
           (mobile
@@ -124,8 +129,10 @@ export function storageAdvice(kind, { canAsk, kept, asked, installed, canInstall
 //           button saying "Keep my words safe" would seem to have done it;
 //           the owner, 2026-10-19), or 'none' if there is nothing to ask
 //   line:   a sentence to show, or ''
-//   addTo:  in Safari, where the person should put the app instead:
-//           'homeScreen' or 'dock' (the screen then shows the steps); else absent
+//   addTo:  where the screen shows the steps to install instead (the owner,
+//           2026-10-19: not in quiet small print): in Safari 'homeScreen'
+//           or 'dock'; in Chromium without its install question
+//           'installPhone' or 'installComputer'; else absent
 export function welcomeStorage(kind, { canAsk, kept, installed, canInstall }, mobile = false) {
   if (kept) {
     return { action: 'none', line: 'This browser already keeps them.' };
@@ -136,7 +143,7 @@ export function welcomeStorage(kind, { canAsk, kept, installed, canInstall }, mo
   if (kind === 'chromium' && !installed) {
     return canInstall
       ? { action: 'install', line: 'This browser keeps the words of an installed app.' }
-      : { action: 'later', line: `This browser only keeps the words of an installed app: ${INSTALL_HOW}.` };
+      : { action: 'later', line: '', addTo: mobile ? 'installPhone' : 'installComputer' };
   }
   if (kind === 'firefox') {
     // At the bottom of the screen on a phone (the owner, 2026-10-16).

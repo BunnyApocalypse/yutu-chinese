@@ -959,7 +959,10 @@
         <section data-step hidden>
           <div id="welcome-keep-general">
             <h2>Keep your words safe</h2>
-            <p>Your words are stored only in this browser. Allow it to keep them, so they are never deleted.</p>
+            <!-- Not "Allow it to keep them": in most browsers there is nothing to
+                 allow, and the line below says what this one needs (the
+                 owner, 2026-10-19). -->
+            <p>Your words are stored only in this browser, on this device.</p>
             <!-- What this particular browser needs, in a line (welcomeStorage in storageAdvice.js). -->
             <p id="welcome-keep-note" class="hint"></p>
           </div>
@@ -984,6 +987,28 @@
               <li>In the menu bar, choose File › Add to Dock (macOS 14 or later).</li>
               <li>Click Add.</li>
               <li>Open <span lang="zh-Hant-TW">玉兔中文</span> from the Dock and start there.</li>
+            </ol>
+          </div>
+          <!-- The same for a Chromium browser that hasn't offered its own
+               install question, so no button can install (the owner,
+               2026-10-19). Unlike Safari, the installed app shares this
+               browser's data, so the words come along. -->
+          <div id="welcome-keep-install-phone" hidden>
+            <h2>Install <span lang="zh-Hant-TW">玉兔中文</span> as an app</h2>
+            <p>This browser may delete a website's data to make space. An installed app keeps your words.</p>
+            <ol class="welcome-steps">
+              <li>Tap the browser's menu (⋮).</li>
+              <li>Tap "Install app" or "Add to Home screen", then Install.</li>
+              <li>Open <span lang="zh-Hant-TW">玉兔中文</span> from your Home screen and start there.</li>
+            </ol>
+          </div>
+          <div id="welcome-keep-install-computer" hidden>
+            <h2>Install <span lang="zh-Hant-TW">玉兔中文</span> as an app</h2>
+            <p>This browser may delete a website's data to make space. An installed app keeps your words.</p>
+            <ol class="welcome-steps">
+              <li>Open the browser's menu (⋮ or ⋯).</li>
+              <li>Choose "Install" (in Chrome, under "Cast, save, and share"), then Install.</li>
+              <li>Open <span lang="zh-Hant-TW">玉兔中文</span> from its new window and start there.</li>
             </ol>
           </div>
         </section>
