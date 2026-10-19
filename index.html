@@ -680,7 +680,11 @@
              picture goes here, data-mood saying which one. -->
         <div id="streak-mascot" class="streak-mascot" data-mood="happy" aria-hidden="true">🌕🐇</div>
         <p id="streak-kicker" class="streak-kicker"></p>
-        <p id="streak-number" class="streak-number"></p>
+        <!-- The confetti flies out from behind the number (streakScreen.js). -->
+        <div class="streak-number-wrap">
+          <div id="streak-confetti" class="streak-confetti" aria-hidden="true"></div>
+          <p id="streak-number" class="streak-number"></p>
+        </div>
         <h2 id="streak-label" class="streak-label"></h2>
         <div id="streak-detail" class="streak-detail"></div>
         <button id="streak-continue" class="primary" type="button">Continue</button>

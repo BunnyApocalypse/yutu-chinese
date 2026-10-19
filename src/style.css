@@ -1711,6 +1711,62 @@ button.slot {
   }
 }
 
+/* The confetti around the number (the owner, 2026-10-19): small pieces in
+   the number's color, put in by streakScreen.js only where motion is
+   welcome. Each starts at the number's middle and flies to its own
+   (--dx, --dy), turning by --turn, and fades. */
+.streak-number-wrap {
+  position: relative;
+}
+
+/* In front of the confetti, which comes out from behind it. */
+.streak-number-wrap .streak-number {
+  position: relative;
+  z-index: 1;
+}
+
+.streak-confetti {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.streak-confetti span {
+  position: absolute;
+  width: 10px;
+  height: 4px;
+  border-radius: 1px;
+  background: var(--accent);
+  opacity: 0;
+  animation: streak-confetti 0.9s ease-out 0.3s both;
+}
+
+.streak-confetti span.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+@keyframes streak-confetti {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(0) scale(0.4);
+  }
+  15% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--turn)) scale(1);
+  }
+}
+
 @keyframes streak-pop {
   0% {
     opacity: 0;

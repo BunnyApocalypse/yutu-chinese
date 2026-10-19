@@ -63,6 +63,34 @@ function line(text, emoji = '', className = '') {
   return element;
 }
 
+// How many pieces of confetti fly out around the number.
+const CONFETTI_PIECES = 14;
+
+// Throws confetti out from behind the number (the owner, 2026-10-19), unless
+// the device asks for less motion. The pieces go out evenly all around, each
+// a little off its place so the burst doesn't look drawn with a ruler, wider
+// than high since the number is; they are removed once they have landed.
+function throwConfetti(layer) {
+  layer.replaceChildren();
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    return;
+  }
+  for (let index = 0; index < CONFETTI_PIECES; index++) {
+    const angle = ((index + Math.random() * 0.6) / CONFETTI_PIECES) * 2 * Math.PI;
+    const distance = 60 + Math.random() * 35;
+    const piece = document.createElement('span');
+    // Every third a dot, the rest strips.
+    if (index % 3 === 0) {
+      piece.className = 'dot';
+    }
+    piece.style.setProperty('--dx', `${Math.round(Math.cos(angle) * distance * 1.4)}px`);
+    piece.style.setProperty('--dy', `${Math.round(Math.sin(angle) * distance * 0.7)}px`);
+    piece.style.setProperty('--turn', `${Math.round((Math.random() - 0.5) * 540)}deg`);
+    piece.addEventListener('animationend', () => piece.remove());
+    layer.append(piece);
+  }
+}
+
 // turnOff: switches streaks off ("Don't count streaks").
 // Returns { showIfNew(streak, dayKey, goal) }.
 export function createStreakScreen(turnOff) {
@@ -70,6 +98,7 @@ export function createStreakScreen(turnOff) {
   const mascot = byId('streak-mascot');
   const kicker = byId('streak-kicker');
   const number = byId('streak-number');
+  const confetti = byId('streak-confetti');
   const label = byId('streak-label');
   const detail = byId('streak-detail');
   const continueButton = byId('streak-continue');
@@ -120,6 +149,7 @@ export function createStreakScreen(turnOff) {
       continueButton.textContent = first ? 'Got it' : 'Continue';
       offButton.hidden = !first;
       dialog.showModal();
+      throwConfetti(confetti);
       // Marked as soon as it is shown, so it never comes twice in a day.
       markShown(dayKey);
     },
