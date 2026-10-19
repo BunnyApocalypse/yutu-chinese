@@ -11,7 +11,7 @@
 
 import { getAll, putAll, saveReview, saveKnown, startCardsOver, randomId } from './db.js';
 import { gradeOptions, GRADES, AGAIN, GOOD } from './scheduler.js';
-import { deckWithInside, isInDecks, dailyGoal } from './decks.js';
+import { deckWithInside, isInDecks, dailyGoal, startingLevel } from './decks.js';
 import { fillDeckSelect } from './decksPanel.js';
 import {
   planSession,
@@ -62,7 +62,7 @@ const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`;
 //   countsElement, typeElement, meaningElement, pinyinElement, pinyinButton,
 //   gradeRow, practiceAgainButton, editWordButton, leechNote, donePanel, doneMessage, studyArea, scriptFlag,
 //   lessonNote, skipLessonButton, lessonNextButton, learnNextButton, addWordsButton,
-//   lessonBackButton, countsRow,
+//   startLevelButton, otherLevelButton, lessonBackButton, countsRow,
 //   and the parts of the study area that differ per kind of card:
 //   wordRow, statusRow, strokeCountElement, writingRow, writingButtons, cardFace,
 //   toneButtonRow, orderNote
@@ -105,6 +105,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     lessonNextButton,
     learnNextButton,
     addWordsButton,
+    startLevelButton,
+    otherLevelButton,
     lessonBackButton,
     countsRow,
     wordRow,
@@ -1099,9 +1101,27 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     return { learnedToday: plan.learnedToday, waiting: plan.waitingCount };
   }
 
+  // "Add words", which opens Decks, or nothing (on: false). With no words at
+  // all, a ready-made level to start with comes first, as the main button,
+  // with "Add my own words" and "Choose another level" (roadmap item 2; the
+  // owner, 2026-10-19: someone who skipped the introduction is led from
+  // here rather than left on an empty screen). main.js handles the taps.
+  function offerAdding(on) {
+    const start = on && words.length === 0 ? startingLevel(settings) : null;
+    addWordsButton.hidden = !on;
+    addWordsButton.textContent = start ? 'Add my own words' : 'Add words';
+    // One main button on a screen.
+    addWordsButton.classList.toggle('primary', !start);
+    startLevelButton.hidden = !start;
+    otherLevelButton.hidden = !start;
+    if (start) {
+      startLevelButton.textContent = `Start with ${start.name}`;
+    }
+  }
+
   // Shows a message where the card would be, and optionally the button that
   // goes on to the next word.
-  // canAdd: also offer "Add words", which opens Decks
+  // canAdd: also offer "Add words", which opens Decks (offerAdding)
   function showLearnMessage(message, canGoOn, canAdd = false) {
     current = null;
     setFocus(false);
@@ -1111,7 +1131,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     doneMessage.textContent = message;
     learnNextButton.textContent = 'Learn the next word';
     learnNextButton.hidden = !canGoOn;
-    addWordsButton.hidden = !canAdd;
+    offerAdding(canAdd);
     lessonBackButton.hidden = true;
     donePanel.hidden = false;
   }
@@ -1353,7 +1373,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     endLesson();
     hideGrades();
     learnNextButton.hidden = true;
-    addWordsButton.hidden = true;
+    offerAdding(false);
     lessonBackButton.hidden = true;
     meaningElement.textContent = '';
     pinyinElement.hidden = true;
@@ -1416,7 +1436,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // the way there when words are waiting.
       learnNextButton.textContent = 'Learn new words';
       learnNextButton.hidden = plan.waitingCount === 0;
-      addWordsButton.hidden = words.length > 0;
+      offerAdding(words.length === 0);
       donePanel.hidden = false;
       // Cards come back after a few minutes, so keep checking.
       recheckTimer = setTimeout(showNext, RECHECK_MS);
@@ -1527,7 +1547,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       stopFlows();
       donePanel.hidden = true;
       learnNextButton.hidden = true;
-      addWordsButton.hidden = true;
+      offerAdding(false);
       studyArea.hidden = false;
       endLesson();
       showScriptFlag(null);

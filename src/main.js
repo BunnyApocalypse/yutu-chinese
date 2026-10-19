@@ -13,7 +13,7 @@ import { createWordsPanel } from './wordsPanel.js';
 import { scriptFor, scriptFlagFor } from './words.js';
 import { fillMixed } from './lang.js';
 import { fileCardsByScript } from './scriptCards.js';
-import { missingReadyMadeDecks, wordsWithListsAsDecks, homeForEveryWord, flattenedReadyMadeDecks } from './decks.js';
+import { missingReadyMadeDecks, wordsWithListsAsDecks, homeForEveryWord, flattenedReadyMadeDecks, startingLevel } from './decks.js';
 import { setUpOffline, keepData } from './offline.js';
 import { createStorageMessage } from './storageMessage.js';
 import { createWelcome } from './welcome.js';
@@ -346,6 +346,31 @@ byId('learn-next-button').addEventListener('click', () => {
 });
 // Review or Learn with no words (or none left to learn): words are added in Decks.
 byId('add-words-button').addEventListener('click', () => setMode('decks'));
+// With no words at all, Review and Learn offer a ready-made level to start
+// with (offerAdding in review.js; roadmap item 2, the owner, 2026-10-19): it
+// is added as the introduction adds one, and Learn opens on its first word.
+byId('start-level-button').addEventListener('click', async (event) => {
+  const button = event.currentTarget;
+  const { listId, level } = startingLevel(settings);
+  button.disabled = true;
+  button.textContent = 'Adding words…';
+  try {
+    await wordsPanel.addReadyLevels(listId, [level]);
+    await setMode('learn');
+  } catch {
+    // Without a connection the list cannot be fetched the first time. The
+    // Ready-made section says so.
+    await setMode('decks');
+    byId('ready-decks-button').click();
+  } finally {
+    button.disabled = false;
+  }
+});
+// "Choose another level": the Decks tab's ready-made levels.
+byId('other-level-button').addEventListener('click', async () => {
+  await setMode('decks');
+  byId('ready-decks-button').click();
+});
 // Free practice is opened from Settings' Writing group, "Try writing with
 // these settings" (and from a word's page, which taps the same button). From
 // Settings, "‹ Settings" in the top bar goes back there, as the owner
@@ -809,6 +834,8 @@ async function startUp() {
       lessonNextButton: byId('lesson-next-button'),
       learnNextButton: byId('learn-next-button'),
       addWordsButton: byId('add-words-button'),
+      startLevelButton: byId('start-level-button'),
+      otherLevelButton: byId('other-level-button'),
       lessonBackButton: byId('lesson-back-button'),
       countsRow: document.querySelector('.counts-row'),
       wordRow: byId('word-row'),

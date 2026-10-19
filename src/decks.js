@@ -29,6 +29,23 @@ export const READY_MADE_LISTS = [
   { id: 'radicals', name: 'Radicals 部首', levels: ['Common', 'Uncommon'] },
 ];
 
+// The ready-made level suggested to someone starting: Taiwan's list for
+// someone learning traditional characters (first, if both) or Taiwan's
+// pronunciation, the mainland's otherwise. Used by the introduction and by
+// Review and Learn with no words (the owner, 2026-10-19).
+//
+// script: 'simplified' or 'traditional' (the main one, with both)
+// pronunciation: as the setting ('mainlandOnly', 'taiwan', 'mainland')
+//
+// Returns { listId, level, name }, the name as its deck is called.
+export function startingLevel({ script, pronunciation }) {
+  const taiwanese = script === 'traditional' || pronunciation === 'taiwan';
+  const listId = taiwanese ? 'tocfl' : 'hsk-3.0';
+  const level = taiwanese ? 'Novice 1' : '1';
+  const list = READY_MADE_LISTS.find((entry) => entry.id === listId);
+  return { listId, level, name: list.levelName(level) };
+}
+
 // Where the decks of the levels that stand on their own go among the decks
 // inside no other: after the ones made before them (newDeckRecord puts a new
 // deck after all of these), and in the order of the lists and their levels.

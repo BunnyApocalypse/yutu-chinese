@@ -10,6 +10,7 @@ import {
   missingReadyMadeDecks,
   wordsWithListsAsDecks,
   deckTree,
+  startingLevel,
   deckWithInside,
   canBeInside,
   newDeckRecord,
@@ -258,4 +259,19 @@ test('the groups inside ready-made levels are told apart from other decks', () =
   assert.equal(isReadyMadeGroup('hsk-3.0/1'), false);
   assert.equal(isReadyMadeGroup('radicals/Common'), false);
   assert.equal(isReadyMadeGroup('a1b2c3'), false);
+});
+
+test('the level suggested to start with follows the script and pronunciation', () => {
+  assert.deepEqual(startingLevel({ script: 'simplified', pronunciation: 'mainlandOnly' }), {
+    listId: 'hsk-3.0',
+    level: '1',
+    name: 'HSK 1 (3.0)',
+  });
+  assert.deepEqual(startingLevel({ script: 'traditional', pronunciation: 'mainland' }), {
+    listId: 'tocfl',
+    level: 'Novice 1',
+    name: 'TOCFL Novice 1',
+  });
+  // Simplified characters with Taiwan's pronunciation: Taiwan's list.
+  assert.equal(startingLevel({ script: 'simplified', pronunciation: 'taiwan' }).listId, 'tocfl');
 });

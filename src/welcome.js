@@ -7,6 +7,7 @@
 // Settings has them), and the pronunciation follows the script.
 
 import { getSetting, setSetting } from './db.js';
+import { startingLevel } from './decks.js';
 import { welcomeStorage } from './storageAdvice.js';
 import { setTheme } from './theme.js';
 
@@ -84,15 +85,18 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
     dialog.querySelector(`input[name="${name}"][value="${value}"]`).checked = true;
   };
 
-  // The level suggested to start with: Taiwan's list for someone learning
-  // traditional characters or Taiwan's pronunciation first, the mainland's
-  // otherwise; none for someone who has words already.
+  // The level suggested to start with (startingLevel in decks.js: Taiwan's
+  // list for traditional characters or Taiwan's pronunciation, the
+  // mainland's otherwise); none for someone who has words already.
   function suggestStart() {
     if (startTouched) {
       return;
     }
-    const taiwanese = chosen('welcome-script').endsWith('traditional') || chosen('welcome-pronunciation') === 'taiwan';
-    choose('welcome-start', hasWords() ? '' : taiwanese ? 'tocfl|Novice 1' : 'hsk-3.0|1');
+    const { listId, level } = startingLevel({
+      script: chosen('welcome-script').replace('both-', ''),
+      pronunciation: chosen('welcome-pronunciation'),
+    });
+    choose('welcome-start', hasWords() ? '' : `${listId}|${level}`);
   }
 
   // The level chosen to start with, { anki: true }, or null.
