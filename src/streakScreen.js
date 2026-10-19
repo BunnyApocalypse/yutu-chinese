@@ -63,31 +63,34 @@ function line(text, emoji = '', className = '') {
   return element;
 }
 
-// How many pieces of confetti fly out around the number.
-const CONFETTI_PIECES = 14;
+// How many sparkles rise from the number.
+const SPARKLES = 9;
 
-// Throws confetti out from behind the number (the owner, 2026-10-19), unless
-// the device asks for less motion. The pieces go out evenly all around, each
-// a little off its place so the burst doesn't look drawn with a ruler, wider
-// than high since the number is; they are removed once they have landed.
-function throwConfetti(layer) {
+// Sparkles rise from the number as it pops in (the owner, 2026-10-19: like
+// sparkles, upward and outward, not confetti scattered at random; quick).
+// Unless the device asks for less motion. They go out in an even fan over
+// the top of the number, from left to right, near and far by turns and big
+// and small by turns, so the burst looks deliberate; each twinkles, rises
+// and fades, and is removed once done.
+function throwSparkles(layer) {
   layer.replaceChildren();
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     return;
   }
-  for (let index = 0; index < CONFETTI_PIECES; index++) {
-    const angle = ((index + Math.random() * 0.6) / CONFETTI_PIECES) * 2 * Math.PI;
-    const distance = 60 + Math.random() * 35;
-    const piece = document.createElement('span');
-    // Every third a dot, the rest strips.
-    if (index % 3 === 0) {
-      piece.className = 'dot';
+  for (let index = 0; index < SPARKLES; index++) {
+    // From 200° (left, a little up) to 340° (right, a little up); on the
+    // screen, y grows downward, so 270° is straight up.
+    const angle = ((200 + (140 * index) / (SPARKLES - 1)) * Math.PI) / 180;
+    const distance = index % 2 === 0 ? 70 : 50;
+    const sparkle = document.createElement('span');
+    if (index % 2 === 1) {
+      sparkle.className = 'small';
     }
-    piece.style.setProperty('--dx', `${Math.round(Math.cos(angle) * distance * 1.4)}px`);
-    piece.style.setProperty('--dy', `${Math.round(Math.sin(angle) * distance * 0.7)}px`);
-    piece.style.setProperty('--turn', `${Math.round((Math.random() - 0.5) * 540)}deg`);
-    piece.addEventListener('animationend', () => piece.remove());
-    layer.append(piece);
+    // Wider than high, as the number is.
+    sparkle.style.setProperty('--dx', `${Math.round(Math.cos(angle) * distance * 1.3)}px`);
+    sparkle.style.setProperty('--dy', `${Math.round(Math.sin(angle) * distance)}px`);
+    sparkle.addEventListener('animationend', () => sparkle.remove());
+    layer.append(sparkle);
   }
 }
 
@@ -98,7 +101,7 @@ export function createStreakScreen(turnOff) {
   const mascot = byId('streak-mascot');
   const kicker = byId('streak-kicker');
   const number = byId('streak-number');
-  const confetti = byId('streak-confetti');
+  const sparkles = byId('streak-sparkles');
   const label = byId('streak-label');
   const detail = byId('streak-detail');
   const continueButton = byId('streak-continue');
@@ -149,7 +152,7 @@ export function createStreakScreen(turnOff) {
       continueButton.textContent = first ? 'Got it' : 'Continue';
       offButton.hidden = !first;
       dialog.showModal();
-      throwConfetti(confetti);
+      throwSparkles(sparkles);
       // Marked as soon as it is shown, so it never comes twice in a day.
       markShown(dayKey);
     },

@@ -1711,59 +1711,59 @@ button.slot {
   }
 }
 
-/* The confetti around the number (the owner, 2026-10-19): small pieces in
-   the number's color, put in by streakScreen.js only where motion is
-   welcome. Each starts at the number's middle and flies to its own
-   (--dx, --dy), turning by --turn, and fades. */
+/* The sparkles rising from the number (the owner, 2026-10-19): small
+   four-pointed stars in the number's color, put in by streakScreen.js only
+   where motion is welcome. Each starts behind the number, a little above
+   its middle, and rises to its own (--dx, --dy): it twinkles up to full
+   size on the way, then shrinks and fades. Quick, about 0.6 seconds. */
 .streak-number-wrap {
   position: relative;
 }
 
-/* In front of the confetti, which comes out from behind it. */
+/* In front of the sparkles, which come out from behind it. */
 .streak-number-wrap .streak-number {
   position: relative;
   z-index: 1;
 }
 
-.streak-confetti {
+.streak-sparkles {
   position: absolute;
-  top: 50%;
+  top: 40%;
   left: 50%;
   width: 0;
   height: 0;
   pointer-events: none;
 }
 
-.streak-confetti span {
+.streak-sparkles span {
   position: absolute;
-  width: 10px;
-  height: 4px;
-  border-radius: 1px;
+  width: 18px;
+  height: 18px;
   background: var(--accent);
+  /* A four-pointed star: long points up, down and to the sides, pinched
+     in between. */
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
   opacity: 0;
-  animation: streak-confetti 0.9s ease-out 0.3s both;
+  animation: streak-sparkle 0.6s ease-out 0.2s both;
 }
 
-.streak-confetti span.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+.streak-sparkles span.small {
+  width: 12px;
+  height: 12px;
 }
 
-@keyframes streak-confetti {
+@keyframes streak-sparkle {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) rotate(0) scale(0.4);
+    transform: translate(-50%, -50%) scale(0) rotate(0);
   }
-  15% {
+  40% {
     opacity: 1;
-  }
-  70% {
-    opacity: 1;
+    transform: translate(calc(-50% + var(--dx) * 0.6), calc(-50% + var(--dy) * 0.6)) scale(1) rotate(15deg);
   }
   100% {
     opacity: 0;
-    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--turn)) scale(1);
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.3) rotate(30deg);
   }
 }
 
