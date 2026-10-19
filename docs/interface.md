@@ -28,7 +28,7 @@
 
 ## The menu and the top bar
 
-- **A top bar with ☰ (`menu-button`) and the screen's name** (`place-title`, `PLACE_TITLES` in `src/main.js`; the owner, 2026-10-14). ☰ opens a panel from the left (`side-menu`): Review, Learn under it while words are waiting (with how many), Decks, Words, then Settings and Send feedback. Its buttons keep their old tab IDs (`review-tab`, `decks-tab`, `settings-button`…), which the tests tap. The backup dot is on ☰ and on Settings in the panel.
+- **A top bar with ☰ (`menu-button`) and the screen's name** (`place-title`, `PLACE_TITLES` in `src/main.js`; the owner, 2026-10-14). ☰ opens a panel from the left (`side-menu`): Review, Learn under it while words are waiting (with how many), Decks, Words, Progress (`docs/cards.md`), then Settings and Send feedback. Its buttons keep their old tab IDs (`review-tab`, `decks-tab`, `settings-button`…), which the tests tap. The backup dot is on ☰ and on Settings in the panel.
 - **The top bar stays put while the page scrolls** (the owner, 2026-10-17) on every screen without a card up, with a line under it once scrolled (`scrolled`; `main:not(.focused) > .top-bar`). While a card is up, only ☰ (or the way back) is in the corner.
 - **The bar is as tall on every screen** (`--top-bar`, 36px); its ways back ("‹ Decks", "‹ Back", "‹ Settings", "‹ Practicing a word") are 44px to tap and spill over above and below.
 - **Every arrow in the app is the same drawn path** (`.back-arrow`, `.side-arrow-icon`; the owner, 2026-10-17: the font's "‹" was too small), as heavy as ☰.

@@ -234,6 +234,16 @@ describe('accessibility', { concurrency: false }, () => {
     await type(page, 'word-search', '');
   });
 
+  it('the Progress tab', async () => {
+    await tap(page, 'progress-tab');
+    await waitUntil(page, `document.querySelector('#progress-today b')`, 'the Progress tab');
+    // A day tapped, so its line is checked too.
+    await page.evaluate(`document.querySelector('#progress-days .today').click()`);
+    await check('the Progress tab, a month');
+    await page.evaluate(`document.querySelector('#progress-range [data-range="year"]').click()`);
+    await check('the Progress tab, a year');
+  });
+
   it('a lesson in Learn', async () => {
     await openLearn(page);
     // The first look at the word, with its note, whose words can be tapped.

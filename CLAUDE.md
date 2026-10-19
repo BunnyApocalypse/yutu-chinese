@@ -48,7 +48,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 Each area's file in `docs/` (index `docs/README.md`) has the names in the code, the owner's decisions with dates, and what is not built. Read it before changing that area.
 
 - Adding words, dictionary, scripts, Taiwan/mainland readings: `docs/words.md`
-- Cards, FSRS, Review and Learn, the lesson, leeches, suspending, the card manager: `docs/cards.md`
+- Cards, FSRS, Review and Learn, the lesson, leeches, suspending, the card manager, the Progress tab: `docs/cards.md`
 - Decks: `docs/decks.md`; HSK, TOCFL and radical lists, reading fixes: `docs/word-lists.md`
 - Importing from Anki (.apkg, .colpkg), imported schedules: `docs/anki.md`
 - `changedAt`, removal marks, `formerIds`, combining backups: `docs/merging.md`

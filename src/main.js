@@ -34,6 +34,7 @@ import { closeOnTapBeside } from './dialogs.js';
 import { createFeedback } from './feedback.js';
 import { createWhatsNew } from './whatsNew.js';
 import { createStreakScreen } from './streakScreen.js';
+import { createProgressPanel } from './progressPanel.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -43,6 +44,8 @@ const decksTab = byId('decks-tab');
 // The Words tab: the same panel as the Decks tab, showing its list of words.
 const wordsTab = byId('words-tab');
 const wordsPanelElement = byId('words-panel');
+const progressTab = byId('progress-tab');
+const progressPanelElement = byId('progress-panel');
 const reviewHeader = byId('review-header');
 const wordForm = byId('word-form');
 const wordInput = byId('word-input');
@@ -253,6 +256,7 @@ function setMode(newMode, { keepPlace = false } = {}) {
     [practiceButton, 'practice'],
     [decksTab, 'decks'],
     [wordsTab, 'words'],
+    [progressTab, 'progress'],
   ]) {
     tab.classList.toggle('selected', mode === itsMode);
     if (mode === itsMode) {
@@ -277,6 +281,7 @@ function setMode(newMode, { keepPlace = false } = {}) {
   reviewHeader.hidden = !reviewing;
   wordForm.hidden = mode !== 'practice';
   wordsPanelElement.hidden = mode !== 'decks' && mode !== 'words';
+  progressPanelElement.hidden = mode !== 'progress';
   noteElement.textContent = '';
   if (!review) {
     // A tab was tapped before the app finished starting. The tab is marked;
@@ -296,6 +301,11 @@ function setMode(newMode, { keepPlace = false } = {}) {
     // The Decks tab and the Words tab have the page to themselves.
     byId('study-area').hidden = true;
     return wordsPanel.show(mode, { keepPlace });
+  }
+  if (mode === 'progress') {
+    // So does the Progress tab.
+    byId('study-area').hidden = true;
+    return progressPanel.show();
   }
   return startFreePractice();
 }
@@ -334,6 +344,7 @@ const PLACE_TITLES = {
   practice: 'Free practice',
   decks: 'Decks',
   words: 'Words',
+  progress: 'Progress',
 };
 
 reviewTab.addEventListener('click', () => setMode('review'));
@@ -470,6 +481,15 @@ byId('practice-back-button').addEventListener('click', () => {
 });
 decksTab.addEventListener('click', () => setMode('decks'));
 wordsTab.addEventListener('click', () => setMode('words'));
+progressTab.addEventListener('click', () => setMode('progress'));
+
+// The Progress tab (progressPanel.js). Review knows which cards a word can
+// have (kinds switched off, suspended cards), so it is asked.
+const progressPanel = createProgressPanel({
+  panel: progressPanelElement,
+  getSettings: () => settings,
+  hasCardType: (word, type) => review.hasCardType(word, type),
+});
 
 wordForm.addEventListener('submit', (event) => {
   // Without this the browser would reload the page, as forms do by default.

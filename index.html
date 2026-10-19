@@ -50,6 +50,7 @@
           <button id="learn-tab" type="button" hidden>Learn <span id="learn-waiting" class="menu-count"></span></button>
           <button id="decks-tab" type="button">Decks</button>
           <button id="words-tab" type="button">Words</button>
+          <button id="progress-tab" type="button">Progress</button>
         </nav>
         <div class="side-menu-items side-menu-bottom">
           <button id="settings-button" type="button">
@@ -437,6 +438,45 @@
             <button id="dictionary-more" class="link-button" type="button" hidden>Show more</button>
           </section>
           </div>
+        </section>
+      </section>
+
+      <!-- The Progress tab: today, the cards by stage, and for a range the
+           streak, the time studied, and words and characters over time.
+           Filled in by progressPanel.js (the owner, 2026-10-19). -->
+      <section id="progress-panel" class="progress-panel" hidden>
+        <section>
+          <h3>Today</h3>
+          <div id="progress-today" class="progress-tiles"></div>
+        </section>
+        <section>
+          <h3>Your cards</h3>
+          <div id="progress-stages" class="progress-box"></div>
+        </section>
+        <!-- What the three parts below show: the last 30 days, 3 months, a
+             year, or everything (as in Anki). -->
+        <div id="progress-range" class="progress-range" role="group" aria-label="Show"></div>
+        <section>
+          <h3 id="progress-days-title">Streak</h3>
+          <div id="progress-days" class="progress-box"></div>
+        </section>
+        <section>
+          <h3>Time studied</h3>
+          <div id="progress-time" class="progress-box"></div>
+        </section>
+        <section>
+          <div class="progress-heading">
+            <h3>Words and characters</h3>
+            <!-- Only for someone learning both scripts, beside the heading (the
+                 owner, 2026-10-19): counts a character's simplified and
+                 traditional forms as two (們 and 们). "Separate simp./trad."
+                 didn't fit beside it on a phone. -->
+            <label id="progress-apart-label" class="switch-label" title="Count simplified and traditional forms as different characters" hidden>
+              <span><span lang="zh-Hans-CN">简体字</span>/<span lang="zh-Hant-TW">繁體字</span></span>
+              <input id="progress-apart" class="switch" type="checkbox" role="switch" aria-label="Count simplified and traditional forms as different characters" />
+            </label>
+          </div>
+          <div id="progress-growth" class="progress-box"></div>
         </section>
       </section>
 

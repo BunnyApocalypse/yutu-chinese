@@ -1624,6 +1624,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     // Free practice of a tone, pinyin or meaning card. Call deactivate() first.
     practice,
 
+    // True if a word can have this kind of card now (the Progress tab).
+    hasCardType,
+
     // Works out the next card afresh, e.g. after a setting changed.
     refresh() {
       showDeckChoice(); // the deck studied may have been chosen elsewhere
