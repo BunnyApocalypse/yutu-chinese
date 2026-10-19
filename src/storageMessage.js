@@ -7,7 +7,7 @@
 // reminder (main.js) is the safety net after that.
 //
 // What it says depends on the browser, as in the introduction and Settings
-// (storageAdvice.js). Like the introduction's last screen, it has one line
+// (storageAdvice.js). Like the introduction's old last screen, it has one line
 // and one main button that does what this browser needs (storageMessageLine),
 // beside "Not now" (roadmap item 1, draft of 2026-10-18: there were three
 // buttons and a long paragraph). Once that button has been tapped, the line

@@ -6,7 +6,19 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, reloadApp, tap, textOf, isShown, waitUntil, openSettings } from './harness.js';
+import {
+  startApp,
+  startBrowsers,
+  reloadApp,
+  tap,
+  textOf,
+  isShown,
+  waitUntil,
+  openSettings,
+  writingArea,
+  drawStroke,
+  loadStrokeData,
+} from './harness.js';
 
 const welcomeOpen = `document.getElementById('welcome').open`;
 
@@ -39,8 +51,51 @@ describe('the introduction', { concurrency: false }, () => {
   it('opens by itself the first time', async () => {
     assert.equal(await page.evaluate(welcomeOpen), true);
     assert.equal(await heading(), 'Welcome to 玉兔中文');
-    assert.equal(await textOf(page, 'welcome-progress'), '1 of 4');
+    assert.equal(await textOf(page, 'welcome-progress'), '1 of 3');
     assert.equal(await isShown(page, 'welcome-back'), false);
+    // One main button: trying a character; Next is a plain one here.
+    assert.equal(await page.evaluate(`document.getElementById('welcome-next').classList.contains('primary')`), false);
+    assert.equal(await isShown(page, 'welcome-try'), true);
+  });
+
+  it('lets a character be tried first, saving nothing, then goes on', { timeout: 60000 }, async () => {
+    const stepIs = (step) => `document.getElementById('card-type').textContent === 'Try it · ${step}'`;
+    const savedWords = () =>
+      page.evaluate(`new Promise((resolve) => {
+        const opening = indexedDB.open('hanzi-trainer');
+        opening.onsuccess = () => {
+          opening.result.transaction('words').objectStore('words').count().onsuccess = (event) => resolve(event.target.result);
+        };
+      })`);
+    await tap(page, 'welcome-try');
+    // 大's writing steps only: no first look, no tones.
+    await waitUntil(page, `!${welcomeOpen} && ${stepIs('step 1 of 3')}`, 'the try');
+    assert.equal(await isShown(page, 'skip-lesson-button'), false);
+    assert.equal(await isShown(page, 'study-back-button'), true);
+    for (const step of ['step 1 of 3', 'step 2 of 3', 'step 3 of 3']) {
+      await waitUntil(page, stepIs(step), step);
+      await waitUntil(
+        page,
+        `document.getElementById('stroke-count').textContent.startsWith('1/') && !document.getElementById('writing-area').hasAttribute('data-busy')`,
+        'the character to be writable',
+      );
+      const area = await writingArea(page);
+      let status = '';
+      for (const median of loadStrokeData('大').medians) {
+        status = await drawStroke(page, area, median);
+      }
+      assert.equal(status, 'No mistakes');
+      await tap(page, 'next-button');
+    }
+    await waitUntil(page, `document.getElementById('done-message').textContent.startsWith('You wrote 大.')`, 'the end');
+    assert.equal(await textOf(page, 'learn-next-button'), 'Start learning');
+    assert.equal(await textOf(page, 'lesson-back-button'), 'Write it again');
+    assert.equal(await savedWords(), 0);
+    // "Start learning": the introduction again, at its second screen.
+    await tap(page, 'learn-next-button');
+    await waitUntil(page, welcomeOpen, 'the introduction again');
+    assert.equal(await heading(), 'Which characters are you learning?');
+    await tap(page, 'welcome-back');
   });
 
   it('sets the script, with the pronunciation following it, and a first level', async () => {
@@ -110,23 +165,16 @@ describe('the introduction', { concurrency: false }, () => {
     await tap(page, 'welcome-next');
   });
 
-  it('ends with one button that keeps the words, and "Not now"', async () => {
-    await tap(page, 'welcome-next');
-    assert.equal(await heading(), 'Keep your words safe');
-    assert.equal(await textOf(page, 'welcome-progress'), '4 of 4');
-    // The test's browser is a Chromium, which keeps only an installed app's
-    // data: the button installs where the browser offers it, and asks otherwise.
-    await waitUntil(page, `document.getElementById('welcome-keep-note').textContent !== ''`, 'the line about this browser');
-    assert.match(await textOf(page, 'welcome-keep-note'), /installed app/);
-    assert.match(await textOf(page, 'welcome-next'), /^(Install the app|Keep my words safe) and start$/);
-    assert.equal(await textOf(page, 'welcome-skip'), 'Not now');
-    // Three buttons at most.
-    assert.equal(await page.evaluate(`[...document.querySelectorAll('#welcome button')].filter((button) => button.offsetParent).length`), 3);
+  it('ends with the starting level, without asking to keep the words', async () => {
+    assert.equal(await heading(), 'Select your starting level');
+    assert.equal(await textOf(page, 'welcome-progress'), '3 of 3');
+    // (Learn asks once the first word is learned: storageMessage.js.)
+    assert.equal(await textOf(page, 'welcome-next'), 'Add my first words');
+    assert.equal(await isShown(page, 'welcome-skip'), false);
   });
 
   it('ends in the Decks tab with the choices saved', async () => {
-    // "Not now" saves the choices; only long-term storage is not asked for.
-    await tap(page, 'welcome-skip');
+    await tap(page, 'welcome-next');
     await waitUntil(page, `!${welcomeOpen} && document.getElementById('decks-tab').classList.contains('selected')`, 'the Decks tab');
     // One box for the word, in traditional, and one for the Taiwan reading.
     assert.equal(await isShown(page, 'add-simplified'), false);
@@ -237,18 +285,9 @@ describe('the introduction', { concurrency: false }, () => {
     assert.equal(await heading(), 'Select your starting level');
     assert.equal(await page.evaluate(`document.querySelector('input[name="welcome-start"]:checked').value`), '');
     await click('input[name="welcome-start"][value="tocfl|Novice 1"]');
-    await tap(page, 'welcome-next');
-    // The main button does what keeps the words: here it notes that they are
-    // to be kept, so that the app asks again by itself once installed.
-    assert.match(await textOf(page, 'welcome-next'), / and start$/);
+    assert.equal(await textOf(page, 'welcome-next'), 'Start learning');
     await tap(page, 'welcome-next');
     await waitUntil(page, `!${welcomeOpen} && document.getElementById('place-title').textContent === 'Learn'`, 'Learn');
-    assert.equal(await page.evaluate(`new Promise((resolve) => {
-      const opening = indexedDB.open('hanzi-trainer');
-      opening.onsuccess = () => {
-        opening.result.transaction('settings').objectStore('settings').get('keepDataWanted').onsuccess = (event) => resolve(event.target.result?.value);
-      };
-    })`), true);
     const words = await page.evaluate(`new Promise((resolve) => {
       const opening = indexedDB.open('hanzi-trainer');
       opening.onsuccess = () => {
@@ -265,7 +304,6 @@ describe('the introduction', { concurrency: false }, () => {
       await tap(page, 'welcome-next');
     }
     await click('input[name="welcome-start"][value="anki"]');
-    await tap(page, 'welcome-next');
     await tap(page, 'welcome-next');
     await waitUntil(page, `!${welcomeOpen} && document.getElementById('anki-dialog').open`, 'the Anki import');
     assert.equal(await page.evaluate(`document.getElementById('place-title').textContent`), 'Decks');

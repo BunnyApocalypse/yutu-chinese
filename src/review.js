@@ -843,8 +843,14 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     const { word } = current;
     const step = lesson.steps[lesson.index];
     // A lesson repeated is of a word already learned, not a new one (the
-    // owner, 2026-10-18).
-    const kind = current.repeating ? 'Repeat lesson' : isRadical(word) ? 'New radical' : 'New word';
+    // owner, 2026-10-18). A try from the introduction is neither.
+    const kind = current.trying
+      ? 'Try it'
+      : current.repeating
+        ? 'Repeat lesson'
+        : isRadical(word)
+          ? 'New radical'
+          : 'New word';
     typeElement.textContent = `${kind} · step ${lesson.index + 1} of ${lesson.steps.length}`;
     const note = step === 'test' && current.learning ? 'learnTest' : step === 'meet' && current.repeating ? 'meetAgain' : step;
     lessonNote.textContent = LESSON_NOTES[note];
@@ -1144,6 +1150,14 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     } else if (mode === 'lesson') {
       startRepeat();
     }
+    // (In a try from the introduction it is "Start learning": main.js.)
+  });
+  // In a try, "Write it again"; in a lesson repeated, "Back to the word",
+  // which main.js handles.
+  lessonBackButton.addEventListener('click', () => {
+    if (mode === 'try') {
+      startRepeat();
+    }
   });
 
   // ---- Repeating a word's lesson ----
@@ -1156,14 +1170,24 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // At the end, "Repeat lesson" again; the way back to the word's page is in
   // the top bar and beside it (main.js).
 
-  // The word whose lesson is repeated, in the mode 'lesson'.
+  //
+  // The same is used for trying the app from the introduction (the mode
+  // 'try', roadmap item 2; draft of 2026-10-19): one character that is not
+  // in the word list, its writing steps only (a newcomer can't answer a tone
+  // question yet), nothing saved, and at the end the way on into the
+  // introduction (main.js, welcome.js).
+
+  // The word whose lesson is repeated, in the mode 'lesson', or tried, in
+  // the mode 'try'.
   let repeatedWord = null;
 
   async function startRepeat() {
     const word = words.find((entry) => entry.id === repeatedWord.id) || repeatedWord;
-    current = { word, type: 'writing', card: null, learning: true, repeating: true };
+    const trying = mode === 'try';
+    current = { word, type: 'writing', card: null, learning: true, repeating: true, trying };
     setFocus(true);
-    lesson = { steps: stepsFor(word, true), index: 0 };
+    const steps = stepsFor(word, true);
+    lesson = { steps: trying ? steps.filter((step) => step !== 'meet' && step !== 'tone') : steps, index: 0 };
     donePanel.hidden = true;
     lessonBackButton.hidden = true;
     studyArea.hidden = false;
@@ -1177,8 +1201,22 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   }
 
   function showRepeatDone() {
+    if (mode === 'try') {
+      const script = scriptFor(repeatedWord, settings);
+      showLearnMessage('', true);
+      fillMixed(
+        doneMessage,
+        `You wrote ${repeatedWord[script]}. Every new word is learned like this: each stroke shown, then over the outline, then from memory.`,
+        script,
+      );
+      learnNextButton.textContent = 'Start learning';
+      lessonBackButton.textContent = 'Write it again';
+      lessonBackButton.hidden = false;
+      return;
+    }
     showLearnMessage('Lesson done.', true);
     learnNextButton.textContent = 'Repeat lesson';
+    lessonBackButton.textContent = 'Back to the word';
     lessonBackButton.hidden = false;
   }
 
@@ -1362,7 +1400,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       showNextToLearn();
       return;
     }
-    if (mode === 'lesson') {
+    if (mode === 'lesson' || mode === 'try') {
       startRepeat();
       return;
     }
@@ -1491,17 +1529,18 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     // changed a moment ago), that is waited for, or the card shown would be
     // chosen from what was there before.
     //
-    // newMode: 'review', 'learn' for the Learn tab, or 'lesson' for
-    //          repeating `word`'s lesson ("Repeat lesson" on its page)
+    // newMode: 'review', 'learn' for the Learn tab, 'lesson' for
+    //          repeating `word`'s lesson ("Repeat lesson" on its page), or
+    //          'try' for trying `word` from the introduction
     async activate(newMode = 'review', { word = null } = {}) {
       active = true;
       mode = newMode;
       repeatedWord = word;
       // The style sheet centers the kind of card in Learn (main.learning),
       // and in a lesson repeated, which looks the same.
-      page.classList.toggle('learning', mode === 'learn' || mode === 'lesson');
-      // A lesson repeated has no deck or counts: it is one word's.
-      countsRow.hidden = mode === 'lesson';
+      page.classList.toggle('learning', mode === 'learn' || mode === 'lesson' || mode === 'try');
+      // A lesson repeated or tried has no deck or counts: it is one word's.
+      countsRow.hidden = mode === 'lesson' || mode === 'try';
       tappedSinceArriving = false;
       justLearned = null;
       await loading;

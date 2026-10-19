@@ -187,7 +187,7 @@ const wordsPanel = createWordsPanel(
     await shown;
   },
   (word) => practiceWord(word),
-  () => mode !== 'review' && mode !== 'learn' && mode !== 'lesson',
+  () => mode !== 'review' && mode !== 'learn' && mode !== 'lesson' && mode !== 'try',
   (newMode, options) => setMode(newMode, options),
   () => mode,
   (word) => repeatLesson(word),
@@ -240,9 +240,9 @@ practiceType.addEventListener('change', startFreePractice);
 // keepPlace: back to Decks or Words as they were left (practiceWord).
 function setMode(newMode, { keepPlace = false } = {}) {
   mode = newMode;
-  // Review, Learn and a lesson repeated share the top of the page and the
-  // study area.
-  const reviewing = mode === 'review' || mode === 'learn' || mode === 'lesson';
+  // Review, Learn, a lesson repeated and a try from the introduction share
+  // the top of the page and the study area.
+  const reviewing = mode === 'review' || mode === 'learn' || mode === 'lesson' || mode === 'try';
   // The menu's item for the place shown is marked: by color ("selected"),
   // and for screen readers by aria-current, which they read as "current
   // page".
@@ -284,7 +284,7 @@ function setMode(newMode, { keepPlace = false } = {}) {
   }
   if (reviewing) {
     // A tip the first time (tips.js).
-    if (mode !== 'lesson') {
+    if (mode !== 'lesson' && mode !== 'try') {
       document.dispatchEvent(new CustomEvent('screen-shown', { detail: mode }));
     }
     return review.activate(mode, { word: repeatedWord });
@@ -330,6 +330,7 @@ const PLACE_TITLES = {
   review: 'Review',
   learn: 'Learn',
   lesson: 'Repeating a lesson',
+  try: 'Try it',
   practice: 'Free practice',
   decks: 'Decks',
   words: 'Words',
@@ -404,6 +405,10 @@ byId('study-back-button').addEventListener('click', async () => {
     backFromLesson();
     return;
   }
+  // From a try, back to the introduction (startUp).
+  if (mode === 'try') {
+    return;
+  }
   await setMode(studiedFrom.mode, { keepPlace: true });
   window.scrollTo(0, studiedFrom.scrollY);
 });
@@ -424,6 +429,22 @@ async function repeatLesson(word) {
   const shown = setMode('lesson');
   byId('study-back-label').textContent = 'Back';
   byId('study-back-button').setAttribute('aria-label', "Back to the word's page");
+  byId('place-title').hidden = true;
+  byId('study-back-button').hidden = false;
+  await shown;
+}
+// "Try writing a character" in the introduction (roadmap item 2, draft of
+// 2026-10-19; tester 2: people want to try an app before studying it): 大
+// written as in a lesson's writing steps, nothing saved (review.js). 大 is
+// written the same in both scripts, so it comes before the script is chosen;
+// it is not put in the word list. "‹ Back" and "Start learning" go back
+// into the introduction (startUp).
+const TRY_WORD = { id: '大|da4', simplified: '大', traditional: '大', pinyin: 'da4', definition: 'big' };
+async function tryWriting() {
+  repeatedWord = TRY_WORD;
+  const shown = setMode('try');
+  byId('study-back-label').textContent = 'Back';
+  byId('study-back-button').setAttribute('aria-label', 'Back to the introduction');
   byId('place-title').hidden = true;
   byId('study-back-button').hidden = false;
   await shown;
@@ -460,7 +481,7 @@ function onSettingsChange() {
   loadWordList(); // the suggestions are in the script being learned
   if (mode === 'decks' || mode === 'words') {
     wordsPanel.show();
-  } else if (mode === 'review' || mode === 'learn' || mode === 'lesson') {
+  } else if (mode === 'review' || mode === 'learn' || mode === 'lesson' || mode === 'try') {
     review.refresh();
   } else if (mode === 'practice') {
     startFreePractice();
@@ -842,8 +863,15 @@ async function startUp() {
 
   const welcome = createWelcome({
     settings,
-    keepData,
     hasWords: () => wordList.length > 0,
+    onTry: () => tryWriting(),
+    // Skipped, after a try: off the try's last screen, to Review (which
+    // offers "Add words").
+    onSkip: () => {
+      if (mode === 'try') {
+        setMode('review');
+      }
+    },
     onFinish: async (start) => {
       // A deck from Anki: the Decks tab, with the import open on top
       // (ankiImportForm.js; the owner, 2026-10-19).
@@ -864,8 +892,22 @@ async function startUp() {
       }
       if (wordList.length === 0) {
         await setMode('decks');
+      } else if (mode === 'try') {
+        await setMode('review');
       }
     },
+  });
+  // The way back from a try into the introduction: "Start learning" at its
+  // end goes on to the second screen, "‹ Back" in the top bar to the first.
+  byId('learn-next-button').addEventListener('click', () => {
+    if (mode === 'try') {
+      welcome.resume(1);
+    }
+  });
+  byId('study-back-button').addEventListener('click', () => {
+    if (mode === 'try') {
+      welcome.resume(0);
+    }
   });
   byId('welcome-again-button').addEventListener('click', () => {
     byId('settings-panel').close();
