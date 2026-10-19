@@ -469,10 +469,11 @@
             <h3>Words and characters</h3>
             <!-- Only for someone learning both scripts, beside the heading (the
                  owner, 2026-10-19): counts a character's simplified and
-                 traditional forms as two (們 and 们). "Separate simp./trad."
-                 didn't fit beside it on a phone. -->
+                 traditional forms as two (們 and 们). "Split 简体字/繁體字"
+                 where it fits beside the heading, else "Split 简/繁"
+                 (progressPanel.js). -->
             <label id="progress-apart-label" class="switch-label" title="Count simplified and traditional forms as different characters" hidden>
-              <span><span lang="zh-Hans-CN">简体字</span>/<span lang="zh-Hant-TW">繁體字</span></span>
+              <span>Split <span class="apart-long"><span lang="zh-Hans-CN">简体字</span>/<span lang="zh-Hant-TW">繁體字</span></span><span class="apart-short" hidden><span lang="zh-Hans-CN">简</span>/<span lang="zh-Hant-TW">繁</span></span></span>
               <input id="progress-apart" class="switch" type="checkbox" role="switch" aria-label="Count simplified and traditional forms as different characters" />
             </label>
           </div>

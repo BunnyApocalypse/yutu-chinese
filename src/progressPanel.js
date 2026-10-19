@@ -124,6 +124,7 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
     growth: panel.querySelector('#progress-growth'),
     apart: panel.querySelector('#progress-apart'),
     apartLabel: panel.querySelector('#progress-apart-label'),
+    heading: panel.querySelector('.progress-heading h3'),
   };
   let range = 'month';
   // What was read from the database when the tab was opened.
@@ -171,6 +172,8 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
       time: timeByDay(reviews, words),
       now: Date.now(),
       firstKey: [...study.keys()].sort()[0] ?? null,
+      // Reviews brought over from Anki are named after Anki's own (anki-…).
+      fromAnki: reviews.some((review) => String(review.id).startsWith('anki-')),
     };
     parts.apart.checked = await getSetting('charactersApart', false);
     drawToday();
@@ -414,7 +417,10 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
     const unitLine = { day: 'Minutes a day.', week: inHours ? 'Hours a week.' : 'Minutes a week.', month: inHours ? 'Hours a month.' : 'Minutes a month.' }[size];
     const content = [said, chart, make('p', 'hint', unitLine), totals];
     if (keys[0] < TIMING_SINCE) {
-      content.push(make('p', 'hint', 'Time is recorded from October 19, 2026 on. Reviews brought over from Anki have their own times.'));
+      // The word about Anki only for someone who has brought reviews over
+      // (the owner, 2026-10-19).
+      const anki = data.fromAnki ? ' Reviews brought over from Anki have their own times.' : '';
+      content.push(make('p', 'hint', `Time is recorded from October 19, 2026 on.${anki}`));
     }
     parts.time.replaceChildren(...content);
   }
@@ -424,6 +430,7 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
     // The switch only means something to someone learning both scripts
     // (the owner, 2026-10-19).
     parts.apartLabel.hidden = !settings.bothScripts;
+    fitApartLabel();
     const apart = settings.bothScripts && parts.apart.checked;
     const keys = rangeDays(range, data.now, data.firstKey);
     const days = growthByDay(data.words, data.cards, {
@@ -561,6 +568,25 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
     const newCharacters = last.characters - first.characters + firstDay.characters;
     const grew = `+${plural(newWords, 'word')} and +${plural(newCharacters, 'character')} ${RANGE_PHRASES[range]}.`;
     parts.growth.replaceChildren(said, svg, legend, make('p', 'hint', grew));
+  }
+
+  // The switch's label in full, "Split 简体字/繁體字", where it fits beside
+  // the heading; "Split 简/繁" where it would drop below it (a small phone,
+  // or large text). The owner, 2026-10-19.
+  function fitApartLabel() {
+    if (parts.apartLabel.hidden) {
+      return;
+    }
+    const long = parts.apartLabel.querySelector('.apart-long');
+    const short = parts.apartLabel.querySelector('.apart-short');
+    const besideHeading = () =>
+      Math.abs(parts.apartLabel.getBoundingClientRect().top - parts.heading.getBoundingClientRect().top) < parts.heading.offsetHeight;
+    long.hidden = false;
+    short.hidden = true;
+    if (!besideHeading()) {
+      long.hidden = true;
+      short.hidden = false;
+    }
   }
 
   return { show };
