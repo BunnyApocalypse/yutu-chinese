@@ -104,7 +104,9 @@ describe('offline use', { concurrency: false }, () => {
     await page.evaluate(`${dataCache}.then((cache) => cache.put(${old}, new Response('{}')))`);
     await page.evaluate(`localStorage.removeItem('old-folder-forgotten')`);
     await reloadApp(page);
-    await waitUntil(page, `localStorage.getItem('old-folder-forgotten') === 'yes'`, 'the clean-up');
+    // It looks through every one of the 1,000 and more files saved: 1.5 to
+    // 4 seconds alone, longer in a full run (2026-10-19), so it gets 20.
+    await waitUntil(page, `localStorage.getItem('old-folder-forgotten') === 'yes'`, 'the clean-up', 20000);
     assert.equal(await page.evaluate(`${dataCache}.then((cache) => cache.match(${old})).then((found) => found === undefined)`), true);
     assert.ok(await page.evaluate(`${dataCache}.then((cache) => cache.keys()).then((keys) => keys.length)`) > 1000);
   });

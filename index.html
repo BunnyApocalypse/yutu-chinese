@@ -154,8 +154,8 @@
         <!-- At the end of a lesson repeated: back to the word's page, as the
              top bar's "‹ Back" (review.js, main.js). -->
         <button id="lesson-back-button" type="button" hidden>Back to the word</button>
-        <!-- Once per device, after the first word learned, if the browser
-             may still clear the app's data (storageMessage.js). -->
+        <!-- At the end of Review and between two words in Learn, every time,
+             while the browser may delete the words (storageMessage.js). -->
         <div id="storage-message" class="storage-message" hidden>
           <p><b>Keep your words safe.</b> <span id="storage-message-advice"></span></p>
           <div class="buttons">
@@ -957,10 +957,35 @@
         </section>
 
         <section data-step hidden>
-          <h2>Keep your words safe</h2>
-          <p>Your words are stored only in this browser. Allow it to keep them, so they are never deleted to make space.</p>
-          <!-- What this particular browser needs, in a line (welcomeStorage in storageAdvice.js). -->
-          <p id="welcome-keep-note" class="hint"></p>
+          <div id="welcome-keep-general">
+            <h2>Keep your words safe</h2>
+            <p>Your words are stored only in this browser. Allow it to keep them, so they are never deleted.</p>
+            <!-- What this particular browser needs, in a line (welcomeStorage in storageAdvice.js). -->
+            <p id="welcome-keep-note" class="hint"></p>
+          </div>
+          <!-- In Safari, in place of the above: only an app on the Home
+               Screen (or a Mac's Dock) keeps the words, and only the person
+               can put it there, so the steps are the screen (the owner,
+               2026-10-19: not in quiet small print). The app put there starts
+               empty, with this introduction again. -->
+          <div id="welcome-keep-home-screen" hidden>
+            <h2>Add <span lang="zh-Hant-TW">玉兔中文</span> to your Home Screen</h2>
+            <p>Safari deletes a website's data after a week without a visit. An app on your Home Screen keeps your words.</p>
+            <ol class="welcome-steps">
+              <li>Tap Share. If you don't see it, tap ⋯ first.</li>
+              <li>Tap "Add to Home Screen", leave "Open as Web App" on, and tap Add.</li>
+              <li>Open <span lang="zh-Hant-TW">玉兔中文</span> from your Home Screen and start there.</li>
+            </ol>
+          </div>
+          <div id="welcome-keep-dock" hidden>
+            <h2>Add <span lang="zh-Hant-TW">玉兔中文</span> to your Dock</h2>
+            <p>Safari deletes a website's data after a week without a visit. An app in your Dock keeps your words.</p>
+            <ol class="welcome-steps">
+              <li>In the menu bar, choose File › Add to Dock (macOS 14 or later).</li>
+              <li>Click Add.</li>
+              <li>Open <span lang="zh-Hant-TW">玉兔中文</span> from the Dock and start there.</li>
+            </ol>
+          </div>
         </section>
 
         <!-- Back and Next, held at the panel's bottom edge while a screen
@@ -1211,6 +1236,11 @@
 
         <section id="settings-data" class="settings-group" hidden>
           <h3>Your data and backups</h3>
+          <!-- Always said, not only when a backup is due (roadmap item 7). -->
+          <p class="hint">
+            Your words and progress are kept only in this browser, on this device. Nothing is sent anywhere and there
+            is no account, so a backup file is the only other copy.
+          </p>
           <!-- How long ago the last backup was made (main.js). -->
           <p id="backup-status" class="hint"></p>
         <div class="setting">
@@ -1219,15 +1249,24 @@
           <button id="backup-reminder-button" class="small" type="button">Stop reminding me</button>
           <button id="import-button" class="small" type="button">Import backup</button>
           <input id="import-file" type="file" accept="application/json,.json" hidden />
+          <!-- After Export backup: where the file went and what it is for (main.js). -->
+          <p id="export-done" class="hint" role="status" hidden></p>
+        </div>
+
+        <div class="setting">
+          Keeping your words
+          <!-- Whether the browser has agreed to keep the app's data, and what to do if not (offline.js). -->
+          <p id="keep-data-status" class="hint">Checking…</p>
+          <button id="install-button" class="small" type="button" hidden>Install the app</button>
+          <button id="keep-data-button" class="small" type="button" hidden>Allow long-term storage</button>
+          <!-- Switching the reminder at the end of Review off, after a warning, or back on (storageMessage.js). -->
+          <button id="keep-reminder-button" class="small" type="button" hidden>Stop reminding me</button>
         </div>
 
         <div class="setting">
           Offline use
           <!-- How much of the app is saved on this device. Filled in by offline.js. -->
           <p id="offline-status" class="hint">Checking…</p>
-          <!-- Shown while the browser has not agreed to keep the app's data (offline.js). -->
-          <button id="install-button" class="small" type="button" hidden>Install the app</button>
-          <button id="keep-data-button" class="small" type="button" hidden>Allow long-term storage</button>
           <!-- Saves every recording on the device (offline.js); they are otherwise kept one by one as they are played. -->
           <button id="save-audio-button" class="small" type="button" hidden>Save all recordings for offline use (about 125 MB)</button>
         </div>

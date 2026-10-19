@@ -21,6 +21,7 @@ import {
   textOf,
   isShown,
   waitUntil,
+  ANSWER_YES,
 } from './harness.js';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -188,8 +189,9 @@ describe('grading in Review', { concurrency: false }, () => {
   });
 
   it('suggests Good for a word written without mistakes, and saves the grade chosen', async () => {
-    await makeDue(['大|da4#writing', '大|da4', 'writing']);
+    // (Before the card comes up, which counts toward how long it took.)
     const before = Date.now();
+    await makeDue(['大|da4#writing', '大|da4', 'writing']);
     await write('大');
     assert.equal(await page.evaluate(SUGGESTED), 'Good');
     // Each grade says when the card would come back: Again soon, Easy last.
@@ -316,5 +318,56 @@ describe('grading in Review', { concurrency: false }, () => {
     await waitUntil(page, `document.getElementById('done-panel').hidden`, 'a card again');
     await waitForFirstStroke();
     assert.equal(await textOf(page, 'prompt-meaning'), 'big');
+  });
+
+  // The test browser hasn't promised to keep the data (no installed app), so
+  // the words are at risk (wordsAtRisk in storageAdvice.js).
+  it('says at the end of every Review that the words may be lost, until put away or switched off', async () => {
+    const gradeMeaning = async () => {
+      await makeDue(['小|xiao3#meaning', '小|xiao3', 'meaning']);
+      await waitUntil(page, `document.getElementById('card-face').textContent.includes('小')`, 'the meaning card');
+      await page.evaluate(`document.getElementById('card-face').dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))`);
+      await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
+      await chooseGrade('Good');
+      await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the end of Review');
+    };
+    const messageShown = `!document.getElementById('storage-message').hidden`;
+    // The test before leaves 大's writing card due: not today.
+    await inDatabase(`stores.cards.get('大|da4#writing').onsuccess = (event) => {
+      stores.cards.put({ ...event.target.result, due: Date.now() + 30 * ${DAY} });
+    };`);
+
+    await gradeMeaning();
+    await waitUntil(page, messageShown, 'the message');
+    assert.match(await textOf(page, 'storage-message'), /^Keep your words safe\. Install 玉兔中文 as an app/);
+    // "Not now" puts it away until the app is opened again.
+    await tap(page, 'storage-message-close');
+    assert.equal(await isShown(page, 'storage-message'), false);
+    await page.evaluate(`document.getElementById('learn-next-button').click()`);
+    await page.evaluate(`document.getElementById('review-tab').click()`);
+    await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'Review again');
+    assert.equal(await isShown(page, 'storage-message'), false);
+    // Opened again (makeDue reloads the app): it is back.
+    await gradeMeaning();
+    await waitUntil(page, messageShown, 'the message again');
+
+    // Settings can switch it off, after a warning.
+    await openSettings(page, 'settings-data');
+    await waitUntil(page, `!document.getElementById('keep-reminder-button').hidden`, 'the switch');
+    assert.equal(await textOf(page, 'keep-reminder-button'), 'Stop reminding me');
+    await page.evaluate(ANSWER_YES);
+    await tap(page, 'keep-reminder-button');
+    await waitUntil(page, `document.getElementById('keep-reminder-button').textContent === 'Remind me to keep my words safe'`, 'switched off');
+    await tap(page, 'settings-close');
+    await gradeMeaning();
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    assert.equal(await isShown(page, 'storage-message'), false);
+
+    // Switched on again for the tests after this one.
+    await openSettings(page, 'settings-data');
+    await waitUntil(page, `document.getElementById('keep-reminder-button').textContent === 'Remind me to keep my words safe'`, 'the switch');
+    await tap(page, 'keep-reminder-button');
+    await waitUntil(page, `document.getElementById('keep-reminder-button').textContent === 'Stop reminding me'`, 'switched on');
+    await tap(page, 'settings-close');
   });
 });

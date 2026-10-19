@@ -1491,7 +1491,14 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       learnNextButton.textContent = 'Learn new words';
       learnNextButton.hidden = plan.waitingCount === 0;
       offerAdding(words.length === 0);
+      // The end of Review with words studied, as it comes up (not at each
+      // look again): the moment for the message about keeping the words
+      // (storageMessage.js).
+      const arriving = donePanel.hidden;
       donePanel.hidden = false;
+      if (arriving && words.length > 0 && studied.length > 0 && plan.waitingCount < studied.length) {
+        document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'reviewDone' }));
+      }
       // Cards come back after a few minutes, so keep checking.
       recheckTimer = setTimeout(showNext, RECHECK_MS);
       return;

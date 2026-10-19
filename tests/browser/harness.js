@@ -522,13 +522,13 @@ export const textOf = (page, idOrSelector) =>
   })()`);
 
 // Waits until `condition` (JavaScript text, run in the page) is true. Fails
-// the test if it isn't within five seconds.
-export async function waitUntil(page, condition, description = condition) {
+// the test if it isn't within `limit` milliseconds (five seconds unless given).
+export async function waitUntil(page, condition, description = condition, limit = 5000) {
   const cameTrue = await page.evaluate(`new Promise((resolve) => {
     const start = performance.now();
     (function look() {
       if (${condition}) resolve(true);
-      else if (performance.now() - start > 5000) resolve(false);
+      else if (performance.now() - start > ${limit}) resolve(false);
       else setTimeout(look, 10);
     })();
   })`);

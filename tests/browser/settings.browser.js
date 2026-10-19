@@ -481,6 +481,14 @@ describe('settings', { concurrency: false }, () => {
     assert.equal(backup.words.length, Number(words));
     assert.ok(backup.reviews.length > 0, 'the reviews are in the backup');
     await waitUntil(page, `document.getElementById('backup-status').textContent.startsWith('Last backup: today.')`, 'the time of the backup');
+    // It says where the file went and what it is for.
+    assert.equal(await isShown(page, 'export-done'), true);
+    const said = await textOf(page, 'export-done');
+    assert.ok(said.includes(await page.evaluate('window.savedName')), said);
+    assert.match(said, /off this device.*Import backup/);
+    // And, in its own line, whether the browser keeps the data.
+    assert.match(await textOf(page, 'keep-data-status'), /\S/);
+    assert.doesNotMatch(await textOf(page, 'offline-status'), /long-term storage/i);
     await tap(page, 'settings-close');
   });
 

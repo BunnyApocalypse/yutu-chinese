@@ -499,6 +499,8 @@ function onSettingsChange() {
 //
 // backup: as buildBackup() gives it
 // label:  added to the file's name, to tell one kind of backup from another
+//
+// Returns the file's name.
 function downloadBackup(backup, label = '') {
   // A Blob is a file held in memory. Pointing a link at it and "clicking" the
   // link is how a web page saves a file to the device's Downloads folder.
@@ -514,13 +516,23 @@ function downloadBackup(backup, label = '') {
   link.download = `yutu-chinese-backup-${stamp}${label}.json`;
   link.click();
   URL.revokeObjectURL(link.href);
+  return link.download;
 }
 
 exportButton.addEventListener('click', async () => {
-  downloadBackup(await buildBackup());
+  const name = downloadBackup(await buildBackup());
+  // Where the file went and what it is for: a backup left on the same
+  // device is lost with it (roadmap item 7, data safety seen by a stranger).
+  const saved = byId('export-done');
+  saved.textContent =
+    `Saved to your downloads as ${name}. Keep a copy off this device too (a cloud drive, or email it to yourself). ` +
+    'To bring it back, here or on a new device, use Import backup.';
+  saved.hidden = false;
   // When a backup was last made on this device, for the reminder below.
   await setSetting('lastBackupAt', Date.now());
   showBackupStatus();
+  // For the message about keeping the words (storageMessage.js).
+  document.dispatchEvent(new CustomEvent('backup-made', { detail: saved.textContent }));
 });
 
 // Everything the learner has is in this one browser. Settings says when a
@@ -561,8 +573,7 @@ async function showBackupStatus() {
       ? 'No backup has been made on this device yet.'
       : `Last backup: ${days === 0 ? 'today' : days === 1 ? 'yesterday' : `${days} days ago`}.`) +
     (due
-      ? ' Your words and progress are kept only in this browser, so export a backup now and then. ' +
-        'The red dot on the menu button is this reminder; it goes away once you have exported one.'
+      ? ' Time to export one. The red dot on the menu button is this reminder; it goes away once you have exported one.'
       : '') +
     (off ? ' Backup reminders are off.' : '');
   // The dot says why it is there to anyone who rests the mouse on the menu
@@ -870,7 +881,7 @@ async function startUp() {
   // The introduction, the first time the app is opened on a device. It adds
   // the level chosen to start with and ends in Learn; with none, it ends in
   // the Decks tab if there are no words yet.
-  // Once per device, after the first word learned (storageMessage.js).
+  // At the end of Review and in Learn while the words may be lost (storageMessage.js).
   createStorageMessage(keepData);
 
   const welcome = createWelcome({
@@ -933,6 +944,7 @@ async function startUp() {
   // Last, and not waited for: saving the app for offline use in the background.
   setUpOffline({
     statusElement: byId('offline-status'),
+    keepElement: byId('keep-data-status'),
     updateButton: byId('update-button'),
     keepButton: byId('keep-data-button'),
     installButton: byId('install-button'),

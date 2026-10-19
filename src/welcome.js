@@ -31,6 +31,12 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
   const skipButton = byId('welcome-skip');
   const bar = byId('welcome-bar');
   const keepNote = byId('welcome-keep-note');
+  // The last screen's text: in general, or Safari's steps (index.html).
+  const keepTexts = {
+    general: byId('welcome-keep-general'),
+    homeScreen: byId('welcome-keep-home-screen'),
+    dock: byId('welcome-keep-dock'),
+  };
   const startRadios = [...dialog.querySelectorAll('input[name="welcome-start"]')];
   // Whether the level to start with was chosen by hand; until it is, it
   // follows the script and pronunciation chosen before.
@@ -127,9 +133,15 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
     // "Skip" finishes without it: at most three buttons on a screen (a
     // tester and the owner, 2026-10-16).
     const willAsk = last && storagePlan.action !== 'none';
+    // In Safari the steps above are what to do; starting here is the
+    // exception, so its button is not the main one.
+    const safariSteps = last && Boolean(storagePlan.addTo);
+    nextButton.classList.toggle('primary', !safariSteps);
     nextButton.textContent = !last
       ? 'Next'
-      : storagePlan.action === 'install'
+      : safariSteps
+        ? 'Start in Safari anyway'
+        : storagePlan.action === 'install'
         ? 'Install the app and start'
         : storagePlan.action === 'ask'
           ? 'Keep my words safe and start'
@@ -162,12 +174,14 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
 
   // The last screen: what this browser needs to keep the words, as
   // welcomeStorage() works it out, and a line about it.
-  const mobile = /Android|iPhone|iPad|iPod/.test(navigator.userAgent);
   let storagePlan = { action: 'none', line: '' };
   async function showKeepState() {
-    storagePlan = welcomeStorage(keepData.kind, await keepData.state(), mobile);
+    storagePlan = welcomeStorage(keepData.kind, await keepData.state(), keepData.mobile);
     keepNote.textContent = storagePlan.line;
     keepNote.hidden = storagePlan.line === '';
+    for (const [name, element] of Object.entries(keepTexts)) {
+      element.hidden = name !== (storagePlan.addTo || 'general');
+    }
     // (Not while finishing: asking tells the listeners too, and the button
     // says "Adding words…" meanwhile.)
     if (!nextButton.disabled) {

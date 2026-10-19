@@ -4,7 +4,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { browserKind, storageAdvice, storageMessageLine, welcomeStorage } from '../src/storageAdvice.js';
+import {
+  browserKind,
+  isMobile,
+  storageAdvice,
+  storageMessageLine,
+  welcomeStorage,
+  wordsAtRisk,
+  RECENT_BACKUP_MS,
+} from '../src/storageAdvice.js';
+
+const DAY = 24 * 60 * 60 * 1000;
 
 const AGENTS = {
   chromeAndroid: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36',
@@ -35,6 +45,17 @@ test('browsers are told apart by family', () => {
   assert.equal(browserKind('SomethingElse/1.0', [{ brand: 'Chromium', version: '130' }]), 'chromium');
 });
 
+test('phones and tablets are told from computers, an iPad by its touch screen', () => {
+  for (const name of ['chromeAndroid', 'samsung', 'safariPhone', 'chromePhoneApple', 'firefoxAndroid']) {
+    assert.equal(isMobile(AGENTS[name]), true, name);
+  }
+  for (const name of ['chromeDesktop', 'edge', 'firefoxDesktop', 'safariMac']) {
+    assert.equal(isMobile(AGENTS[name], 0), false, name);
+  }
+  // An iPad's Safari names itself as a Mac; Macs have no touch screen.
+  assert.equal(isMobile(AGENTS.safariMac, 5), true);
+});
+
 const state = (changes = {}) => ({ canAsk: true, kept: false, asked: false, installed: false, canInstall: false, ...changes });
 
 test('once storage is allowed, every browser gets the same good news', () => {
@@ -63,8 +84,14 @@ test('Chromium: no question; install first, by button if there is one', () => {
   assert.match(storageAdvice('chromium', state({ installed: true, asked: true })), /asks again each time it starts/);
 });
 
-test('Safari: the Home Screen is what keeps the data', () => {
-  assert.match(storageAdvice('safari', state()), /after about a week.*Add to Home Screen/);
+test('Safari: the Home Screen or the Dock is what keeps the data, and words are brought over', () => {
+  const phone = storageAdvice('safari', state(), true);
+  assert.match(phone, /after about a week.*Add to Home Screen/);
+  assert.match(phone, /don't come along.*Export backup here, then Import backup in the app/);
+  // On a Mac too, with the Dock.
+  const mac = storageAdvice('safari', state(), false);
+  assert.match(mac, /after about a week.*Add to Dock/);
+  assert.match(mac, /don't come along/);
   assert.match(storageAdvice('safari', state({ installed: true })), /is kept/);
 });
 
@@ -90,9 +117,11 @@ test('the introduction: one button that does what the browser needs', () => {
     welcomeStorage('firefox', state(), true).line,
     'Firefox will ask at the bottom of the screen: choose "Allow". For an icon of your own, choose Install in the browser\'s menu (⋮).',
   );
-  // Safari on an iPhone or iPad keeps only a Home Screen app's data; on a Mac nothing to add.
-  assert.match(welcomeStorage('safari', state(), true).line, /only keeps them for an app on the Home Screen/);
-  assert.deepEqual(welcomeStorage('safari', state()), { action: 'ask', line: '' });
+  // Safari keeps only the data of an app on the Home Screen, or on a Mac in
+  // the Dock: the screen shows the steps, with no button for them, since
+  // only the person can do it.
+  assert.deepEqual(welcomeStorage('safari', state(), true), { action: 'none', line: '', addTo: 'homeScreen' });
+  assert.deepEqual(welcomeStorage('safari', state()), { action: 'none', line: '', addTo: 'dock' });
   assert.deepEqual(welcomeStorage('safari', state({ installed: true }), true), { action: 'ask', line: '' });
   // Nothing to ask.
   for (const kind of ['firefox', 'chromium', 'safari', 'other']) {
@@ -101,7 +130,26 @@ test('the introduction: one button that does what the browser needs', () => {
   }
 });
 
-test('the message after the first word learned: one line and one action for each browser', () => {
+test('the words are at risk until the browser keeps them, in Safari until the app is on the Home Screen', () => {
+  const now = 100 * DAY;
+  const notKept = { canAsk: true, kept: false, installed: false };
+  for (const kind of ['chromium', 'firefox', 'other']) {
+    assert.equal(wordsAtRisk(kind, notKept, null, now), true, kind);
+    assert.equal(wordsAtRisk(kind, { ...notKept, kept: true }, null, now), false, kind);
+    // A backup doesn't make it go away where the browser can be asked.
+    assert.equal(wordsAtRisk(kind, notKept, now - DAY, now), true, kind);
+  }
+  // Safari deletes after a week whatever it has promised, unless it's the app.
+  assert.equal(wordsAtRisk('safari', { ...notKept, kept: true }, now - DAY, now), true);
+  assert.equal(wordsAtRisk('safari', { ...notKept, installed: true }, null, now), false);
+  // A browser that can't be asked: safe for a week after a backup.
+  const cannotAsk = { ...notKept, canAsk: false };
+  assert.equal(wordsAtRisk('other', cannotAsk, null, now), true);
+  assert.equal(wordsAtRisk('other', cannotAsk, now - 6 * DAY, now), false);
+  assert.equal(wordsAtRisk('other', cannotAsk, now - RECENT_BACKUP_MS - 1, now), true);
+});
+
+test('the message while the words are at risk: one line and one action for each browser', () => {
   const notKept = { canAsk: true, kept: false, installed: false, canInstall: false };
   assert.deepEqual(storageMessageLine('chromium', { ...notKept, kept: true }), { action: 'none', line: '' });
   // Chrome with its own install question: the button installs.
@@ -112,13 +160,19 @@ test('the message after the first word learned: one line and one action for each
   assert.match(storageMessageLine('chromium', notKept).line, /Install app/);
   assert.equal(storageMessageLine('chromium', { ...notKept, installed: true }).action, 'ask');
   assert.equal(storageMessageLine('firefox', notKept).line, "When Firefox asks, choose Allow so it doesn't delete them.");
-  // An iPhone: nothing to tap, only the Home Screen.
-  const phone = storageMessageLine('safari', notKept, true);
-  assert.equal(phone.action, 'none');
-  assert.match(phone.line, /Home Screen/);
-  assert.equal(storageMessageLine('safari', notKept, false).action, 'ask');
+  // An iPhone: the Home Screen, and the words brought over in a backup,
+  // whose button is the one to tap; kept or not, Safari still deletes.
+  for (const kept of [false, true]) {
+    const phone = storageMessageLine('safari', { ...notKept, kept }, true);
+    assert.equal(phone.action, 'export');
+    assert.match(phone.line, /after a week.*Home Screen.*export a backup here and import it there/);
+  }
+  // A Mac: the same, with the Dock.
+  const mac = storageMessageLine('safari', notKept, false);
+  assert.equal(mac.action, 'export');
+  assert.match(mac.line, /Dock.*export a backup/);
   // No way to ask: backups.
   const none = storageMessageLine('other', { ...notKept, canAsk: false });
-  assert.equal(none.action, 'none');
-  assert.match(none.line, /backup/);
+  assert.equal(none.action, 'export');
+  assert.match(none.line, /backup every week/);
 });

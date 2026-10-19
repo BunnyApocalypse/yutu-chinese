@@ -5,7 +5,7 @@
 // comment first.
 
 import { getSetting, setSetting } from './db.js';
-import { browserKind, storageAdvice } from './storageAdvice.js';
+import { browserKind, isMobile, storageAdvice } from './storageAdvice.js';
 
 // BASE_URL is the folder the app is served from.
 const BASE = import.meta.env.BASE_URL;
@@ -250,6 +250,9 @@ export const keepData = {
   // Which family of browser this is (see storageAdvice.js).
   kind: browserKind(navigator.userAgent, navigator.userAgentData ? navigator.userAgentData.brands : []),
 
+  // True on a phone or tablet (an iPad included, see isMobile).
+  mobile: isMobile(navigator.userAgent, navigator.maxTouchPoints),
+
   // Everything storageAdvice() wants to know.
   async state() {
     return {
@@ -304,24 +307,24 @@ window.addEventListener('appinstalled', async () => {
 //
 // elements:
 //   statusElement: a line in the settings panel saying how things stand
+//   keepElement:   a line in the settings panel on long-term storage
 //   updateButton:  shown when a new version of the app is ready
 //   keepButton:    asks the browser for long-term storage
 //   installButton: installs the app, where the browser lets the app offer that
 //   audioButton:   saves every recording for offline use
-export async function setUpOffline({ statusElement, updateButton, keepButton, installButton, audioButton }) {
+export async function setUpOffline({ statusElement, keepElement, updateButton, keepButton, installButton, audioButton }) {
   // What is known so far, shown as one short paragraph.
-  const state = { app: '', data: '', audio: '', kept: '' };
+  const state = { app: '', data: '', audio: '' };
   const show = () => {
-    statusElement.textContent = [state.app, state.data, state.audio, state.kept].filter(Boolean).join(' ');
+    statusElement.textContent = [state.app, state.data, state.audio].filter(Boolean).join(' ');
   };
 
   // Long-term storage: say how it stands and what to do about it.
   const showKeeping = async () => {
     const keeping = await keepData.state();
-    state.kept = storageAdvice(keepData.kind, keeping);
+    keepElement.textContent = storageAdvice(keepData.kind, keeping, keepData.mobile);
     keepButton.hidden = keeping.kept || !keeping.canAsk;
     installButton.hidden = !keeping.canInstall;
-    show();
   };
   keepData.listen(showKeeping);
   keepButton.addEventListener('click', () => keepData.ask());

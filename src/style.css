@@ -885,6 +885,17 @@ fieldset.setting.theme-picker label.theme-choice {
   outline-offset: 2px;
 }
 
+/* Safari's steps for putting the app on the Home Screen or in the Dock, at
+   the size of the text above them (the owner: not quiet small print). */
+.welcome-steps {
+  margin: 0 0 var(--space-medium);
+  padding-left: var(--space-large);
+}
+
+.welcome-steps li {
+  margin-bottom: var(--space-small);
+}
+
 /* The button that asks for long-term storage sits among the paragraphs. */
 /* An explanation in the introduction, folded away until asked for. */
 .welcome-more {

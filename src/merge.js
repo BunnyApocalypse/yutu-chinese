@@ -45,6 +45,7 @@ const DEVICE_SETTINGS = [
   'backupReminderOff',
   'tipsOn',
   'storageMessageShown',
+  'storageReminderOff',
   'theme',
 ];
 

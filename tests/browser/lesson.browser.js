@@ -309,7 +309,7 @@ describe('learning new words', { concurrency: false }, () => {
     await tap(page, 'settings-close');
     await waitUntil(page, `document.getElementById('review-counts').textContent === '2 of 2 learned today · 1 waiting'`, 'the new goal');
     assert.match(await textOf(page, 'done-message'), /That is today's goal: 2 of 2\. Stop here, or go on if you like\.$/);
-    // The message about long-term storage was shown once and is not again.
+    // The message about keeping the words comes when a word was just learned, not here.
     assert.equal(await isShown(page, 'storage-message'), false);
     await tap(page, 'learn-next-button');
     await waitUntil(page, `${stepIs('step 1 of 5')} && document.getElementById('card-face').textContent.startsWith('上')`, 'the third word');
