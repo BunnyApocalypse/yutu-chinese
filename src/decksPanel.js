@@ -202,7 +202,9 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
     const current = getOpenDeck();
     renderPath(current);
     byId('deck-head').hidden = !current;
-    // An import from Anki makes decks of its own: only on the front page.
+    // An import from Anki makes decks of its own, so it is only offered on
+    // the front page, in the new deck's panel (the owner, 2026-10-19).
+    byId('new-deck-button').textContent = current ? '+ New deck' : '+ New / import deck';
     byId('anki-import-row').hidden = Boolean(current);
     // (Whether the way back is in the top bar is decided in wordsPanel.js,
     // which knows whether this page is on screen.)
@@ -297,7 +299,9 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
 
   // "+ New deck" beside the heading opens a small panel for its name (the
   // owner, 2026-10-14: a box under the list would be pushed out of sight by
-  // many decks). A new deck goes inside the deck whose page is open.
+  // many decks). A new deck goes inside the deck whose page is open. On the
+  // front page the panel also offers "Import a deck from Anki", which
+  // closes it and opens the import (ankiImportForm.js).
   const newDeckDialog = byId('new-deck-dialog');
   byId('new-deck-button').addEventListener('click', () => {
     const current = getOpenDeck();
@@ -307,6 +311,7 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
     addName.focus();
   });
   byId('new-deck-cancel').addEventListener('click', () => newDeckDialog.close());
+  byId('anki-import-button').addEventListener('click', () => newDeckDialog.close());
   addForm.addEventListener('submit', async (event) => {
     event.preventDefault(); // or the browser would reload the page
     const name = addName.value.trim();

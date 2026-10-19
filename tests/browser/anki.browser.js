@@ -65,9 +65,13 @@ describe('importing from Anki', { concurrency: false }, () => {
   it('reads the file and shows what it guessed', async () => {
     await tap(page, 'decks-tab');
     await waitUntil(page, `document.querySelectorAll('#deck-list li').length > 0`, 'the Decks tab');
+    // Offered in the panel for a new deck, on the front page.
+    assert.equal(await textOf(page, 'new-deck-button'), '+ New / import deck');
+    await tap(page, 'new-deck-button');
     assert.equal(await page.evaluate(`document.getElementById('anki-import-row').hidden`), false);
     await tap(page, 'anki-import-button');
     assert.equal(await page.evaluate(`document.getElementById('anki-dialog').open`), true);
+    assert.equal(await page.evaluate(`document.getElementById('new-deck-dialog').open`), false);
 
     await chooseFile(page, 'new.apkg');
     await waitUntil(page, `!document.getElementById('anki-check-step').hidden`, 'the guesses');

@@ -1,5 +1,5 @@
 // The pop-up for importing from Anki (#anki-dialog in index.html), opened by
-// "Import from Anki" under the decks. Three steps: choosing the file,
+// "Import a deck from Anki" in the new deck's panel. Three steps: choosing the file,
 // checking what the app guessed of its layout, and what was brought over.
 // The file is read by ankiFile.js and the import worked out by
 // ankiImport.js; docs/anki.md has the owner's decisions.

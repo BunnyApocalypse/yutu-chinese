@@ -3085,13 +3085,14 @@ button.deck-open {
   gap: var(--space-tiny);
 }
 
-/* Importing from Anki (ankiImportForm.js). The button under the decks, and
+/* Importing from Anki (ankiImportForm.js). The link in the new deck's panel, and
    the pop-up's choices: a column of checkboxes for the decks, the field
    roles as rows of a name and a list, each template's kinds of card in a
    row that wraps on a phone. */
 .anki-import-row {
-  margin: var(--space-small) 0 0;
+  margin: var(--space-large) 0 0;
   text-align: center;
+  font-size: var(--size-small);
 }
 
 /* min-width: a fieldset is otherwise never narrower than its widest list. */
