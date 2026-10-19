@@ -274,7 +274,7 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
       );
       content.push(line);
     }
-    const said = readout('Tap a day to see it.');
+    const said = readout('Tap a day for its numbers.');
     // A month as a calendar, a row a week from Monday, with the dates; a
     // longer range as a strip of small squares, a column a week, as in Anki.
     const asCalendar = keys.length <= 31;
@@ -379,7 +379,7 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
     }
     chart.append(axis, plot, dates);
 
-    const said = readout('Tap a bar to see it.');
+    const said = readout('Tap a bar for its time.');
     makeExplorable(
       plot,
       groups.length,
@@ -403,7 +403,8 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
     const totals = make('div', 'time-totals');
     for (const [number, name] of [
       [duration(total), TOTAL_NAMES[range]],
-      [duration(daysWithTime ? total / daysWithTime : 0), 'a day studied'],
+      // Over the days studied only, not every day of the range.
+      [duration(daysWithTime ? total / daysWithTime : 0), 'per day studied'],
       [duration(allTime), 'all time'],
     ]) {
       const part = make('div');
@@ -515,7 +516,7 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
     );
     svg.append(decoration);
 
-    const said = readout('Tap the chart to see a day.');
+    const said = readout("Tap the chart for a day's numbers.");
     makeExplorable(
       svg,
       points.length,
