@@ -147,8 +147,7 @@
         <!-- With no words, or none left to learn: to the Decks tab (review.js, main.js). -->
         <button id="add-words-button" class="primary" type="button" hidden>Add words</button>
         <!-- At the end of a lesson repeated: back to the word's page, as the
-             top bar's "‹ Back" (review.js, main.js). At the end of a try from
-             the introduction: "Write it again" (review.js). -->
+             top bar's "‹ Back" (review.js, main.js). -->
         <button id="lesson-back-button" type="button" hidden>Back to the word</button>
         <!-- Once per device, after the first word learned, if the browser
              may still clear the app's data (storageMessage.js). -->
@@ -854,15 +853,12 @@
       <dialog id="welcome" class="settings-panel welcome">
         <p id="welcome-progress" class="hint"></p>
 
-        <!-- Three short screens, one or two lines of text each (the owner,
+        <!-- Four short screens, one or two lines of text each (the owner,
              2026-10-16, after a tester found the introduction far too wordy).
              Explanations are folded away for whoever wants them. -->
         <section data-step>
           <h2>Welcome to <span lang="zh-Hant-TW">玉兔中文</span></h2>
           <p>Learn to read and write Chinese. Everything stays on this device: no account, nothing sent anywhere.</p>
-          <!-- Writing a character before anything is set up, nothing saved
-               (roadmap item 2, draft of 2026-10-19; welcome.js, main.js). -->
-          <button id="welcome-try" class="primary" type="button">Try writing a character</button>
           <!-- Shown at once as it is chosen; saved with the rest at the end
                (welcome.js). Each choice is a small sample of the look: the
                app's icon (its paper and 兔, icons/swatch.png), in the dark one turned dark, and for "Follow device
@@ -936,12 +932,21 @@
           <p id="welcome-start-note" class="note"></p>
         </section>
 
+        <section data-step hidden>
+          <h2>Keep your words safe</h2>
+          <p>Your words are stored only in this browser. Allow it to keep them, so they are never deleted to make space.</p>
+          <!-- What this particular browser needs, in a line (welcomeStorage in storageAdvice.js). -->
+          <p id="welcome-keep-note" class="hint"></p>
+        </section>
+
         <!-- Back and Next, held at the panel's bottom edge while a screen
              scrolls (style.css, .welcome-bar). -->
         <div id="welcome-bar" class="buttons welcome-bar">
           <button id="welcome-back" class="small" type="button">Back</button>
           <button id="welcome-next" class="small primary" type="button">Next</button>
         </div>
+        <!-- "Skip the introduction" on the first screens; "Not now" on the last,
+             which finishes without asking for long-term storage (welcome.js). -->
         <button id="welcome-skip" class="link-button" type="button">Skip the introduction</button>
       </dialog>
 

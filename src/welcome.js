@@ -1,45 +1,35 @@
-// The introduction shown the first time the app is opened: three short
+// The introduction shown the first time the app is opened: four short
 // screens, one at a time, that set the app up (the look, the script with its
-// pronunciation, a first level). The screens themselves are in index.html
-// (the "welcome" dialog).
+// pronunciation, a first level) and ask for long-term storage after saying
+// why. The screens themselves are in index.html (the "welcome" dialog).
 // Shortened on 2026-10-16 (the owner, after a tester found it far too
 // wordy): the kinds of card are no longer chosen here (all four stay on;
 // Settings has them), and the pronunciation follows the script.
-//
-// Roadmap item 2 (draft of 2026-10-19; tester 2: people want to try an app
-// before studying it): the first screen's main button, "Try writing a
-// character", closes the introduction for a character written as in a
-// lesson, nothing saved (the mode 'try', main.js and review.js), and
-// "Start learning" there opens it again where it was left (resume). The
-// screen about keeping the words safe is gone from here: Learn says it once
-// the first word is learned, when there is something to lose
-// (storageMessage.js).
 
 import { getSetting, setSetting } from './db.js';
+import { welcomeStorage } from './storageAdvice.js';
 import { setTheme } from './theme.js';
 
 const byId = (id) => document.getElementById(id);
 
 // settings:  the current settings (see settings.js), with their change()
+// keepData:  from offline.js: long-term storage and installing
 // hasWords(): true if the word list is not empty
-// onTry():   called when "Try writing a character" is tapped, after the
-//           introduction has closed
-// onSkip():  called when the introduction is closed without finishing it
 // onFinish(start): called when the last screen's button is tapped, and
 //           waited for before the introduction closes. `start` is the
 //           ready-made level chosen to begin with, { listId, level },
 //           { anki: true } for a deck to import from Anki, or null for none.
 //
-// Returns { open(), openIfFirstTime(), resume(step) }.
-export function createWelcome({ settings, hasWords, onTry, onSkip, onFinish }) {
+// Returns { open(), openIfFirstTime() }.
+export function createWelcome({ settings, keepData, hasWords, onFinish }) {
   const dialog = byId('welcome');
   const steps = [...dialog.querySelectorAll('[data-step]')];
   const progress = byId('welcome-progress');
   const backButton = byId('welcome-back');
   const nextButton = byId('welcome-next');
   const skipButton = byId('welcome-skip');
-  const tryButton = byId('welcome-try');
   const bar = byId('welcome-bar');
+  const keepNote = byId('welcome-keep-note');
   const startRadios = [...dialog.querySelectorAll('input[name="welcome-start"]')];
   // Whether the level to start with was chosen by hand; until it is, it
   // follows the script and pronunciation chosen before.
@@ -128,19 +118,26 @@ export function createWelcome({ settings, hasWords, onTry, onSkip, onFinish }) {
     const last = step === steps.length - 1;
     progress.textContent = `${step + 1} of ${steps.length}`;
     backButton.hidden = step === 0;
-    // On the first screen the main button is "Try writing a character", so
-    // Next is a plain one there: one main button on a screen.
-    nextButton.classList.toggle('primary', step !== 0);
+    // On the last screen one button does what this browser needs to keep the
+    // words (installing, or asking) and finishes, and "Not now" in place of
+    // "Skip" finishes without it: at most three buttons on a screen (a
+    // tester and the owner, 2026-10-16).
+    const willAsk = last && storagePlan.action !== 'none';
     nextButton.textContent = !last
       ? 'Next'
-      : startChosen()?.anki
-        ? 'Import my Anki deck'
-        : startChosen()
+      : storagePlan.action === 'install'
+        ? 'Install the app and start'
+        : storagePlan.action === 'ask'
+          ? 'Keep my words safe and start'
+          : startChosen()?.anki
+          ? 'Import my Anki deck'
+          : startChosen()
           ? 'Start learning'
           : hasWords()
             ? 'Done'
             : 'Add my first words';
-    skipButton.hidden = last;
+    skipButton.textContent = last ? 'Not now' : 'Skip the introduction';
+    skipButton.hidden = last && !willAsk;
     // Each screen starts at its top, whatever was scrolled before.
     dialog.scrollTop = 0;
     showCovering();
@@ -158,6 +155,22 @@ export function createWelcome({ settings, hasWords, onTry, onSkip, onFinish }) {
   dialog.addEventListener('scroll', showCovering, { passive: true });
   dialog.addEventListener('toggle', showCovering, true);
   window.addEventListener('resize', showCovering);
+
+  // The last screen: what this browser needs to keep the words, as
+  // welcomeStorage() works it out, and a line about it.
+  const mobile = /Android|iPhone|iPad|iPod/.test(navigator.userAgent);
+  let storagePlan = { action: 'none', line: '' };
+  async function showKeepState() {
+    storagePlan = welcomeStorage(keepData.kind, await keepData.state(), mobile);
+    keepNote.textContent = storagePlan.line;
+    keepNote.hidden = storagePlan.line === '';
+    // (Not while finishing: asking tells the listeners too, and the button
+    // says "Adding words…" meanwhile.)
+    if (!nextButton.disabled) {
+      showStep();
+    }
+  }
+  keepData.listen(showKeepState);
 
   // Saves what was chosen on the screens.
   async function applyChoices() {
@@ -179,56 +192,60 @@ export function createWelcome({ settings, hasWords, onTry, onSkip, onFinish }) {
       showStep();
       return;
     }
-    finish();
+    finish(storagePlan.action);
   });
 
-  // True from "Try writing a character" until the introduction's "close"
-  // event, which then neither marks the introduction done nor undoes the
-  // look being tried: it is only put aside.
-  let tryingOut = false;
-  // Set by finish(), so that its "close" is not taken for a skip.
-  let finished = false;
-  tryButton.addEventListener('click', () => {
-    tryingOut = true;
-    dialog.close();
-    onTry();
-  });
-
-  // Saves the choices and closes.
-  async function finish() {
+  // Saves the choices and closes, first doing what keeps the words:
+  //   'install': the browser's own "install this app?" question. Asking for
+  //              long-term storage too notes that it is wanted, so the app
+  //              asks again by itself once installed (offline.js).
+  //   'ask':     asking for long-term storage
+  //   'none':    nothing (also "Not now")
+  // Neither answer is waited for: Firefox puts its question at the top of
+  // the page (the bottom on a phone), which may stay there a while. Both are started before anything
+  // is awaited, while the tap still counts as the person's own doing, which
+  // browsers require for such questions.
+  async function finish(storageAction) {
+    if (storageAction === 'install') {
+      keepData.install().catch(() => {});
+    }
+    if (storageAction !== 'none') {
+      keepData.ask().catch(() => {});
+    }
     await applyChoices();
     await setSetting('welcomeDone', true);
     // Adding a level takes a few seconds (the dictionary is read for the
     // meanings); the introduction stays up meanwhile.
     nextButton.disabled = true;
     backButton.disabled = true;
+    skipButton.disabled = true;
     nextButton.textContent = startChosen() && !startChosen().anki ? 'Adding words…' : nextButton.textContent;
     try {
       await onFinish(startChosen());
     } finally {
       nextButton.disabled = false;
       backButton.disabled = false;
-      finished = true;
+      skipButton.disabled = false;
       dialog.close();
     }
   }
 
   // Skipping changes no settings. Esc closes a <dialog> too; "close" is
   // announced either way, so the introduction is not shown again unasked.
-  skipButton.addEventListener('click', () => dialog.close());
-  dialog.addEventListener('close', () => {
-    if (tryingOut) {
-      tryingOut = false;
-      return;
+  // On the last screen the same button is "Not now": the choices are saved,
+  // and only long-term storage is not asked for.
+  skipButton.addEventListener('click', () => {
+    if (step === steps.length - 1) {
+      finish('none');
+    } else {
+      dialog.close();
     }
+  });
+  dialog.addEventListener('close', () => {
     setSetting('welcomeDone', true);
     // A look tried and then skipped is undone (after finishing, this is the
     // one just saved).
     setTheme(settings.theme);
-    if (!finished) {
-      onSkip();
-    }
-    finished = false;
   });
 
   function open() {
@@ -239,13 +256,8 @@ export function createWelcome({ settings, hasWords, onTry, onSkip, onFinish }) {
     pronunciationTouched = false;
     showPronunciation();
     startTouched = false;
-    resume(0);
-  }
-
-  // Opens the introduction at a screen, with the choices as they were left
-  // (after trying a character, "Start learning" goes on to the second).
-  function resume(atStep) {
-    step = atStep;
+    showKeepState();
+    step = 0;
     showStep();
     // showModal() opens a <dialog> on top of the page and dims the rest.
     dialog.showModal();
@@ -255,7 +267,6 @@ export function createWelcome({ settings, hasWords, onTry, onSkip, onFinish }) {
 
   return {
     open,
-    resume,
     async openIfFirstTime() {
       if (!(await getSetting('welcomeDone', false))) {
         open();
