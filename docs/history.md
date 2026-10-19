@@ -35,6 +35,7 @@ Agreed with the owner on 2026-10-18. **The first release** means the first users
    - **Importing from Anki** (item 5): an export of the owner's own, and a shared deck from AnkiWeb.
    - **Data safety** (item 7): Safari on an iPhone, an iPad and a Mac (the introduction's steps, the reminder, adding to the Home Screen or the Dock and bringing the words over with a backup), and Firefox; the tests can't drive either.
    - **Streaks** (item 3): the streak screen, the settings, a missed day. (The line at the end of Review is fine for now, the owner, 2026-10-19.)
+   - **The streak pill** (built 2026-10-19, `docs/cards.md`, "Streaks"): the pill while studying instead of the screen, a tap on it, the screen at the end of Review or Learn and when the menu is opened. Pictures: `local/streak-pictures/pill/`.
    - **"Keep my words safe" opening Settings** in Chrome when it hasn't offered to install (item 7).
    - **Sentences:** adding one, the reading card, the gap on the writing card, a whole sentence on a phone.
    - **Combining backups** between two real devices, and whether the `...-before-combining.json` file lands in downloads.
@@ -50,7 +51,6 @@ Agreed with the owner on 2026-10-18. **The first release** means the first users
 - A setting for target retention.
 - **An Android app through F-Droid** (the owner, 2026-10-19), alongside the web app, which stays: the same app wrapped for Android (likely Capacitor, MIT; a dependency to approve when planned), so its data is the app's own and no browser can delete it. F-Droid first (free, and it builds GPL apps from source); the Play Store and iPhone/iPad only if heavily requested (the Play Store needs a closed test with 12 testers for 14 days; Apple needs a Mac and $99 a year). The app's data is separate from the website's: moving over is Export backup, then restore.
 - **A mascot**, mainly for the streaks screen (the owner, 2026-10-18; likely November 2026): a bunny, commissioned from an artist, happy or sad with the streak.
-- **The streak screen without interrupting** (the owner, 2026-10-19; not now): today it opens in the middle of Review or Learn as soon as the day counts. Rather: a small mark that doesn't stop studying when the day counts, and the full screen once the session is over (the end of Review, or leaving Learn). To plan with the owner.
 
 **Nice to have:**
 

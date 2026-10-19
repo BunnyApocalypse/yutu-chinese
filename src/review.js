@@ -144,6 +144,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // the words that are waiting (see "Learning new words" below).
   let active = false;
   let mode = 'review';
+  // True while the end of Review, or of today's words in Learn, is on
+  // screen (showNext sets it): a moment for the streak screen.
+  let atEnd = false;
   // True while a card is being shown for Free practice: it is not scheduled,
   // gets no grade buttons, and nothing is saved.
   let practicing = false;
@@ -559,7 +562,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       );
     }
     showNext();
-    showStreakIfNew();
+    noteStreak();
   }
 
   // ---- Streaks (streak.js) ----
@@ -571,13 +574,30 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     return streakAt(studyByDay(reviewTimes, words), now, streakGoal());
   }
 
-  // The first time today that enough was studied, from Review or Learn:
-  // the streak screen.
-  function showStreakIfNew() {
-    if (settings.streaks) {
-      const now = Date.now();
-      streakScreen.showIfNew(streakNow(now), studyDayKey(now), streakGoal());
+  // After a grade or a word learned, the moment today may start to count
+  // (streakScreen.js says when what is shown): the streak screen at once the
+  // first time ever, or when this was the end of Review or of today's words
+  // in Learn; otherwise the small pill, so studying goes on undisturbed.
+  // showNext() has just set `atEnd`: it does so before it first waits.
+  function noteStreak() {
+    if (!settings.streaks) {
+      return;
     }
+    const now = Date.now();
+    const shown = atEnd || streakScreen.isFirst() ? showStreakIfWaiting() : false;
+    if (!shown) {
+      streakScreen.showPill(streakNow(now), studyDayKey(now), streakGoal());
+    }
+  }
+
+  // The streak screen, if today counts and it hasn't been shown today: at
+  // a pause in studying. then: what to do once it is closed. True if shown.
+  function showStreakIfWaiting(then = null) {
+    if (!settings.streaks) {
+      return false;
+    }
+    const now = Date.now();
+    return streakScreen.showIfNew(streakNow(now), studyDayKey(now), streakGoal(), then);
   }
 
   // Shows the four grade buttons with the suggested one highlighted.
@@ -1134,7 +1154,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     words = words.map((word) => (word.id === learned.id ? learned : word));
     justLearned = learned;
     showNext();
-    showStreakIfNew();
+    noteStreak();
   }
 
   function learnCounts() {
@@ -1258,6 +1278,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     const { learnedToday, waiting } = learnCounts();
     const goal = goalForToday();
     countsElement.textContent = `${learnedToday} of ${goal} learned today · ${waiting} waiting`;
+    // The end of today's words: the goal reached, or nothing left to learn.
+    atEnd = waiting === 0 || learnedToday >= goal;
     const progress =
       learnedToday >= goal && goal > 0
         ? `That is today's goal: ${learnedToday} of ${goal}. Stop here, or go on if you like.`
@@ -1423,6 +1445,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       return;
     }
     practicing = false;
+    atEnd = false;
     stopFlows();
     endLesson();
     hideGrades();
@@ -1479,6 +1502,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       } else {
         // Review looks again every few seconds: put the summary in only
         // when it has changed, or it would be read out again each time.
+        // The end of Review, after studying (the streak screen's moment).
+        atEnd = true;
         const summary = doneSummary(plan, now, waiting.trim());
         const fresh = document.createElement('div');
         fresh.append(...summary);
@@ -1590,8 +1615,19 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       justLearned = null;
       await loading;
       showDeckChoice(); // the deck studied may have been chosen on its page
-      return showNext();
+      const shown = showNext();
+      // Back to studying the same study day, the streak screen not yet seen
+      // (after the app was closed, say): now, before the next card.
+      if (mode !== 'lesson') {
+        showStreakIfWaiting();
+      }
+      return shown;
     },
+
+    // The streak screen if it is waiting, at a pause: when the menu is opened
+    // (the owner, 2026-10-19). then: what to do once it is closed. True if
+    // it was shown (and then will be done), false if not.
+    showStreakIfWaiting,
 
     // How many words wait in Learn for the deck studied (the menu shows it).
     waitingToLearn() {

@@ -714,8 +714,16 @@
         <button id="whats-new-close" class="dialog-close" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 
-      <!-- The first time each study day that enough was studied for the
-           streak (streakScreen.js, src/streak.js). -->
+      <!-- While studying, the moment the day counts for the streak: a small
+           pill over the top bar, gone by itself; a tap opens the streak
+           screen (streakScreen.js). In a status box, so screen readers say
+           it without moving there. -->
+      <div class="streak-pill-place" role="status">
+        <button id="streak-pill" class="streak-pill" type="button" hidden><span aria-hidden="true">🌕🐇 </span><span id="streak-pill-text"></span><span aria-hidden="true"> ✨</span></button>
+      </div>
+
+      <!-- Once each study day that enough was studied for the streak, at a
+           pause in studying (streakScreen.js, src/streak.js). -->
       <dialog id="streak-dialog" class="settings-panel streak-dialog" aria-labelledby="streak-kicker streak-number streak-label">
         <!-- The Jade Rabbit and the moon until the mascot is drawn; then its
              picture goes here, data-mood saying which one. -->

@@ -1,6 +1,18 @@
-// The streak screen: a pop-up the first time in a study day that enough was
-// studied for the streak (src/streak.js), from Review or Learn, whichever
-// gets there first (the owner, 2026-10-19).
+// The streak screen: a pop-up for a study day in which enough was studied
+// for the streak (src/streak.js), and the small pill said while studying.
+//
+// When (the owner, 2026-10-19, after the screen first opened in the middle
+// of studying as soon as the day counted):
+// - the first ever on this device opens at once, so that a new learner
+//   meets streaks, and the switch to turn them off, when it first happens;
+// - after that, the moment the day counts while studying brings only the
+//   pill (`streak-pill`): small, over the top bar, gone by itself after a
+//   few seconds, taking nothing away from the card; a tap on it opens the
+//   screen;
+// - the screen itself waits for a pause: the end of Review or of the day's
+//   words in Learn, opening the menu, or coming back to Review or Learn the
+//   same study day (src/review.js says when). It is "waiting" as long as
+//   today counts and it hasn't been shown today, so nothing more is stored.
 //
 // Two kinds, the owner's choice from pictures (2026-10-19):
 // - the first ever on this device explains streaks ("New: streaks", how a
@@ -94,8 +106,14 @@ function throwSparkles(layer) {
   }
 }
 
+// How long the pill stays, and how long it takes to fade out, in
+// milliseconds (the fade the same as `.streak-pill.leaving` in the style
+// sheet).
+const PILL_TIME = 4000;
+const PILL_FADE = 400;
+
 // turnOff: switches streaks off ("Don't count streaks").
-// Returns { showIfNew(streak, dayKey, goal) }.
+// Returns { isFirst(), showIfNew(streak, dayKey, goal, then), showPill(streak, dayKey, goal) }.
 export function createStreakScreen(turnOff) {
   const dialog = byId('streak-dialog');
   const mascot = byId('streak-mascot');
@@ -106,6 +124,16 @@ export function createStreakScreen(turnOff) {
   const detail = byId('streak-detail');
   const continueButton = byId('streak-continue');
   const offButton = byId('streak-off');
+  const pill = byId('streak-pill');
+  const pillText = byId('streak-pill-text');
+
+  // What to do once the screen is closed (the menu, when it was opened in
+  // the menu's place), and the day the pill was last shown.
+  let afterClosing = null;
+  let pillDay = null;
+  // What the pill opens when tapped.
+  let pillStreak = null;
+  let pillTimer = 0;
 
   continueButton.addEventListener('click', () => dialog.close());
   byId('streak-close').addEventListener('click', () => dialog.close());
@@ -114,17 +142,42 @@ export function createStreakScreen(turnOff) {
     turnOff();
   });
   closeOnTapBeside(dialog);
+  dialog.addEventListener('close', () => {
+    const then = afterClosing;
+    afterClosing = null;
+    then?.();
+  });
 
-  return {
+  function hidePill() {
+    clearTimeout(pillTimer);
+    pill.classList.remove('leaving');
+    pill.hidden = true;
+  }
+  pill.addEventListener('click', () => {
+    hidePill();
+    if (pillStreak) {
+      screen.showIfNew(...pillStreak);
+    }
+  });
+
+  const screen = {
+    // True before the first streak screen on this device (the one that
+    // explains streaks, shown at once).
+    isFirst() {
+      return readShown() === null;
+    },
+
     // streak: as streakAt gives it; dayKey: today's study day (studyDayKey);
-    // goal: { cards, words }, how much makes a day count.
+    // goal: { cards, words }, how much makes a day count; then: what to do
+    // once it is closed.
     // Shown only if today counts and it hasn't been shown today, and not over
-    // another pop-up (the next save tries again).
-    showIfNew(streak, dayKey, goal) {
+    // another pop-up (it waits for the next pause). True if it was shown.
+    showIfNew(streak, dayKey, goal, then = null) {
       const shown = readShown();
       if (!streak.todayDone || shown === dayKey || document.querySelector('dialog[open]')) {
-        return;
+        return false;
       }
+      hidePill();
       const first = shown === null;
       const fresh = streak.current === 1 && streak.lastRun > 0;
       mascot.dataset.mood = fresh ? 'fresh' : 'happy';
@@ -151,10 +204,40 @@ export function createStreakScreen(turnOff) {
       }
       continueButton.textContent = first ? 'Got it' : 'Continue';
       offButton.hidden = !first;
+      afterClosing = then;
       dialog.showModal();
       throwSparkles(sparkles);
       // Marked as soon as it is shown, so it never comes twice in a day.
       markShown(dayKey);
+      return true;
+    },
+
+    // The pill, once a study day, while the screen waits. It is in a
+    // `role="status"` box, so screen readers say it without moving there,
+    // and it never takes the keyboard's place.
+    showPill(streak, dayKey, goal) {
+      if (!streak.todayDone || pillDay === dayKey || readShown() === dayKey) {
+        return;
+      }
+      pillDay = dayKey;
+      pillStreak = [streak, dayKey, goal];
+      pillText.textContent = streak.current === 1 ? '1 day studied' : `${streak.current} days in a row`;
+      // Shown afresh, so that its animation starts from the beginning.
+      hidePill();
+      void pill.offsetWidth;
+      pill.hidden = false;
+      // Gone by itself, unless the mouse rests on it or it has the keyboard's
+      // focus.
+      pillTimer = setTimeout(function hideUnlessHeld() {
+        if (pill.matches(':hover, :focus-visible')) {
+          pillTimer = setTimeout(hideUnlessHeld, 1000);
+        } else {
+          // It fades out (the style sheet's `leaving`), then is put away.
+          pill.classList.add('leaving');
+          pillTimer = setTimeout(hidePill, PILL_FADE);
+        }
+      }, PILL_TIME);
     },
   };
+  return screen;
 }

@@ -186,6 +186,7 @@
 
   --radius: 8px; /* buttons, boxes, fields */
   --radius-large: 12px; /* cards, tips and pop-up panels */
+  --radius-round: 999px; /* fully round ends: the streak pill */
 
   /* How tall anything tapped is: 48px for a button, 44px (what Apple and
      Google recommend at least) for a small one and other controls. */
@@ -1698,6 +1699,48 @@ button.slot {
 
 /* The streak screen (streakScreen.js): the number of days large, centered,
    with a place above it for the mascot once it is drawn. */
+/* The streak pill (streakScreen.js): the moment the day counts while
+   studying. It floats over the top bar, centered, so nothing on the page
+   moves (docs/pitfalls.md: nothing above the writing area changes height),
+   and the menu button and the buttons at the right stay uncovered. */
+.streak-pill-place {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + var(--space-tiny));
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 5;
+}
+.streak-pill {
+  pointer-events: auto;
+  min-height: calc(var(--top-bar) - 2 * var(--space-tiny));
+  padding: 0 var(--space-medium);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-round);
+  background: var(--raised);
+  color: var(--text);
+  font-size: var(--size-small);
+  white-space: nowrap;
+  box-shadow: 0 2px 8px var(--shadow);
+  transition: opacity 0.4s ease-in;
+}
+.streak-pill.leaving {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .streak-pill:not([hidden]) {
+    animation: streak-pill-in 0.3s ease-out backwards;
+  }
+}
+@keyframes streak-pill-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
 .streak-dialog {
   text-align: center;
 }

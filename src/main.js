@@ -322,11 +322,18 @@ function setMode(newMode, { keepPlace = false } = {}) {
 // deck chosen in Review (the owner, 2026-10-16: on a day with cards due,
 // Learn was three taps away through Decks; learning still goes with a deck).
 const sideMenu = byId('side-menu');
-byId('menu-button').addEventListener('click', () => {
+function openMenu() {
   const waiting = review ? review.waitingToLearn() : 0;
   byId('learn-tab').hidden = waiting === 0 && mode !== 'learn';
   byId('learn-waiting').textContent = waiting > 0 ? `${waiting} waiting` : '';
   sideMenu.showModal();
+}
+// Opening the menu is a pause in studying: a streak screen still waiting
+// comes first, and the menu once it is closed (the owner, 2026-10-19).
+byId('menu-button').addEventListener('click', () => {
+  if (!review?.showStreakIfWaiting(openMenu)) {
+    openMenu();
+  }
 });
 byId('learn-tab').addEventListener('click', () => setMode('learn'));
 // A tap on the dimmed page beside the panel lands on the dialog itself.
