@@ -114,9 +114,12 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
   // through its lesson or has a studied card (isLearned in session.js).
   function countsOf(deck) {
     const inDeck = wordsIn(deck);
-    const wordIds = new Set(inDeck.map((word) => word.id));
+    // A suspended card (the word's `suspended`, leeches.js) is not due.
+    const suspendedOf = new Map(inDeck.map((word) => [word.id, word.suspended || []]));
     const now = Date.now();
-    const due = getCards().filter((card) => wordIds.has(card.wordId) && card.due <= now).length;
+    const due = getCards().filter(
+      (card) => suspendedOf.has(card.wordId) && card.due <= now && !suspendedOf.get(card.wordId).includes(card.type),
+    ).length;
     const learned = inDeck.filter(isLearned).length;
     // Rounded down, so that 100% is only said when every word is learned.
     const percent = inDeck.length > 0 ? Math.floor((100 * learned) / inDeck.length) : null;
@@ -199,6 +202,8 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
     const current = getOpenDeck();
     renderPath(current);
     byId('deck-head').hidden = !current;
+    // An import from Anki makes decks of its own: only on the front page.
+    byId('anki-import-row').hidden = Boolean(current);
     // (Whether the way back is in the top bar is decided in wordsPanel.js,
     // which knows whether this page is on screen.)
     if (current) {

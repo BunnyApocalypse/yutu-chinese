@@ -262,6 +262,27 @@ export function saveKnown(entries) {
   });
 }
 
+// Saves what an import from Anki brings (see planAnkiImport in
+// ankiImport.js) all together, so that a failure leaves nothing half done.
+// Words and decks are marked with the time.
+export function saveImport({ words, decks, cards, reviews }) {
+  const changedAt = Date.now();
+  return transaction(['words', 'decks', 'cards', 'reviews'], 'readwrite', (tx) => {
+    for (const deck of decks) {
+      tx.objectStore('decks').put({ ...deck, changedAt });
+    }
+    for (const word of words) {
+      tx.objectStore('words').put({ ...word, changedAt });
+    }
+    for (const card of cards) {
+      tx.objectStore('cards').put(card);
+    }
+    for (const review of reviews) {
+      tx.objectStore('reviews').put(review);
+    }
+  });
+}
+
 // Gives cards new IDs. moves: [{ from, to }], card IDs.
 export function moveCards(moves) {
   return transaction(['cards'], 'readwrite', (tx) => {

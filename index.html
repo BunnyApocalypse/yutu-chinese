@@ -257,6 +257,11 @@
             <button id="new-deck-button" class="small" type="button">+ New deck</button>
           </div>
           <ul id="deck-list" class="word-list"></ul>
+          <!-- Bringing decks over from Anki (ankiImportForm.js). Only on the
+               front page: it makes decks of its own. -->
+          <p id="anki-import-row" class="anki-import-row">
+            <button id="anki-import-button" class="link-button" type="button">Import from Anki</button>
+          </p>
           <!-- Naming a new deck, in a panel of its own (decksPanel.js). -->
           <dialog id="new-deck-dialog" class="settings-panel">
             <form id="add-deck-form">
@@ -613,6 +618,9 @@
               <b>Scheduling:</b> the FSRS method, in <a href="https://github.com/open-spaced-repetition/ts-fsrs" target="_blank" rel="noopener">ts-fsrs</a>. MIT License.
             </li>
             <li>
+              <b>Reading Anki files:</b> <a href="https://github.com/sql-js/sql.js" target="_blank" rel="noopener">sql.js</a> (SQLite in the browser), MIT License; <a href="https://github.com/101arrowz/fzstd" target="_blank" rel="noopener">fzstd</a> by Arjun Barrett, MIT License. SQLite itself is in the public domain.
+            </li>
+            <li>
               <b>Dictionary and tones:</b> <a href="https://cc-cedict.org" target="_blank" rel="noopener">CC-CEDICT</a>.
               Creative Commons Attribution-ShareAlike 4.0.
             </li>
@@ -792,6 +800,52 @@
         </p>
         <p id="import-note" role="status" class="note"></p>
         <button data-same-as="import-cancel-button" class="dialog-close" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
+      </dialog>
+
+      <!-- Importing from Anki, in three steps (ankiImportForm.js): choosing the
+           file, checking what the app guessed, and what was brought over. -->
+      <dialog id="anki-dialog" class="settings-panel anki-dialog">
+        <h2>Import from Anki</h2>
+        <section id="anki-choose-step">
+          <p>
+            Bring your words over from Anki: a deck exported as an .apkg file, or your whole collection (.colpkg). Their
+            schedules come along, so cards are due when Anki said.
+          </p>
+          <div class="buttons">
+            <button id="anki-file-button" class="small primary" type="button">Choose a file</button>
+            <input id="anki-file" type="file" accept=".apkg,.colpkg" hidden />
+          </div>
+          <p class="hint">
+            In Anki: File › Export, then "Anki Deck Package" with "Include scheduling information" ticked. Audio and
+            pictures are not brought over.
+          </p>
+        </section>
+        <section id="anki-check-step" hidden>
+          <p id="anki-summary"></p>
+          <fieldset class="setting">
+            <legend>Decks to bring</legend>
+            <div id="anki-decks" class="anki-choices"></div>
+          </fieldset>
+          <!-- One fieldset per note type, filled in by ankiImportForm.js. -->
+          <div id="anki-note-types"></div>
+          <p class="hint">
+            Cards with no history in Anki (usually writing) come a few a day in Review, with a lesson, as many as your
+            new words per day.
+          </p>
+          <div class="buttons">
+            <button id="anki-import-now" class="small primary" type="button">Import</button>
+          </div>
+        </section>
+        <section id="anki-done-step" hidden>
+          <p id="anki-result"></p>
+          <ul id="anki-problems" class="list-problems"></ul>
+          <div class="buttons">
+            <button id="anki-done-button" class="small primary" type="button">Done</button>
+          </div>
+        </section>
+        <p id="anki-note" role="status" class="note"></p>
+        <button id="anki-cancel-button" type="button" hidden></button>
+        <button data-same-as="anki-cancel-button" class="dialog-close" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 
       <!-- The introduction shown the first time the app is opened: a few screens,

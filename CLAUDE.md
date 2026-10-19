@@ -31,7 +31,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 
 - US English spelling everywhere (UI, comments, identifiers, docs).
 - Simple, direct code; a few small, plainly named files over abstractions. Comment anything non-obvious, and explain new concepts (browser APIs, tooling, PWA mechanics) in plain language the first time.
-- **Ask before adding any dependency**; the bar is high. Approved: `hanzi-writer`, `hanzi-writer-data`, `ts-fsrs`, `vite` (development).
+- **Ask before adding any dependency**; the bar is high. Approved: `hanzi-writer`, `hanzi-writer-data`, `ts-fsrs`, `sql.js` and `fzstd` (reading Anki files, 2026-10-19), `vite` (development).
 - **Fetch bulk data once and read it locally** rather than sending many requests to someone's server (2026-10-13). Development downloads go in the git-ignored `local/`, with source and fetch command in `local/README.md`.
 - One milestone at a time: propose a plan before building something new, and don't build ahead.
 
@@ -50,6 +50,7 @@ Each area's file in `docs/` (index `docs/README.md`) has the names in the code, 
 - Adding words, dictionary, scripts, Taiwan/mainland readings: `docs/words.md`
 - Cards, FSRS, Review and Learn, the lesson, leeches, suspending, the card manager: `docs/cards.md`
 - Decks: `docs/decks.md`; HSK, TOCFL and radical lists, reading fixes: `docs/word-lists.md`
+- Importing from Anki (.apkg, .colpkg), imported schedules: `docs/anki.md`
 - `changedAt`, removal marks, `formerIds`, combining backups: `docs/merging.md`
 - The word page, sentences, sound: `docs/word-page.md`
 - Writing a character (raw input, shortcuts, the frame, stroke orders, gestures): `docs/writing.md`

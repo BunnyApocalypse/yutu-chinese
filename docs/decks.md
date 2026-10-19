@@ -37,4 +37,4 @@ Built on 2026-10-13 at the owner's request; answers marked "owner" were given to
 
 ## Not built
 
-The browser's back button stepping through deck pages; ordering decks by hand; exporting or sharing a deck; per-deck card kinds; deck counts that allow for the hold between cards of one word ("due" is simply past their time).
+The browser's back button stepping through deck pages; ordering decks by hand; exporting or sharing a deck; per-deck card kinds; deck counts that allow for the hold between cards of one word ("due" is simply past their time, suspended cards left out).

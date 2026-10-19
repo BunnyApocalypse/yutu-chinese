@@ -160,7 +160,10 @@ test('a note becomes a word with the help of the dictionary', () => {
   );
   // A word the dictionary lacks keeps the note's pinyin if it can be read.
   assert.equal(word('玉兔', 'yù tù', 'jade rabbit').pinyin, 'yu4tu4');
+  // Both forms in one field: the first is taken.
+  assert.equal(word('學校/学校', 'xué xiào', 'school').simplified, '学校');
   assert.match(wordFromNote({ characters: '', pinyin: '', meaning: 'measure words' }, context).problem, /characters/);
+  assert.match(wordFromNote({ characters: '你好吗？', pinyin: '', meaning: 'how are you?' }, context).problem, /sentence/);
 });
 
 test("an import copies Anki's reviews and keeps its due dates", async () => {

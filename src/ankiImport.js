@@ -30,6 +30,21 @@ import { READY_MADE_LISTS, newDeckRecord, withDeck } from './decks.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+// Sorts records into lists by a key: groupBy(reviews, (r) => r.cardId) is a
+// Map from each card's ID to its reviews, in the order given.
+function groupBy(records, keyOf) {
+  const groups = new Map();
+  for (const record of records) {
+    const key = keyOf(record);
+    if (groups.has(key)) {
+      groups.get(key).push(record);
+    } else {
+      groups.set(key, [record]);
+    }
+  }
+  return groups;
+}
+
 // ---- Reading a field ----
 
 const ENTITIES = { nbsp: ' ', amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" };
@@ -234,10 +249,7 @@ export function describeCollection(collection, script = 'traditional') {
     .map((deck) => ({ id: deck.id, name: deck.name, cardCount: cardCount.get(deck.id) }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  const notesOf = new Map();
-  for (const note of collection.notes) {
-    notesOf.set(note.noteTypeId, [...(notesOf.get(note.noteTypeId) || []), note]);
-  }
+  const notesOf = groupBy(collection.notes, (note) => note.noteTypeId);
   const noteTypes = collection.noteTypes
     .filter((noteType) => notesOf.has(noteType.id))
     .map((noteType) => {
@@ -314,7 +326,14 @@ function numberedPinyin(text) {
 //
 // Returns { word } or { problem }, as checkWord does.
 export function wordFromNote(texts, context) {
-  const characters = texts.characters.replace(/\s+/g, '');
+  // A field with both forms in it ("學校/学校", "学校 (學校)") gives the
+  // first; the dictionary finds the other.
+  const characters = texts.characters.split(/[/|｜,，;；()（）[\]【】]/)[0].replace(/\s+/g, '');
+  // A sentence or phrase is not a word: sentences have a kind of their own
+  // here (sentences.js), not brought over from Anki yet.
+  if (/[\p{P}\p{S}]/u.test(characters)) {
+    return { problem: 'This looks like a sentence or phrase: only words are brought over.' };
+  }
   let pinyinText = texts.pinyin.split('\n')[0] || '';
   let meaning = texts.meaning;
   // No pinyin field: the meaning's first line may be the reading (Basic).
@@ -457,21 +476,16 @@ const isReadyMade = (deck) => READY_MADE_LISTS.some((list) => deck.id === list.i
 //            name (in the same deck), so importing twice makes no new ones
 //   reviews: review records to save: Anki's reviews and imported schedules
 //   cards:   card records to save, worked out from those reviews
-//   report:  { notesRead, newWords, wordsThere, cardsWithSchedule,
+//   report:  { notesRead, newWords, wordsThere, waiting, cardsWithSchedule,
 //              reviewsCopied, alreadyStudied, sameWord, problems }
+//            `waiting`: new words with no cards, which wait in Learn;
 //            `problems`: [{ text, problem }] for notes left out;
 //            `alreadyStudied`: cards left as they are, studied here already;
 //            `sameWord`: notes that are a word another note is too
 export function planAnkiImport(collection, choices, context) {
   const { settings, now } = context;
-  const reviewsOf = new Map();
-  for (const review of collection.reviews) {
-    reviewsOf.set(review.cardId, [...(reviewsOf.get(review.cardId) || []), review]);
-  }
-  const cardsOf = new Map();
-  for (const card of collection.cards) {
-    cardsOf.set(card.noteId, [...(cardsOf.get(card.noteId) || []), card]);
-  }
+  const reviewsOf = groupBy(collection.reviews, (review) => review.cardId);
+  const cardsOf = groupBy(collection.cards, (card) => card.noteId);
   for (const cards of cardsOf.values()) {
     cards.sort((a, b) => a.ord - b.ord);
   }
@@ -497,6 +511,7 @@ export function planAnkiImport(collection, choices, context) {
     notesRead: notes.length,
     newWords: 0,
     wordsThere: 0,
+    waiting: 0,
     cardsWithSchedule: 0,
     reviewsCopied: 0,
     alreadyStudied: 0,
@@ -644,6 +659,8 @@ export function planAnkiImport(collection, choices, context) {
     // for come in a few a day, not all at once (planSession in session.js).
     if (gotCards) {
       word = { ...word, importedAt: word.importedAt ?? now };
+    } else if (!existing.has(id)) {
+      report.waiting += 1;
     }
     words.push(word);
   }

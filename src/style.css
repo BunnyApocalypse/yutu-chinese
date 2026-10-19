@@ -3085,6 +3085,68 @@ button.deck-open {
   gap: var(--space-tiny);
 }
 
+/* Importing from Anki (ankiImportForm.js). The button under the decks, and
+   the pop-up's choices: a column of checkboxes for the decks, the field
+   roles as rows of a name and a list, each template's kinds of card in a
+   row that wraps on a phone. */
+.anki-import-row {
+  margin: var(--space-small) 0 0;
+  text-align: center;
+}
+
+/* min-width: a fieldset is otherwise never narrower than its widest list. */
+.anki-dialog fieldset.setting {
+  min-width: 0;
+  margin: 0 0 var(--space-medium);
+}
+
+.anki-dialog .buttons {
+  margin-top: var(--space-medium);
+}
+
+.anki-choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-tiny);
+}
+
+.anki-choices label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-small);
+  min-height: var(--tap-small);
+}
+
+.anki-choices.anki-types {
+  flex-direction: row;
+  flex-wrap: wrap;
+  column-gap: var(--space-large);
+}
+
+.anki-dialog input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+}
+
+/* The name and its list on one line, the lists lined up (a .setting row
+   would wrap the longest name's list onto a line of its own). */
+.anki-role {
+  flex-wrap: nowrap;
+  width: 100%;
+  margin-bottom: var(--space-small);
+}
+
+.anki-role select {
+  flex: 0 1 65%;
+  min-width: 0;
+  min-height: var(--tap-small);
+}
+
+.anki-cards-title,
+.anki-template > p {
+  margin: var(--space-small) 0 0;
+}
+
 /* Browsers hide elements with the "hidden" attribute, but any "display" rule
    overrides that. This makes sure hidden always wins. */
 [hidden] {

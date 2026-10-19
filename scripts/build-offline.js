@@ -60,8 +60,12 @@ for (let start = 0; start < strokeFiles.length; start += CHARS_PER_PACK) {
 
 // The dictionary, the word lists, the notes (.tsv) and the dictionary of how
 // characters are built (.txt) are one big file each already, so they are
-// saved as they are. Vite puts a fingerprint in their names too.
-const bigFiles = filesUnder('assets').filter((file) => file.endsWith('.tsv') || file.endsWith('.txt'));
+// saved as they are. Vite puts a fingerprint in their names too. So is
+// sql.js's WebAssembly file (.wasm, for importing from Anki, ankiFile.js):
+// kept across versions, it isn't fetched again with each new one.
+const bigFiles = filesUnder('assets').filter(
+  (file) => file.endsWith('.tsv') || file.endsWith('.txt') || file.endsWith('.wasm'),
+);
 
 // ---- The recordings ----
 //

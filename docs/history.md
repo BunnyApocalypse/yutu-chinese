@@ -4,11 +4,12 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
-**Handover from the fourth session of 2026-10-18.** Replace this with each session's handover; keep only what the next session needs.
+**Handover from the session of 2026-10-19.** Replace this with each session's handover; keep only what the next session needs.
 
-- **Everything released to test and stable** (the owner's word), both suites passing (187 unit tests, 309 browser tests). Roadmap items 1 and 10 done. **Next: item 2**, easy to try without studying it first.
+- **Roadmap item 5 built: importing from Anki** (`docs/anki.md`), on branch `worktree-tocfl-decision`, **committed, not pushed, not released**. The owner chose every proposal that day: sql.js and fzstd as dependencies, exact Anki due dates (an `importedSchedule` record that `replay` goes on from), the guesses shown and confirmed, writing left to the learner, tone following the pinyin card, the most-reviewed source winning, `.colpkg` too. Both suites passing (197 unit tests, 313 browser tests). **Next: the owner tries it on an export of their own** (and on a shared deck from AnkiWeb); then item 2.
+- **Item 8 (the TOCFL license) dropped** the same day: the list is kept knowingly (`docs/word-lists.md`).
 - **To know:**
-  - Every release needs its entry at the top of `src/changes.js` (CLAUDE.md, "Deploying").
+  - Every release needs its entry at the top of `src/changes.js` (CLAUDE.md, "Deploying"); none written yet for the Anki import.
   - Pictures for a decision are made with small scripts using the browser tests' harness (`startApp`, `startBrowsers`, `Page.captureScreenshot`), in the session's scratchpad or `local/`, and deleted once the point is built. The owner chooses from pictures side by side; always give the picture's path.
   - Rename by pattern only at exact places, then compare strings and comments with the original (a rename once changed text in messages too).
   - Can be deleted: `local/shoot-about.js`, `local/about-pictures/`, `local/ux-atlas-draft/`.
@@ -23,7 +24,7 @@ Agreed with the owner on 2026-10-18. **The first release** means the first users
 2. **Easy to try without studying it first** (tester 2's main point): someone arriving from a link should be writing a character within a minute.
 3. **Streaks.** Must be possible to turn off. To settle: what counts as a day studied and when it ends (local midnight, or later as in Anki); whether a day of Learn alone counts (nothing in Learn is saved, `docs/cards.md`); whether a missed day breaks it; reminders, which only the device itself could send (no server; browsers' support for a reminder while the app is closed is limited, to check per browser and for an installed app); where it shows.
 4. **Recording how long each review takes**, so a later progress tab has real data. As in Anki, a review counts at most a set time (60 seconds). Old reviews just lack the field; the store layout needn't change.
-5. **Importing an Anki deck (.apkg)**, for learners moving from Anki. The file is a zip holding an SQLite database (newer ones compressed with zstd), so it needs libraries: dependencies to ask about. To settle: what to do with the writing cards (Anki has no writing check: start new, take Anki's history as a hint, or let the learner choose; the owner's open question); which of a note's fields hold characters, pinyin and meaning (every deck differs); whether meaning and pinyin cards take over Anki's scheduling.
+5. **Built on 2026-10-19, not yet tried by the owner: importing from Anki** (.apkg and .colpkg, `docs/anki.md`). Schedules kept exactly, the guesses confirmed by the learner, writing left to the learner, tone following pinyin (the owner's choices that day). sql.js and fzstd added.
 6. **The finished 兔 logo** from a calligrapher, in place of the drawn one (`scripts/icon.html`). Takes an artist's time, so start early; its license must allow its use in the app.
 7. **Data safety, seen by a stranger:** that everything stays on their device, why backups matter, Safari clearing a site not opened for 7 days.
 8. **Dropped on 2026-10-19: the TOCFL list's license.** The owner chose to keep the list and take the risk knowingly, without asking the committee (`docs/word-lists.md`).

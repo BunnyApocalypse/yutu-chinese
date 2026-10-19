@@ -8,6 +8,7 @@ CLAUDE.md keeps the rules and points here. Each file has what an area does now, 
 | `cards.md` | Card kinds, FSRS, grading, Learn and the lesson, writing cards per script, leeches, managing cards |
 | `decks.md` | The Decks tab, adding, how decks work, ready-made decks |
 | `word-lists.md` | HSK, TOCFL, groups, reading fixes, radicals |
+| `anki.md` | Importing from Anki: reading the file, the guesses, keeping schedules |
 | `merging.md` | What is kept for merging, combining backups |
 | `word-page.md` | The word page, sentences, hearing a word |
 | `writing.md` | Raw input, shortcuts, following the frame, two stroke orders, the stroke count, gestures |
