@@ -566,7 +566,7 @@ async function showBackupStatus() {
       due = started.length > 0 && Date.now() - Math.min(...started) > wait;
     }
   }
-  byId('backup-reminder-button').textContent = off ? 'Remind me about backups again' : 'Stop reminding me';
+  byId('backup-reminder-button').textContent = off ? 'Remind me about backups again' : 'Stop backup reminders';
   byId('backup-reminder-button').hidden = !off && !due;
   byId('backup-status').textContent =
     (last === null

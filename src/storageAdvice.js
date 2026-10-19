@@ -89,7 +89,7 @@ export function storageAdvice(kind, { canAsk, kept, asked, installed, canInstall
     }
     return asked
       ? `This browser said no, as it does for an app that is not installed. Install the app (${install}), open it from there, and it will ask again by itself. ${BACKUP}`
-      : `This browser will not ask you anything: it decides by itself, and says yes for an installed app. So install the app first (${install}), then tap the button.`;
+      : `This browser will not ask you anything: it decides by itself, and says yes for an installed app. So install the app first (${install}) and use it from there: it then asks by itself.`;
   }
   if (kind === 'safari') {
     return installed
@@ -98,7 +98,7 @@ export function storageAdvice(kind, { canAsk, kept, asked, installed, canInstall
         : 'Safari decides by itself. Data of an app on the Home Screen, like this one, is kept.'
       : 'Safari decides by itself, and it deletes a site\'s data after about a week without a visit. ' +
           (mobile
-            ? 'To prevent that, put the app on the Home Screen (tap Share, then "Add to Home Screen") and use it from there. '
+            ? 'To prevent that, put the app on the Home Screen (tap Share, or ⋯ then Share, then "Add to Home Screen") and use it from there. '
             : 'To prevent that, add the app to the Dock (in Safari\'s File menu, "Add to Dock", on macOS 14 or later) and use it from there. ') +
           BRING_OVER;
   }

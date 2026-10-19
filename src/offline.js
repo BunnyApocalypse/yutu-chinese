@@ -323,12 +323,24 @@ export async function setUpOffline({ statusElement, keepElement, updateButton, k
   const showKeeping = async () => {
     const keeping = await keepData.state();
     keepElement.textContent = storageAdvice(keepData.kind, keeping, keepData.mobile);
-    keepButton.hidden = keeping.kept || !keeping.canAsk;
+    // "Allow long-term storage" only where tapping it can help: not in
+    // Chrome before the app is installed (it says no until then), nor in
+    // Safari outside the Home Screen or the Dock (only putting it there
+    // helps). The advice above says what to do instead (the owner,
+    // 2026-10-19: fewer buttons here).
+    const useless = !keeping.installed && (keepData.kind === 'chromium' || keepData.kind === 'safari');
+    keepButton.hidden = keeping.kept || !keeping.canAsk || useless;
     installButton.hidden = !keeping.canInstall;
   };
   keepData.listen(showKeeping);
   keepButton.addEventListener('click', () => keepData.ask());
-  installButton.addEventListener('click', () => keepData.install());
+  // Installing asks for long-term storage too, as in the introduction
+  // (welcome.js): Chrome says no before the app is installed, but the wish
+  // is noted, so the installed app asks again by itself.
+  installButton.addEventListener('click', () => {
+    keepData.install().catch(() => {});
+    keepData.ask().catch(() => {});
+  });
   // Someone who has asked for it before wants it. A browser that decides by
   // itself may have said no then and say yes now (after installing, or after
   // some use), so it is asked again, which shows nothing. Firefox would put

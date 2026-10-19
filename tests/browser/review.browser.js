@@ -354,10 +354,10 @@ describe('grading in Review', { concurrency: false }, () => {
     // Settings can switch it off, after a warning.
     await openSettings(page, 'settings-data');
     await waitUntil(page, `!document.getElementById('keep-reminder-button').hidden`, 'the switch');
-    assert.equal(await textOf(page, 'keep-reminder-button'), 'Stop reminding me');
+    assert.equal(await textOf(page, 'keep-reminder-button'), 'Stop the reminder in Review and Learn');
     await page.evaluate(ANSWER_YES);
     await tap(page, 'keep-reminder-button');
-    await waitUntil(page, `document.getElementById('keep-reminder-button').textContent === 'Remind me to keep my words safe'`, 'switched off');
+    await waitUntil(page, `document.getElementById('keep-reminder-button').textContent === 'Show the reminder in Review and Learn again'`, 'switched off');
     await tap(page, 'settings-close');
     await gradeMeaning();
     await new Promise((resolve) => setTimeout(resolve, 300));
@@ -365,9 +365,9 @@ describe('grading in Review', { concurrency: false }, () => {
 
     // Switched on again for the tests after this one.
     await openSettings(page, 'settings-data');
-    await waitUntil(page, `document.getElementById('keep-reminder-button').textContent === 'Remind me to keep my words safe'`, 'the switch');
+    await waitUntil(page, `document.getElementById('keep-reminder-button').textContent === 'Show the reminder in Review and Learn again'`, 'the switch');
     await tap(page, 'keep-reminder-button');
-    await waitUntil(page, `document.getElementById('keep-reminder-button').textContent === 'Stop reminding me'`, 'switched on');
+    await waitUntil(page, `document.getElementById('keep-reminder-button').textContent === 'Stop the reminder in Review and Learn'`, 'switched on');
     await tap(page, 'settings-close');
   });
 });

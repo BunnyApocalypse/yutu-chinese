@@ -130,7 +130,8 @@ export function createStorageMessage(keepData) {
   // off.
   async function showReminderButton() {
     const off = await getSetting('storageReminderOff', false);
-    reminderButton.textContent = off ? 'Remind me to keep my words safe' : 'Stop reminding me';
+    // Named apart from the backup reminder's button in the same group.
+    reminderButton.textContent = off ? 'Show the reminder in Review and Learn again' : 'Stop the reminder in Review and Learn';
     reminderButton.hidden = !off && !(await atRisk());
   }
   reminderButton.addEventListener('click', async () => {
