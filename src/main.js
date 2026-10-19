@@ -845,6 +845,13 @@ async function startUp() {
     keepData,
     hasWords: () => wordList.length > 0,
     onFinish: async (start) => {
+      // A deck from Anki: the Decks tab, with the import open on top
+      // (ankiImportForm.js; the owner, 2026-10-19).
+      if (start?.anki) {
+        await setMode('decks');
+        byId('anki-import-button').click();
+        return;
+      }
       if (start) {
         try {
           await wordsPanel.addReadyLevels(start.listId, [start.level]);

@@ -919,11 +919,13 @@
         <section data-step hidden>
           <h2>Select your starting level</h2>
           <!-- Chosen to suit the script picked before, when this screen is
-               reached (welcome.js). The value is a list and a level. -->
+               reached (welcome.js). The value is a list and a level, or
+               "anki" for importing a deck (ankiImportForm.js). -->
           <fieldset class="setting">
             <legend>Start with</legend>
             <label><input type="radio" name="welcome-start" value="hsk-3.0|1" /> HSK 3.0, level 1: mainland China's test, 512 words</label>
             <label><input type="radio" name="welcome-start" value="tocfl|Novice 1" /> TOCFL, Novice 1: Taiwan's test, 182 words</label>
+            <label><input type="radio" name="welcome-start" value="anki" /> A deck from Anki: bring your words and their schedules</label>
             <label><input type="radio" name="welcome-start" value="" /> None: I'll add my own words</label>
           </fieldset>
           <p class="hint">More levels, and words of your own, can be added any time in <b>Decks</b>.</p>

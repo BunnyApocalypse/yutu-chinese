@@ -17,8 +17,8 @@ const byId = (id) => document.getElementById(id);
 // hasWords(): true if the word list is not empty
 // onFinish(start): called when the last screen's button is tapped, and
 //           waited for before the introduction closes. `start` is the
-//           ready-made level chosen to begin with, { listId, level }, or
-//           null for none.
+//           ready-made level chosen to begin with, { listId, level },
+//           { anki: true } for a deck to import from Anki, or null for none.
 //
 // Returns { open(), openIfFirstTime() }.
 export function createWelcome({ settings, keepData, hasWords, onFinish }) {
@@ -95,11 +95,14 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
     choose('welcome-start', hasWords() ? '' : taiwanese ? 'tocfl|Novice 1' : 'hsk-3.0|1');
   }
 
-  // The level chosen to start with, or null.
+  // The level chosen to start with, { anki: true }, or null.
   function startChosen() {
     const value = chosen('welcome-start');
     if (value === '') {
       return null;
+    }
+    if (value === 'anki') {
+      return { anki: true };
     }
     const [listId, level] = value.split('|');
     return { listId, level };
@@ -126,6 +129,8 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
         ? 'Install the app and start'
         : storagePlan.action === 'ask'
           ? 'Keep my words safe and start'
+          : startChosen()?.anki
+          ? 'Import my Anki deck'
           : startChosen()
           ? 'Start learning'
           : hasWords()
@@ -214,7 +219,7 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
     nextButton.disabled = true;
     backButton.disabled = true;
     skipButton.disabled = true;
-    nextButton.textContent = startChosen() ? 'Adding words…' : nextButton.textContent;
+    nextButton.textContent = startChosen() && !startChosen().anki ? 'Adding words…' : nextButton.textContent;
     try {
       await onFinish(startChosen());
     } finally {

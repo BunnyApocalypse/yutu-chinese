@@ -257,4 +257,19 @@ describe('the introduction', { concurrency: false }, () => {
     })`);
     assert.ok(words.filter((word) => word.decks.some((deck) => deck.startsWith('tocfl/Novice 1'))).length > 150);
   });
+
+  it('can start with a deck from Anki, ending with its import open', async () => {
+    await tap(page, 'settings-button');
+    await tap(page, 'welcome-again-button');
+    for (let screen = 0; screen < 2; screen++) {
+      await tap(page, 'welcome-next');
+    }
+    await click('input[name="welcome-start"][value="anki"]');
+    await tap(page, 'welcome-next');
+    await tap(page, 'welcome-next');
+    await waitUntil(page, `!${welcomeOpen} && document.getElementById('anki-dialog').open`, 'the Anki import');
+    assert.equal(await page.evaluate(`document.getElementById('place-title').textContent`), 'Decks');
+    assert.equal(await isShown(page, 'anki-choose-step'), true);
+    await tap(page, 'anki-cancel-button');
+  });
 });
