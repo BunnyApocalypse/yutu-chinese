@@ -1702,10 +1702,14 @@ button.slot {
 /* The streak pill (streakScreen.js): the moment the day counts while
    studying. It floats over the top bar, centered, so nothing on the page
    moves (docs/pitfalls.md: nothing above the writing area changes height),
-   and the menu button and the buttons at the right stay uncovered. */
+   and the menu button and the buttons at the right stay uncovered. In line
+   with the bar's buttons (the owner, 2026-10-19: at 4px from the top it was
+   pressed against the edge): they start 6px down (main's padding less the
+   bar's 10px margin, .top-bar) and are --top-bar high; the pill, a little
+   lower than they are, is centered on them. */
 .streak-pill-place {
   position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + var(--space-tiny));
+  top: calc(var(--space-large) - 10px + var(--space-tiny));
   left: 0;
   right: 0;
   display: flex;
