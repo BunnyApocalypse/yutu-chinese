@@ -74,19 +74,23 @@
    Both looks are kept soft (the owner, 2026-10-15, after trying it on the
    samples where the look is chosen): paper rather than white and dark gray
    rather than black in the light one, dark gray rather than black in the
-   dark one. */
+   dark one.
+
+   The dark jade is a gray nephrite and what is chosen glows like moonlight,
+   not jade: the first jade, light and bright, read as mint (the owner,
+   2026-10-19, from pictures of four drafts, local/looks/jade/). */
 :root[data-theme='dark'] {
   color-scheme: dark;
   --bg: #1d2120;
   --surface: #252a28;
   --raised: #2c3230;
   --pressed: #363c3a;
-  --selected: #243a31;
+  --selected: #35322a; /* moonlight: warm, not a tint of the jade */
   --text: #ece3cb;
   --text-soft: #dcd3bb;
   --muted: #a9a68f;
   --inverse-text: #1d2120;
-  --accent: #7cc4a3;
+  --accent: #8db89a; /* nephrite, grayer than mint */
   --accent-fill: #5c7290;
   --accent-pressed: #4e627d;
   --on-accent: #fff;
@@ -121,12 +125,12 @@
     --surface: #252a28;
     --raised: #2c3230;
     --pressed: #363c3a;
-    --selected: #243a31;
+    --selected: #35322a; /* moonlight: warm, not a tint of the jade */
     --text: #ece3cb;
     --text-soft: #dcd3bb;
     --muted: #a9a68f;
     --inverse-text: #1d2120;
-    --accent: #7cc4a3;
+    --accent: #8db89a; /* nephrite, grayer than mint */
     --accent-fill: #5c7290;
     --accent-pressed: #4e627d;
     --on-accent: #fff;
