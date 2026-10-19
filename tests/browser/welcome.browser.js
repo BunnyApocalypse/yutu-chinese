@@ -115,13 +115,18 @@ describe('the introduction', { concurrency: false }, () => {
     assert.equal(await heading(), 'Keep your words safe');
     assert.equal(await textOf(page, 'welcome-progress'), '4 of 4');
     // The test's browser is a Chromium, which keeps only an installed app's
-    // data: the button installs where the browser offers it, and asks otherwise.
+    // data: the button installs where the browser offers it, with "Not now"
+    // beside it; otherwise the screen says how and the button just starts.
     await waitUntil(page, `document.getElementById('welcome-keep-note').textContent !== ''`, 'the line about this browser');
     assert.match(await textOf(page, 'welcome-keep-note'), /installed app/);
-    assert.match(await textOf(page, 'welcome-next'), /^(Install the app|Keep my words safe) and start$/);
-    assert.equal(await textOf(page, 'welcome-skip'), 'Not now');
+    const next = await textOf(page, 'welcome-next');
+    assert.doesNotMatch(next, /Keep my words safe/);
+    assert.equal(await isShown(page, 'welcome-skip'), next === 'Install the app and start');
+    if (next === 'Install the app and start') {
+      assert.equal(await textOf(page, 'welcome-skip'), 'Not now');
+    }
     // Three buttons at most.
-    assert.equal(await page.evaluate(`[...document.querySelectorAll('#welcome button')].filter((button) => button.offsetParent).length`), 3);
+    assert.ok(await page.evaluate(`[...document.querySelectorAll('#welcome button')].filter((button) => button.offsetParent).length`) <= 3);
   });
 
   it('ends in the Decks tab with the choices saved', async () => {
@@ -238,9 +243,10 @@ describe('the introduction', { concurrency: false }, () => {
     assert.equal(await page.evaluate(`document.querySelector('input[name="welcome-start"]:checked').value`), '');
     await click('input[name="welcome-start"][value="tocfl|Novice 1"]');
     await tap(page, 'welcome-next');
-    // The main button does what keeps the words: here it notes that they are
-    // to be kept, so that the app asks again by itself once installed.
-    assert.match(await textOf(page, 'welcome-next'), / and start$/);
+    // The main button does what keeps the words: here it installs, or (no
+    // install question) starts and quietly notes that they are to be kept,
+    // so that the app asks again by itself once installed.
+    assert.match(await textOf(page, 'welcome-next'), /^(Install the app and start|Start learning)$/);
     await tap(page, 'welcome-next');
     await waitUntil(page, `!${welcomeOpen} && document.getElementById('place-title').textContent === 'Learn'`, 'Learn');
     assert.equal(await page.evaluate(`new Promise((resolve) => {

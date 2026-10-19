@@ -132,7 +132,8 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
     // words (installing, or asking) and finishes, and "Not now" in place of
     // "Skip" finishes without it: at most three buttons on a screen (a
     // tester and the owner, 2026-10-16).
-    const willAsk = last && storagePlan.action !== 'none';
+    // ('later' starts as usual, with nothing to say "Not now" to.)
+    const willAsk = last && (storagePlan.action === 'install' || storagePlan.action === 'ask');
     // In Safari the steps above are what to do; starting here is the
     // exception, so its button is not the main one.
     const safariSteps = last && Boolean(storagePlan.addTo);
@@ -218,6 +219,8 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
   //              long-term storage too notes that it is wanted, so the app
   //              asks again by itself once installed (offline.js).
   //   'ask':     asking for long-term storage
+  //   'later':   the same, quietly: in Chromium it only notes that it is
+  //              wanted, for once the app is installed
   //   'none':    nothing (also "Not now")
   // Neither answer is waited for: Firefox puts its question at the top of
   // the page (the bottom on a phone), which may stay there a while. Both are started before anything

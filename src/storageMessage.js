@@ -35,7 +35,7 @@ export function createStorageMessage(keepData) {
   const advice = byId('storage-message-advice');
   const keepButton = byId('storage-message-keep');
   const reminderButton = byId('keep-reminder-button');
-  // 'install', 'ask' or 'export', as worked out by storageMessageLine.
+  // 'install', 'ask', 'export' or 'settings', as worked out by storageMessageLine.
   let action = 'ask';
   // "Not now" was tapped: put away until the app is next opened.
   let putAway = false;
@@ -56,10 +56,11 @@ export function createStorageMessage(keepData) {
     action = plan.action;
     // Once the browser was asked, the full advice says what happened and
     // what to do next. The app's name is marked as Chinese, as elsewhere.
-    const asked = state.asked && action !== 'export';
+    const asked = state.asked && (action === 'install' || action === 'ask');
     fillMixed(advice, asked ? storageAdvice(keepData.kind, state, keepData.mobile) : plan.line, 'traditional');
-    keepButton.textContent =
-      action === 'install' ? 'Install the app' : action === 'export' ? 'Export backup' : 'Keep my words safe';
+    // ('settings' keeps "Keep my words safe", the reminder's own words: the
+    // owner, 2026-10-19.)
+    keepButton.textContent = action === 'install' ? 'Install the app' : action === 'export' ? 'Export backup' : 'Keep my words safe';
     keepButton.hidden = action === 'none' || asked;
     return true;
   }
@@ -90,6 +91,15 @@ export function createStorageMessage(keepData) {
     if (action === 'export') {
       // The same as Export backup in Settings (main.js).
       byId('export-button').click();
+      return;
+    }
+    if (action === 'settings') {
+      // "Keep my words safe" without an install question: Settings › Your data and backups, which says how to install the app
+      // from the browser's menu and has Export backup. The wish to keep the
+      // words is noted, so that the installed app asks again by itself.
+      keepData.ask().catch(() => {});
+      byId('settings-button').click();
+      document.querySelector('#settings-nav [data-group="settings-data"]').click();
       return;
     }
     // Installing asks for long-term storage too, as in the introduction

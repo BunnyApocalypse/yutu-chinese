@@ -118,8 +118,11 @@ export function storageAdvice(kind, { canAsk, kept, asked, installed, canInstall
 //   action: 'install' to show the browser's own "install this app?"
 //           question (Chromium keeps only an installed app's data, and the
 //           app asks again by itself once installed; see offline.js),
-//           'ask' to ask for long-term storage, or 'none' if there is
-//           nothing to ask
+//           'ask' to ask for long-term storage, 'later' to start as usual
+//           while noting quietly that the words are to be kept (Chromium
+//           without its install question: no button can install, and a
+//           button saying "Keep my words safe" would seem to have done it;
+//           the owner, 2026-10-19), or 'none' if there is nothing to ask
 //   line:   a sentence to show, or ''
 //   addTo:  in Safari, where the person should put the app instead:
 //           'homeScreen' or 'dock' (the screen then shows the steps); else absent
@@ -133,7 +136,7 @@ export function welcomeStorage(kind, { canAsk, kept, installed, canInstall }, mo
   if (kind === 'chromium' && !installed) {
     return canInstall
       ? { action: 'install', line: 'This browser keeps the words of an installed app.' }
-      : { action: 'ask', line: `This browser only keeps the words of an installed app: ${INSTALL_HOW}.` };
+      : { action: 'later', line: `This browser only keeps the words of an installed app: ${INSTALL_HOW}.` };
   }
   if (kind === 'firefox') {
     // At the bottom of the screen on a phone (the owner, 2026-10-16).
@@ -192,7 +195,10 @@ export function wordsAtRisk(kind, { canAsk, kept, installed }, lastBackupAt, now
 // Returns { action, line }, with action as for welcomeStorage, or 'export'
 // for Export backup: where nothing can be asked, and in Safari, whose app
 // on the Home Screen or in the Dock starts empty, so the words are brought
-// over in a backup. The line names the app as 玉兔中文, to be marked as
+// over in a backup; or 'settings' for "Keep my words safe" opening Settings ›
+// Your data and backups, where the app can be installed or a backup made:
+// Chromium without its install question, where no button here can install
+// (the owner, 2026-10-19). The line names the app as 玉兔中文, to be marked as
 // Chinese where it is shown.
 export function storageMessageLine(kind, { canAsk, kept, installed, canInstall }, mobile = false) {
   if (kind === 'safari' && !installed) {
@@ -212,7 +218,7 @@ export function storageMessageLine(kind, { canAsk, kept, installed, canInstall }
   if (kind === 'chromium' && !installed) {
     return canInstall
       ? { action: 'install', line: "Install 玉兔中文 as an app so your browser doesn't delete them." }
-      : { action: 'ask', line: `Install 玉兔中文 as an app so your browser doesn't delete them: ${INSTALL_HOW}.` };
+      : { action: 'settings', line: "Install 玉兔中文 as an app or save a backup, so your browser doesn't delete them." };
   }
   if (kind === 'firefox') {
     return { action: 'ask', line: "When Firefox asks, choose Allow so it doesn't delete them." };

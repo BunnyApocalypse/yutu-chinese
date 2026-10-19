@@ -107,8 +107,9 @@ test('the introduction: one button that does what the browser needs', () => {
     action: 'install',
     line: 'This browser keeps the words of an installed app.',
   });
+  // Without it no button can install: the screen just starts, and says how.
   const noOffer = welcomeStorage('chromium', state());
-  assert.equal(noOffer.action, 'ask');
+  assert.equal(noOffer.action, 'later');
   assert.match(noOffer.line, /only keeps the words of an installed app: open the browser's menu/);
   assert.deepEqual(welcomeStorage('chromium', state({ installed: true, canInstall: true })), { action: 'ask', line: '' });
   // Firefox asks the person; on a phone, installing is mentioned as a convenience.
@@ -156,8 +157,11 @@ test('the message while the words are at risk: one line and one action for each 
   const chrome = storageMessageLine('chromium', { ...notKept, canInstall: true });
   assert.equal(chrome.action, 'install');
   assert.equal(chrome.line, "Install 玉兔中文 as an app so your browser doesn't delete them.");
-  // Without it, the browser's menu is pointed to.
-  assert.match(storageMessageLine('chromium', notKept).line, /Install app/);
+  // Without it, "Keep my words safe" opens Settings, to install or save a backup.
+  assert.deepEqual(storageMessageLine('chromium', notKept), {
+    action: 'settings',
+    line: "Install 玉兔中文 as an app or save a backup, so your browser doesn't delete them.",
+  });
   assert.equal(storageMessageLine('chromium', { ...notKept, installed: true }).action, 'ask');
   assert.equal(storageMessageLine('firefox', notKept).line, "When Firefox asks, choose Allow so it doesn't delete them.");
   // An iPhone: the Home Screen, and the words brought over in a backup,
