@@ -6,6 +6,17 @@
 // was built.
 export const CHANGES = [
   {
+    id: '2026-10-19',
+    items: [
+      'Bring your decks over from Anki, with their schedules: "+ New / import deck" in Decks.',
+      'Streaks: review 10 cards or learn 2 words a day to keep yours growing. A small note while you study, the rest when you pause. You can turn streaks off in Settings.',
+      'A new Progress tab in the menu: your cards, the days you studied, time spent, and the words and characters you know.',
+      'With no words yet, Review offers a level to start from, one tap from your first lesson.',
+      'Settings now says where your words are kept and how to keep them safe, with the steps for iPhone, iPad and Mac.',
+      'The dark look\'s green is calmer: more jade, less mint.',
+    ],
+  },
+  {
     id: '2026-10-18-2',
     items: [
       'Learning a word is calmer: once a step is written, only the button to go on stays, with "Practice again" under it.',
