@@ -12,7 +12,7 @@ Agreed with the owner on 2026-10-13.
 - **Sentences and audio:** hearing the word and sentence cards are core; listening cards and audio for sentences are nice to have.
 - **The hard constraints are open to change** (vanilla JavaScript, no framework, few dependencies) if a change makes the app easier to grow or contribute to. Nothing planned needs one yet; each change is still asked for first.
 - **What this means for the data model:** a removed word or card must leave a mark, or a merge brings it back; records carry the time they were last changed; a corrected word's old ID is remembered; a card's schedule can be recomputed from its reviews, which also serves changed scheduling, leeches and statistics.
-- **Sharing raises the bar on licensing.** The TOCFL list has no stated license (`docs/word-lists.md`; roadmap item 8).
+- **Sharing raises the bar on licensing.** The TOCFL list has no stated license; the owner keeps it knowingly (2026-10-19, `docs/word-lists.md`).
 
 ## Sharing the app
 

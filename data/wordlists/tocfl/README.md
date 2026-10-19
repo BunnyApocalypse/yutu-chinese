@@ -16,7 +16,7 @@ The list gives each word in traditional characters with its pinyin in tone marks
 
 ## License
 
-**The source states no license.** Neither the file nor the page it is offered on says under what terms it may be reused. It is the official word list of a public test, published for learners and teachers to use, and the project's owner decided on 2026-10-13 to include it on that understanding. It is not covered by the GPL that applies to the app's code, and anyone passing it on should check the committee's terms for themselves.
+**The source states no license.** Neither the file nor the page it is offered on says under what terms it may be reused. It is the official word list of a public test, published for learners and teachers to use, and the project's owner decided on 2026-10-13 to include it on that understanding, and on 2026-10-19 to keep it without asking the committee; it will be removed if the committee asks. It is not covered by the GPL that applies to the app's code, and anyone passing it on should check the committee's terms for themselves.
 
 ## Updating
 
