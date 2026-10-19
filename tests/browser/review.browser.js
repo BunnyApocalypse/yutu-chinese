@@ -1,6 +1,7 @@
 // Grading in Review, in a real browser: the grade suggested for a written
 // word (Good, Hard after a mistake or a hint, Again for a missed character),
-// what is saved once a grade is chosen, a meaning card graded from its tap,
+// what is saved once a grade is chosen (how long it took too), a meaning
+// card graded from its tap,
 // and the Card types setting leaving a kind of card out.
 //
 // Run with: npm run test:browser
@@ -205,6 +206,8 @@ describe('grading in Review', { concurrency: false }, () => {
     assert.equal(review.suggestedGrade, 3);
     assert.deepEqual(review.passedPerChar, [true]);
     assert.deepEqual(review.mistakesPerChar, [0]);
+    // How long it took (timing.js): some time, no more than since the card came up.
+    assert.ok(review.duration > 0 && review.duration <= Date.now() - before, `duration ${review.duration}`);
     // The card comes back days from now, not today.
     const saved = (await all('cards')).find((each) => each.id === '大|da4#writing');
     assert.ok(saved.lastReviewedAt >= before);
@@ -280,6 +283,7 @@ describe('grading in Review', { concurrency: false }, () => {
     await chooseGrade('Easy');
     const review = await lastReview();
     assert.equal(review.cardId, '小|xiao3#meaning');
+    assert.equal(typeof review.duration, 'number');
     assert.equal(review.grade, 4);
     assert.equal(review.suggestedGrade, 3);
   });

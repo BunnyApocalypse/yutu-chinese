@@ -8,7 +8,10 @@
 //   words     key: id      { id, traditional, simplified, pinyin, definition,
 //                            order, addedAt, changedAt } and, for some,
 //                          pinyinTaiwan, pinyinAlso, cardScript, learnedAt,
-//                          decks, formerIds, suspended, startedOverAt.
+//                          learnDuration, decks, formerIds, suspended,
+//                          startedOverAt. `learnDuration` is how long the
+//                          word's lesson in Learn took, in milliseconds
+//                          (timing.js; words learned from 2026-10-19).
 //                          `suspended` lists the kinds of card that are not
 //                          to come up (leeches.js); `startedOverAt` has, by
 //                          kind of card, when it was last started over
@@ -34,16 +37,19 @@
 //                            suggestedPerChar, orderPerChar, script, log }
 //                          One per review, never deleted. `script` is the
 //                          script the card was shown or written in.
+//                          `duration` is how long the answer took in
+//                          milliseconds (timing.js; reviews from 2026-10-19
+//                          and those from Anki).
 //                          A review brought over from Anki has an ID made
 //                          from Anki's ("anki-<Anki's ID>-<type>"),
-//                          `fromAnki: true`, and `duration`, how long the
-//                          answer took in milliseconds. With each such card
-//                          comes one record that is not a review but the
-//                          schedule Anki gave it: `importedSchedule` in
-//                          place of `grade` (replay in scheduler.js). The
-//                          cardId of a review made before 2026-10-13 may be
-//                          the plain id of a card since moved to its
-//                          "#simplified" id (see scriptCards.js).
+//                          `fromAnki: true`, and Anki's `duration`. With
+//                          each such card comes one record that is not a
+//                          review but the schedule Anki gave it:
+//                          `importedSchedule` in place of `grade` (replay
+//                          in scheduler.js). The cardId of a review made
+//                          before 2026-10-13 may be the plain id of a card
+//                          since moved to its "#simplified" id (see
+//                          scriptCards.js).
 //   settings  key: key     { key, value, changedAt }
 //   removed   key: id      { id, removedAt } and, for a deck, kind: 'deck'.
 //                          One per word or deck that was ever removed, under

@@ -244,12 +244,18 @@ describe('learning new words', { concurrency: false }, () => {
     await tap(page, 'storage-message-close');
     assert.equal(await isShown(page, 'storage-message'), false);
     const stored = await inDatabase(`
-      stores.words.get('大|da4').onsuccess = (event) => { result.learned = typeof event.target.result.learnedAt; };
+      stores.words.get('大|da4').onsuccess = (event) => {
+        result.learned = typeof event.target.result.learnedAt;
+        result.took = event.target.result.learnDuration;
+      };
       stores.cards.getAllKeys().onsuccess = (event) => { result.cards = event.target.result; };
     `);
-    // Nothing was saved but the word being learned: all its cards start in
-    // Review, straight away, and the other words are left alone.
-    assert.deepEqual(stored, { learned: 'number', cards: [] });
+    // Nothing was saved but the word being learned (with how long its lesson
+    // took): all its cards start in Review, straight away, and the other
+    // words are left alone.
+    assert.equal(stored.learned, 'number');
+    assert.deepEqual(stored.cards, []);
+    assert.ok(stored.took > 0, `learnDuration ${stored.took}`);
     await tap(page, 'review-tab');
     await waitUntil(page, `document.getElementById('review-counts').textContent.endsWith('2 new')`, 'Review');
     await waitUntil(page, `document.getElementById('card-type').textContent === 'Tone'`, 'its tone card');
@@ -275,13 +281,18 @@ describe('learning new words', { concurrency: false }, () => {
     assert.equal(await textOf(page, 'review-counts'), '2 of 5 learned today · 1 waiting');
     // The word is learned, and each of its cards was answered "Easy".
     const stored = await inDatabase(`
-      stores.words.get('小|xiao3').onsuccess = (event) => { result.learned = typeof event.target.result.learnedAt; };
+      stores.words.get('小|xiao3').onsuccess = (event) => {
+        result.learned = typeof event.target.result.learnedAt;
+        result.timed = 'learnDuration' in event.target.result;
+      };
       stores.cards.getAllKeys().onsuccess = (event) => { result.cards = event.target.result.filter((id) => id.startsWith('小')); };
       stores.reviews.getAll().onsuccess = (event) => {
         result.reviews = event.target.result.filter((review) => review.wordId === '小|xiao3').map((review) => [review.grade, review.markedKnown]);
       };
     `);
     assert.equal(stored.learned, 'number');
+    // Skipping isn't studying: no time is kept.
+    assert.equal(stored.timed, false);
     // (Only tone and writing cards are switched on here.)
     assert.deepEqual(stored.cards.sort(), ['小|xiao3#tone', '小|xiao3#writing']);
     assert.deepEqual(stored.reviews, Array(2).fill([4, true]));

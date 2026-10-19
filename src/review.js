@@ -35,6 +35,7 @@ import { isSentence, sentenceCardTypes, sentenceWriting } from './sentences.js';
 import { isRadical, RADICAL_CARD_TYPES } from './radicals.js';
 import { cardTip } from './cardTip.js';
 import { studyByDay, streakAt, streakLine, studyDayKey } from './streak.js';
+import { createStopwatch } from './timing.js';
 
 // The same for a sentence, which has two kinds of card (see sentences.js).
 const SENTENCE_LABELS = {
@@ -158,6 +159,17 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   let options = null;
   let suggested = null;
   let answerDetails = null;
+  // How long the card on screen, or the word in Learn, has taken so far
+  // (timing.js): started when it comes up, stopped when it is graded or
+  // learned. Time while the app is out of sight doesn't count.
+  const stopwatch = createStopwatch();
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopwatch.pause();
+    } else {
+      stopwatch.resume();
+    }
+  });
 
   // Shows the parts of the study area that the given kind of card uses, and
   // hides the rest.
@@ -499,6 +511,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     showNotice('');
     const chosen = options[value];
     options = null;
+    const duration = stopwatch.stop();
     const { word, type, card } = current;
     const time = finishedAt.getTime();
     // A word of one character has no verdict of its own to overrule (its
@@ -530,6 +543,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       log: chosen.log,
       // What was answered; the fields depend on the kind of card.
       ...answerDetails,
+      // How long it took, in milliseconds (timing.js).
+      ...(duration !== null && { duration }),
     };
     await saveReview(newCard, review);
     cards.set(newCard.id, newCard);
@@ -1000,6 +1015,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       showRepeatDone();
       return;
     }
+    // Each step of a lesson counts up to the limit of its own (timing.js).
+    stopwatch.lap();
     if (toIndex >= lesson.steps.length) {
       // A lesson without writing (writing cards are off, or the word has no
       // stroke data) ends here; with writing it ends when the test is graded.
@@ -1053,6 +1070,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       return;
     }
     const { word, learning } = current;
+    // Skipping isn't studying: the time so far is not kept.
+    stopwatch.stop();
     const known = markedKnown(
       word,
       [...cards.values()],
@@ -1108,7 +1127,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   // The word on screen has been through its lesson: mark it as learned.
   async function finishLearning() {
-    const learned = { ...current.word, learnedAt: Date.now() };
+    // How long the lesson took, in milliseconds (timing.js).
+    const learnDuration = stopwatch.stop();
+    const learned = { ...current.word, learnedAt: Date.now(), ...(learnDuration !== null && { learnDuration }) };
     await putAll('words', [learned]);
     words = words.map((word) => (word.id === learned.id ? learned : word));
     justLearned = learned;
@@ -1172,6 +1193,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       return;
     }
     current = { word, type: 'writing', card: null, learning: true };
+    stopwatch.start();
     setFocus(true);
     lesson = { steps: stepsFor(word, true), index: 0 };
     donePanel.hidden = true;
@@ -1476,6 +1498,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     }
 
     current = plan.next;
+    stopwatch.start();
     setFocus(true);
     donePanel.hidden = true;
     studyArea.hidden = false;
@@ -1577,6 +1600,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       offerListen(false);
       active = false;
       practicing = false;
+      // The card is put away unanswered; its time is not kept.
+      stopwatch.stop();
       clearTimeout(recheckTimer);
       stopFlows();
       donePanel.hidden = true;

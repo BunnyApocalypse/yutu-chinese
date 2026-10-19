@@ -6,7 +6,7 @@
 //
 // The panel rebuilds the word from its form, so what is not in the form is
 // carried over by hand (see the submit handler): decks, formerIds, learnedAt,
-// suspended, startedOverAt, importedAt (CLAUDE.md).
+// learnDuration, suspended, startedOverAt, importedAt (CLAUDE.md).
 
 import { putAll, removeWord, renameWord } from './db.js';
 import { formatPinyin, wordId } from './wordList.js';
@@ -286,6 +286,9 @@ export function createWordDialog(shared) {
     }
     if (openWord.learnedAt !== undefined) {
       saved.learnedAt = openWord.learnedAt;
+    }
+    if (openWord.learnDuration !== undefined) {
+      saved.learnDuration = openWord.learnDuration;
     }
     if (openWord.startedOverAt) {
       saved.startedOverAt = openWord.startedOverAt;

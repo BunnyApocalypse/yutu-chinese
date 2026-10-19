@@ -31,6 +31,7 @@
 - `src/changes.js`, `src/whatsNew.js`, `src/feedback.js`: the list of what changed in each release (a new entry for every release), the "What's new" pop-up, and "Send feedback" (`docs/interface.md`).
 - `src/lang.js`: marks Chinese text with its language (`lang`) for screen readers and the regional font.
 - `src/theme.js`: the light or dark look (the "Look" setting); the colors themselves are named at the top of `src/style.css`.
+- `src/timing.js`: the stopwatch measuring how long a review or a lesson took, each step at most a minute (`docs/cards.md`, "How long studying takes").
 - `src/streak.js`, `src/streakScreen.js`: counting the streak from the reviews (plain calculation), and the streak screen (`docs/cards.md`, "Streaks").
 - `src/storageMessage.js`: the message about long-term storage once per device, after the first word learned.
 - `src/scriptCards.js`: files writing cards under the script they were learned in (`docs/cards.md`).

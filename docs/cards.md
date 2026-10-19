@@ -47,6 +47,17 @@
 - **Repeating a lesson** (tester 2's R6; the owner, 2026-10-18): "Repeat lesson" on a learned word's page opens the mode `'lesson'` (`repeatLesson` in `src/main.js`, `startRepeat` in `src/review.js`): Learn's lesson for that word alone, as practice. **Nothing is saved**, and no "I know this word" (`current.repeating`). "Repeat lesson · step 1 of 5", first look "Have another look."; no deck chooser or counts (`countsRow`). "‹ Back" returns to the word's page. At the end, "Lesson done." with Repeat lesson and Back to the word (`lesson-back-button`). `tests/browser/repeatLesson.browser.js`.
 - **Review and Learn are one piece of code** (`createReview`; `activate('learn')`). `activate` waits for `review.load()`, so a card is never chosen from stale words. `tests/browser/lesson.browser.js` covers Learn and the lesson.
 
+## How long studying takes
+
+Built on 2026-10-19 (roadmap item 4), for a later progress tab; nothing shows it yet.
+
+- **Each review in Review saves `duration`**, in milliseconds: from the card coming up until a grade is tapped (the owner, 2026-10-19: as Anki does, so imported reviews, which carry Anki's own `duration`, add up with ours). A new writing card's lesson in Review counts toward its review.
+- **Each word learned in Learn saves `learnDuration`** on the word (the owner, 2026-10-19: Learn's time counts too), from its first step until the lesson ends. Carried over by the word's panel; combining backups keeps it with the earliest `learnedAt` (`src/merge.js`).
+- **A step counts at most a minute** (`MAX_STEP_MS` in `src/timing.js`, Anki's default "maximum answer seconds"; fixed, no setting). A lesson's steps are counted one by one (`lap`), each up to the limit, so a five-step lesson can count five minutes.
+- **Time out of sight doesn't count:** the stopwatch pauses while the page is hidden (`visibilitychange`: another app or tab, the screen locked).
+- **Not counted:** "I know this word" (also any lesson steps before it), Free practice, a repeated lesson, and a card left unanswered when another tab is opened. Reviews before 2026-10-19 just lack the field.
+- `createStopwatch` in `src/timing.js` (tested in `tests/timing.test.js`), used in `src/review.js`.
+
 ## Writing cards per script
 
 The owner, 2026-10-13: a learner switching scripts keeps their words, with the characters that differ studied as new.

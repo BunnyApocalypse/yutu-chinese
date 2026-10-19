@@ -15,8 +15,9 @@
 //             The marks themselves are all kept.
 //   settings  The one saved later is kept, setting by setting; those that
 //             belong to the device stay as they are on this device.
-//   A word's `learnedAt` is the earlier of the two sides', and each time in
-//   its `startedOverAt` the later, whichever record is kept.
+//   A word's `learnedAt` is the earlier of the two sides' (with that side's
+//   `learnDuration`), and each time in its `startedOverAt` the later,
+//   whichever record is kept.
 //   cards     Not combined, but worked out afresh from the combined reviews
 //             (replay in scheduler.js), unless one side already has every
 //             review of the card: then its card is kept as stored.
@@ -110,17 +111,18 @@ function underCurrentId(record, currentId) {
 
 // Combines the words of both sides. Returns them by ID.
 function mergeWords(mine, theirs, currentId, removedAt) {
-  // The time each word was learned, under its current ID: the earliest known
-  // on either side, whichever record is kept.
-  const learnedAt = new Map();
+  // When each word was learned, under its current ID: the earliest known on
+  // either side, whichever record is kept, with how long that lesson took:
+  // { learnedAt, learnDuration }.
+  const learned = new Map();
   const formerIds = new Map();
   // When each kind of card of a word was last started over, on either side:
   // the later time, whichever record is kept.
   const startedOverAt = new Map();
   for (const word of [...mine, ...theirs]) {
     const id = currentId(word.id);
-    if (word.learnedAt !== undefined) {
-      learnedAt.set(id, Math.min(word.learnedAt, learnedAt.get(id) ?? Infinity));
+    if (word.learnedAt !== undefined && word.learnedAt < (learned.get(id)?.learnedAt ?? Infinity)) {
+      learned.set(id, { learnedAt: word.learnedAt, learnDuration: word.learnDuration });
     }
     for (const [type, time] of Object.entries(word.startedOverAt || {})) {
       const known = startedOverAt.get(id) || {};
@@ -140,8 +142,12 @@ function mergeWords(mine, theirs, currentId, removedAt) {
       continue;
     }
     const merged = { ...word };
-    if (learnedAt.has(id)) {
-      merged.learnedAt = learnedAt.get(id);
+    if (learned.has(id)) {
+      merged.learnedAt = learned.get(id).learnedAt;
+      delete merged.learnDuration;
+      if (learned.get(id).learnDuration !== undefined) {
+        merged.learnDuration = learned.get(id).learnDuration;
+      }
     }
     if (startedOverAt.has(id)) {
       merged.startedOverAt = startedOverAt.get(id);

@@ -21,7 +21,7 @@ Built on 2026-10-13 to a plan the owner agreed to; the same calculation a later 
 - **A backup of the device is downloaded before combining** (the owner), `...-before-combining.json`, since combining can't be undone. Not before replacing.
 - **`mergeBackups(mine, theirs)` in `src/merge.js`** gives the combined contents and a summary; the page writes them with `replaceEverything` in one transaction and reloads. The rules (at the top of the file):
   - Reviews: all of both sides.
-  - Words, decks, settings: the record saved later (`changedAt`), whole; this device's if neither is later. A word's earliest `learnedAt` is kept whichever wins; `startedOverAt` keeps the later time.
+  - Words, decks, settings: the record saved later (`changedAt`), whole; this device's if neither is later. A word's earliest `learnedAt` is kept whichever wins, with that side's `learnDuration`; `startedOverAt` keeps the later time.
   - A removal counts unless the record was saved after it. All marks are kept.
   - A word corrected on one device (`formerIds`) replaces the record under the old ID on the other, whose cards and reviews move to the new ID. If the correcting device also has a word under the old ID, that is a word of its own.
   - Device settings are never taken from the backup (`DEVICE_SETTINGS`; the list in `src/merge.js` is the one to trust).

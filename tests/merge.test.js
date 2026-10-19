@@ -209,9 +209,29 @@ test('a word removed and added again does not get its old schedule back', () => 
   assert.deepEqual(data.cards, []);
 });
 
+test('a word learned on both devices keeps the earlier lesson and its time', () => {
+  const first = word('朋友', 'peng2you3', { day: 1, learnedAt: START + DAY, learnDuration: 80000 });
+  // Saved later (so this record is kept), learned later, its lesson untimed.
+  const second = word('朋友', 'peng2you3', { day: 3, learnedAt: START + 3 * DAY });
+  const both = [
+    mergeBackups(device({ words: [first] }), device({ words: [second] })),
+    mergeBackups(device({ words: [second] }), device({ words: [first] })),
+  ];
+  for (const { data } of both) {
+    assert.equal(data.words[0].learnedAt, START + DAY);
+    assert.equal(data.words[0].learnDuration, 80000);
+  }
+  // The other way round, the later lesson's time doesn't come along.
+  const timedLater = { ...second, learnDuration: 70000 };
+  const untimedFirst = word('朋友', 'peng2you3', { day: 1, learnedAt: START + DAY });
+  const { data } = mergeBackups(device({ words: [untimedFirst] }), device({ words: [timedLater] }));
+  assert.equal(data.words[0].learnedAt, START + DAY);
+  assert.equal(data.words[0].learnDuration, undefined);
+});
+
 test('a word corrected on one device takes the place of the old one on the other', () => {
   // The other device still has the word under its old ID, with reviews.
-  const old = word('朋友', 'peng2you3', { day: 1, learnedAt: START + DAY });
+  const old = word('朋友', 'peng2you3', { day: 1, learnedAt: START + DAY, learnDuration: 95000 });
   const theirs = device({
     words: [old],
     studied: [{ word: old, grades: [[1, GOOD], [3, GOOD]], name: 'theirs' }],
@@ -224,8 +244,9 @@ test('a word corrected on one device takes the place of the old one on the other
   for (const { data } of [mergeBackups(mine, theirs), mergeBackups(theirs, mine)]) {
     assert.deepEqual(ids(data.words), [corrected.id]);
     assert.deepEqual(data.words[0].formerIds, [old.id]);
-    // When it was learned is kept from the old record.
+    // When it was learned, and how long that took, are kept from the old record.
     assert.equal(data.words[0].learnedAt, START + DAY);
+    assert.equal(data.words[0].learnDuration, 95000);
     assert.deepEqual(data.reviews.map((review) => review.wordId), [corrected.id, corrected.id]);
     assert.deepEqual(data.reviews.map((review) => review.cardId), [`${corrected.id}#meaning`, `${corrected.id}#meaning`]);
     assert.deepEqual(ids(data.cards), [`${corrected.id}#meaning`]);
