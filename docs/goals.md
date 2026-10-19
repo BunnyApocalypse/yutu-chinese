@@ -22,6 +22,7 @@ Agreed with the owner on 2026-10-13.
 - **GitHub Pages' limits** (1 GB a site, a soft 100 GB of traffic a month) are the thing to watch; the two copies come to about 565 MB.
 - **The name 玉兔中文** was chosen on 2026-10-15 after checking for clashes: nothing called 玉兔中文, 玉兔華語, "Yutu Chinese" or "Jade Rabbit Chinese" was found. 中文 rather than 華語 because it is written the same in both scripts. The repository moved to `BunnyApocalypse/yutu-chinese`, the old address forwarding (`docs/offline.md`, "The old address").
 - **Feedback:** the email alias yutufeedback.delicious577@passmail.com and the repository's issue tracker, both under "Send feedback" (`docs/interface.md`). `docs/alpha/` has what was given to testers.
+- **An Android app** through F-Droid is on the near-term roadmap (the owner, 2026-10-19); the web app stays. The Play Store and iPhone/iPad come later, only if heavily requested (`docs/history.md`, "Roadmap").
 - **Not deciding now:** scheduling settings (cards can be rebuilt from reviews) and the database's layout (versioned, with upgrade code).
 
 ## Skritter import (future)
