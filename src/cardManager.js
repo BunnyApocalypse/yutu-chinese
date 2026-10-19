@@ -66,6 +66,7 @@ export function cardsOfWord(word, cards, reviews, script) {
         reviewCount: reviews
           ? reviews.filter(
               (review) =>
+                !review.importedSchedule &&
                 review.wordId === word.id &&
                 review.type === type &&
                 review.time > countedFrom(word, type) &&

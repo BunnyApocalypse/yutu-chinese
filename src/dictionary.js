@@ -258,6 +258,16 @@ function hasTones(pinyin, tones) {
   );
 }
 
+// Whether a dictionary entry (from lookUp) is read as `typed` (from
+// readTypedPinyin) says: the same letters, and every tone given, in its
+// mainland or its Taiwan reading. A tone left out matches any: "pengyou"
+// and "péngyou" both read 朋友 péngyou.
+export function readsAs(entry, typed) {
+  return [entry.pinyin, entry.pinyinTaiwan].some(
+    (pinyin) => pinyin && syllablesOf(pinyin).letters === typed.letters && hasTones(pinyin, typed.tones),
+  );
+}
+
 // The dictionary's lines by their letters without tones, made the first time
 // a word is looked up by its pinyin (which a learner who types characters
 // never does), and kept with the dictionary.

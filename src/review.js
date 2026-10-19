@@ -1379,8 +1379,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     });
     countsElement.textContent =
       `${plan.dueCount} to review · ${plan.newCardCount} new` +
-      // Writing cards to be learned again after a change of script.
-      (plan.newWordsLeftToday > 0 ? ` · ${plan.newWordsLeftToday} to write again` : '');
+      // Writing cards to be learned again after a change of script, or
+      // cards of words from Anki that have no history there.
+      (plan.newWordsLeftToday > 0
+        ? ` · ${plan.newWordsLeftToday} ${plan.fromAnki ? 'more new today' : 'to write again'}`
+        : '');
 
     if (!plan.next) {
       current = null;

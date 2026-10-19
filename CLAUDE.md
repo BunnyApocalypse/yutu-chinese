@@ -65,10 +65,10 @@ Each area's file in `docs/` (index `docs/README.md`) has the names in the code, 
 
 ## Rules that cut across the code
 
-- **IDs are the same on every device.** A word's ID is `<traditional>|<pinyin>` (a sentence `<traditional>|sentence`, a radical `<traditional>|radical`); review IDs are random (`randomId()` in `src/db.js`; `crypto.randomUUID()` fails on the LAN address). Never auto-incrementing keys.
+- **IDs are the same on every device.** A word's ID is `<traditional>|<pinyin>` (a sentence `<traditional>|sentence`, a radical `<traditional>|radical`); review IDs are random (`randomId()` in `src/db.js`; `crypto.randomUUID()` fails on the LAN address), except reviews brought over from Anki, named after Anki's own (`anki-…`, `docs/anki.md`) so a second import adds nothing. Never auto-incrementing keys.
 - **Every review is logged and never deleted**; cards can be rebuilt from reviews (`replay` in `src/scheduler.js`). Removing a word deletes its cards, never its reviews, and leaves a mark in `removed`.
 - **`changedAt` is stamped by `putAll` in `src/db.js`, never by callers**; a change the app makes by itself to old records passes `{ stamp: false }`. Compare records without it.
-- **The word's pop-up panel rebuilds the word from its form**, so fields not in the form are carried over by hand: `decks`, `formerIds`, `learnedAt`, `suspended`, `startedOverAt`. A new such field must be added there.
+- **The word's pop-up panel rebuilds the word from its form**, so fields not in the form are carried over by hand: `decks`, `formerIds`, `learnedAt`, `suspended`, `startedOverAt`, `importedAt`. A new such field must be added there.
 - **Changing the store layout** means raising `DATABASE_VERSION` in `src/db.js`, handling existing databases in `onupgradeneeded` by `oldVersion`, and usually raising the backup version (both at 2; old backups must still be read). Testers' data is always carried over.
 - **A setting that belongs to the device** goes in `DEVICE_SETTINGS` in `src/merge.js`, or combining backups takes it from the other device.
 - **A word's script comes from `scriptFor(word, settings)`** (`src/words.js`), never `settings.script`. Card IDs come from `cardIdFor` / `allCardIds` (`src/session.js`), never built by hand.

@@ -68,10 +68,26 @@ export function gradeOptions(fsrsState, now) {
 // reviews: the card's review records (see db.js), in any order
 //
 // Returns { fsrsState, due } as gradeOptions does, or null without reviews.
+//
+// A card brought over from Anki also has a record holding the schedule Anki
+// had given it, `importedSchedule` ({ fsrsState, due }, see ankiImport.js),
+// dated just after its last review there. The card goes on from that
+// schedule, not from the one these reviews would give, so that it is due
+// when Anki said; the reviews before it are kept as its history.
 export function replay(reviews) {
   let outcome = null;
   for (const review of [...reviews].sort((a, b) => a.time - b.time)) {
+    if (review.importedSchedule) {
+      outcome = review.importedSchedule;
+      continue;
+    }
     outcome = gradeOptions(outcome ? outcome.fsrsState : null, new Date(review.time))[review.grade];
   }
   return outcome && { fsrsState: outcome.fsrsState, due: outcome.due };
+}
+
+// The FSRS state of a card never studied, as plain data: what an imported
+// schedule is filled in from (see ankiImport.js).
+export function emptyState(now) {
+  return toPlainData(createEmptyCard(now));
 }

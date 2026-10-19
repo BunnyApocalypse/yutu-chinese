@@ -12,7 +12,9 @@
 //                          `suspended` lists the kinds of card that are not
 //                          to come up (leeches.js); `startedOverAt` has, by
 //                          kind of card, when it was last started over
-//                          (cardManager.js).
+//                          (cardManager.js). `importedAt` is when a word
+//                          whose cards came from Anki was brought over
+//                          (ankiImport.js).
 //                          New words are introduced in the order of `order`,
 //                          lowest first; it may be negative.
 //                          `decks` lists the IDs of the decks the word is in.
@@ -31,7 +33,14 @@
 //                            suggestedGrade, mistakesPerChar, passedPerChar,
 //                            suggestedPerChar, orderPerChar, script, log }
 //                          One per review, never deleted. `script` is the
-//                          script the card was shown or written in. The
+//                          script the card was shown or written in.
+//                          A review brought over from Anki has an ID made
+//                          from Anki's ("anki-<Anki's ID>-<type>"),
+//                          `fromAnki: true`, and `duration`, how long the
+//                          answer took in milliseconds. With each such card
+//                          comes one record that is not a review but the
+//                          schedule Anki gave it: `importedSchedule` in
+//                          place of `grade` (replay in scheduler.js). The
 //                          cardId of a review made before 2026-10-13 may be
 //                          the plain id of a card since moved to its
 //                          "#simplified" id (see scriptCards.js).

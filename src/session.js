@@ -121,7 +121,10 @@ export function nextToLearn(words, cards) {
 // learned again in this one, as if new: after someone who studied simplified
 // switches to traditional, say. Such cards are limited to newWordsPerDay a
 // day (less the words learned that day) and come in the order they were
-// first learned.
+// first learned. So are the cards a word brought over from Anki has no
+// history for (its `importedAt`, see ankiImport.js), such as its writing
+// card: otherwise a thousand words from Anki would bring a thousand new
+// writing cards on the first day.
 //
 // Returns:
 //   next:         { word, type, card } to review now (card is null for a card
@@ -129,7 +132,8 @@ export function nextToLearn(words, cards) {
 //   dueCount:     how many studied cards are due now
 //   newCardCount: how many never-studied cards are waiting for learned words
 //   newWordsLeftToday: how many cards to be learned again in another script
-//                 can still be started today
+//                 (or of words from Anki) can still be started today
+//   fromAnki:     true if some of those are cards of words from Anki
 //   learnedToday: how many words were learned (or first studied) today
 //   waitingCount: how many words are waiting to be learned
 //   nextDueAt:    when something next becomes available, or null
@@ -196,12 +200,17 @@ export function planSession(words, cards, now, options) {
       continue;
     }
     // A card begun today in this script, of a word known in the other one,
-    // uses up one of the day's new words just as a new word does.
+    // uses up one of the day's new words just as a new word does. So does a
+    // card begun today of a word brought over from Anki with older cards.
+    const imported = word.importedAt !== undefined && studied.length > 0;
+    const firstStudied = Math.min(...studied.map((card) => card.firstReviewedAt));
     const learnedAgainToday = CARD_TYPES.some((type) => {
       const card = cardOf(type);
       const other = otherCardOf(type);
       return (
-        card && other && card.firstReviewedAt >= dayStart && other.firstReviewedAt < card.firstReviewedAt
+        card &&
+        card.firstReviewedAt >= dayStart &&
+        ((other && other.firstReviewedAt < card.firstReviewedAt) || (imported && firstStudied < dayStart))
       );
     });
     // A word counts for the day it was learned, or first studied.
@@ -232,6 +241,8 @@ export function planSession(words, cards, now, options) {
           heldUntil,
           learnedAt: otherCardOf(type).firstReviewedAt,
         });
+      } else if (imported) {
+        toLearnAgain.push({ word, type, heldUntil, learnedAt: firstStudied, imported: true });
       } else {
         newCardCount += 1;
         // Only the word's next new card is on offer; the rest wait their turn.
@@ -280,6 +291,7 @@ export function planSession(words, cards, now, options) {
     dueCount: due.length,
     newCardCount,
     newWordsLeftToday,
+    fromAnki: toLearnAgain.some((entry) => entry.imported),
     learnedToday: introducedToday,
     waitingCount,
     nextDueAt,

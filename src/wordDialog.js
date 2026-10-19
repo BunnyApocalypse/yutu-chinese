@@ -6,7 +6,7 @@
 //
 // The panel rebuilds the word from its form, so what is not in the form is
 // carried over by hand (see the submit handler): decks, formerIds, learnedAt,
-// suspended, startedOverAt (CLAUDE.md).
+// suspended, startedOverAt, importedAt (CLAUDE.md).
 
 import { putAll, removeWord, renameWord } from './db.js';
 import { formatPinyin, wordId } from './wordList.js';
@@ -289,6 +289,9 @@ export function createWordDialog(shared) {
     }
     if (openWord.startedOverAt) {
       saved.startedOverAt = openWord.startedOverAt;
+    }
+    if (openWord.importedAt !== undefined) {
+      saved.importedAt = openWord.importedAt;
     }
     // Which cards are suspended is changed on the word's page, not here.
     if (openWord.suspended) {
