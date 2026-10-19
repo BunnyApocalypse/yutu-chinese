@@ -296,11 +296,17 @@ describe('accessibility', { concurrency: false }, () => {
   it('the streak screen, and its settings', async () => {
     // Filled in by hand: what is in it is tested in streak.browser.js.
     await page.evaluate(`(() => {
+      // The first time's, which has the most in it.
+      document.getElementById('streak-kicker').textContent = 'New: streaks';
       document.getElementById('streak-number').textContent = '12';
-      document.getElementById('streak-label').textContent = 'days in a row';
-      document.getElementById('streak-detail').textContent = 'Today counts: 10 cards reviewed. Your best yet.';
+      document.getElementById('streak-label').textContent = 'days in a row!';
+      document.getElementById('streak-detail').textContent = 'Each day you review 10 cards or learn 2 words, your streak grows by one.';
+      document.getElementById('streak-off').hidden = false;
       document.getElementById('streak-dialog').showModal();
     })()`);
+    // Measured once the pop is over: halfway through, the rabbit and the
+    // number are see-through and read as too faint.
+    await page.evaluate(`Promise.all(document.getElementById('streak-dialog').getAnimations({ subtree: true }).map((animation) => animation.finished))`);
     await check('the streak screen');
     await tap(page, 'streak-continue');
     // The browser tests start with streaks off, which hides how much makes a

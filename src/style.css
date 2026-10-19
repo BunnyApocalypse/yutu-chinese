@@ -1681,15 +1681,52 @@ button.slot {
   text-align: center;
 }
 
+/* For now two emoji, at the size of a large character. */
 .streak-mascot {
-  width: 160px;
-  height: 160px;
-  margin: 0 auto var(--space-medium);
-  background: center / contain no-repeat;
+  margin: 0 0 var(--space-small);
+  font-size: 3rem;
+  line-height: 1.2;
+}
+
+/* "New: streaks" or "Study streak", small above the number. */
+.streak-kicker {
+  margin: 0;
+  font-size: var(--size-small);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* The rabbit and the number pop in as the pop-up opens: they grow a little
+   past their size and settle (the owner, 2026-10-19). Not for someone whose
+   device asks for less motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .streak-dialog[open] .streak-mascot,
+  .streak-dialog[open] .streak-number {
+    animation: streak-pop 0.5s ease-out both;
+  }
+
+  .streak-dialog[open] .streak-number {
+    animation-delay: 0.15s;
+  }
+}
+
+@keyframes streak-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .streak-number {
-  margin: var(--space-large) 0 0;
+  margin: var(--space-medium) 0 0;
   font-size: 3.5rem; /* a large number keeps its own size */
   font-weight: bold;
   line-height: 1;
@@ -1711,6 +1748,12 @@ button.slot {
 
 .streak-dialog > .primary {
   width: min(100%, 16em);
+}
+
+/* "Don't count streaks" on a line of its own under the main button. */
+.streak-dialog > .streak-off {
+  display: block;
+  margin: var(--space-medium) auto 0;
 }
 
 /* "A day counts after 10 cards reviewed or 2 words learned" runs as one

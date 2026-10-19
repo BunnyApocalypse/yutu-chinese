@@ -561,7 +561,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   function showStreakIfNew() {
     if (settings.streaks) {
       const now = Date.now();
-      streakScreen.showIfNew(streakNow(now), studyDayKey(now));
+      streakScreen.showIfNew(streakNow(now), studyDayKey(now), streakGoal());
     }
   }
 

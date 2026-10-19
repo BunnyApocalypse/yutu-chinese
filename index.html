@@ -675,13 +675,16 @@
 
       <!-- The first time each study day that enough was studied for the
            streak (streakScreen.js, src/streak.js). -->
-      <dialog id="streak-dialog" class="settings-panel streak-dialog" aria-labelledby="streak-label">
-        <!-- The mascot goes here once drawn; data-mood says which picture. -->
-        <div id="streak-mascot" class="streak-mascot" data-mood="happy" aria-hidden="true" hidden></div>
+      <dialog id="streak-dialog" class="settings-panel streak-dialog" aria-labelledby="streak-kicker streak-number streak-label">
+        <!-- The Jade Rabbit and the moon until the mascot is drawn; then its
+             picture goes here, data-mood saying which one. -->
+        <div id="streak-mascot" class="streak-mascot" data-mood="happy" aria-hidden="true">🌕🐇</div>
+        <p id="streak-kicker" class="streak-kicker"></p>
         <p id="streak-number" class="streak-number"></p>
         <h2 id="streak-label" class="streak-label"></h2>
         <div id="streak-detail" class="streak-detail"></div>
         <button id="streak-continue" class="primary" type="button">Continue</button>
+        <button id="streak-off" class="link-button streak-off" type="button" hidden>Don't count streaks</button>
         <button id="streak-close" class="dialog-close" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 

@@ -860,7 +860,7 @@ async function startUp() {
     (word, thisCard) => wordsPanel.showWord(word, thisCard),
     (word) => wordsPanel.noteOf(word),
     (element, text) => wordsPanel.tappableText(element, text),
-    createStreakScreen(),
+    createStreakScreen(() => settings.change('streaks', false)),
   );
 
   await review.load();
