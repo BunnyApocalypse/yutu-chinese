@@ -138,12 +138,6 @@ describe('the Progress tab', { concurrency: false }, () => {
     await page.evaluate(`document.querySelector('#progress-range [data-range="year"]').click()`);
     assert.equal(await page.evaluate(`document.querySelector('#progress-range [aria-pressed="true"]').textContent`), 'Year');
     assert.equal(await page.evaluate(`document.querySelectorAll('#progress-days .progress-calendar.strip i:not(.blank)').length`), 365);
-    // A year reaches back before times were recorded; nothing was brought
-    // over from Anki here, so Anki isn't mentioned.
-    assert.equal(
-      await page.evaluate(`[...document.querySelectorAll('#progress-time .hint')].pop().textContent`),
-      'Time is recorded from October 19, 2026 on.',
-    );
   });
 
   it('counts characters in the learner\'s script, or apart with the switch', async () => {

@@ -35,8 +35,6 @@ const STAGE_NAMES = { new: 'New', learning: 'Learning', young: 'Young', mature: 
 const RANGE_PHRASES = { month: 'in the last 30 days', months3: 'in the last 3 months', year: 'in the last year', all: 'in all' };
 // Under the total time of the range.
 const TOTAL_NAMES = { month: 'last 30 days', months3: 'last 3 months', year: 'last year', all: 'in all' };
-// Durations were first recorded on this day (timing.js).
-const TIMING_SINCE = '2026-10-19';
 
 // "Oct 19", from a day's name such as "2026-10-19".
 function dateOf(key) {
@@ -172,8 +170,6 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
       time: timeByDay(reviews, words),
       now: Date.now(),
       firstKey: [...study.keys()].sort()[0] ?? null,
-      // Reviews brought over from Anki are named after Anki's own (anki-…).
-      fromAnki: reviews.some((review) => String(review.id).startsWith('anki-')),
     };
     parts.apart.checked = await getSetting('charactersApart', false);
     drawToday();
@@ -415,14 +411,7 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
       totals.append(part);
     }
     const unitLine = { day: 'Minutes a day.', week: inHours ? 'Hours a week.' : 'Minutes a week.', month: inHours ? 'Hours a month.' : 'Minutes a month.' }[size];
-    const content = [said, chart, make('p', 'hint', unitLine), totals];
-    if (keys[0] < TIMING_SINCE) {
-      // The word about Anki only for someone who has brought reviews over
-      // (the owner, 2026-10-19).
-      const anki = data.fromAnki ? ' Reviews brought over from Anki have their own times.' : '';
-      content.push(make('p', 'hint', `Time is recorded from October 19, 2026 on.${anki}`));
-    }
-    parts.time.replaceChildren(...content);
+    parts.time.replaceChildren(said, chart, make('p', 'hint', unitLine), totals);
   }
 
   function drawGrowth() {
