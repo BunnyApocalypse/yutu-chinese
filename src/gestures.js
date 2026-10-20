@@ -22,8 +22,10 @@ const SWIPE_MIN_RISE_SHARE = 1 / 3;
 // ...or by this much when the stroke expected next itself goes steeply up,
 // as the rising stroke (提) of 氵 in 滿 does: then a big, quick 提 must not
 // wipe the character, which in Skritter it can (the owner, 2026-10-15).
-// Three quarters is nearly twice the tallest such stroke (0.4).
-const SWIPE_MIN_RISE_SHARE_STRICT = 3 / 4;
+// Half is above the tallest such stroke written a fifth bigger than the
+// stroke data's box (0.48), itself bigger than the app draws it (the owner,
+// 2026-10-20: three quarters failed the owner's own swipes).
+const SWIPE_MIN_RISE_SHARE_STRICT = 1 / 2;
 // ...and stay near vertical: for each unit it rises, it may drift at most
 // this far sideways (about 22 degrees from straight up).
 //

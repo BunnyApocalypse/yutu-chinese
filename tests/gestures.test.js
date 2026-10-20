@@ -75,7 +75,7 @@ test('a swipe up is recognized, a swipe down or sideways is not', () => {
   assert.ok(!isSwipeUp([{ x: 500, y: 500 }], AREA));
 });
 
-test('when the next stroke rises steeply, even one written nearly twice as big is no swipe', () => {
+test('when the next stroke rises steeply, even one written a fifth bigger is no swipe', () => {
   let rising = 0;
   const taken = [];
   for (const median of everyMedian()) {
@@ -83,10 +83,11 @@ test('when the next stroke rises steeply, even one written nearly twice as big i
       continue;
     }
     rising += 1;
-    // 1.8 times as big, grown from where the stroke starts, with the stroke
-    // data's box already as big as the whole writing area.
+    // 1.2 times as big, grown from where the stroke starts, with the stroke
+    // data's box already as big as the whole writing area (the app draws it
+    // at 0.88).
     const [startX, startY] = median[0];
-    const grown = median.map(([x, y]) => [startX + 1.8 * (x - startX), startY + 1.8 * (y - startY)]);
+    const grown = median.map(([x, y]) => [startX + 1.2 * (x - startX), startY + 1.2 * (y - startY)]);
     if (isSwipeUp(onScreen(grown), AREA, true)) {
       taken.push(median);
     }
@@ -106,9 +107,11 @@ test('the rising stroke of 氵 rises steeply, a horizontal stroke does not', () 
 
 test('a strict swipe up must be longer', () => {
   const up = (from, to) => [{ x: 500, y: from }, { x: 500, y: to }];
-  // Rising by six tenths of the area: a swipe, but not a strict one.
-  assert.ok(isSwipeUp(up(900, 286), AREA));
-  assert.ok(!isSwipeUp(up(900, 286), AREA, true));
+  // Rising by 0.45 of the area: a swipe, but not a strict one.
+  assert.ok(isSwipeUp(up(900, 439), AREA));
+  assert.ok(!isSwipeUp(up(900, 439), AREA, true));
+  // Half is enough for a strict one (the owner, 2026-10-20).
+  assert.ok(isSwipeUp(up(900, 380), AREA, true));
   // From near the bottom to near the top: a swipe either way.
   assert.ok(isSwipeUp(up(980, 40), AREA, true));
 });

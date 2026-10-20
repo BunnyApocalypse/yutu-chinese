@@ -121,10 +121,10 @@ describe('gestures on the writing area', { concurrency: false }, () => {
     await drawStroke(page, area, dot1);
     assert.equal(await drawStroke(page, area, dot2), '3/14 · No mistakes');
 
-    // Rising by about 0.6 of the writing area (698 of the stroke data's
+    // Rising by about 0.45 of the writing area (524 of the stroke data's
     // units, which fill 0.88 of it): enough for a swipe elsewhere, not here.
     // It is graded as a stroke instead, a wrong one.
-    assert.equal(await drawStroke(page, area, [[512, -60], [512, 300], [512, 638]]), '3/14 · 1 mistake');
+    assert.equal(await drawStroke(page, area, [[512, -60], [512, 200], [512, 464]]), '3/14 · 1 mistake');
     assert.equal(await page.evaluate(DRAWN_STROKES), 2);
 
     // From the very bottom to the very top: a swipe even here.
