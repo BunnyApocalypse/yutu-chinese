@@ -192,6 +192,8 @@
      Google recommend at least) for a small one and other controls. */
   --tap: 48px;
   --tap-small: 44px;
+  /* The grades stacked on a tablet held sideways, one a line. */
+  --tap-large: 56px;
   /* The least for anything tapped at all, the accessibility guidelines'
      minimum (checked by accessibility.browser.js): a deck's box on a word's
      page. */
@@ -273,6 +275,53 @@ main {
 :root[data-layout='wide'] main:has(> .study-area:not([hidden])) #card-face {
   top: calc(var(--space-large) / var(--face-zoom, 1));
   right: calc(var(--wide-side) / var(--face-zoom, 1));
+}
+
+/* The grades on a tablet held sideways (the owner chose it from pictures,
+   2026-10-20, after tester 3 found them small there): stacked, one a line
+   across the side column, and at its bottom, near the thumb, their bottom
+   level with the card's. The column is stretched to the writing area's
+   height (main as tall as the area, the study area filling it) and the
+   grades put last in it, pushed down by margin-top: auto; anything tall above
+   them pushes them further down rather than being covered. The column is
+   360px wide whatever the window (--wide-side), and the grades no wider.
+   Only where the window is tall enough for them (a tablet, not a phone held
+   sideways): a column taller than the window scrolls the page, and the
+   writing area is rebuilt, wiping the character (docs/pitfalls.md). */
+@media (min-height: 640px) {
+  :root[data-layout='wide'] main:has(> .study-area:not([hidden])) {
+    min-height: calc(var(--area-size) + 2 * var(--space-large));
+  }
+
+  :root[data-layout='wide'] main > .study-area:not([hidden]) {
+    flex: 1;
+    align-self: stretch;
+  }
+
+  /* The footer below takes no room while it is empty (no "New version
+     ready"), or the grades would end above the card by its margin. */
+  :root[data-layout='wide'] main:has(> .study-area:not([hidden])) > footer:has(> #update-button[hidden]) {
+    display: none;
+  }
+
+  :root[data-layout='wide'] .grade-row {
+    order: 10;
+    margin-top: auto;
+    grid-template-columns: 1fr;
+    max-width: 360px;
+  }
+
+  :root[data-layout='wide'] button.grade {
+    flex-direction: row;
+    justify-content: space-between;
+    min-height: var(--tap-large);
+    padding: 0 var(--space-large);
+    font-size: var(--size-large);
+  }
+
+  :root[data-layout='wide'] button.grade .wait {
+    font-size: var(--size-body);
+  }
 }
 
 /* ---- The top bar and the menu ---- */
