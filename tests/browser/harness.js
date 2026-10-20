@@ -555,8 +555,11 @@ export async function writingArea(page) {
 //   points: the stroke as [x, y] pairs in the stroke data's own coordinates
 //           (0 to 1024 across; y runs upward, from -124 at the bottom to 900
 //           at the top)
+//   pauseMs: a wait between the mouse's moves, for drawing slowly (a slow
+//           line upward is a stroke, not a swipe: SWIPE_MAX_MS in
+//           src/gestures.js)
 // Returns the status line afterward.
-export async function drawStroke(page, area, points) {
+export async function drawStroke(page, area, points, { pauseMs = 0 } = {}) {
   // The same arithmetic Hanzi Writer uses to place the character in the box
   // (the padding is set where it is created, in src/quiz.js).
   const padding = area.size * 0.06;
@@ -577,6 +580,9 @@ export async function drawStroke(page, area, points) {
       const to = onScreen[i];
       const point = { x: from.x + ((to.x - from.x) * step) / 3, y: from.y + ((to.y - from.y) * step) / 3 };
       await mouse('mouseMoved', point, { buttons: 1 });
+      if (pauseMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, pauseMs));
+      }
     }
   }
   await mouse('mouseReleased', onScreen[onScreen.length - 1], { clickCount: 1 });

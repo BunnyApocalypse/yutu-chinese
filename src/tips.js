@@ -62,7 +62,7 @@ const TIPS = {
   // on the writing area (gestures.js), which nothing on screen shows. Under
   // the buttons, so as not to cover the writing area.
   gestures: {
-    text: 'Hold still on the writing area for a hint; swipe up to start again.',
+    text: 'Hold still on the writing area for a hint; swipe up quickly to start again.',
     target: '#restart-button',
     side: 'below',
   },

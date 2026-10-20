@@ -8,7 +8,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-import { isSwipeUp, risesSteeply } from '../src/gestures.js';
+import { isSwipeUp, risesSteeply, SWIPE_MAX_MS } from '../src/gestures.js';
 
 // Stroke data is 1024 units across, with y running upward up to 900; the
 // screen's y runs downward. The writing area is taken as 1024 pixels.
@@ -100,4 +100,16 @@ test('a strict swipe up must be longer', () => {
   assert.ok(!isSwipeUp(up(900, 286), AREA, true));
   // From near the bottom to near the top: a swipe either way.
   assert.ok(isSwipeUp(up(980, 40), AREA, true));
+});
+
+test('a swipe up must be quick; a slow line upward is a stroke', () => {
+  const up = [{ x: 500, y: 900 }, { x: 500, y: 300 }];
+  assert.ok(isSwipeUp(up, AREA, false, 150));
+  assert.ok(isSwipeUp(up, AREA, false, SWIPE_MAX_MS));
+  assert.ok(!isSwipeUp(up, AREA, false, SWIPE_MAX_MS + 1));
+  assert.ok(!isSwipeUp(up, AREA, false, 800));
+  // The same for a strict swipe, however long.
+  const fromBottomToTop = [{ x: 500, y: 980 }, { x: 500, y: 40 }];
+  assert.ok(isSwipeUp(fromBottomToTop, AREA, true, 200));
+  assert.ok(!isSwipeUp(fromBottomToTop, AREA, true, 500));
 });

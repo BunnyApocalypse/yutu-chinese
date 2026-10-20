@@ -2,7 +2,8 @@
 //
 //   a long hold, with the finger or pen kept still, shows the next stroke
 //   as a hint;
-//   a swipe straight up wipes what is written and starts the character again.
+//   a quick swipe straight up wipes what is written and starts the character
+//   again.
 //
 // Everything else drawn on the area is a stroke. This file only decides what
 // a touch was; src/quiz.js, which talks to Hanzi Writer, acts on it.
@@ -32,6 +33,11 @@ const SWIPE_MAX_DRIFT = 0.4;
 // It may first go down below where it started by at most this share of its
 // rise, so that a stroke going down and back up is not taken for one.
 const SWIPE_MAX_DIP_SHARE = 0.1;
+// ...and be quick: from the finger landing to its lifting, at most this many
+// milliseconds (the owner, 2026-10-20, after a tester's slow line upward
+// wiped the character). A flick up takes about 100 to 250 ms; a line drawn
+// on purpose takes longer, and is graded as a stroke.
+export const SWIPE_MAX_MS = 300;
 
 // True if a stroke from the stroke data goes steeply up: it ends higher than
 // it starts, and rises more than it goes sideways (steeper than 45 degrees).
@@ -47,9 +53,10 @@ export function risesSteeply(median) {
 // True if the points drawn are a swipe up. `points` are { x, y } in screen
 // pixels (y grows downward), `areaSize` the writing area's height in pixels.
 // `strict` asks for a longer swipe, for when the stroke expected next rises
-// steeply (risesSteeply).
-export function isSwipeUp(points, areaSize, strict = false) {
-  if (points.length < 2) {
+// steeply (risesSteeply). `durationMs` is how long the touch lasted (left
+// out, the shape alone is looked at).
+export function isSwipeUp(points, areaSize, strict = false, durationMs = 0) {
+  if (points.length < 2 || durationMs > SWIPE_MAX_MS) {
     return false;
   }
   const first = points[0];

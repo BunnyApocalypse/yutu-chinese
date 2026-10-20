@@ -877,7 +877,15 @@ export function createQuiz(target, size, handlers) {
       return;
     }
     const dueAt = performance.now() + HOLD_MS;
-    press = { points: [pointOf(event)], moved: false, taken: false, holdTimer: setTimeout(() => holdTimeUp(dueAt), HOLD_MS) };
+    press = {
+      points: [pointOf(event)],
+      // When the finger landed, for telling a quick swipe from a slow line
+      // (event.timeStamp is in milliseconds, the same clock for every event).
+      startedAt: event.timeStamp,
+      moved: false,
+      taken: false,
+      holdTimer: setTimeout(() => holdTimeUp(dueAt), HOLD_MS),
+    };
   });
 
   target.addEventListener('pointermove', (event) => {
@@ -907,8 +915,9 @@ export function createQuiz(target, size, handlers) {
     // steeply up (the 提 of 氵 in 滿, say).
     const next = charData?.medians[strokesDone];
     const strict = Boolean(next) && risesSteeply(next);
-    const swipedUp = !press.taken && canTakeGesture() && isSwipeUp(press.points, size, strict);
-    const swipedUpWhenDone = !press.taken && canSwipeWhenDone() && isSwipeUp(press.points, size, false);
+    const duration = event.timeStamp - press.startedAt;
+    const swipedUp = !press.taken && canTakeGesture() && isSwipeUp(press.points, size, strict, duration);
+    const swipedUpWhenDone = !press.taken && canSwipeWhenDone() && isSwipeUp(press.points, size, false, duration);
     endPress();
     if (swipedUp) {
       writing = false;

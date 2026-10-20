@@ -66,9 +66,15 @@ describe('gestures on the writing area', { concurrency: false }, () => {
     assert.equal(await drawStroke(page, area, first), '2/2 · No mistakes');
     assert.equal(await page.evaluate(DRAWN_STROKES), 1);
 
-    // A swipe up, from near the bottom to near the top (in the stroke
-    // data's units: y runs upward from -124 to 900).
-    assert.equal(await drawStroke(page, area, [[512, -50], [512, 300], [512, 800]]), '1/2 · Write the first stroke');
+    // The same line up drawn slowly (about 600 ms) is a stroke, a wrong one,
+    // and wipes nothing (tester 3, 2026-10-20).
+    const upward = [[512, -50], [512, 300], [512, 800]];
+    assert.equal(await drawStroke(page, area, upward, { pauseMs: 100 }), '2/2 · 1 mistake');
+    assert.equal(await page.evaluate(DRAWN_STROKES), 1);
+
+    // Drawn quickly, it is a swipe up, from near the bottom to near the top
+    // (in the stroke data's units: y runs upward from -124 to 900).
+    assert.equal(await drawStroke(page, area, upward), '1/2 · 1 mistake');
     assert.equal(await page.evaluate(DRAWN_STROKES), 0);
   });
 
