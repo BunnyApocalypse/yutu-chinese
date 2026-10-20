@@ -4,18 +4,26 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
-**Handover from the session of 2026-10-19 (the dark look, the streak pill, the release).** Replace this with each session's handover; keep only what the next session needs.
+**Handover from the session of 2026-10-20 (tester 3's points).** Replace this with each session's handover; keep only what the next session needs.
 
-- **Released on 2026-10-19** (the owner): everything that was on the test copy is on the stable one too, with its "What's new" entry (`src/changes.js`, `2026-10-19`): the Anki import, streaks, the Progress tab, the level to start from, data safety, how long studying takes (shown on the Progress tab), and the two changes of this session.
-- **The dark look's jade** is a grayer nephrite with a warm moonlight behind what is chosen (`docs/interface.md`, "Dark mode and the looks"); the owner chose draft B of four from pictures and liked it on the screen.
-- **The streak screen no longer interrupts studying** (`docs/cards.md`, "Streaks"): the first ever opens at once; after that a pill over the top bar while studying, and the screen at a pause (the end of Review or of Learn's day, opening the menu, coming back the same study day, a tap on the pill). Not covered by a test: the end of Learn.
-- **What the owner still has to try is one list**, roadmap item 9, now on the stable copy as well.
+- **Tester 3** (an Android tablet in Brave, almost no Chinese; "The testing sessions" below): five of six points built on 2026-10-20, **all on the test copy only, not released**:
+  - a swipe up must be quick (300 ms) and rise a third of the area, half before a steeply rising stroke (`docs/writing.md`, "Gestures");
+  - each word's new cards start at a different kind, and Review says why cards of one word wait (`docs/cards.md`);
+  - the tone card shows the five marks faintly above "Draw one of these here" (`docs/cards.md`, "The tone card");
+  - on a tablet held sideways the grades are stacked at the bottom of the side column, level with the card, from 640px tall (`docs/pitfalls.md`);
+  - the setting "Grade buttons": four, or Wrong and Right, Right always Good (`docs/cards.md`).
+- **Still open from tester 3:** Brave's reminder at the end of Review and Learn asking to install an app already installed (in a tab, `persisted()` stayed false; `local/testing/T3-2026-10-20.md` has what to check first).
+- **Settings › For testing** (`src/testerSettings.js`, `docs/interface.md`): only on the test copy and under `npm run dev`; today the swipe readout. New switches for trying things go there.
+- **Before the next release:** a "What's new" entry for all of the above (`src/changes.js`); the owner releases.
+- **Added to the roadmap:** "Basics of Chinese" for complete beginners (near-term, not planned).
 - **The logo (item 6) has been in process** with the owner since 2026-10-15.
 - **To know:**
-  - Pictures for a decision are made with small scripts using the browser tests' harness (`startApp`, `startBrowsers`, `Page.captureScreenshot`), in `local/`, and deleted once the point is built. The owner chooses from pictures side by side; always give the picture's path.
-  - A label beside a heading must fit on a 360px phone: measure it in the page (a label's top against the heading's) rather than guess.
-  - Rename by pattern only at exact places, then compare strings and comments with the original (a rename once changed text in messages too).
-  - The old files the browser tests once saved in `~/Downloads` are the owner's to delete.
+  - Pictures for a decision: the atlas with `SIZES=` and `TRY_CSS=` for a look (`scripts/ux-atlas.js`), or a small script on the browser tests' harness for anything else. Put them in `local/`, delete them once the point is built, and always give the picture's path. The owner chooses from pictures side by side.
+  - **A new worktree needs a real copy of `node_modules`** (`cp -a`), not a link: Vite won't serve files from outside the project, and the Anki import tests fail. It also needs `node scripts/copy-char-data.js` and `node scripts/copy-audio.js` before a picture script; the test command does that by itself.
+  - Two browser tests fail now and then in a full run only (`tests/browser/CLAUDE.md`): run the file alone before suspecting a change.
+  - A label beside a heading must fit on a 360px phone: measure it in the page rather than guess.
+  - Rename by pattern only at exact places, then compare strings and comments with the original.
+  - Files in `~/Downloads` (the old test files, tester 3's `notes.txt`, now in `local/testing/`) are the owner's to delete.
 
 ## Roadmap
 
@@ -41,6 +49,7 @@ Agreed with the owner on 2026-10-18. **The first release** means the first users
    - **Combining backups** between two real devices, and whether the `...-before-combining.json` file lands in downloads.
    - **Leeches:** the two settings, the note in Review, the lists, both exports.
    - **The app installed** on the phone and the tablet.
+   - **On the test copy only** (2026-10-20, tester 3's points; https://bunnyapocalypse.github.io/yutu-chinese/test/): a quick swipe up on the tablet with a pen and a finger, and before the rising stroke of 氵 (Settings › For testing shows how each measured); the first Review after learning a few words (kinds mixed, the line about the wait); the tone card's example marks; the stacked grades on the tablet held sideways; "Grade buttons" set to two.
 10. **Done on 2026-10-18:** "What's new" after an update and "Send feedback" in the menu (`docs/interface.md`).
 
 **Near-term:**
