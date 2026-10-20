@@ -4,9 +4,12 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
-**Handover from the session of 2026-10-20 (tester 3's points).** Replace this with each session's handover; keep only what the next session needs.
+**Handover from the second session of 2026-10-20 (the Brave check, and the release).** Replace this with each session's handover; keep only what the next session needs.
 
-- **Tester 3** (an Android tablet in Brave, almost no Chinese; "The testing sessions" below): five of six points built and **released on 2026-10-20** ("What's new" entry `2026-10-20`; Settings › For testing stays on the test copy only):
+- **Released on 2026-10-20** (`ce014ea` on `main` and `stable`, "What's new" entry `2026-10-20`): tester 3's five points below. Settings › For testing stays on the test copy only, by itself (`TESTER_SETTINGS_SHOWN`: the stable build has no channel).
+- **Waiting on tester 3:** the owner sends `local/testing/T3-brave-check-instructions.md` (five steps with screenshots: from Discord, in Brave, in the installed app, back in a tab, after a few days). Reading them: fewer words in Discord's than in Brave's means Discord's own browser (a separate copy of the words) was the cause; "Keeps the words for good: yes" in the installed app means only a tab needs "open the app from the home screen"; still "no" after days means Brave never agrees, so Brave gets weekly backups as its advice (`src/storageAdvice.js`). Plan the fix with the owner then.
+- **Suggested next** (the owner's choice): planning "Basics of Chinese" (roadmap, near-term), or the owner's testing list (item 9).
+- **Tester 3** (an Android tablet in Brave, almost no Chinese; "The testing sessions" below): five of six points built and released:
   - a swipe up must be quick (300 ms) and rise a third of the area, half before a steeply rising stroke (`docs/writing.md`, "Gestures");
   - each word's new cards start at a different kind, and Review says why cards of one word wait (`docs/cards.md`);
   - the tone card shows the five marks faintly above "Draw one of these here" (`docs/cards.md`, "The tone card");
@@ -18,6 +21,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - **The logo (item 6) has been in process** with the owner since 2026-10-15.
 - **To know:**
   - Pictures for a decision: the atlas with `SIZES=` and `TRY_CSS=` for a look (`scripts/ux-atlas.js`), or a small script on the browser tests' harness for anything else. Put them in `local/`, delete them once the point is built, and always give the picture's path. The owner chooses from pictures side by side.
+  - **A background session inside a worktree can't run git in the main checkout**, nor write files there: to `git pull` the owner's checkout, leave the worktree first (ExitWorktree, keep), and copy files for `local/` across with `cp`.
   - **A new worktree needs a real copy of `node_modules`** (`cp -a`), not a link: Vite won't serve files from outside the project, and the Anki import tests fail. It also needs `node scripts/copy-char-data.js` and `node scripts/copy-audio.js` before a picture script; the test command does that by itself.
   - Two browser tests fail now and then in a full run only (`tests/browser/CLAUDE.md`): run the file alone before suspecting a change.
   - A label beside a heading must fit on a 360px phone: measure it in the page rather than guess.
