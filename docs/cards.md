@@ -19,7 +19,7 @@
 ## The tone card
 
 - **The buttons show bare tone marks** (ˉ ˊ ˇ ˋ ·; the owner, 2026-10-15): the word's own syllable would give its reading away. Checked automatically; a right answer moves on by itself, a wrong one waits for a tap; one wrong tone suggests Again.
-- **While asking** (the owner, 2026-10-16, after a tester took the big characters for something to draw over): the row above shows the word's characters in boxes with "Tone of 你 (1 of 2)" ("Which tone?" for one); inside the card the character small (`.tone-char`), and under it, large, "Draw the tone mark here" and "or use the buttons below".
+- **While asking** (the owner, 2026-10-16, after a tester took the big characters for something to draw over): the row above shows the word's characters in boxes with "Tone of 你 (1 of 2)" ("Which tone?" for one); inside the card the character small (`.tone-char`); under it **the five marks drawn faintly as examples** (level, rising, down then up, falling, the neutral dot; `.tone-examples`, `exampleMarks` in `src/toneFlow.js`; the owner, 2026-10-20, choosing draft B of three from pictures after tester 3 didn't know what to draw; pictures, since a font puts tone marks high and small; hidden from screen readers, the buttons naming each tone); under them, large, "Draw one of these here" and "or use the buttons below".
 - **The arrows are on a tone card too** (the owner, 2026-10-17; `src/toneFlow.js`): › skips a character, counted as right (a dashed box); ‹ goes back, and one already answered is asked again as practice, its first answer standing. Only on a question.
 - A tap on a tone card is ignored for 200 ms after an answer, as is a tap after a word is written or an answer shown (`TAP_TO_CONTINUE_DELAY_MS`, in three files).
 

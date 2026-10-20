@@ -1407,6 +1407,28 @@ button.slot {
   margin-bottom: var(--space-small);
 }
 
+/* The five tone marks drawn faintly above "Draw one of these here", as
+   examples of what to draw (toneFlow.js; the owner, 2026-10-20). */
+.card-face p.tone-examples {
+  margin: var(--space-small) 0;
+  line-height: 0;
+  color: var(--border);
+}
+
+.tone-examples svg {
+  width: 2.5rem;
+  height: 2.5rem;
+  margin: 0 var(--space-tiny);
+  fill: currentColor;
+}
+
+.tone-examples path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
 .face-hint.tone-ask {
   font-size: var(--size-title);
   color: var(--text-soft);

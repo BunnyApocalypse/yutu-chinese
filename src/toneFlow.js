@@ -32,6 +32,24 @@ function paragraph(className, text) {
   return element;
 }
 
+// The five marks, drawn faintly above "Draw one of these here" while asking
+// (the owner, 2026-10-20, after tester 3 didn't know what to draw): level,
+// rising, down then up, falling, and the dot of the neutral tone. Drawn as
+// pictures, since a font puts tone marks high and small. Only a picture for
+// the eye: the buttons say each tone's name.
+const MARK_PATHS = ['M6 20 H34', 'M8 32 L32 8', 'M6 12 Q20 44 34 8', 'M8 8 L32 32'];
+const EXAMPLE_MARKS =
+  MARK_PATHS.map((path) => `<svg viewBox="0 0 40 40"><path d="${path}" /></svg>`).join('') +
+  '<svg viewBox="0 0 40 40"><circle cx="20" cy="22" r="3.5" /></svg>';
+
+function exampleMarks() {
+  const element = document.createElement('p');
+  element.className = 'tone-examples';
+  element.setAttribute('aria-hidden', 'true');
+  element.innerHTML = EXAMPLE_MARKS;
+  return element;
+}
+
 // elements: the page elements the tone card uses:
 //   cardFace, wordRow, statusElement,
 //   toneButtons (the list of five tone buttons; each has a data-tone attribute),
@@ -172,7 +190,8 @@ export function createToneFlow(elements) {
     asked.lang = langFor(current.script);
     cardFace.replaceChildren(
       asked,
-      paragraph('face-hint tone-ask', 'Draw the tone mark here'),
+      exampleMarks(),
+      paragraph('face-hint tone-ask', 'Draw one of these here'),
       // In two columns (a screen held sideways) the buttons are to the left.
       paragraph('face-hint', document.documentElement.dataset.layout === 'wide' ? 'or use the buttons on the left' : 'or use the buttons below'),
       ink,
