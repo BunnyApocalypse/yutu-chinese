@@ -1432,6 +1432,12 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       coming.push(`${plan.tomorrow} tomorrow`);
     }
     parts.push(line(coming.join(' · '), 'done-next'));
+    // Cards are ready but kept back by another card of their word, which
+    // looks like a fault with only a few words (the owner, 2026-10-20, after
+    // tester 3).
+    if (plan.nextHeldBack) {
+      parts.push(line("Cards of the same word are kept a few minutes apart, so one doesn't give away another's answer.", 'done-why'));
+    }
     if (waiting) {
       parts.push(line(waiting));
     }

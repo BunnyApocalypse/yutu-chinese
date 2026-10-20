@@ -2,13 +2,13 @@
 
 ## Cards and scheduling
 
-- **Four card types per word, as in Skritter**, each with its own schedule (`cards` store, keyed `<wordId>#<type>`), introduced in the order meaning, pinyin, tone, writing:
+- **Four card types per word, as in Skritter**, each with its own schedule (`cards` store, keyed `<wordId>#<type>`), introduced one at a time in the order meaning, pinyin, tone, writing, **each word starting at a different kind** (`startingTypeFirst` in `src/session.js`; the owner, 2026-10-20, after tester 3 saw only meaning cards in her first Review): the start goes round the kinds the word can have by its `order` (0 meaning, 1 pinyin, 2 tone, 3 writing, 4 meaning…) and carries on from the end to the start, so the first Review after learning a few words mixes kinds. A writing card first is fine: Learn has just taught it, and it comes without the lesson (`taughtInLearn`).
   - `meaning`: see the word, recall the meaning; reveal and self-grade.
   - `pinyin`: see the word, recall the reading; reveal and self-grade.
   - `tone`: give each character's tone with five buttons or by drawing the mark (details below). A word whose pinyin doesn't have one syllable per character gets no tone card.
   - `writing`: see the meaning, write the word.
 - **Writing prompts show the meaning only** (the owner): no pinyin. "Show pinyin" reveals it for near-synonyms without affecting the grade; it is shown once the word is finished. Glosses must therefore be distinguishable from each other.
-- **Cards of one word are kept apart** (`SIBLING_GAP_MS`, 3 minutes), since each gives away the others' answers. With few words in play the app says "next review in N minutes" although cards exist: intended.
+- **Cards of one word are kept apart** (`SIBLING_GAP_MS`, 3 minutes), since each gives away the others' answers. With few words in play the app says "Next card in N minutes" although cards exist: intended, and **said why** (the owner, 2026-10-20): when the next card is held back only by this gap (`nextHeldBack` from `planSession`), the end of Review adds "Cards of the same word are kept a few minutes apart, so one doesn't give away another's answer." (`.done-why`).
 - **FSRS** with default parameters (90% retention, learning steps of 1 and 10 minutes, fuzz on). A setting for target retention is on the roadmap.
 - **Session order:** due cards first (longest overdue first), then new cards of words already introduced; the day starts at 4:00.
 - **Settings** (`settings` store): `script`, `pronunciation`, `rawInput`, `newWordsPerDay`, `enabledTypes`, `leechLapses`, `leechAction`, `streaks`, `streakCards`, `streakWords`, `sound`, `sentenceReading`, `sentenceWriting`, and more. A type switched off never appears but keeps its cards and history; at least one stays on.

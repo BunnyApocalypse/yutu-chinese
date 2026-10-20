@@ -126,6 +126,10 @@ export function nextToLearn(words, cards) {
 // card: otherwise a thousand words from Anki would bring a thousand new
 // writing cards on the first day.
 //
+// A word's new cards come one at a time, each kind in turn (meaning, pinyin,
+// tone, writing), but each word starts at a different kind
+// (startingTypeFirst).
+//
 // Returns:
 //   next:         { word, type, card } to review now (card is null for a card
 //                 never studied), or null if there is nothing to do right now
@@ -137,9 +141,27 @@ export function nextToLearn(words, cards) {
 //   learnedToday: how many words were learned (or first studied) today
 //   waitingCount: how many words are waiting to be learned
 //   nextDueAt:    when something next becomes available, or null
+//   nextHeldBack: true if that next card is ready but held back by another
+//                 card of its word just reviewed (SIBLING_GAP_MS), for
+//                 saying why nothing is shown although cards exist
 //   reviewedToday: how many cards were reviewed this study day
 //   laterToday:   how many cards become available later this study day
 //   tomorrow:     how many cards become available on the next study day
+// The kinds of card a word can have, in the order its new cards come: the
+// standard order, but started at a different kind for each word, going round
+// by the word's place in the learning order (`order`) and carrying on from
+// the end to the start. So the first Review after learning a few words mixes
+// kinds, instead of only meaning cards with writing last of all (the owner,
+// 2026-10-20, after tester 3). The same on every device, since `order` is.
+export function startingTypeFirst(word, types) {
+  if (types.length === 0) {
+    return types;
+  }
+  // `order` may be negative (a word put first, orderForStudyingNext).
+  const start = ((Math.round(word.order) % types.length) + types.length) % types.length;
+  return [...types.slice(start), ...types.slice(0, start)];
+}
+
 export function planSession(words, cards, now, options) {
   const {
     newWordsPerDay,
@@ -153,7 +175,8 @@ export function planSession(words, cards, now, options) {
   const tomorrowStart = startOfStudyDay(dayStart + 36 * 60 * 60 * 1000);
   const dayAfterStart = startOfStudyDay(tomorrowStart + 36 * 60 * 60 * 1000);
   // Introduce a word's cards in the standard order, whatever order the
-  // enabled types were given in.
+  // enabled types were given in (each word starting at its own kind,
+  // startingTypeFirst).
   const types = CARD_TYPES.filter((type) => enabledTypes.includes(type));
 
   const due = [];
@@ -161,16 +184,19 @@ export function planSession(words, cards, now, options) {
   const toLearnAgain = [];
   let waitingCount = 0;
   let nextDueAt = null;
+  let nextHeldBack = false;
   let introducedToday = 0;
   let newCardCount = 0;
   let reviewedToday = 0;
   let laterToday = 0;
   let tomorrow = 0;
 
-  // Called once for each card that is not available yet.
-  const noteAvailableAt = (time) => {
+  // Called once for each card that is not available yet; `heldBack` if
+  // only another card of its word keeps it waiting.
+  const noteAvailableAt = (time, heldBack = false) => {
     if (nextDueAt === null || time < nextDueAt) {
       nextDueAt = time;
+      nextHeldBack = heldBack;
     }
     if (time < tomorrowStart) {
       laterToday += 1;
@@ -186,7 +212,7 @@ export function planSession(words, cards, now, options) {
     // That goes for cards in the other script too.
     const studied = allCardIds(word).map((id) => cards.get(id)).filter(Boolean);
     reviewedToday += studied.filter((card) => lastReviewOf(card) >= dayStart).length;
-    const wanted = types.filter((type) => hasCardType(word, type));
+    const wanted = startingTypeFirst(word, types.filter((type) => hasCardType(word, type)));
     const script = scriptOf(word);
     const otherScript = script === 'traditional' ? 'simplified' : 'traditional';
     // The word's card of a kind in the script studied, and in the other one
@@ -232,7 +258,7 @@ export function planSession(words, cards, now, options) {
         if (availableAt <= now) {
           due.push({ word, type, card });
         } else {
-          noteAvailableAt(availableAt);
+          noteAvailableAt(availableAt, heldUntil > card.due);
         }
       } else if (otherCardOf(type)) {
         toLearnAgain.push({
@@ -253,7 +279,7 @@ export function planSession(words, cards, now, options) {
         if (heldUntil <= now) {
           newForKnownWords.push({ word, type, card: null });
         } else {
-          noteAvailableAt(heldUntil);
+          noteAvailableAt(heldUntil, true);
         }
       }
     }
@@ -273,7 +299,7 @@ export function planSession(words, cards, now, options) {
   const againNow = toLearnAgain.filter((entry) => entry.heldUntil <= now);
   if (newWordsLeftToday > 0) {
     for (const entry of toLearnAgain.filter((held) => held.heldUntil > now)) {
-      noteAvailableAt(entry.heldUntil);
+      noteAvailableAt(entry.heldUntil, true);
     }
   }
 
@@ -295,6 +321,7 @@ export function planSession(words, cards, now, options) {
     learnedToday: introducedToday,
     waitingCount,
     nextDueAt,
+    nextHeldBack,
     reviewedToday,
     laterToday,
     tomorrow,

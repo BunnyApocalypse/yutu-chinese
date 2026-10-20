@@ -259,6 +259,19 @@ describe('learning new words', { concurrency: false }, () => {
     await tap(page, 'review-tab');
     await waitUntil(page, `document.getElementById('review-counts').textContent.endsWith('2 new')`, 'Review');
     await waitUntil(page, `document.getElementById('card-type').textContent === 'Tone'`, 'its tone card');
+    // With the tone card answered just now, its writing card waits a few
+    // minutes, and Review says why (the owner, 2026-10-20, after tester 3).
+    await inDatabase(`
+      const longAgo = Date.now() - 10 * 60000;
+      stores.cards.put({ id: '大|da4#tone', wordId: '大|da4', type: 'tone', due: Date.now() + 1e9, firstReviewedAt: longAgo, lastReviewedAt: Date.now(), fsrsState: {} });
+    `);
+    await reloadApp(page);
+    await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the wait');
+    assert.match(await page.evaluate(`document.querySelector('#done-message .done-next').textContent`), /^Next card in 3 minutes/);
+    assert.equal(
+      await page.evaluate(`document.querySelector('#done-message .done-why')?.textContent`),
+      "Cards of the same word are kept a few minutes apart, so one doesn't give away another's answer.",
+    );
     // Its writing card, once the tone card has been answered a while ago,
     // comes without the lesson: the word was just taught in Learn.
     await inDatabase(`

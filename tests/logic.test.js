@@ -20,6 +20,7 @@ import {
   lessonSteps,
   CARD_TYPES,
   SIBLING_GAP_MS,
+  startingTypeFirst,
 } from '../src/session.js';
 import { splitSyllables, toneAnswers, readingsFor } from '../src/tones.js';
 
@@ -190,6 +191,52 @@ test("a word's cards are introduced in order and kept apart", () => {
   const later = planSession(words, cards, now + 5 * MINUTE, ALL_TYPES);
   assert.equal(later.next.type, 'pinyin');
   assert.equal(later.next.card, null);
+});
+
+test('each word starts at a different kind of card, going round by its order', () => {
+  const types = ['meaning', 'pinyin', 'tone', 'writing'];
+  assert.deepEqual(startingTypeFirst({ order: 0 }, types), types);
+  assert.deepEqual(startingTypeFirst({ order: 1 }, types), ['pinyin', 'tone', 'writing', 'meaning']);
+  assert.deepEqual(startingTypeFirst({ order: 6 }, types), ['tone', 'writing', 'meaning', 'pinyin']);
+  // A word put first has a negative order.
+  assert.deepEqual(startingTypeFirst({ order: -1 }, types), ['writing', 'meaning', 'pinyin', 'tone']);
+  // Fewer kinds (no tone card, say): round those.
+  assert.deepEqual(startingTypeFirst({ order: 4 }, ['meaning', 'writing']), ['meaning', 'writing']);
+  assert.deepEqual(startingTypeFirst({ order: 5 }, ['meaning', 'writing']), ['writing', 'meaning']);
+  assert.deepEqual(startingTypeFirst({ order: 3 }, []), []);
+});
+
+test('the first Review after learning a few words mixes kinds of card (tester 3)', () => {
+  let now = at('2026-10-12T10:00:00');
+  const words = makeWords(4).map((word) => ({ ...word, learnedAt: now - MINUTE }));
+  const cards = new Map();
+  const shown = [];
+  // Answer whatever comes next, ten seconds each, until nothing is ready.
+  for (let plan = planSession(words, cards, now, ALL_TYPES); plan.next; plan = planSession(words, cards, now, ALL_TYPES)) {
+    shown.push(`${plan.next.word.id} ${plan.next.type}`);
+    cards.set(cardId(plan.next.word.id, plan.next.type), { due: now + 10 * MINUTE, firstReviewedAt: now, lastReviewedAt: now });
+    now += 10 * 1000;
+  }
+  assert.deepEqual(shown, ['w0 meaning', 'w1 pinyin', 'w2 tone', 'w3 writing']);
+
+  // Then each word's next kind, once the same-word gap is over; meanwhile
+  // the plan says it is that gap that holds them back.
+  const waiting = planSession(words, cards, now, ALL_TYPES);
+  assert.equal(waiting.nextHeldBack, true);
+  assert.equal(waiting.nextDueAt, at('2026-10-12T10:00:00') + SIBLING_GAP_MS);
+  const later = planSession(words, cards, at('2026-10-12T10:00:00') + SIBLING_GAP_MS, ALL_TYPES);
+  assert.deepEqual([later.next.word.id, later.next.type], ['w0', 'pinyin']);
+});
+
+test('nothing is said to be held back when the next card is simply not due', () => {
+  const now = at('2026-10-12T10:00:00');
+  const old = now - 3 * DAY;
+  // Every card studied long ago, the next due tomorrow.
+  const cards = new Map(CARD_TYPES.map((type) => studied('w0', type, { due: now + DAY, first: old })));
+  const plan = planSession(makeWords(1), cards, now, ALL_TYPES);
+  assert.equal(plan.next, null);
+  assert.equal(plan.nextDueAt, now + DAY);
+  assert.equal(plan.nextHeldBack, false);
 });
 
 test('a due card waits while another card of its word was just reviewed', () => {

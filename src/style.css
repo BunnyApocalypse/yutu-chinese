@@ -719,6 +719,12 @@ main.focused .top-bar {
   color: var(--muted);
 }
 
+/* Why nothing is shown while cards wait for another card of their word. */
+.done-why {
+  color: var(--muted);
+  font-size: var(--size-small);
+}
+
 /* The same column layout as the page, for the part that is hidden when
    there is nothing to review. */
 .study-area {

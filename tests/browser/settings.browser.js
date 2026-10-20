@@ -26,6 +26,7 @@ import {
   addTestWords,
   openDeckPage,
   useAddForm,
+  reloadApp,
 } from './harness.js';
 
 // Text for "the Decks tab's list has this many rows".
@@ -36,6 +37,21 @@ describe('settings', { concurrency: false }, () => {
   let app;
   let browsers;
   let page;
+
+  // Runs JavaScript in the page with `stores`: the database's stores, by name, open for writing.
+  // Returns what `body` leaves in `result`, once the changes are saved.
+  const inDatabase = (body) =>
+    page.evaluate(`new Promise((resolve, reject) => {
+      const opening = indexedDB.open('hanzi-trainer');
+      opening.onsuccess = () => {
+        const tx = opening.result.transaction(['words', 'cards', 'reviews'], 'readwrite');
+        const stores = { words: tx.objectStore('words'), cards: tx.objectStore('cards'), reviews: tx.objectStore('reviews') };
+        const result = {};
+        ${body}
+        tx.oncomplete = () => resolve(JSON.stringify(result));
+        tx.onerror = () => reject(tx.error);
+      };
+    })`).then(JSON.parse);
 
   // Starts a Free practice card of this kind for a word of the test word list.
   async function practice(word, kind) {
@@ -276,21 +292,6 @@ describe('settings', { concurrency: false }, () => {
   });
 
   it('files cards and reviews under a corrected traditional form', async () => {
-    // Runs JavaScript in the page with `stores`: the database's stores, by name, open for writing.
-    // Returns what `body` leaves in `result`, once the changes are saved.
-    const inDatabase = (body) =>
-      page.evaluate(`new Promise((resolve, reject) => {
-        const opening = indexedDB.open('hanzi-trainer');
-        opening.onsuccess = () => {
-          const tx = opening.result.transaction(['words', 'cards', 'reviews'], 'readwrite');
-          const stores = { words: tx.objectStore('words'), cards: tx.objectStore('cards'), reviews: tx.objectStore('reviews') };
-          const result = {};
-          ${body}
-          tx.oncomplete = () => resolve(JSON.stringify(result));
-          tx.onerror = () => reject(tx.error);
-        };
-      })`).then(JSON.parse);
-
     // A simplified-only learner adds a word the dictionary does not have,
     // so its traditional form is stored as the simplified one.
     await choose(page, 'script-select', 'simplified');
@@ -345,7 +346,19 @@ describe('settings', { concurrency: false }, () => {
       await waitUntil(page, `!${dialogOpen}`, 'the panel to close');
     };
 
-    // The next card is a meaning or pinyin card: tap to see the answer.
+    // The next card is a pinyin card: tap to see the answer. (Each word's new
+    // cards start at a different kind, startingTypeFirst; this word's start
+    // at its tone card, so that one is answered long ago.)
+    await inDatabase(`
+      const id = '書蟲們|shu1chong2men5';
+      stores.cards.put({ id: id + '#tone', wordId: id, type: 'tone', due: Date.now() + 1e9, firstReviewedAt: 1, lastReviewedAt: 1, fsrsState: {} });
+    `);
+    await reloadApp(page);
+    // Free practice starts a card of its own the first time it is opened
+    // after a reload, a moment later; let it, or it would take the place of
+    // the one a later step starts there (as addTestWords does).
+    await tap(page, 'practice-button');
+    await waitUntil(page, `document.getElementById('stroke-count').textContent.startsWith('1/') && !document.getElementById('writing-area').hasAttribute('data-busy')`, 'Free practice');
     await tap(page, 'review-tab');
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('Tap to show')`, 'a card to reveal');
     assert.equal(await isShown(page, 'edit-word-button'), false);
