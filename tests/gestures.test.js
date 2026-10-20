@@ -29,19 +29,28 @@ function* everyMedian() {
   }
 }
 
-test('no textbook stroke is taken for a swipe up, even written big', () => {
+test('a textbook stroke is taken for a swipe up only if it rises steeply, and hardly ever at its size', () => {
   let strokes = 0;
-  const taken = [];
+  let takenAtSize = 0;
+  const notSteep = [];
   for (const median of everyMedian()) {
     strokes += 1;
-    // As big as the stroke data's whole box, which is already bigger than
-    // the app draws it (it leaves a margin), and a fifth bigger still.
-    if (isSwipeUp(onScreen(median), AREA) || isSwipeUp(onScreen(median), AREA / 1.2)) {
-      taken.push(median);
+    // As the app draws it (the stroke data's box fills about 0.88 of the
+    // area), as big as the area, and a fifth bigger still.
+    const atSize = isSwipeUp(onScreen(median), AREA / 0.88);
+    if (atSize) {
+      takenAtSize += 1;
+    }
+    // Any stroke with a swipe's shape rises steeply, so the stricter share
+    // guards it whenever it is the stroke expected next.
+    if ((atSize || isSwipeUp(onScreen(median), AREA) || isSwipeUp(onScreen(median), AREA / 1.2)) && !risesSteeply(median)) {
+      notSteep.push(median);
     }
   }
   assert.ok(strokes > 100000, `only ${strokes} strokes read`);
-  assert.equal(taken.length, 0, `taken for a swipe: ${JSON.stringify(taken.slice(0, 3))}`);
+  assert.equal(notSteep.length, 0, `taken for a swipe: ${JSON.stringify(notSteep.slice(0, 3))}`);
+  // 3 of over 120,000 (2026-10-20), out of order only.
+  assert.ok(takenAtSize <= 5, `${takenAtSize} strokes at their size taken for a swipe`);
 });
 
 test('a swipe up is recognized, a swipe down or sideways is not', () => {
@@ -53,8 +62,10 @@ test('a swipe up is recognized, a swipe down or sideways is not', () => {
   // Straight up, and a little slanted.
   assert.ok(isSwipeUp(line({ x: 500, y: 900 }, { x: 500, y: 300 }), AREA));
   assert.ok(isSwipeUp(line({ x: 500, y: 900 }, { x: 600, y: 350 }), AREA));
+  // A third of the area is enough (the owner's swipes rise 36 to 40%).
+  assert.ok(isSwipeUp(line({ x: 500, y: 900 }, { x: 500, y: 520 }), AREA));
   // Too short, too slanted, or downward.
-  assert.ok(!isSwipeUp(line({ x: 500, y: 900 }, { x: 500, y: 500 }), AREA));
+  assert.ok(!isSwipeUp(line({ x: 500, y: 900 }, { x: 500, y: 600 }), AREA));
   assert.ok(!isSwipeUp(line({ x: 300, y: 900 }, { x: 700, y: 400 }), AREA));
   assert.ok(!isSwipeUp(line({ x: 500, y: 300 }, { x: 500, y: 900 }), AREA));
   // Down first, then up: a hook, not a swipe.

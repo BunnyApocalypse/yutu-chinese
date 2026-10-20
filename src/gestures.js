@@ -15,8 +15,10 @@ export const HOLD_MS = 500;
 // well under HOLD_MS, so it stays a stroke.
 export const HOLD_STILLNESS_PX = 12;
 
-// A swipe up must rise by at least this share of the writing area's height...
-const SWIPE_MIN_RISE_SHARE = 1 / 2;
+// A swipe up must rise by at least this share of the writing area's height
+// (the owner, 2026-10-20: half was too tall, the owner's own swipes rising
+// 36 to 40%)...
+const SWIPE_MIN_RISE_SHARE = 1 / 3;
 // ...or by this much when the stroke expected next itself goes steeply up,
 // as the rising stroke (提) of 氵 in 滿 does: then a big, quick 提 must not
 // wipe the character, which in Skritter it can (the owner, 2026-10-15).
@@ -27,19 +29,19 @@ const SWIPE_MIN_RISE_SHARE_STRICT = 3 / 4;
 //
 // The rising stroke (提) of 氵 in a tall character (滿, 灣) is nearly as
 // steep, but short: at most 0.4 of the character's height, in any character
-// of either stroke data set. Half the writing area leaves room for writing it
-// a good deal bigger than that. tests/gestures.test.js tries every stroke.
+// of either stroke data set, so about 0.35 of the writing area as the app
+// draws it; only 3 of all strokes reach a third. They are guarded by the
+// stricter share above whenever they are the stroke expected next.
+// tests/gestures.test.js tries every stroke.
 const SWIPE_MAX_DRIFT = 0.4;
 // It may first go down below where it started by at most this share of its
 // rise, so that a stroke going down and back up is not taken for one.
 const SWIPE_MAX_DIP_SHARE = 0.1;
 // ...and be quick: from the finger landing to its lifting, at most this many
 // milliseconds (the owner, 2026-10-20, after a tester's slow line upward
-// wiped the character). First 300, raised the same day to 500: crossing half
-// a tablet's writing area in 0.3 s needs a real flick, and a pen is slower
-// than a finger. A line drawn on purpose takes longer, and is graded as a
-// stroke.
-export const SWIPE_MAX_MS = 500;
+// wiped the character). The owner's own swipes take 120 to 150 ms; a line
+// drawn on purpose takes longer, and is graded as a stroke.
+export const SWIPE_MAX_MS = 300;
 
 // True if a stroke from the stroke data goes steeply up: it ends higher than
 // it starts, and rises more than it goes sideways (steeper than 45 degrees).
