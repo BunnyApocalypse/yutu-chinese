@@ -836,6 +836,7 @@ async function startUp() {
       lessonsCheckbox: byId('lessons-checkbox'),
       strokeCountCheckbox: byId('stroke-count-checkbox'),
       hintSelect: byId('hint-select'),
+      gradeButtonsSelect: byId('grade-buttons-select'),
       meaningDetailSelect: byId('meaning-detail-select'),
       newWordsInput: byId('new-words-input'),
       leechInput: byId('leech-input'),

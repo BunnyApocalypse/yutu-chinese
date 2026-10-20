@@ -20,7 +20,7 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 // elements: the panel's parts:
 //   panel, openButton, closeButton, scriptSelect, pronunciationSelect,
 //   handwritingSelect, themeRadios (the three choices of look), lessonsCheckbox, strokeCountCheckbox,
-//   hintSelect, newWordsInput,
+//   hintSelect, newWordsInput, gradeButtonsSelect,
 //   meaningDetailSelect,
 //   typeCheckboxes (a list of the four checkboxes; each has a
 //   data-card-type attribute saying which type it is)
@@ -56,6 +56,9 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //                   ("3/7") in Review too; it is always shown in Learn and
 //                   Free practice. Off by default, since it is a hint (the
 //                   owner, 2026-10-15).
+//   gradeButtons:   'four' (the default: Again, Hard, Good, Easy) or 'two'
+//                   (Wrong and Right, Right recorded as Good; gradeButtons in
+//                   scheduler.js). The owner, 2026-10-20, after tester 3.
 //   hintCountsAs:   'missed' (the default) or 'hard': how a character
 //                   written with a hint is judged (judgeChar in session.js)
 //   newWordsPerDay: a number
@@ -94,6 +97,7 @@ export async function createSettings(elements, onChange) {
     lessonsCheckbox,
     strokeCountCheckbox,
     hintSelect,
+    gradeButtonsSelect,
     meaningDetailSelect,
     newWordsInput,
     leechInput,
@@ -120,6 +124,7 @@ export async function createSettings(elements, onChange) {
     lessons: await getSetting('lessons', true),
     strokeCountInReview: await getSetting('strokeCountInReview', false),
     hintCountsAs: await getSetting('hintCountsAs', 'missed'),
+    gradeButtons: await getSetting('gradeButtons', 'four'),
     meaningDetail: await getSetting('meaningDetail', DEFAULT_MEANING_DETAIL),
     newWordsPerDay: await getSetting('newWordsPerDay', DEFAULT_NEW_WORDS_PER_DAY),
     leechLapses: await getSetting('leechLapses', DEFAULT_LEECH_LAPSES),
@@ -149,6 +154,7 @@ export async function createSettings(elements, onChange) {
     lessonsCheckbox.checked = settings.lessons;
     strokeCountCheckbox.checked = settings.strokeCountInReview;
     hintSelect.value = settings.hintCountsAs;
+    gradeButtonsSelect.value = settings.gradeButtons;
     meaningDetailSelect.value = settings.meaningDetail;
     newWordsInput.value = settings.newWordsPerDay;
     leechInput.value = settings.leechLapses;
@@ -205,6 +211,7 @@ export async function createSettings(elements, onChange) {
   );
 
   hintSelect.addEventListener('change', () => change('hintCountsAs', hintSelect.value));
+  gradeButtonsSelect.addEventListener('change', () => change('gradeButtons', gradeButtonsSelect.value));
 
   meaningDetailSelect.addEventListener('change', () =>
     change('meaningDetail', meaningDetailSelect.value),

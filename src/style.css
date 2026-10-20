@@ -2352,6 +2352,12 @@ button.small {
   max-width: 420px;
 }
 
+/* Wrong and Right (the setting "Grade buttons"): two, each twice as wide.
+   Stacked on a tablet held sideways all the same (the rule there wins). */
+.grade-row.two {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 button.grade {
   display: flex;
   flex-direction: column;

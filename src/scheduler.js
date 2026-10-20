@@ -24,6 +24,26 @@ export const GRADES = [
   { value: EASY, label: 'Easy' },
 ];
 
+// The grade buttons offered, by the setting `gradeButtons` (the owner,
+// 2026-10-20, after tester 3, who had no Chinese and found four grades too
+// many): 'four', Again to Easy, or 'two', Wrong and Right. Right is always
+// recorded as Good, whatever the app suggested; Hard and Easy are never
+// used, which FSRS handles well (as Anki's pass/fail add-ons do).
+const PASS_FAIL = [
+  { value: AGAIN, label: 'Wrong' },
+  { value: GOOD, label: 'Right' },
+];
+
+export function gradeButtons(kind) {
+  return kind === 'two' ? PASS_FAIL : GRADES;
+}
+
+// The grade to record, or highlight, for `value` with these buttons: with
+// two, Hard and Easy become Good (Right).
+export function gradeFor(value, kind) {
+  return kind === 'two' && value !== AGAIN ? GOOD : value;
+}
+
 // Default FSRS settings: aim for 90% recall. "Fuzz" varies long intervals by
 // a small random amount so that cards learned together don't all come back
 // on the same day forever.

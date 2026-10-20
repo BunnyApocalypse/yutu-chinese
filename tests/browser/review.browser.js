@@ -370,4 +370,38 @@ describe('grading in Review', { concurrency: false }, () => {
     await waitUntil(page, `document.getElementById('keep-reminder-button').textContent === 'Stop the reminder in Review and Learn'`, 'switched on');
     await tap(page, 'settings-close');
   });
+
+  it('offers Wrong and Right with the setting Grade buttons, Right saved as Good', async () => {
+    const buttonsSetting = (value) =>
+      page.evaluate(`(() => {
+        const list = document.getElementById('grade-buttons-select');
+        list.value = '${value}';
+        list.dispatchEvent(new Event('change', { bubbles: true }));
+      })()`);
+    await openSettings(page, 'settings-studying');
+    await buttonsSetting('two');
+    await waitUntil(page, `document.getElementById('grade-buttons-select').value === 'two'`);
+    await inDatabase(`stores.settings.get('gradeButtons').onsuccess = (event) => { result.value = event.target.result?.value; };`).then(
+      (result) => assert.equal(result.value, 'two'),
+    );
+    await tap(page, 'settings-close');
+
+    // A mistake: Hard is suggested, so Right is the one highlighted.
+    await makeDue(['大|da4#writing', '大|da4', 'writing']);
+    await write('大', { wrong: 1 });
+    const labels = await page.evaluate(`[...document.querySelectorAll('#grade-row .grade')].map((button) => button.firstChild.textContent)`);
+    assert.deepEqual(labels, ['Wrong', 'Right']);
+    assert.equal(await page.evaluate(SUGGESTED), 'Right');
+    // The key 2 presses Right.
+    await page.evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: '2', bubbles: true }))`);
+    await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the end of Review');
+    const review = await lastReview();
+    assert.equal(review.grade, 3);
+    assert.equal(review.suggestedGrade, 2);
+
+    await openSettings(page, 'settings-studying');
+    await buttonsSetting('four');
+    await waitUntil(page, `document.getElementById('grade-buttons-select').value === 'four'`);
+    await tap(page, 'settings-close');
+  });
 });

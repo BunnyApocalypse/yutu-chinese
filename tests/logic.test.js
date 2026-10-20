@@ -6,7 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-import { gradeOptions, replay, AGAIN, HARD, GOOD, EASY } from '../src/scheduler.js';
+import { gradeOptions, replay, gradeButtons, gradeFor, AGAIN, HARD, GOOD, EASY } from '../src/scheduler.js';
 import {
   planSession,
   nextToLearn,
@@ -46,6 +46,15 @@ test('a new card comes back within minutes, except when graded Easy', () => {
   assert.ok(options[AGAIN].due - now.getTime() <= 2 * MINUTE);
   assert.ok(options[GOOD].due - now.getTime() <= 15 * MINUTE);
   assert.ok(options[EASY].due - now.getTime() >= DAY);
+});
+
+test('with two grade buttons, Wrong is Again and Right is always Good', () => {
+  assert.deepEqual(gradeButtons('four').map((grade) => grade.label), ['Again', 'Hard', 'Good', 'Easy']);
+  assert.deepEqual(gradeButtons('two').map((grade) => [grade.label, grade.value]), [['Wrong', AGAIN], ['Right', GOOD]]);
+  // A suggested Hard (a written word with mistakes) or Easy is Right.
+  assert.deepEqual([AGAIN, HARD, GOOD, EASY].map((value) => gradeFor(value, 'two')), [AGAIN, GOOD, GOOD, GOOD]);
+  // With four, every grade stays as it is.
+  assert.deepEqual([AGAIN, HARD, GOOD, EASY].map((value) => gradeFor(value, 'four')), [AGAIN, HARD, GOOD, EASY]);
 });
 
 test('better grades never bring a card back sooner', () => {

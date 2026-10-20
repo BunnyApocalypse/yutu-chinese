@@ -10,7 +10,7 @@
 // saving.
 
 import { getAll, putAll, saveReview, saveKnown, startCardsOver, randomId } from './db.js';
-import { gradeOptions, GRADES, AGAIN, GOOD } from './scheduler.js';
+import { gradeOptions, gradeButtons, gradeFor, AGAIN, GOOD } from './scheduler.js';
 import { deckWithInside, isInDecks, dailyGoal, startingLevel } from './decks.js';
 import { fillDeckSelect } from './decksPanel.js';
 import {
@@ -512,6 +512,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       return; // already graded, e.g. a double tap
     }
     showNotice('');
+    // With two buttons, a Hard or Easy (the suggestion, accepted by a tap on
+    // the writing area) is recorded as Good: Right.
+    value = gradeFor(value, settings.gradeButtons);
     const chosen = options[value];
     options = null;
     const duration = stopwatch.stop();
@@ -600,13 +603,16 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     return streakScreen.showIfNew(streakNow(now), studyDayKey(now), streakGoal(), then);
   }
 
-  // Shows the four grade buttons with the suggested one highlighted.
+  // Shows the grade buttons (four, or Wrong and Right: the setting
+  // gradeButtons) with the suggested one highlighted.
   function renderGrades() {
     gradeRow.replaceChildren();
-    for (const [index, { value, label }] of GRADES.entries()) {
+    const buttons = gradeButtons(settings.gradeButtons);
+    gradeRow.classList.toggle('two', buttons.length === 2);
+    for (const [index, { value, label }] of buttons.entries()) {
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = value === suggested ? 'grade primary' : 'grade';
+      button.className = value === gradeFor(suggested, settings.gradeButtons) ? 'grade primary' : 'grade';
       // Its key on a keyboard (see gradeByKey): shown when the mouse rests
       // on it, and told to screen readers by aria-keyshortcuts.
       button.title = `${label} (key ${index + 1})`;
@@ -632,12 +638,12 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   }
 
   // On a keyboard, the keys 1 to 4 press the grade buttons, Again to Easy
-  // (the owner, 2026-10-15; Anki and Skritter do the same). Only while the
-  // grades are showing and no pop-up panel is open, and not while typing
-  // in a box.
+  // (the owner, 2026-10-15; Anki and Skritter do the same), or 1 and 2 for
+  // Wrong and Right. Only while the grades are showing and no pop-up panel
+  // is open, and not while typing in a box.
   function gradeByKey(event) {
     const number = Number(event.key);
-    if (!Number.isInteger(number) || number < 1 || number > GRADES.length) {
+    if (!Number.isInteger(number) || number < 1 || number > gradeRow.children.length) {
       return;
     }
     const typing = event.target.closest?.('input, select, textarea, [contenteditable]');
