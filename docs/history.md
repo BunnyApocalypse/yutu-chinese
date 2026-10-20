@@ -40,7 +40,6 @@ Agreed with the owner on 2026-10-18. **The first release** means the first users
    - **Sentences:** adding one, the reading card, the gap on the writing card, a whole sentence on a phone.
    - **Combining backups** between two real devices, and whether the `...-before-combining.json` file lands in downloads.
    - **Leeches:** the two settings, the note in Review, the lists, both exports.
-   - **Sound** (nobody has listened yet): the recordings at their smallest size, words put together from syllables, the devices' own voices.
    - **The app installed** on the phone and the tablet.
 10. **Done on 2026-10-18:** "What's new" after an update and "Send feedback" in the menu (`docs/interface.md`).
 

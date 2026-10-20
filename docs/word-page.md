@@ -36,7 +36,7 @@ The owner agreed the outline on 2026-10-13 (a sentence stored as a word record; 
 
 ## Hearing a word
 
-The owner chose the sources on 2026-10-13; nobody has listened to the result yet (Claude can't).
+The owner chose the sources on 2026-10-13; the owner has listened and it works (2026-10-20).
 
 - **Three ways, tried in order** (`planSpeech` in `src/speechPlan.js`):
   1. A recording of the word: about 8,500 words and characters (`data/audio-cmn/words`), named by characters, so used only when the reading asked for is the word's single listed `pinyin`.
