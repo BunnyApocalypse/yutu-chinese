@@ -505,6 +505,21 @@ describe('settings', { concurrency: false }, () => {
     await tap(page, 'settings-close');
   });
 
+  it('says under "For testing" what the browser says about keeping the words', async () => {
+    await openSettings(page, 'settings-testing');
+    const words = await page.evaluate(`document.getElementById('word-count').textContent`);
+    await waitUntil(page, `document.getElementById('storage-readout').textContent.includes('Words here: ${words}.')`, 'the readout');
+    const said = await textOf(page, 'storage-readout');
+    assert.match(said, /Browser: Chrome, or another browser built on Chromium\./);
+    assert.match(said, /Opened as: a page in the browser/);
+    assert.match(said, /Keeps the words for good: (yes|no)/);
+    assert.match(said, /The reminder in Review and Learn: (shown|not shown)\./);
+    // Asking says what the browser answered.
+    await tap(page, 'storage-readout-ask');
+    await waitUntil(page, `document.getElementById('storage-readout').textContent.startsWith('Asked just now: the browser said')`, 'the answer');
+    await tap(page, 'settings-close');
+  });
+
   it('opens a tab that was tapped before the app had started', async () => {
     // Makes every page loaded from now on tap Free practice as soon as it has
     // been read, which is before the app has opened its database.
