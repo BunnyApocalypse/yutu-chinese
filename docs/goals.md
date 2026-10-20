@@ -6,7 +6,7 @@ Agreed with the owner on 2026-10-13.
 
 - **Who it is for:** the owner first, and any learner who wants it ("If I am putting the effort into this, why not share it?"). Wording, defaults and help text should work for a stranger.
 - **Nobody's data is ever held by us.** The owner does not want to run a sync server or touch anyone's data, unless that becomes necessary. Everything stays on the device.
-- **Sync without a server:** first combining backups by hand (built, `docs/merging.md`); as a very long-term goal, syncing through storage the learner already has (Google Drive, Proton Drive, iCloud, OneDrive). Both are the same merge with a different way of moving the file.
+- **Sync without a server:** first combining backups by hand (built, `docs/merging.md`); then syncing through storage the learner already has, Google Drive first (planned for after the first release, the owner, 2026-10-20; the order in the roadmap, `docs/history.md`). Both are the same merge with a different way of moving the file.
 - **Better than Skritter where Anki is:** decks and sub-decks, managing cards, flagging leeches, a choice of scheduling (retention, parameters), and everything portable. Leeches can be exported as a list, and as a prompt for an AI to make mnemonics from.
 - **A word can be in several decks and has one schedule.**
 - **Sentences and audio:** hearing the word and sentence cards are core; listening cards and audio for sentences are nice to have.

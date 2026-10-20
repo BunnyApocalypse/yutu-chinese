@@ -50,6 +50,12 @@ Agreed with the owner on 2026-10-18. **The first release** means the first users
 - "Show more" past a list's first 200 words (`MAX_ROWS`); today the rest are reached only by searching. Raised with the owner, not decided.
 - A setting for target retention.
 - **An Android app through F-Droid** (the owner, 2026-10-19), alongside the web app, which stays: the same app wrapped for Android (likely Capacitor, MIT; a dependency to approve when planned), so its data is the app's own and no browser can delete it. F-Droid first (free, and it builds GPL apps from source); the Play Store and iPhone/iPad only if heavily requested (the Play Store needs a closed test with 12 testers for 14 days; Apple needs a Mac and $99 a year). The app's data is separate from the website's: moving over is Export backup, then restore.
+- **Syncing through the learner's own storage** (the owner, 2026-10-20: after the first release, after the testing list). The same combining as `mergeBackups`, with the file kept in the learner's storage instead of moved by hand. Opt-in, and the one agreed exception to "nothing from the internet": the app still works fully offline and syncs when it can. A synced copy also brings words back after Safari deletes them. In this order:
+  1. **Google Drive**, talking to Google directly (no script of Google's, no dependency), in the app's own hidden folder (`drive.appdata`, a non-sensitive scope: only basic verification). The owner registers the app with Google and puts up a short privacy page. Syncing when the app opens and after a session, and a "Sync" switch in Settings; two devices saving at once is fixed by syncing again, since combining the same data twice changes nothing; the file compressed as reviews grow. Browser tests use a stand-in for Google; one real check on the owner's devices.
+  2. **A file picked with Android's own file picker** in the F-Droid app (Drive, OneDrive, Syncthing, maybe Proton Drive).
+  3. **OneDrive or Dropbox** if asked for (both work from a web app, a folder of the app's own).
+  4. **Proton Drive** once Proton supports other apps; in October 2026 its SDK is not supported for them and has no signing in (to look at again in 2027).
+  - **Not iCloud**: the web route needs Apple's $99 a year; on an iPhone, a backup saved to iCloud Drive by hand.
 - **A mascot**, mainly for the streaks screen (the owner, 2026-10-18; likely November 2026): a bunny, commissioned from an artist, happy or sad with the streak.
 
 **Nice to have:**
@@ -58,7 +64,7 @@ Agreed with the owner on 2026-10-18. **The first release** means the first users
 - A German interface, then other languages (`docs/goals.md`, "Translations").
 - The Skritter import, if the GDPR data arrives (the owner doesn't want the word list imported without its scheduling).
 - A mode for going from 繁體 to 簡體 or back, by character rather than by word (having written 們 → 们 once, the learner isn't asked again in 他們, 你們).
-- Mainland, Hong Kong or Taiwan traditional forms (needs stroke data for the other two); zhuyin; longer shortcuts (more strokes joined, reordered or dropped); syncing through storage the learner already has (`docs/goals.md`).
+- Mainland, Hong Kong or Taiwan traditional forms (needs stroke data for the other two); zhuyin; longer shortcuts (more strokes joined, reordered or dropped).
 - Stroke data for the traditional characters animCJK doesn't cover.
 - Listening cards and ready-made sentences (the last step of "sentences and audio"); eSpeak NG or a small neural voice in the browser (raised, not looked into).
 - The TBCL list, and the 79 TOCFL entries left out (`docs/word-lists.md`).
