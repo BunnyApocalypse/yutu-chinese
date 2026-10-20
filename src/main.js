@@ -35,6 +35,7 @@ import { createFeedback } from './feedback.js';
 import { createWhatsNew } from './whatsNew.js';
 import { createStreakScreen } from './streakScreen.js';
 import { createProgressPanel } from './progressPanel.js';
+import { setUpTesterSettings } from './testerSettings.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -945,6 +946,9 @@ async function startUp() {
 
   // The tips the first time each screen is opened, and their two controls
   // in Settings (Help).
+  // Settings › For testing, in the test copy only (testerSettings.js).
+  await setUpTesterSettings();
+
   const tips = createTips();
   await tips.load();
   const tipsCheckbox = byId('tips-checkbox');

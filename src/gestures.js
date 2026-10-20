@@ -79,10 +79,9 @@ export function isSwipeUp(points, areaSize, strict = false, durationMs = 0) {
   return lowest - first.y <= rise * SWIPE_MAX_DIP_SHARE;
 }
 
-// TEMPORARY (the owner, 2026-10-20, while trying out SWIPE_MAX_MS on the
-// tablet; remove before a release): a line saying how an upward touch
-// measured against each rule of isSwipeUp, shown by quiz.js. Null for a touch
-// that hardly rose, which nobody meant as a swipe.
+// For testers (the owner, 2026-10-20; Settings › For testing): a line saying
+// how an upward touch measured against each rule of isSwipeUp, shown by
+// quiz.js. Null for a touch that hardly rose, which nobody meant as a swipe.
 export function describeSwipe(points, areaSize, strict, durationMs) {
   if (points.length < 2) {
     return null;

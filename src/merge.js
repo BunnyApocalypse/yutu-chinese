@@ -44,6 +44,7 @@ const DEVICE_SETTINGS = [
   'tipsSeen',
   'backupReminderOff',
   'tipsOn',
+  'swipeReadout',
   'storageMessageShown',
   'storageReminderOff',
   'theme',

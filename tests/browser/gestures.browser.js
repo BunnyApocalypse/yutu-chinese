@@ -131,4 +131,33 @@ describe('gestures on the writing area', { concurrency: false }, () => {
     assert.equal(await drawStroke(page, area, [[512, -110], [512, 400], [512, 880]]), '1/14 · 1 mistake');
     assert.equal(await page.evaluate(DRAWN_STROKES), 0);
   });
+
+  it('shows how a swipe measured only when switched on under "For testing"', async () => {
+    // The group is there while developing (and in the test copy).
+    assert.equal(
+      await page.evaluate(`document.querySelector('#settings-nav [data-group="settings-testing"]').hidden`),
+      false,
+    );
+    const READOUT = `document.getElementById('swipe-readout')?.hidden === false ? document.getElementById('swipe-readout').textContent : ''`;
+    const swipe = [[512, -50], [512, 300], [512, 800]];
+
+    // Off to begin with: a swipe shows nothing.
+    await startWriting(page, '十');
+    let area = await writingArea(page);
+    assert.equal(await drawStroke(page, area, loadStrokeData('十').medians[0]), '2/2 · No mistakes');
+    await drawStroke(page, area, swipe);
+    assert.equal(await page.evaluate(READOUT), '');
+
+    // Switched on: the line says it was a swipe, and why.
+    await page.evaluate(`document.getElementById('swipe-readout-checkbox').click()`);
+    await startWriting(page, '十');
+    area = await writingArea(page);
+    assert.equal(await drawStroke(page, area, loadStrokeData('十').medians[0]), '2/2 · No mistakes');
+    await drawStroke(page, area, swipe);
+    await waitUntil(page, `(${READOUT}).startsWith('Swipe: rise')`, 'the readout');
+
+    // Off again: hidden at once.
+    await page.evaluate(`document.getElementById('swipe-readout-checkbox').click()`);
+    assert.equal(await page.evaluate(READOUT), '');
+  });
 });

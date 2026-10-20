@@ -1223,14 +1223,24 @@ export function createQuiz(target, size, handlers) {
   };
 }
 
-// TEMPORARY (the owner, 2026-10-20; remove before a release, with
-// describeSwipe in gestures.js): shows how an upward touch measured against
-// the swipe's rules, at the top of the screen for a few seconds, so the
-// owner can tell on the tablet whether a swipe failed on its height or its
+// For testers (the owner, 2026-10-20; switched on under Settings › For
+// testing, testerSettings.js): shows how an upward touch measured against
+// the swipe's rules (describeSwipe in gestures.js), at the top of the screen
+// for a few seconds, to tell whether a swipe failed on its height or its
 // speed. Nothing is shown for a touch that hardly rose (`line` is null).
+let swipeReadoutOn = false;
 let swipeReadoutTimer = null;
+
+export function setSwipeReadout(on) {
+  swipeReadoutOn = on;
+  const box = document.getElementById('swipe-readout');
+  if (box && !on) {
+    box.hidden = true;
+  }
+}
+
 function showSwipeReadout(line) {
-  if (!line) {
+  if (!swipeReadoutOn || !line) {
     return;
   }
   let box = document.getElementById('swipe-readout');

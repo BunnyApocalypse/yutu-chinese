@@ -1939,6 +1939,10 @@ button.slot {
 }
 
 /* A group in the list: a row to tap, with › at its end. */
+.settings-nav button[hidden] {
+  display: none; /* "For testing", outside the test copy (testerSettings.js) */
+}
+
 .settings-nav button {
   display: flex;
   align-items: center;

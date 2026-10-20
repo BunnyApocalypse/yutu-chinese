@@ -1095,6 +1095,7 @@
           <button type="button" data-group="settings-look">Look and sound</button>
           <button type="button" data-group="settings-data">Your data and backups</button>
           <button type="button" data-group="settings-help">Help, feedback and licenses</button>
+          <button type="button" data-group="settings-testing" hidden>For testing</button>
         </nav>
         <div class="settings-pages">
 
@@ -1363,6 +1364,15 @@
         </div>
         <!-- Which version of the app this is (errors.js). -->
         <p id="app-version" class="hint"></p>
+        </section>
+
+        <!-- Only in the test copy and while developing (testerSettings.js). -->
+        <section id="settings-testing" class="settings-group" hidden>
+          <h3>For testing</h3>
+        <div class="setting">
+          <label><input id="swipe-readout-checkbox" type="checkbox" /> Show how each swipe up measured</label>
+          <p class="hint">After a line drawn upward on the writing area: how far it rose, how much it leaned and how long it took, against what a swipe needs. Only on this device.</p>
+        </div>
         </section>
 
         </div>
