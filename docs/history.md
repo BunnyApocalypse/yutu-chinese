@@ -6,7 +6,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Handover from the session of 2026-10-20 (tester 3's points).** Replace this with each session's handover; keep only what the next session needs.
 
-- **Tester 3** (an Android tablet in Brave, almost no Chinese; "The testing sessions" below): five of six points built on 2026-10-20, **all on the test copy only, not released**:
+- **Tester 3** (an Android tablet in Brave, almost no Chinese; "The testing sessions" below): five of six points built and **released on 2026-10-20** ("What's new" entry `2026-10-20`; Settings › For testing stays on the test copy only):
   - a swipe up must be quick (300 ms) and rise a third of the area, half before a steeply rising stroke (`docs/writing.md`, "Gestures");
   - each word's new cards start at a different kind, and Review says why cards of one word wait (`docs/cards.md`);
   - the tone card shows the five marks faintly above "Draw one of these here" (`docs/cards.md`, "The tone card");
@@ -14,7 +14,6 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
   - the setting "Grade buttons": four, or Wrong and Right, Right always Good (`docs/cards.md`).
 - **Still open from tester 3:** Brave's reminder at the end of Review and Learn asking to install an app already installed (in a tab, `persisted()` stayed false; `local/testing/T3-2026-10-20.md`). In Chromium the tab and the installed app share whether the data is kept, so Brave hadn't agreed even for the installed app; the owner suspects the link opened from Discord. **To find out first** (2026-10-20): the readout under Settings › For testing, with steps for the tester in `local/testing/T3-brave-check-instructions.md`. Then: if Brave never agrees, Brave is named apart and told to make weekly backups, not to install; if it agrees for the installed app, a tab says to open the app from the home screen.
 - **Settings › For testing** (`src/testerSettings.js`, `docs/interface.md`): only on the test copy and under `npm run dev`; today the swipe readout. New switches for trying things go there.
-- **Before the next release:** a "What's new" entry for all of the above (`src/changes.js`); the owner releases.
 - **Added to the roadmap:** "Basics of Chinese" for complete beginners (near-term, not planned).
 - **The logo (item 6) has been in process** with the owner since 2026-10-15.
 - **To know:**
@@ -49,7 +48,7 @@ Agreed with the owner on 2026-10-18. **The first release** means the first users
    - **Combining backups** between two real devices, and whether the `...-before-combining.json` file lands in downloads.
    - **Leeches:** the two settings, the note in Review, the lists, both exports.
    - **The app installed** on the phone and the tablet.
-   - **On the test copy only** (2026-10-20, tester 3's points; https://bunnyapocalypse.github.io/yutu-chinese/test/): a quick swipe up on the tablet with a pen and a finger, and before the rising stroke of 氵 (Settings › For testing shows how each measured); the first Review after learning a few words (kinds mixed, the line about the wait); the tone card's example marks; the stacked grades on the tablet held sideways; "Grade buttons" set to two.
+   - **Tester 3's points** (released 2026-10-20; the swipe readout under Settings › For testing on the test copy only, https://bunnyapocalypse.github.io/yutu-chinese/test/): a quick swipe up on the tablet with a pen and a finger, and before the rising stroke of 氵 (Settings › For testing shows how each measured); the first Review after learning a few words (kinds mixed, the line about the wait); the tone card's example marks; the stacked grades on the tablet held sideways; "Grade buttons" set to two.
 10. **Done on 2026-10-18:** "What's new" after an update and "Send feedback" in the menu (`docs/interface.md`).
 
 **Near-term:**

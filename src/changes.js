@@ -6,6 +6,16 @@
 // was built.
 export const CHANGES = [
   {
+    id: '2026-10-20',
+    items: [
+      'Clearing a character with a swipe up now takes a quick flick, so a slow line upward counts as a stroke.',
+      'Just-learned words come back in Review with their kinds of cards mixed, and Review says when a word\'s other cards are waiting.',
+      'The tone card shows the five tone marks, so it\'s clear what to draw.',
+      'On a tablet held sideways, the grade buttons sit at the bottom beside the card, bigger and easier to reach.',
+      'New in Settings › Daily study: "Grade buttons" can be just Wrong and Right.',
+    ],
+  },
+  {
     id: '2026-10-19',
     items: [
       'Bring your decks over from Anki, with their schedules: "+ New / import deck" in Decks.',
