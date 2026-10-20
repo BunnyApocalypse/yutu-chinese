@@ -1,6 +1,6 @@
 {
-  "name": "玉兔中文",
-  "short_name": "玉兔中文",
+  "name": "玉兔中文 Yutu Chinese",
+  "short_name": "玉兔 Yutu",
   "description": "Learn to read and write Chinese words; everything stays on your device",
   "start_url": "./",
   "scope": "./",
