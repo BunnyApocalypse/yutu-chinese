@@ -107,9 +107,9 @@ test('a swipe up must be quick; a slow line upward is a stroke', () => {
   assert.ok(isSwipeUp(up, AREA, false, 150));
   assert.ok(isSwipeUp(up, AREA, false, SWIPE_MAX_MS));
   assert.ok(!isSwipeUp(up, AREA, false, SWIPE_MAX_MS + 1));
-  assert.ok(!isSwipeUp(up, AREA, false, 800));
+  assert.ok(!isSwipeUp(up, AREA, false, 1200));
   // The same for a strict swipe, however long.
   const fromBottomToTop = [{ x: 500, y: 980 }, { x: 500, y: 40 }];
   assert.ok(isSwipeUp(fromBottomToTop, AREA, true, 200));
-  assert.ok(!isSwipeUp(fromBottomToTop, AREA, true, 500));
+  assert.ok(!isSwipeUp(fromBottomToTop, AREA, true, 900));
 });

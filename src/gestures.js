@@ -35,9 +35,11 @@ const SWIPE_MAX_DRIFT = 0.4;
 const SWIPE_MAX_DIP_SHARE = 0.1;
 // ...and be quick: from the finger landing to its lifting, at most this many
 // milliseconds (the owner, 2026-10-20, after a tester's slow line upward
-// wiped the character). A flick up takes about 100 to 250 ms; a line drawn
-// on purpose takes longer, and is graded as a stroke.
-export const SWIPE_MAX_MS = 300;
+// wiped the character). First 300, raised the same day to 500: crossing half
+// a tablet's writing area in 0.3 s needs a real flick, and a pen is slower
+// than a finger. A line drawn on purpose takes longer, and is graded as a
+// stroke.
+export const SWIPE_MAX_MS = 500;
 
 // True if a stroke from the stroke data goes steeply up: it ends higher than
 // it starts, and rises more than it goes sideways (steeper than 45 degrees).
@@ -71,4 +73,33 @@ export function isSwipeUp(points, areaSize, strict = false, durationMs = 0) {
   }
   const lowest = Math.max(...points.map((point) => point.y));
   return lowest - first.y <= rise * SWIPE_MAX_DIP_SHARE;
+}
+
+// TEMPORARY (the owner, 2026-10-20, while trying out SWIPE_MAX_MS on the
+// tablet; remove before a release): a line saying how an upward touch
+// measured against each rule of isSwipeUp, shown by quiz.js. Null for a touch
+// that hardly rose, which nobody meant as a swipe.
+export function describeSwipe(points, areaSize, strict, durationMs) {
+  if (points.length < 2) {
+    return null;
+  }
+  const first = points[0];
+  const last = points[points.length - 1];
+  const rise = first.y - last.y;
+  if (rise < areaSize * 0.2) {
+    return null;
+  }
+  const minRise = strict ? SWIPE_MIN_RISE_SHARE_STRICT : SWIPE_MIN_RISE_SHARE;
+  const lean = (Math.atan(Math.abs(last.x - first.x) / rise) * 180) / Math.PI;
+  const maxLean = (Math.atan(SWIPE_MAX_DRIFT) * 180) / Math.PI;
+  const dip = Math.max(...points.map((point) => point.y)) - first.y;
+  const mark = (ok) => (ok ? '✓' : '✕');
+  const parts = [
+    `rise ${Math.round((rise / areaSize) * 100)}% (≥ ${Math.round(minRise * 100)}%) ${mark(rise >= areaSize * minRise)}`,
+    `lean ${Math.round(lean)}° (≤ ${Math.round(maxLean)}°) ${mark(Math.abs(last.x - first.x) <= rise * SWIPE_MAX_DRIFT)}`,
+    `dip ${mark(dip <= rise * SWIPE_MAX_DIP_SHARE)}`,
+    `${Math.round(durationMs)} ms (≤ ${SWIPE_MAX_MS}) ${mark(durationMs <= SWIPE_MAX_MS)}`,
+  ];
+  const verdict = isSwipeUp(points, areaSize, strict, durationMs) ? 'Swipe' : 'Not a swipe';
+  return `${verdict}: ${parts.join(' · ')}`;
 }

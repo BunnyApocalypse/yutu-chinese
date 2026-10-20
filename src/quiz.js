@@ -27,7 +27,7 @@ import {
 } from './frame.js';
 import { toPoints, resample, averageDistance } from './lines.js';
 import { themeColor } from './theme.js';
-import { HOLD_MS, HOLD_STILLNESS_PX, isSwipeUp, risesSteeply } from './gestures.js';
+import { describeSwipe, HOLD_MS, HOLD_STILLNESS_PX, isSwipeUp, risesSteeply } from './gestures.js';
 import {
   fitsStroke,
   distanceFromStroke,
@@ -918,6 +918,9 @@ export function createQuiz(target, size, handlers) {
     const duration = event.timeStamp - press.startedAt;
     const swipedUp = !press.taken && canTakeGesture() && isSwipeUp(press.points, size, strict, duration);
     const swipedUpWhenDone = !press.taken && canSwipeWhenDone() && isSwipeUp(press.points, size, false, duration);
+    if (!press.taken) {
+      showSwipeReadout(describeSwipe(press.points, size, strict && !canSwipeWhenDone(), duration));
+    }
     endPress();
     if (swipedUp) {
       writing = false;
@@ -1218,4 +1221,34 @@ export function createQuiz(target, size, handlers) {
       demoLayer.remove();
     },
   };
+}
+
+// TEMPORARY (the owner, 2026-10-20; remove before a release, with
+// describeSwipe in gestures.js): shows how an upward touch measured against
+// the swipe's rules, at the top of the screen for a few seconds, so the
+// owner can tell on the tablet whether a swipe failed on its height or its
+// speed. Nothing is shown for a touch that hardly rose (`line` is null).
+let swipeReadoutTimer = null;
+function showSwipeReadout(line) {
+  if (!line) {
+    return;
+  }
+  let box = document.getElementById('swipe-readout');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'swipe-readout';
+    // Over everything, and never in the way of a tap.
+    box.style.cssText =
+      'position: fixed; top: var(--space-small); left: var(--space-small); right: var(--space-small);' +
+      'z-index: 1000; pointer-events: none; padding: var(--space-small); text-align: center;' +
+      'background: var(--surface); color: var(--text); border: 1px solid var(--border);' +
+      'border-radius: var(--radius); font-size: var(--size-small);';
+    document.body.append(box);
+  }
+  box.textContent = line;
+  box.hidden = false;
+  clearTimeout(swipeReadoutTimer);
+  swipeReadoutTimer = setTimeout(() => {
+    box.hidden = true;
+  }, 6000);
 }

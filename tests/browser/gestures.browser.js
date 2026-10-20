@@ -66,10 +66,10 @@ describe('gestures on the writing area', { concurrency: false }, () => {
     assert.equal(await drawStroke(page, area, first), '2/2 · No mistakes');
     assert.equal(await page.evaluate(DRAWN_STROKES), 1);
 
-    // The same line up drawn slowly (about 600 ms) is a stroke, a wrong one,
-    // and wipes nothing (tester 3, 2026-10-20).
+    // The same line up drawn slowly (about a second) is a stroke, a wrong
+    // one, and wipes nothing (tester 3, 2026-10-20).
     const upward = [[512, -50], [512, 300], [512, 800]];
-    assert.equal(await drawStroke(page, area, upward, { pauseMs: 100 }), '2/2 · 1 mistake');
+    assert.equal(await drawStroke(page, area, upward, { pauseMs: 170 }), '2/2 · 1 mistake');
     assert.equal(await page.evaluate(DRAWN_STROKES), 1);
 
     // Drawn quickly, it is a swipe up, from near the bottom to near the top
