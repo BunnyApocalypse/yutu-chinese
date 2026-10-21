@@ -132,7 +132,7 @@ test("each field's role and each template's cards are guessed", async () => {
   const chinese = description.noteTypes.find((noteType) => noteType.name === 'Chinese (Yutu test)');
   assert.deepEqual(chinese.roles, { characters: 0, pinyin: 1, meaning: 2 });
   const byName = Object.fromEntries(chinese.templates.map((template) => [template.name, template]));
-  assert.deepEqual(byName.Recognition.types, ['meaning', 'pinyin']);
+  assert.deepEqual(byName.Recognition.types, ['meaning', 'pinyin', 'tone']);
   // Meaning to characters could be writing, but is left to the learner.
   assert.deepEqual(byName.Recall.types, []);
   assert.equal(byName.Recall.couldBeWriting, true);
@@ -140,7 +140,7 @@ test("each field's role and each template's cards are guessed", async () => {
   // Basic: the back has the pinyin, then the meaning.
   const basic = description.noteTypes.find((noteType) => noteType.name === 'Basic');
   assert.deepEqual(basic.roles, { characters: 0, pinyin: null, meaning: 1 });
-  assert.deepEqual(basic.templates[0].types, ['meaning', 'pinyin']);
+  assert.deepEqual(basic.templates[0].types, ['meaning', 'pinyin', 'tone']);
   assert.deepEqual(
     description.decks.map((deck) => [deck.name, deck.cardCount]),
     [
@@ -338,11 +338,22 @@ test("an import copies Anki's reviews and keeps its due dates", async () => {
   assert.equal(word('你好|ni3hao3').definition, 'hello');
   assert.equal(word('你好|ni3hao3').importedAt, NOW);
 
-  // 你好's Recognition card stands for its meaning and pinyin cards, and its
-  // tone card goes by the pinyin card. Due on Anki's day 300.
+  // 你好's Recognition card stands for its meaning, pinyin and tone cards
+  // (Tone is ticked with Pinyin). Due on Anki's day 300.
   for (const type of ['meaning', 'pinyin', 'tone']) {
     assert.equal(card(`你好|ni3hao3#${type}`).due, dueDay(300), type);
   }
+  // With Tone unticked, the tone card starts new: nothing hidden copies the
+  // pinyin card to it.
+  const untickedChoices = defaultChoices(describeCollection(collection));
+  for (const choice of Object.values(untickedChoices.noteTypes)) {
+    for (const ord of Object.keys(choice.templates)) {
+      choice.templates[ord] = choice.templates[ord].filter((type) => type !== 'tone');
+    }
+  }
+  const unticked = planAnkiImport(collection, untickedChoices, contextWith());
+  assert.ok(unticked.cards.find((candidate) => candidate.id === '你好|ni3hao3#pinyin'));
+  assert.equal(unticked.cards.find((candidate) => candidate.id === '你好|ni3hao3#tone'), undefined);
   assert.equal(card('你好|ni3hao3#meaning').fsrsState.lapses, 1);
   assert.equal(card('你好|ni3hao3#writing'), undefined);
   const copied = plan.reviews.filter((review) => review.cardId === '你好|ni3hao3#meaning');

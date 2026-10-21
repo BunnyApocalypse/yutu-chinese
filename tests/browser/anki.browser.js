@@ -78,7 +78,7 @@ describe('importing from Anki', { concurrency: false }, () => {
     assert.equal(await textOf(page, 'anki-summary'), 'In the file: 8 notes in 3 decks, 16 reviews.');
     const summary = await textOf(page, 'anki-note-types');
     assert.match(summary, /Each note becomes a word, like:\s*你好 nǐhǎo · hello/);
-    assert.match(summary, /Your Anki reviews count for: Meaning and Pinyin\.\s*Tone follows Pinyin\. Writing starts new/);
+    assert.match(summary, /Your Anki reviews count for: Meaning, Pinyin and Tone\.\s*Writing starts new/);
     // The choices are folded away under "Change this" until tapped.
     const change = `document.querySelector('.anki-change')`;
     assert.equal(await page.evaluate(`${change}.open`), false);
@@ -87,10 +87,10 @@ describe('importing from Anki', { concurrency: false }, () => {
     const choices = await textOf(page, 'anki-note-types');
     assert.match(choices, /Reviewing Anki’s “Recognition” \(7 cards, showing Hanzi on the front\), you practiced:/);
     assert.match(choices, /Anki can’t check handwriting/);
-    // Recognition counts for meaning and pinyin, Recall for nothing yet.
+    // Recognition counts for meaning, pinyin and tone, Recall for nothing yet.
     const ticked = await page.evaluate(`[...document.querySelectorAll('.anki-template')].map((row) =>
       [...row.querySelectorAll('input')].filter((box) => box.checked).map((box) => box.parentElement.textContent.trim()))`);
-    assert.deepEqual(ticked, [['Meaning', 'Pinyin'], ['Meaning', 'Pinyin'], [], []]);
+    assert.deepEqual(ticked, [['Meaning', 'Pinyin', 'Tone'], ['Meaning', 'Pinyin', 'Tone'], [], []]);
   });
 
   it("saves the words, decks and Anki's schedules", async () => {

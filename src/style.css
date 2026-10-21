@@ -3521,8 +3521,9 @@ button.deck-open {
    would wrap the longest name's list onto a line of its own). */
 .anki-role {
   flex-wrap: nowrap;
+  gap: var(--space-medium);
   width: 100%;
-  margin-bottom: var(--space-small);
+  margin-bottom: var(--space-medium);
 }
 
 /* width 0: a list is otherwise as wide as its longest choice, which inside
@@ -3546,6 +3547,12 @@ button.deck-open {
 .anki-fold-title {
   margin: 0;
   font-weight: 600;
+}
+
+/* Room between the explanation and the lists or checkboxes it is about
+   (the owner, 2026-10-21: the Characters list felt cramped under it). */
+.anki-fold-part .hint {
+  margin: var(--space-tiny) 0 var(--space-medium);
 }
 
 /* Each note type's summary in plain words, then "Change this", a fold-out

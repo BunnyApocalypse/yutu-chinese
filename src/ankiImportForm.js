@@ -231,18 +231,11 @@ export function createAnkiImport(shared, dictionaryLoader) {
         counted.length > 0
           ? `Your Anki reviews count for: ${names(counted)}.`
           : 'Your Anki reviews aren’t used: every card starts new.';
-      // Tone cards follow the pinyin card where no template counts for tone
-      // (planAnkiImport).
-      const toneFollows = counted.includes('pinyin') && !counted.includes('tone');
-      const fresh = CARD_TYPES.filter((type) => !counted.includes(type) && !(type === 'tone' && toneFollows));
-      startsNew.textContent = [
-        toneFollows ? 'Tone follows Pinyin.' : '',
+      const fresh = CARD_TYPES.filter((type) => !counted.includes(type));
+      startsNew.textContent =
         fresh.length > 0 && counted.length > 0
           ? `${names(fresh)} ${fresh.length === 1 ? 'starts' : 'start'} new: a few words a day in Review, with a lesson.`
-          : '',
-      ]
-        .filter(Boolean)
-        .join(' ');
+          : '';
       startsNew.hidden = startsNew.hidden || startsNew.textContent === '';
     }
 

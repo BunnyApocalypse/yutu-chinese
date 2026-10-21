@@ -284,9 +284,13 @@ export function guessCardTypes(noteType, roles) {
       types.push('meaning');
       // The reading is asked for if it is only on the back: in its own
       // field, or with the meaning where there is no field for it.
+      // Recalling the pinyin is recalling its tones too, which is how most
+      // people practice tones in Anki, so Tone is ticked with it (the owner,
+      // 2026-10-21; before, a hidden rule copied the pinyin card to the tone
+      // card, and the unticked box read as "starts new").
       const readingAsked = roles.pinyin !== null ? !onFront('pinyin') && onBack('pinyin') : onBack('meaning');
       if (readingAsked) {
-        types.push('pinyin');
+        types.push('pinyin', 'tone');
       }
     } else if (onFront('meaning') && onBack('characters')) {
       couldBeWriting = true;
@@ -730,15 +734,14 @@ export function planAnkiImport(collection, choices, context) {
     report[existing.has(id) ? 'wordsThere' : isRadical(word) ? 'newRadicals' : 'newWords'] += 1;
     word = withDeck(word, appDeck(deckId));
     const script = scriptFor(word, settings);
-    // Recalling the pinyin is recalling its tones, so a tone card no
-    // template was chosen for goes by the pinyin card (the owner,
-    // 2026-10-19), if the word can have one: a syllable per character.
+    // A tone card only for a word that can have one: a syllable per
+    // character (not 一点儿, yīdiǎnr).
     const syllables = (reading) => (reading.match(/[a-z]+[1-5]/gi) || []).length;
     const canHaveTone = word.pinyin
       .split(', ')
       .some((reading) => syllables(reading) === Array.from(word.traditional).length);
-    if (!sources.tone && sources.pinyin && canHaveTone) {
-      sources.tone = sources.pinyin;
+    if (!canHaveTone) {
+      delete sources.tone;
     }
     const suspended = new Set(word.suspended || []);
     let gotCards = false;
