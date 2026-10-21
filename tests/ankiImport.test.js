@@ -14,6 +14,8 @@ import {
   describeCollection,
   defaultChoices,
   guessRoles,
+  guessSpareMeaning,
+  meaningsIn,
   layoutLines,
   fieldText,
   itemFromNote,
@@ -324,6 +326,45 @@ test('a note becomes a word with the help of the dictionary', () => {
     wordFromNote({ characters: '着名', pinyin: '', meaning: 'famous' }, context).problem,
     'No pinyin: the note has none, and the app’s dictionary doesn’t have this word.',
   );
+});
+
+test("the deck's other meaning field comes before the dictionary", () => {
+  // As in the HSK 2012 deck: SimpleMeaning is empty in some notes, whose
+  // meaning is in Definitions under lines of characters, pinyin and zhuyin.
+  const noteType = { fields: ['Simplified', 'Pinyin', 'SimpleMeaning', 'Definitions', 'Examples English', 'StrokeLabel'] };
+  const notes = [
+    ['爱', 'ài', 'to love', '爱\n愛\nài\nㄞˋ\n1. to love\n2. to be fond of', '我愛你。\nI love you.', '10 strokes'],
+    ['八', 'bā', '', '八\n八\nbā\nㄅㄚ\neight', '八點。\nIt is eight.', '2 strokes'],
+    ['朋友', 'péng you', '', '朋友\n朋友\npéng you\nㄆㄥˊ ㄧㄡ˙\n1. friend\n2. pal', '朋友。\nA friend.', '8 strokes'],
+    ['山脉', 'shān mài', '', '山脉\n山脈\nshān mài\nㄕㄢ ㄇㄞˋ\nmountain rangemeasure word條/条tiao2', '山。\nMountains.', '3 strokes'],
+  ].map((fields) => ({ fields }));
+  const roles = { characters: 0, pinyin: 1, meaning: 2 };
+  // Not the examples' English, nor a field of other English.
+  assert.equal(guessSpareMeaning(noteType, notes, roles), 3);
+  assert.equal(guessSpareMeaning({ fields: ['Simplified', 'Pinyin', 'SimpleMeaning', 'Notes'] }, notes, roles), null);
+
+  assert.deepEqual(meaningsIn('朋友\n朋友\npéng you\nㄆㄥˊ ㄧㄡ˙\n1. friend\n2. pal'), ['friend', 'pal']);
+  assert.deepEqual(meaningsIn('山脉\n山脈\nshān mài\nmountain rangemeasure word條/条tiao2'), ['mountain range']);
+  // Several readings: the lines under the note's own.
+  assert.deepEqual(meaningsIn('鱼\n魚\nYú\nㄩˊ\nsurname Yu\n鱼\n魚\nyú\nㄩˊ\n1. fish', (line) => line === 'yú'), ['fish']);
+  // References to other words as the app's dictionary has them.
+  assert.deepEqual(meaningsIn('notebook (abbr. for 筆記本電腦|笔记本电脑[bi3 ji4 ben3 dian4 nao3])\nTaiwan pr. [bi3 ji4 ben3]\nvariant of 筆記'), [
+    'notebook (abbr. for 筆記本電腦)',
+  ]);
+
+  const context = contextWith({ meaningDetail: 'everyday' });
+  const word = (characters, pinyin, spareMeaning) => wordFromNote({ characters, pinyin, meaning: '', spareMeaning }, context).word;
+  // The deck's meaning, though the dictionary has the word ("friend").
+  assert.equal(word('朋友', 'péng you', '朋友\n朋友\npéng you\n1. friend\n2. pal').definition, 'friend; pal');
+  // Nothing there: the dictionary's.
+  assert.equal(word('朋友', 'péng you', '朋友\n朋友').definition, 'friend');
+  // The block of the word's reading, though the deck writes it with a
+  // capital, as a name's.
+  const leng = '冷\n冷\nLěng\nsurname Leng\n冷\n冷\nlěng\ncold';
+  const withLeng = contextWith({ dictionary: readDictionary('冷\t\tLeng3\tsurname Leng\n冷\t\tleng3\tcold') });
+  assert.equal(wordFromNote({ characters: '冷', pinyin: 'Lěng', meaning: '', spareMeaning: leng }, withLeng).word.definition, 'cold');
+  // The chosen meaning field still comes first.
+  assert.equal(wordFromNote({ characters: '朋友', pinyin: '', meaning: 'buddy', spareMeaning: 'pal' }, context).word.definition, 'buddy');
 });
 
 test("an import copies Anki's reviews and keeps its due dates", async () => {

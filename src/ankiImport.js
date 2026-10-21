@@ -257,6 +257,40 @@ export function guessRoles(noteType, notes, script = 'traditional') {
   return roles;
 }
 
+// A field named for a meaning, but not for an example's ("Example 2
+// English") or a sentence's.
+const SPARE_MEANING_NAME = /meaning|definition|english|gloss|意思/i;
+const EXAMPLE_NAME = /example|sentence|例/i;
+
+// A second field to take a note's meaning from where the field chosen for
+// the meaning is empty: the HSK 2012 deck leaves its short SimpleMeaning
+// empty in 578 notes and has their meaning in "Definitions" (the owner,
+// 2026-10-21: the deck's own definitions come before the dictionary's).
+// Only a field named for a meaning, since many decks have fields of other
+// English (stroke counts, Japanese readings, translations of examples),
+// and only one filled in at least half the notes; of those, the one with
+// meanings (meaningsIn) in most notes.
+//
+// roles: from guessRoles; a field chosen for a role is not taken
+//
+// Returns the field's index, or null for none.
+export function guessSpareMeaning(noteType, notes, roles) {
+  const sample = notes.slice(0, 200);
+  let best = null;
+  let bestCount = 0;
+  noteType.fields.forEach((name, index) => {
+    if (Object.values(roles).includes(index) || !SPARE_MEANING_NAME.test(name) || EXAMPLE_NAME.test(name)) {
+      return;
+    }
+    const count = sample.filter((note) => meaningsIn(cleanField(note.fields[index])).length > 0).length;
+    if (count * 2 >= sample.length && count > bestCount) {
+      best = index;
+      bestCount = count;
+    }
+  });
+  return best;
+}
+
 // Which of the app's kinds of card each of a note type's templates stands
 // for, guessed from what the template shows on the front.
 //
@@ -308,12 +342,13 @@ export function guessCardTypes(noteType, roles) {
 //
 // Returns:
 //   decks:     [{ id, name, cardCount }], the decks with cards, by name
-//   noteTypes: [{ id, name, fields, noteCount, example, roles, templates }]
+//   noteTypes: [{ id, name, fields, noteCount, example, roles, spareMeaning, templates }]
 //              for the note types that have notes. `example` is the first
 //              note's fields, cleaned and without the deck's headings
 //              (fieldText); `templates` is [{ ord, name, front,
 //              cardCount, types, couldBeWriting }], `front` the fields its
-//              front shows. `roles`, `types`: the guesses.
+//              front shows. `roles`, `types`: the guesses;
+//              `spareMeaning`: guessSpareMeaning's field, or null.
 //   reviewCount: how many reviews the file holds (none in a shared deck)
 export function describeCollection(collection, script = 'traditional') {
   const cardCount = new Map();
@@ -332,6 +367,7 @@ export function describeCollection(collection, script = 'traditional') {
       const notes = notesOf.get(noteType.id);
       const noteIds = new Set(notes.map((note) => note.id));
       const roles = guessRoles(noteType, notes, script);
+      const spareMeaning = guessSpareMeaning(noteType, notes, roles);
       const guesses = guessCardTypes(noteType, roles);
       const layout = layoutLines(notes);
       return {
@@ -341,6 +377,7 @@ export function describeCollection(collection, script = 'traditional') {
         noteCount: notes.length,
         example: notes[0].fields.map((_, index) => fieldText(notes[0], index, layout)),
         roles,
+        spareMeaning,
         templates: noteType.templates.map((template) => ({
           ord: template.ord,
           name: template.name,
@@ -355,7 +392,7 @@ export function describeCollection(collection, script = 'traditional') {
 
 // The choices the pop-up starts with: every deck, and the guesses.
 //
-// Returns { deckIds: Set, noteTypes: { [id]: { roles, templates: { [ord]: types } } } }
+// Returns { deckIds: Set, noteTypes: { [id]: { roles, spareMeaning, templates: { [ord]: types } } } }
 export function defaultChoices(description) {
   return {
     deckIds: new Set(description.decks.map((deck) => deck.id)),
@@ -364,6 +401,7 @@ export function defaultChoices(description) {
         noteType.id,
         {
           roles: { ...noteType.roles },
+          spareMeaning: noteType.spareMeaning,
           templates: Object.fromEntries(noteType.templates.map((template) => [template.ord, [...template.types]])),
         },
       ]),
@@ -433,13 +471,75 @@ export function itemFromNote(texts, context) {
   return radical && radical.pinyin === '' ? { word: radicalRecord(radical) } : wordFromNote(texts, context);
 }
 
+const ZHUYIN = /[\u3100-\u312f\u31a0-\u31bf]/u;
+
+// Meanings that say nothing about what the word means, left out as the
+// app's dictionary leaves them out (NOT_A_MEANING in
+// scripts/build-dictionary.js): measure words, notes on pronunciation and
+// spelling, and pointers to other entries.
+const NOT_A_MEANING = [
+  /^CL:/,
+  /^Taiwan pr\./,
+  /^also pr\./,
+  /^(also|sometimes) written/,
+  /^(old |archaic |Japanese |erhua |dialectal |ancient )?variant of/,
+  /^see (also )?[^a-z]/,
+];
+
+// The meanings in a field that holds more than the meaning, as a list for
+// proposeMeaning: the HSK 2012 deck's "Definitions" repeats the word's
+// characters, pinyin and zhuyin above numbered meanings, a dictionary
+// entry for each reading:
+//
+//   鱼 / 魚 / Yú / ㄩˊ / surname Yu / 鱼 / 魚 / yú / ㄩˊ / 1. fish / 2. used in…
+//
+// gives ['fish', 'used in…'] for the reading yú. Lines of characters,
+// pinyin or zhuyin are left out, and the numbers before a meaning.
+//
+// text:      the field, cleaned (fieldText), a line for each part
+// isReading: whether a line of pinyin is the word's reading: where the
+//            field has several readings, the lines under that one are
+//            taken (all of them if none is)
+export function meaningsIn(text, isReading = () => false) {
+  let lines = text.split('\n');
+  const readingAt = lines.findIndex((line) => isPinyin(line) && isReading(line));
+  if (readingAt >= 0) {
+    const after = lines.slice(readingAt + 1);
+    const next = after.findIndex((line) => isPinyin(line));
+    lines = next >= 0 ? after.slice(0, next) : after;
+  }
+  return lines
+    .filter((line) => {
+      const han = (line.match(HAN) || []).length;
+      return /[a-z]/i.test(line) && han * 2 < line.replace(/\s/g, '').length && !ZHUYIN.test(line) && !isPinyin(line);
+    })
+    .map((line) =>
+      line
+        .replace(/^\d+\.\s*/, '')
+        // The deck adds a word's measure words to its last meaning, without
+        // a space: "mountain rangemeasure word條/条tiao2".
+        .replace(/\s*measure word\s*\p{Script=Han}.*$/u, '')
+        // As the app's dictionary has them (scripts/build-dictionary.js): no
+        // note on pronunciation inside a meaning, and references to other
+        // words cut short, 學習|学习[xue2 xi2] → 學習.
+        .replace(/\s*\((?:Taiwan|also) pr\. \[[^\]]*\]\)/g, '')
+        .replace(/([^\s|[\]]+)\|[^\s|[\]]+/g, '$1')
+        .replace(/\[[^\]]*\]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim(),
+    )
+    .filter((line) => line !== '' && !NOT_A_MEANING.some((pattern) => pattern.test(line)));
+}
+
 // Makes a word out of a note's characters, pinyin and meaning, checked as
 // a typed word is (checkWord), with the dictionary's help: it gives the
 // other script's form, the reading where the note has none (or has it with
 // tone marks the app can't split by itself), and a meaning where the note
 // has none.
 //
-// texts:   { characters, pinyin, meaning }, cleaned fields ('' if none)
+// texts:   { characters, pinyin, meaning, spareMeaning }, cleaned fields
+//          ('' if none); `spareMeaning` (guessSpareMeaning's field) gives
+//          the meaning where `meaning` is empty, before the dictionary
 // context: { dictionary, likeliestEntry(entries, characters), meaningDetail }
 //          `dictionary` may be null; `likeliestEntry` picks the entry with
 //          the usual reading (dictionaryLoader.js)
@@ -490,6 +590,20 @@ export function wordFromNote(texts, context) {
     : 'simplified';
   const other = script === 'traditional' ? 'simplified' : 'traditional';
   const otherForm = entry ? entry[other] : otherScriptForm(entries, script, characters, tidyPinyin(pinyin) || '');
+  // The deck's other meaning field, under the word's own reading: the one
+  // of the dictionary's entry, with a capital only if that has one (the
+  // HSK 2012 deck writes 冷 "Lěng" when it means lěng "cold", not the
+  // surname); without an entry, the note's.
+  if (meaning === '' && texts.spareMeaning) {
+    const startsWithCapital = (text) => text[0] !== text[0].toLowerCase();
+    const isReading = entry
+      ? (line) => {
+          const typed = readTypedPinyin(line);
+          return typed !== null && readsAs(entry, typed) && startsWithCapital(line) === startsWithCapital(entry.pinyin);
+        }
+      : (line) => line === pinyinText;
+    meaning = proposeMeaning(meaningsIn(texts.spareMeaning, isReading), context.meaningDetail);
+  }
   if (meaning === '' && entry) {
     meaning = proposeMeaning(entry.meanings, context.meaningDetail);
   }
@@ -686,10 +800,15 @@ export function planAnkiImport(collection, choices, context) {
       .map(([id]) => id),
   );
   for (const note of notes) {
-    const { roles, templates } = choices.noteTypes[note.noteTypeId];
+    const { roles, spareMeaning = null, templates } = choices.noteTypes[note.noteTypeId];
     const layout = layoutOf.get(note.noteTypeId);
     const text = (role) => (roles[role] === null ? '' : fieldText(note, roles[role], layout));
-    const texts = { characters: text('characters'), pinyin: text('pinyin'), meaning: text('meaning') };
+    const texts = {
+      characters: text('characters'),
+      pinyin: text('pinyin'),
+      meaning: text('meaning'),
+      spareMeaning: spareMeaning === null || Object.values(roles).includes(spareMeaning) ? '' : fieldText(note, spareMeaning, layout),
+    };
     const result = itemFromNote(texts, {
       ...context,
       radicals: radicalDecks.has(note.noteTypeId) ? context.radicals : null,

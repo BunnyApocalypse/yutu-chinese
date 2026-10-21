@@ -197,8 +197,14 @@ export function createAnkiImport(shared, dictionaryLoader) {
         return false;
       }
       const text = (role) => (choice.roles[role] === null ? '' : noteType.example[choice.roles[role]]);
+      const spare = choice.spareMeaning;
       const result = itemFromNote(
-        { characters: text('characters'), pinyin: text('pinyin'), meaning: text('meaning') },
+        {
+          characters: text('characters'),
+          pinyin: text('pinyin'),
+          meaning: text('meaning'),
+          spareMeaning: spare === null || Object.values(choice.roles).includes(spare) ? '' : noteType.example[spare],
+        },
         {
           dictionary: dictionaryLoader.get(),
           likeliestEntry: dictionaryLoader.likeliestEntry,
