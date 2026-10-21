@@ -4,8 +4,9 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
-**Handover from the fourth session of 2026-10-21 (Review: correcting grades and verdicts; sentences shown better; released).** Replace this with each session's handover; keep only what the next session needs.
+**Handover from the fifth session of 2026-10-21 (tester 4's feedback as to-dos; an Italian interface as a high priority; docs only).** Replace this with each session's handover; keep only what the next session needs.
 
+- **This session (docs only, nothing in the app changed):** tester 4's observation sheet made into 13 to-dos at the top of the roadmap (notes and the original sheet in `local/testing/T4-2026-10-21*`; the original is still in `~/Downloads/m-feedback.odt`, the owner's to delete). **An Italian interface** added as high priority, ahead of German (`docs/goals.md`, "Translations"); to plan with the owner: who checks the Italian, a dictionary in Italian or not, before or after the first release.
 - **Released on 2026-10-21 to `main` and `stable`, a third time** ("What's new" entry `2026-10-21-3`): the mainland reader's notes #60 to #80, nothing else.
 - **Released on 2026-10-21 to `main` and `stable`** ("What's new" entry `2026-10-21-2` in `src/changes.js`):
   - **The Anki import on real shared decks** (`docs/anki.md`): reading real decks and textbooks, the deck's own meanings, sentences as the app's sentences, the check step as a summary, "Words you already have", advice for each reason a note was left out, a turning sign. Ch_book1: 491 words and 85 sentences, 2,301 reviews copied.
