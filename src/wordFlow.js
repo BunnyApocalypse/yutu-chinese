@@ -5,7 +5,8 @@
 //
 // In Review each character also gets a verdict, passed or missed. The flow
 // proposes one as soon as the character is finished, colors its slot green or
-// red, and shows two buttons to overrule it.
+// red, and the slot can be tapped to overrule it; between characters, two
+// buttons in the grades' place do the same (verdictButtons).
 
 import { createQuiz } from './quiz.js';
 import { loadCharData } from './charData.js';
@@ -112,7 +113,7 @@ function sum(numbers) {
 //   writingArea, wordRow, statusElement, strokeCountElement, noteElement,
 //   nextButton, restartButton, outlineButton, animateButton,
 //   orderNote,
-//   skipButton, backButton
+//   skipButton, backButton, verdictRow
 //
 // Returns { start, rebuild }.
 export function createWordFlow(elements) {
@@ -129,6 +130,7 @@ export function createWordFlow(elements) {
     orderNote,
     skipButton,
     backButton,
+    verdictRow,
   } = elements;
 
   // The word being written, as a list of characters, and where we are in it.
@@ -225,6 +227,66 @@ export function createWordFlow(elements) {
       wordRow.appendChild(slot);
     });
     showArrows();
+    renderVerdictButtons();
+  }
+
+  // Between the characters of a word in Review (options.verdictButtons):
+  // "✕ 姓 missed" and "✓ 姓 right" for the character just written, in the
+  // grades' place, the app's verdict pressed (the owner, 2026-10-21: in
+  // 我姓王, 姓 written right but judged missed, and its box went unnoticed).
+  // A tap changes the verdict, as a tap on its box does. After the last
+  // character the grades take this place: its box, or the grade chosen, is
+  // the way to overrule it.
+  //
+  // Meanwhile Clear, Show outline and Animate are put away, as under the
+  // grades, leaving Next: with them, Next on its line and these two, a small
+  // phone (360 by 640) had to scroll. A swipe up still writes the character
+  // again.
+  function renderVerdictButtons() {
+    if (!options.verdictButtons) {
+      verdictRow.hidden = true;
+      return;
+    }
+    const show =
+      chars.length > 1 &&
+      charDone &&
+      Boolean(finishedPerChar[position]) &&
+      !skippedPerChar[position] &&
+      passedPerChar[position] !== undefined &&
+      !wordFinished();
+    nextButton.parentElement.classList.toggle('tools-away', show);
+    verdictRow.hidden = !show;
+    if (!show) {
+      verdictRow.replaceChildren();
+      return;
+    }
+    const passed = passedPerChar[position];
+    verdictRow.replaceChildren(verdictButton(false, !passed), verdictButton(true, passed));
+  }
+
+  // One of the two: `passed` says which verdict it gives, `pressed` whether
+  // that is the verdict standing now (aria-pressed tells a screen reader).
+  function verdictButton(passed, pressed) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `verdict ${passed ? 'passed' : 'missed'}`;
+    button.setAttribute('aria-pressed', String(pressed));
+    const mark = document.createElement('span');
+    mark.className = 'verdict-mark';
+    mark.setAttribute('aria-hidden', 'true');
+    mark.textContent = passed ? '✓' : '✕';
+    // The character in the slot row's language, so the right font shows it.
+    const char = document.createElement('span');
+    char.lang = wordRow.lang;
+    char.textContent = chars[position];
+    button.append(mark, ' ', char, passed ? ' right' : ' missed');
+    const index = position;
+    button.addEventListener('click', () => {
+      if (passedPerChar[index] !== passed) {
+        setVerdict(index, passed);
+      }
+    });
+    return button;
   }
 
   // The two arrows beside the writing area.
@@ -361,6 +423,7 @@ export function createWordFlow(elements) {
           nextButton.textContent = 'Next';
           nextButton.hidden = false;
         }
+        renderVerdictButtons();
         // The printed character keeps the color of the verdict that stands.
         return passedPerChar[position];
       }
@@ -487,6 +550,7 @@ export function createWordFlow(elements) {
     const wasPracticing = practicing;
     position = index;
     charDone = false;
+    renderVerdictButtons();
     practicing = Boolean(finishedPerChar[index]) && !skippedPerChar[index];
     if (wasPracticing && !practicing) {
       options.onPracticeEnd?.();
@@ -653,6 +717,9 @@ export function createWordFlow(elements) {
     //   judgeChar({ mistakes, strokes, hintShown, peeked }):
     //                  returns true if the character counts as passed. Leave
     //                  it out for no verdicts at all (Free practice).
+    //   verdictButtons: true to show "✕ 姓 missed" and "✓ 姓 right" between
+    //                  the characters of a word (see renderVerdictButtons;
+    //                  Review)
     //   practiceWhenDone: true to let the character on screen be written
     //                  again once the word is finished, as practice that
     //                  changes nothing (see practicing; Review)
@@ -696,6 +763,8 @@ export function createWordFlow(elements) {
 
       options = newOptions;
       practicing = false;
+      charDone = false;
+      verdictRow.hidden = true;
       // Tells the browser which regional font to use for the characters in
       // the slot row. Without it, a phone may show Japanese or mainland shapes.
       wordRow.lang = options.script === 'traditional' ? 'zh-Hant-TW' : 'zh-Hans-CN';

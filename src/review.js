@@ -62,7 +62,7 @@ const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`;
 
 // elements: the page elements review controls:
 //   countsElement, typeElement, meaningElement, pinyinElement, pinyinButton,
-//   gradeRow, practiceAgainButton, editWordButton, leechNote, donePanel, doneMessage, studyArea, scriptFlag,
+//   gradeRow, verdictRow, practiceAgainButton, editWordButton, leechNote, donePanel, doneMessage, studyArea, scriptFlag,
 //   lessonNote, skipLessonButton, lessonNextButton, learnNextButton, addWordsButton,
 //   startLevelButton, otherLevelButton, lessonBackButton, countsRow,
 //   and the parts of the study area that differ per kind of card:
@@ -93,6 +93,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     pinyinElement,
     pinyinButton,
     gradeRow,
+    verdictRow,
     practiceAgainButton,
     editWordButton,
     aboutWordButton,
@@ -203,6 +204,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     // one. (A writing card shows its stroke count again when it starts.)
     orderNote.hidden = true;
     strokeCountElement.hidden = true;
+    // Shown again by wordFlow.js between the characters of a writing card.
+    verdictRow.hidden = true;
     // A sentence's writing card lets its prompt run to two lines (see there).
     meaningElement.style.webkitLineClamp = '';
     meaningElement.style.maxHeight = '';
@@ -754,6 +757,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       hideStrokeCount: !settings.strokeCountInReview && lesson === null,
       // How a hint counts is a setting (the owner, 2026-10-15).
       judgeChar: (facts) => judgeChar({ ...facts, hintCountsAs: settings.hintCountsAs }),
+      // Right and missed for each character but the last, in the grades' place.
+      verdictButtons: true,
       // Starting a character over after the word was finished (the back
       // arrow to a skipped one) takes the grade buttons away
       // again until it is finished once more, and brings back Clear, Show

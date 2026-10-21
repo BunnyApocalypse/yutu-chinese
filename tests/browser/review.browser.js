@@ -1,8 +1,8 @@
 // Grading in Review, in a real browser: the grade suggested for a written
 // word (Good, Hard after a mistake or a hint, Again for a missed character),
 // what is saved once a grade is chosen (how long it took too), a meaning
-// card graded from its tap,
-// and the Card types setting leaving a kind of card out.
+// card graded from its tap, the Card types setting leaving a kind of card
+// out, and "missed" and "right" between the characters of a word.
 //
 // Run with: npm run test:browser
 
@@ -155,9 +155,9 @@ describe('grading in Review', { concurrency: false }, () => {
     await browsers.use(async (thePage) => {
       page = thePage;
     });
-    // Two words learned long ago, with their meaning and writing cards, none
-    // of them due yet. The stroke count is shown in Review, so that each
-    // stroke changes the status line (drawStroke waits for that).
+    // Three words learned long ago, with their meaning and writing cards,
+    // none of them due yet. The stroke count is shown in Review, so that
+    // each stroke changes the status line (drawStroke waits for that).
     await inDatabase(`
       for (const [char, pinyin, definition] of [['大', 'da4', 'big'], ['小', 'xiao3', 'small']]) {
         stores.words.put({ id: char + '|' + pinyin, traditional: char, simplified: char, pinyin, definition, order: 0, addedAt: 1, learnedAt: 1 });
@@ -167,9 +167,12 @@ describe('grading in Review', { concurrency: false }, () => {
         card('大|da4#writing', '大|da4', 'writing', 30 * DAY),
         card('小|xiao3#meaning', '小|xiao3', 'meaning', 30 * DAY),
         card('小|xiao3#writing', '小|xiao3', 'writing', 30 * DAY),
+        card('大小|da4xiao3#meaning', '大小|da4xiao3', 'meaning', 30 * DAY),
+        card('大小|da4xiao3#writing', '大小|da4xiao3', 'writing', 30 * DAY),
       ])}) {
         stores.cards.put(card);
       }
+      stores.words.put({ id: '大小|da4xiao3', traditional: '大小', simplified: '大小', pinyin: 'da4xiao3', definition: 'size', order: 0, addedAt: 1, learnedAt: 1 });
       stores.settings.put({ key: 'enabledTypes', value: ['meaning', 'writing'] });
       stores.settings.put({ key: 'strokeCountInReview', value: true });
     `);
@@ -403,5 +406,45 @@ describe('grading in Review', { concurrency: false }, () => {
     await buttonsSetting('four');
     await waitUntil(page, `document.getElementById('grade-buttons-select').value === 'four'`);
     await tap(page, 'settings-close');
+  });
+
+  it('offers missed and right between the characters of a word, the verdict changed by a tap', async () => {
+    await makeDue(['大小|da4xiao3#writing', '大小|da4xiao3', 'writing']);
+    await waitForFirstStroke();
+    const area = await writingArea(page);
+    // 大 with two mistakes: judged missed.
+    for (let count = 0; count < 2; count++) {
+      await drawStroke(page, area, [[512, 850], [512, 400], [512, -50]]);
+    }
+    for (const median of loadStrokeData('大').medians) {
+      await drawStroke(page, area, median);
+    }
+    await waitUntil(page, `!document.getElementById('verdict-row').hidden`, 'the verdict buttons');
+    const buttons = `[...document.querySelectorAll('#verdict-row .verdict')]`;
+    const state = () =>
+      page.evaluate(`${buttons}.map((button) => [button.textContent, button.getAttribute('aria-pressed')])`);
+    assert.deepEqual(await state(), [['✕ 大 missed', 'true'], ['✓ 大 right', 'false']]);
+    assert.ok(await page.evaluate(`document.querySelector('#word-row .slot').classList.contains('missed')`));
+
+    // Right: the box turns green and the button is pressed.
+    await page.evaluate(`${buttons}[1].click()`);
+    assert.deepEqual(await state(), [['✕ 大 missed', 'false'], ['✓ 大 right', 'true']]);
+    assert.ok(await page.evaluate(`document.querySelector('#word-row .slot').classList.contains('passed')`));
+
+    // On to 小: the buttons go, and after it the grades take their place.
+    await tap(page, 'next-button');
+    await waitUntil(page, `document.getElementById('verdict-row').hidden`, 'the verdict buttons to go');
+    await waitForFirstStroke();
+    for (const median of loadStrokeData('小').medians) {
+      await drawStroke(page, area, median);
+    }
+    await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
+    assert.ok(await page.evaluate(`document.getElementById('verdict-row').hidden`));
+    // Mistakes but nothing missed: Hard.
+    assert.equal(await page.evaluate(SUGGESTED), 'Hard');
+    await chooseGrade('Hard');
+    const review = await lastReview();
+    assert.deepEqual(review.passedPerChar, [true, true]);
+    assert.deepEqual(review.suggestedPerChar, [false, true]);
   });
 });

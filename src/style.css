@@ -2418,6 +2418,33 @@ button.small {
   max-width: 420px;
 }
 
+/* Between the characters of a word (wordFlow.js, renderVerdictButtons):
+   "✕ 姓 missed" and "✓ 姓 right" in the grades' place. The verdict standing
+   is in its box's colors, with a thicker border and bold, so it shows
+   without the colors too. */
+button.verdict {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-tiny);
+  font-size: var(--size-body);
+}
+
+button.verdict[aria-pressed='true'] {
+  border-width: 2px;
+  font-weight: 600;
+}
+
+button.verdict.passed[aria-pressed='true'] {
+  border-color: var(--success);
+  background: var(--success-bg);
+}
+
+button.verdict.missed[aria-pressed='true'] {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+}
+
 /* Wrong and Right (the setting "Grade buttons"): two, each twice as wide.
    Stacked on a tablet held sideways all the same (the rule there wins). */
 .grade-row.two {
