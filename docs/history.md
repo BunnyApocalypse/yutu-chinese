@@ -4,25 +4,22 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
-**Handover from the second session of 2026-10-20 (the Brave check, and the release).** Replace this with each session's handover; keep only what the next session needs.
+**Handover from the session of 2026-10-21 (the reader's notes #43 to #61, and "Basics of Chinese" released).** Replace this with each session's handover; keep only what the next session needs.
 
-- **Released on 2026-10-20** (`ce014ea` on `main` and `stable`, "What's new" entry `2026-10-20`): tester 3's five points below. Settings › For testing stays on the test copy only, by itself (`TESTER_SETTINGS_SHOWN`: the stable build has no channel).
+- **Released on 2026-10-21** (`5c56afb` on `main` and `stable`, "What's new" entry `2026-10-21`; the deploy checked live): **"Basics of Chinese"** (`docs/interface.md`), five screens (Characters, Pinyin, Tones, Writing, Four kinds of card; the owner's order), from the menu, Settings › Help, the introduction's first screen, and "What are tones?" on a tone card's face until 3 tone cards are graded; its 11 recordings are app files, so it plays offline. Also: **Settings last in the menu** (the owner), the mainland reader's notes #43 to #61, and space between a row of buttons and the hint under it (Send feedback, Import backup).
+- **Decided, not built:** no second "New to Chinese?" link at the introduction's end (the owner, 2026-10-21: the last screen is for keeping the words safe). If a beginner tester misses the basics, add one to the level screen (screen 3).
+- **The mainland reader's notes:** #1 to #61 of the general page worked in (`data/notes/CLAUDE.md`); their batch was "#1-60", and their "#60" was the page's #61 (生活). **Next batch starts at #62** (网). Their answers are translated and condensed, never copied in whole.
 - **Waiting on tester 3:** the owner sends `local/testing/T3-brave-check-instructions.md` (five steps with screenshots: from Discord, in Brave, in the installed app, back in a tab, after a few days). Reading them: fewer words in Discord's than in Brave's means Discord's own browser (a separate copy of the words) was the cause; "Keeps the words for good: yes" in the installed app means only a tab needs "open the app from the home screen"; still "no" after days means Brave never agrees, so Brave gets weekly backups as its advice (`src/storageAdvice.js`). Plan the fix with the owner then.
-- **Released on 2026-10-21** ("What's new" entry `2026-10-21`): **"Basics of Chinese"** (`docs/interface.md`), Settings last in the menu, the mainland reader's notes #43 to #61, and the spacing under Send feedback's buttons. Basics: the owner chose a pop-up linked from the menu, Settings, the introduction and the tone card, with sound kept offline and all four kinds of screen. "What are tones?" goes after 3 tone cards graded (the owner). Pictures: `local/basics-pictures/`. No second link at the introduction's end (the owner, 2026-10-21: the last screen is for keeping the words safe; the level screen if a beginner tester misses it). **Next:** the owner tries it, or the owner's testing list (item 9).
-- **Tester 3** (an Android tablet in Brave, almost no Chinese; "The testing sessions" below): five of six points built and released:
-  - a swipe up must be quick (300 ms) and rise a third of the area, half before a steeply rising stroke (`docs/writing.md`, "Gestures");
-  - each word's new cards start at a different kind, and Review says why cards of one word wait (`docs/cards.md`);
-  - the tone card shows the five marks faintly above "Draw one of these here" (`docs/cards.md`, "The tone card");
-  - on a tablet held sideways the grades are stacked at the bottom of the side column, level with the card, from 640px tall (`docs/pitfalls.md`);
-  - the setting "Grade buttons": four, or Wrong and Right, Right always Good (`docs/cards.md`).
+- **Suggested next** (the owner's choice): the owner tries the basics and the rest of the testing list (item 9); the reader's next batch when it comes.
 - **Still open from tester 3:** Brave's reminder at the end of Review and Learn asking to install an app already installed (in a tab, `persisted()` stayed false; `local/testing/T3-2026-10-20.md`). In Chromium the tab and the installed app share whether the data is kept, so Brave hadn't agreed even for the installed app; the owner suspects the link opened from Discord. **To find out first** (2026-10-20): the readout under Settings › For testing, with steps for the tester in `local/testing/T3-brave-check-instructions.md`. Then: if Brave never agrees, Brave is named apart and told to make weekly backups, not to install; if it agrees for the installed app, a tab says to open the app from the home screen.
 - **Settings › For testing** (`src/testerSettings.js`, `docs/interface.md`): only on the test copy and under `npm run dev`; today the swipe readout. New switches for trying things go there.
-- **Added to the roadmap:** "Basics of Chinese" for complete beginners (near-term, not planned).
 - **The logo (item 6) has been in process** with the owner since 2026-10-15.
 - **To know:**
   - Pictures for a decision: the atlas with `SIZES=` and `TRY_CSS=` for a look (`scripts/ux-atlas.js`), or a small script on the browser tests' harness for anything else. Put them in `local/`, delete them once the point is built, and always give the picture's path. The owner chooses from pictures side by side.
   - **A background session inside a worktree can't run git in the main checkout**, nor write files there: to `git pull` the owner's checkout, leave the worktree first (ExitWorktree, keep), and copy files for `local/` across with `cp`.
   - **A new worktree needs a real copy of `node_modules`** (`cp -a`), not a link: Vite won't serve files from outside the project, and the Anki import tests fail. It also needs `node scripts/copy-char-data.js` and `node scripts/copy-audio.js` before a picture script; the test command does that by itself.
+  - **Running commands in a worktree:** a command that changes directory, chains steps around version control, or runs `sed` with a computed program is refused as unverifiable; write scripts to files and run plain separate commands.
+  - **`reloadApp` in the harness switches the page to both scripts, mostly traditional**, even after `startBrowsers(..., { keepWelcome: true })`: a picture script that reloads shows traditional forms whatever the app's default.
   - Two browser tests fail now and then in a full run only (`tests/browser/CLAUDE.md`): run the file alone before suspecting a change.
   - A label beside a heading must fit on a 360px phone: measure it in the page rather than guess.
   - Rename by pattern only at exact places, then compare strings and comments with the original.
@@ -52,6 +49,7 @@ Agreed with the owner on 2026-10-18. **The first release** means the first users
    - **Combining backups** between two real devices, and whether the `...-before-combining.json` file lands in downloads.
    - **Leeches:** the two settings, the note in Review, the lists, both exports.
    - **The app installed** on the phone and the tablet.
+   - **Basics of Chinese** (released 2026-10-21): the five screens on the phone and the tablet, the ▶ sounds (also offline), the link on the introduction, "What are tones?" until 3 tone cards are graded, Settings at the bottom of the menu.
    - **Tester 3's points** (released 2026-10-20; the swipe readout under Settings › For testing on the test copy only, https://bunnyapocalypse.github.io/yutu-chinese/test/): a quick swipe up on the tablet with a pen and a finger, and before the rising stroke of 氵 (Settings › For testing shows how each measured); the first Review after learning a few words (kinds mixed, the line about the wait); the tone card's example marks; the stacked grades on the tablet held sideways; "Grade buttons" set to two.
 10. **Done on 2026-10-18:** "What's new" after an update and "Send feedback" in the menu (`docs/interface.md`).
 
