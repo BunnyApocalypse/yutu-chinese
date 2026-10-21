@@ -3539,6 +3539,11 @@ button.deck-open {
   margin: var(--space-small) 0 0;
 }
 
+/* "Not brought over: Explanation, Structure, …" and its link. */
+.anki-unused {
+  margin: var(--space-medium) 0 0;
+}
+
 /* The result: a line for each thing brought over, then the notes left out,
    each on a line of its own with room between them. */
 .anki-result p {

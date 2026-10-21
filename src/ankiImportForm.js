@@ -284,7 +284,17 @@ export function createAnkiImport(shared, dictionaryLoader) {
         'Each word here has four cards. A card ticked keeps your schedule from Anki; one not ticked starts new.',
       ),
     );
-    for (const template of noteType.templates.filter((candidate) => candidate.cardCount > 0)) {
+    // Rows only for the templates the guesses use; the others (Ch_book1's
+    // grammar notes have 13: Explanation, Structure, Correction 1 to 4…) are
+    // named on one line, with a link that shows their rows (the owner,
+    // 2026-10-21: 23 rows of four checkboxes were too many). Split by the
+    // guesses, not the ticks, so that a row doesn't vanish when its last box
+    // is unticked. If no template is guessed, every row is shown.
+    const withCards = noteType.templates.filter((candidate) => candidate.cardCount > 0);
+    const used = withCards.filter((template) => template.types.length > 0);
+    const unused = used.length > 0 ? withCards.filter((template) => template.types.length === 0) : [];
+    const hiddenRows = [];
+    for (const template of withCards) {
       const row = document.createElement('div');
       row.className = 'anki-template';
       const name = document.createElement('p');
@@ -315,7 +325,32 @@ export function createAnkiImport(shared, dictionaryLoader) {
           'otherwise writing starts new, with a lesson.';
         row.append(hint);
       }
-      change.append(row);
+      if (unused.includes(template)) {
+        row.hidden = true;
+        hiddenRows.push(row);
+      } else {
+        change.append(row);
+      }
+    }
+    if (unused.length > 0) {
+      const line = document.createElement('p');
+      line.className = 'anki-unused';
+      fillMixed(line, `Not brought over: ${unused.map((template) => template.name).join(', ')}. `, settings.script);
+      const show = document.createElement('button');
+      show.type = 'button';
+      show.className = 'link-button';
+      show.textContent = unused.length === 1 ? 'Show its checkboxes' : 'Show their checkboxes';
+      show.addEventListener('click', () => {
+        for (const row of hiddenRows) {
+          row.hidden = false;
+        }
+        line.remove();
+        // The link is gone: focus goes on to what it showed.
+        hiddenRows[0].querySelector('input').focus();
+      });
+      line.append(show);
+      // The hidden rows after the line, so that they open where it was.
+      change.append(line, ...hiddenRows);
     }
 
     // Opened at once where the first note would be left out, so the lists

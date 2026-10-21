@@ -91,6 +91,21 @@ describe('importing from Anki', { concurrency: false }, () => {
     const ticked = await page.evaluate(`[...document.querySelectorAll('.anki-template')].map((row) =>
       [...row.querySelectorAll('input')].filter((box) => box.checked).map((box) => box.parentElement.textContent.trim()))`);
     assert.deepEqual(ticked, [['Meaning', 'Pinyin', 'Tone'], ['Meaning', 'Pinyin', 'Tone'], [], []]);
+    // Templates guessed as nothing are named on a line, their rows hidden
+    // until the link is tapped.
+    const unused = `[...document.querySelectorAll('.anki-unused')]`;
+    assert.deepEqual(await page.evaluate(`${unused}.map((line) => line.textContent)`), [
+      'Not brought over: Recall, Listening. Show their checkboxes',
+    ]);
+    const hiddenRows = `[...document.querySelectorAll('.anki-template')].filter((row) => row.hidden).length`;
+    assert.equal(await page.evaluate(hiddenRows), 2);
+    // In the other note type's "Change this", opened first, as a learner would.
+    await page.evaluate(`${unused}[0].closest('details').open = true`);
+    await page.evaluate(`${unused}[0].querySelector('button').click()`);
+    assert.equal(await page.evaluate(hiddenRows), 0);
+    assert.equal(await page.evaluate(`${unused}.length`), 0);
+    // Focus goes on to the first box shown.
+    assert.equal(await page.evaluate(`document.activeElement.parentElement.textContent.trim()`), 'Meaning');
   });
 
   it("saves the words, decks and Anki's schedules", async () => {
