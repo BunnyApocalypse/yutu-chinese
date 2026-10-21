@@ -3570,6 +3570,40 @@ button.deck-open {
   margin-top: var(--space-medium);
 }
 
+/* "Reading the file…" and "Importing…" (showWorking in ankiImportForm.js):
+   not a warning, so in the text's color, after a ring turning beside it.
+   Turning by `transform` keeps it moving while the page is busy. Without
+   motion (the device's setting) the words alone say it. */
+.note.working {
+  display: flex;
+  align-items: center;
+  gap: var(--space-small);
+  color: var(--text-soft);
+}
+
+.working-sign {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .working-sign {
+    display: inline-block;
+    flex: none;
+    width: 1em;
+    height: 1em;
+    border: 2px solid var(--line);
+    border-top-color: var(--accent);
+    border-radius: var(--radius-round);
+    animation: working-turn 0.8s linear infinite;
+  }
+}
+
+@keyframes working-turn {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
 /* The two parts of "Change this": a heading, and what it asks under it. */
 .anki-fold-part {
   margin-top: var(--space-medium);

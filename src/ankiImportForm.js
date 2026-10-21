@@ -53,8 +53,32 @@ export function createAnkiImport(shared, dictionaryLoader) {
   const dialog = byId('anki-dialog');
   const fileInput = byId('anki-file');
   const note = (text) => {
+    byId('anki-note').classList.remove('working');
     byId('anki-note').textContent = text;
   };
+  // A turning sign before the note while the file is read or the import
+  // worked out, with the button disabled: both hold up the page for a
+  // second or more on a big file, and the button seemed not to have worked
+  // (the owner, 2026-10-21). The work runs in one go on the page's main
+  // thread, the one that also draws the page, so the sign is drawn first:
+  // a requestAnimationFrame callback runs just before the browser draws,
+  // so the second one comes once the sign is on the screen. The sign turns
+  // by a CSS animation of `transform`, which the browser runs apart from
+  // that thread, so it keeps turning while the work goes on. The next
+  // note() takes it away. A page out of sight draws no frames, so the work
+  // goes ahead after a tenth of a second whatever happens.
+  async function showWorking(text, button) {
+    button.disabled = true;
+    const sign = document.createElement('span');
+    sign.className = 'working-sign';
+    sign.setAttribute('aria-hidden', 'true');
+    byId('anki-note').classList.add('working');
+    byId('anki-note').replaceChildren(sign, text);
+    await new Promise((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(resolve));
+      setTimeout(resolve, 100);
+    });
+  }
   // The file read, what it holds, and the learner's choices.
   let collection = null;
   let description = null;
@@ -87,7 +111,20 @@ export function createAnkiImport(shared, dictionaryLoader) {
     if (!file) {
       return;
     }
-    note('Reading the file…');
+    const button = byId('anki-file-button');
+    await showWorking('Reading the file…', button);
+    try {
+      await readFile(file);
+    } catch (error) {
+      // Not left turning if something unforeseen goes wrong.
+      note(`That file could not be read. ${error.message}`);
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  // Reads the chosen file and shows the check step, or says what is wrong.
+  async function readFile(file) {
     try {
       // The dictionary is fetched meanwhile: it fills in what notes lack.
       const [SQL] = await Promise.all([loadSqlJs(), dictionaryLoader.load()]);
@@ -113,7 +150,7 @@ export function createAnkiImport(shared, dictionaryLoader) {
     renderChoices();
     showStep('check');
     note(dictionaryLoader.get() ? '' : 'The dictionary could not be fetched, so notes without pinyin will be left out.');
-  });
+  }
 
   // A checkbox with its text, as Settings has them.
   function checkbox(text, checked, onChange) {
@@ -488,8 +525,7 @@ export function createAnkiImport(shared, dictionaryLoader) {
 
   byId('anki-import-now').addEventListener('click', async () => {
     const button = byId('anki-import-now');
-    button.disabled = true;
-    note('Importing…');
+    await showWorking('Importing…', button);
     try {
       const plan = planAnkiImport(collection, choices, planContext());
       await saveImport(plan);

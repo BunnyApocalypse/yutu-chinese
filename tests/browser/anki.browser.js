@@ -28,6 +28,8 @@ const stored = (page, storeName) =>
   })`);
 
 // Hands the pop-up a file as if it had been chosen with "Choose a file".
+// Gives what the pop-up showed at once: whether the working sign was there
+// and the button disabled.
 const chooseFile = (page, name) =>
   page.evaluate(`(() => {
     const bytes = Uint8Array.from(atob(${JSON.stringify(fs.readFileSync(`tests/fixtures/anki/${name}`).toString('base64'))}), (c) => c.charCodeAt(0));
@@ -36,6 +38,11 @@ const chooseFile = (page, name) =>
     const input = document.getElementById('anki-file');
     input.files = files.files;
     input.dispatchEvent(new Event('change'));
+    return {
+      sign: Boolean(document.querySelector('#anki-note.working .working-sign')),
+      text: document.getElementById('anki-note').textContent,
+      disabled: document.getElementById('anki-file-button').disabled,
+    };
   })()`);
 
 // The collection's creation time in the files (CRT in make-fixtures.py).
@@ -73,8 +80,11 @@ describe('importing from Anki', { concurrency: false }, () => {
     assert.equal(await page.evaluate(`document.getElementById('anki-dialog').open`), true);
     assert.equal(await page.evaluate(`document.getElementById('new-deck-dialog').open`), false);
 
-    await chooseFile(page, 'new.apkg');
+    // A sign that it is working at once, and the button can't be pressed again.
+    assert.deepEqual(await chooseFile(page, 'new.apkg'), { sign: true, text: 'Reading the file…', disabled: true });
     await waitUntil(page, `!document.getElementById('anki-check-step').hidden`, 'the guesses');
+    assert.equal(await page.evaluate(`document.getElementById('anki-file-button').disabled`), false);
+    assert.equal(await page.evaluate(`document.querySelector('#anki-note .working-sign')`), null);
     assert.equal(await textOf(page, 'anki-summary'), 'In the file: 8 notes in 3 decks, 16 reviews.');
     const summary = await textOf(page, 'anki-note-types');
     assert.match(summary, /Each note becomes a word, like:\s*你好 nǐhǎo · hello/);
@@ -109,7 +119,11 @@ describe('importing from Anki', { concurrency: false }, () => {
   });
 
   it("saves the words, decks and Anki's schedules", async () => {
-    await tap(page, 'anki-import-now');
+    const atOnce = await page.evaluate(`(() => {
+      document.getElementById('anki-import-now').click();
+      return [Boolean(document.querySelector('#anki-note.working .working-sign')), document.getElementById('anki-import-now').disabled];
+    })()`);
+    assert.deepEqual(atOnce, [true, true]);
     await waitUntil(page, `!document.getElementById('anki-done-step').hidden`, 'the result');
     assert.match(await textOf(page, 'anki-result'), /^Brought over 6 new words\.\s*15 cards keep their schedule from Anki, with 33 reviews of history\.\s*1 word you hadn’t studied in Anki yet waits in Learn\./);
     assert.match(await textOf(page, 'anki-left-out'), /^1 note was left out\s*They weren’t brought over\./);
