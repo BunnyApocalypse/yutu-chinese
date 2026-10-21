@@ -535,4 +535,34 @@ describe('grading in Review', { concurrency: false }, () => {
     await tap(page, 'past-forward-button');
     await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the end of Review again');
   });
+
+  it('goes on with a tap after practicing a character gone back to, the word unfinished', async () => {
+    await makeDue(['大小|da4xiao3#writing', '大小|da4xiao3', 'writing']);
+    await waitForFirstStroke();
+    const area = await writingArea(page);
+    for (const median of loadStrokeData('大').medians) {
+      await drawStroke(page, area, median);
+    }
+    await tap(page, 'next-button');
+    await waitForFirstStroke();
+    // Back to 大, written again as practice.
+    await tap(page, 'back-button');
+    await waitForFirstStroke();
+    for (const median of loadStrokeData('大').medians) {
+      await drawStroke(page, area, median);
+    }
+    await waitUntil(page, `document.getElementById('status').textContent.startsWith('Practice ·')`, 'the practice done');
+    // The box of 大, on screen, is green with the blue ring of the current one.
+    assert.equal(
+      await page.evaluate(`getComputedStyle(document.querySelector('#word-row .slot.current.passed')).outlineStyle`),
+      'solid',
+    );
+    // A real tap on the writing area: on to 小.
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const middle = { x: area.x + area.size / 2, y: area.y + area.size / 2 };
+    for (const type of ['mousePressed', 'mouseReleased']) {
+      await page.send('Input.dispatchMouseEvent', { type, x: middle.x, y: middle.y, button: 'left', clickCount: 1 });
+    }
+    await waitUntil(page, `document.querySelectorAll('#word-row .slot')[1].classList.contains('current')`, 'on to 小');
+  });
 });

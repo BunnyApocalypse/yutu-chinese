@@ -1362,6 +1362,15 @@ select {
 /* Passed only after starting again, in a lesson's practice (wordFlow.js):
    amber, not green ("you got it right, but not on the first try": the
    owner, 2026-10-18), with "✓2", a little wider. */
+/* The current character judged already (written again, or gone back to):
+   its green or red box keeps a blue ring around it, or which character is
+   on screen could not be told (the owner, 2026-10-21). */
+.slot.current.passed,
+.slot.current.missed {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .slot.passed.retried {
   border-color: var(--warn);
   background: var(--retried-bg);

@@ -445,6 +445,7 @@ export function createWordFlow(elements) {
     onComplete({ totalMistakes, hintShown, order }) {
       charDone = true;
       if (practicing) {
+        tapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
         orderNote.hidden = order !== 'mainland';
         hideProgress();
         statusElement.textContent = `Practice · ${describeMistakes(totalMistakes).toLowerCase()}`;
@@ -694,8 +695,12 @@ export function createWordFlow(elements) {
   // writing area itself: a swipe up once the character is done is taken by
   // the quiz there and goes no further, so it is not also a tap (quiz.js).
   writingArea.parentElement.addEventListener('pointerup', (event) => {
-    // Not while practicing: a tap there never grades or moves on.
-    if (writingArea.contains(event.target) && charDone && !practicing && Date.now() >= tapAllowedFrom) {
+    // While practicing a finished word, a tap never grades. Practicing a
+    // character gone back to while the word is unfinished, it goes on to
+    // the one still to be written, as Next does (the owner, 2026-10-21:
+    // the tap had stopped working there, leaving only the arrow).
+    const canGoOn = !practicing || !wordFinished();
+    if (writingArea.contains(event.target) && charDone && canGoOn && Date.now() >= tapAllowedFrom) {
       goOn();
     }
   });
