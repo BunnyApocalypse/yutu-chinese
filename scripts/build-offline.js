@@ -20,6 +20,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
+import { BASICS_RECORDINGS } from '../src/basicsSounds.js';
+
 const DIST = 'dist';
 const STROKE_FOLDERS = ['char-data', 'char-data-tw'];
 // How many characters go into one pack. A pack of this size is 2 to 3 MB.
@@ -95,9 +97,13 @@ fs.writeFileSync(path.join(DIST, 'offline/index.json'), JSON.stringify({ packs, 
 
 // ---- The service worker ----
 
+// The recordings of "Basics of Chinese" count as the app's own files, so
+// that it works offline from the start (src/basicsSounds.js).
+const basicsAudio = BASICS_RECORDINGS.map((name) => `audio/${name}.mp3`);
+
 // The app's own files: everything except the stroke data, the recordings
-// (but the list of them is one), the packs, the dictionary, and the service
-// worker itself.
+// (but the list of them is one, and so are those of the basics), the packs,
+// the dictionary, and the service worker itself.
 const appFiles = fs
   .readdirSync(DIST, { recursive: true, withFileTypes: true })
   .filter((entry) => entry.isFile())
@@ -106,7 +112,7 @@ const appFiles = fs
     (file) =>
       file !== 'sw.js' &&
       !file.startsWith('offline/') &&
-      !(file.startsWith('audio/') && file !== 'audio/index.json') &&
+      !(file.startsWith('audio/') && file !== 'audio/index.json' && !basicsAudio.includes(file)) &&
       !STROKE_FOLDERS.some((folder) => file.startsWith(`${folder}/`)) &&
       !bigFiles.includes(file),
   )

@@ -17,6 +17,7 @@ import { missingReadyMadeDecks, wordsWithListsAsDecks, homeForEveryWord, flatten
 import { setUpOffline, keepData } from './offline.js';
 import { createStorageMessage } from './storageMessage.js';
 import { createWelcome } from './welcome.js';
+import { createBasics } from './basics.js';
 import { createTips } from './tips.js';
 import { buildBackup, checkBackup, describeBackup, restoreBackup } from './backup.js';
 import { mergeBackups, describeMerge } from './merge.js';
@@ -77,6 +78,8 @@ const toneFlow = createToneFlow({
   statusElement: byId('status'),
   toneButtons: [...document.querySelectorAll('#tone-buttons [data-tone]')],
   nextButton: byId('tone-next-button'),
+  // "What are tones?" on the card: the basics at its screen on tones.
+  onWhatAreTones: () => basics.open('tones'),
 });
 
 const recallCard = createRecallCard(byId('card-face'));
@@ -84,6 +87,8 @@ const recallCard = createRecallCard(byId('card-face'));
 // Both are set up in startUp() below, once the saved settings have been read.
 let settings = null;
 let review = null;
+// "Basics of Chinese" (basics.js), set up with the settings.
+let basics = null;
 
 // Until 2026-10-13 a new database was filled with a list of 109 words for
 // trying the app out. A device that was given them (it has the
@@ -944,6 +949,14 @@ async function startUp() {
     byId('settings-panel').close();
     welcome.open();
   });
+
+  // "Basics of Chinese" (basics.js): from the menu and Settings › Help, and
+  // on top of the introduction's first screen. (A tone card opens it at its
+  // screen on tones: onWhatAreTones above.)
+  basics = createBasics(settings);
+  byId('basics-button').addEventListener('click', () => basics.open());
+  byId('settings-basics-button').addEventListener('click', () => basics.open());
+  byId('welcome-basics-button').addEventListener('click', () => basics.open());
 
   // The tips the first time each screen is opened, and their two controls
   // in Settings (Help).

@@ -38,9 +38,16 @@ function paragraph(className, text) {
 // pictures, since a font puts tone marks high and small. Only a picture for
 // the eye: the buttons say each tone's name.
 const MARK_PATHS = ['M6 20 H34', 'M8 32 L32 8', 'M6 12 Q20 44 34 8', 'M8 8 L32 32'];
-const EXAMPLE_MARKS =
-  MARK_PATHS.map((path) => `<svg viewBox="0 0 40 40"><path d="${path}" /></svg>`).join('') +
-  '<svg viewBox="0 0 40 40"><circle cx="20" cy="22" r="3.5" /></svg>';
+
+// One tone's mark as a picture (SVG markup): tone 1 to 4, or 5 for the dot.
+// Also used by "Basics of Chinese" (basics.js).
+export function toneMarkPicture(tone) {
+  return tone === 5
+    ? '<svg viewBox="0 0 40 40"><circle cx="20" cy="22" r="3.5" /></svg>'
+    : `<svg viewBox="0 0 40 40"><path d="${MARK_PATHS[tone - 1]}" /></svg>`;
+}
+
+const EXAMPLE_MARKS = [1, 2, 3, 4, 5].map(toneMarkPicture).join('');
 
 function exampleMarks() {
   const element = document.createElement('p');
@@ -53,11 +60,13 @@ function exampleMarks() {
 // elements: the page elements the tone card uses:
 //   cardFace, wordRow, statusElement,
 //   toneButtons (the list of five tone buttons; each has a data-tone attribute),
-//   nextButton
+//   nextButton,
+//   onWhatAreTones (called by "What are tones?" on the card: main.js opens
+//   "Basics of Chinese" at its screen on tones)
 //
 // Returns { start, stop }.
 export function createToneFlow(elements) {
-  const { cardFace, wordRow, statusElement, toneButtons, nextButton } = elements;
+  const { cardFace, wordRow, statusElement, toneButtons, nextButton, onWhatAreTones } = elements;
 
   // What the card on screen needs; null when no tone card is showing.
   let current = null;
@@ -108,6 +117,20 @@ export function createToneFlow(elements) {
   }
   const backArrow = arrow('tone-back-button', 'Go back to the character before', 'M15 5 L8 12 L15 19');
   const skipArrow = arrow('tone-skip-button', 'Skip this character (counts as right)', 'M9 5 L16 12 L9 19');
+
+  // "What are tones?", under what to do while asking (the owner, 2026-10-21,
+  // after tester 3, who had almost no Chinese). On the card's face, which is
+  // always the same size, so that nothing above or below it moves; in the
+  // line above the card it took two lines in Learn. Like the arrows, a touch
+  // on it is not a stroke of a tone mark nor a tap on the card.
+  const tonesLink = document.createElement('button');
+  tonesLink.type = 'button';
+  tonesLink.id = 'tones-link';
+  tonesLink.className = 'link-button face-link';
+  tonesLink.textContent = 'What are tones?';
+  tonesLink.addEventListener('pointerdown', (event) => event.stopPropagation());
+  tonesLink.addEventListener('pointerup', (event) => event.stopPropagation());
+  tonesLink.addEventListener('click', () => onWhatAreTones());
 
   function showArrows() {
     backArrow.classList.toggle('unavailable', !(state === 'asking' && position > 0));
@@ -194,6 +217,8 @@ export function createToneFlow(elements) {
       paragraph('face-hint tone-ask', 'Draw one of these here'),
       // In two columns (a screen held sideways) the buttons are to the left.
       paragraph('face-hint', document.documentElement.dataset.layout === 'wide' ? 'or use the buttons on the left' : 'or use the buttons below'),
+      // Only for someone who has graded few tone cards yet (review.js).
+      ...(current.offerHelp ? [tonesLink] : []),
       ink,
       backArrow,
       skipArrow,
@@ -408,6 +433,7 @@ export function createToneFlow(elements) {
     //   script:  'traditional' or 'simplified'
     //   reading: which reading to show (from readingsFor in tones.js)
     //   answers: one entry per character, from toneAnswers() in tones.js
+    //   offerHelp: true to show "What are tones?" while asking
     //   onDone({ givenTones, passedPerChar, variantPerChar }): every
     //            character was answered
     //   onContinue(): the card was tapped after that

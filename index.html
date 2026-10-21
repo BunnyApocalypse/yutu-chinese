@@ -63,6 +63,14 @@
           </button>
           <!-- Says what the red dot is about (main.js, showBackupStatus). -->
           <p id="backup-due-line" class="backup-due-line" hidden>Time to save a backup of your words, in Settings.</p>
+          <!-- For someone new to Chinese (the owner, 2026-10-21; basics.js). -->
+          <button id="basics-button" type="button">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+              <!-- An open book. -->
+              <path d="M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2zM12 6v14" />
+            </svg>
+            Basics of Chinese
+          </button>
           <!-- Where strangers find it (the owner, 2026-10-18; feedback.js). -->
           <button id="feedback-button" type="button">
             <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
@@ -758,6 +766,110 @@
         <button id="feedback-close" class="dialog-close" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 
+      <!-- "Basics of Chinese": five short screens for someone who knows no
+           Chinese at all (the owner, 2026-10-21, after tester 3). Opened from
+           the menu, Settings › Help, the introduction's first screen, and
+           "What are tones?" on a tone card (basics.js).
+           A character written differently in the two scripts is filled in
+           by basics.js from data-simplified and data-traditional, in the
+           script being learned. A ▶ button plays the recording named in
+           data-play (basicsSounds.js). -->
+      <dialog id="basics-dialog" class="settings-panel basics">
+        <p id="basics-progress" class="hint"></p>
+
+        <section data-basics-step="characters">
+          <h2>Characters</h2>
+          <p>
+            Chinese is written in characters, not letters. Each character is one syllable, and most have a meaning of
+            their own: <span data-zh>人</span> "person", <span data-zh>大</span> "big",
+            <span data-zh>山</span> "mountain".
+          </p>
+          <p>
+            A word is one character or a few: <span data-zh>火</span> "fire" and <span data-zh>山</span>
+            "mountain" make <span data-zh>火山</span> "volcano".
+          </p>
+          <p>
+            Many characters have two forms: <b>simplified</b>, used in mainland China, and <b>traditional</b>, used in
+            Taiwan and Hong Kong, like <span lang="zh-Hans-CN">学</span> and <span lang="zh-Hant-TW">學</span> "study".
+            You learn the one you chose in Settings, or both.
+          </p>
+        </section>
+
+        <section data-basics-step="pinyin" hidden>
+          <h2>Pinyin</h2>
+          <p>
+            Pinyin spells the sounds of Chinese in the Latin alphabet: <span data-zh>火山</span> is huǒshān. The app
+            shows it with the characters, and it is how Chinese is typed.
+          </p>
+          <p>Most letters sound roughly as in English. These don't:</p>
+          <ul class="basics-list">
+            <li><button class="icon-button basics-play" type="button" data-play="s/xi1" aria-label="Hear xī"></button><span><b>x</b> as "sh" in "sheep", with a smile: xī</span></li>
+            <li><button class="icon-button basics-play" type="button" data-play="s/qi1" aria-label="Hear qī"></button><span><b>q</b> as "ch" in "cheap": qī</span></li>
+            <li><button class="icon-button basics-play" type="button" data-play="s/ci1" aria-label="Hear cī"></button><span><b>c</b> as "ts" in "cats": cī</span></li>
+            <li><button class="icon-button basics-play" type="button" data-play="s/zi4" aria-label="Hear zì"></button><span><b>z</b> as "ds" in "kids": zì</span></li>
+            <li><button class="icon-button basics-play" type="button" data-play="s/zhi1" aria-label="Hear zhī"></button><span><b>zh</b> as "j" in "jam", the tongue curled back: zhī</span></li>
+            <li><button class="icon-button basics-play" type="button" data-play="s/lv4" aria-label="Hear lǜ"></button><span><b>ü</b> as "ee" said with rounded lips: lǜ</span></li>
+          </ul>
+          <p class="hint">After z, c, s, zh, ch, sh and r, the i is not "ee" but a buzz that carries the sound on, as in zì and zhī.</p>
+        </section>
+
+        <section data-basics-step="tones" hidden>
+          <h2>Tones</h2>
+          <p>
+            Every syllable has a tone: its pitch stays high, rises, dips or falls. Another tone makes another word, so
+            the tone is part of learning each word.
+          </p>
+          <ul class="basics-list">
+            <li><button class="icon-button basics-play" type="button" data-play="s/ma1" aria-label="Hear mā"></button><span class="basics-mark" data-tone="1"></span><span><b>mā</b> <span data-simplified="妈" data-traditional="媽"></span> "mother": first tone, high and level</span></li>
+            <li><button class="icon-button basics-play" type="button" data-play="s/ma2" aria-label="Hear má"></button><span class="basics-mark" data-tone="2"></span><span><b>má</b> <span data-simplified="麻" data-traditional="麻"></span> "hemp": second tone, rising, as in "What?"</span></li>
+            <li><button class="icon-button basics-play" type="button" data-play="s/ma3" aria-label="Hear mǎ"></button><span class="basics-mark" data-tone="3"></span><span><b>mǎ</b> <span data-simplified="马" data-traditional="馬"></span> "horse": third tone, low, dipping</span></li>
+            <li><button class="icon-button basics-play" type="button" data-play="s/ma4" aria-label="Hear mà"></button><span class="basics-mark" data-tone="4"></span><span><b>mà</b> <span data-simplified="骂" data-traditional="罵"></span> "to scold": fourth tone, falling, as in a firm "No!"</span></li>
+            <li><button class="icon-button basics-play" type="button" data-play="w/5988-5988" aria-label="Hear māma"></button><span class="basics-mark" data-tone="5"></span><span><b>māma</b> <span data-simplified="妈妈" data-traditional="媽媽"></span> "mom": the second ma is neutral, short and light, with no mark</span></li>
+          </ul>
+          <p class="hint">
+            A few tones change beside others: two third tones in a row are said as a second and a third, so nǐ hǎo
+            sounds like ní hǎo. Pinyin writes the tone each syllable has on its own.
+          </p>
+        </section>
+
+        <section data-basics-step="cards" hidden>
+          <h2>Four kinds of card</h2>
+          <p>Each word you learn becomes up to four cards, and each comes back just before you would forget it:</p>
+          <dl class="basics-cards">
+            <dt>Meaning</dt>
+            <dd>See the word, remember what it means.</dd>
+            <dt>Pinyin</dt>
+            <dd>See the word, remember how it is said.</dd>
+            <dt>Tone</dt>
+            <dd>Give each character's tone: tap a tone button, or draw the mark on the card. A dot is the neutral tone.
+              <span class="basics-marks" aria-hidden="true"><span class="basics-mark" data-tone="1"></span><span class="basics-mark" data-tone="2"></span><span class="basics-mark" data-tone="3"></span><span class="basics-mark" data-tone="4"></span><span class="basics-mark" data-tone="5"></span></span>
+            </dd>
+            <dt>Writing</dt>
+            <dd>See the meaning, write the word.</dd>
+          </dl>
+          <p>New words come in Learn, with a short lesson each. Review brings the cards back; after each one, say how it went.</p>
+        </section>
+
+        <section data-basics-step="writing" hidden>
+          <h2>Writing</h2>
+          <p>
+            Characters are made of strokes, written in a set order. As a rule: top before bottom, left before right,
+            and a horizontal stroke before a vertical one crossing it, as in <span data-zh>十</span>.
+          </p>
+          <p>
+            The app checks each stroke as you write. Stuck? Hold your finger or pen still on the writing area for a
+            hint. Gone wrong? Swipe up quickly to start the character again.
+          </p>
+          <p>You needn't be neat: your writing stays as you drew it, and the usual shortcuts of handwriting are accepted.</p>
+        </section>
+
+        <div id="basics-bar" class="buttons welcome-bar">
+          <button id="basics-back" class="small" type="button">Back</button>
+          <button id="basics-next" class="small primary" type="button">Next</button>
+        </div>
+        <button id="basics-close" class="dialog-close" type="button" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
+      </dialog>
+
       <!-- Asks before something that cannot be undone (confirm.js). -->
       <dialog id="confirm-dialog" class="settings-panel">
         <h2 id="confirm-question"></h2>
@@ -932,6 +1044,9 @@
         <section data-step>
           <h2>Welcome to <span lang="zh-Hant-TW">玉兔中文</span></h2>
           <p>Learn to read and write Chinese. Everything stays on this device: no account, nothing sent anywhere.</p>
+          <!-- Opens "Basics of Chinese" on top; closing it comes back here
+               (main.js; the owner, 2026-10-21). -->
+          <p><button id="welcome-basics-button" class="link-button" type="button">New to Chinese? Start with the basics</button></p>
           <!-- Shown at once as it is chosen; saved with the rest at the end
                (welcome.js). Each choice is a small sample of the look: the
                app's icon (its paper and 兔, icons/swatch.png), in the dark one turned dark, and for "Follow device
@@ -1361,6 +1476,7 @@
         <section id="settings-help" class="settings-group" hidden>
           <h3>Help, feedback and licenses</h3>
         <div class="setting">
+          <button id="settings-basics-button" class="small" type="button">Basics of Chinese</button>
           <button id="welcome-again-button" class="small" type="button">Show the introduction again</button>
           <button id="whats-new-button" class="small" type="button">What's new</button>
           <button id="settings-feedback-button" class="small" type="button">Send feedback</button>

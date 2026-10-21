@@ -134,6 +134,17 @@ function speakWithVoice(text, region, volume) {
   return true;
 }
 
+// Plays one recording by its name ("s/ma1", "w/5988-5988"), for "Basics of
+// Chinese" (basics.js). Returns false if it could not be played.
+export async function playRecording(file, volume = 1) {
+  try {
+    await playRecordings([file], volume);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Speaks a word.
 //
 // word:    the word record

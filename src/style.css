@@ -978,6 +978,67 @@ fieldset.setting.theme-picker label.theme-choice {
   margin-bottom: var(--space-medium);
 }
 
+/* "Basics of Chinese" (basics.js): screens like the introduction's, with
+   Back and Next held at the bottom (.welcome-bar). */
+.basics p {
+  margin: 0 0 var(--space-medium);
+}
+
+/* A row per sound: its ▶ button, the tone's mark on the screen on tones,
+   and what it is. */
+.basics-list {
+  list-style: none;
+  margin: 0 0 var(--space-medium);
+  padding: 0;
+}
+
+.basics-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-small);
+  margin-bottom: var(--space-small);
+}
+
+/* The tone's mark, drawn as on a tone card (toneFlow.js). */
+.basics-mark svg {
+  display: block;
+  width: 1.75rem;
+  height: 1.75rem;
+  fill: currentColor;
+}
+
+.basics-mark path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.basics-list .basics-mark {
+  flex: none;
+  color: var(--accent);
+}
+
+/* The five marks under "Tone" on the screen on the kinds of card. */
+.basics-marks {
+  display: flex;
+  gap: var(--space-small);
+  margin-top: var(--space-tiny);
+  color: var(--text-soft);
+}
+
+.basics-cards {
+  margin: 0 0 var(--space-medium);
+}
+
+.basics-cards dt {
+  font-weight: bold;
+}
+
+.basics-cards dd {
+  margin: 0 0 var(--space-small) var(--space-large);
+}
+
 /* The kinds of button (2026-10-17): at most one main button on a screen
    ("primary", filled), the usual one (paper with an edge, "button" below),
    a quiet one for things of little weight ("Not now", "Show pinyin": this
@@ -1476,6 +1537,11 @@ button.slot {
   stroke: currentColor;
   stroke-width: 4;
   stroke-linecap: round;
+}
+
+/* "What are tones?" under what to do on a tone card (toneFlow.js). */
+.card-face .face-link {
+  margin-top: var(--space-medium);
 }
 
 .face-hint.tone-ask {

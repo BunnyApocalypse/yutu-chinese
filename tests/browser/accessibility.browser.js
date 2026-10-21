@@ -214,6 +214,18 @@ describe('accessibility', { concurrency: false }, () => {
     await page.evaluate(`document.getElementById('side-menu').close()`);
   });
 
+  it('Basics of Chinese, each of its screens', async () => {
+    await tap(page, 'basics-button');
+    await waitUntil(page, `document.getElementById('basics-dialog').open`, 'the basics');
+    for (let step = 1; step <= 5; step += 1) {
+      await check(`Basics of Chinese, screen ${step}`);
+      if (step < 5) {
+        await tap(page, 'basics-next');
+      }
+    }
+    await tap(page, 'basics-close');
+  });
+
   it('the Words tab and a word\'s page', async () => {
     await tap(page, 'words-tab');
     await waitUntil(page, `document.querySelector('#word-list li')`, 'the words');

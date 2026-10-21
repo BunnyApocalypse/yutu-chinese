@@ -8,6 +8,7 @@ import fs from 'node:fs';
 
 import { planSpeech, spokenSyllables, wordFileName } from '../src/speechPlan.js';
 import { wordFileName as copiedFileName } from '../scripts/copy-audio.js';
+import { BASICS_RECORDINGS } from '../src/basicsSounds.js';
 
 const index = {
   words: new Set(['学习', '你好']),
@@ -56,4 +57,13 @@ test('the recordings in the repository are those the README describes', () => {
   const syllables = fs.readdirSync('data/audio-cmn/syllables');
   assert.ok(words.length > 8000 && words.includes('cmn-学习.mp3'));
   assert.ok(syllables.includes('cmn-ma1.mp3') && syllables.includes('cmn-lv4.mp3'));
+});
+
+test('every recording "Basics of Chinese" plays is in the repository', () => {
+  const nameOf = (file) => file.replace(/^cmn-|\.mp3$/g, '');
+  const words = new Set(fs.readdirSync('data/audio-cmn/words').map((file) => `w/${copiedFileName(nameOf(file))}`));
+  const syllables = new Set(fs.readdirSync('data/audio-cmn/syllables').map((file) => `s/${nameOf(file)}`));
+  for (const name of BASICS_RECORDINGS) {
+    assert.ok(words.has(name) || syllables.has(name), name);
+  }
 });

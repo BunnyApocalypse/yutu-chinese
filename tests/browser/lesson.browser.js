@@ -142,7 +142,7 @@ describe('learning new words', { concurrency: false }, () => {
     // the row above has the character too, even for a word of one.
     await waitUntil(page, `document.querySelector('#card-face .tone-char')`, 'the tone card');
     // (‹ and › are the arrows, hidden here: a word of one character.)
-    assert.equal(await textOf(page, 'card-face'), '大Draw one of these hereor use the buttons below');
+    assert.equal(await textOf(page, 'card-face'), '大Draw one of these hereor use the buttons belowWhat are tones?');
     assert.equal(await page.evaluate(`document.querySelectorAll('#card-face .face-arrow:not(.unavailable)').length`), 0);
     assert.equal(await page.evaluate(`document.querySelector('#card-face .tone-char').lang`), 'zh-Hant-TW');
     assert.equal(await textOf(page, 'status'), 'Which tone?');
@@ -152,8 +152,16 @@ describe('learning new words', { concurrency: false }, () => {
     assert.equal(await textOf(page, 'prompt-meaning'), 'big');
     assert.equal(await textOf(page, 'prompt-pinyin'), 'dà');
     assert.equal(await isShown(page, 'lesson-next-button'), false);
+    // "What are tones?" while asking opens the basics at its screen on tones
+    // (basics.js), and is gone once answered.
+    await tap(page, 'tones-link');
+    await waitUntil(page, `document.getElementById('basics-dialog').open`, 'the basics');
+    assert.equal(await textOf(page, 'basics-progress'), '3 of 5');
+    await tap(page, 'basics-close');
+    assert.equal(await textOf(page, 'status'), 'Which tone?');
     await page.evaluate(`document.querySelector('#tone-buttons [data-tone="4"]').click()`);
     await waitUntil(page, `document.getElementById('status').textContent === 'All tones right'`);
+    assert.equal(await page.evaluate(`Boolean(document.getElementById('tones-link')?.isConnected)`), false);
     // Nothing is graded here.
     assert.equal(await isShown(page, 'grade-row'), false);
     await tap(page, 'lesson-next-button');
@@ -536,5 +544,33 @@ describe('learning new words', { concurrency: false }, () => {
       review = await lastToneReview();
     }
     assert.deepEqual(review.passedPerChar, [true, true]);
+  });
+
+  it('offers "What are tones?" until three tone cards have been graded', async () => {
+    // 小孩's tone card due, the rest waiting, as in the test before; and the
+    // tone reviews so far: none, then three.
+    const toneCardWith = (reviews) => `
+      stores.settings.put({ key: 'enabledTypes', value: ['tone'] });
+      stores.cards.getAll().onsuccess = (event) => {
+        for (const card of event.target.result) {
+          stores.cards.put(card.id === '小孩|xiao3hai2#tone' ? { ...card, due: 1 } : { ...card, due: Date.now() + 1e9, lastReviewedAt: 1 });
+        }
+      };
+      stores.reviews.getAll().onsuccess = (event) => {
+        for (const review of event.target.result) {
+          if (review.cardId.endsWith('#tone')) stores.reviews.delete(review.id);
+        }
+        for (let n = 0; n < ${reviews}; n++) {
+          stores.reviews.put({ id: 'tone-review-' + n, cardId: '大|da4#tone', wordId: '大|da4', time: 1 + n, grade: 3 });
+        }
+      };`;
+    const linkShown = `Boolean(document.getElementById('tones-link')?.isConnected)`;
+    for (const [reviews, shown] of [[0, true], [2, true], [3, false]]) {
+      await inDatabase(toneCardWith(reviews));
+      await reloadApp(page);
+      await tap(page, 'review-tab');
+      await waitUntil(page, `document.getElementById('status').textContent === 'Tone of 小 (1 of 2)'`, 'the tone card');
+      assert.equal(await page.evaluate(linkShown), shown, `after ${reviews} tone reviews`);
+    }
   });
 });

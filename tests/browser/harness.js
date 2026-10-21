@@ -56,6 +56,9 @@ export async function startBuiltApp() {
     '.json': 'application/json',
     '.webmanifest': 'application/manifest+json',
     '.png': 'image/png',
+    // As GitHub Pages sends them: the recordings of "Basics of Chinese" are
+    // among the app's own files, saved as they were served (basicsSounds.js).
+    '.mp3': 'audio/mpeg',
   };
   const FOLDER = '/yutu-chinese/';
   const server = http.createServer((request, response) => {

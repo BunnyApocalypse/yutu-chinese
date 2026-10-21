@@ -571,6 +571,17 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // ---- Streaks (streak.js) ----
 
   const reviewTime = ({ cardId, wordId, time, markedKnown }) => ({ cardId, wordId, time, markedKnown });
+
+  // "What are tones?" on a tone card (toneFlow.js) until this many tone
+  // cards have been graded: by then the learner shows they know what a tone
+  // is (the owner, 2026-10-21). A lesson's tone step is practice and is not
+  // saved, and a word answered by "I know this word" was not answered at all,
+  // so neither counts.
+  const TONE_HELP_UNTIL = 3;
+  function offerToneHelp() {
+    const toneReviews = reviewTimes.filter((review) => /#tone(#|$)/.test(review.cardId) && !review.markedKnown);
+    return toneReviews.length < TONE_HELP_UNTIL;
+  }
   const streakGoal = () => ({ cards: settings.streakCards, words: settings.streakWords });
 
   function streakNow(now) {
@@ -786,6 +797,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       script: scriptFor(word, settings),
       reading: readingOf(word),
       answers: toneAnswersOf(word),
+      offerHelp: offerToneHelp(),
       onDone({ givenTones, passedPerChar, variantPerChar }) {
         // One wrong tone fails the card.
         const allRight = passedPerChar.every(Boolean);
@@ -1003,6 +1015,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         script,
         reading: readingOf(word),
         answers: toneAnswersOf(word),
+        offerHelp: offerToneHelp(),
         // Practice: nothing is saved, and the tone card comes by itself later.
         onDone() {
           lessonNextButton.hidden = false;

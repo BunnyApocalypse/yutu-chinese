@@ -77,6 +77,14 @@ describe('offline use', { concurrency: false }, () => {
       page.evaluate(`caches.open('offline-audio').then((cache) => cache.match(new URL('${file}', location.href).href)).then((found) => Boolean(found))`);
     await waitUntil(page, `document.getElementById('offline-status').textContent.includes('Recordings of words are kept once played.')`, 'the line about recordings');
     assert.equal(await saved('audio/w/5b66-4e60.mp3'), false);
+    // Except those of "Basics of Chinese", which are among the app's own files.
+    const inAppFiles = (file) =>
+      page.evaluate(`caches.keys().then(async (names) => {
+        const app = await caches.open(names.find((name) => name.startsWith('app-')));
+        return Boolean(await app.match(new URL('${file}', location.href).href));
+      })`);
+    assert.equal(await inAppFiles('audio/s/ma2.mp3'), true);
+    assert.equal(await inAppFiles('audio/w/5b66-4e60.mp3'), false);
     // The button is shown only once the app listens for its tap, a moment
     // after the line above. A tap before that did nothing, which made this
     // test (and the last one, which expects the recordings asked for) fail
