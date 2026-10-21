@@ -6,6 +6,15 @@
 // was built.
 export const CHANGES = [
   {
+    id: '2026-10-21',
+    items: [
+      'New to Chinese? "Basics of Chinese" in the menu explains characters, pinyin and tones, with sounds to listen to, and how the app teaches.',
+      'Tone cards have a "What are tones?" link for your first few.',
+      'Settings is now at the bottom of the menu.',
+      'More learning notes were checked and corrected by a native speaker.',
+    ],
+  },
+  {
     id: '2026-10-20',
     items: [
       'Clearing a character with a swipe up now takes a quick flick, so a slow line upward counts as a stroke.',
