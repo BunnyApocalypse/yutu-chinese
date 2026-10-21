@@ -6,7 +6,7 @@
 
 import { saveImport, randomId } from './db.js';
 import { openAnkiFile, readCollection } from './ankiFile.js';
-import { describeCollection, defaultChoices, planAnkiImport, itemFromNote } from './ankiImport.js';
+import { describeCollection, defaultChoices, planAnkiImport, itemFromNote, isRadicalDeck } from './ankiImport.js';
 import { isRadical } from './radicals.js';
 import { formatPinyin } from './wordList.js';
 import { CARD_TYPES } from './session.js';
@@ -158,6 +158,7 @@ export function createAnkiImport(shared, dictionaryLoader) {
 
     const preview = document.createElement('p');
     preview.className = 'hint';
+    const notesOfType = collection.notes.filter((candidate) => candidate.noteTypeId === noteType.id);
     function showPreview() {
       if (choice.roles.characters === null) {
         preview.textContent = 'Without a field of characters, these notes are left out.';
@@ -170,7 +171,7 @@ export function createAnkiImport(shared, dictionaryLoader) {
           dictionary: dictionaryLoader.get(),
           likeliestEntry: dictionaryLoader.likeliestEntry,
           meaningDetail: settings.meaningDetail,
-          radicals,
+          radicals: isRadicalDeck(notesOfType, choice.roles.characters, radicals) ? radicals : null,
         },
       );
       if (result.problem) {

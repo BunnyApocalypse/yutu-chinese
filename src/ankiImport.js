@@ -384,25 +384,47 @@ function numberedPinyin(text) {
   return tidyPinyin(numbered.join(''));
 }
 
-// Makes the app's item out of a note: one of the app's radicals with no
-// reading of its own (丨, 氵, 糹/纟: a record of kind 'radical', with the
-// list's meaning, see radicals.js) where the note's characters are one, as
-// in a shared deck of radicals (the owner, 2026-10-21); otherwise a word
+// The line of the ready-made list of radicals (data/wordlists/radicals/
+// radicals.tsv, as parseReadyList reads it) for a note's characters, in
+// either form, or undefined.
+function radicalEntry(characters, radicals) {
+  const plain = characters.replace(/\s+/g, '');
+  return (radicals || []).find((entry) => entry.traditional === plain || entry.simplified === plain);
+}
+
+// Whether a note type is a deck of radicals: most of its notes (more than
+// half of the first 200) have characters that are one of the app's
+// radicals. Only then is a note made a radical (itemFromNote); in a deck of
+// words or characters, 言 stays the word yán, though the list pairs it with
+// the side form 讠 as one radical.
+//
+// notes:      the note type's notes
+// index:      the field of characters (roles.characters), or null
+// radicals:   the list's lines
+export function isRadicalDeck(notes, index, radicals) {
+  if (index === null || !radicals || radicals.length === 0) {
+    return false;
+  }
+  const sample = notes.slice(0, 200);
+  const matching = sample.filter((note) => radicalEntry(cleanField(note.fields[index]), radicals)).length;
+  return matching * 2 > sample.length;
+}
+
+// Makes the app's item out of a note: in a deck of radicals (isRadicalDeck),
+// one of the app's radicals with no reading of its own (丨, 氵, 糹/纟: a
+// record of kind 'radical', with the list's meaning, see radicals.js) where
+// the note's characters are one (the owner, 2026-10-21); otherwise a word
 // (wordFromNote). A radical that is a word (水, 口) is that word, as in the
 // ready-made deck of radicals.
 //
 // texts:   as for wordFromNote
-// context: as for wordFromNote, and `radicals`, the lines of the ready-made
-//          list of radicals (data/wordlists/radicals/radicals.tsv, as
-//          parseReadyList reads it), or none
+// context: as for wordFromNote, and `radicals`, the list's lines, given only
+//          for a deck of radicals
 //
 // Returns { word } or { problem }, as wordFromNote does.
 export function itemFromNote(texts, context) {
-  const characters = texts.characters.replace(/\s+/g, '');
-  const radical = (context.radicals || []).find(
-    (entry) => entry.pinyin === '' && (entry.traditional === characters || entry.simplified === characters),
-  );
-  return radical ? { word: radicalRecord(radical) } : wordFromNote(texts, context);
+  const radical = radicalEntry(texts.characters, context.radicals);
+  return radical && radical.pinyin === '' ? { word: radicalRecord(radical) } : wordFromNote(texts, context);
 }
 
 // Makes a word out of a note's characters, pinyin and meaning, checked as
@@ -628,15 +650,24 @@ export function planAnkiImport(collection, choices, context) {
   const found = new Map(); // word ID → { word, deckId, sources: { type: card } }
   const reviewCount = (card) => countedReviews(reviewsOf.get(card.id) || []).length;
   // The headings of each note type's layout, left out of its fields' text.
-  const layoutOf = new Map(
-    [...groupBy(collection.notes, (note) => note.noteTypeId)].map(([id, ofType]) => [id, layoutLines(ofType)]),
+  // And which note types are decks of radicals, whose notes become the
+  // app's radicals (itemFromNote).
+  const notesOfType = groupBy(collection.notes, (note) => note.noteTypeId);
+  const layoutOf = new Map([...notesOfType].map(([id, ofType]) => [id, layoutLines(ofType)]));
+  const radicalDecks = new Set(
+    [...notesOfType]
+      .filter(([id, ofType]) => choices.noteTypes[id] && isRadicalDeck(ofType, choices.noteTypes[id].roles.characters, context.radicals))
+      .map(([id]) => id),
   );
   for (const note of notes) {
     const { roles, templates } = choices.noteTypes[note.noteTypeId];
     const layout = layoutOf.get(note.noteTypeId);
     const text = (role) => (roles[role] === null ? '' : fieldText(note, roles[role], layout));
     const texts = { characters: text('characters'), pinyin: text('pinyin'), meaning: text('meaning') };
-    const result = itemFromNote(texts, context);
+    const result = itemFromNote(texts, {
+      ...context,
+      radicals: radicalDecks.has(note.noteTypeId) ? context.radicals : null,
+    });
     if (result.problem) {
       report.problems.push({ text: texts.characters || cleanField(note.fields[0]), problem: result.problem });
       continue;

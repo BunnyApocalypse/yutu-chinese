@@ -17,6 +17,7 @@ import {
   layoutLines,
   fieldText,
   itemFromNote,
+  isRadicalDeck,
   wordFromNote,
   planAnkiImport,
 } from '../src/ankiImport.js';
@@ -276,6 +277,12 @@ test("a note that is one of the app's radicals becomes that radical", () => {
   const kinds = (id) => plan.cards.filter((card) => card.wordId === id).map((card) => card.type).sort();
   assert.deepEqual(kinds('丨|radical'), ['meaning']);
   assert.deepEqual(kinds('水|shui3'), ['meaning', 'pinyin', 'tone']);
+  // In a deck of words or characters, a note that is a radical's other form
+  // stays a word: 言 yán, which the list pairs with the side form 讠.
+  const withSpeech = [...radicals, { level: 'Common', simplified: '讠', traditional: '言', pinyin: '', meaning: 'speech' }];
+  const wordNotes = ['言', '学校', '老师'].map((characters) => ({ fields: [characters] }));
+  assert.equal(isRadicalDeck(wordNotes, 0, withSpeech), false);
+  assert.equal(isRadicalDeck(collection.notes, 0, withSpeech), true);
   // Without the list, 丨 is a word where the dictionary has it.
   assert.equal(itemFromNote({ characters: '丨', pinyin: 'gǔn', meaning: 'line' }, contextWith({ dictionary })).word.id, undefined);
 });
