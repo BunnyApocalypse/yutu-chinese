@@ -29,7 +29,7 @@ Roadmap item 5, built on 2026-10-19, for learners moving from Anki. Decided with
 - `src/ankiImport.js` (plain calculation, `tests/ankiImport.test.js`): `cleanField`, `fieldsInTemplate`, `guessRoles`, `guessCardTypes`, `describeCollection`, `defaultChoices`, `wordFromNote`, `planAnkiImport` → `{ words, decks, reviews, cards, report }`.
 - `src/ankiImportForm.js`: the pop-up; `saveImport` in `src/db.js` saves it all in one transaction.
 - **Libraries** (the owner's approval, 2026-10-19): `sql.js` (SQLite compiled to WebAssembly, MIT; fetched only when a file is read: a 40 KB script and a 685 KB `.wasm`, kept offline across versions with the dictionary, `scripts/build-offline.js`) and `fzstd` (zstd, MIT, 24 KB). Credits in `credits-dialog`.
-- **Tests:** `tests/fixtures/anki/` holds a small collection made by Anki itself in four exports, with the script that makes them (`make-fixtures.py`, needs `pip install anki`); `tests/browser/anki.browser.js` imports in the real app.
+- **Tests:** `tests/fixtures/anki/` holds a small collection made by Anki itself in four exports, with the script that makes them (`make-fixtures.py`, needs `pip install anki`); `tests/browser/anki.browser.js` imports in the real app. For trying it by hand on real decks: four shared decks from GitHub in the git-ignored `local/anki-decks/downloads/`, and `scripts/anki-study-data.py`, which gives them the made-up histories of three learners in Anki (SM-2 and FSRS, leeches, Forget, Set due date, a filtered deck, a lapsed backlog, an export in the middle of a session) and exports them in every format to `local/anki-decks/study-data/` (`local/README.md`).
 
 ## Not built
 
