@@ -493,13 +493,33 @@ export function wordFromNote(texts, context) {
   if (meaning === '' && entry) {
     meaning = proposeMeaning(entry.meanings, context.meaningDetail);
   }
-  return checkWord({
+  // Why a note is left out, said about the note: checkWord's own words are
+  // advice for typing a word ("Write pinyin with tone numbers…"), so the
+  // ones a note can give are put another way.
+  const notInDictionary =
+    entries.length === 0
+      ? 'the app’s dictionary doesn’t have this word'
+      : 'the app’s dictionary has this word only with another reading';
+  const result = checkWord({
     [script]: characters,
     [other]: otherForm,
     pinyin,
     definition: meaning,
     pinyinTaiwan: entry && entry.pinyinTaiwan && entry.pinyin === pinyin ? entry.pinyinTaiwan : '',
   });
+  if (!result.problem) {
+    return result;
+  }
+  if (result.problem.startsWith('The pinyin is missing')) {
+    return { problem: `No pinyin: the note has none, and ${notInDictionary}.` };
+  }
+  if (result.problem.startsWith('The meaning is missing')) {
+    return { problem: `No meaning: the note has none, and ${notInDictionary}.` };
+  }
+  if (result.problem.includes('is not pinyin the app can read')) {
+    return { problem: `The note’s pinyin “${pinyinText}” can’t be read.` };
+  }
+  return result;
 }
 
 // ---- Schedules ----

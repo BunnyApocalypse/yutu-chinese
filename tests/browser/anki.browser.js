@@ -96,7 +96,8 @@ describe('importing from Anki', { concurrency: false }, () => {
   it("saves the words, decks and Anki's schedules", async () => {
     await tap(page, 'anki-import-now');
     await waitUntil(page, `!document.getElementById('anki-done-step').hidden`, 'the result');
-    assert.match(await textOf(page, 'anki-result'), /^Brought over 6 new words\. 15 cards keep their schedule from Anki, with 33 reviews of history\. 1 word not yet studied in Anki waits in Learn\./);
+    assert.match(await textOf(page, 'anki-result'), /^Brought over 6 new words\.\s*15 cards keep their schedule from Anki, with 33 reviews of history\.\s*1 word you hadn’t studied in Anki yet waits in Learn\./);
+    assert.match(await textOf(page, 'anki-left-out'), /^1 note was left out\s*They weren’t brought over\./);
     assert.match(await textOf(page, 'anki-problems'), /Measure words/);
 
     const words = await stored(page, 'words');
@@ -127,7 +128,7 @@ describe('importing from Anki', { concurrency: false }, () => {
     await waitUntil(page, `!document.getElementById('anki-check-step').hidden`, 'the guesses');
     await tap(page, 'anki-import-now');
     await waitUntil(page, `!document.getElementById('anki-done-step').hidden`, 'the result');
-    assert.match(await textOf(page, 'anki-result'), /^No new words\. 6 words you had already went into the decks\./);
+    assert.match(await textOf(page, 'anki-result'), /^No new words\.\s*6 words you already had were added to these decks\./);
     assert.equal((await stored(page, 'reviews')).length, reviewsBefore);
   });
 });

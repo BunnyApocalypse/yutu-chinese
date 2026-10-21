@@ -315,6 +315,15 @@ test('a note becomes a word with the help of the dictionary', () => {
   assert.equal(word('學校/学校', 'xué xiào', 'school').simplified, '学校');
   assert.match(wordFromNote({ characters: '', pinyin: '', meaning: 'measure words' }, context).problem, /characters/);
   assert.match(wordFromNote({ characters: '你好吗？', pinyin: '', meaning: 'how are you?' }, context).problem, /sentence/);
+  // Why a note is left out is said about the note, not as advice for typing.
+  assert.equal(
+    wordFromNote({ characters: '着名', pinyin: 'zhù míng', meaning: '' }, context).problem,
+    'No meaning: the note has none, and the app’s dictionary doesn’t have this word.',
+  );
+  assert.equal(
+    wordFromNote({ characters: '着名', pinyin: '', meaning: 'famous' }, context).problem,
+    'No pinyin: the note has none, and the app’s dictionary doesn’t have this word.',
+  );
 });
 
 test("an import copies Anki's reviews and keeps its due dates", async () => {

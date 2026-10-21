@@ -14,7 +14,8 @@ import { fillMixed } from './lang.js';
 
 const byId = (id) => document.getElementById(id);
 
-const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`;
+// Numbers with commas, as in the rest of the app's English: 4,862.
+const plural = (count, noun) => `${count.toLocaleString('en-US')} ${noun}${count === 1 ? '' : 's'}`;
 // The verb for one or more: was/were, waits/wait.
 const verb = (count, one, more) => (count === 1 ? one : more);
 // "Meaning", "Meaning and Pinyin", "Meaning, Pinyin and Tone".
@@ -356,35 +357,56 @@ export function createAnkiImport(shared, dictionaryLoader) {
     return brought.length > 0 ? `Brought over ${brought.join(' and ')}.` : 'No new words.';
   }
 
+  // What was brought over, a line for each thing, then the notes left out
+  // with why and what to do about them (the owner, 2026-10-21: one long
+  // paragraph was cramped, and what became of the notes left out unclear).
   function showResult({ report }) {
     const { waiting } = report;
     const lines = [
       broughtOver(report),
-      report.wordsThere > 0 ? `${plural(report.wordsThere, 'word')} you had already went into the decks.` : '',
+      report.wordsThere > 0
+        ? `${plural(report.wordsThere, 'word')} you already had ${verb(report.wordsThere, 'was', 'were')} added to these decks.`
+        : '',
       report.cardsWithSchedule > 0
         ? `${plural(report.cardsWithSchedule, 'card')} ${verb(report.cardsWithSchedule, 'keeps its', 'keep their')} schedule from Anki, with ` +
           `${plural(report.reviewsCopied, 'review')} of history.`
         : '',
-      waiting > 0 ? `${plural(waiting, 'word')} not yet studied in Anki ${verb(waiting, 'waits', 'wait')} in Learn.` : '',
+      waiting > 0
+        ? `${plural(waiting, 'word')} you hadn’t studied in Anki yet ${verb(waiting, 'waits', 'wait')} in Learn.`
+        : '',
       report.alreadyStudied > 0
         ? `${plural(report.alreadyStudied, 'card')} already studied here ${verb(report.alreadyStudied, 'was', 'were')} left as ${verb(report.alreadyStudied, 'it is', 'they are')}.`
         : '',
       report.sameWord > 0
-        ? `${plural(report.sameWord, 'note')} ${verb(report.sameWord, 'was', 'were')} the same word as another note.`
+        ? `${plural(report.sameWord, 'note')} ${verb(report.sameWord, 'was the same word as another; it was', 'were the same word as others; each word was')} brought over once.`
         : '',
-      report.problems.length > 0 ? `${plural(report.problems.length, 'note')} could not be used:` : '',
     ];
-    byId('anki-result').textContent = lines.filter(Boolean).join(' ');
-    const items = report.problems.slice(0, MAX_PROBLEMS_SHOWN).map(({ text, problem }) => {
+    byId('anki-result').replaceChildren(
+      ...lines.filter(Boolean).map((line) => Object.assign(document.createElement('p'), { textContent: line })),
+    );
+
+    const leftOut = report.problems.length;
+    byId('anki-left-out').hidden = leftOut === 0;
+    byId('anki-left-out-title').textContent = `${plural(leftOut, 'note')} ${verb(leftOut, 'was', 'were')} left out`;
+    // Grouped by why, each reason once with its notes under it: seven
+    // notes left out for the same reason were seven long lines.
+    const byReason = new Map();
+    for (const { text, problem } of report.problems) {
+      byReason.set(problem, [...(byReason.get(problem) || []), text.slice(0, 30)]);
+    }
+    const items = [...byReason].map(([problem, texts]) => {
       const item = document.createElement('li');
-      fillMixed(item, `${text.slice(0, 30)}: ${problem}`, shared.getSettings().script);
+      const notes = document.createElement('p');
+      notes.className = 'anki-problem-notes';
+      const shown = texts.slice(0, MAX_PROBLEMS_SHOWN).join(', ');
+      fillMixed(
+        notes,
+        texts.length > MAX_PROBLEMS_SHOWN ? `${shown} and ${(texts.length - MAX_PROBLEMS_SHOWN).toLocaleString('en-US')} more` : shown,
+        shared.getSettings().script,
+      );
+      item.append(problem, notes);
       return item;
     });
-    if (report.problems.length > MAX_PROBLEMS_SHOWN) {
-      const more = document.createElement('li');
-      more.textContent = `… and ${report.problems.length - MAX_PROBLEMS_SHOWN} more.`;
-      items.push(more);
-    }
     byId('anki-problems').replaceChildren(...items);
     showStep('done');
   }
