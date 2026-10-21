@@ -328,6 +328,34 @@ test('a note becomes a word with the help of the dictionary', () => {
   );
 });
 
+test("a textbook's way of writing pinyin is read", () => {
+  // As in Ch_book1, a Taiwan textbook.
+  const context = contextWith({
+    dictionary: readDictionary(
+      [
+        '對不起\t对不起\tdui4bu5qi3\tsorry',
+        '夜裡\t夜里\tye4li5\tat night',
+        '一點兒\t一点儿\tyi1dian3r5\ta bit',
+        '法國\t法国\tFa3guo2\tFrance',
+        '行\t\thang2\trow',
+      ].join('\n'),
+    ),
+  });
+  const pinyin = (characters, text) => wordFromNote({ characters, pinyin: text, meaning: 'x' }, context).word.pinyin;
+  // Full tones where the dictionary has a neutral one: the dictionary's.
+  assert.equal(pinyin('對不起', 'Duìbùqǐ'), 'dui4bu5qi3');
+  // A note in brackets, an erhua written apart, a breve for the third tone.
+  assert.equal(pinyin('夜裡', 'Yèlǐ (li)'), 'ye4li5');
+  assert.equal(pinyin('一點兒', 'Yīdiǎn er'), 'yi1dian3r5');
+  assert.equal(pinyin('法國', 'Făguó'), 'Fa3guo2');
+  // Only a neutral tone gives way: a full tone that differs still doesn't
+  // read, and the note's own text is shown.
+  assert.equal(
+    wordFromNote({ characters: '對不起', pinyin: 'Duībùqǐ (sorry)', meaning: 'x' }, context).problem,
+    'The note’s pinyin “Duībùqǐ (sorry)” can’t be read.',
+  );
+});
+
 test("the deck's other meaning field comes before the dictionary", () => {
   // As in the HSK 2012 deck: SimpleMeaning is empty in some notes, whose
   // meaning is in Definitions under lines of characters, pinyin and zhuyin.

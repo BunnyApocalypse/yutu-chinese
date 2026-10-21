@@ -531,6 +531,21 @@ export function meaningsIn(text, isReading = () => false) {
     .filter((line) => line !== '' && !NOT_A_MEANING.some((pattern) => pattern.test(line)));
 }
 
+// The breve some decks type for the third tone's mark: they look alike.
+const BREVES = { ă: 'ǎ', ĕ: 'ě', ĭ: 'ǐ', ŏ: 'ǒ', ŭ: 'ǔ', Ă: 'Ǎ', Ĕ: 'Ě', Ĭ: 'Ǐ', Ŏ: 'Ǒ', Ŭ: 'Ǔ' };
+
+// A note's pinyin as the app can read it, from the ways textbook decks write
+// it (Ch_book1): notes in brackets left out ("Yèlǐ (li)", "xuéqī (tw:
+// xuéqí)"), an erhua written apart joined to its syllable ("Yīdiǎn er" →
+// "Yīdiǎnr"), and a breve read as the third tone (Făguó → Fǎguó).
+function tidyNotePinyin(text) {
+  return text
+    .replace(/\s*[(（][^)）]*[)）]/g, '')
+    .replace(/\s+er\b/g, 'r')
+    .replace(/[ăĕĭŏŭĂĔĬŎŬ]/g, (letter) => BREVES[letter])
+    .trim();
+}
+
 // Makes a word out of a note's characters, pinyin and meaning, checked as
 // a typed word is (checkWord), with the dictionary's help: it gives the
 // other script's form, the reading where the note has none (or has it with
@@ -560,7 +575,8 @@ export function wordFromNote(texts, context) {
   if (sentence.test(characters)) {
     return { problem: 'This looks like a sentence or phrase: only words are brought over.' };
   }
-  let pinyinText = texts.pinyin.split('\n')[0] || '';
+  const notePinyin = texts.pinyin.split('\n')[0] || '';
+  let pinyinText = tidyNotePinyin(notePinyin);
   let meaning = texts.meaning;
   // No pinyin field: the meaning's first line may be the reading (Basic).
   if (pinyinText === '' && meaning !== '') {
@@ -577,7 +593,15 @@ export function wordFromNote(texts, context) {
   let pinyin = '';
   if (pinyinText !== '') {
     const typed = readTypedPinyin(pinyinText);
-    entry = (typed && entries.find((candidate) => readsAs(candidate, typed))) || null;
+    // A Taiwan textbook's full tones where the dictionary has a neutral one
+    // (Ch_book1's 對不起 "Duìbùqǐ", 謝謝 "Xièxiè") take the dictionary's
+    // reading, as a learner typing them would; tone cards accept the full
+    // tone there (toneAnswers in tones.js).
+    entry =
+      (typed &&
+        (entries.find((candidate) => readsAs(candidate, typed)) ||
+          entries.find((candidate) => readsAs(candidate, typed, { fullForNeutral: true })))) ||
+      null;
     pinyin = entry ? entry.pinyin : tidyPinyin(pinyinText) || numberedPinyin(pinyinText) || pinyinText;
   } else if (entries.length > 0) {
     entry = context.likeliestEntry ? context.likeliestEntry(entries, characters) : entries[0];
@@ -631,7 +655,7 @@ export function wordFromNote(texts, context) {
     return { problem: `No meaning: the note has none, and ${notInDictionary}.` };
   }
   if (result.problem.includes('is not pinyin the app can read')) {
-    return { problem: `The note’s pinyin “${pinyinText}” can’t be read.` };
+    return { problem: `The note’s pinyin “${notePinyin}” can’t be read.` };
   }
   return result;
 }

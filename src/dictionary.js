@@ -250,11 +250,15 @@ function syllablesOf(pinyin) {
   return { letters, syllables };
 }
 
-// Whether a reading has every tone that was typed, each in its syllable.
-function hasTones(pinyin, tones) {
+// Whether a reading has every tone that was typed, each in its syllable
+// (or, with `fullForNeutral`, a neutral tone where a full one was typed).
+function hasTones(pinyin, tones, fullForNeutral) {
   const { syllables } = syllablesOf(pinyin);
   return tones.every(({ at, tone }) =>
-    syllables.some((syllable) => syllable.start <= at && at < syllable.end && syllable.tone === tone),
+    syllables.some(
+      (syllable) =>
+        syllable.start <= at && at < syllable.end && (syllable.tone === tone || (fullForNeutral && syllable.tone === 5)),
+    ),
   );
 }
 
@@ -262,9 +266,14 @@ function hasTones(pinyin, tones) {
 // readTypedPinyin) says: the same letters, and every tone given, in its
 // mainland or its Taiwan reading. A tone left out matches any: "pengyou"
 // and "péngyou" both read 朋友 péngyou.
-export function readsAs(entry, typed) {
+//
+// fullForNeutral: a full tone given also matches a neutral one, as a
+// Taiwan textbook writes them: "duìbùqǐ" reads 對不起 duìbuqǐ (the
+// Anki import, for a note that matches no entry otherwise)
+export function readsAs(entry, typed, { fullForNeutral = false } = {}) {
   return [entry.pinyin, entry.pinyinTaiwan].some(
-    (pinyin) => pinyin && syllablesOf(pinyin).letters === typed.letters && hasTones(pinyin, typed.tones),
+    (pinyin) =>
+      pinyin && syllablesOf(pinyin).letters === typed.letters && hasTones(pinyin, typed.tones, fullForNeutral),
   );
 }
 
