@@ -25,6 +25,7 @@ import { lookUp, readTypedPinyin, readsAs, proposeMeaning, otherScriptForm } fro
 import { checkWord, tidyPinyin, newWordRecords, scriptFor } from './words.js';
 import { wordId } from './wordList.js';
 import { isSyllables } from './pinyinSyllables.js';
+import { radicalRecord, isRadical, RADICAL_CARD_TYPES } from './radicals.js';
 import { cardIdFor, CARD_TYPES } from './session.js';
 import { replay, emptyState } from './scheduler.js';
 import { READY_MADE_LISTS, newDeckRecord, withDeck } from './decks.js';
@@ -383,6 +384,27 @@ function numberedPinyin(text) {
   return tidyPinyin(numbered.join(''));
 }
 
+// Makes the app's item out of a note: one of the app's radicals with no
+// reading of its own (丨, 氵, 糹/纟: a record of kind 'radical', with the
+// list's meaning, see radicals.js) where the note's characters are one, as
+// in a shared deck of radicals (the owner, 2026-10-21); otherwise a word
+// (wordFromNote). A radical that is a word (水, 口) is that word, as in the
+// ready-made deck of radicals.
+//
+// texts:   as for wordFromNote
+// context: as for wordFromNote, and `radicals`, the lines of the ready-made
+//          list of radicals (data/wordlists/radicals/radicals.tsv, as
+//          parseReadyList reads it), or none
+//
+// Returns { word } or { problem }, as wordFromNote does.
+export function itemFromNote(texts, context) {
+  const characters = texts.characters.replace(/\s+/g, '');
+  const radical = (context.radicals || []).find(
+    (entry) => entry.pinyin === '' && (entry.traditional === characters || entry.simplified === characters),
+  );
+  return radical ? { word: radicalRecord(radical) } : wordFromNote(texts, context);
+}
+
 // Makes a word out of a note's characters, pinyin and meaning, checked as
 // a typed word is (checkWord), with the dictionary's help: it gives the
 // other script's form, the reading where the note has none (or has it with
@@ -537,7 +559,7 @@ const isReadyMade = (deck) => READY_MADE_LISTS.some((list) => deck.id === list.i
 // collection: from readCollection (ankiFile.js)
 // choices:    as from defaultChoices, changed by the learner
 // context:
-//   dictionary, likeliestEntry, meaningDetail: for wordFromNote
+//   dictionary, likeliestEntry, meaningDetail, radicals: for itemFromNote
 //   words:    the word records there are
 //   decks:    the deck records there are
 //   cards:    a Map from card ID to the card records there are
@@ -552,9 +574,13 @@ const isReadyMade = (deck) => READY_MADE_LISTS.some((list) => deck.id === list.i
 //            name (in the same deck), so importing twice makes no new ones
 //   reviews: review records to save: Anki's reviews and imported schedules
 //   cards:   card records to save, worked out from those reviews
-//   report:  { notesRead, newWords, wordsThere, waiting, cardsWithSchedule,
-//              reviewsCopied, alreadyStudied, sameWord, problems }
-//            `waiting`: new words with no cards, which wait in Learn;
+//   report:  { notesRead, newWords, newRadicals, wordsThere, waiting,
+//              cardsWithSchedule, reviewsCopied, alreadyStudied, sameWord,
+//              problems }
+//            `newRadicals`: new radicals of kind 'radical' (not counted in
+//            newWords);
+//            `waiting`: new words (and radicals) with no cards, which wait
+//            in Learn;
 //            `problems`: [{ text, problem }] for notes left out;
 //            `alreadyStudied`: cards left as they are, studied here already;
 //            `sameWord`: notes that are a word another note is too
@@ -586,6 +612,7 @@ export function planAnkiImport(collection, choices, context) {
   const report = {
     notesRead: notes.length,
     newWords: 0,
+    newRadicals: 0,
     wordsThere: 0,
     waiting: 0,
     cardsWithSchedule: 0,
@@ -609,12 +636,13 @@ export function planAnkiImport(collection, choices, context) {
     const layout = layoutOf.get(note.noteTypeId);
     const text = (role) => (roles[role] === null ? '' : fieldText(note, roles[role], layout));
     const texts = { characters: text('characters'), pinyin: text('pinyin'), meaning: text('meaning') };
-    const result = wordFromNote(texts, context);
+    const result = itemFromNote(texts, context);
     if (result.problem) {
       report.problems.push({ text: texts.characters || cleanField(note.fields[0]), problem: result.problem });
       continue;
     }
-    const id = wordId(result.word);
+    // A radical comes with its ID; a word's is worked out.
+    const id = result.word.id || wordId(result.word);
     const cards = cardsOf.get(note.id) || [];
     if (found.has(id)) {
       report.sameWord += 1;
@@ -666,7 +694,7 @@ export function planAnkiImport(collection, choices, context) {
   const cards = [];
   for (const [id, { deckId, sources }] of found) {
     let word = existing.get(id) || added.get(id);
-    report[existing.has(id) ? 'wordsThere' : 'newWords'] += 1;
+    report[existing.has(id) ? 'wordsThere' : isRadical(word) ? 'newRadicals' : 'newWords'] += 1;
     word = withDeck(word, appDeck(deckId));
     const script = scriptFor(word, settings);
     // Recalling the pinyin is recalling its tones, so a tone card no
@@ -684,7 +712,8 @@ export function planAnkiImport(collection, choices, context) {
     for (const type of CARD_TYPES) {
       const card = sources[type];
       // A card new in Anki has nothing to bring; the word is learned here.
-      if (!card || card.type === 0) {
+      // A radical has only meaning and writing cards.
+      if (!card || card.type === 0 || (isRadical(word) && !RADICAL_CARD_TYPES.includes(type))) {
         continue;
       }
       const cardId = cardIdFor(word, type, script);

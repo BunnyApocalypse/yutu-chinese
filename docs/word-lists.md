@@ -42,4 +42,5 @@ Built on 2026-10-14 at the owner's request; they haven't tried it.
 - **Meanings of non-word radicals** are hand-written in `data/wordlists/radicals/meanings.tsv`; a side form names its full form ("water (side form of 水)"), since prompts show only the meaning. The build stops if one is missing.
 - **Built by `scripts/build-radicals.js`** (run by hand) from Unicode's `CJKRadicals.txt`, Make Me a Hanzi and the word lists; details in the folder's README.
 - **Every non-word radical has a note** (`data/notes/radicals.tsv`, 156).
+- **From Anki:** a note that is one of these radicals becomes it (`itemFromNote` in `src/ankiImport.js`, `docs/anki.md`; the owner, 2026-10-21), in the Anki deck, not this one.
 - **Not done:** Chinese names of radicals (三點水); a radical's page listing its characters.

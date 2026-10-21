@@ -11,9 +11,11 @@ import initSqlJs from 'sql.js';
 import { openAnkiFile, readCollection } from '../src/ankiFile.js';
 import { describeCollection, defaultChoices, planAnkiImport } from '../src/ankiImport.js';
 import { readDictionary } from '../src/dictionary.js';
+import { parseReadyList } from '../src/words.js';
 
 const SQL = await initSqlJs();
 const dictionary = readDictionary(fs.readFileSync('data/cedict/dictionary.tsv', 'utf8'));
+const radicals = parseReadyList(fs.readFileSync('data/wordlists/radicals/radicals.tsv', 'utf8'));
 for (const path of process.argv.slice(2)) {
   const started = Date.now();
   const db = await openAnkiFile(new Uint8Array(fs.readFileSync(path)), SQL);
@@ -24,7 +26,7 @@ for (const path of process.argv.slice(2)) {
     const choices = defaultChoices(description);
     let made = 0;
     const plan = planAnkiImport(collection, choices, {
-      dictionary, likeliestEntry: (entries) => entries[0], meaningDetail: 'first',
+      dictionary, likeliestEntry: (entries) => entries[0], meaningDetail: 'first', radicals,
       words: [], decks: [], cards: new Map(), settings: { script }, now: Date.now(),
       randomId: () => `deck-${++made}`,
     });
@@ -38,7 +40,13 @@ for (const path of process.argv.slice(2)) {
       console.log('Anki reviews in file:', description.reviewCount);
     }
     console.log('words', plan.words.length, 'reviews', plan.reviews.length, 'cards', plan.cards.length);
-    console.log('first words:', plan.words.slice(0, 4).map((word) => `${word[script]} ${word.pinyin} · ${word.definition}`).join(' | '));
+    console.log('first words:', plan.words.slice(0, 4).map((word) => `${word[script]} ${word.pinyin || '(radical)'} · ${word.definition}`).join(' | '));
+    const radicalCards = plan.cards.filter((card) => card.wordId.endsWith('|radical'));
+    if (radicalCards.length > 0) {
+      const types = {};
+      for (const card of radicalCards) types[card.type] = (types[card.type] || 0) + 1;
+      console.log('cards of radicals by kind:', JSON.stringify(types));
+    }
     console.log('report', JSON.stringify(Object.fromEntries(
       Object.entries(plan.report).map(([k, v]) => [k, Array.isArray(v) ? `${v.length} e.g. ${JSON.stringify(v.slice(0, 2))}` : v]))));
   }

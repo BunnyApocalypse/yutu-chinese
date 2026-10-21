@@ -16,6 +16,7 @@ import {
   guessRoles,
   layoutLines,
   fieldText,
+  itemFromNote,
   wordFromNote,
   planAnkiImport,
 } from '../src/ankiImport.js';
@@ -208,6 +209,75 @@ test('an example sentence is not cut down to a word at a bracket', () => {
   assert.match(problem.problem, /sentence/);
   // Both forms with a bracket are still one word.
   assert.equal(wordFromNote({ characters: '学校 (學校)', pinyin: '', meaning: '' }, context).word.traditional, '學校');
+});
+
+test("a note that is one of the app's radicals becomes that radical", () => {
+  // A small deck of radicals as readCollection gives it: 丨 (a radical
+  // only), 水 (a radical that is a word), and 氵 (the side form of 水).
+  const radicals = [
+    { level: 'Uncommon', simplified: '丨', traditional: '丨', pinyin: '', meaning: 'line (a stroke)' },
+    { level: 'Common', simplified: '水', traditional: '水', pinyin: 'shui3', meaning: '' },
+    { level: 'Common', simplified: '氵', traditional: '氵', pinyin: '', meaning: 'water (side form of 水)' },
+  ];
+  const dictionary = readDictionary(['丨\t\tgun3\tline', '水\t\tshui3\twater'].join('\n'));
+  const DAY = 86400;
+  const collection = {
+    createdAt: CRT,
+    noteTypes: [
+      {
+        id: 1,
+        name: 'Radical',
+        fields: ['Radical', 'Pinyin', 'Meaning'],
+        templates: [{ ord: 0, name: 'Recognize', front: '{{Radical}}', back: '{{Pinyin}} {{Meaning}}' }],
+      },
+    ],
+    decks: [{ id: 10, name: 'Radicals' }],
+    notes: [
+      { id: 101, noteTypeId: 1, fields: ['丨', 'gǔn', 'line'], tags: '' },
+      { id: 102, noteTypeId: 1, fields: ['水', 'shuǐ', 'water'], tags: '' },
+      { id: 103, noteTypeId: 1, fields: ['氵', 'shuǐ', 'water (side form)'], tags: '' },
+    ],
+    cards: [101, 102, 103].map((noteId) => ({
+      id: noteId * 10,
+      noteId,
+      deckId: 10,
+      ord: 0,
+      type: 2,
+      queue: 2,
+      due: 300,
+      interval: 5,
+      factor: 2500,
+      reps: 1,
+      lapses: 0,
+      data: '',
+    })),
+    reviews: [101, 102, 103].map((noteId) => ({
+      id: (CRT + 295 * DAY) * 1000 + noteId,
+      cardId: noteId * 10,
+      ease: 3,
+      interval: 5,
+      lastInterval: 0,
+      factor: 2500,
+      took: 3000,
+      type: 0,
+    })),
+  };
+  const context = contextWith({ dictionary, radicals });
+  const plan = planAnkiImport(collection, defaultChoices(describeCollection(collection)), context);
+  assert.equal(plan.report.newRadicals, 2);
+  assert.equal(plan.report.newWords, 1);
+  const line = plan.words.find((word) => word.id === '丨|radical');
+  assert.equal(line.kind, 'radical');
+  assert.equal(line.definition, 'line (a stroke)');
+  assert.ok(plan.words.find((word) => word.id === '氵|radical'));
+  assert.ok(plan.words.find((word) => word.id === '水|shui3'));
+  // A radical keeps its Anki schedule on its meaning card only: it has no
+  // pinyin or tone card. The word 水 has all three.
+  const kinds = (id) => plan.cards.filter((card) => card.wordId === id).map((card) => card.type).sort();
+  assert.deepEqual(kinds('丨|radical'), ['meaning']);
+  assert.deepEqual(kinds('水|shui3'), ['meaning', 'pinyin', 'tone']);
+  // Without the list, 丨 is a word where the dictionary has it.
+  assert.equal(itemFromNote({ characters: '丨', pinyin: 'gǔn', meaning: 'line' }, contextWith({ dictionary })).word.id, undefined);
 });
 
 test('a note becomes a word with the help of the dictionary', () => {

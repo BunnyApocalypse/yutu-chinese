@@ -6,7 +6,8 @@
 
 import { saveImport, randomId } from './db.js';
 import { openAnkiFile, readCollection } from './ankiFile.js';
-import { describeCollection, defaultChoices, planAnkiImport, wordFromNote } from './ankiImport.js';
+import { describeCollection, defaultChoices, planAnkiImport, itemFromNote } from './ankiImport.js';
+import { isRadical } from './radicals.js';
 import { formatPinyin } from './wordList.js';
 import { CARD_TYPES } from './session.js';
 import { fillMixed } from './lang.js';
@@ -47,6 +48,10 @@ export function createAnkiImport(shared, dictionaryLoader) {
   let collection = null;
   let description = null;
   let choices = null;
+  // The ready-made list of radicals: a note that is one of them becomes
+  // that radical (itemFromNote in ankiImport.js). Empty if it could not be
+  // fetched; such notes are then words where the dictionary has them.
+  let radicals = [];
 
   function showStep(step) {
     for (const name of ['choose', 'check', 'done']) {
@@ -91,6 +96,7 @@ export function createAnkiImport(shared, dictionaryLoader) {
     }
     // The usual readings decide a word's reading where a note has none.
     await dictionaryLoader.loadUsualReadings();
+    radicals = await dictionaryLoader.readyEntries('radicals').catch(() => []);
     description = describeCollection(collection, shared.getSettings().script);
     choices = defaultChoices(description);
     renderChoices();
@@ -158,23 +164,22 @@ export function createAnkiImport(shared, dictionaryLoader) {
         return;
       }
       const text = (role) => (choice.roles[role] === null ? '' : noteType.example[choice.roles[role]]);
-      const result = wordFromNote(
+      const result = itemFromNote(
         { characters: text('characters'), pinyin: text('pinyin'), meaning: text('meaning') },
         {
           dictionary: dictionaryLoader.get(),
           likeliestEntry: dictionaryLoader.likeliestEntry,
           meaningDetail: settings.meaningDetail,
+          radicals,
         },
       );
       if (result.problem) {
         fillMixed(preview, `First note: left out. ${result.problem}`, settings.script);
       } else {
         const { word } = result;
-        fillMixed(
-          preview,
-          `First note: ${word[settings.script]} ${formatPinyin(word.pinyin)} · ${word.definition}`,
-          settings.script,
-        );
+        // A radical has no reading of its own.
+        const reading = isRadical(word) ? '(radical)' : formatPinyin(word.pinyin);
+        fillMixed(preview, `First note: ${word[settings.script]} ${reading} · ${word.definition}`, settings.script);
       }
     }
 
@@ -251,6 +256,7 @@ export function createAnkiImport(shared, dictionaryLoader) {
         dictionary: dictionaryLoader.get(),
         likeliestEntry: dictionaryLoader.likeliestEntry,
         meaningDetail: settings.meaningDetail,
+        radicals,
         words: shared.words(),
         decks: shared.decks(),
         cards: new Map(shared.cards().map((card) => [card.id, card])),
@@ -269,12 +275,19 @@ export function createAnkiImport(shared, dictionaryLoader) {
     }
   });
 
+  // "Brought over 12 new words and 3 radicals.", or as many as there are.
+  function broughtOver({ newWords, newRadicals, wordsThere }) {
+    const brought = [
+      newWords > 0 || (newRadicals === 0 && wordsThere === 0) ? plural(newWords, 'new word') : '',
+      newRadicals > 0 ? plural(newRadicals, 'radical') : '',
+    ].filter(Boolean);
+    return brought.length > 0 ? `Brought over ${brought.join(' and ')}.` : 'No new words.';
+  }
+
   function showResult({ report }) {
     const { waiting } = report;
     const lines = [
-      report.newWords > 0 || report.wordsThere === 0
-        ? `Brought over ${plural(report.newWords, 'new word')}.`
-        : 'No new words.',
+      broughtOver(report),
       report.wordsThere > 0 ? `${plural(report.wordsThere, 'word')} you had already went into the decks.` : '',
       report.cardsWithSchedule > 0
         ? `${plural(report.cardsWithSchedule, 'card')} ${verb(report.cardsWithSchedule, 'keeps its', 'keep their')} schedule from Anki, with ` +
