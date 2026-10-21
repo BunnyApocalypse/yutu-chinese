@@ -50,13 +50,15 @@ export function showPastCard(cardFace, card, { onVerdict, onBack, onForward }) {
 }
 
 // The squares, as many to a row as make a square of them (two for 2 to 4
-// characters, three for 5 to 9, then four), so that they are as big as
-// the face allows.
+// characters, three for 5 to 9, four for 10 to 16, and so on), so that all
+// fit on the face, as big as it allows.
 function drawingsOf(card, onVerdict) {
   const chars = card.drawings.map((drawing) => drawing.char);
   const grid = document.createElement('div');
   grid.className = 'past-drawings';
-  grid.style.setProperty('--columns', String(Math.min(4, Math.ceil(Math.sqrt(chars.length)))));
+  const columns = Math.ceil(Math.sqrt(chars.length));
+  grid.style.setProperty('--columns', String(columns));
+  grid.classList.toggle('many', columns >= 4);
   const several = chars.length > 1;
   chars.forEach((char, index) => {
     const passed = card.passedPerChar?.[index];

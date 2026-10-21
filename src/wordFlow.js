@@ -792,7 +792,8 @@ export function createWordFlow(elements) {
       // Find out which characters have stroke data, loading it at the same time.
       const data = await Promise.all(typed.map((char) => loadCharData(char, newOptions.script)));
       const usable = typed.filter((char, index) => data[index] !== null);
-      const skipped = typed.filter((char, index) => data[index] === null);
+      // Punctuation (，。？) is never written: left out without a word.
+      const skipped = typed.filter((char, index) => data[index] === null && !/\p{P}/u.test(char));
 
       noteElement.textContent =
         skipped.length > 0 ? `No stroke data for ${skipped.join(' ')}, so skipped.` : '';

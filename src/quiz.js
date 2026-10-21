@@ -1187,7 +1187,14 @@ export function createQuiz(target, size, handlers) {
       picture.setAttribute('class', 'past-drawing');
       picture.setAttribute('aria-hidden', 'true');
       const gridLines = [...target.children].filter((child) => child.tagName === 'line');
-      picture.append(...gridLines.map((line) => line.cloneNode(true)), drawnLayer.cloneNode(true));
+      const strokes = drawnLayer.cloneNode(true);
+      // Shown smaller, the strokes are to be thinner too: on the writing
+      // area they keep their width when shrunk (zoomInk), which in a small
+      // copy made them look swollen (the owner, 2026-10-21).
+      for (const path of strokes.querySelectorAll('path')) {
+        path.removeAttribute('vector-effect');
+      }
+      picture.append(...gridLines.map((line) => line.cloneNode(true)), strokes);
       return picture;
     },
 

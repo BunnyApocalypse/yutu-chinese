@@ -723,6 +723,28 @@ main.focused .top-bar {
 }
 
 /* On a sentence's writing card: the sentence with its gap, under the meaning. */
+/* The pop-up of a message (confirm.js) keeps the text's own line breaks:
+   a sentence's meaning and the sentence each on a line (clamp.js). */
+#confirm-detail {
+  white-space: pre-line;
+}
+
+/* A sentence's writing card (showMeaning in review.js): the meaning cut off
+   after one line, the sentence under it in full. */
+#prompt-meaning.with-sentence {
+  display: block;
+  max-height: none;
+}
+
+#prompt-meaning.with-sentence .prompt-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+  line-height: 1.3;
+  max-height: 1.3em;
+}
+
 .cloze-sentence {
   display: block;
   margin-top: var(--space-tiny);
@@ -1543,6 +1565,23 @@ button.slot {
 
 .past-square.skipped {
   border-style: dashed;
+}
+
+/* Many characters (four or more to a row): smaller marks. */
+.past-drawings.many {
+  gap: var(--space-tiny);
+}
+
+.past-drawings.many .past-square::after {
+  top: -5px;
+  right: -5px;
+  width: 12px;
+  height: 12px;
+  font-size: 0.55rem;
+}
+
+.past-drawings.many .past-char {
+  font-size: var(--size-large);
 }
 
 .past-square svg {

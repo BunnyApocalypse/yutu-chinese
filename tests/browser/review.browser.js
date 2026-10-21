@@ -465,7 +465,7 @@ describe('grading in Review', { concurrency: false }, () => {
     await waitForFirstStroke();
     await waitUntil(page, `!document.getElementById('back-button').classList.contains('unavailable')`, 'the way back');
     await tap(page, 'back-button');
-    await waitUntil(page, `document.getElementById('card-type').textContent === 'Writing · the card before'`, 'the card before');
+    await waitUntil(page, `document.getElementById('card-type').textContent === 'Writing · 1 back'`, 'the card before');
     // The raw input is there, and the grade given is pressed.
     assert.ok(await page.evaluate(`document.querySelectorAll('#card-face .past-square .drawn-strokes path').length > 0`));
     const pressed = `document.querySelector('#grade-row .grade[aria-pressed="true"]')?.firstChild.textContent`;
@@ -521,7 +521,7 @@ describe('grading in Review', { concurrency: false }, () => {
     await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the end of Review');
     await waitUntil(page, `!document.getElementById('look-back-button').hidden`, 'the way back');
     await tap(page, 'look-back-button');
-    await waitUntil(page, `document.getElementById('card-type').textContent === 'Writing · the card before'`, 'the card before');
+    await waitUntil(page, `document.getElementById('card-type').textContent === 'Writing · 1 back'`, 'the card before');
     const squares = `[...document.querySelectorAll('#card-face .past-square')]`;
     assert.deepEqual(await page.evaluate(`${squares}.map((square) => square.className)`), ['past-square missed', 'past-square passed']);
     // 大 right after all: Hard (it had mistakes), saved at once.

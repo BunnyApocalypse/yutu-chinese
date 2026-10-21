@@ -176,6 +176,28 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     }
   });
 
+  // The meaning above a writing card; for a sentence, with the sentence
+  // (its gap, or once answered all of it) on a line of its own under it.
+  // The meaning is cut off after one line, a tap showing it all (clamp.js,
+  // `data-clamp`); the sentence never is, being what is asked (the owner,
+  // 2026-10-21: where the meaning took two lines, the gap was cut off).
+  function showMeaning(word, sentence, script) {
+    meaningElement.classList.toggle('with-sentence', Boolean(sentence));
+    if (!sentence) {
+      meaningElement.textContent = word.definition;
+      return;
+    }
+    const meaning = document.createElement('span');
+    meaning.className = 'prompt-text';
+    meaning.dataset.clamp = '';
+    meaning.textContent = word.definition;
+    const line = document.createElement('span');
+    line.className = 'cloze-sentence';
+    line.lang = script === 'traditional' ? 'zh-Hant-TW' : 'zh-Hans-CN';
+    line.textContent = sentence;
+    meaningElement.replaceChildren(meaning, line);
+  }
+
   // The kind of card, above it: "Writing", "Sentence · reading".
   function labelFor(word, type) {
     return isSentence(word) ? SENTENCE_LABELS[type] : isRadical(word) ? RADICAL_LABELS[type] : TYPE_LABELS[type];
@@ -212,9 +234,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     strokeCountElement.hidden = true;
     // Shown again by wordFlow.js between the characters of a writing card.
     verdictRow.hidden = true;
-    // A sentence's writing card lets its prompt run to two lines (see there).
-    meaningElement.style.webkitLineClamp = '';
-    meaningElement.style.maxHeight = '';
+    // A sentence's writing card has its sentence under the meaning (showMeaning).
+    meaningElement.classList.remove('with-sentence');
   }
 
   // Above the card: a note if this word is in another script than the rest
@@ -572,6 +593,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       card: newCard,
       review,
       drawings: type === 'writing' ? flows.writing.drawings() : null,
+      withSentence: Boolean(current.withSentence),
     });
     // Forgotten once too often: with that setting, the card is suspended.
     if (settings.leechAction === 'suspend' && becameLeech(card, newCard, settings.leechLapses)) {
@@ -614,7 +636,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // taken for the tap that brought it (as in the other files' own
   // TAP_TO_CONTINUE_DELAY_MS).
   const TAP_TO_CONTINUE_DELAY_MS = 200;
-  // { word, type, script, cardBefore, card, review, drawings }, oldest first.
+  // { word, type, script, cardBefore, card, review, drawings, withSentence },
+  // oldest first.
   let graded = [];
   // Which of them is on screen, or null.
   let lookingBack = null;
@@ -651,13 +674,18 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     stopwatch.stop();
     current = { word: entry.word, type: entry.type, card: entry.card };
     const back = graded.length - index;
-    typeElement.textContent = `${labelFor(entry.word, entry.type)} · ${back === 1 ? 'the card before' : `${back} cards back`}`;
+    // Short: "Sentence · writing · the card before" took two lines on a phone.
+    typeElement.textContent = `${labelFor(entry.word, entry.type)} · ${back} back`;
     showScriptFlag(entry.word);
     // On the card's face, whatever its kind.
     showPartsFor('meaning');
     // Above a writing card, as when it was written; the other kinds have
     // the reading and meaning on their face.
-    meaningElement.textContent = entry.type === 'writing' ? entry.word.definition : '';
+    if (entry.type === 'writing') {
+      showMeaning(entry.word, entry.withSentence ? entry.word[entry.script] : null, entry.script);
+    } else {
+      meaningElement.textContent = '';
+    }
     if (entry.type === 'writing') {
       showPinyin();
     } else {
@@ -931,21 +959,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     const asked = isSentence(word)
       ? sentenceWriting(word, script, settings.sentenceWriting)
       : { text: word[script], prompt: null };
-    const showPrompt = (sentence) => {
-      meaningElement.textContent = word.definition;
-      // The prompt is cut off after one line (clamp.js); a sentence with its
-      // gap is a second line that has to stay in view.
-      meaningElement.style.webkitLineClamp = sentence ? '2' : '';
-      meaningElement.style.maxHeight = sentence ? 'none' : '';
-      if (sentence) {
-        const line = document.createElement('span');
-        line.className = 'cloze-sentence';
-        line.lang = script === 'traditional' ? 'zh-Hant-TW' : 'zh-Hans-CN';
-        line.textContent = sentence;
-        meaningElement.append(line);
-      }
-    };
+    const showPrompt = (sentence) => showMeaning(word, sentence, script);
     showPrompt(asked.prompt);
+    // Kept for looking back at the card (the sentence shown in full then).
+    current.withSentence = Boolean(asked.prompt);
     pinyinButton.hidden = false;
 
     // What to save about a written word.
