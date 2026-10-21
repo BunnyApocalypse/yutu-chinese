@@ -6,6 +6,16 @@
 // was built.
 export const CHANGES = [
   {
+    id: '2026-10-21-2',
+    items: [
+      'Changed your mind about a grade? Tap ‹ on a new card (or "Back to the last card" at the end of Review) to see your last 10 cards, with your own handwriting, and change the grade.',
+      'Between the characters of a word, "missed" and "right" buttons let you correct the app if it judged a character wrong.',
+      'Sentences show their meaning and the sentence with its gap on separate lines, so the gap is never cut off.',
+      'The character you\'re on keeps its blue outline after it has turned green or red, and a tap goes on after practicing one again.',
+      'Anki imports read real shared decks and textbooks much better: the deck\'s own meanings, its sentences as sentences, and a summary to check before importing.',
+    ],
+  },
+  {
     id: '2026-10-21',
     items: [
       'New to Chinese? "Basics of Chinese" in the menu explains characters, pinyin and tones, with sounds to listen to, and how the app teaches.',
