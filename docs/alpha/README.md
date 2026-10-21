@@ -1,6 +1,6 @@
 # Alpha testing
 
-What the project's owner needs to run a first round of testing with other people. Written on 2026-10-13, before anyone but the owner had used the app; revise it after the first tester.
+What the project's owner needs to run testing with other people. Written on 2026-10-13; brought up to date with the app on 2026-10-21, after three testers (their sessions: `docs/history.md`, "The testing sessions"; notes in the git-ignored `local/testing/`).
 
 | File | For whom | What it is |
 |---|---|---|
@@ -10,4 +10,4 @@ What the project's owner needs to run a first round of testing with other people
 | `feedback-questions.md` | Testers | The questions to answer after a week |
 | `observation-sheet.md` | The owner | What to write down while watching someone use the app |
 
-The address and the feedback channel were filled in on 2026-10-14.
+The testers' copy is the stable one, https://bunnyapocalypse.github.io/yutu-chinese/; feedback goes to the email alias through "Send feedback" in the app's menu.

@@ -18,9 +18,10 @@ Avoid starting with close friends who want to be kind. If you do use friends, te
 ## Before you hand it over
 
 - Use the app yourself for a week first. Anything that annoys you will annoy them, and you can fix it before it uses up a tester's patience.
-- Decide the address testers will use and do not change it during the round: their words and progress are stored in their own browser. A new folder on the same site (such as the move from `/hanzi-trainer/` to `/yutu-chinese/`, see `docs/offline.md`) keeps them, except perhaps in an app added to an iPhone's home screen; a new site (a domain of its own) starts empty. Decided on 2026-10-14: **https://bunnyapocalypse.github.io/hanzi-trainer/** (the stable copy).
-- Decide how feedback reaches you. Decided on 2026-10-14: the email alias **yutufeedback.delicious577@passmail.com**, plus the issue tracker for testers with a GitHub account. One channel is better than three.
-- Check that the app says which version it is, so a report can name it. (It does not yet; see the review of what real users imply.)
+- Decide the address testers will use and do not change it during the round: their words and progress are stored in their own browser. A new folder on the same site (such as the move from `/hanzi-trainer/` to `/yutu-chinese/`, see `docs/offline.md`) keeps them, except perhaps in an app added to an iPhone's home screen; a new site (a domain of its own) starts empty. Decided on 2026-10-14, moved on 2026-10-15: **https://bunnyapocalypse.github.io/yutu-chinese/** (the stable copy). The test copy (`.../yutu-chinese/test/`) is for trying a change with one tester, and keeps words of its own.
+- Decide how feedback reaches you. Decided on 2026-10-14: the email alias **yutufeedback.delicious577@passmail.com**, plus the issue tracker for testers with a GitHub account. One channel is better than three. "Send feedback" in the app's menu writes the email with the version and device filled in.
+- The app says which version it is (Settings, "Help, feedback and licenses"), so a report can name it.
+- Send the link as text to copy into the browser. A link tapped in Discord or another app may open in that app's own browser, which keeps the words apart (tester 3, 2026-10-20). On the test copy, Settings › For testing › "Keeping the words" shows how the app was opened.
 
 ## What to tell testers, and what not to
 
@@ -28,7 +29,7 @@ Tell them:
 
 - that it is an early test version, made by one person, and free;
 - that everything they enter stays on their own device and nothing is sent anywhere, which also means you cannot see their data or rescue it;
-- that they should export a backup now and then (Settings, "Your data and backups"), and that on an iPhone or iPad the app must be added to the Home Screen or the browser may clear its data after a week without use;
+- that they should export a backup now and then (Settings, "Your data and backups"), and that on an iPhone, iPad or Mac the app must be added to the Home Screen or the Dock before they start, or Safari may clear its data after a week without use (the added app starts empty);
 - that things may change under them, and that in the worst case an update could ask them to start over;
 - how long you would like them to try it (two weeks of ten minutes a day is a good ask) and how to report.
 

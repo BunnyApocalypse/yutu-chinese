@@ -2,7 +2,7 @@
 
 One per session. Fill in while watching; do not rely on memory.
 
-**Tester:** (a nickname is enough)  **Date:**  **Device and browser:**  **App version:**
+**Tester:** (a nickname is enough)  **Date:**  **Device and browser:**  **Installed or a tab:**  **App version:** (Settings, Help)
 **Chinese level and script:**  **Apps used before:**
 
 ## Tasks
@@ -12,12 +12,16 @@ For each: could they do it without help (yes / with a struggle / no / I stepped 
 | Task | Done? | Time | What happened, in their words where possible |
 |---|---|---|---|
 | Get to where they could start studying | | | |
+| (New to Chinese) find out about pinyin and tones | | | |
 | Get suitable words into the app | | | |
 | Learn the first three new words | | | |
 | Add a word of their own | | | |
 | Find a word and look at what the app knows about it | | | |
 | Change a setting to suit them | | | |
 | Hear a word | | | |
+| Change a grade, or a verdict on a character | | | |
+| See how much they have studied | | | |
+| Make sure the words are kept safe; make a backup | | | |
 
 ## While they work, note
 
