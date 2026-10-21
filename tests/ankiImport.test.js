@@ -344,6 +344,10 @@ test("a textbook's way of writing pinyin is read", () => {
         '會\t会\thui4\tcan',
         '得\t\tde5\t(particle)',
         '得\t\tdei3\tmust',
+        '咖啡\t\tka1fei1\tcoffee',
+        '臺灣\t台湾\tTai2wan1\tTaiwan',
+        '照相機\t照相机\tzhao4xiang4ji1\tcamera',
+        '公車\t公车\tgong1che1\tbus',
       ].join('\n'),
     ),
   });
@@ -361,12 +365,20 @@ test("a textbook's way of writing pinyin is read", () => {
   assert.equal(pinyin('得', 'děi, de'), 'dei3, de5');
   // Only the dictionary's readings, where it has any.
   assert.equal(pinyin('會', 'huèi, huì'), 'hui4');
-  // Only a neutral tone gives way: a full tone that differs still doesn't
-  // read, and the note's own text is shown.
+  // Pinyin that fits no entry of a word with one reading is a slip.
+  assert.equal(pinyin('咖啡', 'kāifēi'), 'ka1fei1');
+  // Not where the dictionary has several: the note's own text is shown.
   assert.equal(
-    wordFromNote({ characters: '對不起', pinyin: 'Duībùqǐ (sorry)', meaning: 'x' }, context).problem,
-    'The note’s pinyin “Duībùqǐ (sorry)” can’t be read.',
+    wordFromNote({ characters: '還', pinyin: 'qwè (x)', meaning: 'x' }, context).problem,
+    'The note’s pinyin “qwè (x)” can’t be read.',
   );
+  // The form of the characters the dictionary reads as the pinyin.
+  assert.equal(wordFromNote({ characters: '臺 / 台灣', pinyin: 'Táiwān', meaning: 'x' }, context).word.traditional, '臺灣');
+  assert.equal(wordFromNote({ characters: '照相（像）機', pinyin: 'Zhàoxiàngjī', meaning: 'x' }, context).word.traditional, '照相機');
+  // A word the dictionary lacks: its syllables by the table, its other
+  // script word by word.
+  const lacking = wordFromNote({ characters: '公車站', pinyin: 'Gōngchē zhàn', meaning: 'bus stop' }, context).word;
+  assert.deepEqual([lacking.pinyin, lacking.simplified], ['gong1che1zhan4', '公车站']);
 });
 
 test("a note that is a sentence becomes one of the app's sentences", () => {

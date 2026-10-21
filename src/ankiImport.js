@@ -24,7 +24,7 @@
 import { lookUp, readTypedPinyin, readsAs, proposeMeaning, otherScriptForm, splitIntoWords } from './dictionary.js';
 import { checkWord, tidyPinyin, newWordRecords, scriptFor } from './words.js';
 import { wordId } from './wordList.js';
-import { isSyllables } from './pinyinSyllables.js';
+import { isSyllables, SYLLABLES } from './pinyinSyllables.js';
 import { radicalRecord, isRadical, RADICAL_CARD_TYPES } from './radicals.js';
 import { cardIdFor, CARD_TYPES } from './session.js';
 import { sentenceId, sentenceRecord, isSentence, SENTENCE_CARD_TYPES } from './sentences.js';
@@ -436,17 +436,43 @@ export function countSentenceNotes(collection, choices) {
 // turned into the app's numbered pinyin ("ni3hao3"), for a word the
 // dictionary doesn't have. Without a separator between syllables the
 // dictionary is needed to tell where they end, so that gives null.
+//
+// A run of several syllables ("Gōngchē") is split by the table of
+// syllables (splitByTones), so that each mark falls in a syllable of its
+// own.
 function numberedPinyin(text) {
-  const syllables = text.split(/[\s'’-]+/).filter(Boolean);
   const numbered = [];
-  for (const syllable of syllables) {
-    const typed = readTypedPinyin(syllable);
-    if (!typed || typed.tones.length > 1) {
+  for (const run of text.split(/[\s'’-]+/).filter(Boolean)) {
+    const typed = readTypedPinyin(run);
+    const syllables = typed && splitByTones(typed);
+    if (!syllables) {
       return null;
     }
-    numbered.push(typed.letters + (typed.tones.length === 1 ? typed.tones[0].tone : 5));
+    numbered.push(...syllables);
   }
   return tidyPinyin(numbered.join(''));
+}
+
+// Letters with tone marks (from readTypedPinyin) split into syllables of
+// Mandarin, each with at most one tone, as few as can be: "gongche" with
+// marks on its o and e gives ["gong1", "che1"]. A syllable without a mark
+// has the neutral tone. Returns null if they can't be split so.
+function splitByTones({ letters, tones }) {
+  // best[i]: the fewest syllables the first i letters split into.
+  const best = [[]];
+  for (let end = 1; end <= letters.length; end++) {
+    for (let start = Math.max(0, end - 6); start < end; start++) {
+      const inside = tones.filter(({ at }) => at >= start && at < end);
+      if (!best[start] || !SYLLABLES.has(letters.slice(start, end)) || inside.length > 1) {
+        continue;
+      }
+      const syllable = letters.slice(start, end) + (inside.length === 1 ? inside[0].tone : 5);
+      if (!best[end] || best[start].length + 1 < best[end].length) {
+        best[end] = [...best[start], syllable];
+      }
+    }
+  }
+  return best[letters.length] || null;
 }
 
 // The line of the ready-made list of radicals (data/wordlists/radicals/
@@ -657,6 +683,36 @@ function tidyNotePinyin(text) {
     .trim();
 }
 
+// The word in a note's field of characters, which may hold more than one
+// form of it: "學校/学校", "学校 (學校)", Ch_book1's "照相（像）機" (照相機 or
+// 照像機) and "臺 / 台灣" (臺灣 or 台灣). Of the forms it could mean, the
+// first the dictionary reads as the note's pinyin; failing that, the
+// field's first part, the dictionary finding the other script.
+//
+// The forms tried: the field without what is in brackets (照相機); a single
+// character, then a word, the character written into the word (臺灣); each
+// part.
+function charactersOf(field, pinyinText, dictionary) {
+  const plain = (text) => text.replace(/\s+/g, '');
+  const parts = field.split(/[/|｜,，;；()（）[\]【】]/).map(plain).filter((part) => part !== '');
+  const first = parts[0] || '';
+  const typed = pinyinText !== '' && dictionary ? readTypedPinyin(pinyinText) : null;
+  if (!typed) {
+    return first;
+  }
+  const [one, word] = parts.map((part) => Array.from(part));
+  const candidates = [
+    plain(field.replace(/[(（][^)）]*[)）]/g, '')),
+    ...(one && word && one.length === 1 && word.length > 1 ? [[...one, ...word.slice(1)].join('')] : []),
+    ...parts,
+  ].filter((candidate) => /^\p{Script=Han}+$/u.test(candidate));
+  const fits = (candidate) =>
+    lookUp(dictionary, candidate).some(
+      (entry) => readsAs(entry, typed) || readsAs(entry, typed, { fullForNeutral: true }),
+    );
+  return candidates.find(fits) || first;
+}
+
 // Makes a word out of a note's characters, pinyin and meaning, checked as
 // a typed word is (checkWord), with the dictionary's help: it gives the
 // other script's form, the reading where the note has none (or has it with
@@ -676,9 +732,6 @@ export function wordFromNote(texts, context) {
   if (looksLikeSentence(texts.characters)) {
     return { problem: 'This looks like a sentence or phrase, not a word.' };
   }
-  // A field with both forms in it ("學校/学校", "学校 (學校)") gives the
-  // first; the dictionary finds the other.
-  const characters = texts.characters.split(/[/|｜,，;；()（）[\]【】]/)[0].replace(/\s+/g, '');
   const notePinyin = texts.pinyin.split('\n')[0] || '';
   let pinyinText = tidyNotePinyin(notePinyin);
   let meaning = texts.meaning;
@@ -691,6 +744,7 @@ export function wordFromNote(texts, context) {
     }
   }
   meaning = meaning.split('\n').join('; ');
+  const characters = charactersOf(texts.characters, pinyinText, context.dictionary);
 
   const entries = context.dictionary ? lookUp(context.dictionary, characters) : [];
   // One reading as the note writes it: the dictionary's entry read so, and
@@ -700,10 +754,13 @@ export function wordFromNote(texts, context) {
     // A Taiwan textbook's full tones where the dictionary has a neutral one
     // (Ch_book1's 對不起 "Duìbùqǐ", 謝謝 "Xièxiè") take the dictionary's
     // reading, as a learner typing them would; tone cards accept the full
-    // tone there (toneAnswers in tones.js).
+    // tone there (toneAnswers in tones.js). An entry read so in the
+    // mainland comes before one read so only in Taiwan: 打 "dǎ" is dǎ "to
+    // hit", not dá "dozen" (Taiwan dǎ).
     const found =
       (typed &&
-        (entries.find((candidate) => readsAs(candidate, typed)) ||
+        (entries.find((candidate) => readsAs({ pinyin: candidate.pinyin }, typed)) ||
+          entries.find((candidate) => readsAs(candidate, typed)) ||
           entries.find((candidate) => readsAs(candidate, typed, { fullForNeutral: true })))) ||
       null;
     return { entry: found, pinyin: found ? found.pinyin : tidyPinyin(text) || numberedPinyin(text) || '' };
@@ -741,18 +798,36 @@ export function wordFromNote(texts, context) {
     pinyin = readings.map((reading) => reading.pinyin).join(', ');
   } else if (pinyinText !== '') {
     ({ entry, pinyin } = readings.length === 1 ? readings[0] : readingOf(pinyinText));
+    // Pinyin that fits none of the dictionary's entries, for a word it has
+    // with one reading only, is taken for a slip: 咖啡 "kāifēi" is kāfēi.
+    const dictionaryReadings = new Set(entries.map((candidate) => candidate.pinyin.toLowerCase()));
+    if (!entry && dictionaryReadings.size === 1) {
+      entry = entries[0];
+      pinyin = entry.pinyin;
+    }
     pinyin = pinyin || pinyinText;
   } else if (entries.length > 0) {
     entry = context.likeliestEntry ? context.likeliestEntry(entries, characters) : entries[0];
     pinyin = entry.pinyin;
   }
   // Which script the note is written in: traditional unless the dictionary
-  // says these characters are the simplified form.
-  const script = entries.some((candidate) => candidate.traditional === characters) || entries.length === 0
-    ? 'traditional'
-    : 'simplified';
+  // says these characters are the simplified form. A word the dictionary
+  // lacks is put in the other script word by word, as a sentence is
+  // (公車站: 公车 and 站).
+  const forms = entries.length === 0 ? sentenceForms(characters, context.dictionary) : null;
+  const script = forms
+    ? forms.traditional === characters
+      ? 'traditional'
+      : 'simplified'
+    : entries.some((candidate) => candidate.traditional === characters)
+      ? 'traditional'
+      : 'simplified';
   const other = script === 'traditional' ? 'simplified' : 'traditional';
-  const otherForm = entry ? entry[other] : otherScriptForm(entries, script, characters, tidyPinyin(pinyin) || '');
+  const otherForm = forms
+    ? forms[other]
+    : entry
+      ? entry[other]
+      : otherScriptForm(entries, script, characters, tidyPinyin(pinyin) || '');
   // The deck's other meaning field, under the word's own reading: the one
   // of the dictionary's entry, with a capital only if that has one (the
   // HSK 2012 deck writes 冷 "Lěng" when it means lěng "cold", not the
