@@ -76,9 +76,16 @@ describe('importing from Anki', { concurrency: false }, () => {
     await chooseFile(page, 'new.apkg');
     await waitUntil(page, `!document.getElementById('anki-check-step').hidden`, 'the guesses');
     assert.equal(await textOf(page, 'anki-summary'), 'In the file: 8 notes in 3 decks, 16 reviews.');
+    const summary = await textOf(page, 'anki-note-types');
+    assert.match(summary, /Each note becomes a word, like:\s*你好 nǐhǎo · hello/);
+    assert.match(summary, /Your Anki reviews count for: Meaning and Pinyin\.\s*Tone follows Pinyin\. Writing starts new/);
+    // The choices are folded away under "Change this" until tapped.
+    const change = `document.querySelector('.anki-change')`;
+    assert.equal(await page.evaluate(`${change}.open`), false);
+    await page.evaluate(`${change}.querySelector('summary').click()`);
+    assert.equal(await page.evaluate(`${change}.open`), true);
     const choices = await textOf(page, 'anki-note-types');
-    assert.match(choices, /First note: 你好 nǐhǎo · hello/);
-    assert.match(choices, /Recognition \(shows Hanzi\) · 7 cards/);
+    assert.match(choices, /Reviewing Anki’s “Recognition” \(7 cards, showing Hanzi on the front\), you practiced:/);
     assert.match(choices, /Anki can’t check handwriting/);
     // Recognition counts for meaning and pinyin, Recall for nothing yet.
     const ticked = await page.evaluate(`[...document.querySelectorAll('.anki-template')].map((row) =>

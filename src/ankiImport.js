@@ -127,8 +127,8 @@ export function fieldText(note, index, layout) {
     .join('\n');
 }
 
-// The fields a template shows, by name: "{{Hanzi}}<br>{{type:Pinyin}}" gives
-// ['Hanzi', 'Pinyin']. Anki's own fields ({{FrontSide}}, {{Tags}}, ...) and
+// The fields a template shows, by name, each once: "{{Hanzi}}<br>{{type:Pinyin}}"
+// gives ['Hanzi', 'Pinyin']. Anki's own fields ({{FrontSide}}, {{Tags}}, ...) and
 // the conditions around parts of a template ({{#Field}}...{{/Field}}, shown
 // only if the field is filled in) are left out.
 //
@@ -147,7 +147,9 @@ export function fieldsInTemplate(text) {
       cloze = true;
     }
     const name = parts[parts.length - 1].trim();
-    if (!['FrontSide', 'Tags', 'Deck', 'Subdeck', 'Card', 'Type', 'CardFlag'].includes(name)) {
+    // Each field once, though a template may use it many times (a drawing
+    // script on the front of a writing card reads {{Simplified}} often).
+    if (!['FrontSide', 'Tags', 'Deck', 'Subdeck', 'Card', 'Type', 'CardFlag'].includes(name) && !fields.includes(name)) {
       fields.push(name);
     }
   }

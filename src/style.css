@@ -3525,15 +3525,73 @@ button.deck-open {
   margin-bottom: var(--space-small);
 }
 
+/* width 0: a list is otherwise as wide as its longest choice, which inside
+   "Change this" made the whole box wider than the pop-up. */
 .anki-role select {
   flex: 0 1 65%;
+  width: 0;
   min-width: 0;
   min-height: var(--tap-small);
 }
 
-.anki-cards-title,
 .anki-template > p {
   margin: var(--space-small) 0 0;
+}
+
+/* The two parts of "Change this": a heading, and what it asks under it. */
+.anki-fold-part {
+  margin-top: var(--space-medium);
+}
+
+.anki-fold-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Each note type's summary in plain words, then "Change this", a fold-out
+   link like the introduction's (.welcome-more). Its parts are as wide as the
+   box: a .setting fieldset otherwise makes each as wide as its longest
+   line, which ran out of the box. The box's gap is the only space between
+   them. */
+.anki-dialog fieldset.anki-note-type {
+  align-items: stretch;
+}
+
+.anki-note-type > p {
+  margin: 0;
+}
+
+/* The example word on a line of its own, never broken after its characters. */
+.anki-becomes strong {
+  display: block;
+}
+
+/* Or the fold is never narrower than its widest list, as with the box. */
+.anki-change {
+  min-width: 0;
+}
+
+.anki-change > summary {
+  color: var(--accent);
+  cursor: pointer;
+  min-height: var(--tap-small);
+  display: flex;
+  align-items: center;
+}
+
+/* Safari's own triangle; the one before the text is drawn here, for every
+   browser alike. */
+.anki-change > summary::-webkit-details-marker {
+  display: none;
+}
+
+.anki-change > summary::before {
+  content: '▸';
+  margin-right: var(--space-small);
+}
+
+.anki-change[open] > summary::before {
+  content: '▾';
 }
 
 /* Browsers hide elements with the "hidden" attribute, but any "display" rule

@@ -17,6 +17,8 @@ const byId = (id) => document.getElementById(id);
 const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`;
 // The verb for one or more: was/were, waits/wait.
 const verb = (count, one, more) => (count === 1 ? one : more);
+// "Meaning", "Meaning and Pinyin", "Meaning, Pinyin and Tone".
+const andList = (items) => (items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`);
 
 const TYPE_LABELS = { meaning: 'Meaning', pinyin: 'Pinyin', tone: 'Tone', writing: 'Writing' };
 const ROLE_LABELS = { characters: 'Characters', pinyin: 'Pinyin', meaning: 'Meaning' };
@@ -144,9 +146,26 @@ export function createAnkiImport(shared, dictionaryLoader) {
     byId('anki-note-types').replaceChildren(...description.noteTypes.map(noteTypeChoices));
   }
 
-  // The choices for one note type: which field is which, with the first
-  // note shown as the word it would become, and what each template's cards
-  // count for.
+  // A heading inside "Change this", with what it asks under it.
+  function foldPart(title, explanation) {
+    const part = document.createElement('div');
+    part.className = 'anki-fold-part';
+    const heading = document.createElement('p');
+    heading.className = 'anki-fold-title';
+    heading.textContent = title;
+    const hint = document.createElement('p');
+    hint.className = 'hint';
+    hint.textContent = explanation;
+    part.append(heading, hint);
+    return part;
+  }
+
+  // One note type: first a summary in plain words of what its notes become
+  // and what the Anki reviews count for, then the choices behind it, folded
+  // away under "Change this" since the guesses are usually right (the owner,
+  // 2026-10-21, who found the open lists and checkboxes unclear): which field
+  // is which, and what each template's cards count for. The summary follows
+  // every change.
   function noteTypeChoices(noteType) {
     const choice = choices.noteTypes[noteType.id];
     const settings = shared.getSettings();
@@ -156,13 +175,25 @@ export function createAnkiImport(shared, dictionaryLoader) {
     fillMixed(legend, `${noteType.name} · ${plural(noteType.noteCount, 'note')}`, settings.script);
     fieldset.append(legend);
 
-    const preview = document.createElement('p');
-    preview.className = 'hint';
+    const becomes = document.createElement('p');
+    becomes.className = 'anki-becomes';
+    const countsFor = document.createElement('p');
+    countsFor.className = 'anki-counts-for';
+    const startsNew = document.createElement('p');
+    startsNew.className = 'hint';
+    const change = document.createElement('details');
+    change.className = 'anki-change';
+    const changeSummary = document.createElement('summary');
+    changeSummary.textContent = 'Change this';
+    change.append(changeSummary);
+    fieldset.append(becomes, countsFor, startsNew, change);
+
     const notesOfType = collection.notes.filter((candidate) => candidate.noteTypeId === noteType.id);
-    function showPreview() {
+    // What the first note becomes, as the import would make it.
+    function showExample() {
       if (choice.roles.characters === null) {
-        preview.textContent = 'Without a field of characters, these notes are left out.';
-        return;
+        becomes.textContent = 'These notes are left out: no field is chosen for the characters.';
+        return false;
       }
       const text = (role) => (choice.roles[role] === null ? '' : noteType.example[choice.roles[role]]);
       const result = itemFromNote(
@@ -175,15 +206,56 @@ export function createAnkiImport(shared, dictionaryLoader) {
         },
       );
       if (result.problem) {
-        fillMixed(preview, `First note: left out. ${result.problem}`, settings.script);
-      } else {
-        const { word } = result;
-        // A radical has no reading of its own.
-        const reading = isRadical(word) ? '(radical)' : formatPinyin(word.pinyin);
-        fillMixed(preview, `First note: ${word[settings.script]} ${reading} · ${word.definition}`, settings.script);
+        fillMixed(becomes, `The first note would be left out. ${result.problem}`, settings.script);
+        return false;
       }
+      const { word } = result;
+      // A radical has no reading of its own.
+      const reading = isRadical(word) ? '(radical)' : formatPinyin(word.pinyin);
+      becomes.textContent = 'Each note becomes a word, like:';
+      const example = document.createElement('strong');
+      fillMixed(example, `${word[settings.script]} ${reading} · ${word.definition}`, settings.script);
+      becomes.append(example);
+      return true;
+    }
+    // What the Anki reviews count for, all templates together, and what
+    // starts new. Without review history in the file, every card starts new
+    // and the summary at the top says so.
+    function showCountsFor() {
+      countsFor.hidden = startsNew.hidden = description.reviewCount === 0;
+      const counted = CARD_TYPES.filter((type) =>
+        noteType.templates.some((template) => template.cardCount > 0 && choice.templates[template.ord].includes(type)),
+      );
+      const names = (types) => andList(types.map((type) => TYPE_LABELS[type]));
+      countsFor.textContent =
+        counted.length > 0
+          ? `Your Anki reviews count for: ${names(counted)}.`
+          : 'Your Anki reviews aren’t used: every card starts new.';
+      // Tone cards follow the pinyin card where no template counts for tone
+      // (planAnkiImport).
+      const toneFollows = counted.includes('pinyin') && !counted.includes('tone');
+      const fresh = CARD_TYPES.filter((type) => !counted.includes(type) && !(type === 'tone' && toneFollows));
+      startsNew.textContent = [
+        toneFollows ? 'Tone follows Pinyin.' : '',
+        fresh.length > 0 && counted.length > 0
+          ? `${names(fresh)} ${fresh.length === 1 ? 'starts' : 'start'} new: a few words a day in Review, with a lesson.`
+          : '',
+      ]
+        .filter(Boolean)
+        .join(' ');
+      startsNew.hidden = startsNew.hidden || startsNew.textContent === '';
     }
 
+    // Each part of "Change this" says what it asks, in words for someone who
+    // never made an Anki deck (the owner, 2026-10-21: "I still don't
+    // understand what the checkboxes and dropdowns mean").
+    change.append(
+      foldPart(
+        'Where the notes keep each part of the word',
+        'An Anki note keeps a word in boxes, named by whoever made the deck. Choose the box for each part; ' +
+          'in brackets is what the first note has there.',
+      ),
+    );
     for (const role of ['characters', 'pinyin', 'meaning']) {
       const label = document.createElement('label');
       label.className = 'setting anki-role';
@@ -200,26 +272,26 @@ export function createAnkiImport(shared, dictionaryLoader) {
       select.value = choice.roles[role] === null ? '' : String(choice.roles[role]);
       select.addEventListener('change', () => {
         choice.roles[role] = select.value === '' ? null : Number(select.value);
-        showPreview();
+        showExample();
       });
       label.append(ROLE_LABELS[role], select);
-      fieldset.append(label);
+      change.append(label);
     }
-    fieldset.append(preview);
-    showPreview();
 
-    const cardsTitle = document.createElement('p');
-    cardsTitle.className = 'anki-cards-title';
-    cardsTitle.textContent = 'What each kind of card counts for here:';
-    fieldset.append(cardsTitle);
+    change.append(
+      foldPart(
+        'What your Anki reviews practiced',
+        'Each word here has four cards. A card ticked keeps your schedule from Anki; one not ticked starts new.',
+      ),
+    );
     for (const template of noteType.templates.filter((candidate) => candidate.cardCount > 0)) {
       const row = document.createElement('div');
       row.className = 'anki-template';
       const name = document.createElement('p');
       fillMixed(
         name,
-        `${template.name}${template.front.length > 0 ? ` (shows ${template.front.join(', ')})` : ''} · ` +
-          plural(template.cardCount, 'card'),
+        `Reviewing Anki’s “${template.name}” (${plural(template.cardCount, 'card')}` +
+          `${template.front.length > 0 ? `, showing ${template.front.join(', ')} on the front` : ''}), you practiced:`,
         settings.script,
       );
       const boxes = document.createElement('div');
@@ -229,6 +301,7 @@ export function createAnkiImport(shared, dictionaryLoader) {
           checkbox(TYPE_LABELS[type], choice.templates[template.ord].includes(type), (checked) => {
             const types = choice.templates[template.ord].filter((other) => other !== type);
             choice.templates[template.ord] = checked ? [...types, type] : types;
+            showCountsFor();
           }),
         );
       }
@@ -242,8 +315,13 @@ export function createAnkiImport(shared, dictionaryLoader) {
           'otherwise writing starts new, with a lesson.';
         row.append(hint);
       }
-      fieldset.append(row);
+      change.append(row);
     }
+
+    // Opened at once where the first note would be left out, so the lists
+    // to fix it are in sight.
+    change.open = !showExample();
+    showCountsFor();
     return fieldset;
   }
 
