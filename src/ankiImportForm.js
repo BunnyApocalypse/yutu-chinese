@@ -153,10 +153,61 @@ export function createAnkiImport(shared, dictionaryLoader) {
     );
 
     const sentences = sentenceChoice();
+    const meanings = meaningsChoice();
     byId('anki-note-types').replaceChildren(
       ...description.noteTypes.map(noteTypeChoices),
       ...(sentences ? [sentences] : []),
+      ...(meanings ? [meanings] : []),
     );
+  }
+
+  // What planAnkiImport needs besides the file and the choices.
+  function planContext() {
+    const settings = shared.getSettings();
+    return {
+      dictionary: dictionaryLoader.get(),
+      likeliestEntry: dictionaryLoader.likeliestEntry,
+      meaningDetail: settings.meaningDetail,
+      radicals,
+      words: shared.words(),
+      decks: shared.decks(),
+      cards: new Map(shared.cards().map((card) => [card.id, card])),
+      settings,
+      now: Date.now(),
+      randomId,
+    };
+  }
+
+  // Words the learner already has keep their meaning, unless they choose
+  // the deck's here (the owner, 2026-10-21: off by default; only where the
+  // deck has a meaning of its own and it differs). Shown only if there are
+  // such words; counted once, with the guesses as they are, by planning
+  // the import (a second or so for a big file).
+  function meaningsChoice() {
+    if (shared.words().length === 0) {
+      return null;
+    }
+    const count = planAnkiImport(collection, choices, planContext()).report.otherMeanings;
+    if (count === 0) {
+      return null;
+    }
+    const fieldset = document.createElement('fieldset');
+    fieldset.className = 'setting anki-note-type';
+    const legend = document.createElement('legend');
+    legend.textContent = 'Words you already have';
+    const label = checkbox(
+      `Use the deck’s meanings for the ${plural(count, 'word')} you already have`,
+      choices.useDeckMeanings,
+      (checked) => {
+        choices.useDeckMeanings = checked;
+      },
+    );
+    const hint = document.createElement('p');
+    hint.className = 'hint';
+    hint.textContent =
+      'Otherwise they keep the meaning they have. A meaning you wrote yourself is replaced too.';
+    fieldset.append(legend, label, hint);
+    return fieldset;
   }
 
   // Notes that are a sentence come over as the app's sentences (the owner,
@@ -440,19 +491,7 @@ export function createAnkiImport(shared, dictionaryLoader) {
     button.disabled = true;
     note('Importing…');
     try {
-      const settings = shared.getSettings();
-      const plan = planAnkiImport(collection, choices, {
-        dictionary: dictionaryLoader.get(),
-        likeliestEntry: dictionaryLoader.likeliestEntry,
-        meaningDetail: settings.meaningDetail,
-        radicals,
-        words: shared.words(),
-        decks: shared.decks(),
-        cards: new Map(shared.cards().map((card) => [card.id, card])),
-        settings,
-        now: Date.now(),
-        randomId,
-      });
+      const plan = planAnkiImport(collection, choices, planContext());
       await saveImport(plan);
       await shared.afterChange();
       showResult(plan);
@@ -483,6 +522,9 @@ export function createAnkiImport(shared, dictionaryLoader) {
       broughtOver(report),
       report.wordsThere > 0
         ? `${plural(report.wordsThere, 'word')} you already had ${verb(report.wordsThere, 'was', 'were')} added to these decks.`
+        : '',
+      report.otherMeanings > 0 && choices.useDeckMeanings
+        ? `${plural(report.otherMeanings, 'word')} you already had ${verb(report.otherMeanings, 'was', 'were')} given the deck’s meaning.`
         : '',
       report.cardsWithSchedule > 0
         ? `${plural(report.cardsWithSchedule, 'card')} ${verb(report.cardsWithSchedule, 'keeps its', 'keep their')} schedule from Anki, with ` +

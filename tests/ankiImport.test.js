@@ -559,6 +559,34 @@ test('importing the same file again changes nothing that was studied', async () 
   assert.ok(first.reviews.every((review) => review.id.startsWith('anki-')));
 });
 
+test("words already there take the deck's meaning only if the learner chooses", async () => {
+  const collection = await collectionOf('new.apkg');
+  const choices = defaultChoices(describeCollection(collection));
+  const first = planAnkiImport(collection, choices, contextWith());
+  // The learner's own meanings for the words, as if typed in.
+  const words = first.words.map((word) => ({ ...word, definition: 'my own' }));
+  const again = (useDeckMeanings) =>
+    planAnkiImport(collection, { ...choices, useDeckMeanings }, contextWith({ words, decks: first.decks }));
+  const kept = again(false);
+  assert.ok(kept.report.otherMeanings > 0);
+  assert.ok(kept.words.every((word) => word.definition === 'my own'));
+  const changed = again(true);
+  assert.equal(changed.report.otherMeanings, kept.report.otherMeanings);
+  assert.equal(changed.words.find((word) => word.id === '你好|ni3hao3').definition, 'hello');
+  // The same meanings as now: nothing to change.
+  const same = planAnkiImport(
+    collection,
+    { ...choices, useDeckMeanings: true },
+    contextWith({ words: first.words, decks: first.decks }),
+  );
+  assert.equal(same.report.otherMeanings, 0);
+
+  // A meaning the dictionary gave is not the deck's.
+  const context = contextWith();
+  assert.equal(wordFromNote({ characters: '老師', pinyin: 'lǎoshī', meaning: 'tutor' }, context).fromDeck, true);
+  assert.equal(wordFromNote({ characters: '老師', pinyin: 'lǎoshī', meaning: '' }, context).fromDeck, false);
+});
+
 test("a card goes on from Anki's schedule, not from its rebuilt reviews", async () => {
   const collection = await collectionOf('new.apkg');
   const plan = planAnkiImport(collection, defaultChoices(describeCollection(collection)), contextWith());

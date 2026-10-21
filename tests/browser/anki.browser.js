@@ -10,7 +10,7 @@ import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-import { startApp, startBrowsers, tap, textOf, waitUntil } from './harness.js';
+import { startApp, startBrowsers, reloadApp, tap, textOf, waitUntil } from './harness.js';
 
 // Everything in one store of the app's database, read through a connection
 // of the test's own.
@@ -145,5 +145,38 @@ describe('importing from Anki', { concurrency: false }, () => {
     await waitUntil(page, `!document.getElementById('anki-done-step').hidden`, 'the result');
     assert.match(await textOf(page, 'anki-result'), /^No new words\.\s*6 words you already had were added to these decks\./);
     assert.equal((await stored(page, 'reviews')).length, reviewsBefore);
+  });
+
+  it("offers the deck's meaning for a word whose meaning differs", async () => {
+    // 你好's meaning as if the learner had changed it.
+    await page.evaluate(`new Promise((resolve, reject) => {
+      const request = indexedDB.open('hanzi-trainer');
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const transaction = request.result.transaction(['words'], 'readwrite');
+        const words = transaction.objectStore('words');
+        words.get('你好|ni3hao3').onsuccess = (event) => words.put({ ...event.target.result, definition: 'hi there' });
+        transaction.oncomplete = () => {
+          request.result.close();
+          resolve();
+        };
+      };
+    })`);
+    await reloadApp(page);
+    await tap(page, 'decks-tab');
+    await tap(page, 'new-deck-button');
+    await tap(page, 'anki-import-button');
+    await chooseFile(page, 'legacy.apkg');
+    await waitUntil(page, `!document.getElementById('anki-check-step').hidden`, 'the guesses');
+    const box = `[...document.querySelectorAll('.anki-note-type')].find((box) => box.querySelector('legend').textContent === 'Words you already have')`;
+    assert.match(await page.evaluate(`${box}.textContent`), /Use the deck’s meanings for the 1 word you already have/);
+    // Off unless chosen.
+    assert.equal(await page.evaluate(`${box}.querySelector('input').checked`), false);
+    await page.evaluate(`${box}.querySelector('input').click()`);
+    await tap(page, 'anki-import-now');
+    await waitUntil(page, `!document.getElementById('anki-done-step').hidden`, 'the result');
+    assert.match(await textOf(page, 'anki-result'), /1 word you already had was given the deck’s meaning\./);
+    const word = (await stored(page, 'words')).find((candidate) => candidate.id === '你好|ni3hao3');
+    assert.equal(word.definition, 'hello');
   });
 });

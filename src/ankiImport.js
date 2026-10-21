@@ -400,6 +400,7 @@ export function defaultChoices(description) {
   return {
     deckIds: new Set(description.decks.map((deck) => deck.id)),
     sentenceWriting: 'whole',
+    useDeckMeanings: false,
     noteTypes: Object.fromEntries(
       description.noteTypes.map((noteType) => [
         noteType.id,
@@ -514,7 +515,8 @@ export function isRadicalDeck(notes, index, radicals) {
 //          for a deck of radicals; `sentences`, true for a note type of
 //          sentences (isSentenceDeck), whose every note is a sentence
 //
-// Returns { word }, { sentence } or { problem }.
+// Returns { word, fromDeck }, { sentence } or { problem }; a sentence's
+// meaning is always the note's own, a radical's never.
 export function itemFromNote(texts, context) {
   const radical = radicalEntry(texts.characters, context.radicals);
   if (radical && radical.pinyin === '') {
@@ -726,7 +728,8 @@ function charactersOf(field, pinyinText, dictionary) {
 //          `dictionary` may be null; `likeliestEntry` picks the entry with
 //          the usual reading (dictionaryLoader.js)
 //
-// Returns { word } or { problem }, as checkWord does.
+// Returns { word, fromDeck } or { problem }, as checkWord does; `fromDeck`
+// is true where the meaning is the note's own, not the dictionary's.
 export function wordFromNote(texts, context) {
   // A sentence or phrase is not a word: itemFromNote makes it a sentence.
   if (looksLikeSentence(texts.characters)) {
@@ -842,6 +845,9 @@ export function wordFromNote(texts, context) {
       : (line) => line === pinyinText;
     meaning = proposeMeaning(meaningsIn(texts.spareMeaning, isReading), context.meaningDetail);
   }
+  // Whether the meaning is the deck's own, not the dictionary's: only that
+  // one may replace the meaning of a word already there (planAnkiImport).
+  const fromDeck = meaning !== '';
   if (meaning === '' && readings.length > 1) {
     meaning = readings
       .filter((reading) => reading.entry)
@@ -865,7 +871,7 @@ export function wordFromNote(texts, context) {
     pinyinTaiwan: entry && entry.pinyinTaiwan && entry.pinyin === pinyin ? entry.pinyinTaiwan : '',
   });
   if (!result.problem) {
-    return result;
+    return { ...result, fromDeck };
   }
   if (result.problem.startsWith('The pinyin is missing')) {
     return { problem: `No pinyin: the note has none, and ${notInDictionary}.` };
@@ -981,7 +987,7 @@ const isReadyMade = (deck) => READY_MADE_LISTS.some((list) => deck.id === list.i
 //   cards:   card records to save, worked out from those reviews
 //   report:  { notesRead, newWords, newRadicals, newSentences, wordsThere, waiting,
 //              cardsWithSchedule, reviewsCopied, alreadyStudied, sameWord,
-//              problems }
+//              otherMeanings, problems }
 //            `newRadicals`: new radicals of kind 'radical' (not counted in
 //            newWords); `newSentences`: new sentences (sentences.js), whose
 //            writing card comes suspended if `choices.sentenceWriting` is
@@ -990,7 +996,11 @@ const isReadyMade = (deck) => READY_MADE_LISTS.some((list) => deck.id === list.i
 //            in Learn;
 //            `problems`: [{ text, problem }] for notes left out;
 //            `alreadyStudied`: cards left as they are, studied here already;
-//            `sameWord`: notes that are a word another note is too
+//            `sameWord`: notes that are a word another note is too;
+//            `otherMeanings`: words already there whose meaning differs
+//            from the deck's own, given the deck's if
+//            `choices.useDeckMeanings` (the owner, 2026-10-21: off by
+//            default, and a meaning the learner wrote is replaced too)
 export function planAnkiImport(collection, choices, context) {
   const { settings, now } = context;
   const reviewsOf = groupBy(collection.reviews, (review) => review.cardId);
@@ -1027,13 +1037,14 @@ export function planAnkiImport(collection, choices, context) {
     reviewsCopied: 0,
     alreadyStudied: 0,
     sameWord: 0,
+    otherMeanings: 0,
     problems: [],
   };
 
   // Each note made into a word, and the Anki cards behind each of the
   // word's kinds of card. A word in two notes keeps, for each kind, the
   // card with the most reviews (the owner, 2026-10-19).
-  const found = new Map(); // word ID → { word, deckId, sources: { type: card } }
+  const found = new Map(); // word ID → { word, sentence, deckMeaning, deckId, sources: { type: card } }
   const reviewCount = (card) => countedReviews(reviewsOf.get(card.id) || []).length;
   // The headings of each note type's layout, left out of its fields' text.
   // And which note types are decks of radicals, whose notes become the
@@ -1076,7 +1087,13 @@ export function planAnkiImport(collection, choices, context) {
       report.sameWord += 1;
     } else {
       const home = cards.find((card) => choices.deckIds.has(card.deckId));
-      found.set(id, { word: result.word || null, sentence: result.sentence || null, deckId: home.deckId, sources: {} });
+      // The deck's own meaning, if the note has one (not the dictionary's).
+      const deckMeaning = result.sentence
+        ? result.sentence.definition
+        : result.fromDeck
+          ? result.word.definition
+          : null;
+      found.set(id, { word: result.word || null, sentence: result.sentence || null, deckMeaning, deckId: home.deckId, sources: {} });
     }
     const { sources } = found.get(id);
     for (const card of cards) {
@@ -1122,13 +1139,22 @@ export function planAnkiImport(collection, choices, context) {
   const words = [];
   const reviews = [];
   const cards = [];
-  for (const [id, { sentence, deckId, sources }] of found) {
+  for (const [id, { sentence, deckMeaning, deckId, sources }] of found) {
     let word = existing.get(id) || added.get(id);
     if (!word && sentence) {
       word = sentenceRecord(sentence, nextOrder, appDeck(deckId), now);
       nextOrder += 1;
     }
     report[existing.has(id) ? 'wordsThere' : isSentence(word) ? 'newSentences' : isRadical(word) ? 'newRadicals' : 'newWords'] += 1;
+    // A word already there keeps its meaning unless the learner chose the
+    // deck's (a switch in the check step). Its pinyin is the note's
+    // already: it is part of the word's ID.
+    if (existing.has(id) && deckMeaning && deckMeaning !== word.definition) {
+      report.otherMeanings += 1;
+      if (choices.useDeckMeanings) {
+        word = { ...word, definition: deckMeaning };
+      }
+    }
     word = withDeck(word, appDeck(deckId));
     const script = scriptFor(word, settings);
     // A tone card only for a word that can have one: a syllable per
