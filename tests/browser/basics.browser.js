@@ -59,12 +59,12 @@ describe('basics of Chinese', { concurrency: false }, () => {
       assert.equal(await textOf(page, 'basics-progress'), `${step} of 5`);
       headings.push(await heading());
     }
-    assert.deepEqual(headings, ['Characters', 'Pinyin', 'Tones', 'Four kinds of card', 'Writing']);
+    assert.deepEqual(headings, ['Characters', 'Pinyin', 'Tones', 'Writing', 'Four kinds of card']);
     assert.equal(await textOf(page, 'basics-next'), 'Done');
-    await tap(page, 'basics-back');
-    assert.equal(await heading(), 'Four kinds of card');
-    // Every kind of card has its tone mark drawn.
+    // The tone card's five marks are drawn.
     assert.equal(await page.evaluate(`document.querySelectorAll('#basics-dialog .basics-marks svg').length`), 5);
+    await tap(page, 'basics-back');
+    assert.equal(await heading(), 'Writing');
     await tap(page, 'basics-next');
     await tap(page, 'basics-next');
     assert.equal(await page.evaluate(basicsOpen), false);
