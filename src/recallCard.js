@@ -2,6 +2,7 @@
 // reading, tap to see the answer, and grade yourself.
 
 import { describeReading } from './tones.js';
+import { faceArrow, BACK } from './faceArrow.js';
 
 // A tap right after the answer appears is probably the same tap that revealed
 // it; ignore taps for this long.
@@ -79,6 +80,9 @@ export function createRecallCard(cardFace) {
     //   onContinue(): the card was tapped again after the answer was shown
     //   onAnswerShown(): optional; the answer was put on the face (each time,
     //                 also after update()), so more can be added under it
+    //   backToCard(): optional; a ‹ arrow on the face, until the answer is
+    //                 shown, goes back to the card before (Review). Showing
+    //                 the answer refills the face, which takes it away.
     start(options) {
       current = options;
       revealed = false;
@@ -88,6 +92,11 @@ export function createRecallCard(cardFace) {
       // Tells the browser which regional font to use for the characters.
       wordElement.lang = options.script === 'traditional' ? 'zh-Hant-TW' : 'zh-Hans-CN';
       cardFace.replaceChildren(wordElement, paragraph('face-hint', HINTS[options.ask]));
+      if (options.backToCard) {
+        const back = faceArrow('recall-back-button', 'Go back to the card before', BACK);
+        back.addEventListener('click', () => options.backToCard());
+        cardFace.append(back);
+      }
     },
 
     // The word's meaning was corrected while its card is showing.

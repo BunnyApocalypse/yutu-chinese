@@ -15,6 +15,8 @@
 - `src/review.js`: Review and Learn. Picks the next card or the next word to learn, hands it to the code for its kind, runs the lesson, shows the grade buttons, saves the result.
 - `src/recallCard.js`: meaning and pinyin cards (see the word, tap to reveal, grade yourself).
 - `src/toneFlow.js`: tone cards (one tone per character, by button or drawn mark, checked automatically).
+- `src/faceArrow.js`: the ‹ and › arrows on a card's face (tone, meaning and pinyin cards, a card looked back at).
+- `src/pastCard.js`: the face of a card already graded, looked back at from Review (a writing card with the raw input on each character).
 - `src/toneMark.js`: recognizes a drawn tone mark (level, rising, down-then-up, falling, dot). Plain calculation.
 - `src/tones.js`: which reading of a word applies (Taiwan or mainland), lining syllables up with characters, and which tones are accepted. Plain calculation.
 - `src/settings.js`: the settings and their panel.

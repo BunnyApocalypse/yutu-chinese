@@ -2,7 +2,8 @@
 // word (Good, Hard after a mistake or a hint, Again for a missed character),
 // what is saved once a grade is chosen (how long it took too), a meaning
 // card graded from its tap, the Card types setting leaving a kind of card
-// out, and "missed" and "right" between the characters of a word.
+// out, "missed" and "right" between the characters of a word, and going
+// back to a card graded to change its grade.
 //
 // Run with: npm run test:browser
 
@@ -446,5 +447,92 @@ describe('grading in Review', { concurrency: false }, () => {
     const review = await lastReview();
     assert.deepEqual(review.passedPerChar, [true, true]);
     assert.deepEqual(review.suggestedPerChar, [false, true]);
+  });
+
+  it('goes back to the card graded before, with the raw input, and corrects its grade', async () => {
+    await makeDue(['大|da4#writing', '大|da4', 'writing'], ['小|xiao3#writing', '小|xiao3', 'writing']);
+    const reviewsBefore = (await all('reviews')).length;
+    // The first card: no card before it, so ‹ is not offered.
+    await waitForFirstStroke();
+    assert.ok(await page.evaluate(`document.getElementById('back-button').classList.contains('unavailable')`));
+    const first = await page.evaluate(`document.getElementById('prompt-meaning').textContent`);
+    const char = first === 'big' ? '大' : '小';
+    const other = char === '大' ? '小' : '大';
+    await write(char);
+    await chooseGrade('Good');
+
+    // The next card, untouched: ‹ goes back to the one graded.
+    await waitForFirstStroke();
+    await waitUntil(page, `!document.getElementById('back-button').classList.contains('unavailable')`, 'the way back');
+    await tap(page, 'back-button');
+    await waitUntil(page, `document.getElementById('card-type').textContent === 'Writing · the card before'`, 'the card before');
+    // The raw input is there, and the grade given is pressed.
+    assert.ok(await page.evaluate(`document.querySelectorAll('#card-face .past-square .drawn-strokes path').length > 0`));
+    const pressed = `document.querySelector('#grade-row .grade[aria-pressed="true"]')?.firstChild.textContent`;
+    assert.equal(await page.evaluate(pressed), 'Good');
+    assert.ok(await page.evaluate(`document.getElementById('past-back-button').classList.contains('unavailable')`));
+
+    // Again instead: the same review corrected, no new one, the card due soon.
+    await chooseGrade('Again');
+    await waitUntil(page, `document.getElementById('card-type').textContent === 'Writing'`, 'back to the card on screen');
+    const reviews = await all('reviews');
+    assert.equal(reviews.length, reviewsBefore + 1);
+    const cardId = char === '大' ? '大|da4#writing' : '小|xiao3#writing';
+    const corrected = reviews.filter((review) => review.cardId === cardId).sort((a, b) => a.time - b.time).at(-1);
+    assert.equal(corrected.grade, 1);
+    assert.deepEqual(corrected.passedPerChar, [false]);
+    const saved = (await all('cards')).find((each) => each.id === cardId);
+    assert.ok(saved.due < Date.now() + 60 * 60 * 1000, 'a forgotten card should come back within the hour');
+    assert.equal(saved.fsrsState.lapses, 1);
+
+    // The card on screen is the other word, and once a stroke is drawn ‹
+    // stays on it.
+    await waitForFirstStroke();
+    assert.equal(await page.evaluate(`document.getElementById('prompt-meaning').textContent`), other === '大' ? 'big' : 'small');
+    const area = await writingArea(page);
+    await drawStroke(page, area, loadStrokeData(other).medians[0]);
+    assert.ok(await page.evaluate(`document.getElementById('back-button').classList.contains('unavailable')`));
+  });
+
+  it('changes a character\'s verdict on a card looked back at from the end of Review', async () => {
+    // Only 大小 due: the test before left the other word's card due.
+    await inDatabase(`
+      for (const card of ${JSON.stringify([card('大|da4#writing', '大|da4', 'writing', 30 * DAY), card('小|xiao3#writing', '小|xiao3', 'writing', 30 * DAY)])}) {
+        stores.cards.put(card);
+      }
+    `);
+    await makeDue(['大小|da4xiao3#writing', '大小|da4xiao3', 'writing']);
+    await waitForFirstStroke();
+    const area = await writingArea(page);
+    // 大 with two mistakes (missed), then 小: Again.
+    for (let count = 0; count < 2; count++) {
+      await drawStroke(page, area, [[512, 850], [512, 400], [512, -50]]);
+    }
+    for (const median of loadStrokeData('大').medians) {
+      await drawStroke(page, area, median);
+    }
+    await waitUntil(page, `!document.getElementById('verdict-row').hidden`, 'the verdict buttons');
+    await tap(page, 'next-button');
+    await write('小');
+    assert.equal(await page.evaluate(SUGGESTED), 'Again');
+    await chooseGrade('Again');
+
+    // The end of Review: back to the last card from there.
+    await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the end of Review');
+    await waitUntil(page, `!document.getElementById('look-back-button').hidden`, 'the way back');
+    await tap(page, 'look-back-button');
+    await waitUntil(page, `document.getElementById('card-type').textContent === 'Writing · the card before'`, 'the card before');
+    const squares = `[...document.querySelectorAll('#card-face .past-square')]`;
+    assert.deepEqual(await page.evaluate(`${squares}.map((square) => square.className)`), ['past-square missed', 'past-square passed']);
+    // 大 right after all: Hard (it had mistakes), saved at once.
+    await page.evaluate(`${squares}[0].click()`);
+    await waitUntil(page, `document.querySelector('#card-face .past-square').classList.contains('passed')`, 'the verdict changed');
+    const review = (await all('reviews')).filter((each) => each.cardId === '大小|da4xiao3#writing').sort((a, b) => a.time - b.time).at(-1);
+    assert.deepEqual(review.passedPerChar, [true, true]);
+    assert.equal(review.grade, 2);
+    assert.equal(await page.evaluate(`document.querySelector('#grade-row .grade[aria-pressed="true"]')?.firstChild.textContent`), 'Hard');
+    // › goes on: nothing is due, so back to the end of Review.
+    await tap(page, 'past-forward-button');
+    await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the end of Review again');
   });
 });

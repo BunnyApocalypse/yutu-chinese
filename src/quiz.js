@@ -1175,6 +1175,22 @@ export function createQuiz(target, size, handlers) {
       writer.showCharacter();
     },
 
+    // A copy of your strokes on the writing area, with its guide lines, as a
+    // picture of its own (an SVG element): for looking back at a card
+    // already graded (pastCard.js). Taken as the character is finished,
+    // while the printed one is still invisible, so that only your raw input
+    // is in it. Its viewBox lets it be shown at any size. Empty of strokes
+    // without raw input, where the printed strokes stood in for them.
+    drawing() {
+      const picture = document.createElementNS(SVG_NAMESPACE, 'svg');
+      picture.setAttribute('viewBox', `0 0 ${size} ${size}`);
+      picture.setAttribute('class', 'past-drawing');
+      picture.setAttribute('aria-hidden', 'true');
+      const gridLines = [...target.children].filter((child) => child.tagName === 'line');
+      picture.append(...gridLines.map((line) => line.cloneNode(true)), drawnLayer.cloneNode(true));
+      return picture;
+    },
+
     // Recolors the printed character of a finished quiz after its verdict
     // changed: red for missed (false), green otherwise.
     showVerdict(passed) {

@@ -1253,7 +1253,7 @@ select {
   left: 2px;
 }
 
-.card-face .face-arrow#tone-skip-button {
+.card-face .face-arrow.forward {
   left: auto;
   right: 2px;
 }
@@ -1263,7 +1263,7 @@ select {
   opacity: 1;
 }
 
-:root[data-arrows='beside'] .card-face .face-arrow#tone-skip-button {
+:root[data-arrows='beside'] .card-face .face-arrow.forward {
   left: auto;
   right: calc(-28px - var(--space-tiny));
 }
@@ -1506,6 +1506,80 @@ button.slot {
 .face-hint {
   font-size: var(--size-body);
   color: var(--muted);
+}
+
+/* A writing card looked back at (pastCard.js): your strokes on each
+   character, in squares as many to a row as --columns, green or red with
+   a ✓ or ✕ like the boxes in the row of slots. */
+.past-drawings {
+  display: grid;
+  grid-template-columns: repeat(var(--columns, 1), 1fr);
+  gap: var(--space-small);
+  width: 100%;
+}
+
+.past-square {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  min-height: 0;
+  padding: 0;
+  border: 2px solid var(--border-soft);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.past-square.passed {
+  border-color: var(--success);
+  background: var(--success-bg);
+}
+
+.past-square.missed {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.past-square.skipped {
+  border-style: dashed;
+}
+
+.past-square svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* A character skipped, or written without raw input. */
+.past-char {
+  font-size: 2.4rem;
+  line-height: 1;
+}
+
+.past-square.passed::after,
+.past-square.missed::after {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font: bold var(--size-tiny)/1 system-ui, sans-serif;
+}
+
+.past-square.passed::after {
+  content: '✓';
+  background: var(--success-text);
+  color: var(--surface);
+}
+
+.past-square.missed::after {
+  content: '✕';
+  background: var(--danger-fill);
+  color: var(--on-accent);
 }
 
 /* A tone card, while asking: the character whose tone is asked, smaller

@@ -36,6 +36,7 @@ import { isRadical, RADICAL_CARD_TYPES } from './radicals.js';
 import { cardTip } from './cardTip.js';
 import { studyByDay, streakAt, streakLine, studyDayKey } from './streak.js';
 import { createStopwatch } from './timing.js';
+import { showPastCard } from './pastCard.js';
 
 // The same for a sentence, which has two kinds of card (see sentences.js).
 const SENTENCE_LABELS = {
@@ -174,6 +175,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       stopwatch.resume();
     }
   });
+
+  // The kind of card, above it: "Writing", "Sentence · reading".
+  function labelFor(word, type) {
+    return isSentence(word) ? SENTENCE_LABELS[type] : isRadical(word) ? RADICAL_LABELS[type] : TYPE_LABELS[type];
+  }
 
   // Shows the parts of the study area that the given kind of card uses, and
   // hides the rest.
@@ -558,6 +564,15 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     await saveReview(newCard, review);
     cards.set(newCard.id, newCard);
     reviewTimes.push(reviewTime(review));
+    remember({
+      word,
+      type,
+      script: review.script,
+      cardBefore: card,
+      card: newCard,
+      review,
+      drawings: type === 'writing' ? flows.writing.drawings() : null,
+    });
     // Forgotten once too often: with that setting, the card is suspended.
     if (settings.leechAction === 'suspend' && becameLeech(card, newCard, settings.leechLapses)) {
       await suspend(word, type);
@@ -570,6 +585,209 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     showNext();
     noteStreak();
   }
+
+  // ---- Looking back at cards already graded ----
+  //
+  // The ‹ arrow on a card not yet touched goes back to the cards graded
+  // before it in this sitting of Review, the newest first, up to
+  // LOOK_BACK_LIMIT (the owner, 2026-10-21: "the last 10 or so cards I've
+  // studied should be able to be kept and I should be able to go back and
+  // change my grading"). One looked back at shows how it was answered
+  // (pastCard.js; a writing card with your raw input), with the grades
+  // under it and the grade given pressed.
+  //
+  // Another grade, or on a writing card a character's verdict changed (the
+  // grade then becomes the one suggested), corrects the review: it is saved
+  // again under its own ID and time, and the card's schedule worked out
+  // again from the card as it was before (`cardBefore`), as if that had been
+  // the answer at the time. It is the one change ever made to a review once
+  // saved (the owner: "this is a correction, not an addition"). Combining
+  // backups is not affected: no other device can have the review yet.
+  // Only while the card has not been graded again since (an Again card that
+  // came back): then its grade stays.
+  //
+  // ›, a tap on the face, or a grade goes on: to the card after, and from
+  // the newest back to Review, which shows the next card afresh. Kept in
+  // memory only, for as long as the page is open.
+  const LOOK_BACK_LIMIT = 10;
+  // A tap on the face this soon after a card looked back at comes up is
+  // taken for the tap that brought it (as in the other files' own
+  // TAP_TO_CONTINUE_DELAY_MS).
+  const TAP_TO_CONTINUE_DELAY_MS = 200;
+  // { word, type, script, cardBefore, card, review, drawings }, oldest first.
+  let graded = [];
+  // Which of them is on screen, or null.
+  let lookingBack = null;
+  let pastTapAllowedFrom = 0;
+  // At the end of Review, where there is no card to tap ‹ on.
+  const lookBackButton = document.getElementById('look-back-button');
+  lookBackButton.addEventListener('click', () => lookBackAt(graded.length - 1));
+
+  function remember(entry) {
+    graded = [...graded, entry].slice(-LOOK_BACK_LIMIT);
+  }
+
+  // For the card about to be shown: going back to the cards before, or null
+  // where there is none, and not in a lesson, Free practice or Learn.
+  function backToCard() {
+    return mode === 'review' && !practicing && lesson === null && graded.length > 0
+      ? () => lookBackAt(graded.length - 1)
+      : null;
+  }
+
+  function lookBackAt(index) {
+    lookingBack = index;
+    const entry = graded[index];
+    // From the end of Review, which looks again every few seconds.
+    clearTimeout(recheckTimer);
+    donePanel.hidden = true;
+    studyArea.hidden = false;
+    setFocus(true);
+    stopFlows();
+    hideGrades();
+    endLesson();
+    showNotice('');
+    // The card left is shown afresh on coming back: its time starts again.
+    stopwatch.stop();
+    current = { word: entry.word, type: entry.type, card: entry.card };
+    const back = graded.length - index;
+    typeElement.textContent = `${labelFor(entry.word, entry.type)} · ${back === 1 ? 'the card before' : `${back} cards back`}`;
+    showScriptFlag(entry.word);
+    // On the card's face, whatever its kind.
+    showPartsFor('meaning');
+    // Above a writing card, as when it was written; the other kinds have
+    // the reading and meaning on their face.
+    meaningElement.textContent = entry.type === 'writing' ? entry.word.definition : '';
+    if (entry.type === 'writing') {
+      showPinyin();
+    } else {
+      pinyinElement.hidden = true;
+    }
+    pinyinButton.hidden = true;
+    offerListen(true);
+    showPast();
+    pastTapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
+  }
+
+  function showPast() {
+    const entry = graded[lookingBack];
+    showPastCard(
+      cardFace,
+      {
+        type: entry.type,
+        text: entry.word[entry.script],
+        script: entry.script,
+        reading: readingOf(entry.word),
+        meaning: entry.word.definition,
+        drawings: entry.drawings,
+        passedPerChar: entry.review.passedPerChar,
+        skippedPerChar: entry.review.skippedPerChar,
+      },
+      {
+        onVerdict: changeVerdict,
+        onBack: lookingBack > 0 ? () => lookBackAt(lookingBack - 1) : null,
+        onForward: lookForward,
+      },
+    );
+    renderPastGrades();
+  }
+
+  // The grades under a card looked back at: what each would have done at
+  // the time, the one given pressed.
+  function renderPastGrades() {
+    const entry = graded[lookingBack];
+    const time = entry.review.time;
+    const choices = gradeOptions(entry.cardBefore ? entry.cardBefore.fsrsState : null, new Date(time));
+    const changeable = canCorrect(entry);
+    const given = gradeFor(entry.review.grade, settings.gradeButtons);
+    const buttons = gradeButtons(settings.gradeButtons);
+    gradeRow.replaceChildren();
+    gradeRow.classList.toggle('two', buttons.length === 2);
+    for (const [index, { value, label }] of buttons.entries()) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = value === given ? 'grade primary' : 'grade';
+      button.setAttribute('aria-pressed', String(value === given));
+      button.title = `${label} (key ${index + 1})`;
+      button.setAttribute('aria-keyshortcuts', String(index + 1));
+      button.disabled = !changeable;
+      const wait = document.createElement('span');
+      wait.className = 'wait';
+      wait.textContent = formatInterval(choices[value].due - time);
+      button.append(label, wait);
+      button.addEventListener('click', () => regrade(value));
+      gradeRow.appendChild(button);
+    }
+    gradeRow.hidden = false;
+    showNotice(changeable ? '' : 'Graded again since, so this grade stays.');
+  }
+
+  // A review can be corrected while it is still the card's latest, and the
+  // word is still there.
+  function canCorrect(entry) {
+    const stored = cards.get(entry.card.id);
+    return Boolean(stored) && stored.lastReviewedAt === entry.review.time && words.some((word) => word.id === entry.word.id);
+  }
+
+  // Saves the review again with grade `value` (and these verdicts on a
+  // writing card), and the card as that grade would have left it.
+  async function correct(entry, value, passedPerChar) {
+    const time = entry.review.time;
+    const chosen = gradeOptions(entry.cardBefore ? entry.cardBefore.fsrsState : null, new Date(time))[value];
+    // A word of one character: the grade is its verdict (as in grade()).
+    const verdicts = entry.type === 'writing' && passedPerChar?.length === 1 ? [value !== AGAIN] : passedPerChar;
+    const card = { ...entry.card, due: chosen.due, fsrsState: chosen.fsrsState };
+    const review = { ...entry.review, grade: value, log: chosen.log, ...(verdicts && { passedPerChar: verdicts }) };
+    await saveReview(card, review);
+    cards.set(card.id, card);
+    entry.card = card;
+    entry.review = review;
+  }
+
+  // A grade tapped on a card looked back at: saved if it differs, and on.
+  async function regrade(value) {
+    const entry = graded[lookingBack];
+    if (!entry || !canCorrect(entry)) {
+      return;
+    }
+    if (value !== gradeFor(entry.review.grade, settings.gradeButtons)) {
+      await correct(entry, gradeFor(value, settings.gradeButtons), entry.review.passedPerChar);
+    }
+    lookForward();
+  }
+
+  // A character's square tapped on a writing card looked back at: its
+  // verdict turns, and the grade becomes the one then suggested.
+  async function changeVerdict(index) {
+    const entry = graded[lookingBack];
+    if (!entry || !canCorrect(entry)) {
+      return;
+    }
+    const verdicts = [...entry.review.passedPerChar];
+    verdicts[index] = !verdicts[index];
+    const mistakes = (entry.review.mistakesPerChar ?? []).reduce((total, count) => total + count, 0);
+    const suggestion = suggestGrade({ passedPerChar: verdicts, mistakes, hintPerChar: entry.review.hintPerChar ?? [] });
+    await correct(entry, gradeFor(suggestion, settings.gradeButtons), verdicts);
+    showPast();
+  }
+
+  function lookForward() {
+    if (lookingBack !== null && lookingBack < graded.length - 1) {
+      lookBackAt(lookingBack + 1);
+      return;
+    }
+    lookingBack = null;
+    showNotice('');
+    showNext();
+  }
+
+  // A tap on the face of a card looked back at goes on (the arrows and the
+  // squares keep their taps to themselves).
+  cardFace.addEventListener('pointerup', () => {
+    if (lookingBack !== null && Date.now() >= pastTapAllowedFrom) {
+      lookForward();
+    }
+  });
 
   // ---- Streaks (streak.js) ----
 
@@ -792,6 +1010,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       },
       // Tapping the writing area accepts the suggested grade.
       onContinue: () => grade(suggested),
+      // ‹ on a word not yet touched: the cards graded before.
+      backToCard: backToCard(),
     });
   }
 
@@ -815,6 +1035,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         });
       },
       onContinue: () => grade(suggested),
+      backToCard: backToCard(),
     });
   }
 
@@ -830,6 +1051,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       ask,
       onReveal: () => offerGrades(GOOD, {}),
       onContinue: () => grade(suggested),
+      backToCard: backToCard(),
       // Under the answer, the word's learning tip (cardTip.js).
       onAnswerShown: () => addTip(word, script, () => current && current.word === word && current.type === ask),
     });
@@ -855,6 +1077,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // the word can't have that kind of card. (Writing practice is handled by
   // main.js, since it works for any characters, not only words in the list.)
   function practice(word, type) {
+    lookingBack = null;
     stopFlows();
     hideGrades();
     if (type === 'tone' && toneAnswersOf(word) === null) {
@@ -1471,6 +1694,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // Works out what is next and puts it on screen.
   async function showNext() {
     clearTimeout(recheckTimer);
+    lookingBack = null;
     if (!active) {
       return;
     }
@@ -1482,6 +1706,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     learnNextButton.hidden = true;
     offerAdding(false);
     lessonBackButton.hidden = true;
+    lookBackButton.hidden = true;
     meaningElement.textContent = '';
     pinyinElement.hidden = true;
     pinyinButton.hidden = true;
@@ -1545,6 +1770,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // the way there when words are waiting.
       learnNextButton.textContent = 'Learn new words';
       learnNextButton.hidden = plan.waitingCount === 0;
+      lookBackButton.hidden = !(mode === 'review' && graded.length > 0);
       offerAdding(words.length === 0);
       // The end of Review with words studied, as it comes up (not at each
       // look again): the moment for the message about keeping the words
@@ -1564,11 +1790,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     setFocus(true);
     donePanel.hidden = true;
     studyArea.hidden = false;
-    typeElement.textContent = isSentence(current.word)
-      ? SENTENCE_LABELS[current.type]
-      : isRadical(current.word)
-        ? RADICAL_LABELS[current.type]
-        : TYPE_LABELS[current.type];
+    typeElement.textContent = labelFor(current.word, current.type);
     showScriptFlag(current.word);
     showPartsFor(current.type);
     offerListen(current.type === 'writing' || current.type === 'meaning');
@@ -1666,6 +1888,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
     // Leaves the page ready for Free practice, which uses the writing parts.
     deactivate() {
+      lookingBack = null;
       setFocus(false);
       page.classList.remove('learning');
       countsRow.hidden = false;
@@ -1679,6 +1902,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       stopFlows();
       donePanel.hidden = true;
       learnNextButton.hidden = true;
+      lookBackButton.hidden = true;
       offerAdding(false);
       studyArea.hidden = false;
       endLesson();

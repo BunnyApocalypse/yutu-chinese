@@ -5,6 +5,7 @@ import { formatPinyin } from './wordList.js';
 import { TONE_LABELS, describeReading } from './tones.js';
 import { recognizeToneMark } from './toneMark.js';
 import { fillMixed, langFor } from './lang.js';
+import { faceArrow, BACK, FORWARD } from './faceArrow.js';
 
 // After a right answer, the next character comes up by itself after this long.
 const MOVE_ON_AFTER_MS = 500;
@@ -95,28 +96,11 @@ export function createToneFlow(elements) {
   // True once onDone has been called: going back afterwards is practice.
   let doneOnce = false;
 
-  // The arrows, over the card's edges or beside it as on the writing area
-  // (style.css, data-arrows): back to the character before, and on past
+  // The arrows (faceArrow.js): back to the character before, and on past
   // this one. Put on the card's face with each question, since the face is
   // refilled.
-  // The arrow is drawn, as are all the app's arrows (index.html).
-  function arrow(id, label, path) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.id = id;
-    button.className = 'side-arrow face-arrow';
-    button.innerHTML =
-      '<svg class="side-arrow-icon" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" ' +
-      `stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="${path}" /></svg>`;
-    button.setAttribute('aria-label', label);
-    button.title = label;
-    // Not a stroke of a tone mark, nor a tap on the card.
-    button.addEventListener('pointerdown', (event) => event.stopPropagation());
-    button.addEventListener('pointerup', (event) => event.stopPropagation());
-    return button;
-  }
-  const backArrow = arrow('tone-back-button', 'Go back to the character before', 'M15 5 L8 12 L15 19');
-  const skipArrow = arrow('tone-skip-button', 'Skip this character (counts as right)', 'M9 5 L16 12 L9 19');
+  const backArrow = faceArrow('tone-back-button', 'Go back to the character before', BACK);
+  const skipArrow = faceArrow('tone-skip-button', 'Skip this character (counts as right)', FORWARD);
 
   // "What are tones?", under what to do while asking (the owner, 2026-10-21,
   // after tester 3, who had almost no Chinese). On the card's face, which is
@@ -132,8 +116,17 @@ export function createToneFlow(elements) {
   tonesLink.addEventListener('pointerup', (event) => event.stopPropagation());
   tonesLink.addEventListener('click', () => onWhatAreTones());
 
+  // Back to the card before (Review, options.backToCard): from the first
+  // character, before any tone has been given or skipped.
+  function canGoBackACard() {
+    return Boolean(current?.backToCard) && position === 0 && givenTones.length === 0 && skippedPerChar.length === 0;
+  }
+
   function showArrows() {
-    backArrow.classList.toggle('unavailable', !(state === 'asking' && position > 0));
+    backArrow.classList.toggle('unavailable', !(state === 'asking' && (position > 0 || canGoBackACard())));
+    const label = position === 0 ? 'Go back to the card before' : 'Go back to the character before';
+    backArrow.setAttribute('aria-label', label);
+    backArrow.title = label;
     skipArrow.classList.toggle('unavailable', !(state === 'asking' && chars.length > 1));
   }
 
@@ -259,10 +252,14 @@ export function createToneFlow(elements) {
   }
 
   function goBack() {
-    if (!current || state !== 'asking' || position === 0) {
+    if (!current || state !== 'asking') {
       return;
     }
-    askAt(position - 1);
+    if (position > 0) {
+      askAt(position - 1);
+    } else if (canGoBackACard()) {
+      current.backToCard();
+    }
   }
 
   backArrow.addEventListener('click', goBack);
@@ -437,6 +434,8 @@ export function createToneFlow(elements) {
     //   onDone({ givenTones, passedPerChar, variantPerChar }): every
     //            character was answered
     //   onContinue(): the card was tapped after that
+    //   backToCard(): optional; the ‹ arrow on the first character, before
+    //            anything is answered, goes back to the card before (Review)
     start(options) {
       clearTimeout(moveOnTimer);
       current = options;

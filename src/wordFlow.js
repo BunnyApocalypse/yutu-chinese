@@ -151,10 +151,17 @@ export function createWordFlow(elements) {
   //                        accepted stroke orders, otherwise null
   let skippedPerChar = []; // true where the character was skipped, not written
   let finishedPerChar = []; // true once the character has been written or skipped
+  let drawingPerChar = []; // a copy of the raw input as each character was
+  //                          finished (quiz.drawing), for looking back at the
+  //                          card once graded (pastCard.js)
   let retriesPerChar = []; // where starting again wipes the slate: how many
   //                          times it was started again after a mistake or a
   //                          hint, so that "✓ 2nd try" can say it was not
   //                          right at first (tester 2, 2026-10-17)
+
+  // True once anything has been drawn on the word (a stroke, right or
+  // wrong), for backToCard.
+  let touched = false;
 
   // Mistakes on the current character so far in this attempt, and mistakes
   // from earlier attempts at it (before Clear or Animate was pressed).
@@ -314,13 +321,32 @@ export function createWordFlow(elements) {
     return position - 1;
   }
 
+  // Back to the card before (Review, options.backToCard; the owner,
+  // 2026-10-21): from the first character, while nothing has been done on
+  // the word, so that coming back to it loses nothing.
+  function canGoBackACard() {
+    return (
+      Boolean(options.backToCard) &&
+      position === 0 &&
+      !touched &&
+      !charDone &&
+      !finishedPerChar.some(Boolean) &&
+      !peekedPerChar[0] &&
+      !hintPerChar[0] &&
+      !quiz.hintShownNow()
+    );
+  }
+
   function canGoBack() {
-    return backTarget() !== -1;
+    return backTarget() !== -1 || canGoBackACard();
   }
 
   function showArrows() {
     skipButton.classList.toggle('unavailable', !canSkip());
     backButton.classList.toggle('unavailable', !canGoBack());
+    const label = backTarget() === -1 && canGoBackACard() ? 'Go back to the card before' : 'Go back to the character before';
+    backButton.setAttribute('aria-label', label);
+    backButton.title = label;
   }
 
   // The stroke being written out of how many: "3/7". With hideStrokeCount
@@ -409,6 +435,10 @@ export function createWordFlow(elements) {
     },
     onProgress({ strokesDone, totalStrokes, totalMistakes }) {
       currentMistakes = totalMistakes;
+      if (!touched && !practicing) {
+        touched = true;
+        showArrows();
+      }
       // While the last stroke's completion is being reported, onComplete takes over.
       showProgress(Math.min(strokesDone + 1, totalStrokes), totalStrokes, strokesDone > 0 || totalMistakes > 0);
     },
@@ -429,6 +459,8 @@ export function createWordFlow(elements) {
       }
       finishedPerChar[position] = true;
       orderPerChar[position] = order;
+      // Before the quiz colors the printed character: your strokes alone.
+      drawingPerChar[position] = quiz.drawing();
       // Writing the mainland order is accepted; the note only points out that
       // the standard order is different.
       orderNote.hidden = order !== 'mainland';
@@ -457,6 +489,7 @@ export function createWordFlow(elements) {
       return passedPerChar[position] && retriesPerChar[position] > 0 ? 'retried' : passedPerChar[position];
     },
     onAnimateStart() {
+      showArrows();
       nextButton.hidden = true;
       orderNote.hidden = true;
       hideProgress();
@@ -531,6 +564,8 @@ export function createWordFlow(elements) {
     const target = backTarget();
     if (target !== -1) {
       goTo(target);
+    } else if (canGoBackACard()) {
+      options.backToCard();
     }
   }
 
@@ -572,6 +607,7 @@ export function createWordFlow(elements) {
     outlineButton.textContent = visible ? 'Hide outline' : 'Show outline';
     if (visible && chars.length > 0 && !practicing) {
       peekedPerChar[position] = true;
+      showArrows();
     }
   }
 
@@ -736,6 +772,9 @@ export function createWordFlow(elements) {
     //                  finished
     //   onContinue():  Next was pressed, or the writing area tapped, after the
     //                  word was finished
+    //   backToCard():  the ‹ arrow on the first character, while nothing has
+    //                  been done on the word, goes back to the card before
+    //                  (Review; see canGoBackACard)
     async start(text, newOptions) {
       // Array.from splits text into whole characters. (Plain text.split('')
       // would cut some rare characters in half.) Spaces are dropped.
@@ -780,8 +819,18 @@ export function createWordFlow(elements) {
       skippedPerChar = [];
       finishedPerChar = [];
       retriesPerChar = [];
+      drawingPerChar = [];
+      touched = false;
       await showCurrentCharacter();
       return true;
+    },
+
+    // Each character written, with a copy of your strokes on it as it was
+    // finished ({ char, picture }: an SVG element, see quiz.drawing;
+    // undefined for one skipped): for looking back at the card once graded.
+    // The characters are those with stroke data, as passedPerChar's are.
+    drawings() {
+      return chars.map((char, index) => ({ char, picture: drawingPerChar[index] }));
     },
 
     // Writes the character on screen again once the word is finished: as
