@@ -64,8 +64,8 @@ The notes left: 着名 and 煳涂 (the deck's old forms, which the dictionary la
 Five changes, after the owner tried the branch on the study-data files. One at a time, with pictures for the owner before the next; checked with `node scripts/check-anki-import.js` before and after.
 
 1. **Built on 2026-10-21: the deck's own meaning before the dictionary's** ("The meaning" above); the owner accepted it.
-2. **Built on 2026-10-21: fewer checkboxes in decks with many card types** ("The check step" above), not yet seen by the owner.
-3. **Built on 2026-10-21: sentences brought over as the app's sentences** ("Sentences" above), not yet seen by the owner.
+2. **Built on 2026-10-21: fewer checkboxes in decks with many card types** ("The check step" above); the owner accepted it.
+3. **Built on 2026-10-21: sentences brought over as the app's sentences** ("Sentences" above); the owner accepted it.
 4. **A switch for words already there** (the owner: "this should be a toggle, perhaps"). Today a word the learner already has keeps its meaning (and everything else); only its decks change (`report.wordsThere`). Plan: a checkbox in the check step, shown only when the file has such words, e.g. "Use the deck's meanings for the 124 words you already have", off by default. To decide when planning: whether it covers only the meaning, or the pinyin too, and that the word's `changedAt` is stamped (`putAll`), so combining backups takes the new meaning.
 5. **"Working on it" while the file is read and imported.** Reading a big file and planning the import take a few seconds and hold up the page (Mei's file about 1 s to plan, more on a phone), so the button seems not to have worked. Plan: a moving sign beside "Reading the file…" and "Importing…", and the button disabled. The work runs on the page's main thread in one go, so the page has to be given a moment to draw the sign first (wait for a frame before planning), and a CSS animation of `transform` keeps moving while the work runs; moving the work into a Web Worker is the bigger alternative.
 
