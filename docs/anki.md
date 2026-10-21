@@ -31,6 +31,31 @@ Roadmap item 5, built on 2026-10-19, for learners moving from Anki. Decided with
 - **Libraries** (the owner's approval, 2026-10-19): `sql.js` (SQLite compiled to WebAssembly, MIT; fetched only when a file is read: a 40 KB script and a 685 KB `.wasm`, kept offline across versions with the dictionary, `scripts/build-offline.js`) and `fzstd` (zstd, MIT, 24 KB). Credits in `credits-dialog`.
 - **Tests:** `tests/fixtures/anki/` holds a small collection made by Anki itself in four exports, with the script that makes them (`make-fixtures.py`, needs `pip install anki`); `tests/browser/anki.browser.js` imports in the real app. For trying it by hand on real decks: four shared decks from GitHub in the git-ignored `local/anki-decks/downloads/`, and `scripts/anki-study-data.py`, which gives them the made-up histories of three learners in Anki (SM-2 and FSRS, leeches, Forget, Set due date, a filtered deck, a lapsed backlog, an export in the middle of a session) and exports them in every format to `local/anki-decks/study-data/` (`local/README.md`).
 
+## Planned: real shared decks (2026-10-21)
+
+Tried on four real shared decks and their made-up study histories (`local/anki-decks/`, `local/README.md`), the import fails on most notes of three of them. Planned with the owner on 2026-10-21; **two milestones**, the first in progress. Each step is checked with `node scripts/check-anki-import.js` (what the import makes of a file with the default choices) on the four downloads and five study-data files, before and after.
+
+**What goes wrong** (measured that day):
+
+| Deck | Fails | Cause |
+|---|---|---|
+| Anki-xiehanzi HSK 2012 (download) | 2,892 of 4,995, "The meaning is missing" | Its text is in Unicode's decomposed form ("a" + a separate accent: 4,993 notes), so "ài" isn't read as pinyin; and the pinyin check takes "HSK 1" and "Top 500" for pinyin (`tidyPinyin` gives "HSK1"), so the HskLevel field becomes the pinyin, no dictionary entry matches, and no meaning is filled in. The same deck once Anki has saved it (composed form) fails on 9. |
+| hanzi_3000 | 2,191 of 3,184 | `guessRoles` scores a field by the share of its *filled* notes that fit: Examples Pinyin (178 of 178 filled) beats Pinyin (194 of 200). |
+| Kangxi radicals (Anki-xiehanzi) | 414 of 428 | The same: Simplified (15 of 15 filled, and its name) beats Radical (200 of 200). |
+| All | meanings | Headings of the deck's layout come along: "Common Meaning; to love". |
+| Mei's study data | 14 s (simplified) to 28 s (traditional) in Node | 12 of 12.5 s in `replay`/`gradeOptions` (`src/scheduler.js`): every review works out all four grades and turns each into plain data (`toPlainData`, a JSON round trip, 9 s alone), and `planAnkiImport` replays each card's whole history twice (in `importedSchedule` and again for the card record, whose result is the imported schedule anyway). |
+
+**Milestone 1: reading real decks** (in this order; the owner, 2026-10-21):
+
+1. **Composed form:** `cleanField` normalizes to NFC (`.normalize('NFC')`), as Anki does when it saves a note.
+2. **Pinyin only if every syllable is Mandarin:** a plain list of the ~410 syllables of standard Mandarin in a small file of its own (facts, no license; no dependency), used by `isPinyin` in `src/ankiImport.js` so that "HSK 1", "Top 500" and Vietnamese "nhất" aren't pinyin. Check `tidyPinyin`'s other callers before changing it rather than `isPinyin`.
+3. **Field guessing** (`guessRoles`): count a field by how many of *all* sampled notes fit (with the share of filled notes still required to be at least half), and give a field named exactly Pinyin, Meaning, Hanzi (and the like) more than one whose name only contains the word. Worked out on paper: score = (fit / filled + fit / sampled) / 2, name contains a hint +0.2, name is exactly a hint +0.3 (empty field: as now). It picks Pinyin over Examples Pinyin (1.27 to 1.15), Radical over Simplified (1.0 to 0.79), and SimpleMeaning over PartOfSpeech (1.10 to 0.97); check on all nine files and the fixtures that no right guess turns wrong.
+4. **Headings dropped:** a line that is in more than half a field's notes is the deck's layout ("Common Meaning", "Radical"), not content; left out of that field's text, in the import and in the pop-up's "First note:" line.
+5. **Radicals as the app's radicals** (the owner chose this over leaving them out or bringing them in as words, 2026-10-21: "the most complete"). A note whose characters are one of the app's radicals (`src/radicals.js`, `docs/word-lists.md`, "Radicals") becomes that item, not a word: the word itself where the radical is a word of the lists (水), else the `kind: 'radical'` record (`<traditional>|radical`, the list's meaning, meaning and writing cards only, `RADICAL_CARD_TYPES`). Its Anki reviews go to the meaning card; a pinyin choice for it is ignored. To decide in the building: whether the radical list is loaded for the import (it is a ready-made list file), and whether such notes go into the Anki deck only or also the ready-made Radicals deck (likely only the Anki deck, as for words). The Kangxi deck's Write cards (front: the meaning, back: the radical, drawn in Anki) could be offered for Writing as for words (`couldBeWriting`).
+6. **Tests and docs:** unit tests in `tests/ankiImport.test.js` with small made-up notes in each of these shapes (never the decks themselves: their licenses); `npm test`, then `tests/browser/anki.browser.js` in the background; this section rewritten as what is true.
+
+**Milestone 2: speed** (separate, since `replay` is used by studying and combining backups): `planAnkiImport` takes the card record's schedule from the imported-schedule record instead of replaying again; `replay` works out only the grade given (ts-fsrs `next`) and turns the state into plain data once at the end. Before switching, check that the old and new `replay` give identical results on all of Mei's 51,178 copied reviews and on the tests. Aim: under 3 s for Mei's file.
+
 ## Not built
 
 - Audio and pictures from the notes; tags; sentences or cloze notes as sentences.
