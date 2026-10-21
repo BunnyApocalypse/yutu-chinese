@@ -3512,7 +3512,8 @@ button.deck-open {
   column-gap: var(--space-large);
 }
 
-.anki-dialog input[type='checkbox'] {
+.anki-dialog input[type='checkbox'],
+.anki-dialog input[type='radio'] {
   width: 20px;
   height: 20px;
 }

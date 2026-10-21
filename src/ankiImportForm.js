@@ -6,7 +6,15 @@
 
 import { saveImport, randomId } from './db.js';
 import { openAnkiFile, readCollection } from './ankiFile.js';
-import { describeCollection, defaultChoices, planAnkiImport, itemFromNote, isRadicalDeck } from './ankiImport.js';
+import {
+  describeCollection,
+  defaultChoices,
+  planAnkiImport,
+  itemFromNote,
+  isRadicalDeck,
+  isSentenceDeck,
+  countSentenceNotes,
+} from './ankiImport.js';
 import { isRadical } from './radicals.js';
 import { formatPinyin } from './wordList.js';
 import { CARD_TYPES } from './session.js';
@@ -144,7 +152,54 @@ export function createAnkiImport(shared, dictionaryLoader) {
       }),
     );
 
-    byId('anki-note-types').replaceChildren(...description.noteTypes.map(noteTypeChoices));
+    const sentences = sentenceChoice();
+    byId('anki-note-types').replaceChildren(
+      ...description.noteTypes.map(noteTypeChoices),
+      ...(sentences ? [sentences] : []),
+    );
+  }
+
+  // Notes that are a sentence come over as the app's sentences (the owner,
+  // 2026-10-21): a reading card, and a writing card for the whole sentence
+  // or none, as the learner chooses here. Shown only if the file has some.
+  function sentenceChoice() {
+    const count = countSentenceNotes(collection, choices);
+    if (count === 0) {
+      return null;
+    }
+    const fieldset = document.createElement('fieldset');
+    fieldset.className = 'setting anki-note-type';
+    const legend = document.createElement('legend');
+    legend.textContent = `Sentences · ${plural(count, 'note')}`;
+    const about = document.createElement('p');
+    about.textContent =
+      'Notes that are a sentence or phrase come over as sentences, with a card for reading them: what does it mean? ' +
+      'Sentences have no pinyin or tone cards.';
+    const question = document.createElement('p');
+    question.textContent = 'Their writing card:';
+    const options = document.createElement('div');
+    options.className = 'anki-choices';
+    for (const [value, text] of [
+      ['whole', 'Write the whole sentence'],
+      ['none', 'No writing card'],
+    ]) {
+      const label = document.createElement('label');
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'anki-sentence-writing';
+      input.value = value;
+      input.checked = choices.sentenceWriting === value;
+      input.addEventListener('change', () => {
+        choices.sentenceWriting = value;
+      });
+      label.append(input, ` ${text}`);
+      options.append(label);
+    }
+    const hint = document.createElement('p');
+    hint.className = 'hint';
+    hint.textContent = 'Without one, you can switch a sentence’s writing card on later, in its panel.';
+    fieldset.append(legend, about, question, options, hint);
+    return fieldset;
   }
 
   // A heading inside "Change this", with what it asks under it.
@@ -210,11 +265,19 @@ export function createAnkiImport(shared, dictionaryLoader) {
           likeliestEntry: dictionaryLoader.likeliestEntry,
           meaningDetail: settings.meaningDetail,
           radicals: isRadicalDeck(notesOfType, choice.roles.characters, radicals) ? radicals : null,
+          sentences: isSentenceDeck(notesOfType, choice.roles.characters),
         },
       );
       if (result.problem) {
         fillMixed(becomes, `The first note would be left out. ${result.problem}`, settings.script);
         return false;
+      }
+      if (result.sentence) {
+        becomes.textContent = 'Each note becomes a sentence, like:';
+        const example = document.createElement('strong');
+        fillMixed(example, `${result.sentence[settings.script]} · ${result.sentence.definition}`, settings.script);
+        becomes.append(example);
+        return true;
       }
       const { word } = result;
       // A radical has no reading of its own.
@@ -230,6 +293,18 @@ export function createAnkiImport(shared, dictionaryLoader) {
     // and the summary at the top says so.
     function showCountsFor() {
       countsFor.hidden = startsNew.hidden = description.reviewCount === 0;
+      // Sentences: their reading card is the one a meaning template counts
+      // for; writing is asked under "Sentences" below.
+      if (isSentenceDeck(notesOfType, choice.roles.characters)) {
+        const counted = noteType.templates.some(
+          (template) => template.cardCount > 0 && choice.templates[template.ord].includes('meaning'),
+        );
+        countsFor.textContent = counted
+          ? 'Your Anki reviews count for their reading card.'
+          : 'Your Anki reviews aren’t used: their cards start new in Review.';
+        startsNew.hidden = true;
+        return;
+      }
       const counted = CARD_TYPES.filter((type) =>
         noteType.templates.some((template) => template.cardCount > 0 && choice.templates[template.ord].includes(type)),
       );
@@ -390,12 +465,13 @@ export function createAnkiImport(shared, dictionaryLoader) {
   });
 
   // "Brought over 12 new words and 3 radicals.", or as many as there are.
-  function broughtOver({ newWords, newRadicals, wordsThere }) {
+  function broughtOver({ newWords, newRadicals, newSentences, wordsThere }) {
     const brought = [
-      newWords > 0 || (newRadicals === 0 && wordsThere === 0) ? plural(newWords, 'new word') : '',
+      newWords > 0 || (newRadicals === 0 && newSentences === 0 && wordsThere === 0) ? plural(newWords, 'new word') : '',
       newRadicals > 0 ? plural(newRadicals, 'radical') : '',
+      newSentences > 0 ? plural(newSentences, 'sentence') : '',
     ].filter(Boolean);
-    return brought.length > 0 ? `Brought over ${brought.join(' and ')}.` : 'No new words.';
+    return brought.length > 0 ? `Brought over ${andList(brought)}.` : 'No new words.';
   }
 
   // What was brought over, a line for each thing, then the notes left out

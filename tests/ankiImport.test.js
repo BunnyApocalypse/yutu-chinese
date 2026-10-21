@@ -15,6 +15,7 @@ import {
   defaultChoices,
   guessRoles,
   guessSpareMeaning,
+  isSentenceDeck,
   meaningsIn,
   layoutLines,
   fieldText,
@@ -366,6 +367,53 @@ test("a textbook's way of writing pinyin is read", () => {
     wordFromNote({ characters: '對不起', pinyin: 'Duībùqǐ (sorry)', meaning: 'x' }, context).problem,
     'The note’s pinyin “Duībùqǐ (sorry)” can’t be read.',
   );
+});
+
+test("a note that is a sentence becomes one of the app's sentences", () => {
+  const context = contextWith({
+    dictionary: readDictionary(['老師\t老师\tlao3shi1\tteacher', '學校\t学校\txue2xiao4\tschool'].join('\n')),
+  });
+  // A label before it is left out; the other script comes word by word.
+  assert.deepEqual(itemFromNote({ characters: 'a: 老師在學校。', pinyin: '', meaning: 'a/b: The teacher is at school.' }, context), {
+    sentence: { traditional: '老師在學校。', simplified: '老师在学校。', pinyin: '', definition: 'The teacher is at school.' },
+  });
+  assert.equal(itemFromNote({ characters: '老师在学校。', pinyin: '', meaning: 'x' }, context).sentence.traditional, '老師在學校。');
+  assert.match(itemFromNote({ characters: '老師在學校。', pinyin: '', meaning: '' }, context).problem, /meaning/);
+  // A word is still a word.
+  assert.ok(itemFromNote({ characters: '老師', pinyin: '', meaning: '' }, context).word);
+
+  // In a note type of sentences, a phrase is a sentence too.
+  const notes = ['我姓王。', '書在哪兒？', '這個人'].map((text) => ({ fields: [text, 'x'] }));
+  assert.equal(isSentenceDeck(notes, 0), true);
+  assert.equal(isSentenceDeck([{ fields: ['老師'] }, { fields: ['學校'] }, { fields: ['我姓王。'] }], 0), false);
+  assert.ok(itemFromNote({ characters: '這個人', pinyin: '', meaning: 'this person' }, { ...context, sentences: true }).sentence);
+
+  // Imported: a reading card with Anki's history; the writing card
+  // suspended if the learner wants none.
+  const collection = {
+    createdAt: CRT,
+    noteTypes: [{ id: 1, name: 'Grammar', fields: ['Example', 'English'], templates: [{ ord: 0, name: 'Card 1', front: '{{Example}}', back: '{{English}}' }] }],
+    decks: [{ id: 10, name: 'Grammar' }],
+    notes: [{ id: 100, noteTypeId: 1, fields: ['我姓王。', 'My name is Wang.'], tags: '' }],
+    cards: [{ id: 1000, noteId: 100, deckId: 10, ord: 0, type: 2, queue: 2, due: 30, interval: 5, factor: 2500, reps: 1, lapses: 0, data: '' }],
+    reviews: [{ id: NOW - 5 * 86400000, cardId: 1000, ease: 3, interval: 5, lastInterval: 0, factor: 2500, took: 4000, type: 0 }],
+  };
+  const choices = {
+    deckIds: new Set([10]),
+    noteTypes: { 1: { roles: { characters: 0, pinyin: null, meaning: 1 }, spareMeaning: null, templates: { 0: ['meaning', 'pinyin', 'tone'] } } },
+    sentenceWriting: 'none',
+  };
+  const plan = planAnkiImport(collection, choices, contextWith());
+  assert.equal(plan.report.newSentences, 1);
+  assert.equal(plan.report.newWords, 0);
+  const [sentence] = plan.words;
+  assert.equal(sentence.id, '我姓王。|sentence');
+  assert.equal(sentence.kind, 'sentence');
+  assert.deepEqual(sentence.suspended, ['writing']);
+  assert.deepEqual(plan.cards.map((card) => card.id), ['我姓王。|sentence#meaning']);
+  assert.equal(plan.report.waiting, 0);
+  // With a writing card, nothing is suspended.
+  assert.equal(planAnkiImport(collection, { ...choices, sentenceWriting: 'whole' }, contextWith()).words[0].suspended, undefined);
 });
 
 test("the deck's other meaning field comes before the dictionary", () => {

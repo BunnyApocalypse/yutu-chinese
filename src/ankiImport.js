@@ -21,12 +21,13 @@
 // card is due on the day Anki said and the app's FSRS takes over from its
 // next review.
 
-import { lookUp, readTypedPinyin, readsAs, proposeMeaning, otherScriptForm } from './dictionary.js';
+import { lookUp, readTypedPinyin, readsAs, proposeMeaning, otherScriptForm, splitIntoWords } from './dictionary.js';
 import { checkWord, tidyPinyin, newWordRecords, scriptFor } from './words.js';
 import { wordId } from './wordList.js';
 import { isSyllables } from './pinyinSyllables.js';
 import { radicalRecord, isRadical, RADICAL_CARD_TYPES } from './radicals.js';
 import { cardIdFor, CARD_TYPES } from './session.js';
+import { sentenceId, sentenceRecord, isSentence, SENTENCE_CARD_TYPES } from './sentences.js';
 import { replay, emptyState } from './scheduler.js';
 import { READY_MADE_LISTS, newDeckRecord, withDeck } from './decks.js';
 
@@ -392,10 +393,13 @@ export function describeCollection(collection, script = 'traditional') {
 
 // The choices the pop-up starts with: every deck, and the guesses.
 //
-// Returns { deckIds: Set, noteTypes: { [id]: { roles, spareMeaning, templates: { [ord]: types } } } }
+// Returns { deckIds: Set, noteTypes: { [id]: { roles, spareMeaning, templates: { [ord]: types } } },
+//           sentenceWriting }: `sentenceWriting` is 'whole' (a sentence's
+//           writing card asks for all of it) or 'none' (it comes suspended)
 export function defaultChoices(description) {
   return {
     deckIds: new Set(description.decks.map((deck) => deck.id)),
+    sentenceWriting: 'whole',
     noteTypes: Object.fromEntries(
       description.noteTypes.map((noteType) => [
         noteType.id,
@@ -407,6 +411,23 @@ export function defaultChoices(description) {
       ]),
     ),
   };
+}
+
+// How many notes would be sentences (looksLikeSentence), with the
+// choices as they are: the pop-up asks about their writing card only then.
+export function countSentenceNotes(collection, choices) {
+  let count = 0;
+  for (const [id, notes] of groupBy(collection.notes, (note) => note.noteTypeId)) {
+    const choice = choices.noteTypes[id];
+    if (!choice || choice.roles.characters === null) {
+      continue;
+    }
+    const layout = layoutLines(notes);
+    count += isSentenceDeck(notes, choice.roles.characters)
+      ? notes.length
+      : notes.filter((note) => looksLikeSentence(fieldText(note, choice.roles.characters, layout))).length;
+  }
+  return count;
 }
 
 // ---- A note as a word ----
@@ -459,16 +480,106 @@ export function isRadicalDeck(notes, index, radicals) {
 // record of kind 'radical', with the list's meaning, see radicals.js) where
 // the note's characters are one (the owner, 2026-10-21); otherwise a word
 // (wordFromNote). A radical that is a word (水, 口) is that word, as in the
-// ready-made deck of radicals.
+// ready-made deck of radicals. A sentence or phrase is one of the app's
+// sentences (sentenceFromNote).
 //
 // texts:   as for wordFromNote
 // context: as for wordFromNote, and `radicals`, the list's lines, given only
-//          for a deck of radicals
+//          for a deck of radicals; `sentences`, true for a note type of
+//          sentences (isSentenceDeck), whose every note is a sentence
 //
-// Returns { word } or { problem }, as wordFromNote does.
+// Returns { word }, { sentence } or { problem }.
 export function itemFromNote(texts, context) {
   const radical = radicalEntry(texts.characters, context.radicals);
-  return radical && radical.pinyin === '' ? { word: radicalRecord(radical) } : wordFromNote(texts, context);
+  if (radical && radical.pinyin === '') {
+    return { word: radicalRecord(radical) };
+  }
+  return context.sentences || looksLikeSentence(texts.characters)
+    ? sentenceFromNote(texts, context)
+    : wordFromNote(texts, context);
+}
+
+// Whether a note type is one of sentences: more than half of the notes
+// with characters (in the field `index`, of the first 200) are sentences
+// (looksLikeSentence). Then its every note is a sentence, the phrases among
+// them too: the examples of Ch_book1's grammar notes are 我姓王。 and
+// 書在哪兒？, but also 這個人 and 我的書, which the dictionary doesn't have
+// as words.
+export function isSentenceDeck(notes, index) {
+  if (index === null) {
+    return false;
+  }
+  const layout = layoutLines(notes);
+  const filled = notes
+    .slice(0, 200)
+    .map((note) => fieldText(note, index, layout))
+    .filter((text) => text !== '');
+  return filled.filter(looksLikeSentence).length * 2 > filled.length;
+}
+
+// Whether a note's characters are a sentence or phrase, not a word: with a
+// sentence's punctuation anywhere ("我(不)看書。", so that it isn't taken for
+// 我 with something in brackets), or with any punctuation in the part a word
+// is read from (before a slash or bracket: "學校/学校" is a word).
+export function looksLikeSentence(characters) {
+  if (/[。？！?!「」『』…：]/.test(characters)) {
+    return true;
+  }
+  return /[\p{P}\p{S}]/u.test(characters.split(/[/|｜,，;；()（）[\]【】]/)[0].replace(/\s+/g, ''));
+}
+
+// A label before an example in a textbook deck: "a: 我來學中文。", "a/b:", "1. ".
+const EXAMPLE_LABEL = /^[a-z0-9]{1,2}(?:\/[a-z0-9]{1,2})?\s*[:：.)]\s*/i;
+
+// A sentence in both scripts, from one: word by word, with the dictionary
+// (splitIntoWords, otherScriptForm). It is taken for simplified if some
+// word in it is written so only in simplified; a word the dictionary can't
+// tell stays as it is.
+function sentenceForms(text, dictionary) {
+  const words = dictionary ? splitIntoWords(dictionary, text) : [{ text, word: false }];
+  const entriesOf = words.map((piece) => (piece.word ? lookUp(dictionary, piece.text) : []));
+  const onlyIn = (script, index) =>
+    entriesOf[index].some((entry) => entry[script] === words[index].text) &&
+    !entriesOf[index].some((entry) => entry[script === 'simplified' ? 'traditional' : 'simplified'] === words[index].text);
+  const script = words.some((_, index) => onlyIn('simplified', index)) && !words.some((_, index) => onlyIn('traditional', index))
+    ? 'simplified'
+    : 'traditional';
+  const other = words
+    .map((piece, index) => (piece.word ? otherScriptForm(entriesOf[index], script, piece.text, '') : piece.text))
+    .join('');
+  return script === 'traditional' ? { traditional: text, simplified: other } : { traditional: other, simplified: text };
+}
+
+// Makes one of the app's sentences (sentences.js) out of a note whose
+// characters are a sentence (looksLikeSentence): Ch_book1's 我姓王。 "My
+// name is Wang.". Its pinyin is kept as the note writes it, for reading; a
+// label before it ("a: ") is left out.
+//
+// texts, context: as for wordFromNote
+//
+// Returns { sentence: { traditional, simplified, pinyin, definition } } for
+// sentenceRecord, or { problem }.
+export function sentenceFromNote(texts, context) {
+  const firstLine = (text) => (text.split('\n')[0] || '').replace(EXAMPLE_LABEL, '').trim();
+  const characters = firstLine(texts.characters).replace(/\s+/g, '');
+  if (!/\p{Script=Han}/u.test(characters)) {
+    return { problem: 'No Chinese characters in the note’s sentence.' };
+  }
+  const meaning = texts.meaning
+    .split('\n')
+    .map((line) => line.replace(EXAMPLE_LABEL, '').trim())
+    .filter((line) => line !== '')
+    .join(' ');
+  if (meaning === '') {
+    return { problem: 'A sentence without its meaning: the note has none.' };
+  }
+  return {
+    sentence: {
+      ...sentenceForms(characters, context.dictionary),
+      pinyin: firstLine(texts.pinyin),
+      definition: meaning,
+    },
+  };
 }
 
 const ZHUYIN = /[\u3100-\u312f\u31a0-\u31bf]/u;
@@ -561,20 +672,13 @@ function tidyNotePinyin(text) {
 //
 // Returns { word } or { problem }, as checkWord does.
 export function wordFromNote(texts, context) {
-  // A sentence or phrase is not a word: sentences have a kind of their own
-  // here (sentences.js), not brought over from Anki yet. Looked for in the
-  // whole field first, so that a textbook's "我(不)看書。" isn't taken for
-  // 我 with something in brackets.
-  const sentence = /[\p{P}\p{S}]/u;
-  if (/[。？！?!「」『』…：]/.test(texts.characters)) {
-    return { problem: 'This looks like a sentence or phrase: only words are brought over.' };
+  // A sentence or phrase is not a word: itemFromNote makes it a sentence.
+  if (looksLikeSentence(texts.characters)) {
+    return { problem: 'This looks like a sentence or phrase, not a word.' };
   }
   // A field with both forms in it ("學校/学校", "学校 (學校)") gives the
   // first; the dictionary finds the other.
   const characters = texts.characters.split(/[/|｜,，;；()（）[\]【】]/)[0].replace(/\s+/g, '');
-  if (sentence.test(characters)) {
-    return { problem: 'This looks like a sentence or phrase: only words are brought over.' };
-  }
   const notePinyin = texts.pinyin.split('\n')[0] || '';
   let pinyinText = tidyNotePinyin(notePinyin);
   let meaning = texts.meaning;
@@ -800,11 +904,13 @@ const isReadyMade = (deck) => READY_MADE_LISTS.some((list) => deck.id === list.i
 //            name (in the same deck), so importing twice makes no new ones
 //   reviews: review records to save: Anki's reviews and imported schedules
 //   cards:   card records to save, worked out from those reviews
-//   report:  { notesRead, newWords, newRadicals, wordsThere, waiting,
+//   report:  { notesRead, newWords, newRadicals, newSentences, wordsThere, waiting,
 //              cardsWithSchedule, reviewsCopied, alreadyStudied, sameWord,
 //              problems }
 //            `newRadicals`: new radicals of kind 'radical' (not counted in
-//            newWords);
+//            newWords); `newSentences`: new sentences (sentences.js), whose
+//            writing card comes suspended if `choices.sentenceWriting` is
+//            'none';
 //            `waiting`: new words (and radicals) with no cards, which wait
 //            in Learn;
 //            `problems`: [{ text, problem }] for notes left out;
@@ -839,6 +945,7 @@ export function planAnkiImport(collection, choices, context) {
     notesRead: notes.length,
     newWords: 0,
     newRadicals: 0,
+    newSentences: 0,
     wordsThere: 0,
     waiting: 0,
     cardsWithSchedule: 0,
@@ -863,6 +970,11 @@ export function planAnkiImport(collection, choices, context) {
       .filter(([id, ofType]) => choices.noteTypes[id] && isRadicalDeck(ofType, choices.noteTypes[id].roles.characters, context.radicals))
       .map(([id]) => id),
   );
+  const sentenceDecks = new Set(
+    [...notesOfType]
+      .filter(([id, ofType]) => choices.noteTypes[id] && isSentenceDeck(ofType, choices.noteTypes[id].roles.characters))
+      .map(([id]) => id),
+  );
   for (const note of notes) {
     const { roles, spareMeaning = null, templates } = choices.noteTypes[note.noteTypeId];
     const layout = layoutOf.get(note.noteTypeId);
@@ -876,19 +988,20 @@ export function planAnkiImport(collection, choices, context) {
     const result = itemFromNote(texts, {
       ...context,
       radicals: radicalDecks.has(note.noteTypeId) ? context.radicals : null,
+      sentences: sentenceDecks.has(note.noteTypeId),
     });
     if (result.problem) {
       report.problems.push({ text: texts.characters || cleanField(note.fields[0]), problem: result.problem });
       continue;
     }
     // A radical comes with its ID; a word's is worked out.
-    const id = result.word.id || wordId(result.word);
+    const id = result.sentence ? sentenceId(result.sentence.traditional) : result.word.id || wordId(result.word);
     const cards = cardsOf.get(note.id) || [];
     if (found.has(id)) {
       report.sameWord += 1;
     } else {
       const home = cards.find((card) => choices.deckIds.has(card.deckId));
-      found.set(id, { word: result.word, deckId: home.deckId, sources: {} });
+      found.set(id, { word: result.word || null, sentence: result.sentence || null, deckId: home.deckId, sources: {} });
     }
     const { sources } = found.get(id);
     for (const card of cards) {
@@ -924,17 +1037,23 @@ export function planAnkiImport(collection, choices, context) {
 
   const existing = new Map(context.words.map((word) => [word.id, word]));
   const { toAdd } = newWordRecords(
-    [...found.values()].map(({ word }) => word),
+    [...found.values()].filter(({ word }) => word).map(({ word }) => word),
     context.words,
     now,
   );
   const added = new Map(toAdd.map((word) => [word.id, word]));
+  // New sentences go after everything, in the file's order.
+  let nextOrder = Math.max(-1, ...[...context.words, ...toAdd].map((word) => word.order)) + 1;
   const words = [];
   const reviews = [];
   const cards = [];
-  for (const [id, { deckId, sources }] of found) {
+  for (const [id, { sentence, deckId, sources }] of found) {
     let word = existing.get(id) || added.get(id);
-    report[existing.has(id) ? 'wordsThere' : isRadical(word) ? 'newRadicals' : 'newWords'] += 1;
+    if (!word && sentence) {
+      word = sentenceRecord(sentence, nextOrder, appDeck(deckId), now);
+      nextOrder += 1;
+    }
+    report[existing.has(id) ? 'wordsThere' : isSentence(word) ? 'newSentences' : isRadical(word) ? 'newRadicals' : 'newWords'] += 1;
     word = withDeck(word, appDeck(deckId));
     const script = scriptFor(word, settings);
     // A tone card only for a word that can have one: a syllable per
@@ -947,8 +1066,16 @@ export function planAnkiImport(collection, choices, context) {
       delete sources.tone;
     }
     const suspended = new Set(word.suspended || []);
+    // A sentence has a reading card and, if the learner wants one, a
+    // writing card for the whole sentence (Anki doesn't say which word was
+    // the point); without, the card comes suspended, to be switched on in
+    // its pop-up panel.
+    if (isSentence(word) && !existing.has(id) && choices.sentenceWriting === 'none') {
+      suspended.add('writing');
+      delete sources.writing;
+    }
     let gotCards = false;
-    for (const type of CARD_TYPES) {
+    for (const type of isSentence(word) ? SENTENCE_CARD_TYPES : CARD_TYPES) {
       const card = sources[type];
       // A card new in Anki has nothing to bring; the word is learned here.
       // A radical has only meaning and writing cards.
@@ -1009,7 +1136,10 @@ export function planAnkiImport(collection, choices, context) {
     }
     // Marks a word whose cards came from Anki: the cards it has no history
     // for come in a few a day, not all at once (planSession in session.js).
-    if (gotCards) {
+    // A sentence is not taught: its new cards are in Review at once.
+    if (isSentence(word)) {
+      // Nothing to mark.
+    } else if (gotCards) {
       word = { ...word, importedAt: word.importedAt ?? now };
     } else if (!existing.has(id)) {
       report.waiting += 1;
