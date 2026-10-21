@@ -127,7 +127,7 @@ describe('importing from Anki', { concurrency: false }, () => {
     await waitUntil(page, `!document.getElementById('anki-done-step').hidden`, 'the result');
     assert.match(await textOf(page, 'anki-result'), /^Brought over 6 new words\.\s*15 cards keep their schedule from Anki, with 33 reviews of history\.\s*1 word you hadn’t studied in Anki yet waits in Learn\./);
     assert.match(await textOf(page, 'anki-left-out'), /^1 note was left out\s*They weren’t brought over\./);
-    assert.match(await textOf(page, 'anki-problems'), /Measure words/);
+    assert.match(await textOf(page, 'anki-problems'), /Measure words\s*To study one, add it yourself: open a deck, tap “\+\sAdd to deck”, then “One word”\./);
 
     const words = await stored(page, 'words');
     assert.ok(words.some((word) => word.id === '你好|ni3hao3' && word.importedAt));

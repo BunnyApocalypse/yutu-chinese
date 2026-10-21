@@ -34,6 +34,18 @@ const TYPE_LABELS = { meaning: 'Meaning', pinyin: 'Pinyin', tone: 'Tone', writin
 const ROLE_LABELS = { characters: 'Characters', pinyin: 'Pinyin', meaning: 'Meaning' };
 const MAX_PROBLEMS_SHOWN = 20;
 
+// What to do about the notes left out for a reason, under them (the owner,
+// 2026-10-21: "One word" was the advice for sentences too). A sentence
+// without Chinese is an explanation, as Ch_book1's grammar notes are; the
+// app has no card for those (a new kind of card, the owner).
+function adviceFor(problem) {
+  if (problem.startsWith('No Chinese characters in the note’s sentence')) {
+    return 'They explain rather than give something to write, and the app has no card for that.';
+  }
+  const form = problem.startsWith('A sentence') ? '“A sentence”, with its meaning' : '“One word”';
+  return `To study one, add it yourself: open a deck, tap “+\u00a0Add to deck”, then ${form}.`;
+}
+
 // sql.js, fetched the first time a file is read: its WebAssembly file (see
 // ankiFile.js) is 700 KB, which nobody but an Anki user needs. The "?url"
 // import gives the file's address, as for the dictionary.
@@ -605,7 +617,10 @@ export function createAnkiImport(shared, dictionaryLoader) {
         texts.length > MAX_PROBLEMS_SHOWN ? `${shown} and ${(texts.length - MAX_PROBLEMS_SHOWN).toLocaleString('en-US')} more` : shown,
         shared.getSettings().script,
       );
-      item.append(problem, notes);
+      const advice = document.createElement('p');
+      advice.className = 'hint';
+      advice.textContent = adviceFor(problem);
+      item.append(problem, notes, advice);
       return item;
     });
     byId('anki-problems').replaceChildren(...items);
