@@ -13,6 +13,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
   - **Going back to the last 10 cards graded** (‹ on an untouched card, or "‹ Back to the last card" at the end of Review): the raw input on each character, and a grade or a character's verdict corrected in place (the review saved again under its ID and time; `CLAUDE.md`'s rule on reviews now says so).
   - **Sentences:** the meaning and the sentence with its gap as separate lines, the gap never cut off; punctuation left out quietly; any number of characters on a card looked back at.
   - **Fixes:** a tap goes on after practicing a character gone back to; the current box keeps a blue ring over green or red.
+- **First:** the owner reviews tester 4's feedback, made into to-dos at the top of the roadmap; then the Italian interface (high priority, to plan).
 - **Next:** the owner tries it in real study; the Anki import on an export of their own and a shared deck (testing list, item 9).
 - **New on the roadmap** ("Near-term"): the writing area on short phones (one row of buttons below; the owner's idea of dropping Next for a tap); card types and fields, with a grammar card; zhuyin. Long-term: the Anki import's button for each reason and keeping the page usable during a long import.
 - **To check the Anki import:** `node scripts/check-anki-import.js <file>…` with the study data's full paths (`local/anki-decks/study-data/` in the main checkout; elsewhere `local/README.md`). Helper scripts in the main checkout's `local/anki-scripts/`.
@@ -38,6 +39,29 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
   - Files in `~/Downloads` (the old test files, tester 3's `notes.txt`, now in `local/testing/`) are the owner's to delete.
 
 ## Roadmap
+
+**First: the owner reviews tester 4's feedback** (2026-10-21; notes in `local/testing/T4-2026-10-21.md`). About A2, a Skritter user switching from simplified to traditional, on release `2026-10-21-2`. Liked hearing words; added a word and looked one up without trouble. Not reached: changing a setting or a grade, the Progress tab, a backup. Nothing below is planned yet; the owner decides what is built, changed or dropped.
+
+- **Bugs**
+  - [ ] **"Show outline" shows the outline on both characters** of a two-character word, not just the one being written.
+  - [ ] **你's meaning has 您 in it** (CC-CEDICT's "as opposed to courteous 您"): check how it reads on the card; on a meaning card it may give away nothing, on a writing card it may confuse.
+- **Adding words and sentences**
+  - [ ] **Added the sentence but not the word**, and was confused by adding the sentence to a deck in the extra details. Rethink adding: perhaps the add-word button beside the add-sentence button.
+  - [ ] **Importing a list (TSV, CSV, one per line):** trim whitespace at the ends of lines; fill missing pinyin or meanings from the dictionary.
+  - [ ] **"HSK 3.0" read as a level**: make clear 3.0 is the version of the list.
+- **Studying**
+  - [ ] **After the one card, didn't see there was more to do**: make the way on clearer.
+  - [ ] **The prompt was too small** when asked to write 你: bolder and more central. They began writing the wrong character.
+  - [ ] **Didn't like the count of mistakes**: hidden by default, or a setting to hide it.
+  - [ ] **A goal of a set number of cards** to study, as an option.
+- **The word's panel and page**
+  - [ ] **The "Cards" tab was confusing**: a short explanation of what it is (a pop-up or a line on the tab).
+  - [ ] **Layout:** pinyin below the characters, the meaning after; the top part (characters, pinyin, meaning) bigger than the extra information below it.
+- **Settings and accessibility**
+  - [ ] **A dyslexia-friendly font** as a setting (a font is new data: its license and a README, ask first).
+  - [ ] **The Progress tab with a screen reader**: its charts and numbers readable.
+
+**High priority: an Italian interface** (the owner, 2026-10-21), ahead of the German one. Translating the interface only (layer 1 in `docs/goals.md`, "Translations and other languages"): the strings gathered into one file per language, then Italian. To plan with the owner first: who checks the Italian, whether a dictionary in Italian is wanted, and where it falls against the first release.
 
 Agreed with the owner on 2026-10-18. **The first release** means the first users beyond testers: a small group of learners and an online language-learning community, without advertising. They are strangers trying the app on their own, so it is about first impressions and keeping their data safe. **Changes to the layout come before it** (the owner: no big UX changes once there are real users, if it can be avoided). Each item is planned with the owner before it is built.
 
@@ -88,7 +112,7 @@ Agreed with the owner on 2026-10-18. **The first release** means the first users
 **Nice to have:**
 
 - Checking by hand with VoiceOver or TalkBack (`docs/interface.md`, "Accessibility").
-- A German interface, then other languages (`docs/goals.md`, "Translations").
+- A German interface after the Italian one, then other languages (`docs/goals.md`, "Translations").
 - The Skritter import, if the GDPR data arrives (the owner doesn't want the word list imported without its scheduling).
 - A mode for going from 繁體 to 簡體 or back, by character rather than by word (having written 們 → 们 once, the learner isn't asked again in 他們, 你們).
 - Mainland, Hong Kong or Taiwan traditional forms (needs stroke data for the other two); longer shortcuts (more strokes joined, reordered or dropped).
@@ -114,4 +138,5 @@ Notes and transcripts are in the git-ignored `local/testing/`. Every point raise
 - **2026-10-14, tester 1:** an absolute beginner, simplified, an Anki user, Android phone in Chrome. Taught: a beginner without a Chinese keyboard couldn't add a word (now added by pinyin, or by meaning); tips weren't read (now one line, beside what they are about); "too many buttons", the Learn screen busy.
 - **2026-10-16 and 2026-10-17, tester 2:** a designer, no Chinese, no study apps before; a Mac in Chrome, then the owner's tablet with a pen. Taught: far less text (the introduction became four short screens); **at most three buttons on a screen**, one of them main; **people must be able to try the app without studying it first** (roadmap item 2). Liked: writing with one's own strokes, the hints, the information about every word, the progress, looking up English.
 - **2026-10-20, tester 3:** almost no Chinese; an Android tablet in Brave, at times held sideways. A short session; **open, not yet planned with the owner** (`local/testing/T3-2026-10-20.md` has what the code says on each): a slow swipe up cleared the character (**built on 2026-10-20, to try on the tablet:** a swipe must take at most 300 ms and rise a third of the area, `docs/writing.md`, the owner's own swipes measured with the readout now under Settings › For testing); Brave's reminder at the end of Review and Learn asked to install an app already installed but opened in the browser (`persisted()` stayed false there); on the tone card it wasn't clear what to draw (the owner had to explain that the area takes a tone mark; **built on 2026-10-20:** the five marks drawn faintly above "Draw one of these here", `docs/cards.md`); a right/wrong choice in place of the four grades, as a setting (**built on 2026-10-20:** "Grade buttons", Wrong and Right, `docs/cards.md`); the grade buttons small on a tablet held sideways (**built on 2026-10-20:** stacked at the bottom of the side column, `docs/pitfalls.md`); Review right after Learn showed only meaning cards (each word offered its next new card in a fixed order, its others held back by `SIBLING_GAP_MS`) (**built on 2026-10-20:** each word starts at a different kind, and the wait is explained, `docs/cards.md`).
+- **2026-10-21, tester 4:** about A2, a Skritter user switching from simplified to traditional. Open, not yet reviewed: the to-dos at the top of the roadmap.
 - **For the first release:** the learners the owner means to share it with are not all very serious, so it must be clear without reading.
