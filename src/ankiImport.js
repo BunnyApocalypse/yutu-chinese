@@ -24,6 +24,7 @@
 import { lookUp, readTypedPinyin, readsAs, proposeMeaning, otherScriptForm } from './dictionary.js';
 import { checkWord, tidyPinyin, newWordRecords, scriptFor } from './words.js';
 import { wordId } from './wordList.js';
+import { isSyllables } from './pinyinSyllables.js';
 import { cardIdFor, CARD_TYPES } from './session.js';
 import { replay, emptyState } from './scheduler.js';
 import { READY_MADE_LISTS, newDeckRecord, withDeck } from './decks.js';
@@ -107,13 +108,15 @@ export function fieldsInTemplate(text) {
 const HAN = /\p{Script=Han}/gu;
 
 // Whether a line is pinyin: with tone numbers (ni3hao3) or tone marks
-// (nǐhǎo, nǐ hǎo). Without either it could as well be English ("hen").
+// (nǐhǎo, nǐ hǎo), or several readings with commas between ("hang2,
+// xing2"). Without tones it could as well be English ("hen"). Its letters
+// must make syllables of Mandarin, so that "HSK 1" or "Top 500" (the level
+// and frequency fields of some decks) are not taken for pinyin.
 function isPinyin(line) {
-  if (tidyPinyin(line) !== null) {
-    return true;
-  }
-  const typed = readTypedPinyin(line);
-  return typed !== null && typed.tones.length > 0;
+  return line.split(/[,，;；]/).every((part) => {
+    const typed = readTypedPinyin(part);
+    return typed !== null && typed.tones.length > 0 && isSyllables(typed.letters);
+  });
 }
 
 // What a field holds, by its text: 'characters' (mostly Chinese

@@ -13,10 +13,12 @@ import {
   fieldsInTemplate,
   describeCollection,
   defaultChoices,
+  guessRoles,
   wordFromNote,
   planAnkiImport,
 } from '../src/ankiImport.js';
 import { readDictionary } from '../src/dictionary.js';
+import { isSyllables } from '../src/pinyinSyllables.js';
 import { replay, gradeOptions, GOOD } from '../src/scheduler.js';
 import { planSession } from '../src/session.js';
 
@@ -145,6 +147,24 @@ test("each field's role and each template's cards are guessed", async () => {
       ['Chinese::HSK 1', 11],
     ],
   );
+});
+
+test('only syllables of Mandarin make pinyin', () => {
+  for (const letters of ['nihao', 'xian', 'yidianr', 'lve', 'nv', 'zhuang', 'er', 'r']) {
+    assert.equal(isSyllables(letters), true, letters);
+  }
+  for (const letters of ['hsk', 'top', 'nhat', 'hello', 'bv', '']) {
+    assert.equal(isSyllables(letters), false, letters);
+  }
+  // A deck's level and frequency fields ("HSK 1", "Top 500") are not taken
+  // for pinyin; the reading is the meaning's first line, as in Basic.
+  const noteType = { fields: ['Hanzi', 'Level', 'Back'] };
+  const notes = [
+    ['你好', 'HSK 1', 'nǐhǎo<br>hello'],
+    ['老师', 'HSK 1', 'lǎoshī<br>teacher'],
+    ['学校', 'Top 500', 'xuéxiào<br>school'],
+  ].map((fields) => ({ fields }));
+  assert.deepEqual(guessRoles(noteType, notes), { characters: 0, pinyin: null, meaning: 2 });
 });
 
 test('a note becomes a word with the help of the dictionary', () => {
