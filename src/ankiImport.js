@@ -589,20 +589,55 @@ export function wordFromNote(texts, context) {
   meaning = meaning.split('\n').join('; ');
 
   const entries = context.dictionary ? lookUp(context.dictionary, characters) : [];
-  let entry = null;
-  let pinyin = '';
-  if (pinyinText !== '') {
-    const typed = readTypedPinyin(pinyinText);
+  // One reading as the note writes it: the dictionary's entry read so, and
+  // its pinyin (the note's own, numbered, where no entry is).
+  const readingOf = (text) => {
+    const typed = readTypedPinyin(text);
     // A Taiwan textbook's full tones where the dictionary has a neutral one
     // (Ch_book1's 對不起 "Duìbùqǐ", 謝謝 "Xièxiè") take the dictionary's
     // reading, as a learner typing them would; tone cards accept the full
     // tone there (toneAnswers in tones.js).
-    entry =
+    const found =
       (typed &&
         (entries.find((candidate) => readsAs(candidate, typed)) ||
           entries.find((candidate) => readsAs(candidate, typed, { fullForNeutral: true })))) ||
       null;
-    pinyin = entry ? entry.pinyin : tidyPinyin(pinyinText) || numberedPinyin(pinyinText) || pinyinText;
+    return { entry: found, pinyin: found ? found.pinyin : tidyPinyin(text) || numberedPinyin(text) || '' };
+  };
+  // Several readings of one character ("Hái, huán", "kān / kàn"): one word
+  // with all of them (the owner, 2026-10-21, as Anki had one card), its
+  // pinyin "hai2, huan2" as the app keeps several readings; a pinyin card
+  // shows them all, a tone card takes any. Only readings of Mandarin
+  // syllables, one for each character, and only those the dictionary has
+  // where it has any (會 "huèi, huì" gives huì; 像片 "xiàng piàn / xiàng
+  // piàn er" leaves out the reading of 像片兒). A reading without a tone
+  // mark is the neutral tone (得 "děi, de").
+  const parts = pinyinText.split(/\s*[,，/／]\s*/).filter((part) => part !== '');
+  let readings = [];
+  if (parts.length > 1) {
+    for (const part of parts) {
+      const typed = readTypedPinyin(part);
+      if (!typed || !isSyllables(typed.letters)) {
+        continue;
+      }
+      const reading = readingOf(typed.tones.length === 0 ? `${part}5` : part);
+      const syllables = reading.pinyin.match(/[a-zA-Z]+[1-5]/g) || [];
+      if (syllables.length === [...characters].length && !readings.some((other) => other.pinyin === reading.pinyin)) {
+        readings.push(reading);
+      }
+    }
+    if (readings.some((reading) => reading.entry)) {
+      readings = readings.filter((reading) => reading.entry);
+    }
+  }
+  let entry = null;
+  let pinyin = '';
+  if (readings.length > 1) {
+    entry = readings[0].entry;
+    pinyin = readings.map((reading) => reading.pinyin).join(', ');
+  } else if (pinyinText !== '') {
+    ({ entry, pinyin } = readings.length === 1 ? readings[0] : readingOf(pinyinText));
+    pinyin = pinyin || pinyinText;
   } else if (entries.length > 0) {
     entry = context.likeliestEntry ? context.likeliestEntry(entries, characters) : entries[0];
     pinyin = entry.pinyin;
@@ -628,7 +663,12 @@ export function wordFromNote(texts, context) {
       : (line) => line === pinyinText;
     meaning = proposeMeaning(meaningsIn(texts.spareMeaning, isReading), context.meaningDetail);
   }
-  if (meaning === '' && entry) {
+  if (meaning === '' && readings.length > 1) {
+    meaning = readings
+      .filter((reading) => reading.entry)
+      .map((reading) => proposeMeaning(reading.entry.meanings, context.meaningDetail))
+      .join('; ');
+  } else if (meaning === '' && entry) {
     meaning = proposeMeaning(entry.meanings, context.meaningDetail);
   }
   // Why a note is left out, said about the note: checkWord's own words are

@@ -338,6 +338,11 @@ test("a textbook's way of writing pinyin is read", () => {
         '一點兒\t一点儿\tyi1dian3r5\ta bit',
         '法國\t法国\tFa3guo2\tFrance',
         '行\t\thang2\trow',
+        '還\t还\thai2\tstill',
+        '還\t还\thuan2\tto return',
+        '會\t会\thui4\tcan',
+        '得\t\tde5\t(particle)',
+        '得\t\tdei3\tmust',
       ].join('\n'),
     ),
   });
@@ -348,6 +353,13 @@ test("a textbook's way of writing pinyin is read", () => {
   assert.equal(pinyin('夜裡', 'Yèlǐ (li)'), 'ye4li5');
   assert.equal(pinyin('一點兒', 'Yīdiǎn er'), 'yi1dian3r5');
   assert.equal(pinyin('法國', 'Făguó'), 'Fa3guo2');
+  // Several readings: one word with all of them, the meaning of each where
+  // the note has none; a reading without a mark is the neutral tone.
+  const several = wordFromNote({ characters: '還', pinyin: 'Hái, huán', meaning: '' }, context).word;
+  assert.deepEqual([several.pinyin, several.definition], ['hai2, huan2', 'still; to return']);
+  assert.equal(pinyin('得', 'děi, de'), 'dei3, de5');
+  // Only the dictionary's readings, where it has any.
+  assert.equal(pinyin('會', 'huèi, huì'), 'hui4');
   // Only a neutral tone gives way: a full tone that differs still doesn't
   // read, and the note's own text is shown.
   assert.equal(
