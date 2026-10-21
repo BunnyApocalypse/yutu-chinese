@@ -145,6 +145,11 @@ const NAME_HINTS = {
   meaning: /meaning|english|definition|translation|gloss|back|意思/i,
 };
 
+// The same hints as a whole name: "Pinyin", but not "Examples Pinyin".
+const EXACT_NAME_HINTS = Object.fromEntries(
+  Object.entries(NAME_HINTS).map(([role, hint]) => [role, new RegExp(`^(?:${hint.source})s?$`, 'i')]),
+);
+
 // The roles of a note type's fields, guessed from its notes.
 //
 // noteType: from readCollection (ankiFile.js)
@@ -169,14 +174,20 @@ export function guessRoles(noteType, notes, script = 'traditional') {
       }
       const filled = sample.filter((note) => cleanField(note.fields[index]) !== '');
       const matching = filled.filter((note) => kindOf(note.fields[index]) === role).length;
-      // Mostly the right kind of text counts most; the name decides between
-      // fields alike, or for a field still empty.
-      let score = filled.length > 0 ? matching / filled.length : 0;
-      if (score < 0.5 && filled.length > 0) {
-        score = 0;
+      // The right kind of text counts most: in at least half the notes
+      // where the field is filled, and the more notes of all the better, so
+      // that a field filled in a few notes (Simplified, in a deck of
+      // radicals) loses to one filled in all, and one often empty (Examples
+      // Pinyin) to the field for the word's own reading. The name decides
+      // between fields alike, a name that is exactly a hint ("Pinyin") more
+      // than one with a hint in it ("Examples Pinyin"), and it alone decides
+      // for a field still empty.
+      let score = 0;
+      if (filled.length > 0 && matching / filled.length >= 0.5) {
+        score = (matching / filled.length + matching / sample.length) / 2;
       }
       if (NAME_HINTS[role].test(name)) {
-        score += filled.length > 0 ? 0.1 : 0.6;
+        score += filled.length === 0 ? 0.6 : EXACT_NAME_HINTS[role].test(name.trim()) ? 0.2 : 0.1;
       }
       if (role === 'characters' && /trad|simp|繁|简/i.test(name)) {
         const wanted = script === 'simplified' ? /simp|简/i : /trad|繁/i;

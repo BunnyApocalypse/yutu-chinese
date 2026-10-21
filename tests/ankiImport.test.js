@@ -167,6 +167,21 @@ test('only syllables of Mandarin make pinyin', () => {
   assert.deepEqual(guessRoles(noteType, notes), { characters: 0, pinyin: null, meaning: 2 });
 });
 
+test('a field filled in every note wins over one filled in a few', () => {
+  // As in a shared deck of radicals: Simplified is filled only where the
+  // radical has a simplified form; Radical always. And as in a deck of
+  // characters: Examples Pinyin is often empty, Pinyin never.
+  const noteType = { fields: ['Radical', 'Simplified', 'Examples Pinyin', 'Pinyin', 'Meaning'] };
+  const notes = [
+    ['一', '', '', 'yī', 'one'],
+    ['言', '讠', 'yǔyán', 'yán', 'speech'],
+    ['水', '', 'shuǐguǒ', 'shuǐ', 'water'],
+    ['門', '门', '', 'mén', 'door'],
+    ['口', '', 'kǒuyǔ', 'kǒu', 'mouth'],
+  ].map((fields) => ({ fields }));
+  assert.deepEqual(guessRoles(noteType, notes, 'simplified'), { characters: 0, pinyin: 3, meaning: 4 });
+});
+
 test('a note becomes a word with the help of the dictionary', () => {
   const context = contextWith();
   const word = (characters, pinyin, meaning) => wordFromNote({ characters, pinyin, meaning }, context).word;
