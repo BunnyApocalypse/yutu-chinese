@@ -53,6 +53,11 @@ const ENTITIES = { nbsp: ' ', amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" }
 // page: line breaks are <br> or <div>, a word may be in <b>, a sound is
 // written [sound:file.mp3], and & is written &amp;. All that is taken out;
 // lines are kept, one per line break, with spaces tidied.
+//
+// Accented letters are put in Unicode's composed form: "à" can be stored as
+// one character or as "a" followed by a separate accent, which look the
+// same but are not equal as text. Some shared decks are in the second form
+// (Anki itself turns a note into the first when it saves it).
 export function cleanField(text) {
   return (text || '')
     .replace(/\[sound:[^\]]*\]/g, '')
@@ -68,7 +73,8 @@ export function cleanField(text) {
     .split('\n')
     .map((line) => line.replace(/\s+/g, ' ').trim())
     .filter((line) => line !== '')
-    .join('\n');
+    .join('\n')
+    .normalize('NFC');
 }
 
 // The fields a template shows, by name: "{{Hanzi}}<br>{{type:Pinyin}}" gives

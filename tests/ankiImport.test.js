@@ -101,6 +101,17 @@ test("a field is read without Anki's markup", () => {
   assert.equal(cleanField('&#20320;&#x597D;'), '你好');
 });
 
+test('a field with its accents stored apart reads as the usual letters', () => {
+  // "ài" as some shared decks store it: a, then a separate grave accent.
+  const apart = 'a\u0300i';
+  assert.notEqual(apart, 'ài');
+  assert.equal(cleanField(apart), 'ài');
+  assert.equal(cleanField('l&#x01ce;oshi&#x0304;'), 'lǎoshī');
+  const word = wordFromNote({ characters: '学校', pinyin: cleanField('xue\u0301xia\u0300o'), meaning: '' }, contextWith());
+  assert.equal(word.word.pinyin, 'xue2xiao4');
+  assert.equal(word.word.definition, 'school');
+});
+
 test('the fields a template shows are found by name', () => {
   assert.deepEqual(fieldsInTemplate('{{FrontSide}}<hr id=answer>{{Pinyin}}<br>{{type:Meaning}}'), {
     fields: ['Pinyin', 'Meaning'],

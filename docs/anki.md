@@ -47,7 +47,7 @@ Tried on four real shared decks and their made-up study histories (`local/anki-d
 
 **Milestone 1: reading real decks** (in this order; the owner, 2026-10-21):
 
-1. **Composed form:** `cleanField` normalizes to NFC (`.normalize('NFC')`), as Anki does when it saves a note.
+1. **Done: composed form.** `cleanField` normalizes to NFC (`.normalize('NFC')`, last, so that `&#…;` codes are covered too), as Anki does when it saves a note. The HSK 2012 download alone went from 2,892 notes that could not be used to 9.
 2. **Pinyin only if every syllable is Mandarin:** a plain list of the ~410 syllables of standard Mandarin in a small file of its own (facts, no license; no dependency), used by `isPinyin` in `src/ankiImport.js` so that "HSK 1", "Top 500" and Vietnamese "nhất" aren't pinyin. Check `tidyPinyin`'s other callers before changing it rather than `isPinyin`.
 3. **Field guessing** (`guessRoles`): count a field by how many of *all* sampled notes fit (with the share of filled notes still required to be at least half), and give a field named exactly Pinyin, Meaning, Hanzi (and the like) more than one whose name only contains the word. Worked out on paper: score = (fit / filled + fit / sampled) / 2, name contains a hint +0.2, name is exactly a hint +0.3 (empty field: as now). It picks Pinyin over Examples Pinyin (1.27 to 1.15), Radical over Simplified (1.0 to 0.79), and SimpleMeaning over PartOfSpeech (1.10 to 0.97); check on all nine files and the fixtures that no right guess turns wrong.
 4. **Headings dropped:** a line that is in more than half a field's notes is the deck's layout ("Common Meaning", "Radical"), not content; left out of that field's text, in the import and in the pop-up's "First note:" line.
