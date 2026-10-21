@@ -78,6 +78,54 @@ export function cleanField(text) {
     .normalize('NFC');
 }
 
+// The lines of a deck's layout in each field of a note type: a heading
+// such as "Common Meaning" above the meaning, the same in most notes. A
+// line counts as one if it is in more than half the notes where the field
+// is filled (of the first 200, and at least 3), and in at least one note
+// with something else in the field too, so that a field which simply holds
+// the same text in most notes ("noun") is not emptied.
+//
+// Returns a list with a Set of lines for each field, by its index.
+export function layoutLines(notes) {
+  const sample = notes.slice(0, 200);
+  const fieldCount = Math.max(0, ...sample.map((note) => note.fields.length));
+  return Array.from({ length: fieldCount }, (_, index) => {
+    const linesOf = sample.map((note) => cleanField(note.fields[index])).filter((text) => text !== '').map((text) => text.split('\n'));
+    const count = new Map();
+    const withOthers = new Set();
+    for (const lines of linesOf) {
+      for (const line of new Set(lines)) {
+        count.set(line, (count.get(line) || 0) + 1);
+        if (lines.length > 1) {
+          withOthers.add(line);
+        }
+      }
+    }
+    const layout = new Set();
+    for (const [line, times] of count) {
+      if (times >= 3 && times * 2 > linesOf.length && withOthers.has(line)) {
+        layout.add(line);
+      }
+    }
+    return layout;
+  });
+}
+
+// A note's field as cleanField reads it, without the lines of the deck's
+// layout (`layout`, from layoutLines): "Common Meaning\nto love" becomes
+// "to love".
+export function fieldText(note, index, layout) {
+  const lines = layout[index];
+  const text = cleanField(note.fields[index]);
+  if (!lines || lines.size === 0) {
+    return text;
+  }
+  return text
+    .split('\n')
+    .filter((line) => !lines.has(line))
+    .join('\n');
+}
+
 // The fields a template shows, by name: "{{Hanzi}}<br>{{type:Pinyin}}" gives
 // ['Hanzi', 'Pinyin']. Anki's own fields ({{FrontSide}}, {{Tags}}, ...) and
 // the conditions around parts of a template ({{#Field}}...{{/Field}}, shown
@@ -255,7 +303,8 @@ export function guessCardTypes(noteType, roles) {
 //   decks:     [{ id, name, cardCount }], the decks with cards, by name
 //   noteTypes: [{ id, name, fields, noteCount, example, roles, templates }]
 //              for the note types that have notes. `example` is the first
-//              note's fields, cleaned; `templates` is [{ ord, name, front,
+//              note's fields, cleaned and without the deck's headings
+//              (fieldText); `templates` is [{ ord, name, front,
 //              cardCount, types, couldBeWriting }], `front` the fields its
 //              front shows. `roles`, `types`: the guesses.
 //   reviewCount: how many reviews the file holds (none in a shared deck)
@@ -277,12 +326,13 @@ export function describeCollection(collection, script = 'traditional') {
       const noteIds = new Set(notes.map((note) => note.id));
       const roles = guessRoles(noteType, notes, script);
       const guesses = guessCardTypes(noteType, roles);
+      const layout = layoutLines(notes);
       return {
         id: noteType.id,
         name: noteType.name,
         fields: noteType.fields,
         noteCount: notes.length,
-        example: notes[0].fields.map(cleanField),
+        example: notes[0].fields.map((_, index) => fieldText(notes[0], index, layout)),
         roles,
         templates: noteType.templates.map((template) => ({
           ord: template.ord,
@@ -346,12 +396,18 @@ function numberedPinyin(text) {
 //
 // Returns { word } or { problem }, as checkWord does.
 export function wordFromNote(texts, context) {
+  // A sentence or phrase is not a word: sentences have a kind of their own
+  // here (sentences.js), not brought over from Anki yet. Looked for in the
+  // whole field first, so that a textbook's "我(不)看書。" isn't taken for
+  // 我 with something in brackets.
+  const sentence = /[\p{P}\p{S}]/u;
+  if (/[。？！?!「」『』…：]/.test(texts.characters)) {
+    return { problem: 'This looks like a sentence or phrase: only words are brought over.' };
+  }
   // A field with both forms in it ("學校/学校", "学校 (學校)") gives the
   // first; the dictionary finds the other.
   const characters = texts.characters.split(/[/|｜,，;；()（）[\]【】]/)[0].replace(/\s+/g, '');
-  // A sentence or phrase is not a word: sentences have a kind of their own
-  // here (sentences.js), not brought over from Anki yet.
-  if (/[\p{P}\p{S}]/u.test(characters)) {
+  if (sentence.test(characters)) {
     return { problem: 'This looks like a sentence or phrase: only words are brought over.' };
   }
   let pinyinText = texts.pinyin.split('\n')[0] || '';
@@ -544,9 +600,14 @@ export function planAnkiImport(collection, choices, context) {
   // card with the most reviews (the owner, 2026-10-19).
   const found = new Map(); // word ID → { word, deckId, sources: { type: card } }
   const reviewCount = (card) => countedReviews(reviewsOf.get(card.id) || []).length;
+  // The headings of each note type's layout, left out of its fields' text.
+  const layoutOf = new Map(
+    [...groupBy(collection.notes, (note) => note.noteTypeId)].map(([id, ofType]) => [id, layoutLines(ofType)]),
+  );
   for (const note of notes) {
     const { roles, templates } = choices.noteTypes[note.noteTypeId];
-    const text = (role) => (roles[role] === null ? '' : cleanField(note.fields[roles[role]]));
+    const layout = layoutOf.get(note.noteTypeId);
+    const text = (role) => (roles[role] === null ? '' : fieldText(note, roles[role], layout));
     const texts = { characters: text('characters'), pinyin: text('pinyin'), meaning: text('meaning') };
     const result = wordFromNote(texts, context);
     if (result.problem) {

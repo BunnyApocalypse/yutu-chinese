@@ -38,6 +38,7 @@ for (const path of process.argv.slice(2)) {
       console.log('Anki reviews in file:', description.reviewCount);
     }
     console.log('words', plan.words.length, 'reviews', plan.reviews.length, 'cards', plan.cards.length);
+    console.log('first words:', plan.words.slice(0, 4).map((word) => `${word[script]} ${word.pinyin} · ${word.definition}`).join(' | '));
     console.log('report', JSON.stringify(Object.fromEntries(
       Object.entries(plan.report).map(([k, v]) => [k, Array.isArray(v) ? `${v.length} e.g. ${JSON.stringify(v.slice(0, 2))}` : v]))));
   }

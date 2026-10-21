@@ -14,6 +14,8 @@ import {
   describeCollection,
   defaultChoices,
   guessRoles,
+  layoutLines,
+  fieldText,
   wordFromNote,
   planAnkiImport,
 } from '../src/ankiImport.js';
@@ -180,6 +182,32 @@ test('a field filled in every note wins over one filled in a few', () => {
     ['口', '', 'kǒuyǔ', 'kǒu', 'mouth'],
   ].map((fields) => ({ fields }));
   assert.deepEqual(guessRoles(noteType, notes, 'simplified'), { characters: 0, pinyin: 3, meaning: 4 });
+});
+
+test("the headings of a deck's layout are left out of a field", () => {
+  // As in a shared deck whose meaning field has a heading above it, and
+  // whose part of speech is the same in most notes.
+  const notes = [
+    ['爱', '<div class="title">Common Meaning</div><div>to love</div>', 'verb'],
+    ['八', '<div class="title">Common Meaning</div><div>eight</div>', 'numeral'],
+    ['爸爸', '<div class="title">Common Meaning</div><div>father</div>', 'noun'],
+    ['杯子', '<div class="title">Common Meaning</div>', 'noun'],
+    ['北京', '', 'noun'],
+  ].map((fields) => ({ fields }));
+  const layout = layoutLines(notes);
+  assert.deepEqual([...layout[1]], ['Common Meaning']);
+  assert.equal(layout[2].size, 0);
+  assert.equal(fieldText(notes[0], 1, layout), 'to love');
+  assert.equal(fieldText(notes[3], 1, layout), '');
+  assert.equal(fieldText(notes[2], 2, layout), 'noun');
+});
+
+test('an example sentence is not cut down to a word at a bracket', () => {
+  const context = contextWith();
+  const problem = wordFromNote({ characters: '我(不)看書。', pinyin: '', meaning: 'I (do not) read books.' }, context);
+  assert.match(problem.problem, /sentence/);
+  // Both forms with a bracket are still one word.
+  assert.equal(wordFromNote({ characters: '学校 (學校)', pinyin: '', meaning: '' }, context).word.traditional, '學校');
 });
 
 test('a note becomes a word with the help of the dictionary', () => {
