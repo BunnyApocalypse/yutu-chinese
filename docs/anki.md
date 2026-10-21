@@ -72,6 +72,7 @@ Five changes, after the owner tried the branch on the study-data files. One at a
 
 ## Not built
 
+- **Keeping the page usable during a long import** (the owner, 2026-10-21: a consideration, left for now; to look at again after trying the import on a phone). At about a phone's speed Mei's HSK deck holds the page about 5 s to read and 13 s to import; the ring (item 5 above) shows it is working, but nothing can be tapped meanwhile. Two ways: **planning in batches** (`planAnkiImport` async, a pause for the page every few hundred notes): responsive, and a count like "1,200 of 4,995 notes" becomes possible; no new file, but it doesn't help the reading (sql.js opening the file is one block; how the 5 s divide is not measured). Or a **Web Worker** (Vite builds it, no dependency; `scripts/build-offline.js` takes it from `dist/assets/`): also cancellable, but the worker needs its own copy of the 8.4 MB dictionary (memory and seconds on a phone) unless the dictionary moves there for the whole app, `likeliestEntry` and `randomId` can't be passed to it, and a few hundred lines more. Batches first, the worker if the reading is the slow part.
 - **The other fields of a note** (to consider, roadmap "Near-term"). Audio and pictures from the notes; tags; cloze notes as sentences; a grammar note's other examples (Example 2 to 7) as sentences of their own.
 - Anki's own scheduling settings (retention, FSRS parameters): the app's defaults take over after the first review.
 - An export to Anki (`docs/history.md`, "Nice to have").
