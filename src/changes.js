@@ -6,6 +6,12 @@
 // was built.
 export const CHANGES = [
   {
+    id: '2026-10-21-3',
+    items: [
+      'More learning notes were checked and corrected by a native speaker.',
+    ],
+  },
+  {
     id: '2026-10-21-2',
     items: [
       'Changed your mind about a grade? Tap ‹ on a new card (or "Back to the last card" at the end of Review) to see your last 10 cards, with your own handwriting, and change the grade.',
