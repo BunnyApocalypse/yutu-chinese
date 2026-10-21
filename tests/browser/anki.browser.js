@@ -186,6 +186,12 @@ describe('importing from Anki', { concurrency: false }, () => {
     assert.match(await page.evaluate(`${box}.textContent`), /Use the deck’s meanings for the 1 word you already have/);
     // Off unless chosen.
     assert.equal(await page.evaluate(`${box}.querySelector('input').checked`), false);
+    // Counted again when the decks change: none ticked, no such words.
+    const deckBoxes = `document.querySelectorAll('#anki-decks input')`;
+    await page.evaluate(`${deckBoxes}.forEach((input) => input.click())`);
+    assert.equal(await page.evaluate(`Boolean(${box})`), false);
+    await page.evaluate(`${deckBoxes}.forEach((input) => input.click())`);
+    assert.equal(await page.evaluate(`Boolean(${box})`), true);
     await page.evaluate(`${box}.querySelector('input').click()`);
     await tap(page, 'anki-import-now');
     await waitUntil(page, `!document.getElementById('anki-done-step').hidden`, 'the result');

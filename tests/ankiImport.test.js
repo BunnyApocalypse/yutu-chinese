@@ -23,6 +23,7 @@ import {
   isRadicalDeck,
   wordFromNote,
   planAnkiImport,
+  countOtherMeanings,
 } from '../src/ankiImport.js';
 import { readDictionary } from '../src/dictionary.js';
 import { isSyllables } from '../src/pinyinSyllables.js';
@@ -573,6 +574,9 @@ test("words already there take the deck's meaning only if the learner chooses", 
   const changed = again(true);
   assert.equal(changed.report.otherMeanings, kept.report.otherMeanings);
   assert.equal(changed.words.find((word) => word.id === '你好|ni3hao3').definition, 'hello');
+  // Counted quickly, the same.
+  assert.equal(countOtherMeanings(collection, choices, contextWith({ words, decks: first.decks })), kept.report.otherMeanings);
+  assert.equal(countOtherMeanings(collection, choices, contextWith()), 0);
   // The same meanings as now: nothing to change.
   const same = planAnkiImport(
     collection,

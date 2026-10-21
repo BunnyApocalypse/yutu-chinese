@@ -431,6 +431,30 @@ export function countSentenceNotes(collection, choices) {
   return count;
 }
 
+// How many words already there would take the deck's meaning
+// (planAnkiImport's `otherMeanings`), quickly enough to be counted again at
+// every change in the check step: making every note into a word takes a
+// second or more on a big file, so only notes whose characters hold one of
+// those words' forms are. (A form put together from two parts of a field,
+// 臺 / 台灣 → 臺灣, is missed: the count is for the box, the import
+// itself goes through every note.)
+//
+// The arguments are planAnkiImport's.
+export function countOtherMeanings(collection, choices, context) {
+  const forms = new Set(context.words.flatMap((word) => [word.traditional, word.simplified]));
+  if (forms.size === 0) {
+    return 0;
+  }
+  const lengths = [...new Set([...forms].map((form) => [...form].length))];
+  const holdsAForm = (text) => {
+    const characters = text.match(HAN) || [];
+    return characters.some((_, start) =>
+      lengths.some((length) => forms.has(characters.slice(start, start + length).join(''))),
+    );
+  };
+  return planAnkiImport(collection, choices, { ...context, onlyCharacters: holdsAForm }).report.otherMeanings;
+}
+
 // ---- A note as a word ----
 
 // Pinyin with tone marks and a space or ' between syllables ("nǐ hǎo")
@@ -977,6 +1001,10 @@ const isReadyMade = (deck) => READY_MADE_LISTS.some((list) => deck.id === list.i
 //   settings: the current settings (for the script, see scriptFor)
 //   now:      the time, as from Date.now()
 //   randomId: makes a random ID (randomId in db.js), for new decks
+//   onlyCharacters: if given, only notes whose characters field it says
+//            yes to are made into words, and nothing but the report's
+//            counts of words is worked out: no cards or reviews
+//            (countOtherMeanings)
 //
 // Returns:
 //   words:   word records to save: new ones, and ones there already that
@@ -1065,8 +1093,12 @@ export function planAnkiImport(collection, choices, context) {
     const { roles, spareMeaning = null, templates } = choices.noteTypes[note.noteTypeId];
     const layout = layoutOf.get(note.noteTypeId);
     const text = (role) => (roles[role] === null ? '' : fieldText(note, roles[role], layout));
+    const characters = text('characters');
+    if (context.onlyCharacters && !context.onlyCharacters(characters)) {
+      continue;
+    }
     const texts = {
-      characters: text('characters'),
+      characters,
       pinyin: text('pinyin'),
       meaning: text('meaning'),
       spareMeaning: spareMeaning === null || Object.values(roles).includes(spareMeaning) ? '' : fieldText(note, spareMeaning, layout),
@@ -1154,6 +1186,10 @@ export function planAnkiImport(collection, choices, context) {
       if (choices.useDeckMeanings) {
         word = { ...word, definition: deckMeaning };
       }
+    }
+    // Only counting: the schedules are most of the work.
+    if (context.onlyCharacters) {
+      continue;
     }
     word = withDeck(word, appDeck(deckId));
     const script = scriptFor(word, settings);

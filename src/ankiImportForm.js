@@ -14,6 +14,7 @@ import {
   isRadicalDeck,
   isSentenceDeck,
   countSentenceNotes,
+  countOtherMeanings,
 } from './ankiImport.js';
 import { isRadical } from './radicals.js';
 import { formatPinyin } from './wordList.js';
@@ -180,6 +181,7 @@ export function createAnkiImport(shared, dictionaryLoader) {
           } else {
             choices.deckIds.delete(deck.id);
           }
+          showMoreChoices();
         });
         // A deck's name may have Chinese in it.
         const name = document.createElement('span');
@@ -189,13 +191,20 @@ export function createAnkiImport(shared, dictionaryLoader) {
       }),
     );
 
+    moreChoices = document.createElement('div');
+    byId('anki-note-types').replaceChildren(...description.noteTypes.map(noteTypeChoices), moreChoices);
+    showMoreChoices();
+  }
+
+  // The boxes after the note types, about sentences and words already
+  // there, each shown only if there are some. Their counts follow the
+  // decks ticked and the fields chosen, so they are made again at each
+  // change; what the learner chose in them is kept in `choices`.
+  let moreChoices = null;
+  function showMoreChoices() {
     const sentences = sentenceChoice();
     const meanings = meaningsChoice();
-    byId('anki-note-types').replaceChildren(
-      ...description.noteTypes.map(noteTypeChoices),
-      ...(sentences ? [sentences] : []),
-      ...(meanings ? [meanings] : []),
-    );
+    moreChoices.replaceChildren(...(sentences ? [sentences] : []), ...(meanings ? [meanings] : []));
   }
 
   // What planAnkiImport needs besides the file and the choices.
@@ -218,13 +227,9 @@ export function createAnkiImport(shared, dictionaryLoader) {
   // Words the learner already has keep their meaning, unless they choose
   // the deck's here (the owner, 2026-10-21: off by default; only where the
   // deck has a meaning of its own and it differs). Shown only if there are
-  // such words; counted once, with the guesses as they are, by planning
-  // the import (a second or so for a big file).
+  // such words.
   function meaningsChoice() {
-    if (shared.words().length === 0) {
-      return null;
-    }
-    const count = planAnkiImport(collection, choices, planContext()).report.otherMeanings;
+    const count = countOtherMeanings(collection, choices, planContext());
     if (count === 0) {
       return null;
     }
@@ -436,6 +441,7 @@ export function createAnkiImport(shared, dictionaryLoader) {
       select.addEventListener('change', () => {
         choice.roles[role] = select.value === '' ? null : Number(select.value);
         showExample();
+        showMoreChoices();
       });
       label.append(ROLE_LABELS[role], select);
       change.append(label);
