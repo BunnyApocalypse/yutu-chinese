@@ -90,6 +90,22 @@ test('replaying a card\'s reviews gives the state that was saved with it', () =>
   for (const grade of [GOOD, GOOD, GOOD, HARD, GOOD, AGAIN, GOOD, GOOD, EASY, GOOD, GOOD, GOOD]) {
     ({ fsrsState: state, due } = gradeOptions(state, new Date(time))[grade]);
     reviews.push({ time, grade });
+    // Replaying works out only the grade given (see replay); it must match
+    // gradeOptions after every review, not just the last.
+    assert.deepEqual(replay(reviews), { fsrsState: state, due });
+    time = due + 7 * 60 * 60 * 1000;
+  }
+  // Reviews made early, before the card fell due, too.
+  for (const grade of [GOOD, AGAIN, HARD, EASY]) {
+    time = reviews.at(-1).time + 3 * 60 * 60 * 1000;
+    ({ fsrsState: state, due } = gradeOptions(state, new Date(time))[grade]);
+    reviews.push({ time, grade });
+    assert.deepEqual(replay(reviews), { fsrsState: state, due });
+  }
+  time = due + 7 * 60 * 60 * 1000;
+  for (const grade of [GOOD, GOOD, GOOD]) {
+    ({ fsrsState: state, due } = gradeOptions(state, new Date(time))[grade]);
+    reviews.push({ time, grade });
     time = due + 7 * 60 * 60 * 1000;
   }
   // Long intervals are varied a little at random ("fuzz"); this only works

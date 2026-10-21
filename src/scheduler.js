@@ -94,16 +94,26 @@ export function gradeOptions(fsrsState, now) {
 // dated just after its last review there. The card goes on from that
 // schedule, not from the one these reviews would give, so that it is due
 // when Anki said; the reviews before it are kept as its history.
+//
+// For speed (an Anki import replays tens of thousands of reviews), each
+// review works out only the grade given (`next`, where gradeOptions works
+// out all four), and the card is turned into plain data once, at the end.
+// It gives exactly what gradeOptions would, review after review.
 export function replay(reviews) {
-  let outcome = null;
+  let card = null;
   for (const review of [...reviews].sort((a, b) => a.time - b.time)) {
     if (review.importedSchedule) {
-      outcome = review.importedSchedule;
+      card = review.importedSchedule.fsrsState;
       continue;
     }
-    outcome = gradeOptions(outcome ? outcome.fsrsState : null, new Date(review.time))[review.grade];
+    const now = new Date(review.time);
+    card = scheduler.next(card ?? createEmptyCard(now), now, review.grade).card;
   }
-  return outcome && { fsrsState: outcome.fsrsState, due: outcome.due };
+  if (!card) {
+    return null;
+  }
+  const fsrsState = toPlainData(card);
+  return { fsrsState, due: new Date(fsrsState.due).getTime() };
 }
 
 // The FSRS state of a card never studied, as plain data: what an imported

@@ -777,11 +777,14 @@ export function planAnkiImport(collection, choices, context) {
       const all = [...history, schedule];
       const times = all.map((review) => review.time);
       reviews.push(...all);
+      // The schedule record comes after every copied review, so the card is
+      // what `replay(all)` would give: Anki's schedule, without replaying.
       cards.push({
         id: cardId,
         wordId: id,
         type,
-        ...replay(all),
+        fsrsState: schedule.importedSchedule.fsrsState,
+        due: schedule.importedSchedule.due,
         firstReviewedAt: Math.min(...times),
         lastReviewedAt: Math.max(...times),
       });
