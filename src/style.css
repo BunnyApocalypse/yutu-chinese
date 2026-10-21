@@ -2456,6 +2456,12 @@ button.primary:active {
   color: var(--muted);
 }
 
+/* An explanation right under a row of buttons (Send feedback, Import
+   backup) keeps clear of them, instead of touching their bottom edge. */
+.buttons + .hint {
+  margin-top: var(--space-medium);
+}
+
 .add-list {
   padding: var(--space-medium) var(--space-medium);
   border: 1px solid var(--border);
