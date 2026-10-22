@@ -32,7 +32,7 @@ The owner wants to bring their Skritter data across eventually, but not the word
 
 ## Translations and other languages (future)
 
-Discussed with the owner on 2026-10-15. Nothing built yet.
+Discussed with the owner on 2026-10-15. **Layer 1 under way since 2026-10-22**: the interface's text is being gathered into `src/text/en.js` (`docs/interface.md`, "Interface text and translations"); no other language yet.
 
 - **Why:** many early users will be native German speakers, and learners worldwide in general.
 - **What:** **translate the interface, and use a dictionary in the learner's language where a license-compatible one exists.** The learning notes and example sentences stay in English (the owner doesn't want to generate them again). Where no good dictionary exists, the interface alone is still worth translating.

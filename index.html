@@ -1204,23 +1204,23 @@
              in view (UX review, 2026-10-16). "‹ Settings" goes back from a
              group to the list, on a narrow screen (settings.js). -->
         <div class="settings-heading">
-          <button id="settings-back" class="settings-back" type="button" hidden><svg class="back-arrow" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19" /></svg><span>Settings</span></button>
-          <h2 id="settings-title">Settings</h2>
-          <button id="settings-close" class="small" type="button">Done</button>
+          <button id="settings-back" class="settings-back" type="button" hidden><svg class="back-arrow" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19" /></svg><span data-t="settings.title"></span></button>
+          <h2 id="settings-title" data-t="settings.title"></h2>
+          <button id="settings-close" class="small" type="button" data-t="settings.done"></button>
         </div>
 
         <!-- One group at a time (the owner, 2026-10-16, from a tester's
              suggestion): on a phone, a list of the groups, and a tap shows one;
              on a wider screen the list stays at the side (settings.js). -->
         <div class="settings-body">
-        <nav id="settings-nav" class="settings-nav" aria-label="Groups of settings">
-          <button type="button" data-group="settings-learning">Chinese</button>
-          <button type="button" data-group="settings-studying">Daily study</button>
-          <button type="button" data-group="settings-writing">Writing</button>
-          <button type="button" data-group="settings-look">Look and sound</button>
-          <button type="button" data-group="settings-data">Your data and backups</button>
-          <button type="button" data-group="settings-help">Help, feedback and licenses</button>
-          <button type="button" data-group="settings-testing" hidden>For testing</button>
+        <nav id="settings-nav" class="settings-nav" data-t-aria-label="settings.groups">
+          <button type="button" data-group="settings-learning" data-t="settings.chinese"></button>
+          <button type="button" data-group="settings-studying" data-t="settings.dailyStudy"></button>
+          <button type="button" data-group="settings-writing" data-t="settings.writing"></button>
+          <button type="button" data-group="settings-look" data-t="settings.lookAndSound"></button>
+          <button type="button" data-group="settings-data" data-t="settings.data"></button>
+          <button type="button" data-group="settings-help" data-t="settings.help"></button>
+          <button type="button" data-group="settings-testing" hidden data-t="settings.testing"></button>
         </nav>
         <div class="settings-pages">
 
@@ -1230,166 +1230,143 @@
              (the owner: Look under "Studying" made no sense): Chinese (what is learned and tested), Daily study, Writing, Look and
              sound, Your data and backups, Help. -->
         <section id="settings-learning" class="settings-group" hidden>
-          <h3>Chinese</h3>
+          <h3 data-t="settings.chinese"></h3>
         <div class="setting">
           <span>
-            <label for="script-select">Script</label>
-            <button class="help-button" type="button" aria-label="What does this setting do?" aria-expanded="false" aria-controls="script-hint">?</button>
+            <label for="script-select" data-t="settings.script"></label>
+            <button class="help-button" type="button" data-t-aria-label="settings.whatDoesThisDo" aria-expanded="false" aria-controls="script-hint">?</button>
           </span>
           <select id="script-select">
-            <option value="simplified">Simplified only 简体</option>
-            <option value="traditional">Traditional only 繁體</option>
-            <option value="both-simplified">Both, cards in simplified</option>
-            <option value="both-traditional">Both, cards in traditional</option>
+            <option value="simplified" data-t="settings.scriptSimplified"></option>
+            <option value="traditional" data-t="settings.scriptTraditional"></option>
+            <option value="both-simplified" data-t="settings.scriptBothSimplified"></option>
+            <option value="both-traditional" data-t="settings.scriptBothTraditional"></option>
           </select>
-          <p id="script-hint" class="hint" hidden>
-            <a href="https://en.wikipedia.org/wiki/Simplified_Chinese_characters" target="_blank" rel="noopener">Simplified</a> characters are used in mainland China, Singapore and Malaysia. <a href="https://en.wikipedia.org/wiki/Traditional_Chinese_characters" target="_blank" rel="noopener">Traditional</a> characters are used in Taiwan, Hong Kong and Macau. Many characters are the same in both; others differ, like <span lang="zh-Hans-CN">学</span> and <span lang="zh-Hant-TW">學</span>. If you are not sure, pick the one used where you plan to read or speak Chinese.<br />
-            With one script, you are only asked for and shown that one. With both, cards are in the script named, and single words can be given the other.
-          </p>
+          <p id="script-hint" class="hint" hidden data-t-html="settings.scriptHint"></p>
         </div>
 
         <div class="setting">
           <span>
-            <label for="pronunciation-select">Pronunciation</label>
-            <button class="help-button" type="button" aria-label="What does this setting do?" aria-expanded="false" aria-controls="pronunciation-hint">?</button>
+            <label for="pronunciation-select" data-t="settings.pronunciation"></label>
+            <button class="help-button" type="button" data-t-aria-label="settings.whatDoesThisDo" aria-expanded="false" aria-controls="pronunciation-hint">?</button>
           </span>
           <select id="pronunciation-select">
-            <option value="mainlandOnly">Mainland China (普通话)</option>
-            <option value="taiwan">Taiwan (國語)</option>
+            <option value="mainlandOnly" data-t="settings.pronunciationMainland"></option>
+            <option value="taiwan" data-t="settings.pronunciationTaiwan"></option>
             <!-- Both readings, the mainland one listed first. -->
-            <option value="mainland">Accept both</option>
+            <option value="mainland" data-t="settings.pronunciationBoth"></option>
           </select>
-          <p id="pronunciation-hint" class="hint" hidden>
-            A few words are read differently in Taiwan and on the mainland: <span lang="zh-Hant-TW">星期</span> is xīngqí in Taiwan and xīngqī on the mainland (more on <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">Taiwan's Mandarin</a>). The reading you choose is the one shown and tested. With Taiwan, the mainland reading also appears beside it in small print, because dictionaries file words under it. With Accept both, cards show both readings and accept either tone. With Mainland China, Taiwan readings are never shown or asked for.
-          </p>
+          <p id="pronunciation-hint" class="hint" hidden data-t-html="settings.pronunciationHint"></p>
         </div>
 
         <fieldset class="setting">
-          <legend>Card types</legend>
-          <label><input type="checkbox" data-card-type="meaning" /> Meaning: see the word, recall what it means</label>
-          <label><input type="checkbox" data-card-type="pinyin" /> Pinyin: see the word, recall how it is read</label>
-          <label><input type="checkbox" data-card-type="tone" /> Tone: see the word, give each tone</label>
-          <label><input type="checkbox" data-card-type="writing" /> Writing: see the meaning, write the word</label>
+          <legend data-t="settings.cardTypes"></legend>
+          <label><input type="checkbox" data-card-type="meaning" /> <span data-t="settings.cardTypeMeaning"></span></label>
+          <label><input type="checkbox" data-card-type="pinyin" /> <span data-t="settings.cardTypePinyin"></span></label>
+          <label><input type="checkbox" data-card-type="tone" /> <span data-t="settings.cardTypeTone"></span></label>
+          <label><input type="checkbox" data-card-type="writing" /> <span data-t="settings.cardTypeWriting"></span></label>
         </fieldset>
 
         <fieldset class="setting">
-          <legend>Sentences</legend>
-          <label><input id="sentence-reading-checkbox" type="checkbox" /> Reading: see the sentence, recall what it means</label>
+          <legend data-t="settings.sentences"></legend>
+          <label><input id="sentence-reading-checkbox" type="checkbox" /> <span data-t="settings.sentenceReading"></span></label>
           <label class="setting">
-            Writing
+            <span data-t="settings.sentenceWriting"></span>
             <select id="sentence-writing-select">
-              <option value="word">Fill in the missing word</option>
-              <option value="sentence">Write the whole sentence</option>
-              <option value="off">No writing cards for sentences</option>
+              <option value="word" data-t="settings.sentenceWritingWord"></option>
+              <option value="sentence" data-t="settings.sentenceWritingSentence"></option>
+              <option value="off" data-t="settings.sentenceWritingOff"></option>
             </select>
           </label>
-          <span class="hint">
-            Sentences are added from a word's page (its example sentence) or on a deck's page. A sentence added
-            without a word to fill in is written whole.
-          </span>
+          <span class="hint" data-t="settings.sentencesHint"></span>
         </fieldset>
 
         <div class="setting">
           <span>
-            <label for="meaning-detail-select">Dictionary meanings</label>
-            <button id="meaning-detail-help" class="help-button" type="button" aria-label="What does this setting do?" aria-expanded="false" aria-controls="meaning-detail-hint">?</button>
+            <label for="meaning-detail-select" data-t="settings.meaningDetail"></label>
+            <button id="meaning-detail-help" class="help-button" type="button" data-t-aria-label="settings.whatDoesThisDo" aria-expanded="false" aria-controls="meaning-detail-hint">?</button>
           </span>
           <select id="meaning-detail-select">
-            <option value="first">First only</option>
-            <option value="everyday">Everyday</option>
-            <option value="all">All</option>
+            <option value="first" data-t="settings.meaningDetailFirst"></option>
+            <option value="everyday" data-t="settings.meaningDetailEveryday"></option>
+            <option value="all" data-t="settings.meaningDetailAll"></option>
           </select>
-          <p id="meaning-detail-hint" class="hint" hidden>
-            How much of a dictionary entry is filled in as the meaning when you add a word. You can still edit it before saving.<br />
-            <b>First only:</b> just the first meaning.<br />
-            <b>Everyday:</b> every meaning except those marked for a specialist field, such as "(math.)" or "(law)".<br />
-            <b>All:</b> everything the dictionary lists.
-          </p>
+          <p id="meaning-detail-hint" class="hint" hidden data-t-html="settings.meaningDetailHint"></p>
         </div>
         </section>
 
         <section id="settings-studying" class="settings-group" hidden>
-          <h3>Daily study</h3>
+          <h3 data-t="settings.dailyStudy"></h3>
         <label class="setting">
-          New words per day (goal)
+          <span data-t="settings.newWordsPerDay"></span>
           <input id="new-words-input" type="number" min="0" max="50" inputmode="numeric" />
         </label>
 
         <label class="setting">
-          Grade buttons
+          <span data-t="settings.gradeButtons"></span>
           <select id="grade-buttons-select">
-            <option value="four">Four: Again, Hard, Good, Easy</option>
-            <option value="two">Two: Wrong, Right</option>
+            <option value="four" data-t="settings.gradeButtonsFour"></option>
+            <option value="two" data-t="settings.gradeButtonsTwo"></option>
           </select>
-          <span class="hint">
-            How you say how a card went. Two is simpler: Right counts as Good.
-          </span>
+          <span class="hint" data-t="settings.gradeButtonsHint"></span>
         </label>
 
         <div class="setting">
-          <label><input id="lessons-checkbox" type="checkbox" /> In Review, teach before testing</label>
-          <p class="hint">When a word you already know is to be written for the first time (after changing script, say): its tones, then each stroke shown, then the outline, then from memory. Words in the Learn tab are always taught this way.</p>
+          <label><input id="lessons-checkbox" type="checkbox" /> <span data-t="settings.lessons"></span></label>
+          <p class="hint" data-t="settings.lessonsHint"></p>
         </div>
 
         <label class="setting">
-          A card is a leech after
-          <input id="leech-input" type="number" min="2" max="30" inputmode="numeric" aria-label="Times forgotten before a card is a leech" />
-          <span class="hint">
-            times forgotten. A leech is a card you keep getting wrong. Words, in the menu, can list your leeches, so
-            you can do something about them.
-          </span>
+          <span data-t="settings.leechAfter"></span>
+          <input id="leech-input" type="number" min="2" max="30" inputmode="numeric" data-t-aria-label="settings.leechInput" />
+          <span class="hint" data-t="settings.leechHint"></span>
         </label>
 
         <label class="setting">
-          When a card becomes a leech
+          <span data-t="settings.leechAction"></span>
           <select id="leech-action-select">
-            <option value="flag">Point it out</option>
-            <option value="suspend">Suspend it</option>
+            <option value="flag" data-t="settings.leechActionFlag"></option>
+            <option value="suspend" data-t="settings.leechActionSuspend"></option>
           </select>
-          <span class="hint">
-            A suspended card no longer comes up in Review, until you resume it, on the word's page.
-          </span>
+          <span class="hint" data-t="settings.leechActionHint"></span>
         </label>
 
         <div class="setting">
-          <label><input id="streaks-checkbox" type="checkbox" /> Count a streak of days studied</label>
-          <p class="hint">A pop-up the first time each day that you have studied enough, and a line at the end of Review.</p>
+          <label><input id="streaks-checkbox" type="checkbox" /> <span data-t="settings.streaks"></span></label>
+          <p class="hint" data-t="settings.streaksHint"></p>
         </div>
 
         <p id="streak-goal" class="setting streak-goal">
-          A day counts after
-          <input id="streak-cards-input" type="number" min="1" max="500" inputmode="numeric" aria-label="Cards to review for a day to count" />
-          cards reviewed or
-          <input id="streak-words-input" type="number" min="1" max="50" inputmode="numeric" aria-label="Words to learn for a day to count" />
-          words learned.
+          <span data-t="settings.streakGoalStart"></span>
+          <input id="streak-cards-input" type="number" min="1" max="500" inputmode="numeric" data-t-aria-label="settings.streakCardsInput" />
+          <span data-t="settings.streakGoalMiddle"></span>
+          <input id="streak-words-input" type="number" min="1" max="50" inputmode="numeric" data-t-aria-label="settings.streakWordsInput" />
+          <span data-t="settings.streakGoalEnd"></span>
         </p>
         </section>
 
         <section id="settings-writing" class="settings-group" hidden>
-          <h3>Writing</h3>
+          <h3 data-t="settings.writing"></h3>
         <label class="setting">
-          Handwriting
+          <span data-t="settings.handwriting"></span>
           <select id="handwriting-select">
-            <option value="raw">Keep my own strokes (raw input)</option>
-            <option value="snap">Snap to the printed strokes</option>
+            <option value="raw" data-t="settings.handwritingRaw"></option>
+            <option value="snap" data-t="settings.handwritingSnap"></option>
           </select>
         </label>
 
         <div class="setting">
-          <label><input id="stroke-count-checkbox" type="checkbox" /> Show the stroke count in Review</label>
-          <p class="hint">How many strokes the character has, as in "3/7". It is always shown in Learn and Free practice; in Review it is a hint, so it is off unless you want it.</p>
+          <label><input id="stroke-count-checkbox" type="checkbox" /> <span data-t="settings.strokeCount"></span></label>
+          <p class="hint" data-t="settings.strokeCountHint"></p>
         </div>
 
         <label class="setting">
-          A character written with a hint counts as
+          <span data-t="settings.hintCounts"></span>
           <select id="hint-select">
-            <option value="missed">Missed</option>
-            <option value="hard">Passed, the word Hard at best</option>
+            <option value="missed" data-t="settings.hintMissed"></option>
+            <option value="hard" data-t="settings.hintHard"></option>
           </select>
-          <span class="hint">
-            For a hint, hold your finger or pen still on the writing area: the next stroke flashes green. It also
-            comes by itself after three misses on a stroke. To start a character again, swipe up quickly on the writing area.
-          </span>
+          <span class="hint" data-t="settings.hintHint"></span>
         </label>
 
         <!-- Free practice: any kind of card for any word, without it counting
@@ -1397,107 +1374,101 @@
              debugging tool"; until then a button in the Words tab), here as a
              way to try the settings above. -->
         <div class="setting">
-          <button id="practice-button" class="small" type="button">Try writing with these settings</button>
-          <p class="hint">Free practice: write any character or word, or try any kind of card. Nothing is saved, and your schedule is not touched.</p>
+          <button id="practice-button" class="small" type="button" data-t="settings.tryWriting"></button>
+          <p class="hint" data-t="settings.tryWritingHint"></p>
         </div>
         </section>
 
         <section id="settings-look" class="settings-group" hidden>
-          <h3>Look and sound</h3>
+          <h3 data-t="settings.lookAndSound"></h3>
         <!-- The same three samples as in the introduction (the owner, 2026-10-15). -->
         <fieldset class="setting theme-picker">
-          <legend>Look</legend>
+          <legend data-t="settings.look"></legend>
           <label class="theme-choice">
             <input type="radio" name="settings-theme" value="light" />
             <span class="theme-swatch light" aria-hidden="true"><img src="icons/swatch.png" alt="" /></span>
-            Light
+            <span data-t="settings.lookLight"></span>
           </label>
           <label class="theme-choice">
             <input type="radio" name="settings-theme" value="dark" />
             <span class="theme-swatch dark" aria-hidden="true"><img src="icons/swatch.png" alt="" /></span>
-            Dark
+            <span data-t="settings.lookDark"></span>
           </label>
           <label class="theme-choice">
             <input type="radio" name="settings-theme" value="auto" />
             <span class="theme-swatch auto" aria-hidden="true"><img src="icons/swatch.png" alt="" /><img src="icons/swatch.png" alt="" /></span>
-            Follow device theme
+            <span data-t="settings.lookAuto"></span>
           </label>
         </fieldset>
 
         <label class="setting">
-          Sound
+          <span data-t="settings.sound"></span>
           <select id="sound-select">
-            <option value="auto">By itself when the answer shows, and when I tap the loudspeaker</option>
-            <option value="tap">Only when I tap the loudspeaker</option>
-            <option value="off">Off</option>
+            <option value="auto" data-t="settings.soundAuto"></option>
+            <option value="tap" data-t="settings.soundTap"></option>
+            <option value="off" data-t="settings.soundOff"></option>
           </select>
-          <span class="hint">
-            Most words are spoken from a recording; others are put together from recorded syllables, or read by
-            your device's own Chinese voice if it has one. A recording needs a connection the first time it is played.
-          </span>
+          <span class="hint" data-t="settings.soundHint"></span>
         </label>
 
         <label class="setting">
-          Volume
+          <span data-t="settings.volume"></span>
           <!-- A slider from silent to full; letting go of it speaks 中文 as a sample (settings.js). -->
-          <input id="volume-input" type="range" min="0" max="100" step="5" aria-label="Volume of the spoken words" />
-          <span class="hint">How loud words are spoken, beside whatever else your device is playing.</span>
+          <input id="volume-input" type="range" min="0" max="100" step="5" data-t-aria-label="settings.volumeInput" />
+          <span class="hint" data-t="settings.volumeHint"></span>
         </label>
         </section>
 
         <section id="settings-data" class="settings-group" hidden>
-          <h3>Your data and backups</h3>
+          <h3 data-t="settings.data"></h3>
           <!-- Always said, not only when a backup is due (roadmap item 7). -->
-          <p class="hint">
-            Your words and progress are kept only in this browser, on this device. Nothing is sent anywhere and there
-            is no account, so a backup file is the only other copy.
-          </p>
+          <p class="hint" data-t="settings.dataWhere"></p>
           <!-- How long ago the last backup was made (main.js). -->
           <p id="backup-status" class="hint"></p>
         <div class="setting">
-          <button id="export-button" class="small" type="button">Export backup</button>
+          <button id="export-button" class="small" type="button" data-t="settings.exportBackup"></button>
           <!-- Switching the reminder dot off, or back on (main.js). -->
-          <button id="backup-reminder-button" class="small" type="button">Stop backup reminders</button>
-          <button id="import-button" class="small" type="button">Import backup</button>
+          <button id="backup-reminder-button" class="small" type="button" data-t="settings.stopBackupReminders"></button>
+          <button id="import-button" class="small" type="button" data-t="settings.importBackup"></button>
           <input id="import-file" type="file" accept="application/json,.json" hidden />
           <!-- After Export backup: where the file went and what it is for (main.js). -->
           <p id="export-done" class="hint" role="status" hidden></p>
         </div>
 
         <div class="setting">
-          Keeping your words
+          <span data-t="settings.keepingWords"></span>
           <!-- Whether the browser has agreed to keep the app's data, and what to do if not (offline.js). -->
-          <p id="keep-data-status" class="hint">Checking…</p>
-          <button id="install-button" class="small" type="button" hidden>Install the app</button>
-          <button id="keep-data-button" class="small" type="button" hidden>Allow long-term storage</button>
+          <p id="keep-data-status" class="hint" data-t="settings.checking"></p>
+          <button id="install-button" class="small" type="button" hidden data-t="settings.installApp"></button>
+          <button id="keep-data-button" class="small" type="button" hidden data-t="settings.allowStorage"></button>
           <!-- Switching the reminder at the end of Review off, after a warning, or back on (storageMessage.js). -->
-          <button id="keep-reminder-button" class="small" type="button" hidden>Stop the reminder in Review and Learn</button>
+          <button id="keep-reminder-button" class="small" type="button" hidden data-t="settings.stopKeepReminder"></button>
         </div>
 
         <div class="setting">
-          Offline use
+          <span data-t="settings.offlineUse"></span>
           <!-- How much of the app is saved on this device. Filled in by offline.js. -->
-          <p id="offline-status" class="hint">Checking…</p>
+          <p id="offline-status" class="hint" data-t="settings.checking"></p>
           <!-- Saves every recording on the device (offline.js); they are otherwise kept one by one as they are played. -->
-          <button id="save-audio-button" class="small" type="button" hidden>Save all recordings for offline use (about 125 MB)</button>
+          <button id="save-audio-button" class="small" type="button" hidden data-t="settings.saveAudio"></button>
         </div>
         </section>
 
         <section id="settings-help" class="settings-group" hidden>
-          <h3>Help, feedback and licenses</h3>
+          <h3 data-t="settings.help"></h3>
         <div class="setting">
-          <button id="settings-basics-button" class="small" type="button">Basics of Chinese</button>
-          <button id="welcome-again-button" class="small" type="button">Show the introduction again</button>
-          <button id="whats-new-button" class="small" type="button">What's new</button>
-          <button id="settings-feedback-button" class="small" type="button">Send feedback</button>
-          <button id="credits-button" class="small" type="button">Credits and licenses</button>
+          <button id="settings-basics-button" class="small" type="button" data-t="settings.basics"></button>
+          <button id="welcome-again-button" class="small" type="button" data-t="settings.introductionAgain"></button>
+          <button id="whats-new-button" class="small" type="button" data-t="settings.whatsNew"></button>
+          <button id="settings-feedback-button" class="small" type="button" data-t="settings.sendFeedback"></button>
+          <button id="credits-button" class="small" type="button" data-t="settings.credits"></button>
         </div>
         <!-- The tips shown the first time each screen is opened (tips.js). -->
         <div class="setting">
-          <label><input id="tips-checkbox" type="checkbox" /> Show a tip the first time each screen is opened</label>
+          <label><input id="tips-checkbox" type="checkbox" /> <span data-t="settings.tips"></span></label>
         </div>
         <div class="setting">
-          <button id="tips-again-button" class="small" type="button">Show all tips again</button>
+          <button id="tips-again-button" class="small" type="button" data-t="settings.tipsAgain"></button>
         </div>
         <!-- Which version of the app this is (errors.js). -->
         <p id="app-version" class="hint"></p>
@@ -1505,17 +1476,21 @@
 
         <!-- Only in the test copy and while developing (testerSettings.js). -->
         <section id="settings-testing" class="settings-group" hidden>
-          <h3>For testing</h3>
+          <h3 data-t="settings.testing"></h3>
         <div class="setting">
-          <label><input id="swipe-readout-checkbox" type="checkbox" /> Show how each swipe up measured</label>
-          <p class="hint">After a line drawn upward on the writing area: how far it rose, how much it leaned and how long it took, against what a swipe needs. Only on this device.</p>
+          <label><input id="swipe-readout-checkbox" type="checkbox" /> <span data-t="testing.swipeReadout"></span></label>
+          <p class="hint" data-t="testing.swipeReadoutHint"></p>
         </div>
         <div class="setting">
-          Keeping the words: what this browser says
-          <p class="hint">Compare it in the installed app and in a browser tab (testerSettings.js).</p>
+          <label><input id="pseudo-language-checkbox" type="checkbox" /> <span data-t="testing.pseudoLanguage"></span></label>
+          <p class="hint" data-t="testing.pseudoLanguageHint"></p>
+        </div>
+        <div class="setting">
+          <span data-t="testing.storageReadout"></span>
+          <p class="hint" data-t="testing.storageReadoutHint"></p>
           <p id="storage-readout" class="hint" role="status"></p>
-          <button id="storage-readout-refresh" class="small" type="button">Check again</button>
-          <button id="storage-readout-ask" class="small" type="button">Ask to keep the words now</button>
+          <button id="storage-readout-refresh" class="small" type="button" data-t="testing.checkAgain"></button>
+          <button id="storage-readout-ask" class="small" type="button" data-t="testing.askNow"></button>
         </div>
         </section>
 

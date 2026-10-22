@@ -6,6 +6,8 @@
 // Each switch belongs to the device (DEVICE_SETTINGS in merge.js).
 //
 //   swipeReadout: show how each swipe up measured (quiz.js, gestures.js)
+//   the test language: every text in look-alike letters (src/text.js; kept
+//     in localStorage, not as a setting)
 //
 // And one readout, not a switch: what the browser says about keeping the
 // words (the owner, 2026-10-20, after tester 3's Brave kept asking to install
@@ -17,6 +19,7 @@ import { getAll, getSetting, setSetting } from './db.js';
 import { keepData } from './offline.js';
 import { setSwipeReadout } from './quiz.js';
 import { wordsAtRisk } from './storageAdvice.js';
+import { t, language, setLanguage } from './text.js';
 
 // import.meta.env.DEV is true only under Vite's dev server.
 export const TESTER_SETTINGS_SHOWN = Boolean(__CHANNEL__) || import.meta.env.DEV;
@@ -36,10 +39,16 @@ export async function setUpTesterSettings() {
     await setSetting('swipeReadout', swipeCheckbox.checked);
   });
 
+  // The test language (src/text.js): kept with the browser rather than in
+  // the database, and the app starts again in it.
+  const pseudoCheckbox = document.getElementById('pseudo-language-checkbox');
+  pseudoCheckbox.checked = language === 'pseudo';
+  pseudoCheckbox.addEventListener('change', () => setLanguage(pseudoCheckbox.checked ? 'pseudo' : 'en'));
+
   document.getElementById('storage-readout-refresh').addEventListener('click', () => showStorageReadout());
   document.getElementById('storage-readout-ask').addEventListener('click', async () => {
     const kept = await keepData.ask();
-    await showStorageReadout(`Asked just now: the browser said ${kept ? 'yes' : 'no'}.`);
+    await showStorageReadout(t('testing.askedJustNow', { answer: yesNo(kept) }));
   });
   // Filled again whenever the group is opened, and when anything about
   // keeping or installing may have changed (offline.js).
@@ -56,10 +65,10 @@ function browserName(brands) {
     return 'Brave';
   }
   return {
-    chromium: 'Chrome, or another browser built on Chromium',
+    chromium: t('testing.chromium'),
     firefox: 'Firefox',
     safari: 'Safari',
-    other: 'not recognized',
+    other: t('testing.notRecognized'),
   }[keepData.kind];
 }
 
@@ -69,13 +78,15 @@ function browserName(brands) {
 // "custom tab", which from inside the page looks like an ordinary tab.
 function openedAs(installed) {
   if (installed) {
-    return 'the installed app';
+    return t('testing.installed');
   }
   if (/; wv\)/.test(navigator.userAgent)) {
-    return "a browser built into another app (such as Discord), with words apart from the browser's";
+    return t('testing.webView');
   }
-  return 'a page in the browser (a tab, or a link opened from another app such as Discord)';
+  return t('testing.tab');
 }
+
+const yesNo = (answer) => t(answer ? 'testing.yes' : 'testing.no');
 
 // first: a line to put at the top, or ''.
 async function showStorageReadout(first = '') {
@@ -85,12 +96,12 @@ async function showStorageReadout(first = '') {
   const atRisk = wordsAtRisk(keepData.kind, state, await getSetting('lastBackupAt', null), Date.now());
   const lines = [
     first,
-    `Browser: ${browserName(brands)}.`,
-    `Opened as: ${openedAs(state.installed)}.`,
-    `Keeps the words for good: ${state.kept ? 'yes' : 'no'} (asked before on this device: ${state.asked ? 'yes' : 'no'}).`,
-    `Words here: ${words}.`,
-    `The reminder in Review and Learn: ${atRisk ? 'shown' : 'not shown'}.`,
-    `The browser's names: ${brands.map((entry) => `${entry.brand} ${entry.version}`).join(', ') || navigator.userAgent}.`,
+    t('testing.browser', { name: browserName(brands) }),
+    t('testing.openedAs', { how: openedAs(state.installed) }),
+    t('testing.keeps', { kept: yesNo(state.kept), asked: yesNo(state.asked) }),
+    t('testing.words', { count: words }),
+    t('testing.reminder', { shown: t(atRisk ? 'testing.reminderShown' : 'testing.reminderNotShown') }),
+    t('testing.brands', { names: brands.map((entry) => `${entry.brand} ${entry.version}`).join(', ') || navigator.userAgent }),
   ].filter(Boolean);
   const readout = document.getElementById('storage-readout');
   readout.replaceChildren();

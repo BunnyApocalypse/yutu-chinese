@@ -34,6 +34,7 @@
 - `src/basics.js`, `src/basicsSounds.js`: "Basics of Chinese", five screens for someone new to Chinese, and the recordings it plays (`docs/interface.md`).
 - `src/changes.js`, `src/whatsNew.js`, `src/feedback.js`: the list of what changed in each release (a new entry for every release), the "What's new" pop-up, and "Send feedback" (`docs/interface.md`).
 - `src/lang.js`: marks Chinese text with its language (`lang`) for screen readers and the regional font.
+- `src/text.js`: the interface's text by key (`t()`), dates and numbers in the language, and the page's own text filled in (`applyText`); `src/text/en.js` holds every English text, `src/text/pseudo.js` makes the test language (`docs/interface.md`, "Interface text and translations").
 - `src/theme.js`: the light or dark look (the "Look" setting); the colors themselves are named at the top of `src/style.css`.
 - `src/timing.js`: the stopwatch measuring how long a review or a lesson took, each step at most a minute (`docs/cards.md`, "How long studying takes").
 - `src/streak.js`, `src/streakScreen.js`: counting the streak from the reviews (plain calculation), and the streak screen (`docs/cards.md`, "Streaks").
@@ -72,6 +73,7 @@
 - `scripts/build-word-lists.js`, `data/wordlists/`: the ready-made word lists (run by hand, uses the internet; `docs/word-lists.md`).
 - `data/animcjk/`: the animCJK traditional stroke data, copied unchanged from that project at a pinned commit. Its README records the source, license and how to update. This is vendored data, not an npm dependency.
 - `tests/logic.test.js`, `tests/shortcuts.test.js`, `tests/strokeOrder.test.js`, `tests/toneMark.test.js`, `tests/frame.test.js`, `tests/storageAdvice.test.js`: tests for the plain-calculation code.
+- `scripts/missing-text.js`, `tests/text.test.js`, `tests/browser/text.browser.js`: what a translation lacks (run by hand), and the checks on the interface's text and the test language.
 - `tests/browser/harness.js`: what the browser tests share: serving the app, starting the browsers, drawing strokes, reading the status line.
 - `tests/browser/writing-grid.browser.js`: writes 15 characters in both stroke orders at seven positions and sizes.
 - `tests/browser/basics.browser.js`: "Basics of Chinese": its screens, the ways to it, the script of its characters, a recording played.

@@ -1921,7 +1921,19 @@ button.slot {
    screen: it is cut short with "…" instead (the open list shows it whole). */
 .settings-panel select {
   max-width: 100%;
+  min-width: 0;
   text-overflow: ellipsis;
+}
+
+/* Likewise a list inside a setting inside a group (Sentences › Writing): the
+   group (a fieldset) and the setting otherwise grow to fit the list's longest
+   choice, past the panel's edge. Found with the test language (src/text.js). */
+.settings-panel fieldset {
+  min-inline-size: 0;
+}
+
+.settings-panel .setting .setting {
+  max-width: 100%;
 }
 
 /* A line at the bottom of the screen when something has gone wrong. */

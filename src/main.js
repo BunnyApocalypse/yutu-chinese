@@ -37,6 +37,11 @@ import { createWhatsNew } from './whatsNew.js';
 import { createStreakScreen } from './streakScreen.js';
 import { createProgressPanel } from './progressPanel.js';
 import { setUpTesterSettings } from './testerSettings.js';
+import { applyText } from './text.js';
+
+// The page's own text, in the learner's language (src/text.js), before
+// anything else is set up.
+applyText();
 
 const byId = (id) => document.getElementById(id);
 

@@ -74,6 +74,7 @@ Each area's file in `docs/` (index `docs/README.md`) has the names in the code, 
 - **A setting that belongs to the device** goes in `DEVICE_SETTINGS` in `src/merge.js`, or combining backups takes it from the other device.
 - **A word's script comes from `scriptFor(word, settings)`** (`src/words.js`), never `settings.script`. Card IDs come from `cardIdFor` / `allCardIds` (`src/session.js`), never built by hand.
 - **`word.pinyin` may be empty or not syllables** (sentences, radicals); code reading it must cope.
+- **Interface text is never written into the code or `index.html`**: it goes in `src/text/en.js` under a key and is shown with `t('key')` or a `data-t…` attribute (`src/text.js`, `docs/interface.md`, "Interface text and translations"); dates and numbers through its `format…` functions. Screens not yet moved over are listed there.
 - **Chinese on the page is marked with `lang`** (`langFor` / `fillMixed` in `src/lang.js`), and anything tapped is at least 24px tall; `tests/browser/accessibility.browser.js` checks both, with contrast, in both looks.
 - **Always pass the script to `loadCharData`** (`src/charData.js`, the only place stroke data is loaded); never cache stroke data by character alone, never hard-code a stroke number. `src/quiz.js` is the only file importing Hanzi Writer, `src/scheduler.js` the only one importing ts-fsrs.
 - **Addresses are built with `import.meta.env.BASE_URL`**, never a leading `/` (the build is relative).
