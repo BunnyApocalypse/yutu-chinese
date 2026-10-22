@@ -29,6 +29,7 @@
 import { replay } from './scheduler.js';
 import { cardIdFor } from './session.js';
 import { countedFrom } from './cardManager.js';
+import { t } from './text.js';
 
 // Settings that say something about the device, not about the learner.
 const DEVICE_SETTINGS = [
@@ -353,16 +354,15 @@ function summarize(mine, data) {
 // The summary as lines of text for the person, leaving out what is zero.
 // Returns an empty list if combining changes nothing on this device.
 export function describeMerge(summary) {
-  const count = (number, one, many) => `${number} ${number === 1 ? one : many}`;
   const lines = [
-    [summary.wordsAdded, count(summary.wordsAdded, 'new word', 'new words')],
-    [summary.wordsChanged, `${count(summary.wordsChanged, 'word', 'words')} changed on the other device`],
-    [summary.wordsRemoved, `${count(summary.wordsRemoved, 'word', 'words')} removed on the other device`],
-    [summary.decksAdded, count(summary.decksAdded, 'new deck', 'new decks')],
-    [summary.decksRemoved, `${count(summary.decksRemoved, 'deck', 'decks')} deleted on the other device`],
-    [summary.reviewsAdded, count(summary.reviewsAdded, 'new review', 'new reviews')],
-    [summary.cardsChanged, `${count(summary.cardsChanged, 'card', 'cards')} with a new schedule`],
-    [summary.settingsChanged, `${count(summary.settingsChanged, 'setting', 'settings')} changed on the other device`],
+    [summary.wordsAdded, 'merge.wordsAdded'],
+    [summary.wordsChanged, 'merge.wordsChanged'],
+    [summary.wordsRemoved, 'merge.wordsRemoved'],
+    [summary.decksAdded, 'merge.decksAdded'],
+    [summary.decksRemoved, 'merge.decksRemoved'],
+    [summary.reviewsAdded, 'merge.reviewsAdded'],
+    [summary.cardsChanged, 'merge.cardsChanged'],
+    [summary.settingsChanged, 'merge.settingsChanged'],
   ];
-  return lines.filter(([number]) => number > 0).map(([, text]) => text);
+  return lines.filter(([count]) => count > 0).map(([count, key]) => t(key, { count }));
 }

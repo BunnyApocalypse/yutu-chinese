@@ -12,6 +12,7 @@
 //      starts (decks.js).
 
 import { STORES, getAll, replaceEverything } from './db.js';
+import { t, formatDateTime } from './text.js';
 
 // From the app's first name, Hanzi Trainer. It stays, so that every backup
 // made so far can still be read.
@@ -41,22 +42,22 @@ export async function buildBackup() {
 // of the app can read. Throws an Error with a readable message if not.
 export function checkBackup(data) {
   if (!data || typeof data !== 'object' || data.format !== FORMAT_NAME) {
-    throw new Error('This file is not a backup from this app.');
+    throw new Error(t('backup.notABackup'));
   }
   if (!STORES_IN_VERSION[data.version]) {
     throw new Error(
-      `This backup is format version ${data.version}, but this app reads up to version ${FORMAT_VERSION}. Update the app and try again.`,
+      t('backup.tooNew', { version: data.version, newest: FORMAT_VERSION }),
     );
   }
   for (const storeName of STORES_IN_VERSION[data.version]) {
     const records = data[storeName];
     if (!Array.isArray(records)) {
-      throw new Error(`The backup is damaged: "${storeName}" is missing.`);
+      throw new Error(t('backup.storeMissing', { store: storeName }));
     }
     // Every record needs its key, or the database would refuse it halfway.
     const keyName = storeName === 'settings' ? 'key' : 'id';
     if (records.some((record) => !record || typeof record[keyName] !== 'string')) {
-      throw new Error(`The backup is damaged: a record in "${storeName}" has no ${keyName}.`);
+      throw new Error(t('backup.recordWithoutKey', { store: storeName, key: keyName }));
     }
   }
 }
@@ -65,8 +66,13 @@ export function checkBackup(data) {
 // same shape) contains.
 export function describeBackup(data) {
   const lastReview = data.reviews.reduce((latest, review) => Math.max(latest, review.time), 0);
-  const when = lastReview ? `last review ${new Date(lastReview).toLocaleString()}` : 'no reviews';
-  return `${data.words.length} words, ${data.cards.length} cards studied, ${data.reviews.length} reviews, ${when}`;
+  const when = lastReview ? t('backup.lastReview', { when: formatDateTime(lastReview) }) : t('backup.noReviews');
+  return t('backup.contents', {
+    words: t('backup.words', { count: data.words.length }),
+    cards: t('backup.cards', { count: data.cards.length }),
+    reviews: t('backup.reviews', { count: data.reviews.length }),
+    when,
+  });
 }
 
 // Replaces everything in the database with the backup's contents.

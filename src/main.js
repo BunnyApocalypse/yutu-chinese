@@ -37,7 +37,7 @@ import { createWhatsNew } from './whatsNew.js';
 import { createStreakScreen } from './streakScreen.js';
 import { createProgressPanel } from './progressPanel.js';
 import { setUpTesterSettings } from './testerSettings.js';
-import { applyText } from './text.js';
+import { applyText, t, formatList } from './text.js';
 
 // The page's own text, in the learner's language (src/text.js), before
 // anything else is set up.
@@ -152,7 +152,7 @@ byId('whats-new-button').addEventListener('click', whatsNew.openAll);
 
 // A long meaning in the prompt above a card is cut off after one line; a tap
 // on it shows the whole of it in a panel.
-clampWithPopup(byId('prompt-meaning'), (text) => tell('Meaning', text));
+clampWithPopup(byId('prompt-meaning'), (text) => tell(t('main.meaning'), text));
 
 // ---- Modes ----
 
@@ -192,11 +192,11 @@ const wordsPanel = createWordsPanel(
     const shown = setMode(newMode);
     // "Learn it now" can come from the Words tab too.
     if (studiedFrom.mode === 'decks' || studiedFrom.mode === 'words') {
-      const backTo = studiedFrom.mode === 'words' ? 'Words' : 'Decks';
+      const backTo = t(studiedFrom.mode === 'words' ? 'menu.words' : 'menu.decks');
       byId('study-back-label').textContent = backTo;
       // Its name for a screen reader, also while a card is up, when the
       // arrow is alone in the corner.
-      byId('study-back-button').setAttribute('aria-label', `Back to ${backTo}`);
+      byId('study-back-button').setAttribute('aria-label', t('place.backTo', { place: backTo }));
       byId('place-title').hidden = true;
       byId('study-back-button').hidden = false;
     }
@@ -232,7 +232,7 @@ function startFreePractice() {
     return flow.start(text, {
       script: ownScript ? scriptFor(word, settings) : settings.script,
       rawInput: settings.rawInput,
-      continueLabel: 'Again',
+      continueLabel: t('practice.again'),
       onContinue: startFreePractice,
     });
   }
@@ -240,11 +240,11 @@ function startFreePractice() {
   // The other kinds need the word's reading and meaning, so it has to be in
   // the word list.
   if (!word) {
-    noteElement.textContent = `"${text}" is not in the word list, so only Writing can be practiced with it.`;
+    noteElement.textContent = t('practice.notInList', { text });
     return undefined;
   }
   if (!review.practice(word, type)) {
-    noteElement.textContent = `"${text}" can't have a tone card: its pinyin doesn't have one syllable per character.`;
+    noteElement.textContent = t('practice.noToneCard', { text });
     return undefined;
   }
   noteElement.textContent = '';
@@ -337,7 +337,7 @@ const sideMenu = byId('side-menu');
 function openMenu() {
   const waiting = review ? review.waitingToLearn() : 0;
   byId('learn-tab').hidden = waiting === 0 && mode !== 'learn';
-  byId('learn-waiting').textContent = waiting > 0 ? `${waiting} waiting` : '';
+  byId('learn-waiting').textContent = waiting > 0 ? t('menu.waiting', { count: waiting }) : '';
   sideMenu.showModal();
 }
 // Opening the menu is a pause in studying: a streak screen still waiting
@@ -357,13 +357,13 @@ sideMenu.addEventListener('click', (event) => {
 
 // The name of each screen, in the top bar.
 const PLACE_TITLES = {
-  review: 'Review',
-  learn: 'Learn',
-  lesson: 'Repeating a lesson',
-  practice: 'Free practice',
-  decks: 'Decks',
-  words: 'Words',
-  progress: 'Progress',
+  review: t('menu.review'),
+  learn: t('menu.learn'),
+  lesson: t('place.lesson'),
+  practice: t('place.practice'),
+  decks: t('menu.decks'),
+  words: t('menu.words'),
+  progress: t('menu.progress'),
 };
 
 reviewTab.addEventListener('click', () => setMode('review'));
@@ -384,7 +384,7 @@ byId('start-level-button').addEventListener('click', async (event) => {
   const button = event.currentTarget;
   const { listId, level } = startingLevel(settings);
   button.disabled = true;
-  button.textContent = 'Adding words…';
+  button.textContent = t('main.addingWords');
   try {
     await wordsPanel.addReadyLevels(listId, [level]);
     await setMode('learn');
@@ -434,10 +434,10 @@ async function practiceWord(word) {
   await setMode('practice');
   wordInput.hidden = true;
   byId('practice-go').hidden = true;
-  byId('place-title').textContent = 'Practicing a word';
+  byId('place-title').textContent = t('place.practicingWord');
   const back = byId('practice-word-back');
-  back.setAttribute('aria-label', "Back to the word's page");
-  back.title = 'Back to its page';
+  back.setAttribute('aria-label', t('place.backToWordPage'));
+  back.title = t('place.backToItsPage');
   back.hidden = false;
 }
 byId('practice-word-back').addEventListener('click', async () => {
@@ -478,8 +478,8 @@ async function repeatLesson(word) {
   repeatedWord = word;
   repeatedFrom = { mode, scrollY: window.scrollY };
   const shown = setMode('lesson');
-  byId('study-back-label').textContent = 'Back';
-  byId('study-back-button').setAttribute('aria-label', "Back to the word's page");
+  byId('study-back-label').textContent = t('place.back');
+  byId('study-back-button').setAttribute('aria-label', t('place.backToWordPage'));
   byId('place-title').hidden = true;
   byId('study-back-button').hidden = false;
   await shown;
@@ -563,9 +563,7 @@ exportButton.addEventListener('click', async () => {
   // Where the file went and what it is for: a backup left on the same
   // device is lost with it (roadmap item 7, data safety seen by a stranger).
   const saved = byId('export-done');
-  saved.textContent =
-    `Saved to your downloads as ${name}. Keep a copy off this device too (a cloud drive, or email it to yourself). ` +
-    'To bring it back, here or on a new device, use Import backup.';
+  saved.textContent = t('backup.saved', { name });
   saved.hidden = false;
   // When a backup was last made on this device, for the reminder below.
   await setSetting('lastBackupAt', Date.now());
@@ -605,26 +603,31 @@ async function showBackupStatus() {
       due = started.length > 0 && Date.now() - Math.min(...started) > wait;
     }
   }
-  byId('backup-reminder-button').textContent = off ? 'Remind me about backups again' : 'Stop backup reminders';
+  byId('backup-reminder-button').textContent = t(off ? 'backup.remindAgain' : 'settings.stopBackupReminders');
   byId('backup-reminder-button').hidden = !off && !due;
-  byId('backup-status').textContent =
-    (last === null
-      ? 'No backup has been made on this device yet.'
-      : `Last backup: ${days === 0 ? 'today' : days === 1 ? 'yesterday' : `${days} days ago`}.`) +
-    (due
-      ? ' Time to export one. The red dot on the menu button is this reminder; it goes away once you have exported one.'
-      : '') +
-    (off ? ' Backup reminders are off.' : '');
+  byId('backup-status').textContent = [
+    last === null
+      ? t('backup.noneYet')
+      : days === 0
+        ? t('backup.lastToday')
+        : days === 1
+          ? t('backup.lastYesterday')
+          : t('backup.lastDaysAgo', { count: days }),
+    due ? t('backup.due') : '',
+    off ? t('backup.remindersOff') : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
   // The dot says why it is there to anyone who rests the mouse on the menu
   // button or uses a screen reader, and in Settings the same dot is on the
   // group it is about, in the list of groups.
   const menuButton = byId('menu-button');
   menuButton.classList.toggle('reminder', due);
-  menuButton.title = due ? 'Menu (time to make a backup, in Settings)' : 'Menu';
+  menuButton.title = t(due ? 'menu.menuBackupDue' : 'menu.menu');
   menuButton.setAttribute('aria-label', menuButton.title);
   const settingsButton = byId('settings-button');
   settingsButton.classList.toggle('reminder', due);
-  settingsButton.title = due ? 'Settings (time to make a backup)' : '';
+  settingsButton.title = due ? t('menu.settingsBackupDue') : '';
   // On a phone there is no resting the mouse on a button, so the menu says
   // in words what the dot is about, under Settings.
   byId('backup-due-line').hidden = !due;
@@ -635,10 +638,9 @@ byId('backup-reminder-button').addEventListener('click', async () => {
   const off = await getSetting('backupReminderOff', false);
   if (!off) {
     const sure = await ask({
-      question: 'Stop the backup reminders?',
-      detail:
-        'Your words and progress are kept only in this browser. If it loses them (a cleared browser, a lost phone) and you have no backup, they are gone.',
-      yes: 'I understand, stop them',
+      question: t('backup.stopQuestion'),
+      detail: t('backup.stopDetail'),
+      yes: t('backup.stopYes'),
     });
     if (!sure) {
       return;
@@ -670,20 +672,20 @@ importFile.addEventListener('change', async () => {
     checkBackup(chosenBackup);
   } catch (error) {
     // JSON.parse fails with a technical message; checkBackup with a readable one.
-    const reason = error instanceof SyntaxError ? 'This file is not a backup from this app.' : error.message;
-    await tell('That file could not be used', `${reason} Nothing was changed.`);
+    const reason = error instanceof SyntaxError ? t('backup.notABackup') : error.message;
+    await tell(t('backup.couldNotUse'), t('backup.nothingChanged', { reason }));
     return;
   }
 
   onDevice = await buildBackup();
-  byId('import-backup-text').textContent = `In the backup: ${describeBackup(chosenBackup)}.`;
-  byId('import-device-text').textContent = `On this device now: ${describeBackup(onDevice)}.`;
+  byId('import-backup-text').textContent = t('backup.inBackup', { contents: describeBackup(chosenBackup) });
+  byId('import-device-text').textContent = t('backup.onDevice', { contents: describeBackup(onDevice) });
   // What combining would do, worked out now so it can be said before choosing.
   const changes = describeMerge(mergeBackups(onDevice, chosenBackup).summary);
   byId('import-combine-text').textContent =
     changes.length > 0
-      ? `Combining would bring this device: ${changes.join(', ')}.`
-      : 'Combining would change nothing: this device already has everything in the backup.';
+      ? t('backup.combineWouldBring', { changes: formatList(changes) })
+      : t('backup.combineNothing');
   byId('import-combine-button').disabled = changes.length === 0;
   byId('import-note').textContent = '';
   importDialog.showModal();
@@ -704,9 +706,9 @@ byId('import-combine-button').addEventListener('click', async () => {
 
 byId('import-replace-button').addEventListener('click', async () => {
   const confirmed = await ask({
-    question: 'Replace everything on this device with the backup?',
-    detail: 'What is on this device now will be gone. This cannot be undone.',
-    yes: 'Replace everything',
+    question: t('backup.replaceQuestion'),
+    detail: t('backup.replaceDetail'),
+    yes: t('backup.replaceYes'),
   });
   if (!confirmed) {
     return;

@@ -18,6 +18,8 @@
 //
 // Plain calculation: no page, so it can be tested on its own.
 
+import { t } from './text.js';
+
 // Which family of browser this is, from navigator.userAgent (a line of text
 // in which a browser names itself) and, where the browser has it,
 // navigator.userAgentData.brands.
@@ -50,13 +52,15 @@ export function isMobile(userAgent, maxTouchPoints = 0) {
   return /Android|iPhone|iPad|iPod/.test(userAgent) || (/Macintosh/.test(userAgent) && maxTouchPoints > 1);
 }
 
-const INSTALL_HOW = 'open the browser\'s menu and choose "Install app" or "Add to Home screen"';
-// Safari's app on the Home Screen or in the Dock starts with nothing.
-const BRING_OVER = 'Words studied here in Safari don\'t come along by themselves: use Export backup here, then Import backup in the app.';
-// The advice to make backups meanwhile. `where` says where Export backup
-// is: 'in Settings' in the reminder, 'above' in Settings itself, where the
-// button is just above the advice.
-const backup = (where, start = 'Until then, use') => `${start} Export backup ${where} now and then.`;
+// The advice to make backups meanwhile, starting "Until then", "Use" or
+// "Still". Export backup is 'above' in Settings itself, where the button is
+// just above the advice, and 'in Settings' in the reminder.
+const BACKUP_KEYS = {
+  Until: ['storage.backupUntilSettings', 'storage.backupUntilAbove'],
+  Use: ['storage.backupUseSettings', 'storage.backupUseAbove'],
+  Still: ['storage.backupStillSettings', 'storage.backupStillAbove'],
+};
+const backup = (inSettings, start = 'Until') => t(BACKUP_KEYS[start][inSettings ? 1 : 0]);
 
 // The advice to show.
 //
@@ -72,44 +76,36 @@ const backup = (where, start = 'Until then, use') => `${start} Export backup ${w
 //
 // Returns a sentence or two.
 export function storageAdvice(kind, { canAsk, kept, asked, installed, canInstall }, mobile = false, inSettings = false) {
-  const BACKUP = backup(inSettings ? 'above' : 'in Settings');
+  const BACKUP = backup(inSettings);
   if (kept) {
-    return 'Long-term storage is allowed: the browser will not clear this data to free up space.';
+    return t('storage.kept');
   }
   if (!canAsk) {
-    return `This browser has no way to ask for long-term storage. ${backup(inSettings ? 'above' : 'in Settings', 'Use')}`;
+    return t('storage.cannotAsk', { backup: backup(inSettings, 'Use') });
   }
-  const install = canInstall ? 'tap "Install the app" below' : INSTALL_HOW;
+  const install = t(canInstall ? 'storage.installBelow' : 'storage.installHow');
 
   if (kind === 'firefox') {
-    return asked
-      ? 'Firefox has not allowed it. If you chose "Block" or "Not now", click the icon at the left end of the address bar, clear the entry for storing data in persistent storage, and tap the button again. ' + BACKUP
-      : 'Firefox will show a question: may this site store data in persistent storage? Choose "Allow".';
+    return asked ? t('storage.firefoxRefused', { backup: BACKUP }) : t('storage.firefoxWillAsk');
   }
   if (kind === 'chromium') {
     if (installed) {
-      return asked
-        ? 'This browser has not allowed it yet, although the app is installed. It decides by itself and usually agrees once the app has been used a little; the app asks again each time it starts. ' + BACKUP
-        : 'This browser will not ask you anything: it decides by itself, and usually agrees for an installed app like this one.';
+      return asked ? t('storage.chromiumInstalledRefused', { backup: BACKUP }) : t('storage.chromiumInstalled');
     }
-    return asked
-      ? `This browser said no, as it does for an app that is not installed. Install the app (${install}), open it from there, and it will ask again by itself. ${BACKUP}`
-      : `This browser will not ask you anything: it decides by itself, and says yes for an installed app. So install the app first (${install}) and use it from there: it then asks by itself.`;
+    return asked ? t('storage.chromiumRefused', { install, backup: BACKUP }) : t('storage.chromium', { install });
   }
   if (kind === 'safari') {
-    return installed
-      ? asked
-        ? 'Safari has not confirmed it, but data of an app on the Home Screen is kept. ' + backup(inSettings ? 'above' : 'in Settings', 'Still, use')
-        : 'Safari decides by itself. Data of an app on the Home Screen, like this one, is kept.'
-      : 'Safari decides by itself, and it deletes a site\'s data after about a week without a visit. ' +
-          (mobile
-            ? 'To prevent that, put the app on the Home Screen (tap Share, or ⋯ then Share, then "Add to Home Screen") and use it from there. '
-            : 'To prevent that, add the app to the Dock (in Safari\'s File menu, "Add to Dock", on macOS 14 or later) and use it from there. ') +
-          BRING_OVER;
+    if (installed) {
+      return asked
+        ? t('storage.safariInstalledUnconfirmed', { backup: backup(inSettings, 'Still') })
+        : t('storage.safariInstalled');
+    }
+    // Safari's app on the Home Screen or in the Dock starts with nothing.
+    return t(mobile ? 'storage.safariPhone' : 'storage.safariMac', { bringOver: t('storage.bringOver') });
   }
   return asked
-    ? `The browser did not allow it. It may once the app is installed: ${INSTALL_HOW}. ${BACKUP}`
-    : 'Your browser may ask you to confirm, or decide by itself.';
+    ? t('storage.otherRefused', { install: t('storage.installHow'), backup: BACKUP })
+    : t('storage.other');
 }
 
 // The last screen of the introduction: one main button that does what this
@@ -135,23 +131,19 @@ export function storageAdvice(kind, { canAsk, kept, asked, installed, canInstall
 //           'installPhone' or 'installComputer'; else absent
 export function welcomeStorage(kind, { canAsk, kept, installed, canInstall }, mobile = false) {
   if (kept) {
-    return { action: 'none', line: 'This browser already keeps them.' };
+    return { action: 'none', line: t('storage.welcomeKept') };
   }
   if (!canAsk) {
-    return { action: 'none', line: 'This browser cannot be asked, so use Export backup in Settings now and then.' };
+    return { action: 'none', line: t('storage.welcomeCannotAsk') };
   }
   if (kind === 'chromium' && !installed) {
     return canInstall
-      ? { action: 'install', line: 'This browser keeps the words of an installed app.' }
+      ? { action: 'install', line: t('storage.welcomeChromium') }
       : { action: 'later', line: '', addTo: mobile ? 'installPhone' : 'installComputer' };
   }
   if (kind === 'firefox') {
     // At the bottom of the screen on a phone (the owner, 2026-10-16).
-    const question = `Firefox will ask at the ${mobile ? 'bottom of the screen' : 'top of the page'}: choose "Allow".`;
-    return {
-      action: 'ask',
-      line: mobile ? `${question} For an icon of your own, choose Install in the browser's menu (⋮).` : question,
-    };
+    return { action: 'ask', line: t(mobile ? 'storage.welcomeFirefoxPhone' : 'storage.welcomeFirefoxComputer') };
   }
   // What keeps them in Safari is the Home Screen or the Dock, which only the
   // person can do: no button that would seem to have done it (as in
@@ -211,24 +203,22 @@ export function storageMessageLine(kind, { canAsk, kept, installed, canInstall }
   if (kind === 'safari' && !installed) {
     return {
       action: 'export',
-      line: mobile
-        ? 'Safari deletes them after a week without a visit. Add 玉兔中文 to your Home Screen (Share, or ⋯ then Share, then "Add to Home Screen") and study there. To bring your words along, export a backup here and import it there.'
-        : 'Safari deletes them after a week without a visit. Add 玉兔中文 to the Dock (File › Add to Dock) and study there. To bring your words along, export a backup here and import it there.',
+      line: t(mobile ? 'storage.messageSafariPhone' : 'storage.messageSafariMac'),
     };
   }
   if (kept) {
     return { action: 'none', line: '' };
   }
   if (!canAsk) {
-    return { action: 'export', line: "Your browser may delete them, and it can't be asked not to. Save a backup every week." };
+    return { action: 'export', line: t('storage.messageCannotAsk') };
   }
   if (kind === 'chromium' && !installed) {
     return canInstall
-      ? { action: 'install', line: "Install 玉兔中文 as an app so your browser doesn't delete them." }
-      : { action: 'settings', line: "Install 玉兔中文 as an app or save a backup, so your browser doesn't delete them." };
+      ? { action: 'install', line: t('storage.messageInstall') }
+      : { action: 'settings', line: t('storage.messageSettings') };
   }
   if (kind === 'firefox') {
-    return { action: 'ask', line: "When Firefox asks, choose Allow so it doesn't delete them." };
+    return { action: 'ask', line: t('storage.messageFirefox') };
   }
-  return { action: 'ask', line: "Tap below so your browser doesn't delete them." };
+  return { action: 'ask', line: t('storage.messageOther') };
 }

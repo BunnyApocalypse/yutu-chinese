@@ -52,7 +52,7 @@ test('text put in with data-t has no markup (data-t-html is for that)', () => {
 
 // The parts of the page moved over to data-t… so far (docs/interface.md,
 // "Interface text and translations"); once all are, the whole page is checked.
-const MOVED_OVER = ['settings-panel'];
+const MOVED_OVER = ['settings-panel', 'side-menu', 'import-dialog', 'storage-message'];
 
 test('nothing in the parts moved over is written straight into the page', () => {
   // Text between tags (not in comments, scripts or pictures) with an English

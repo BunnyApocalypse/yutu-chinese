@@ -111,9 +111,9 @@ export function formatDateTime(date, options) {
   return new Date(date).toLocaleString(locale, options);
 }
 
-// Items joined as the language joins them: "a, b and c" (Intl.ListFormat).
-export function formatList(items, type = 'conjunction') {
-  return new Intl.ListFormat(locale, { style: 'long', type }).format(items);
+// Items in a plain series, "a, b, c" (in Chinese it would be "a、b、c").
+export function formatList(items) {
+  return items.join(t('list.separator'));
 }
 
 // Fills in the page's own text from its data-t… attributes (see the top of

@@ -23,6 +23,7 @@ import { getSetting, setSetting } from './db.js';
 import { fillMixed } from './lang.js';
 import { storageAdvice, storageMessageLine, wordsAtRisk } from './storageAdvice.js';
 import { ask } from './confirm.js';
+import { t } from './text.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -60,7 +61,9 @@ export function createStorageMessage(keepData) {
     fillMixed(advice, asked ? storageAdvice(keepData.kind, state, keepData.mobile) : plan.line, 'traditional');
     // ('settings' keeps "Keep my words safe", the reminder's own words: the
     // owner, 2026-10-19.)
-    keepButton.textContent = action === 'install' ? 'Install the app' : action === 'export' ? 'Export backup' : 'Keep my words safe';
+    keepButton.textContent = t(
+      action === 'install' ? 'settings.installApp' : action === 'export' ? 'settings.exportBackup' : 'storageMessage.keep',
+    );
     keepButton.hidden = action === 'none' || asked;
     return true;
   }
@@ -124,11 +127,8 @@ export function createStorageMessage(keepData) {
   // app on the Home Screen or in the Dock.
   document.addEventListener('backup-made', (event) => {
     if (!box.hidden && action === 'export') {
-      const place = keepData.mobile ? 'your Home Screen' : 'the Dock';
       const next =
-        keepData.kind === 'safari'
-          ? ` Next: add 玉兔中文 to ${place}, open it from there, and use Import backup in its Settings.`
-          : '';
+        keepData.kind === 'safari' ? ` ${t(keepData.mobile ? 'storageMessage.nextPhone' : 'storageMessage.nextMac')}` : '';
       fillMixed(advice, event.detail + next, 'traditional');
       keepButton.hidden = true;
     }
@@ -141,18 +141,16 @@ export function createStorageMessage(keepData) {
   async function showReminderButton() {
     const off = await getSetting('storageReminderOff', false);
     // Named apart from the backup reminder's button in the same group.
-    reminderButton.textContent = off ? 'Show the reminder in Review and Learn again' : 'Stop the reminder in Review and Learn';
+    reminderButton.textContent = t(off ? 'storageMessage.showReminder' : 'settings.stopKeepReminder');
     reminderButton.hidden = !off && !(await atRisk());
   }
   reminderButton.addEventListener('click', async () => {
     const off = await getSetting('storageReminderOff', false);
     if (!off) {
       const sure = await ask({
-        question: 'Stop reminding you to keep your words safe?',
-        detail:
-          'This browser may delete your words and progress. If it does and you have no backup, they are gone. ' +
-          'The reminder at the end of Review stops; Settings still says how things stand.',
-        yes: 'I understand, stop it',
+        question: t('storageMessage.stopQuestion'),
+        detail: t('storageMessage.stopDetail'),
+        yes: t('storageMessage.stopYes'),
       });
       if (!sure) {
         return;

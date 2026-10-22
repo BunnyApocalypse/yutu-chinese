@@ -9,6 +9,9 @@
 // (`node scripts/missing-text.js de` lists them).
 
 export default {
+  // Between the items of a plain series (formatList in text.js)
+  'list.separator': ', ',
+
   // Settings (index.html, settings-panel)
   'settings.title': 'Settings',
   'settings.done': 'Done',
@@ -157,4 +160,162 @@ export default {
   'testing.installed': 'the installed app',
   'testing.webView': "a browser built into another app (such as Discord), with words apart from the browser's",
   'testing.tab': 'a page in the browser (a tab, or a link opened from another app such as Discord)',
+
+  // Keeping the words: what each browser does (storageAdvice.js)
+  'storage.installHow': 'open the browser\'s menu and choose "Install app" or "Add to Home screen"',
+  'storage.installBelow': 'tap "Install the app" below',
+  'storage.bringOver': "Words studied here in Safari don't come along by themselves: use Export backup here, then Import backup in the app.",
+  // The advice to make backups; "above" in Settings itself, where Export
+  // backup is just above the advice.
+  'storage.backupUntilAbove': 'Until then, use Export backup above now and then.',
+  'storage.backupUntilSettings': 'Until then, use Export backup in Settings now and then.',
+  'storage.backupUseAbove': 'Use Export backup above now and then.',
+  'storage.backupUseSettings': 'Use Export backup in Settings now and then.',
+  'storage.backupStillAbove': 'Still, use Export backup above now and then.',
+  'storage.backupStillSettings': 'Still, use Export backup in Settings now and then.',
+  'storage.kept': 'Long-term storage is allowed: the browser will not clear this data to free up space.',
+  'storage.cannotAsk': 'This browser has no way to ask for long-term storage. {backup}',
+  'storage.firefoxRefused':
+    'Firefox has not allowed it. If you chose "Block" or "Not now", click the icon at the left end of the address bar, clear the entry for storing data in persistent storage, and tap the button again. {backup}',
+  'storage.firefoxWillAsk': 'Firefox will show a question: may this site store data in persistent storage? Choose "Allow".',
+  'storage.chromiumInstalledRefused':
+    'This browser has not allowed it yet, although the app is installed. It decides by itself and usually agrees once the app has been used a little; the app asks again each time it starts. {backup}',
+  'storage.chromiumInstalled':
+    'This browser will not ask you anything: it decides by itself, and usually agrees for an installed app like this one.',
+  'storage.chromiumRefused':
+    'This browser said no, as it does for an app that is not installed. Install the app ({install}), open it from there, and it will ask again by itself. {backup}',
+  'storage.chromium':
+    'This browser will not ask you anything: it decides by itself, and says yes for an installed app. So install the app first ({install}) and use it from there: it then asks by itself.',
+  'storage.safariInstalledUnconfirmed': 'Safari has not confirmed it, but data of an app on the Home Screen is kept. {backup}',
+  'storage.safariInstalled': 'Safari decides by itself. Data of an app on the Home Screen, like this one, is kept.',
+  'storage.safariPhone':
+    "Safari decides by itself, and it deletes a site's data after about a week without a visit. To prevent that, put the app on the Home Screen (tap Share, or ⋯ then Share, then \"Add to Home Screen\") and use it from there. {bringOver}",
+  'storage.safariMac':
+    "Safari decides by itself, and it deletes a site's data after about a week without a visit. To prevent that, add the app to the Dock (in Safari's File menu, \"Add to Dock\", on macOS 14 or later) and use it from there. {bringOver}",
+  'storage.otherRefused': 'The browser did not allow it. It may once the app is installed: {install}. {backup}',
+  'storage.other': 'Your browser may ask you to confirm, or decide by itself.',
+  'storage.welcomeKept': 'This browser already keeps them.',
+  'storage.welcomeCannotAsk': 'This browser cannot be asked, so use Export backup in Settings now and then.',
+  'storage.welcomeChromium': 'This browser keeps the words of an installed app.',
+  'storage.welcomeFirefoxPhone':
+    "Firefox will ask at the bottom of the screen: choose \"Allow\". For an icon of your own, choose Install in the browser's menu (⋮).",
+  'storage.welcomeFirefoxComputer': 'Firefox will ask at the top of the page: choose "Allow".',
+  'storage.messageSafariPhone':
+    'Safari deletes them after a week without a visit. Add 玉兔中文 to your Home Screen (Share, or ⋯ then Share, then "Add to Home Screen") and study there. To bring your words along, export a backup here and import it there.',
+  'storage.messageSafariMac':
+    'Safari deletes them after a week without a visit. Add 玉兔中文 to the Dock (File › Add to Dock) and study there. To bring your words along, export a backup here and import it there.',
+  'storage.messageCannotAsk': "Your browser may delete them, and it can't be asked not to. Save a backup every week.",
+  'storage.messageInstall': "Install 玉兔中文 as an app so your browser doesn't delete them.",
+  'storage.messageSettings': "Install 玉兔中文 as an app or save a backup, so your browser doesn't delete them.",
+  'storage.messageFirefox': "When Firefox asks, choose Allow so it doesn't delete them.",
+  'storage.messageOther': "Tap below so your browser doesn't delete them.",
+
+  // The reminder to keep the words safe, in Review and Learn (storageMessage.js)
+  'storageMessage.title': 'Keep your words safe.',
+  'storageMessage.keep': 'Keep my words safe',
+  'storageMessage.notNow': 'Not now',
+  'storageMessage.nextPhone': 'Next: add 玉兔中文 to your Home Screen, open it from there, and use Import backup in its Settings.',
+  'storageMessage.nextMac': 'Next: add 玉兔中文 to the Dock, open it from there, and use Import backup in its Settings.',
+  'storageMessage.showReminder': 'Show the reminder in Review and Learn again',
+  'storageMessage.stopQuestion': 'Stop reminding you to keep your words safe?',
+  'storageMessage.stopDetail':
+    'This browser may delete your words and progress. If it does and you have no backup, they are gone. The reminder at the end of Review stops; Settings still says how things stand.',
+  'storageMessage.stopYes': 'I understand, stop it',
+
+  // Offline use (offline.js)
+  'offline.devServer': 'Offline use is switched off while developing (npm run dev).',
+  'offline.cannot': 'This browser cannot save the app for offline use.',
+  'offline.failed': 'The app could not be saved for offline use.',
+  'offline.saved': 'The app is saved on this device.',
+  'offline.dataSaved': 'Stroke data and dictionary are saved too.',
+  'offline.dataSaving': 'Saving stroke data and dictionary: {percent}%.',
+  'offline.audioSaved': 'All recordings are saved too.',
+  'offline.audioSaving': 'Saving recordings: {percent}%.',
+  'offline.audioOnPlay': 'Recordings of words are kept once played.',
+
+  // Backups (backup.js)
+  'backup.notABackup': 'This file is not a backup from this app.',
+  'backup.tooNew': 'This backup is format version {version}, but this app reads up to version {newest}. Update the app and try again.',
+  'backup.storeMissing': 'The backup is damaged: "{store}" is missing.',
+  'backup.recordWithoutKey': 'The backup is damaged: a record in "{store}" has no {key}.',
+  'backup.lastReview': 'last review {when}',
+  'backup.noReviews': 'no reviews',
+  'backup.contents': '{words}, {cards}, {reviews}, {when}',
+  'backup.words': { one: '{count} word', other: '{count} words' },
+  'backup.cards': { one: '{count} card studied', other: '{count} cards studied' },
+  'backup.reviews': { one: '{count} review', other: '{count} reviews' },
+
+  // The menu and the top bar (index.html, main.js)
+  'menu.menu': 'Menu',
+  'menu.menuBackupDue': 'Menu (time to make a backup, in Settings)',
+  'menu.settingsBackupDue': 'Settings (time to make a backup)',
+  'menu.review': 'Review',
+  'menu.learn': 'Learn',
+  'menu.waiting': '{count} waiting',
+  'menu.decks': 'Decks',
+  'menu.words': 'Words',
+  'menu.progress': 'Progress',
+  'menu.basics': 'Basics of Chinese',
+  'menu.feedback': 'Send feedback',
+  'menu.settings': 'Settings',
+  'menu.backupDue': 'Time to save a backup of your words, in Settings.',
+  // The screen's name in the top bar, beside the menu's own names
+  'place.lesson': 'Repeating a lesson',
+  'place.practice': 'Free practice',
+  'place.practicingWord': 'Practicing a word',
+  'place.back': 'Back',
+  'place.backTo': 'Back to {place}',
+  'place.backToWordPage': "Back to the word's page",
+  'place.backToItsPage': 'Back to its page',
+
+  // Free practice (main.js)
+  'practice.notInList': '"{text}" is not in the word list, so only Writing can be practiced with it.',
+  'practice.noToneCard': "\"{text}\" can't have a tone card: its pinyin doesn't have one syllable per character.",
+  'practice.again': 'Again',
+  'main.meaning': 'Meaning',
+  'main.addingWords': 'Adding words…',
+
+  // Backups in Settings (main.js)
+  'backup.saved':
+    'Saved to your downloads as {name}. Keep a copy off this device too (a cloud drive, or email it to yourself). To bring it back, here or on a new device, use Import backup.',
+  'backup.remindAgain': 'Remind me about backups again',
+  'backup.noneYet': 'No backup has been made on this device yet.',
+  'backup.lastToday': 'Last backup: today.',
+  'backup.lastYesterday': 'Last backup: yesterday.',
+  'backup.lastDaysAgo': { one: 'Last backup: {count} day ago.', other: 'Last backup: {count} days ago.' },
+  'backup.due': 'Time to export one. The red dot on the menu button is this reminder; it goes away once you have exported one.',
+  'backup.remindersOff': 'Backup reminders are off.',
+  'backup.stopQuestion': 'Stop the backup reminders?',
+  'backup.stopDetail':
+    'Your words and progress are kept only in this browser. If it loses them (a cleared browser, a lost phone) and you have no backup, they are gone.',
+  'backup.stopYes': 'I understand, stop them',
+  'backup.couldNotUse': 'That file could not be used',
+  'backup.nothingChanged': '{reason} Nothing was changed.',
+  'backup.inBackup': 'In the backup: {contents}.',
+  'backup.onDevice': 'On this device now: {contents}.',
+  'backup.combineWouldBring': 'Combining would bring this device: {changes}.',
+  'backup.combineNothing': 'Combining would change nothing: this device already has everything in the backup.',
+  'backup.replaceQuestion': 'Replace everything on this device with the backup?',
+  'backup.replaceDetail': 'What is on this device now will be gone. This cannot be undone.',
+  'backup.replaceYes': 'Replace everything',
+
+  // Importing a backup (merge.js, index.html)
+  'merge.wordsAdded': { one: '{count} new word', other: '{count} new words' },
+  'merge.wordsChanged': { one: '{count} word changed on the other device', other: '{count} words changed on the other device' },
+  'merge.wordsRemoved': { one: '{count} word removed on the other device', other: '{count} words removed on the other device' },
+  'merge.decksAdded': { one: '{count} new deck', other: '{count} new decks' },
+  'merge.decksRemoved': { one: '{count} deck deleted on the other device', other: '{count} decks deleted on the other device' },
+  'merge.reviewsAdded': { one: '{count} new review', other: '{count} new reviews' },
+  'merge.cardsChanged': { one: '{count} card with a new schedule', other: '{count} cards with a new schedule' },
+  'merge.settingsChanged': {
+    one: '{count} setting changed on the other device',
+    other: '{count} settings changed on the other device',
+  },
+  'import.title': 'Import backup',
+  'import.combine': 'Combine with this device',
+  'import.replace': 'Replace everything on this device',
+  'import.explained':
+    '<b>Combine</b> keeps what is on this device and adds what the backup has: for studying on two devices. A backup of this device is saved to your downloads first, in case you want to go back.<br /><b>Replace</b> throws away what is on this device and puts the backup in its place.',
+  'common.close': 'Close',
+  'common.cancel': 'Cancel',
 };

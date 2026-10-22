@@ -143,8 +143,8 @@ describe('importing a backup', { concurrency: false }, () => {
 
     await chooseBackup(page, backup);
     await waitUntil(page, `document.getElementById('import-dialog').open`, 'the import panel');
-    assert.match(await textOf(page, 'import-backup-text'), /^In the backup: 1 words, 1 cards studied, 1 reviews/);
-    assert.match(await textOf(page, 'import-device-text'), /^On this device now: 1 words, 0 cards studied, 0 reviews, no reviews/);
+    assert.match(await textOf(page, 'import-backup-text'), /^In the backup: 1 word, 1 card studied, 1 review/);
+    assert.match(await textOf(page, 'import-device-text'), /^On this device now: 1 word, 0 cards studied, 0 reviews, no reviews/);
     assert.equal(
       await textOf(page, 'import-combine-text'),
       'Combining would bring this device: 1 new word, 1 new deck, 1 new review, 1 card with a new schedule, 1 setting changed on the other device.',

@@ -6,6 +6,7 @@
 
 import { getSetting, setSetting } from './db.js';
 import { browserKind, isMobile, storageAdvice } from './storageAdvice.js';
+import { t } from './text.js';
 
 // BASE_URL is the folder the app is served from.
 const BASE = import.meta.env.BASE_URL;
@@ -354,12 +355,12 @@ export async function setUpOffline({ statusElement, keepElement, updateButton, k
 
   // import.meta.env.PROD is true in the built app and false under `npm run dev`.
   if (!import.meta.env.PROD) {
-    state.app = 'Offline use is switched off while developing (npm run dev).';
+    state.app = t('offline.devServer');
     show();
     return;
   }
   if (!('serviceWorker' in navigator) || !('caches' in window)) {
-    state.app = 'This browser cannot save the app for offline use.';
+    state.app = t('offline.cannot');
     show();
     return;
   }
@@ -370,11 +371,11 @@ export async function setUpOffline({ statusElement, keepElement, updateButton, k
   try {
     registration = await navigator.serviceWorker.register(address('sw.js'));
   } catch {
-    state.app = 'The app could not be saved for offline use.';
+    state.app = t('offline.failed');
     show();
     return;
   }
-  state.app = 'The app is saved on this device.';
+  state.app = t('offline.saved');
   show();
   // In the background; if it fails, it is tried again next time.
   forgetOldFolder().catch(() => {});
@@ -414,8 +415,8 @@ export async function setUpOffline({ statusElement, keepElement, updateButton, k
   const complete = await saveOfflineData(({ done, total }) => {
     state.data =
       done === total
-        ? 'Stroke data and dictionary are saved too.'
-        : `Saving stroke data and dictionary: ${Math.round((done / total) * 100)}%.`;
+        ? t('offline.dataSaved')
+        : t('offline.dataSaving', { percent: Math.round((done / total) * 100) });
     show();
   });
   if (!complete) {
@@ -435,8 +436,8 @@ export async function setUpOffline({ statusElement, keepElement, updateButton, k
         total === 0
           ? ''
           : done === total
-            ? 'All recordings are saved too.'
-            : `Saving recordings: ${Math.round((done / total) * 100)}%.`;
+            ? t('offline.audioSaved')
+            : t('offline.audioSaving', { percent: Math.round((done / total) * 100) });
       show();
     });
     if (!all && state.audio !== '') {
@@ -447,7 +448,7 @@ export async function setUpOffline({ statusElement, keepElement, updateButton, k
   if (await getSetting('audioOffline', false)) {
     await saveRecordings();
   } else {
-    state.audio = 'Recordings of words are kept once played.';
+    state.audio = t('offline.audioOnPlay');
     show();
     // The test copy of the app has no packs of recordings to save (see
     // scripts/build-offline.js), so it does not offer to.
