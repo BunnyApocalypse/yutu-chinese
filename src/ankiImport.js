@@ -30,6 +30,7 @@ import { cardIdFor, CARD_TYPES } from './session.js';
 import { sentenceId, sentenceRecord, isSentence, SENTENCE_CARD_TYPES } from './sentences.js';
 import { replay, emptyState } from './scheduler.js';
 import { READY_MADE_LISTS, newDeckRecord, withDeck } from './decks.js';
+import { t } from './text.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -539,7 +540,7 @@ export function isRadicalDeck(notes, index, radicals) {
 //          for a deck of radicals; `sentences`, true for a note type of
 //          sentences (isSentenceDeck), whose every note is a sentence
 //
-// Returns { word, fromDeck }, { sentence } or { problem }; a sentence's
+// Returns { word, fromDeck }, { sentence } or { problem, reason }; a sentence's
 // meaning is always the note's own, a radical's never.
 export function itemFromNote(texts, context) {
   const radical = radicalEntry(texts.characters, context.radicals);
@@ -610,12 +611,12 @@ function sentenceForms(text, dictionary) {
 // texts, context: as for wordFromNote
 //
 // Returns { sentence: { traditional, simplified, pinyin, definition } } for
-// sentenceRecord, or { problem }.
+// sentenceRecord, or { problem, reason }.
 export function sentenceFromNote(texts, context) {
   const firstLine = (text) => (text.split('\n')[0] || '').replace(EXAMPLE_LABEL, '').trim();
   const characters = firstLine(texts.characters).replace(/\s+/g, '');
   if (!/\p{Script=Han}/u.test(characters)) {
-    return { problem: 'No Chinese characters in the note’s sentence.' };
+    return { problem: t('ankiReason.sentenceNoChinese'), reason: 'sentenceNoChinese' };
   }
   const meaning = texts.meaning
     .split('\n')
@@ -623,7 +624,7 @@ export function sentenceFromNote(texts, context) {
     .filter((line) => line !== '')
     .join(' ');
   if (meaning === '') {
-    return { problem: 'A sentence without its meaning: the note has none.' };
+    return { problem: t('ankiReason.sentenceNoMeaning'), reason: 'sentenceNoMeaning' };
   }
   return {
     sentence: {
@@ -752,12 +753,12 @@ function charactersOf(field, pinyinText, dictionary) {
 //          `dictionary` may be null; `likeliestEntry` picks the entry with
 //          the usual reading (dictionaryLoader.js)
 //
-// Returns { word, fromDeck } or { problem }, as checkWord does; `fromDeck`
+// Returns { word, fromDeck } or { problem, reason }, as checkWord does; `fromDeck`
 // is true where the meaning is the note's own, not the dictionary's.
 export function wordFromNote(texts, context) {
   // A sentence or phrase is not a word: itemFromNote makes it a sentence.
   if (looksLikeSentence(texts.characters)) {
-    return { problem: 'This looks like a sentence or phrase, not a word.' };
+    return { problem: t('ankiReason.looksLikeSentence'), reason: 'looksLikeSentence' };
   }
   const notePinyin = texts.pinyin.split('\n')[0] || '';
   let pinyinText = tidyNotePinyin(notePinyin);
@@ -883,10 +884,7 @@ export function wordFromNote(texts, context) {
   // Why a note is left out, said about the note: checkWord's own words are
   // advice for typing a word ("Write pinyin with tone numbers…"), so the
   // ones a note can give are put another way.
-  const notInDictionary =
-    entries.length === 0
-      ? 'the app’s dictionary doesn’t have this word'
-      : 'the app’s dictionary has this word only with another reading';
+  const notInDictionary = t(entries.length === 0 ? 'ankiReason.notInDictionary' : 'ankiReason.otherReading');
   const result = checkWord({
     [script]: characters,
     [other]: otherForm,
@@ -897,14 +895,14 @@ export function wordFromNote(texts, context) {
   if (!result.problem) {
     return { ...result, fromDeck };
   }
-  if (result.problem.startsWith('The pinyin is missing')) {
-    return { problem: `No pinyin: the note has none, and ${notInDictionary}.` };
+  if (result.reason === 'pinyinMissing') {
+    return { problem: t('ankiReason.noPinyin', { why: notInDictionary }), reason: 'noPinyin' };
   }
-  if (result.problem.startsWith('The meaning is missing')) {
-    return { problem: `No meaning: the note has none, and ${notInDictionary}.` };
+  if (result.reason === 'meaningMissing') {
+    return { problem: t('ankiReason.noMeaning', { why: notInDictionary }), reason: 'noMeaning' };
   }
-  if (result.problem.includes('is not pinyin the app can read')) {
-    return { problem: `The note’s pinyin “${notePinyin}” can’t be read.` };
+  if (result.reason === 'notPinyin') {
+    return { problem: t('ankiReason.pinyinUnreadable', { pinyin: notePinyin }), reason: 'pinyinUnreadable' };
   }
   return result;
 }
@@ -1022,7 +1020,7 @@ const isReadyMade = (deck) => READY_MADE_LISTS.some((list) => deck.id === list.i
 //            'none';
 //            `waiting`: new words (and radicals) with no cards, which wait
 //            in Learn;
-//            `problems`: [{ text, problem }] for notes left out;
+//            `problems`: [{ text, problem, reason }] for notes left out;
 //            `alreadyStudied`: cards left as they are, studied here already;
 //            `sameWord`: notes that are a word another note is too;
 //            `otherMeanings`: words already there whose meaning differs
@@ -1109,7 +1107,7 @@ export function planAnkiImport(collection, choices, context) {
       sentences: sentenceDecks.has(note.noteTypeId),
     });
     if (result.problem) {
-      report.problems.push({ text: texts.characters || cleanField(note.fields[0]), problem: result.problem });
+      report.problems.push({ text: texts.characters || cleanField(note.fields[0]), problem: result.problem, reason: result.reason });
       continue;
     }
     // A radical comes with its ID; a word's is worked out.

@@ -73,6 +73,7 @@ const MOVED_OVER = [
   'word-page',
   'confirm-dialog',
   'progress-panel',
+  'anki-dialog',
 ];
 
 test('nothing in the parts moved over is written straight into the page', () => {

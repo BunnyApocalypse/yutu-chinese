@@ -24,6 +24,7 @@
 // Audio and pictures in the file are not read.
 
 import { decompress as unzstd } from 'fzstd';
+import { t } from './text.js';
 
 // ---- The zip archive ----
 
@@ -50,7 +51,7 @@ export function filesInZip(bytes) {
     }
   }
   if (end === -1) {
-    throw new Error('This is not a zip archive.');
+    throw new Error(t('ankiFile.notZip'));
   }
   const count = view.getUint16(end + 10, true);
   let at = view.getUint32(end + 16, true);
@@ -58,7 +59,7 @@ export function filesInZip(bytes) {
   const files = new Map();
   for (let index = 0; index < count; index++) {
     if (view.getUint32(at, true) !== 0x02014b50) {
-      throw new Error('The zip archive is damaged.');
+      throw new Error(t('ankiFile.damaged'));
     }
     const method = view.getUint16(at + 10, true);
     let packedSize = view.getUint32(at + 20, true);
@@ -110,7 +111,7 @@ export async function unpack({ method, data }) {
     return data;
   }
   if (method !== 8) {
-    throw new Error('The zip archive is packed in a way the app cannot read.');
+    throw new Error(t('ankiFile.packing'));
   }
   const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
   return new Uint8Array(await new Response(stream).arrayBuffer());
@@ -133,7 +134,7 @@ export async function openAnkiFile(bytes, SQL) {
   const files = filesInZip(bytes);
   const name = ['collection.anki21b', 'collection.anki21', 'collection.anki2'].find((file) => files.has(file));
   if (!name) {
-    throw new Error('This file has no Anki collection in it. Is it a deck exported from Anki (.apkg)?');
+    throw new Error(t('ankiFile.noCollection'));
   }
   let database = await unpack(files.get(name));
   if (isZstd(database)) {

@@ -42,8 +42,10 @@ export function tidyPinyin(text) {
 //     cardScript }
 // Either of traditional and simplified may be left empty if they are the same.
 //
-// Returns { word } with the tidied word, or { problem } with a sentence
-// saying what is wrong.
+// Returns { word } with the tidied word, or { problem, reason }: a sentence
+// saying what is wrong, and a name for the reason that stays the same in
+// every language ('pinyinMissing', 'meaningMissing', 'notPinyin'…), for
+// code that acts on it (ankiImport.js).
 export function checkWord(fields) {
   const clean = (text) => (text || '').replace(/\s+/g, ' ').trim();
   let traditional = clean(fields.traditional);
@@ -51,42 +53,42 @@ export function checkWord(fields) {
   traditional = traditional || simplified;
   simplified = simplified || traditional;
   if (traditional === '') {
-    return { problem: t('check.typeCharacters') };
+    return { problem: t('check.typeCharacters'), reason: 'typeCharacters' };
   }
   // A word has at least one Chinese character: a tester typed an English
   // word, and "word1", which went in (2026-10-14). (AA制 and X光 still do.)
   const hasHan = (text) => /\p{Script=Han}/u.test(text);
   if (!hasHan(traditional) || !hasHan(simplified)) {
-    return { problem: t('check.notCharacters') };
+    return { problem: t('check.notCharacters'), reason: 'notCharacters' };
   }
   // A space would hide a typing slip; | and # are used inside the IDs of
   // words and cards.
   if (/[\s|#]/.test(traditional + simplified)) {
-    return { problem: t('check.noSpaces') };
+    return { problem: t('check.noSpaces'), reason: 'noSpaces' };
   }
   // Array.from counts whole characters, where .length would count rare
   // characters twice.
   if (Array.from(traditional).length !== Array.from(simplified).length) {
-    return { problem: t('check.sameLength') };
+    return { problem: t('check.sameLength'), reason: 'sameLength' };
   }
 
   if (clean(fields.pinyin) === '') {
-    return { problem: t('check.pinyinMissing', { help: pinyinHelp() }) };
+    return { problem: t('check.pinyinMissing', { help: pinyinHelp() }), reason: 'pinyinMissing' };
   }
   const pinyin = tidyPinyin(clean(fields.pinyin));
   if (pinyin === null) {
-    return { problem: t('check.notPinyin', { pinyin: clean(fields.pinyin), help: pinyinHelp() }) };
+    return { problem: t('check.notPinyin', { pinyin: clean(fields.pinyin), help: pinyinHelp() }), reason: 'notPinyin' };
   }
   const definition = clean(fields.definition);
   if (definition === '') {
-    return { problem: t('check.meaningMissing') };
+    return { problem: t('check.meaningMissing'), reason: 'meaningMissing' };
   }
 
   const word = { simplified, traditional, pinyin, definition };
   if (clean(fields.pinyinTaiwan) !== '') {
     const pinyinTaiwan = tidyPinyin(clean(fields.pinyinTaiwan));
     if (pinyinTaiwan === null) {
-      return { problem: t('check.taiwanNotPinyin', { help: pinyinHelp() }) };
+      return { problem: t('check.taiwanNotPinyin', { help: pinyinHelp() }), reason: 'taiwanNotPinyin' };
     }
     // Only kept if it really differs.
     if (pinyinTaiwan !== pinyin) {
@@ -98,7 +100,7 @@ export function checkWord(fields) {
   if (clean(fields.pinyinAlso) !== '') {
     const pinyinAlso = tidyPinyin(clean(fields.pinyinAlso));
     if (pinyinAlso === null) {
-      return { problem: t('check.alsoNotPinyin', { help: pinyinHelp() }) };
+      return { problem: t('check.alsoNotPinyin', { help: pinyinHelp() }), reason: 'alsoNotPinyin' };
     }
     const extra = pinyinAlso.split(', ').filter((reading) => !pinyin.split(', ').includes(reading));
     if (extra.length > 0) {
@@ -240,7 +242,7 @@ export function readWordList(text, completeForms) {
       columns = columnsFromCsv(fields);
     }
     const result =
-      columns.definition === undefined ? { problem: t('check.columns') } : checkWord(columns);
+      columns.definition === undefined ? { problem: t('check.columns'), reason: 'columns' } : checkWord(columns);
     if (result.word && oneScript && completeForms) {
       Object.assign(result.word, completeForms(result.word.traditional, result.word.pinyin));
     }

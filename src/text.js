@@ -120,6 +120,14 @@ export function formatList(items) {
   return items.join(t('list.separator'));
 }
 
+// Items with "and" before the last: "a, b and c".
+export function formatAndList(items) {
+  if (items.length < 2) {
+    return items.join('');
+  }
+  return t('list.and', { start: formatList(items.slice(0, -1)), last: items.at(-1) });
+}
+
 // Fills in the page's own text from its data-t… attributes (see the top of
 // this file), under `root` (the whole page at start-up).
 const ATTRIBUTES = ['title', 'aria-label', 'placeholder', 'alt'];

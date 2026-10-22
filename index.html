@@ -932,32 +932,26 @@
       <!-- Importing from Anki, in three steps (ankiImportForm.js): choosing the
            file, checking what the app guessed, and what was brought over. -->
       <dialog id="anki-dialog" class="settings-panel anki-dialog">
-        <h2>Import from Anki</h2>
+        <h2 data-t="anki.importFromAnki"></h2>
         <section id="anki-choose-step">
-          <p>
-            Bring your words over from Anki: a deck exported as an .apkg file, or your whole collection (.colpkg). Their
-            schedules come along, so cards are due when Anki said.
-          </p>
+          <p data-t="anki.bringYourWordsOver"></p>
           <div class="buttons">
-            <button id="anki-file-button" class="small primary" type="button">Choose a file</button>
+            <button id="anki-file-button" class="small primary" type="button" data-t="anki.ankiFileButton"></button>
             <input id="anki-file" type="file" accept=".apkg,.colpkg" hidden />
           </div>
-          <p class="hint">
-            In Anki: File › Export, then "Anki Deck Package" with "Include scheduling information" ticked. Audio and
-            pictures are not brought over.
-          </p>
+          <p class="hint" data-t="anki.inAnkiFileExport"></p>
         </section>
         <section id="anki-check-step" hidden>
           <p id="anki-summary"></p>
           <fieldset class="setting">
-            <legend>Decks to bring</legend>
+            <legend data-t="anki.decksToBring"></legend>
             <div id="anki-decks" class="anki-choices"></div>
           </fieldset>
           <!-- One fieldset per note type, filled in by ankiImportForm.js. -->
           <div id="anki-note-types"></div>
-          <p>Looks right? Press Import.</p>
+          <p data-t="anki.looksRightPressImport"></p>
           <div class="buttons">
-            <button id="anki-import-now" class="small primary" type="button">Import</button>
+            <button id="anki-import-now" class="small primary" type="button" data-t="anki.ankiImportNow"></button>
           </div>
         </section>
         <section id="anki-done-step" hidden>
@@ -965,11 +959,11 @@
           <!-- The notes that could not be brought over, and why. -->
           <section id="anki-left-out" class="anki-left-out" hidden>
             <p id="anki-left-out-title" class="anki-fold-title"></p>
-            <p class="hint">They weren’t brought over.</p>
+            <p class="hint" data-t="anki.theyWerenTBrought"></p>
             <ul id="anki-problems" class="list-problems anki-problems"></ul>
           </section>
           <div class="buttons">
-            <button id="anki-done-button" class="small primary" type="button">Done</button>
+            <button id="anki-done-button" class="small primary" type="button" data-t="anki.ankiDoneButton"></button>
           </div>
         </section>
         <p id="anki-note" role="status" class="note"></p>
