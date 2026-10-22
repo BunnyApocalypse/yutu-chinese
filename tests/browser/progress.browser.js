@@ -140,6 +140,18 @@ describe('the Progress tab', { concurrency: false }, () => {
     assert.equal(await page.evaluate(`document.querySelectorAll('#progress-days .progress-calendar.strip i:not(.blank)').length`), 365);
   });
 
+  it('gives each chart to a screen reader as a slider that says the day in words', async () => {
+    const charts = await page.evaluate(
+      `[...document.querySelectorAll('#progress-panel [role="slider"]')].map((chart) => [chart.getAttribute('aria-label'), chart.getAttribute('aria-valuetext')])`,
+    );
+    assert.deepEqual(charts.map(([label]) => label), ['Days studied', 'Time studied', 'Words learned and characters known over time']);
+    // Today, to begin with.
+    assert.match(charts[0][1], /: 2 cards, 1 word learned, 3 min\.$/);
+    // The arrow keys move it, and it says where it is.
+    await page.evaluate(`document.querySelector('#progress-days [role="slider"]').dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }))`);
+    assert.equal(await page.evaluate(`document.querySelector('#progress-days [role="slider"]').getAttribute('aria-valuenow')`), '0');
+  });
+
   it('counts characters in the learner\'s script, or apart with the switch', async () => {
     const ends = () => page.evaluate(`[...document.querySelectorAll('#progress-growth .end-label')].map((label) => label.textContent)`);
     // 大 他 們: the harness learns both scripts, cards in traditional.

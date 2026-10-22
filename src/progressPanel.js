@@ -7,8 +7,11 @@
 // The charts are drawn with plain elements and SVG, no library. Tapping a
 // day or a bar shows its numbers on the line above the chart (the owner:
 // yes), where a finger doesn't cover them; with a keyboard, the chart takes
-// the focus and the arrow keys move along it. Screen readers hear the line
-// change (aria-live).
+// the focus and the arrow keys move along it. To a screen reader each chart
+// is a slider (tester 4, 2026-10-21, found the tab hard to use with one):
+// it says the chart's name and the day or bar it is on in words, today's
+// to begin with, and the arrow keys (or a swipe up or down) move it. The
+// squares, bars and lines themselves are hidden from it.
 
 import { getAll, getSetting, setSetting } from './db.js';
 import {
@@ -98,12 +101,27 @@ function make(tag, className = '', text = '') {
 }
 
 // Makes `chart` answer taps and arrow keys: `count` places along it (days or
-// bars), `placeAt(event)` the one under a tap, and `choose(index)` shows it.
-function makeExplorable(chart, count, placeAt, choose) {
+// bars), `placeAt(event)` the one under a tap, `mark(index)` shows which is
+// chosen, and `describe(index)` says it in words, on the line `said` above
+// the chart. For screen readers the chart is a slider (role="slider") whose
+// value is that sentence (aria-valuetext); a slider is what they know to
+// move with the arrow keys, or with a swipe up or down on a phone.
+function makeExplorable(chart, count, placeAt, { mark, describe, said, label }) {
   let chosen = null;
+  chart.setAttribute('role', 'slider');
+  chart.setAttribute('aria-label', label);
+  chart.setAttribute('aria-valuemin', '0');
+  chart.setAttribute('aria-valuemax', String(count - 1));
+  // Before anything is chosen, the last place (today) is what it says.
+  chart.setAttribute('aria-valuenow', String(count - 1));
+  chart.setAttribute('aria-valuetext', describe(count - 1));
   const pick = (index) => {
     chosen = Math.max(0, Math.min(count - 1, index));
-    choose(chosen);
+    mark(chosen);
+    const text = describe(chosen);
+    said.textContent = text;
+    chart.setAttribute('aria-valuenow', String(chosen));
+    chart.setAttribute('aria-valuetext', text);
   };
   chart.tabIndex = 0;
   chart.addEventListener('click', (event) => {
@@ -122,10 +140,20 @@ function makeExplorable(chart, count, placeAt, choose) {
     }
   });
   chart.addEventListener('keydown', (event) => {
-    const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7, Home: -count, End: count }[event.key];
+    const step = {
+      ArrowLeft: -1,
+      ArrowRight: 1,
+      ArrowUp: -7,
+      ArrowDown: 7,
+      PageUp: -7,
+      PageDown: 7,
+      Home: -count,
+      End: count,
+    }[event.key];
     if (step !== undefined) {
       event.preventDefault();
-      pick(chosen === null ? count - 1 : chosen + step);
+      // From today where nothing is chosen yet, as the slider already says.
+      pick((chosen ?? count - 1) + step);
     }
   });
 }
@@ -276,10 +304,11 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
     drawGrowth();
   }
 
-  // A line in a chart's box that says what was tapped.
+  // A line in a chart's box that says what was tapped. A screen reader
+  // hears it from the chart itself (makeExplorable), so not from here too.
   function readout(text) {
     const line = make('p', 'progress-readout', text);
-    line.setAttribute('aria-live', 'polite');
+    line.setAttribute('aria-hidden', 'true');
     return line;
   }
 
@@ -310,7 +339,6 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
     // longer range as a strip of small squares, a column a week, as in Anki.
     const asCalendar = keys.length <= 31;
     const calendar = make('div', asCalendar ? 'progress-calendar month' : 'progress-calendar strip');
-    calendar.setAttribute('aria-label', t('progress.daysStudied'));
     const blanks = (dateOf(keys[0]).getDay() + 6) % 7;
     const cells = [];
     for (let blank = 0; blank < blanks; blank++) {
@@ -345,13 +373,13 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
         const index = cells.indexOf(cell);
         return index >= 0 ? index : null;
       },
-      (index) => {
-        cells.forEach((cell, each) => cell.classList.toggle('chosen', each === index));
-        const key = keys[index];
-        const day = study.get(key) || { cards: 0, words: 0 };
-        const time = data.time.get(key);
-        said.textContent =
-          day.cards + day.words === 0
+      {
+        mark: (index) => cells.forEach((cell, each) => cell.classList.toggle('chosen', each === index)),
+        describe: (index) => {
+          const key = keys[index];
+          const day = study.get(key) || { cards: 0, words: 0 };
+          const time = data.time.get(key);
+          return day.cards + day.words === 0
             ? t('progress.nothingStudied', { date: longDate(key) })
             : t(time ? 'progress.dayStudiedTime' : 'progress.dayStudied', {
                 date: longDate(key),
@@ -359,6 +387,9 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
                 words: t('progress.dayWordsLearned', { count: day.words }),
                 time: time ? duration(time) : '',
               });
+        },
+        said,
+        label: t('progress.daysStudied'),
       },
     );
     const scale = make('div', 'progress-scale');
@@ -399,7 +430,6 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
       axis.append(tick);
     }
     const plot = make('div', 'time-plot');
-    plot.setAttribute('aria-label', t('progress.timeStudied'));
     const bars = groups.map((group) => {
       const bar = make('i');
       bar.style.height = `${(group.ms / top) * 100}%`;
@@ -421,16 +451,20 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
       plot,
       groups.length,
       (event) => placeAcross(plot, groups.length, event),
-      (index) => {
-        bars.forEach((bar, each) => bar.classList.toggle('chosen', each === index));
-        const group = groups[index];
-        const when =
-          size === 'day'
-            ? longDate(group.keys[0])
-            : size === 'week'
-              ? t('progress.weekSpan', { from: shortDate(group.keys[0]), to: shortDate(group.keys[group.keys.length - 1]) })
-              : monthName(group.keys[0], true);
-        said.textContent = t('progress.barTime', { when, time: duration(group.ms) });
+      {
+        mark: (index) => bars.forEach((bar, each) => bar.classList.toggle('chosen', each === index)),
+        describe: (index) => {
+          const group = groups[index];
+          const when =
+            size === 'day'
+              ? longDate(group.keys[0])
+              : size === 'week'
+                ? t('progress.weekSpan', { from: shortDate(group.keys[0]), to: shortDate(group.keys[group.keys.length - 1]) })
+                : monthName(group.keys[0], true);
+          return t('progress.barTime', { when, time: duration(group.ms) });
+        },
+        said,
+        label: t('progress.timeStudied'),
       },
     );
 
@@ -509,7 +543,6 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
       return element;
     };
     const svg = draw('svg', { viewBox: `0 0 ${width} ${height}`, width, height, class: 'growth-chart' });
-    svg.setAttribute('aria-label', t('progress.growthChart'));
     const decoration = draw('g', { 'aria-hidden': 'true' });
     for (let value = bottom; value <= top; value += step) {
       decoration.append(
@@ -568,21 +601,26 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
         const along = (event.clientX - box.left - left) / (width - left - right);
         return Math.max(0, Math.min(points.length - 1, Math.round(along * (points.length - 1))));
       },
-      (index) => {
-        const point = points[index];
-        marker.setAttribute('visibility', 'visible');
-        for (const [attribute, value] of [['x1', x(index)], ['x2', x(index)]]) {
-          markerLine.setAttribute(attribute, value);
-        }
-        charactersDot.setAttribute('cx', x(index));
-        charactersDot.setAttribute('cy', y(point.characters));
-        wordsDot.setAttribute('cx', x(index));
-        wordsDot.setAttribute('cy', y(point.words));
-        said.textContent = t('progress.growthDay', {
-          date: longDate(point.key),
-          words: t('progress.words', { count: point.words }),
-          characters: t('progress.characters', { count: point.characters }),
-        });
+      {
+        mark: (index) => {
+          const point = points[index];
+          marker.setAttribute('visibility', 'visible');
+          for (const [attribute, value] of [['x1', x(index)], ['x2', x(index)]]) {
+            markerLine.setAttribute(attribute, value);
+          }
+          charactersDot.setAttribute('cx', x(index));
+          charactersDot.setAttribute('cy', y(points[index].characters));
+          wordsDot.setAttribute('cx', x(index));
+          wordsDot.setAttribute('cy', y(point.words));
+        },
+        describe: (index) =>
+          t('progress.growthDay', {
+            date: longDate(points[index].key),
+            words: t('progress.words', { count: points[index].words }),
+            characters: t('progress.characters', { count: points[index].characters }),
+          }),
+        said,
+        label: t('progress.growthChart'),
       },
     );
 
