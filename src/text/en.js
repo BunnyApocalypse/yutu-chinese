@@ -838,7 +838,7 @@ export default {
     other: '{count} words selected. Tap words in the list to select them.',
   },
   'cards.markedKnown': {
-    one: 'Marked {count} word as known: their new cards were answered "Easy" and will come up in Review in a few days.',
+    one: 'Marked {count} word as known: its new cards were answered "Easy" and will come up in Review in a few days.',
     other: 'Marked {count} words as known: their new cards were answered "Easy" and will come up in Review in a few days.',
   },
   'cards.suspendedAll': { one: 'Suspended every card of {count} word.', other: 'Suspended every card of {count} words.' },
