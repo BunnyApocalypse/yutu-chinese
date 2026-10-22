@@ -8,7 +8,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 - **Built:** see the roadmap's "Tester 4's feedback" just below: the outline bug, no Chinese in a writing card's meaning, lists filled in from the dictionary, HSK 3.0 named as a version, a setting for the mistake count, a line on what a card is, the word page's top, OpenDyslexic, the Progress tab's charts for screen readers. Unit tests and all browser tests pass.
 - **The owner to look at:** the word page (`local/tester4/word-page-before.png`, `-after.png`) and OpenDyslexic (`local/tester4/opendyslexic-*.png`, against `device-font-lesson-small-phone.png`).
-- **Built after:** the bolder prompt by the writing area (B). **To plan:** a Review of a set number of cards (dropped: the way on after the first card); and adding a sentence and its word (the owner thinks the first three were misread).
+- **Built after:** the bolder prompt by the writing area (B). **To plan:** a Review of a set number of cards (dropped: the way on after the first card); and adding a sentence and its word.
 - **Corrected:** the SIL Open Font License is not GPL-compatible in the FSF's list (said wrongly when asking); the font is kept as separate files, like the stroke data (`CLAUDE.md`, Licensing).
 - **To release** when the owner wants: a "What's new" entry covering these and the earlier "1 word" fixes.
 
