@@ -70,6 +70,9 @@ const MOVED_OVER = [
   'streak-dialog',
   'feedback-dialog',
   'deck-dialog',
+  'word-page',
+  'confirm-dialog',
+  'progress-panel',
 ];
 
 test('nothing in the parts moved over is written straight into the page', () => {

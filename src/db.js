@@ -78,6 +78,8 @@
 // IndexedDB's own interface is built on callbacks and is awkward to use. The
 // functions below wrap it so the rest of the app can simply "await" results.
 
+import { t } from './text.js';
+
 // The app is published twice at one site: a stable copy, and under test/ a
 // copy that gets every change first. A browser keeps one set of databases
 // for the whole site, so the test copy has a database of its own name; it
@@ -133,7 +135,7 @@ function openDatabase() {
       // The other way around: this is the later version, and a tab with an
       // earlier one is still open.
       request.onblocked = () =>
-        reject(new Error('The app is open in another tab in an older version. Close that tab, then reload this one.'));
+        reject(new Error(t('error.olderTab')));
     });
   }
   return databasePromise;

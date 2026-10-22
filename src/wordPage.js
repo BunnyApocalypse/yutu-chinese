@@ -16,6 +16,7 @@
 import { formatPinyin, wordId } from './wordList.js';
 import { scriptFor } from './words.js';
 import { langFor, fillMixed } from './lang.js';
+import { t } from './text.js';
 import { closeOnTapBeside } from './dialogs.js';
 import { readingsFor, describeReading } from './tones.js';
 import { parseNotes, noteFor, sentenceWords } from './notes.js';
@@ -117,7 +118,7 @@ export function createWordPage({
   // has "Learn it now" at its top (a word just added).
   function showLessonButton(word, learnNowAbove = false) {
     const learned = word && isLearned(word);
-    lessonButton.textContent = learned ? 'Repeat lesson' : 'Learn it now';
+    lessonButton.textContent = t(learned ? 'page.repeatLesson' : 'page.learnItNow');
     lessonButton.hidden = !word || isSentence(word) || !canPractice() || (!learned && learnNowAbove);
   }
 
@@ -163,8 +164,8 @@ export function createWordPage({
   function loudspeaker(word, reading) {
     const button = element('button', 'icon-button');
     button.type = 'button';
-    button.title = 'Hear it';
-    button.setAttribute('aria-label', 'Hear it');
+    button.title = t('page.hearIt');
+    button.setAttribute('aria-label', t('page.hearIt'));
     // The same picture as the loudspeaker in Review (index.html).
     button.innerHTML = byId('listen-button').innerHTML;
     button.addEventListener('click', async () => {
@@ -240,7 +241,7 @@ export function createWordPage({
     const section = element('section', 'page-section');
     const noteText = element('p', 'page-note');
     tappableText(noteText, note.note);
-    section.append(element('h3', '', 'Learning tips'), noteText);
+    section.append(element('h3', '', t('page.learningTips')), noteText);
 
     // A note about a part of a character has no example sentence.
     if (!note.example) {
@@ -280,10 +281,10 @@ export function createWordPage({
       return section;
     }
     const adding = element('div', 'page-add-sentence');
-    const deckSelect = deckChooser('Deck to add the sentence to', shown.word);
+    const deckSelect = deckChooser(t('page.deckForSentence'), shown.word);
     // Worded so that it is plain a card is made (the owner, 2026-10-14:
     // "Study this sentence in" did not say so).
-    const addButton = element('button', 'small', 'Add');
+    const addButton = element('button', 'small', t('page.add'));
     addButton.type = 'button';
     const said = element('p', 'note');
     addButton.addEventListener('click', async () => {
@@ -301,9 +302,9 @@ export function createWordPage({
       if (word) {
         adding.replaceWith(sentenceStudiedLine(word));
       }
-      said.textContent = result === 'added' ? 'Added. Its cards come up in Review.' : '';
+      said.textContent = result === 'added' ? t('page.sentenceAdded') : '';
     });
-    adding.append(element('span', '', 'Make cards from this sentence in'), deckSelect, addButton);
+    adding.append(element('span', '', t('page.makeCardsIn')), deckSelect, addButton);
     section.append(adding, said);
     return section;
   }
@@ -323,7 +324,7 @@ export function createWordPage({
       return null;
     }
     const chips = element('div', 'page-chips');
-    chips.append(element('span', 'chips-label', rows.length > 1 ? 'Decks:' : 'Deck:'));
+    chips.append(element('span', 'chips-label', t(rows.length > 1 ? 'page.decks' : 'page.deck')));
     const canLeave = canPractice();
     // (A deck's name has no script of its own: the learner's is taken.)
     for (const { deck, label } of rows) {
@@ -331,7 +332,7 @@ export function createWordPage({
       fillMixed(chip, label, getSettings().script);
       if (canLeave) {
         chip.type = 'button';
-        chip.title = 'Open this deck';
+        chip.title = t('page.openDeck');
         chip.addEventListener('click', () => {
           dialog.close();
           showDeck(deck.id, word);
@@ -402,15 +403,15 @@ export function createWordPage({
     let readingSelect = null;
     if (entries.length > 1) {
       readingSelect = element('select', 'deck-select');
-      readingSelect.setAttribute('aria-label', 'Which reading to add');
+      readingSelect.setAttribute('aria-label', t('page.whichReading'));
       entries.forEach((entry, index) => {
         const option = element('option', '', formatPinyin(entry.pinyin));
         option.value = String(index);
         readingSelect.append(option);
       });
     }
-    const deckSelect = deckChooser('Deck to add the word to');
-    const addButton = element('button', 'small', 'Add');
+    const deckSelect = deckChooser(t('page.deckForWord'));
+    const addButton = element('button', 'small', t('page.add'));
     addButton.type = 'button';
     const said = element('p', 'note');
     said.setAttribute('role', 'status');
@@ -420,7 +421,7 @@ export function createWordPage({
       const result = await addEntry(entry, deckSelect.value);
       const word = getWords().find((own) => own.id === wordId(entry));
       if (result === 'already there' || !word) {
-        said.textContent = 'This word is already in that deck.';
+        said.textContent = t('page.alreadyInDeck');
         addButton.disabled = false;
         return;
       }
@@ -432,7 +433,9 @@ export function createWordPage({
       }
     });
     adding.append(
-      ...(readingSelect ? [element('span', '', 'Add'), readingSelect, element('span', '', 'to your words, in')] : [element('span', '', 'Add to your words, in')]),
+      ...(readingSelect
+        ? [element('span', '', t('page.addReadingStart')), readingSelect, element('span', '', t('page.addReadingEnd'))]
+        : [element('span', '', t('page.addToWordsIn'))]),
       deckSelect,
       addButton,
     );
@@ -449,7 +452,7 @@ export function createWordPage({
       return made;
     };
     const section = element('section', 'page-section');
-    section.append(element('h3', '', single ? 'How it is built' : 'Characters'));
+    section.append(element('h3', '', t(single ? 'page.howBuilt' : 'page.characters')));
     let any = false;
     for (const char of chars) {
       const structure = structureOf(characters, char);
@@ -478,7 +481,7 @@ export function createWordPage({
           button.append(partCharacter);
           if (role) {
             // "meaning" or "sound": what this part does in the character.
-            button.append(element('span', 'part-role', role));
+            button.append(element('span', 'part-role', t(role === 'meaning' ? 'page.roleMeaning' : 'page.roleSound')));
           }
           button.addEventListener('click', () => go({ text: part }));
           parts.append(button);
@@ -487,12 +490,12 @@ export function createWordPage({
       }
       const KINDS = {
         'sound-meaning': structure.hint
-          ? `One part gives the meaning (${structure.hint}) and one the sound.`
-          : 'One part gives the meaning and one the sound.',
+          ? t('page.soundMeaningHint', { hint: structure.hint })
+          : t('page.soundMeaning'),
         // The dictionary's gloss for these two kinds is often a way of
         // seeing the character more than its history, and is worded so.
-        meaning: structure.hint ? `One way to see it: ${structure.hint.replace(/\.$/, '')}.` : '',
-        picture: structure.hint ? `Seen as a picture: ${structure.hint.replace(/\.$/, '')}.` : 'Seen as a picture.',
+        meaning: structure.hint ? t('page.oneWayToSee', { hint: structure.hint.replace(/\.$/, '') }) : '',
+        picture: structure.hint ? t('page.pictureHint', { hint: structure.hint.replace(/\.$/, '') }) : t('page.picture'),
       };
       if (KINDS[structure.kind]) {
         card.append(mixed('p', 'hint', KINDS[structure.kind]));
@@ -574,7 +577,7 @@ export function createWordPage({
       if (entries.length > 0) {
         parts.push(...showAdding(entries));
       } else {
-        parts.push(element('p', 'hint', 'Not in your words or the dictionary. To add it, type it on a deck\'s page.'));
+        parts.push(element('p', 'hint', t('page.notAnywhere')));
       }
     }
     chars = [...new Set(Array.from(forms.own).filter(isHan))];
@@ -605,14 +608,17 @@ export function createWordPage({
       const deck = getDecks().find((entry) => entry.id === target.addedTo);
       const deckName = element('span');
       fillMixed(deckName, deck ? deck.name : '', settings.script);
-      const learnButton = element('button', 'small', 'Learn it now');
+      const learnButton = element('button', 'small', t('page.learnItNow'));
       learnButton.type = 'button';
       learnButton.addEventListener('click', () => {
         dialog.close();
         learnNow(word.id, target.addedTo);
       });
       const said = element('span');
-      said.append('Added to ', deckName);
+      // The deck's name is an element of its own, its Chinese marked: put
+      // where the gap {deck} is in the text.
+      const [before, after] = t('page.addedTo').split('{deck}');
+      said.append(before, deckName, after);
       added.append(said, learnButton);
       parts.unshift(added);
     }
@@ -631,14 +637,14 @@ export function createWordPage({
   function showThisCard(thisCard) {
     const strip = element('div', 'page-this-card');
     const said = element('span');
-    said.append(element('b', '', `This card: ${thisCard.label}`));
+    said.append(element('b', '', t('page.thisCard', { label: thisCard.label })));
     if (thisCard.facts) {
       said.append(` · ${thisCard.facts}`);
     }
     const buttons = element('div', 'page-this-card-buttons');
     for (const [label, act] of [
-      ['Suspend', thisCard.suspend],
-      ['Start over', thisCard.startOver],
+      [t('cards.suspend'), thisCard.suspend],
+      [t('cards.startOver'), thisCard.startOver],
     ]) {
       const button = element('button', 'small', label);
       button.type = 'button';
@@ -697,7 +703,7 @@ export function createWordPage({
       ? own.definition
       : entry
         ? entry.meanings.join('; ')
-        : 'Not in the dictionary.';
+        : t('page.notInDictionary');
     // The loudspeaker, made afresh for this word, on the word's line.
     peekCard.querySelector('.icon-button')?.remove();
     const speakable = own

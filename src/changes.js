@@ -2,8 +2,14 @@
 // A new entry is written at the top whenever a release goes out
 // (docs/interface.md, "What's new"). `id` tells the entries apart and is the
 // release's date; a second release on the same day gets "-2" after it.
+// The entries so far are in English whatever the app's language, and stay
+// so (the owner, 2026-10-22); once a translation exists, a new entry's lines
+// are to be translated too (docs/interface.md, "Interface text").
 // Each line is a short sentence about what a learner will notice, not how it
 // was built.
+
+import { formatDate } from './text.js';
+
 export const CHANGES = [
   {
     id: '2026-10-21-3',
@@ -82,5 +88,5 @@ export function changesSince(changes, seen) {
 // in London and could show the day before.
 export function changeDate(id) {
   const [year, month, day] = id.split('-').map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  return formatDate(new Date(year, month - 1, day), { year: 'numeric', month: 'long', day: 'numeric' });
 }

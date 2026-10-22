@@ -27,35 +27,63 @@ import { studyByDay, streakAt } from './streak.js';
 import { CARD_TYPES } from './session.js';
 import { scriptFor } from './words.js';
 import { langFor } from './lang.js';
+import { t, formatDate, formatNumber, formatList } from './text.js';
 
 // The names shown for the kinds of card and the stages.
-const TYPE_NAMES = { meaning: 'Meaning', pinyin: 'Pinyin', tone: 'Tone', writing: 'Writing' };
-const STAGE_NAMES = { new: 'New', learning: 'Learning', young: 'Young', mature: 'Mature' };
-// "+19 words … in the last 30 days."
-const RANGE_PHRASES = { month: 'in the last 30 days', months3: 'in the last 3 months', year: 'in the last year', all: 'in all' };
+// (Keys of their text, src/text/en.js.)
+const TYPE_NAMES = {
+  meaning: 'progress.typeMeaning',
+  pinyin: 'progress.typePinyin',
+  tone: 'progress.typeTone',
+  writing: 'progress.typeWriting',
+};
+const STAGE_NAMES = {
+  new: 'progress.stageNew',
+  learning: 'progress.stageLearning',
+  young: 'progress.stageYoung',
+  mature: 'progress.stageMature',
+};
+const STAGE_COUNTS = {
+  new: 'progress.stageNewCount',
+  learning: 'progress.stageLearningCount',
+  young: 'progress.stageYoungCount',
+  mature: 'progress.stageMatureCount',
+};
+// "+19 words and +12 characters in the last 30 days."
+const GREW = {
+  month: 'progress.grewMonth',
+  months3: 'progress.grew3Months',
+  year: 'progress.grewYear',
+  all: 'progress.grewAll',
+};
 // Under the total time of the range.
-const TOTAL_NAMES = { month: 'last 30 days', months3: 'last 3 months', year: 'last year', all: 'in all' };
+const TOTAL_NAMES = {
+  month: 'progress.totalMonth',
+  months3: 'progress.total3Months',
+  year: 'progress.totalYear',
+  all: 'progress.totalAll',
+};
 
 // "Oct 19", from a day's name such as "2026-10-19".
 function dateOf(key) {
   const [year, month, day] = key.split('-').map(Number);
   return new Date(year, month - 1, day, 12);
 }
-const shortDate = (key) => dateOf(key).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-const longDate = (key) => dateOf(key).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+const shortDate = (key) => formatDate(dateOf(key), { month: 'short', day: 'numeric' });
+const longDate = (key) => formatDate(dateOf(key), { weekday: 'short', month: 'short', day: 'numeric' });
 const monthName = (key, long = false) =>
-  dateOf(key).toLocaleDateString('en-US', long ? { month: 'long', year: 'numeric' } : { month: 'short' });
+  formatDate(dateOf(key), long ? { month: 'long', year: 'numeric' } : { month: 'short' });
 
 // "14 min", "2 h 5 min".
 function duration(ms) {
   const minutes = Math.round(ms / 60000);
   if (minutes < 60) {
-    return `${minutes} min`;
+    return t('progress.minutes', { minutes });
   }
   const rest = minutes % 60;
-  return `${Math.floor(minutes / 60)} h${rest ? ` ${rest} min` : ''}`;
+  const hours = Math.floor(minutes / 60);
+  return rest ? t('progress.hoursMinutes', { hours, minutes: rest }) : t('progress.hours', { hours });
 }
-const plural = (count, one, many = `${one}s`) => `${count} ${count === 1 ? one : many}`;
 
 // The element for one tag, with its class and text.
 function make(tag, className = '', text = '') {
@@ -129,7 +157,7 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
   let data = null;
 
   for (const { id, name } of RANGES) {
-    const button = make('button', '', name);
+    const button = make('button', '', t(name));
     button.type = 'button';
     button.dataset.range = id;
     button.addEventListener('click', () => {
@@ -180,10 +208,13 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
   function drawToday() {
     const today = todayStats(data.reviews, data.words, data.now);
     const tiles = [
-      [String(today.cards), today.cards === 1 ? 'card reviewed' : 'cards reviewed'],
-      [String(today.words), today.words === 1 ? 'word learned' : 'words learned'],
-      [duration(today.time), 'studied'],
-      [today.reviews ? `${Math.round((today.right / today.reviews) * 100)}%` : '–', 'answers right'],
+      [formatNumber(today.cards), t('progress.cardsReviewed', { count: today.cards })],
+      [formatNumber(today.words), t('progress.wordsLearned', { count: today.words })],
+      [duration(today.time), t('progress.studied')],
+      [
+        today.reviews ? t('progress.percent', { percent: Math.round((today.right / today.reviews) * 100) }) : '–',
+        t('progress.answersRight'),
+      ],
     ];
     parts.today.replaceChildren(
       ...tiles.map(([number, label]) => {
@@ -199,7 +230,7 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
   function stageBar(counts) {
     const bar = make('div', 'stage-bar');
     bar.setAttribute('role', 'img');
-    bar.setAttribute('aria-label', STAGES.map((stage) => `${counts[stage]} ${STAGE_NAMES[stage].toLowerCase()}`).join(', '));
+    bar.setAttribute('aria-label', formatList(STAGES.map((stage) => t(STAGE_COUNTS[stage], { count: counts[stage] }))));
     for (const stage of STAGES) {
       if (counts[stage] > 0) {
         const part = make('i', `stage-${stage}`);
@@ -225,13 +256,13 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
     };
     const legend = make('div', 'progress-legend');
     for (const stage of STAGES) {
-      legend.append(make('span', `key-stage-${stage}`, STAGE_NAMES[stage]));
+      legend.append(make('span', `key-stage-${stage}`, t(STAGE_NAMES[stage])));
     }
     parts.stages.replaceChildren(
-      ...stages.rows.map(({ type, counts, total }) => row(TYPE_NAMES[type], counts, total)),
-      row('All cards', stages.all.counts, stages.all.total, 'stage-all'),
+      ...stages.rows.map(({ type, counts, total }) => row(t(TYPE_NAMES[type]), counts, total)),
+      row(t('progress.allCards'), stages.all.counts, stages.all.total, 'stage-all'),
       legend,
-      make('p', 'hint', 'New: not studied yet. Young: remembered for less than 3 weeks. Mature: 3 weeks or more.'),
+      make('p', 'hint', t('progress.stagesExplained')),
     );
   }
 
@@ -264,22 +295,22 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
     const content = [];
     // The streak, with streaks on; just the days studied without (a nudge
     // that can be switched off, the owner, 2026-10-19).
-    parts.daysTitle.textContent = settings.streaks ? 'Streak' : 'Days studied';
+    parts.daysTitle.textContent = t(settings.streaks ? 'progress.streak' : 'progress.daysStudied');
     if (settings.streaks) {
       const streak = streakAt(study, data.now, { cards: settings.streakCards, words: settings.streakWords });
       const line = make('div', 'progress-big-line');
       line.append(
-        make('b', '', plural(streak.current, 'day')),
-        make('span', '', `in a row · your best: ${plural(streak.best, 'day')}`),
+        make('b', '', t('progress.days', { count: streak.current })),
+        make('span', '', t('progress.inARow', { count: streak.best })),
       );
       content.push(line);
     }
-    const said = readout('Tap a day for its numbers.');
+    const said = readout(t('progress.tapDay'));
     // A month as a calendar, a row a week from Monday, with the dates; a
     // longer range as a strip of small squares, a column a week, as in Anki.
     const asCalendar = keys.length <= 31;
     const calendar = make('div', asCalendar ? 'progress-calendar month' : 'progress-calendar strip');
-    calendar.setAttribute('aria-label', 'Days studied');
+    calendar.setAttribute('aria-label', t('progress.daysStudied'));
     const blanks = (dateOf(keys[0]).getDay() + 6) % 7;
     const cells = [];
     for (let blank = 0; blank < blanks; blank++) {
@@ -288,7 +319,7 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
     keys.forEach((key, index) => {
       const cell = make('i', `level-${level(key)}${index === keys.length - 1 ? ' today' : ''}`);
       if (asCalendar) {
-        cell.textContent = key.endsWith('-01') ? `${monthName(key)} 1` : String(dateOf(key).getDate());
+        cell.textContent = key.endsWith('-01') ? t('progress.firstOfMonth', { month: monthName(key) }) : formatNumber(dateOf(key).getDate());
       }
       cells.push(cell);
       calendar.append(cell);
@@ -296,8 +327,10 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
     if (asCalendar) {
       const weekdays = make('div', 'progress-weekdays');
       weekdays.setAttribute('aria-hidden', 'true');
-      for (const day of ['M', 'T', 'W', 'T', 'F', 'S', 'S']) {
-        weekdays.append(make('span', '', day));
+      // Monday to Sunday in a letter or two, as the language writes them
+      // (January 1, 2024 was a Monday).
+      for (let day = 1; day <= 7; day++) {
+        weekdays.append(make('span', '', formatDate(new Date(2024, 0, day, 12), { weekday: 'narrow' })));
       }
       content.push(said, weekdays, calendar);
     } else {
@@ -319,20 +352,24 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
         const time = data.time.get(key);
         said.textContent =
           day.cards + day.words === 0
-            ? `${longDate(key)}: nothing studied.`
-            : `${longDate(key)}: ${plural(day.cards, 'card')}, ${plural(day.words, 'word')} learned` +
-              (time ? `, ${duration(time)}.` : '.');
+            ? t('progress.nothingStudied', { date: longDate(key) })
+            : t(time ? 'progress.dayStudiedTime' : 'progress.dayStudied', {
+                date: longDate(key),
+                cards: t('progress.dayCards', { count: day.cards }),
+                words: t('progress.dayWordsLearned', { count: day.words }),
+                time: time ? duration(time) : '',
+              });
       },
     );
     const scale = make('div', 'progress-scale');
     scale.setAttribute('aria-hidden', 'true');
-    scale.append('Fewer');
+    scale.append(t('progress.fewer'));
     for (let each = 0; each <= 4; each++) {
       scale.append(make('i', `level-${each}`));
     }
-    scale.append('More cards');
+    scale.append(t('progress.moreCards'));
     const studied = keys.filter((key) => activity(key) > 0).length;
-    content.push(scale, make('p', 'hint', `Studied on ${studied} of ${plural(keys.length, 'day')}.`));
+    content.push(scale, make('p', 'hint', t('progress.studiedOn', { studied, count: keys.length })));
     parts.days.replaceChildren(...content);
   }
 
@@ -351,7 +388,7 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
     const steps = inHours ? [1, 1.5, 2, 3, 5, 10, 15, 20, 30, 50, 100] : [1, 2, 3, 5, 10, 15, 20, 30, 45, 60];
     const step = steps.find((each) => each * 2 * unit >= most) ?? steps[steps.length - 1];
     const top = step * 2 * unit;
-    const label = (value) => `${value}${inHours ? ' h' : ''}`;
+    const label = (value) => (inHours ? t('progress.hours', { hours: value }) : formatNumber(value));
 
     const chart = make('div', 'time-chart');
     const axis = make('div', 'time-axis');
@@ -362,7 +399,7 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
       axis.append(tick);
     }
     const plot = make('div', 'time-plot');
-    plot.setAttribute('aria-label', 'Time studied');
+    plot.setAttribute('aria-label', t('progress.timeStudied'));
     const bars = groups.map((group) => {
       const bar = make('i');
       bar.style.height = `${(group.ms / top) * 100}%`;
@@ -375,11 +412,11 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
     const nameOf = (group) => (size === 'month' ? monthName(group.keys[0]) : shortDate(group.keys[0]));
     const marked = [...new Set([0, Math.floor((groups.length - 1) / 2), groups.length - 1])];
     for (const index of marked) {
-      dates.append(make('span', '', size === 'day' && index === groups.length - 1 ? 'Today' : nameOf(groups[index])));
+      dates.append(make('span', '', size === 'day' && index === groups.length - 1 ? t('progress.today') : nameOf(groups[index])));
     }
     chart.append(axis, plot, dates);
 
-    const said = readout('Tap a bar for its time.');
+    const said = readout(t('progress.tapBar'));
     makeExplorable(
       plot,
       groups.length,
@@ -391,9 +428,9 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
           size === 'day'
             ? longDate(group.keys[0])
             : size === 'week'
-              ? `${shortDate(group.keys[0])} to ${shortDate(group.keys[group.keys.length - 1])}`
+              ? t('progress.weekSpan', { from: shortDate(group.keys[0]), to: shortDate(group.keys[group.keys.length - 1]) })
               : monthName(group.keys[0], true);
-        said.textContent = `${when}: ${duration(group.ms)}.`;
+        said.textContent = t('progress.barTime', { when, time: duration(group.ms) });
       },
     );
 
@@ -402,16 +439,22 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
     const allTime = [...data.time.values()].reduce((sum, ms) => sum + ms, 0);
     const totals = make('div', 'time-totals');
     for (const [number, name] of [
-      [duration(total), TOTAL_NAMES[range]],
+      [duration(total), t(TOTAL_NAMES[range])],
       // Over the days studied only, not every day of the range.
-      [duration(daysWithTime ? total / daysWithTime : 0), 'per day studied'],
-      [duration(allTime), 'all time'],
+      [duration(daysWithTime ? total / daysWithTime : 0), t('progress.perDay')],
+      [duration(allTime), t('progress.allTime')],
     ]) {
       const part = make('div');
       part.append(make('b', '', number), make('span', '', name));
       totals.append(part);
     }
-    const unitLine = { day: 'Minutes a day.', week: inHours ? 'Hours a week.' : 'Minutes a week.', month: inHours ? 'Hours a month.' : 'Minutes a month.' }[size];
+    const unitLine = t(
+      {
+        day: 'progress.minutesADay',
+        week: inHours ? 'progress.hoursAWeek' : 'progress.minutesAWeek',
+        month: inHours ? 'progress.hoursAMonth' : 'progress.minutesAMonth',
+      }[size],
+    );
     parts.time.replaceChildren(said, chart, make('p', 'hint', unitLine), totals);
   }
 
@@ -466,12 +509,12 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
       return element;
     };
     const svg = draw('svg', { viewBox: `0 0 ${width} ${height}`, width, height, class: 'growth-chart' });
-    svg.setAttribute('aria-label', 'Words learned and characters known over time');
+    svg.setAttribute('aria-label', t('progress.growthChart'));
     const decoration = draw('g', { 'aria-hidden': 'true' });
     for (let value = bottom; value <= top; value += step) {
       decoration.append(
         draw('line', { class: value === bottom ? 'baseline' : 'gridline', x1: left, x2: width - right, y1: y(value), y2: y(value) }),
-        draw('text', { class: 'axis-text', x: left - 6, y: y(value) + 4, 'text-anchor': 'end' }, String(value)),
+        draw('text', { class: 'axis-text', x: left - 6, y: y(value) + 4, 'text-anchor': 'end' }, formatNumber(value)),
       );
     }
     const marked = [...new Set([0, Math.floor((points.length - 1) / 2), points.length - 1])];
@@ -495,12 +538,12 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
     }
     const endLabel = (value, name, atY) => {
       const text = draw('text', { class: 'end-label', x: width - right + 8, y: atY });
-      text.append(draw('tspan', { 'font-weight': '600' }, String(value)), ` ${name}`);
+      text.append(draw('tspan', { 'font-weight': '600' }, formatNumber(value)), ` ${name}`);
       return text;
     };
     decoration.append(
-      endLabel(last.characters, last.characters === 1 ? 'character' : 'characters', charactersY),
-      endLabel(last.words, last.words === 1 ? 'word' : 'words', wordsY),
+      endLabel(last.characters, t('progress.characterEnd', { count: last.characters }), charactersY),
+      endLabel(last.words, t('progress.wordEnd', { count: last.words }), wordsY),
     );
     // Where a tap or the keyboard is: a line down, a dot on each line.
     const marker = draw('g', { class: 'growth-marker', visibility: 'hidden' });
@@ -516,7 +559,7 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
     );
     svg.append(decoration);
 
-    const said = readout("Tap the chart for a day's numbers.");
+    const said = readout(t('progress.tapChart'));
     makeExplorable(
       svg,
       points.length,
@@ -535,7 +578,11 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
         charactersDot.setAttribute('cy', y(point.characters));
         wordsDot.setAttribute('cx', x(index));
         wordsDot.setAttribute('cy', y(point.words));
-        said.textContent = `${longDate(point.key)}: ${plural(point.words, 'word')}, ${plural(point.characters, 'character')}.`;
+        said.textContent = t('progress.growthDay', {
+          date: longDate(point.key),
+          words: t('progress.words', { count: point.words }),
+          characters: t('progress.characters', { count: point.characters }),
+        });
       },
     );
 
@@ -551,12 +598,18 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
       item.append(words);
       return item;
     };
-    legend.append(key('key-words', 'Words learned', wordSign), key('key-characters', 'Characters known', '字'));
+    legend.append(
+      key('key-words', t('progress.wordsLearnedKey'), wordSign),
+      key('key-characters', t('progress.charactersKnownKey'), '字'),
+    );
     // What was new in the range, its first day included.
     const firstDay = days.get(keys[0]) || { words: 0, characters: 0 };
     const newWords = last.words - first.words + firstDay.words;
     const newCharacters = last.characters - first.characters + firstDay.characters;
-    const grew = `+${plural(newWords, 'word')} and +${plural(newCharacters, 'character')} ${RANGE_PHRASES[range]}.`;
+    const grew = t(GREW[range], {
+      words: t('progress.words', { count: newWords }),
+      characters: t('progress.characters', { count: newCharacters }),
+    });
     parts.growth.replaceChildren(said, svg, legend, make('p', 'hint', grew));
   }
 

@@ -22,12 +22,13 @@ import { isSentence } from './sentences.js';
 import { isRadical } from './radicals.js';
 
 // The ranges to choose from: how many days back from today, or null for
-// everything since the first day studied.
+// everything since the first day studied. `name` is the key of its text
+// (src/text/en.js).
 export const RANGES = [
-  { id: 'month', name: 'Month', days: 30 },
-  { id: 'months3', name: '3 months', days: 91 },
-  { id: 'year', name: 'Year', days: 365 },
-  { id: 'all', name: 'All', days: null },
+  { id: 'month', name: 'progress.rangeMonth', days: 30 },
+  { id: 'months3', name: 'progress.range3Months', days: 91 },
+  { id: 'year', name: 'progress.rangeYear', days: 365 },
+  { id: 'all', name: 'progress.rangeAll', days: null },
 ];
 
 // A card is "mature" once it is next due 21 days or more after its last

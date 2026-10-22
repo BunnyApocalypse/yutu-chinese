@@ -392,7 +392,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     byId('deck-back-button').hidden = !onDeckPage;
     // Opened from a word's page, the way back goes there (cameFromWord).
     if (cameFromWord) {
-      fillMixed(byId('deck-back-label'), 'Back', getSettings().script);
+      fillMixed(byId('deck-back-label'), t('place.back'), getSettings().script);
     }
     // Only while Decks or Words is on screen: this also runs after changes
     // made from Review, whose top bar may have its own way back in the

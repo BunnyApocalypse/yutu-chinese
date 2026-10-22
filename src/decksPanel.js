@@ -174,7 +174,7 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
       button.addEventListener('click', () => open(deckId));
       return button;
     };
-    const parts = current ? [link('Decks', null), ...above.map((deck) => link(deck.name, deck.id))] : [];
+    const parts = current ? [link(t('menu.decks'), null), ...above.map((deck) => link(deck.name, deck.id))] : [];
     const here = document.createElement('span');
     showName(here, current ? current.name : '');
     pathElement.replaceChildren(...parts.flatMap((part) => [part, ' › ']), ...(current ? [here] : []));

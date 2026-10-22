@@ -450,35 +450,35 @@
            Filled in by progressPanel.js (the owner, 2026-10-19). -->
       <section id="progress-panel" class="progress-panel" hidden>
         <section>
-          <h3>Today</h3>
+          <h3 data-t="progress.today"></h3>
           <div id="progress-today" class="progress-tiles"></div>
         </section>
         <section>
-          <h3>Your cards</h3>
+          <h3 data-t="progress.yourCards"></h3>
           <div id="progress-stages" class="progress-box"></div>
         </section>
         <!-- What the three parts below show: the last 30 days, 3 months, a
              year, or everything (as in Anki). -->
-        <div id="progress-range" class="progress-range" role="group" aria-label="Show"></div>
+        <div id="progress-range" class="progress-range" role="group" data-t-aria-label="progress.show"></div>
         <section>
-          <h3 id="progress-days-title">Streak</h3>
+          <h3 id="progress-days-title" data-t="progress.streak"></h3>
           <div id="progress-days" class="progress-box"></div>
         </section>
         <section>
-          <h3>Time studied</h3>
+          <h3 data-t="progress.timeStudied"></h3>
           <div id="progress-time" class="progress-box"></div>
         </section>
         <section>
           <div class="progress-heading">
-            <h3>Words and characters</h3>
+            <h3 data-t="progress.wordsAndCharacters"></h3>
             <!-- Only for someone learning both scripts, beside the heading (the
                  owner, 2026-10-19): counts a character's simplified and
                  traditional forms as two (們 and 们). "Split 简体字/繁體字"
                  where it fits beside the heading, else "Split 简/繁"
                  (progressPanel.js). -->
-            <label id="progress-apart-label" class="switch-label" title="Count simplified and traditional forms as different characters" hidden>
-              <span>Split <span class="apart-long"><span lang="zh-Hans-CN">简体字</span>/<span lang="zh-Hant-TW">繁體字</span></span><span class="apart-short" hidden><span lang="zh-Hans-CN">简</span>/<span lang="zh-Hant-TW">繁</span></span></span>
-              <input id="progress-apart" class="switch" type="checkbox" role="switch" aria-label="Count simplified and traditional forms as different characters" />
+            <label id="progress-apart-label" class="switch-label" data-t-title="progress.countSimplifiedAndTraditional" hidden>
+              <span><span data-t="progress.split"></span> <span class="apart-long"><span lang="zh-Hans-CN">简体字</span>/<span lang="zh-Hant-TW">繁體字</span></span><span class="apart-short" hidden><span lang="zh-Hans-CN">简</span>/<span lang="zh-Hant-TW">繁</span></span></span>
+              <input id="progress-apart" class="switch" type="checkbox" role="switch" data-t-aria-label="progress.countSimplifiedAndTraditional" />
             </label>
           </div>
           <div id="progress-growth" class="progress-box"></div>
@@ -843,27 +843,23 @@
           <div id="word-page-cards" hidden>
           <!-- How each of the word's cards stands (cardsPanel.js). -->
           <details id="edit-cards-row" class="add-list">
-            <summary id="edit-cards-summary">Cards</summary>
+            <summary id="edit-cards-summary" data-t="page.editCardsSummary"></summary>
             <ul id="edit-cards" class="card-rows"></ul>
             <div class="buttons">
-              <button id="know-word-button" class="small" type="button">I know this word</button>
+              <button id="know-word-button" class="small" type="button" data-t="page.knowWordButton"></button>
             </div>
-            <p class="hint">
-              <b>Start over</b> makes a card new again. <b>Suspend</b> keeps a card from coming up, with its history
-              and schedule, until resumed. <b>I know this word</b> answers its new cards "Easy",
-              so the word skips its lesson and the cards come up in Review in some days.
-            </p>
+            <p class="hint" data-t-html="page.startOverMakesA"></p>
           </details>
           </div>
         </div>
         <div class="buttons">
-          <button id="word-page-back" class="small with-arrow" type="button" hidden><svg class="back-arrow" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19" /></svg><span>Back</span></button>
-          <button id="word-page-practice" class="small" type="button" hidden>Practice</button>
+          <button id="word-page-back" class="small with-arrow" type="button" hidden><svg class="back-arrow" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19" /></svg><span data-t="page.back"></span></button>
+          <button id="word-page-practice" class="small" type="button" hidden data-t="page.wordPagePractice"></button>
           <!-- "Repeat lesson" for a word learned, "Learn it now" for one
                still waiting (wordPage.js). -->
-          <button id="word-page-lesson" class="small" type="button" hidden>Repeat lesson</button>
-          <button id="word-page-edit" class="small" type="button" hidden>Edit</button>
-          <button id="word-page-remove" class="small danger" type="button" hidden>Remove</button>
+          <button id="word-page-lesson" class="small" type="button" hidden data-t="page.wordPageLesson"></button>
+          <button id="word-page-edit" class="small" type="button" hidden data-t="page.wordPageEdit"></button>
+          <button id="word-page-remove" class="small danger" type="button" hidden data-t="page.wordPageRemove"></button>
         </div>
         <button id="word-page-close" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
 
@@ -876,7 +872,7 @@
             <span id="word-peek-pinyin" class="word-peek-pinyin"></span>
           </p>
           <p id="word-peek-meaning" class="word-peek-meaning"></p>
-          <button id="word-peek-open" class="small" type="button">About this word</button>
+          <button id="word-peek-open" class="small" type="button" data-t="page.wordPeekOpen"></button>
         </div>
       </dialog>
 

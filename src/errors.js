@@ -7,6 +7,7 @@
 // words and nothing about the person's studying is in them.
 
 /* global __APP_VERSION__, __CHANNEL__ */
+import { t } from './text.js';
 
 // The app's version (see vite.config.js).
 // The test copy of the app says that it is one (see db.js).
@@ -16,7 +17,8 @@ const byId = (id) => document.getElementById(id);
 
 // Which version, browser and screen size this is: the first lines of an
 // error's details and of a feedback email (feedback.js). Nothing about the
-// person's words or studying.
+// person's words or studying. In English whatever the app's language: it is
+// read by whoever fixes the app.
 export function aboutThisDevice() {
   return [
     `Yutu Chinese ${APP_VERSION}`,
@@ -58,13 +60,13 @@ export function watchForErrors({ banner, detailsButton, dialog, textElement, cop
 
   detailsButton.addEventListener('click', () => {
     textElement.value = describe();
-    copyButton.textContent = 'Copy';
+    copyButton.textContent = t('error.copy');
     dialog.showModal();
   });
   copyButton.addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(textElement.value);
-      copyButton.textContent = 'Copied';
+      copyButton.textContent = t('error.copied');
     } catch {
       // Where the browser will not let a page copy, the text is selected, to
       // be copied by hand.
@@ -79,7 +81,7 @@ export function watchForErrors({ banner, detailsButton, dialog, textElement, cop
 
 // Fills in the line in Settings that says which version this is.
 export function showVersion() {
-  byId('app-version').textContent = `Version ${APP_VERSION}`;
+  byId('app-version').textContent = t('error.version', { version: APP_VERSION });
   if (__CHANNEL__) {
     document.title = `${document.title} (${__CHANNEL__})`;
   }

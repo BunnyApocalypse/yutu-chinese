@@ -10,6 +10,7 @@
 
 import { aboutThisDevice } from './errors.js';
 import { closeOnTapBeside } from './dialogs.js';
+import { t } from './text.js';
 
 const ADDRESS = 'yutufeedback.delicious577@passmail.com';
 const ISSUES = 'https://github.com/BunnyApocalypse/yutu-chinese/issues';
@@ -21,11 +22,11 @@ export function createFeedback() {
   const dialog = byId('feedback-dialog');
 
   byId('feedback-email').addEventListener('click', () => {
-    const body = `\n\n\n---\nThe details below help with a report; delete them if you like.\n${aboutThisDevice()}\n`;
+    const body = `\n\n\n---\n${t('feedback.detailsBelow')}\n${aboutThisDevice()}\n`;
     // encodeURIComponent turns spaces, line breaks and the like into the
     // %20-style codes an address needs.
     window.location.href =
-      `mailto:${ADDRESS}?subject=${encodeURIComponent('Yutu Chinese feedback')}&body=${encodeURIComponent(body)}`;
+      `mailto:${ADDRESS}?subject=${encodeURIComponent(t('feedback.subject'))}&body=${encodeURIComponent(body)}`;
   });
   byId('feedback-issue').addEventListener('click', () => {
     // "noopener": the new tab gets no handle on this one.
