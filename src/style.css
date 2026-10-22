@@ -1807,14 +1807,6 @@ button.slot {
   -webkit-line-clamp: 2;
 }
 
-/* With a tip the word and its reading are a little smaller, to leave room. */
-.card-face.with-tip .face-word {
-  font-size: 2.4rem;
-}
-
-.card-face.with-tip .face-pinyin {
-  font-size: var(--size-title);
-}
 
 .face-tip {
   display: flex;
@@ -1836,7 +1828,7 @@ button.slot {
 }
 
 .face-tip-sentence {
-  font-size: var(--size-large);
+  font-size: var(--size-body);
 }
 
 .face-tip-english {
@@ -1884,8 +1876,13 @@ button.slot {
   border-top: 1px solid var(--line);
 }
 
+/* Bold and a size up: with the word and its pinyin, bigger than a tip
+   under them (tester 4, 2026-10-21: the word and its meaning were smaller
+   than the tip; until then a tip made them smaller still. The owner chose
+   this, B of two, 2026-10-22). */
 .face-meaning {
-  font-size: var(--size-large);
+  font-size: var(--size-title);
+  font-weight: 700;
   /* On a card's face a long meaning is cut off after five lines. */
   display: -webkit-box;
   -webkit-box-orient: vertical;

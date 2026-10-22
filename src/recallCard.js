@@ -35,18 +35,17 @@ export function createRecallCard(cardFace) {
 
   // Shows the answer under the word.
   function showAnswer() {
-    const { word, ask, reading } = current;
+    const { word, reading } = current;
     const described = describeReading(reading);
     const pinyin = [paragraph('face-pinyin', described.main)];
     if (described.other) {
       pinyin.push(paragraph('face-hint', described.other));
     }
     const meaning = paragraph('face-meaning', word.definition);
-    // The word stays at the top; the thing that was asked for comes first.
-    cardFace.replaceChildren(
-      cardFace.firstElementChild,
-      ...(ask === 'meaning' ? [meaning, ...pinyin] : [...pinyin, meaning]),
-    );
+    // Always the word, its pinyin, its meaning, as on the word's page and
+    // the other cards (tester 4, 2026-10-21; the owner, 2026-10-22). Until
+    // then the thing asked for came first.
+    cardFace.replaceChildren(cardFace.firstElementChild, ...pinyin, meaning);
     current.onAnswerShown?.();
   }
 

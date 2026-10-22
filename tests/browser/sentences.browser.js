@@ -140,7 +140,8 @@ describe('sentences', { concurrency: false }, () => {
     assert.match(await textOf(page, 'card-face'), /^我們是同學。/);
     await page.evaluate(`document.getElementById('card-face').dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))`);
     await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
-    assert.match(await textOf(page, 'card-face'), /We are classmates\.Wǒmen shì tóngxué\.About this sentence$/);
+    // The sentence, its pinyin, then its meaning, as on every card.
+    assert.match(await textOf(page, 'card-face'), /Wǒmen shì tóngxué\.We are classmates\.About this sentence$/);
     // Good.
     await page.evaluate(`document.querySelectorAll('#grade-row button')[2].click()`);
     await waitUntil(page, `document.getElementById('grade-row').hidden`, 'the card graded');
