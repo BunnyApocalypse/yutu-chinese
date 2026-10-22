@@ -15,6 +15,7 @@ CLAUDE.md keeps the rules and points here. Each file has what an area does now, 
 | `pitfalls.md` | Things that are easy to get wrong |
 | `offline.md` | The two copies, the service worker, icons, the old address |
 | `interface.md` | Introduction, storage, tips, menu, tabs, practice, Settings, pop-ups, What's new, wording, sizes, looks, accessibility |
+| `translations.md` | The Italian and German texts: rules for translating, the words used for the app's ideas |
 | `ux-review.md` | The screenshot atlas, and what the review of 2026-10-16 led to |
 | `layout.md` | Every file, one line each |
 | `goals.md` | Long-term goals, sharing the app, Skritter import, translations |

@@ -32,11 +32,11 @@ The owner wants to bring their Skritter data across eventually, but not the word
 
 ## Translations and other languages (future)
 
-Discussed with the owner on 2026-10-15. **Layer 1's groundwork done on 2026-10-22**: all the interface's text is in `src/text/en.js`, shown through `t()` (`docs/interface.md`, "Interface text and translations"); no other language and no language setting yet.
+Discussed with the owner on 2026-10-15. **Layer 1 drafted on 2026-10-22**: all the interface's text is in `src/text/en.js`, shown through `t()` (`docs/interface.md`, "Interface text and translations"); Italian and German drafts and a Language setting, to be checked by native speakers (`docs/translations.md`). **No dictionary in Italian or German for now** (the owner, 2026-10-22).
 
 - **Why:** many early users will be native German speakers, and learners worldwide in general.
 - **What:** **translate the interface, and use a dictionary in the learner's language where a license-compatible one exists.** The learning notes and example sentences stay in English (the owner doesn't want to generate them again). Where no good dictionary exists, the interface alone is still worth translating.
-- **Which and when:** **Italian first, as a high priority** (the owner, 2026-10-21; roadmap, after tester 4's to-dos), then German, other major languages later.
+- **Which and when:** **Italian and German first** (the owner, 2026-10-21 and 2026-10-22; drafted 2026-10-22, to be checked by native speakers), other major languages later.
 - **Four layers, very different in cost:**
   1. **The interface:** text is written straight into `index.html` and the JS files (about 165 places), not gathered anywhere. Doable without a dependency: one file of strings per language (`en.js`, `de.js`), a small `t('key')` lookup, a `data-text` attribute on static HTML filled in at start-up, `Intl` for plurals, dates and numbers, and the page's `lang` following the language (the Chinese `lang` marking unchanged). The lasting cost: every new button or message in every language; a test can catch missing keys but not write them.
   2. **Dictionary meanings:** CC-CEDICT is English only; another language needs another dictionary. German (HanDeDict) and French (CFDICT) exist under CC BY-SA in the same format; most others have none, a smaller one, or no clear license.

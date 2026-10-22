@@ -4,6 +4,14 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the third session of 2026-10-22 (Italian and German interfaces drafted; committed on the branch `worktree-translations-it-de`, not merged or pushed).**
+
+- **Built:** a Language choice at the top of Settings › Look and sound (English, Italiano, Deutsch); until one is chosen the app follows the browser's language (`docs/interface.md`). `src/text/it.js` and `de.js`, all 1,121 texts, informal *tu* / *du*, no dictionaries (the owner). Drafted by Sonnet agents from a shared glossary (`docs/translations.md`), then checked: `missing-text.js` clean for both, a unit test that each translation keeps the English's gaps, forms, markup and Chinese, a browser test of the switch, and pictures of the main screens at 360 and 390 wide (some labels shortened to fit, listed in `docs/translations.md`).
+- **Next:** the owner sends the Italian tester the test copy (once merged and pushed) and the list "For the native checkers" in `docs/translations.md`; a German tester is still to find. Both languages stay on the test copy until checked, so a release to `stable` needs a decision first: hold the Language choice back there, or release with the drafts.
+- **Seen, not changed:** in Free practice's tone card a big character overlaps the top of the card, in English too.
+- **Tools** (in `local/`, not committed): `local/join-text.mjs` (joins translated parts), `local/quoted-names.mjs <lang>` (quoted button names that match no label), `local/text-pictures/shoot-screens.js <lang>`, `local/text-pictures/fit-buttons.js` (whether labels fit the writing buttons' row).
+- **A worktree needs its own `node_modules`** (`cp -al` from the main checkout): a link to the main one makes Vite refuse sql.js's file, and the Anki browser tests hang until they time out.
+
 **Handover from the second session of 2026-10-22 (tester 4's feedback; committed on `main`, not pushed).**
 
 - **Built:** see the roadmap's "Tester 4's feedback" just below: the outline bug, no Chinese in a writing card's meaning, lists filled in from the dictionary, HSK 3.0 named as a version, a setting for the mistake count, a line on what a card is, the word page's top, OpenDyslexic, the Progress tab's charts for screen readers. Unit tests and all browser tests pass.
@@ -16,7 +24,6 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 - **All interface text is in `src/text/en.js`**, shown with `t()` or `data-t…` (`docs/interface.md`, "Interface text and translations"; rule in `CLAUDE.md`). Seven commits, one area each; all 348 browser tests and the unit tests pass after each. Visible changes: counts say "1 word", "1 card studied", "forgotten 1 time" where they said "1 words"; the list in Settings › Sentences › Writing no longer spills past the panel.
 - **The test language** (Settings › For testing, the owner said yes): look-alike letters, a third longer. Pictures of the main screens in it: `node local/text-pictures/shoot-screens.js` (into `local/text-pictures/`). **Found:** in Learn on a 360-wide phone the lesson's note and "I know this word" take two lines, which moves the writing area down (`docs/pitfalls.md`; the picture kept: `local/text-pictures/learn-360.png`); a real Italian or German text will show whether it happens.
-- **Next for translations** (not started): **Italian first** (the owner, 2026-10-21, roadmap "High priority"; to plan with the owner: who checks it, a dictionary in Italian or not, before or after the first release): `src/text/it.js`, `node scripts/missing-text.js it`, and a language setting (from the browser's language; a device setting in `localStorage`). Then German and HanDeDict (`docs/goals.md`, layers 2 to 4). Helper scripts used to move the text over are in the git-ignored `local/text-tools/` (`conv.py` marks a part of `index.html` with `data-t…` and adds its keys to `en.js`; check its key names by eye).
 - **To release** when the owner wants: a "What's new" entry (a learner only notices "1 word" for "1 words" and the fixed list in Settings, so it may wait for Italian).
 
 **Handover from the fifth session of 2026-10-21 (tester 4's feedback as to-dos; an Italian interface as a high priority; docs only).**
@@ -73,7 +80,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
   - [x] **A Review of a set number of cards** (the owner, 2026-10-22, on what tester 4 meant): a start screen, "Review all" or 20, 50, 100, other; stops at the number with "Keep going"; a setting switches the screen off (`docs/cards.md`).
   - [x] **Added the sentence but not the word**: "Add to my words" in the bar at the word page's bottom edge, always in view; the sentence's button says "Add sentence" (B, 2026-10-22; `docs/word-page.md`).
 
-**High priority: an Italian interface** (the owner, 2026-10-21), ahead of the German one. Translating the interface only (layer 1 in `docs/goals.md`, "Translations and other languages"). **The strings are gathered** (2026-10-22, `src/text/en.js`, `docs/interface.md`); what is left is `src/text/it.js` and a language setting. To plan with the owner first: who checks the Italian, whether a dictionary in Italian is wanted, and where it falls against the first release.
+**High priority: the Italian and German interfaces** (the owner, 2026-10-21 and 2026-10-22). **Drafted** (2026-10-22: `src/text/it.js`, `de.js`, a Language choice in Settings; `docs/translations.md`), interface only, no dictionaries (the owner). Left: the Italian tester checks the Italian; a German tester is still to find; both stay on the test copy until checked.
 
 Agreed with the owner on 2026-10-18. **The first release** means the first users beyond testers: a small group of learners and an online language-learning community, without advertising. They are strangers trying the app on their own, so it is about first impressions and keeping their data safe. **Changes to the layout come before it** (the owner: no big UX changes once there are real users, if it can be avoided). Each item is planned with the owner before it is built.
 
@@ -124,7 +131,7 @@ Agreed with the owner on 2026-10-18. **The first release** means the first users
 **Nice to have:**
 
 - Checking by hand with VoiceOver or TalkBack (`docs/interface.md`, "Accessibility").
-- A German interface after the Italian one, then other languages (`docs/goals.md`, "Translations"). The groundwork for both is done (2026-10-22): every text is in `src/text/en.js`.
+- Other languages after Italian and German (`docs/goals.md`, "Translations"): a file in `src/text/`, a line in `LANGUAGE_NAMES` and `LOCALES` (`src/text.js`), and the language's rules in `docs/translations.md`.
 - The Skritter import, if the GDPR data arrives (the owner doesn't want the word list imported without its scheduling).
 - A mode for going from 繁體 to 簡體 or back, by character rather than by word (having written 們 → 们 once, the learner isn't asked again in 他們, 你們).
 - Mainland, Hong Kong or Taiwan traditional forms (needs stroke data for the other two); longer shortcuts (more strokes joined, reordered or dropped).

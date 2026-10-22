@@ -34,7 +34,7 @@
 - `src/basics.js`, `src/basicsSounds.js`: "Basics of Chinese", five screens for someone new to Chinese, and the recordings it plays (`docs/interface.md`).
 - `src/changes.js`, `src/whatsNew.js`, `src/feedback.js`: the list of what changed in each release (a new entry for every release), the "What's new" pop-up, and "Send feedback" (`docs/interface.md`).
 - `src/lang.js`: marks Chinese text with its language (`lang`) for screen readers and the regional font.
-- `src/text.js`: the interface's text by key (`t()`), dates and numbers in the language, and the page's own text filled in (`applyText`); `src/text/en.js` holds every English text, `src/text/pseudo.js` makes the test language (`docs/interface.md`, "Interface text and translations").
+- `src/text.js`: the interface's text by key (`t()`), dates and numbers in the language, and the page's own text filled in (`applyText`); `src/text/en.js` holds every English text, `src/text/it.js` and `de.js` the Italian and German (`docs/translations.md`), `src/text/pseudo.js` makes the test language (`docs/interface.md`, "Interface text and translations").
 - `src/theme.js`: the light or dark look (the "Look" setting); the colors themselves are named at the top of `src/style.css`.
 - `src/font.js`: the interface's font (the "Font" setting): the device's own or OpenDyslexic, from `public/fonts/opendyslexic/`.
 - `src/timing.js`: the stopwatch measuring how long a review or a lesson took, each step at most a minute (`docs/cards.md`, "How long studying takes").
