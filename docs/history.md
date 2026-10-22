@@ -4,6 +4,14 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the second session of 2026-10-22 (tester 4's feedback; committed on `main`, not pushed).**
+
+- **Built:** see the roadmap's "Tester 4's feedback" just below: the outline bug, no Chinese in a writing card's meaning, lists filled in from the dictionary, HSK 3.0 named as a version, a setting for the mistake count, a line on what a card is, the word page's top, OpenDyslexic, the Progress tab's charts for screen readers. Unit tests and all browser tests pass.
+- **The owner to look at:** the word page (`local/tester4/word-page-before.png`, `-after.png`) and OpenDyslexic (`local/tester4/opendyslexic-*.png`, against `device-font-lesson-small-phone.png`).
+- **To talk over first:** the bigger prompt, the way on after the first card, a goal of cards, and adding a sentence and its word (the owner thinks the first three were misread).
+- **Corrected:** the SIL Open Font License is not GPL-compatible in the FSF's list (said wrongly when asking); the font is kept as separate files, like the stroke data (`CLAUDE.md`, Licensing).
+- **To release** when the owner wants: a "What's new" entry covering these and the earlier "1 word" fixes.
+
 **Handover from the session of 2026-10-22 (the app made ready for translation; pushed to `main`, so on the test copy; not released to `stable`).** Replace this with each session's handover; keep only what the next session needs.
 
 - **All interface text is in `src/text/en.js`**, shown with `t()` or `data-t…` (`docs/interface.md`, "Interface text and translations"; rule in `CLAUDE.md`). Seven commits, one area each; all 348 browser tests and the unit tests pass after each. Visible changes: counts say "1 word", "1 card studied", "forgotten 1 time" where they said "1 words"; the list in Settings › Sentences › Writing no longer spills past the panel.
@@ -48,26 +56,22 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Roadmap
 
-**First: the owner reviews tester 4's feedback** (2026-10-21; notes in `local/testing/T4-2026-10-21.md`). About A2, a Skritter user switching from simplified to traditional, on release `2026-10-21-2`. Liked hearing words; added a word and looked one up without trouble. Not reached: changing a setting or a grade, the Progress tab, a backup. Nothing below is planned yet; the owner decides what is built, changed or dropped.
+**Tester 4's feedback** (2026-10-21; their notes and the original sheet are no longer on the computer, so this list is the record). About A2, a Skritter user switching from simplified to traditional, on release `2026-10-21-2`. Liked hearing words; added a word and looked one up without trouble. Not reached: changing a setting or a grade, the Progress tab, a backup. **Built on 2026-10-22** (on `main`, not pushed), the owner choosing where asked:
 
-- **Bugs**
-  - [ ] **"Show outline" shows the outline on both characters** of a two-character word, not just the one being written.
-  - [ ] **你's meaning has 您 in it** (CC-CEDICT's "as opposed to courteous 您"): check how it reads on the card; on a meaning card it may give away nothing, on a writing card it may confuse.
-- **Adding words and sentences**
-  - [ ] **Added the sentence but not the word**, and was confused by adding the sentence to a deck in the extra details. Rethink adding: perhaps the add-word button beside the add-sentence button.
-  - [ ] **Importing a list (TSV, CSV, one per line):** trim whitespace at the ends of lines; fill missing pinyin or meanings from the dictionary.
-  - [ ] **"HSK 3.0" read as a level**: make clear 3.0 is the version of the list.
-- **Studying**
-  - [ ] **After the one card, didn't see there was more to do**: make the way on clearer.
-  - [ ] **The prompt was too small** when asked to write 你: bolder and more central. They began writing the wrong character.
-  - [ ] **Didn't like the count of mistakes**: hidden by default, or a setting to hide it.
-  - [ ] **A goal of a set number of cards** to study, as an option.
-- **The word's panel and page**
-  - [ ] **The "Cards" tab was confusing**: a short explanation of what it is (a pop-up or a line on the tab).
-  - [ ] **Layout:** pinyin below the characters, the meaning after; the top part (characters, pinyin, meaning) bigger than the extra information below it.
-- **Settings and accessibility**
-  - [ ] **A dyslexia-friendly font** as a setting (a font is new data: its license and a README, ask first).
-  - [ ] **The Progress tab with a screen reader**: its charts and numbers readable.
+- [x] **"Show outline" stayed on for the next character** in Review, which then counted as peeked: now it lasts one character (`docs/cards.md`).
+- [x] **你's meaning has 您 in it**: a writing card leaves Chinese out of the meaning, "…" in its place (the owner's choice; `docs/cards.md`).
+- [x] **Importing a list:** spaces at the ends were already ignored; now a line of characters alone, or without pinyin or a meaning, is filled in from the dictionary, and pinyin with tone marks is read (`docs/words.md`).
+- [x] **"HSK 3.0" read as a level:** the texts say 3.0 is the version; the introduction says "HSK level 1 (version 3.0)".
+- [x] **The count of mistakes:** a setting "Show the number of mistakes", on by default (the owner's choice; `docs/writing.md`).
+- [x] **The "Cards" fold-out was confusing:** a line on what a card is.
+- [x] **The word page's top** (characters, pinyin, meaning) bigger, the decks after the meaning (`docs/word-page.md`; pictures `local/tester4/word-page-*.png`). **The owner to look at it.**
+- [x] **OpenDyslexic** as a setting (the owner's choice; `docs/interface.md`). It moves the writing area 15 to 40px down in lessons (pictures `local/tester4/opendyslexic-*.png`). **The owner to look at it.**
+- [x] **The Progress tab with a screen reader:** each chart a slider saying the day in words (`docs/cards.md`). Not tried with VoiceOver or TalkBack.
+- **To talk over with the owner** (2026-10-22: "1, 2 and 4 may have been misunderstood"), nothing built:
+  - [ ] **The prompt was too small** when asked to write 你; they began writing the wrong character (perhaps 您 from the meaning, now gone).
+  - [ ] **After the one card, didn't see there was more to do.**
+  - [ ] **A goal of a set number of cards** to study.
+  - [ ] **Added the sentence but not the word**, and was confused by adding the sentence to a deck in the extra details. Perhaps the add-word button beside the add-sentence button.
 
 **High priority: an Italian interface** (the owner, 2026-10-21), ahead of the German one. Translating the interface only (layer 1 in `docs/goals.md`, "Translations and other languages"). **The strings are gathered** (2026-10-22, `src/text/en.js`, `docs/interface.md`); what is left is `src/text/it.js` and a language setting. To plan with the owner first: who checks the Italian, whether a dictionary in Italian is wanted, and where it falls against the first release.
 
