@@ -107,6 +107,10 @@ export default {
   'settings.lookLight': 'Light',
   'settings.lookDark': 'Dark',
   'settings.lookAuto': 'Follow device theme',
+  'settings.font': 'Font',
+  'settings.fontSystem': "The device's own",
+  'settings.fontDyslexic': 'OpenDyslexic',
+  'settings.fontHint': 'OpenDyslexic gives letters a heavier bottom, so they are harder to mix up; some readers with dyslexia find it easier. Chinese characters stay as they are.',
   'settings.sound': 'Sound',
   'settings.soundAuto': 'By itself when the answer shows, and when I tap the loudspeaker',
   'settings.soundTap': 'Only when I tap the loudspeaker',
@@ -926,6 +930,7 @@ export default {
   'credits.hskWordListsFrom': '<b>HSK word lists:</b> from <a href="https://github.com/ivankra/hsk30" target="_blank" rel="noopener">ivankra/hsk30</a> and <a href="https://github.com/glxxyz/hskhsk.com" target="_blank" rel="noopener">glxxyz/hskhsk.com</a>. MIT License. Their grouping into themes was made for this app by AI models. MIT License.',
   'credits.tocflWordListThe': '<b>TOCFL word list:</b> the <span lang="zh-Hant-TW">華語八千詞表</span> published by Taiwan\'s Steering Committee for the Test of Proficiency-Huayu. The committee states no license for it.',
   'credits.radicalsThe214Kangxi': '<b>Radicals:</b> the 214 Kangxi radicals as listed by the Unicode Consortium (CJKRadicals.txt, Unicode License), ranked by how often they occur, from Make Me a Hanzi; their meanings were written for this app. MIT License.',
+  'credits.openDyslexic': '<b>The OpenDyslexic font</b> (a choice in Settings): by Abbie Gonzalez, from <a href="https://github.com/antijingoist/opendyslexic" target="_blank" rel="noopener">antijingoist/opendyslexic</a>, SIL Open Font License 1.1, kept as separate font files.',
   'credits.creditsAndLicenses': 'Credits and licenses',
   'credits.itIsBuiltOn': 'It is built on the work of others, each under its own license:',
 

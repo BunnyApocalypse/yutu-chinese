@@ -546,13 +546,15 @@ export function createWordPage({
           isSentence(word) ? word.pinyin : null,
         ),
       );
+      // The characters, pinyin and meaning together at the top, bigger than
+      // what follows; the decks after them (tester 4, 2026-10-21).
+      const meaning = element('p', 'page-meaning own');
+      fillMixed(meaning, word.definition, script);
+      parts.push(meaning);
       const chips = deckChips(word);
       if (chips) {
         parts.push(chips);
       }
-      const meaning = element('p', 'page-meaning');
-      fillMixed(meaning, word.definition, script);
-      parts.push(meaning);
     } else {
       // Not one of your words: what the dictionary says, the entry tapped
       // in the Words tab first.

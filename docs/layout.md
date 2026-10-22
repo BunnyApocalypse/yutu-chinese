@@ -36,6 +36,7 @@
 - `src/lang.js`: marks Chinese text with its language (`lang`) for screen readers and the regional font.
 - `src/text.js`: the interface's text by key (`t()`), dates and numbers in the language, and the page's own text filled in (`applyText`); `src/text/en.js` holds every English text, `src/text/pseudo.js` makes the test language (`docs/interface.md`, "Interface text and translations").
 - `src/theme.js`: the light or dark look (the "Look" setting); the colors themselves are named at the top of `src/style.css`.
+- `src/font.js`: the interface's font (the "Font" setting): the device's own or OpenDyslexic, from `public/fonts/opendyslexic/`.
 - `src/timing.js`: the stopwatch measuring how long a review or a lesson took, each step at most a minute (`docs/cards.md`, "How long studying takes").
 - `src/streak.js`, `src/streakScreen.js`: counting the streak from the reviews (plain calculation), and the streak screen (`docs/cards.md`, "Streaks").
 - `src/progress.js`, `src/progressPanel.js`: the Progress tab's numbers (plain calculation) and drawing it (`docs/cards.md`, "The Progress tab").

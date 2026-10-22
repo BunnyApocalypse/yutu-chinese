@@ -205,6 +205,28 @@ describe('settings', { concurrency: false }, () => {
     assert.match(await textOf(page, 'list-hint'), /simplified, traditional, pinyin/);
   });
 
+  it('fills in what a list leaves out from the dictionary', async () => {
+    // Characters alone; characters and a meaning; characters and pinyin with tone marks.
+    await useAddForm(page, 'add-list-fold');
+    await type(page, 'list-text', '  熊貓  \n大象, a big elephant\n老虎\tlǎohǔ\n');
+    await tap(page, 'check-list-button');
+    await waitUntil(page, `document.getElementById('list-report').textContent !== ''`, 'the list report');
+    assert.equal(await textOf(page, 'list-report'), "3 new words, 0 you already have, 0 lines that can't be read.");
+    await tap(page, 'add-list-button');
+    await waitUntil(page, `document.getElementById('list-report').textContent === 'Added 3 words. They wait in Learn.'`);
+    const stored = await page.evaluate(`new Promise((resolve) => {
+      indexedDB.open('hanzi-trainer').onsuccess = (event) => {
+        event.target.result.transaction('words').objectStore('words').getAll().onsuccess = (got) =>
+          resolve(got.target.result.filter((word) => ['熊貓', '大象', '老虎'].includes(word.traditional)).map((word) => [word.traditional, word.pinyin, word.definition]).sort());
+      };
+    })`);
+    assert.deepEqual(stored.map(([characters, pinyin]) => [characters, pinyin]), [['大象', 'da4xiang4'], ['熊貓', 'xiong2mao1'], ['老虎', 'lao3hu3']]);
+    // The list's own meaning is kept; the others are the dictionary's.
+    assert.equal(stored[0][2], 'a big elephant');
+    assert.match(stored[1][2], /panda/);
+    assert.match(stored[2][2], /tiger/);
+  });
+
   it('hides simplified when only traditional is learned', async () => {
     await choose(page, 'script-select', 'traditional');
     // A setting is saved before it takes effect, which takes a moment.
@@ -420,6 +442,18 @@ describe('settings', { concurrency: false }, () => {
     await look('auto');
     assert.equal(await background(), LIGHT);
     await device('');
+  });
+
+  it('uses OpenDyslexic for the interface when chosen, and the device font again after', async () => {
+    await choose(page, 'font-select', 'dyslexic');
+    await waitUntil(
+      page,
+      `document.documentElement.dataset.font === 'dyslexic' && [...document.fonts].some((face) => face.family === 'OpenDyslexic' && face.status === 'loaded')`,
+      'the font',
+    );
+    assert.match(await page.evaluate(`getComputedStyle(document.body).fontFamily`), /^OpenDyslexic/);
+    await choose(page, 'font-select', 'system');
+    await waitUntil(page, `document.documentElement.dataset.font === undefined`, 'the device font');
   });
 
   it('closes Settings with a tap beside the panel, not with a tap on it', async () => {

@@ -7,6 +7,7 @@ import { CARD_TYPES, DEFAULT_NEW_WORDS_PER_DAY } from './session.js';
 import { DEFAULT_LEECH_LAPSES, MIN_LEECH_LAPSES, MAX_LEECH_LAPSES } from './leeches.js';
 import { speak } from './speech.js';
 import { setTheme } from './theme.js';
+import { setFont } from './font.js';
 import { closeOnTapBeside } from './dialogs.js';
 import {
   DEFAULT_STREAK_CARDS,
@@ -20,7 +21,7 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 // elements: the panel's parts:
 //   panel, openButton, closeButton, scriptSelect, pronunciationSelect,
 //   handwritingSelect, themeRadios (the three choices of look), lessonsCheckbox, strokeCountCheckbox,
-//   mistakeCountCheckbox,
+//   mistakeCountCheckbox, fontSelect,
 //   hintSelect, newWordsInput, gradeButtonsSelect,
 //   meaningDetailSelect,
 //   typeCheckboxes (a list of the four checkboxes; each has a
@@ -48,6 +49,8 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //   theme:          'auto' (the default: as the device is set, where the
 //                   browser can tell; light otherwise), 'light' or 'dark'
 //                   (see theme.js); belongs to the device
+//   font:           'system' (the default: the device's own) or 'dyslexic'
+//                   (OpenDyslexic; see font.js)
 //   meaningDetail:  'first', 'everyday' or 'all': how much of a dictionary
 //                   entry is filled in as a word's meaning (see
 //                   proposeMeaning in dictionary.js)
@@ -102,6 +105,7 @@ export async function createSettings(elements, onChange) {
     lessonsCheckbox,
     strokeCountCheckbox,
     mistakeCountCheckbox,
+    fontSelect,
     hintSelect,
     gradeButtonsSelect,
     meaningDetailSelect,
@@ -127,6 +131,7 @@ export async function createSettings(elements, onChange) {
     // has it under the old name keeps its choice.
     rawInput: await getSetting('rawInput', await getSetting('rawSquigs', true)),
     theme: await getSetting('theme', 'auto'),
+    font: await getSetting('font', 'system'),
     lessons: await getSetting('lessons', true),
     strokeCountInReview: await getSetting('strokeCountInReview', false),
     mistakeCount: await getSetting('mistakeCount', true),
@@ -148,6 +153,7 @@ export async function createSettings(elements, onChange) {
   };
   // "Follow device theme" needs nothing: the style sheet does that by itself.
   setTheme(settings.theme);
+  setFont(settings.font);
 
   // Shows the current settings in the panel's controls.
   function fillPanel() {
@@ -161,6 +167,7 @@ export async function createSettings(elements, onChange) {
     lessonsCheckbox.checked = settings.lessons;
     strokeCountCheckbox.checked = settings.strokeCountInReview;
     mistakeCountCheckbox.checked = settings.mistakeCount;
+    fontSelect.value = settings.font;
     hintSelect.value = settings.hintCountsAs;
     gradeButtonsSelect.value = settings.gradeButtons;
     meaningDetailSelect.value = settings.meaningDetail;
@@ -186,6 +193,9 @@ export async function createSettings(elements, onChange) {
     // The look changes at once, before the setting is saved.
     if (key === 'theme') {
       setTheme(value);
+    }
+    if (key === 'font') {
+      setFont(value);
     }
     await setSetting(key, value);
     onChange();
@@ -219,6 +229,8 @@ export async function createSettings(elements, onChange) {
   );
 
   mistakeCountCheckbox.addEventListener('change', () => change('mistakeCount', mistakeCountCheckbox.checked));
+
+  fontSelect.addEventListener('change', () => change('font', fontSelect.value));
 
   hintSelect.addEventListener('change', () => change('hintCountsAs', hintSelect.value));
   gradeButtonsSelect.addEventListener('change', () => change('gradeButtons', gradeButtonsSelect.value));

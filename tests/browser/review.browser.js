@@ -565,4 +565,45 @@ describe('grading in Review', { concurrency: false }, () => {
     }
     await waitUntil(page, `document.querySelectorAll('#word-row .slot')[1].classList.contains('current')`, 'on to 小');
   });
+
+  it('shows the outline for one character only, and leaves Chinese out of the meaning', async () => {
+    // A meaning with Chinese in it, as CC-CEDICT's for 你 (tester 4).
+    await inDatabase(`
+      stores.words.put({ id: '大小|da4xiao3', traditional: '大小', simplified: '大小', pinyin: 'da4xiao3', definition: 'size (opposite of 尺寸)', order: 0, addedAt: 1, learnedAt: 1 });
+    `);
+    await makeDue(['大小|da4xiao3#writing', '大小|da4xiao3', 'writing']);
+    await waitForFirstStroke();
+    assert.equal(await textOf(page, 'prompt-meaning'), 'size (opposite of …)');
+    const area = await writingArea(page);
+    await tap(page, 'outline-button');
+    assert.equal(await textOf(page, 'outline-button'), 'Hide outline');
+    for (const median of loadStrokeData('大').medians) {
+      await drawStroke(page, area, median);
+    }
+    await tap(page, 'next-button');
+    await waitForFirstStroke();
+    // 小 starts without the outline, and so isn't counted as peeked.
+    assert.equal(await textOf(page, 'outline-button'), 'Show outline');
+    for (const median of loadStrokeData('小').medians) {
+      await drawStroke(page, area, median);
+    }
+    await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
+    await chooseGrade('Again');
+    assert.deepEqual((await lastReview()).suggestedPerChar, [false, true]);
+    await inDatabase(`
+      stores.words.put({ id: '大小|da4xiao3', traditional: '大小', simplified: '大小', pinyin: 'da4xiao3', definition: 'size', order: 0, addedAt: 1, learnedAt: 1 });
+    `);
+  });
+
+  it('keeps the count of mistakes out of sight with the setting off', async () => {
+    await inDatabase(`stores.settings.put({ key: 'mistakeCount', value: false });`);
+    await makeDue(['大|da4#writing', '大|da4', 'writing']);
+    await write('大', { wrong: 1 });
+    assert.doesNotMatch(await textOf(page, 'status'), /mistake/i);
+    // Still graded on them: Hard.
+    assert.equal(await page.evaluate(SUGGESTED), 'Hard');
+    await chooseGrade('Hard');
+    assert.deepEqual((await lastReview()).mistakesPerChar, [1]);
+    await inDatabase(`stores.settings.put({ key: 'mistakeCount', value: true });`);
+  });
 });

@@ -23,6 +23,7 @@ The owner would not use the app without these:
 - App code: GPL-3.0-only (`LICENSE`).
 - Stroke data (`data/animcjk/`, `hanzi-writer-data`): Arphic Public License, GPL-incompatible. Kept as separate data files the app loads; never paste it into source or relicense it.
 - `data/cedict/` (dictionary, tone table): CC BY-SA 4.0.
+- `public/fonts/opendyslexic/` (the OpenDyslexic font, a setting): SIL Open Font License 1.1, which the FSF counts as GPL-incompatible; kept as separate font files like the stroke data.
 - New dependencies must be GPL-compatible (MIT, BSD, Apache-2.0, LGPL, GPL). New data or code keeps its license in its own folder with a README (source and license), and gets a line in "Credits and licenses" (`credits-dialog` in `index.html`).
 
 ## Working with the owner

@@ -2,7 +2,8 @@
 
 ## The word page
 
-- **A read-only `<dialog>`** (`word-page`, `src/wordPage.js`): the word in the script(s) learned, its reading with a loudspeaker, its decks (below), meaning, learning note and example sentence, and each character with its parts. Its buttons: Practice, Repeat lesson (or Learn it now), Edit, Remove.
+- **A read-only `<dialog>`** (`word-page`, `src/wordPage.js`): the word in the script(s) learned, its reading with a loudspeaker, its meaning, its decks (below), learning note and example sentence, and each character with its parts. Its buttons: Practice, Repeat lesson (or Learn it now), Edit, Remove.
+- **The top is the characters, the pinyin and the meaning, bigger than the rest** (tester 4, 2026-10-21; pictures `local/tester4/word-page-before.png` and `-after.png`): the reading at `--size-big`, the meaning of one of your words centered at `--size-title` (`.page-meaning.own`), the deck boxes after it. A dictionary word's page lists each reading with its meanings as before.
 - **Where it opens:** a tap on a word in a list (`showWord` in `src/wordsPanel.js`; the pop-up panel for changing the word is behind Edit), and "About this word" inside an answered card (`docs/cards.md`).
 - **Remove** (`word-page-remove`; tester 2; the owner, 2026-10-18): the same question as in the word's panel (`removeAsked` in `src/wordDialog.js`); the page closes once the word is gone.
 - **"Repeat lesson"** (`word-page-lesson`; 2026-10-18): a learned word's lesson again, as practice (`docs/cards.md`). For a word still waiting it reads **"Learn it now"** and opens its real lesson in Learn, first in line, on the listed deck if the word is in it, else its first deck (`learnWordNow` in `src/wordsPanel.js`); not when "Learn it now" is already at the top (a word just added). Not on a sentence's page.

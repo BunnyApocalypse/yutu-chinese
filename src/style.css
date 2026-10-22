@@ -218,6 +218,12 @@ body {
   color: var(--text);
 }
 
+/* The font chosen in Settings (font.js). Chinese, which OpenDyslexic
+   doesn't have, still comes from the device's fonts. */
+:root[data-font='dyslexic'] body {
+  font-family: OpenDyslexic, system-ui, sans-serif;
+}
+
 main {
   display: flex;
   flex-direction: column;
@@ -2933,12 +2939,20 @@ html:has(dialog[open]) {
   align-items: center;
   justify-content: center;
   gap: var(--space-small);
-  font-size: var(--size-title);
+  font-size: var(--size-big);
 }
 
 .page-meaning {
   margin: var(--space-small) 0;
   font-size: var(--size-large);
+}
+
+/* The meaning of one of your words, under its pinyin: part of the top
+   (tester 4, 2026-10-21: the characters, pinyin and meaning bigger than
+   the rest). */
+.page-meaning.own {
+  text-align: center;
+  font-size: var(--size-title);
 }
 
 .page-chips {
