@@ -69,6 +69,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - [x] **The Progress tab with a screen reader:** each chart a slider saying the day in words (`docs/cards.md`). Not tried with VoiceOver or TalkBack.
 - **To talk over with the owner** (2026-10-22: "1, 2 and 4 may have been misunderstood"), nothing built:
   - [x] **The prompt was too small** (the owner: shoved up at the top, not bold, not obviously the task): bold, bigger and just above the writing area (B, 2026-10-22; `docs/cards.md`).
+  - [ ] **The card's face with a tip** (an answered meaning or pinyin card, a new word's first look; the owner agrees, 2026-10-22): the word and its meaning are smaller than the tip below them (the note, the example sentence), and the pinyin comes after the meaning. As on the word page: characters, pinyin, meaning, bigger than the tip. Pictures for the owner first (`docs/pitfalls.md`: the face is the writing area's size).
   - [ ] **A Review of a set number of cards** (the owner, 2026-10-22, on what tester 4 meant): start a Review of, say, 100 cards; it stops by itself after them, even with cards still due. To plan.
   - [ ] **Added the sentence but not the word**, and was confused by adding the sentence to a deck in the extra details. Perhaps the add-word button beside the add-sentence button.
 
