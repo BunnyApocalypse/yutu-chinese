@@ -25,7 +25,9 @@
 //   <button data-t-aria-label="menu.open">…</button>  an attribute (also -title,
 //                                                     -placeholder, -alt)
 //
-// Only English exists so far. The other "language" is for testing
+// English, Italian and German (src/text/it.js, de.js; a key a translation
+// lacks shows in English). The learner picks one in Settings; until then the
+// app follows the browser's own language list. The last "language" is for testing
 // (Settings › For testing): every text turned into look-alike letters and made
 // longer, as other languages often are, so that text the lookup missed stands
 // out in plain English, and so that a screen can be checked for room. App
@@ -33,6 +35,8 @@
 
 /* global __CHANNEL__ */
 import en from './text/en.js';
+import it from './text/it.js';
+import de from './text/de.js';
 import { pseudoText } from './text/pseudo.js';
 
 const CHANNEL = typeof __CHANNEL__ === 'undefined' ? '' : __CHANNEL__;
@@ -42,15 +46,33 @@ const CHANNEL = typeof __CHANNEL__ === 'undefined' ? '' : __CHANNEL__;
 // test copy keeps its own (CLAUDE.md: anything kept per site).
 const LANGUAGE_KEY = CHANNEL ? `language-${CHANNEL}` : 'language';
 
-export const LANGUAGES = ['en', 'pseudo'];
+// The languages a learner can pick in Settings, each named in itself (the
+// same in every language, so not in en.js), and the tag for the browser's
+// Intl functions and the page's `lang`.
+export const LANGUAGE_NAMES = { en: 'English', it: 'Italiano', de: 'Deutsch' };
+const LOCALES = { en: 'en-US', it: 'it-IT', de: 'de-DE', pseudo: 'en-US' };
+const TRANSLATIONS = { en, it, de };
+export const LANGUAGES = Object.keys(LOCALES);
+
+// The first of the browser's languages that the app has ("it-CH" counts as
+// Italian), else English.
+function browserLanguage() {
+  for (const tag of globalThis.navigator?.languages ?? []) {
+    const base = tag.toLowerCase().split('-')[0];
+    if (base in LANGUAGE_NAMES) {
+      return base;
+    }
+  }
+  return 'en';
+}
 
 function readLanguage() {
   try {
     const saved = globalThis.localStorage?.getItem(LANGUAGE_KEY);
-    return LANGUAGES.includes(saved) ? saved : 'en';
+    return LANGUAGES.includes(saved) ? saved : browserLanguage();
   } catch {
     // localStorage can be refused (a private window in some browsers).
-    return 'en';
+    return browserLanguage();
   }
 }
 
@@ -58,11 +80,10 @@ function readLanguage() {
 // (setLanguage), so it never changes while the app runs.
 export const language = readLanguage();
 
-// The language's tag for the browser's Intl functions and the page's `lang`.
 // The test language is English underneath.
-export const locale = { en: 'en-US', pseudo: 'en-US' }[language];
+export const locale = LOCALES[language];
 
-const strings = language === 'pseudo' ? pseudoStrings(en) : en;
+const strings = language === 'pseudo' ? pseudoStrings(en) : TRANSLATIONS[language];
 const pluralRules = new Intl.PluralRules(locale);
 const ordinalRules = new Intl.PluralRules(locale, { type: 'ordinal' });
 const numberFormat = new Intl.NumberFormat(locale);
@@ -151,10 +172,11 @@ export function applyText(root = document) {
   }
 }
 
-// Switches the language and starts the app again in it.
+// Switches the language and starts the app again in it. With none given,
+// the app goes back to following the browser's language.
 export function setLanguage(newLanguage) {
   try {
-    if (newLanguage === 'en') {
+    if (!newLanguage) {
       localStorage.removeItem(LANGUAGE_KEY);
     } else {
       localStorage.setItem(LANGUAGE_KEY, newLanguage);

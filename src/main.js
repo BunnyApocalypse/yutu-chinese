@@ -851,6 +851,7 @@ async function startUp() {
       strokeCountCheckbox: byId('stroke-count-checkbox'),
       mistakeCountCheckbox: byId('mistake-count-checkbox'),
       fontSelect: byId('font-select'),
+      languageSelect: byId('language-select'),
       reviewStartCheckbox: byId('review-start-checkbox'),
       hintSelect: byId('hint-select'),
       gradeButtonsSelect: byId('grade-buttons-select'),

@@ -43,7 +43,7 @@ export async function setUpTesterSettings() {
   // the database, and the app starts again in it.
   const pseudoCheckbox = document.getElementById('pseudo-language-checkbox');
   pseudoCheckbox.checked = language === 'pseudo';
-  pseudoCheckbox.addEventListener('change', () => setLanguage(pseudoCheckbox.checked ? 'pseudo' : 'en'));
+  pseudoCheckbox.addEventListener('change', () => setLanguage(pseudoCheckbox.checked ? 'pseudo' : null));
 
   document.getElementById('storage-readout-refresh').addEventListener('click', () => showStorageReadout());
   document.getElementById('storage-readout-ask').addEventListener('click', async () => {

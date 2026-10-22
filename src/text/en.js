@@ -105,6 +105,7 @@ export default {
   'settings.tryWritingHint':
     'Free practice: write any character or word, or try any kind of card. Nothing is saved, and your schedule is not touched.',
 
+  'settings.language': 'Language',
   'settings.look': 'Look',
   'settings.lookLight': 'Light',
   'settings.lookDark': 'Dark',

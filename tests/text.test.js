@@ -1,5 +1,6 @@
 // Tests for the interface's text (src/text.js, src/text/): every key the
-// app asks for is in the English file, every key there is used, and the
+// app asks for is in the English file, every key there is used, the
+// translations match the English in their gaps, forms and markup, and the
 // lookup fills in gaps and plurals.
 
 import test from 'node:test';
@@ -7,6 +8,8 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 
 import en from '../src/text/en.js';
+import it from '../src/text/it.js';
+import de from '../src/text/de.js';
 import { t, formatNumber } from '../src/text.js';
 import { pseudoText } from '../src/text/pseudo.js';
 
@@ -64,6 +67,32 @@ test('nothing on the page is written straight into it, outside data-t… attribu
     .filter((text) => /[A-Za-z]{2,}/.test(text) && !/^[a-z]+\d[a-z\d]*$/.test(text));
   assert.deepEqual([...written, ...attributes], []);
 });
+
+// A translation may lack keys (they show in English; scripts/missing-text.js
+// lists them), but what it has must fit the English: no keys the English no
+// longer has, the same {gaps}, forms for numbers where the English has them,
+// the same markup (links, <b>, Chinese marked with lang) and the same Chinese.
+const gapsIn = (text) => [...new Set(text.match(/\{\w+\}/g) ?? [])].sort();
+const chineseIn = (text) => (text.match(/\p{Script=Han}+/gu) ?? []).sort();
+const tagsIn = (text) => (text.match(/<[a-z]+\b[^>]*>/g) ?? []).map((tag) => tag.match(/<([a-z]+)/)[1]).sort();
+
+for (const [name, translation] of Object.entries({ it, de })) {
+  test(`the ${name} text fits the English`, () => {
+    for (const [key, value] of Object.entries(translation)) {
+      assert.ok(key in en, `${key} is no longer in the English`);
+      assert.equal(typeof value, typeof en[key], `${key}: forms for numbers, or not, as in the English`);
+      if (typeof value === 'object') {
+        assert.ok('other' in value, `${key} has the form "other"`);
+      } else {
+        // An English form may leave a gap out ("one word"), so gaps and
+        // markup are compared for single texts only.
+        assert.deepEqual(gapsIn(value), gapsIn(en[key]), `${key}: the same gaps`);
+        assert.deepEqual(tagsIn(value), tagsIn(en[key]), `${key}: the same markup`);
+        assert.deepEqual(chineseIn(value), chineseIn(en[key]), `${key}: the same Chinese`);
+      }
+    }
+  });
+}
 
 test('gaps are filled in, and numbers written as the language writes them', () => {
   assert.equal(t('testing.askedJustNow', { answer: 'yes' }), 'Asked just now: the browser said yes.');

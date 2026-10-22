@@ -1,12 +1,13 @@
 // The interface's text (src/text.js): the page's own text filled in at
-// start-up, and the test language under Settings › For testing.
+// start-up, the language chosen in Settings › Look and sound, and the test
+// language under Settings › For testing.
 //
 // Run with: npm run test:browser
 
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, textOf, openSettings } from './harness.js';
+import { startApp, startBrowsers, tap, textOf, openSettings, choose } from './harness.js';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -80,6 +81,24 @@ describe('the interface text', { concurrency: false }, () => {
 
     await page.evaluate('window.loadedBefore = true');
     await tap(page, 'pseudo-language-checkbox');
+    await afterRestart(page, `document.getElementById('settings-title').textContent === 'Settings'`);
+  });
+
+  it('switches to Italian and back to English in Settings', async () => {
+    await openSettings(page, 'settings-look');
+    assert.equal(await page.evaluate(`document.getElementById('language-select').value`), 'en');
+    await page.evaluate('window.loadedBefore = true');
+    await choose(page, 'language-select', 'it');
+    await afterRestart(
+      page,
+      `document.documentElement.lang === 'it' && document.getElementById('language-select').value === 'it'`,
+    );
+    assert.equal(await page.evaluate(`document.getElementById('settings-title').textContent`), 'Impostazioni');
+    // Each language is named in itself, marked with its own lang.
+    assert.equal(await page.evaluate(`document.querySelector('#language-select option[value="de"]').lang`), 'de');
+
+    await page.evaluate('window.loadedBefore = true');
+    await choose(page, 'language-select', 'en');
     await afterRestart(page, `document.getElementById('settings-title').textContent === 'Settings'`);
   });
 });

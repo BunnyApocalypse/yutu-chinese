@@ -15,13 +15,14 @@ import {
   MAX_STREAK_CARDS,
   MAX_STREAK_WORDS,
 } from './streak.js';
+import { LANGUAGE_NAMES, language, setLanguage } from './text.js';
 
 const MAX_NEW_WORDS_PER_DAY = 50;
 
 // elements: the panel's parts:
 //   panel, openButton, closeButton, scriptSelect, pronunciationSelect,
 //   handwritingSelect, themeRadios (the three choices of look), lessonsCheckbox, strokeCountCheckbox,
-//   mistakeCountCheckbox, fontSelect, reviewStartCheckbox,
+//   mistakeCountCheckbox, fontSelect, languageSelect, reviewStartCheckbox,
 //   hintSelect, newWordsInput, gradeButtonsSelect,
 //   meaningDetailSelect,
 //   typeCheckboxes (a list of the four checkboxes; each has a
@@ -109,6 +110,7 @@ export async function createSettings(elements, onChange) {
     strokeCountCheckbox,
     mistakeCountCheckbox,
     fontSelect,
+    languageSelect,
     reviewStartCheckbox,
     hintSelect,
     gradeButtonsSelect,
@@ -239,6 +241,17 @@ export async function createSettings(elements, onChange) {
   mistakeCountCheckbox.addEventListener('change', () => change('mistakeCount', mistakeCountCheckbox.checked));
 
   fontSelect.addEventListener('change', () => change('font', fontSelect.value));
+
+  // The language is not kept in the database but by the browser for this
+  // device (src/text.js), and the app starts again in it. Each is named in
+  // itself and marked with its own lang, for screen readers.
+  for (const [code, name] of Object.entries(LANGUAGE_NAMES)) {
+    const option = new Option(name, code);
+    option.lang = code;
+    languageSelect.append(option);
+  }
+  languageSelect.value = language === 'pseudo' ? 'en' : language;
+  languageSelect.addEventListener('change', () => setLanguage(languageSelect.value));
 
   hintSelect.addEventListener('change', () => change('hintCountsAs', hintSelect.value));
   gradeButtonsSelect.addEventListener('change', () => change('gradeButtons', gradeButtonsSelect.value));
