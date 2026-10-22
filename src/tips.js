@@ -25,6 +25,7 @@
 // with position: fixed, which works the same here.
 
 import { getSetting, setSetting } from './db.js';
+import { t } from './text.js';
 
 // Each tip: its text, the element it is about (a CSS selector), and on which
 // side of it the tip goes if there is room ('above' or 'below').
@@ -34,11 +35,12 @@ import { getSetting, setSetting } from './db.js';
 // enough without it, with the animations), and the Words tab's, "Tap a word
 // for its page. Free practice tries any card without it counting." (a word
 // is what anyone would tap; Free practice is for the pass over the looks).
+// `text` is the key of the tip's text (src/text/en.js).
 const TIPS = {
   // The first time the grades are offered (review.js), in Review or at a
   // lesson's graded step.
   grades: {
-    text: 'How was this card? Choose, or tap the card to take the suggestion.',
+    text: 'tips.grades',
     target: '#grade-row',
     side: 'below',
   },
@@ -46,7 +48,7 @@ const TIPS = {
   // Until 2026-10-15 this was the Learn tab's tip ('learn'), shown when the
   // tab opened, before the button was there.
   lesson: {
-    text: 'Already know a word? "I know this word" skips its lesson.',
+    text: 'tips.lesson',
     target: '#skip-lesson-button',
     side: 'below',
   },
@@ -54,7 +56,7 @@ const TIPS = {
   // character has no row of boxes, and its grade is its verdict. Above the
   // row, so as not to cover the writing area while the next one is written.
   verdict: {
-    text: 'Tap a character\'s box if the app judged it wrong.',
+    text: 'tips.verdict',
     target: '#word-row',
     side: 'above',
   },
@@ -62,12 +64,12 @@ const TIPS = {
   // on the writing area (gestures.js), which nothing on screen shows. Under
   // the buttons, so as not to cover the writing area.
   gestures: {
-    text: 'Hold still on the writing area for a hint; swipe up quickly to start again.',
+    text: 'tips.gestures',
     target: '#restart-button',
     side: 'below',
   },
   decks: {
-    text: 'Everything else is in the menu, ☰ at the top left.',
+    text: 'tips.menu',
     target: '#menu-button',
     side: 'below',
   },
@@ -75,21 +77,21 @@ const TIPS = {
   // a tap on the row starts studying, so the way to a deck's words is not
   // what it was (2026-10-16).
   deckRows: {
-    text: 'Tap a deck to study it; › for its words and settings.',
+    text: 'tips.decks',
     target: '#deck-list .deck-open',
     side: 'below',
   },
   // The first level's Add button (or the one Add of a list whose levels are
   // ticked), once the list has loaded.
   ready: {
-    text: 'Add one level at a time: each takes a few months.',
+    text: 'tips.ready',
     target: '#ready-levels button',
     side: 'below',
   },
   // Below the first character's parts: above them it would cover the
   // character itself, which can be tapped too.
   wordPage: {
-    text: 'Tap a character or part to see more about it.',
+    text: 'tips.wordPage',
     target: '#word-page .character-parts',
     side: 'below',
   },
@@ -203,7 +205,7 @@ export function createTips() {
     }
     waiting.splice(waiting.indexOf(key), 1);
     current = key;
-    text.textContent = TIPS[key].text;
+    text.textContent = t(TIPS[key].text);
     moveCard();
     open();
     place(targetBox(key));

@@ -729,95 +729,67 @@
         <p id="basics-progress" class="hint"></p>
 
         <section data-basics-step="characters">
-          <h2>Characters</h2>
-          <p>
-            Chinese is written in characters, not letters. Each character is one syllable, and most have a meaning of
-            their own: <span data-zh>人</span> "person", <span data-zh>大</span> "big",
-            <span data-zh>山</span> "mountain".
-          </p>
-          <p>
-            A word is one character or a few: <span data-zh>火</span> "fire" and <span data-zh>山</span>
-            "mountain" make <span data-zh>火山</span> "volcano".
-          </p>
-          <p>
-            Many characters have two forms: <b>simplified</b>, used in mainland China, and <b>traditional</b>, used in
-            Taiwan and Hong Kong, like <span lang="zh-Hans-CN">学</span> and <span lang="zh-Hant-TW">學</span> "study".
-            You learn the one you chose in Settings, or both.
-          </p>
+          <h2 data-t="basics.characters"></h2>
+          <p data-t-html="basics.chineseIsWrittenIn"></p>
+          <p data-t-html="basics.aWordIsOne"></p>
+          <p data-t-html="basics.manyCharactersHaveTwo"></p>
         </section>
 
         <section data-basics-step="pinyin" hidden>
-          <h2>Pinyin</h2>
-          <p>
-            Pinyin spells the sounds of Chinese in the Latin alphabet: <span data-zh>火山</span> is huǒshān. The app
-            shows it with the characters, and it is how Chinese is typed.
-          </p>
-          <p>The marks over the vowels, as in huǒshān, are the tones: more on them next.</p>
-          <p>Most letters sound roughly as in English. These don't:</p>
+          <h2 data-t="basics.pinyin"></h2>
+          <p data-t-html="basics.pinyinSpellsTheSounds"></p>
+          <p data-t="basics.theMarksOverThe"></p>
+          <p data-t="basics.mostLettersSoundRoughly"></p>
           <ul class="basics-list">
-            <li><button class="icon-button basics-play" type="button" data-play="s/xi1" aria-label="Hear xī"></button><span><b>x</b> as "sh" in "sheep", with a smile: xī</span></li>
-            <li><button class="icon-button basics-play" type="button" data-play="s/qi1" aria-label="Hear qī"></button><span><b>q</b> as "ch" in "cheap": qī</span></li>
-            <li><button class="icon-button basics-play" type="button" data-play="s/ci1" aria-label="Hear cī"></button><span><b>c</b> as "ts" in "cats": cī</span></li>
-            <li><button class="icon-button basics-play" type="button" data-play="s/zi4" aria-label="Hear zì"></button><span><b>z</b> as "ds" in "kids": zì</span></li>
-            <li><button class="icon-button basics-play" type="button" data-play="s/zhi1" aria-label="Hear zhī"></button><span><b>zh</b> as "j" in "jam", the tongue curled back: zhī</span></li>
-            <li><button class="icon-button basics-play" type="button" data-play="s/lv4" aria-label="Hear lǜ"></button><span><b>ü</b> as "ee" said with rounded lips: lǜ</span></li>
+            <li><button class="icon-button basics-play" type="button" data-play="s/xi1" data-t-aria-label="basics.hearX"></button><span data-t-html="basics.letterX"></span></li>
+            <li><button class="icon-button basics-play" type="button" data-play="s/qi1" data-t-aria-label="basics.hearQ"></button><span data-t-html="basics.letterQ"></span></li>
+            <li><button class="icon-button basics-play" type="button" data-play="s/ci1" data-t-aria-label="basics.hearC"></button><span data-t-html="basics.letterC"></span></li>
+            <li><button class="icon-button basics-play" type="button" data-play="s/zi4" data-t-aria-label="basics.hearZ"></button><span data-t-html="basics.letterZ"></span></li>
+            <li><button class="icon-button basics-play" type="button" data-play="s/zhi1" data-t-aria-label="basics.hearZh"></button><span data-t-html="basics.letterZh"></span></li>
+            <li><button class="icon-button basics-play" type="button" data-play="s/lv4" data-t-aria-label="basics.hearL"></button><span data-t-html="basics.letterU"></span></li>
           </ul>
-          <p class="hint">After z, c, s, zh, ch, sh and r, the i is not "ee" but a buzz that carries the sound on, as in zì and zhī.</p>
+          <p class="hint" data-t="basics.afterZCS"></p>
         </section>
 
         <section data-basics-step="tones" hidden>
-          <h2>Tones</h2>
-          <p>
-            Every syllable has a tone: its pitch stays high, rises, dips or falls. Another tone makes another word, so
-            the tone is part of learning each word.
-          </p>
+          <h2 data-t="basics.tones"></h2>
+          <p data-t="basics.everySyllableHasA"></p>
           <ul class="basics-list">
-            <li><button class="icon-button basics-play" type="button" data-play="s/ma1" aria-label="Hear mā"></button><span class="basics-mark" data-tone="1"></span><span><b>mā</b> <span data-simplified="妈" data-traditional="媽"></span> "mother": first tone, high and level</span></li>
-            <li><button class="icon-button basics-play" type="button" data-play="s/ma2" aria-label="Hear má"></button><span class="basics-mark" data-tone="2"></span><span><b>má</b> <span data-simplified="麻" data-traditional="麻"></span> "hemp": second tone, rising, as in "What?"</span></li>
-            <li><button class="icon-button basics-play" type="button" data-play="s/ma3" aria-label="Hear mǎ"></button><span class="basics-mark" data-tone="3"></span><span><b>mǎ</b> <span data-simplified="马" data-traditional="馬"></span> "horse": third tone, low, dipping</span></li>
-            <li><button class="icon-button basics-play" type="button" data-play="s/ma4" aria-label="Hear mà"></button><span class="basics-mark" data-tone="4"></span><span><b>mà</b> <span data-simplified="骂" data-traditional="罵"></span> "to scold": fourth tone, falling, as in a firm "No!"</span></li>
-            <li><button class="icon-button basics-play" type="button" data-play="w/5988-5988" aria-label="Hear māma"></button><span class="basics-mark" data-tone="5"></span><span><b>māma</b> <span data-simplified="妈妈" data-traditional="媽媽"></span> "mom": the second ma is neutral, short and light, with no mark</span></li>
+            <li><button class="icon-button basics-play" type="button" data-play="s/ma1" data-t-aria-label="basics.hearM"></button><span class="basics-mark" data-tone="1"></span><span data-t-html="basics.tone1"></span></li>
+            <li><button class="icon-button basics-play" type="button" data-play="s/ma2" data-t-aria-label="basics.hearM2"></button><span class="basics-mark" data-tone="2"></span><span data-t-html="basics.tone2"></span></li>
+            <li><button class="icon-button basics-play" type="button" data-play="s/ma3" data-t-aria-label="basics.hearM3"></button><span class="basics-mark" data-tone="3"></span><span data-t-html="basics.tone3"></span></li>
+            <li><button class="icon-button basics-play" type="button" data-play="s/ma4" data-t-aria-label="basics.hearM4"></button><span class="basics-mark" data-tone="4"></span><span data-t-html="basics.tone4"></span></li>
+            <li><button class="icon-button basics-play" type="button" data-play="w/5988-5988" data-t-aria-label="basics.hearMMa"></button><span class="basics-mark" data-tone="5"></span><span data-t-html="basics.tone5"></span></li>
           </ul>
-          <p class="hint">
-            A few tones change beside others: two third tones in a row are said as a second and a third, so nǐ hǎo
-            sounds like ní hǎo. Pinyin writes the tone each syllable has on its own.
-          </p>
+          <p class="hint" data-t="basics.aFewTonesChange"></p>
         </section>
 
         <section data-basics-step="writing" hidden>
-          <h2>Writing</h2>
-          <p>
-            Characters are made of strokes, written in a set order. As a rule: top before bottom, left before right,
-            and a horizontal stroke before a vertical one crossing it, as in <span data-zh>十</span>.
-          </p>
-          <p>
-            The app checks each stroke as you write. Stuck? Hold your finger or pen still on the writing area for a
-            hint. Gone wrong? Swipe up quickly to start the character again.
-          </p>
-          <p>You don't have to be neat: your writing stays as you drew it, and the usual shortcuts of handwriting are accepted.</p>
+          <h2 data-t="basics.writing"></h2>
+          <p data-t-html="basics.charactersAreMadeOf"></p>
+          <p data-t="basics.theAppChecksEach"></p>
+          <p data-t="basics.youDontHaveTo"></p>
         </section>
 
         <section data-basics-step="cards" hidden>
-          <h2>Four kinds of card</h2>
-          <p>Each word you learn becomes up to four cards, and each comes back just before you would forget it:</p>
+          <h2 data-t="basics.fourKindsOfCard"></h2>
+          <p data-t="basics.eachWordYouLearn"></p>
           <dl class="basics-cards">
-            <dt>Meaning</dt>
-            <dd>See the word, remember what it means.</dd>
-            <dt>Pinyin</dt>
-            <dd>See the word, remember how it is said.</dd>
-            <dt>Tone</dt>
-            <dd>Give each character's tone: tap a tone button, or draw the mark on the card. A dot is the neutral tone.
-              <span class="basics-marks" aria-hidden="true"><span class="basics-mark" data-tone="1"></span><span class="basics-mark" data-tone="2"></span><span class="basics-mark" data-tone="3"></span><span class="basics-mark" data-tone="4"></span><span class="basics-mark" data-tone="5"></span></span>
-            </dd>
-            <dt>Writing</dt>
-            <dd>See the meaning, write the word.</dd>
+            <dt data-t="basics.meaning"></dt>
+            <dd data-t="basics.seeTheWordRemember"></dd>
+            <dt data-t="basics.pinyin"></dt>
+            <dd data-t="basics.seeTheWordRemember2"></dd>
+            <dt data-t="basics.tone"></dt>
+            <dd data-t-html="basics.giveEachCharactersTone"></dd>
+            <dt data-t="basics.writing"></dt>
+            <dd data-t="basics.seeTheMeaningWrite"></dd>
           </dl>
-          <p>New words come in Learn, with a short lesson each. Review brings the cards back; after each one, say how it went.</p>
+          <p data-t="basics.newWordsComeIn"></p>
         </section>
 
         <div id="basics-bar" class="buttons welcome-bar">
-          <button id="basics-back" class="small" type="button">Back</button>
-          <button id="basics-next" class="small primary" type="button">Next</button>
+          <button id="basics-back" class="small" type="button" data-t="basics.basicsBack"></button>
+          <button id="basics-next" class="small primary" type="button" data-t="basics.next"></button>
         </div>
         <button id="basics-close" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
@@ -980,11 +952,11 @@
              2026-10-16, after a tester found the introduction far too wordy).
              Explanations are folded away for whoever wants them. -->
         <section data-step>
-          <h2>Welcome to <span lang="zh-Hant-TW">玉兔中文</span></h2>
-          <p>Learn to read and write Chinese. Everything stays on this device: no account, nothing sent anywhere.</p>
+          <h2 data-t-html="welcome.welcomeTo"></h2>
+          <p data-t="welcome.learnToReadAnd"></p>
           <!-- Opens "Basics of Chinese" on top; closing it comes back here
                (main.js; the owner, 2026-10-21). -->
-          <p><button id="welcome-basics-button" class="link-button" type="button">New to Chinese? Start with the basics</button></p>
+          <p><button id="welcome-basics-button" class="link-button" type="button" data-t="welcome.welcomeBasicsButton"></button></p>
           <!-- Shown at once as it is chosen; saved with the rest at the end
                (welcome.js). Each choice is a small sample of the look: the
                app's icon (its paper and 兔, icons/swatch.png), in the dark one turned dark, and for "Follow device
@@ -992,79 +964,79 @@
                buttons are still there, out of sight, for the keyboard and
                screen readers. -->
           <fieldset class="setting theme-picker">
-            <legend>Look</legend>
+            <legend data-t="welcome.look"></legend>
             <label class="theme-choice">
               <input type="radio" name="welcome-theme" value="light" />
               <span class="theme-swatch light" aria-hidden="true"><img src="icons/swatch.png" alt="" /></span>
-              Light
+              <span data-t="welcome.light"></span>
             </label>
             <label class="theme-choice">
               <input type="radio" name="welcome-theme" value="dark" />
               <span class="theme-swatch dark" aria-hidden="true"><img src="icons/swatch.png" alt="" /></span>
-              Dark
+              <span data-t="welcome.dark"></span>
             </label>
             <label class="theme-choice">
               <input type="radio" name="welcome-theme" value="auto" />
               <span class="theme-swatch auto" aria-hidden="true"><img src="icons/swatch.png" alt="" /><img src="icons/swatch.png" alt="" /></span>
-              Follow device theme
+              <span data-t="welcome.followDeviceTheme"></span>
             </label>
           </fieldset>
         </section>
 
         <section data-step hidden>
-          <h2>Which characters are you learning?</h2>
+          <h2 data-t="welcome.whichCharactersAreYou"></h2>
           <fieldset class="setting">
-            <legend>Script</legend>
-            <label><input type="radio" name="welcome-script" value="simplified" /> Simplified <span lang="zh-Hans-CN">简体</span></label>
-            <label><input type="radio" name="welcome-script" value="traditional" /> Traditional <span lang="zh-Hant-TW">繁體</span></label>
-            <label><input type="radio" name="welcome-script" value="both-simplified" /> Both, mostly simplified</label>
-            <label><input type="radio" name="welcome-script" value="both-traditional" /> Both, mostly traditional</label>
+            <legend data-t="welcome.script"></legend>
+            <label><input type="radio" name="welcome-script" value="simplified" /> <span data-t="welcome.simplified"></span> <span lang="zh-Hans-CN">简体</span></label>
+            <label><input type="radio" name="welcome-script" value="traditional" /> <span data-t="welcome.traditional"></span> <span lang="zh-Hant-TW">繁體</span></label>
+            <label><input type="radio" name="welcome-script" value="both-simplified" /> <span data-t="welcome.bothMostlySimplified"></span></label>
+            <label><input type="radio" name="welcome-script" value="both-traditional" /> <span data-t="welcome.bothMostlyTraditional"></span></label>
           </fieldset>
-          <p class="hint">Not sure? Pick the one used where you'll read Chinese.</p>
+          <p class="hint" data-t="welcome.notSurePickThe"></p>
           <details class="welcome-more">
-            <summary>What's the difference?</summary>
+            <summary data-t="welcome.whatsTheDifference"></summary>
             <!-- The names link to Wikipedia; a link someone taps is fine under the offline rule. -->
-            <p class="hint"><a href="https://en.wikipedia.org/wiki/Simplified_Chinese_characters" target="_blank" rel="noopener">Simplified</a> characters are used in mainland China, Singapore and Malaysia. <a href="https://en.wikipedia.org/wiki/Traditional_Chinese_characters" target="_blank" rel="noopener">Traditional</a> characters are used in Taiwan, Hong Kong and Macau. Many characters are the same in both; others differ, like <span lang="zh-Hans-CN">学</span> and <span lang="zh-Hant-TW">學</span>.</p>
-            <p class="hint">With both, your cards are in the script you mostly use, and you can pick the other one for single words.</p>
+            <p class="hint" data-t-html="welcome.simplifiedCharactersAreUsed"></p>
+            <p class="hint" data-t="welcome.withBothYourCards"></p>
           </details>
           <!-- The pronunciation follows the script chosen until it is changed
                here by hand (welcome.js; the owner, 2026-10-16). -->
           <details class="welcome-more">
-            <summary id="welcome-pronunciation-summary">Pronunciation</summary>
+            <summary id="welcome-pronunciation-summary" data-t="welcome.welcomePronunciationSummary"></summary>
             <fieldset class="setting">
-              <legend>Pronunciation: which standard?</legend>
-              <label><input type="radio" name="welcome-pronunciation" value="mainlandOnly" /> Mainland China (<span lang="zh-Hans-CN">普通话</span>)</label>
-              <label><input type="radio" name="welcome-pronunciation" value="taiwan" /> Taiwan (<span lang="zh-Hant-TW">國語</span>)</label>
+              <legend data-t="welcome.pronunciationWhichStandard"></legend>
+              <label><input type="radio" name="welcome-pronunciation" value="mainlandOnly" /> <span data-t-html="welcome.mainlandChina"></span></label>
+              <label><input type="radio" name="welcome-pronunciation" value="taiwan" /> <span data-t-html="welcome.taiwan"></span></label>
               <!-- "mainland": both readings, the mainland one listed first. -->
-              <label><input type="radio" name="welcome-pronunciation" value="mainland" /> Accept both</label>
+              <label><input type="radio" name="welcome-pronunciation" value="mainland" /> <span data-t="welcome.acceptBoth"></span></label>
             </fieldset>
-            <p class="hint">A few words are read differently in Taiwan and on the mainland: <span lang="zh-Hant-TW">星期</span> is xīngqí in Taiwan and xīngqī on the mainland (more on <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">Taiwan's Mandarin</a>). The reading you choose is the one shown and tested. With Taiwan, the mainland reading also appears beside it in small print, because dictionaries file words under it. With Accept both, cards show both readings and accept either tone.</p>
+            <p class="hint" data-t-html="welcome.aFewWordsAre"></p>
           </details>
         </section>
 
         <section data-step hidden>
-          <h2>Select your starting level</h2>
+          <h2 data-t="welcome.selectYourStartingLevel"></h2>
           <!-- Chosen to suit the script picked before, when this screen is
                reached (welcome.js). The value is a list and a level, or
                "anki" for importing a deck (ankiImportForm.js). -->
           <fieldset class="setting">
-            <legend>Start with</legend>
-            <label><input type="radio" name="welcome-start" value="hsk-3.0|1" /> HSK 3.0, level 1: mainland China's test, 512 words</label>
-            <label><input type="radio" name="welcome-start" value="tocfl|Novice 1" /> TOCFL, Novice 1: Taiwan's test, 182 words</label>
-            <label><input type="radio" name="welcome-start" value="anki" /> A deck from Anki: bring your words and their schedules</label>
-            <label><input type="radio" name="welcome-start" value="" /> None: I'll add my own words</label>
+            <legend data-t="welcome.startWith"></legend>
+            <label><input type="radio" name="welcome-start" value="hsk-3.0|1" /> <span data-t="welcome.hsk30Level"></span></label>
+            <label><input type="radio" name="welcome-start" value="tocfl|Novice 1" /> <span data-t="welcome.tocflNovice1Taiwans"></span></label>
+            <label><input type="radio" name="welcome-start" value="anki" /> <span data-t="welcome.aDeckFromAnki"></span></label>
+            <label><input type="radio" name="welcome-start" value="" /> <span data-t="welcome.noneIllAddMy"></span></label>
           </fieldset>
-          <p class="hint">More levels, and words of your own, can be added any time in <b>Decks</b>.</p>
+          <p class="hint" data-t-html="welcome.moreLevelsAndWords"></p>
           <p id="welcome-start-note" class="note"></p>
         </section>
 
         <section data-step hidden>
           <div id="welcome-keep-general">
-            <h2>Keep your words safe</h2>
+            <h2 data-t="welcome.keepYourWordsSafe"></h2>
             <!-- Not "Allow it to keep them": in most browsers there is nothing to
                  allow, and the line below says what this one needs (the
                  owner, 2026-10-19). -->
-            <p>Your words are stored only in this browser, on this device.</p>
+            <p data-t="welcome.yourWordsAreStored"></p>
             <!-- What this particular browser needs, in a line (welcomeStorage in storageAdvice.js). -->
             <p id="welcome-keep-note" class="hint"></p>
           </div>
@@ -1074,21 +1046,21 @@
                2026-10-19: not in quiet small print). The app put there starts
                empty, with this introduction again. -->
           <div id="welcome-keep-home-screen" hidden>
-            <h2>Add <span lang="zh-Hant-TW">玉兔中文</span> to your Home Screen</h2>
-            <p>Safari deletes a website's data after a week without a visit. An app on your Home Screen keeps your words.</p>
+            <h2 data-t-html="welcome.addToYourHome"></h2>
+            <p data-t="welcome.safariDeletesAWebsites"></p>
             <ol class="welcome-steps">
-              <li>Tap Share. If you don't see it, tap ⋯ first.</li>
-              <li>Tap "Add to Home Screen", leave "Open as Web App" on, and tap Add.</li>
-              <li>Open <span lang="zh-Hant-TW">玉兔中文</span> from your Home Screen and start there.</li>
+              <li data-t="welcome.tapShareIfYou"></li>
+              <li data-t="welcome.tapAddToHome"></li>
+              <li data-t-html="welcome.openFromYourHome"></li>
             </ol>
           </div>
           <div id="welcome-keep-dock" hidden>
-            <h2>Add <span lang="zh-Hant-TW">玉兔中文</span> to your Dock</h2>
-            <p>Safari deletes a website's data after a week without a visit. An app in your Dock keeps your words.</p>
+            <h2 data-t-html="welcome.addToYourDock"></h2>
+            <p data-t="welcome.safariDeletesAWebsites2"></p>
             <ol class="welcome-steps">
-              <li>In the menu bar, choose File › Add to Dock (macOS 14 or later).</li>
-              <li>Click Add.</li>
-              <li>Open <span lang="zh-Hant-TW">玉兔中文</span> from the Dock and start there.</li>
+              <li data-t="welcome.inTheMenuBar"></li>
+              <li data-t="welcome.clickAdd"></li>
+              <li data-t-html="welcome.openFromTheDock"></li>
             </ol>
           </div>
           <!-- The same for a Chromium browser that hasn't offered its own
@@ -1096,21 +1068,21 @@
                2026-10-19). Unlike Safari, the installed app shares this
                browser's data, so the words come along. -->
           <div id="welcome-keep-install-phone" hidden>
-            <h2>Install <span lang="zh-Hant-TW">玉兔中文</span> as an app</h2>
-            <p>This browser may delete a website's data to make space. An installed app keeps your words.</p>
+            <h2 data-t-html="welcome.installAsAnApp"></h2>
+            <p data-t="welcome.thisBrowserMayDelete"></p>
             <ol class="welcome-steps">
-              <li>Tap the browser's menu (⋮).</li>
-              <li>Tap "Install app" or "Add to Home screen", then Install.</li>
-              <li>Open <span lang="zh-Hant-TW">玉兔中文</span> from your Home screen and start there.</li>
+              <li data-t="welcome.tapTheBrowsersMenu"></li>
+              <li data-t="welcome.tapInstallAppOr"></li>
+              <li data-t-html="welcome.openFromYourHome2"></li>
             </ol>
           </div>
           <div id="welcome-keep-install-computer" hidden>
-            <h2>Install <span lang="zh-Hant-TW">玉兔中文</span> as an app</h2>
-            <p>This browser may delete a website's data to make space. An installed app keeps your words.</p>
+            <h2 data-t-html="welcome.installAsAnApp"></h2>
+            <p data-t="welcome.thisBrowserMayDelete"></p>
             <ol class="welcome-steps">
-              <li>Open the browser's menu (⋮ or ⋯).</li>
-              <li>Choose "Install" (in Chrome, under "Cast, save, and share"), then Install.</li>
-              <li>Open <span lang="zh-Hant-TW">玉兔中文</span> from its new window and start there.</li>
+              <li data-t="welcome.openTheBrowsersMenu"></li>
+              <li data-t="welcome.chooseInstallInChrome"></li>
+              <li data-t-html="welcome.openFromItsNew"></li>
             </ol>
           </div>
         </section>
@@ -1118,12 +1090,12 @@
         <!-- Back and Next, held at the panel's bottom edge while a screen
              scrolls (style.css, .welcome-bar). -->
         <div id="welcome-bar" class="buttons welcome-bar">
-          <button id="welcome-back" class="small" type="button">Back</button>
-          <button id="welcome-next" class="small primary" type="button">Next</button>
+          <button id="welcome-back" class="small" type="button" data-t="welcome.welcomeBack"></button>
+          <button id="welcome-next" class="small primary" type="button" data-t="welcome.next"></button>
         </div>
         <!-- "Skip the introduction" on the first screens; "Not now" on the last,
              which finishes without asking for long-term storage (welcome.js). -->
-        <button id="welcome-skip" class="link-button" type="button">Skip the introduction</button>
+        <button id="welcome-skip" class="link-button" type="button" data-t="welcome.skip"></button>
       </dialog>
 
       <!-- <dialog> is the browser's built-in pop-up panel. It stays hidden until opened by settings.js. -->
@@ -1431,7 +1403,7 @@
          popover, so that it lies above everything else. -->
     <div id="tip-card" class="tip-card" popover="manual" role="status">
       <p id="tip-text"></p>
-      <button id="tip-dismiss" class="small primary" type="button">Got it</button>
+      <button id="tip-dismiss" class="small primary" type="button" data-t="tips.gotIt"></button>
     </div>
 
     <script type="module" src="/src/main.js"></script>

@@ -50,53 +50,19 @@ test('text put in with data-t has no markup (data-t-html is for that)', () => {
   assert.deepEqual(plainKeys.filter((key) => /<[a-z]/.test(en[key])), []);
 });
 
-// The parts of the page moved over to data-t… so far (docs/interface.md,
-// "Interface text and translations"); once all are, the whole page is checked.
-const MOVED_OVER = [
-  'settings-panel',
-  'side-menu',
-  'import-dialog',
-  'storage-message',
-  'review-header',
-  'word-form',
-  'done-panel',
-  'study-area',
-  'words-panel',
-  'word-dialog',
-  'error-banner',
-  'error-dialog',
-  'credits-dialog',
-  'whats-new-dialog',
-  'streak-dialog',
-  'feedback-dialog',
-  'deck-dialog',
-  'word-page',
-  'confirm-dialog',
-  'progress-panel',
-  'anki-dialog',
-];
-
-test('nothing in the parts moved over is written straight into the page', () => {
-  // Text between tags (not in comments, scripts or pictures) with an English
-  // word in it. Chinese, symbols and numbers alone are fine.
-  const visible = page.replace(/<!--[\s\S]*?-->/g, '').replace(/<(script|style|svg)[\s\S]*?<\/\1>/g, '');
-  const written = MOVED_OVER.flatMap((id) => {
-    const start = visible.lastIndexOf('<', visible.indexOf(`id="${id}"`));
-    const name = visible.slice(start + 1).match(/^[a-z]+/)[0];
-    // To the tag that closes this one, past any of the same kind inside it.
-    const tags = new RegExp(`<(/?)${name}\\b`, 'g');
-    tags.lastIndex = start + 1;
-    let depth = 1;
-    let end = start;
-    while (depth > 0) {
-      const match = tags.exec(visible);
-      depth += match[1] ? -1 : 1;
-      end = match.index;
-    }
-    const part = visible.slice(start, end);
-    return [...part.matchAll(/>([^<]*)</g)].map((match) => match[1].trim()).filter((text) => /[A-Za-z]{2,}/.test(text));
-  });
-  assert.deepEqual(written, []);
+test('nothing on the page is written straight into it, outside data-t… attributes', () => {
+  // Text between tags (not in comments, scripts, pictures or the title)
+  // with an English word in it, and attributes read out or shown. Chinese,
+  // symbols, numbers and pinyin examples (placeholder="xing1qi5") are fine.
+  const visible = page
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<(script|style|svg|title)[\s\S]*?<\/\1>/g, '');
+  const body = visible.slice(visible.indexOf('<body'));
+  const written = [...body.matchAll(/>([^<]*)</g)].map((match) => match[1].trim()).filter((text) => /[A-Za-z]{2,}/.test(text));
+  const attributes = [...body.matchAll(/(?<![-\w])(?:aria-label|title|placeholder|alt)="([^"]*)"/g)]
+    .map((match) => match[1])
+    .filter((text) => /[A-Za-z]{2,}/.test(text) && !/^[a-z]+\d[a-z\d]*$/.test(text));
+  assert.deepEqual([...written, ...attributes], []);
 });
 
 test('gaps are filled in, and numbers written as the language writes them', () => {

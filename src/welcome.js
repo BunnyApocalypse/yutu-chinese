@@ -10,6 +10,7 @@ import { getSetting, setSetting } from './db.js';
 import { startingLevel } from './decks.js';
 import { welcomeStorage } from './storageAdvice.js';
 import { setTheme } from './theme.js';
+import { t } from './text.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -60,10 +61,16 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
     'both-simplified': 'mainland',
     'both-traditional': 'mainland',
   };
-  const PRONUNCIATION_NAMES = { mainlandOnly: 'Mainland China', taiwan: 'Taiwan', mainland: 'Accept both' };
+  const PRONUNCIATION_NAMES = {
+    mainlandOnly: 'welcome.pronunciationMainland',
+    taiwan: 'welcome.pronunciationTaiwan',
+    mainland: 'welcome.pronunciationBoth',
+  };
   let pronunciationTouched = false;
   function showPronunciation() {
-    pronunciationSummary.textContent = `Pronunciation: ${PRONUNCIATION_NAMES[chosen('welcome-pronunciation')]}`;
+    pronunciationSummary.textContent = t('welcome.pronunciationSummary', {
+      name: t(PRONUNCIATION_NAMES[chosen('welcome-pronunciation')]),
+    });
   }
   for (const radio of dialog.querySelectorAll('input[name="welcome-script"]')) {
     radio.addEventListener('change', () => {
@@ -129,7 +136,7 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
       suggestStart();
     }
     const last = step === steps.length - 1;
-    progress.textContent = `${step + 1} of ${steps.length}`;
+    progress.textContent = t('welcome.stepOf', { step: step + 1, steps: steps.length });
     backButton.hidden = step === 0;
     // On the last screen one button does what this browser needs to keep the
     // words (installing, or asking) and finishes, and "Not now" in place of
@@ -142,24 +149,26 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
     // exception, so its button is not the main one.
     const installSteps = last && Boolean(storagePlan.addTo);
     nextButton.classList.toggle('primary', !installSteps);
-    nextButton.textContent = !last
-      ? 'Next'
-      : installSteps
-        ? keepData.kind === 'safari'
-          ? 'Start in Safari anyway'
-          : 'Start in the browser anyway'
-        : storagePlan.action === 'install'
-        ? 'Install the app and start'
-        : storagePlan.action === 'ask'
-          ? 'Keep my words safe and start'
-          : startChosen()?.anki
-          ? 'Import my Anki deck'
-          : startChosen()
-          ? 'Start learning'
-          : hasWords()
-            ? 'Done'
-            : 'Add my first words';
-    skipButton.textContent = last ? 'Not now' : 'Skip the introduction';
+    nextButton.textContent = t(
+      !last
+        ? 'welcome.next'
+        : installSteps
+          ? keepData.kind === 'safari'
+            ? 'welcome.startInSafari'
+            : 'welcome.startInBrowser'
+          : storagePlan.action === 'install'
+            ? 'welcome.installAndStart'
+            : storagePlan.action === 'ask'
+              ? 'welcome.keepAndStart'
+              : startChosen()?.anki
+                ? 'welcome.importAnki'
+                : startChosen()
+                  ? 'welcome.startLearning'
+                  : hasWords()
+                    ? 'welcome.done'
+                    : 'welcome.addFirstWords',
+    );
+    skipButton.textContent = t(last ? 'welcome.notNow' : 'welcome.skip');
     skipButton.hidden = last && !willAsk;
     // Each screen starts at its top, whatever was scrolled before.
     dialog.scrollTop = 0;
@@ -246,7 +255,7 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
     nextButton.disabled = true;
     backButton.disabled = true;
     skipButton.disabled = true;
-    nextButton.textContent = startChosen() && !startChosen().anki ? 'Adding words…' : nextButton.textContent;
+    nextButton.textContent = startChosen() && !startChosen().anki ? t('welcome.addingWords') : nextButton.textContent;
     try {
       await onFinish(startChosen());
     } finally {

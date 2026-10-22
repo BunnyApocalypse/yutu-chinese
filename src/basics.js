@@ -13,6 +13,7 @@ import { closeOnTapBeside } from './dialogs.js';
 import { langFor } from './lang.js';
 import { playRecording } from './speech.js';
 import { toneMarkPicture } from './toneFlow.js';
+import { t } from './text.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -61,7 +62,7 @@ export function createBasics(settings) {
     });
     progress.textContent = `${step + 1} of ${steps.length}`;
     backButton.hidden = step === 0;
-    nextButton.textContent = step === steps.length - 1 ? 'Done' : 'Next';
+    nextButton.textContent = t(step === steps.length - 1 ? 'basics.done' : 'basics.next');
     // Each screen starts at its top.
     dialog.scrollTop = 0;
     showCovering();
