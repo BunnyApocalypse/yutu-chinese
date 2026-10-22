@@ -4,7 +4,13 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
-**Handover from the fifth session of 2026-10-21 (tester 4's feedback as to-dos; an Italian interface as a high priority; docs only).** Replace this with each session's handover; keep only what the next session needs.
+**Handover from the session of 2026-10-22 (the app made ready for translation; pushed to `main`, so on the test copy; not released to `stable`).** Replace this with each session's handover; keep only what the next session needs.
+
+- **All interface text is in `src/text/en.js`**, shown with `t()` or `data-t…` (`docs/interface.md`, "Interface text and translations"; rule in `CLAUDE.md`). Seven commits, one area each; all 348 browser tests and the unit tests pass after each. Visible changes: counts say "1 word", "1 card studied", "forgotten 1 time" where they said "1 words"; the list in Settings › Sentences › Writing no longer spills past the panel.
+- **The test language** (Settings › For testing, the owner said yes): look-alike letters, a third longer. Pictures of the main screens in it: `node local/text-pictures/shoot-screens.js` (into `local/text-pictures/`). **Found:** in Learn on a 360-wide phone the lesson's note and "I know this word" take two lines, which moves the writing area down (`docs/pitfalls.md`); a real German text will show whether it happens.
+- **Next for translations** (not started): **Italian first** (the owner, 2026-10-21, roadmap "High priority"; to plan with the owner: who checks it, a dictionary in Italian or not, before or after the first release): `src/text/it.js`, `node scripts/missing-text.js it`, and a language setting (from the browser's language; a device setting in `localStorage`). Then German and HanDeDict (`docs/goals.md`, layers 2 to 4). Helper scripts used to move the text over are in the git-ignored `local/text-tools/`.
+
+**Handover from the fifth session of 2026-10-21 (tester 4's feedback as to-dos; an Italian interface as a high priority; docs only).**
 
 - **This session (docs only, nothing in the app changed):** tester 4's observation sheet made into 13 to-dos at the top of the roadmap (notes and the original sheet in `local/testing/T4-2026-10-21*`; the original is still in `~/Downloads/m-feedback.odt`, the owner's to delete). **An Italian interface** added as high priority, ahead of German (`docs/goals.md`, "Translations"); to plan with the owner: who checks the Italian, a dictionary in Italian or not, before or after the first release.
 - **Released on 2026-10-21 to `main` and `stable`, a third time** ("What's new" entry `2026-10-21-3`): the mainland reader's notes #60 to #80, nothing else.
@@ -62,7 +68,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
   - [ ] **A dyslexia-friendly font** as a setting (a font is new data: its license and a README, ask first).
   - [ ] **The Progress tab with a screen reader**: its charts and numbers readable.
 
-**High priority: an Italian interface** (the owner, 2026-10-21), ahead of the German one. Translating the interface only (layer 1 in `docs/goals.md`, "Translations and other languages"): the strings gathered into one file per language, then Italian. To plan with the owner first: who checks the Italian, whether a dictionary in Italian is wanted, and where it falls against the first release.
+**High priority: an Italian interface** (the owner, 2026-10-21), ahead of the German one. Translating the interface only (layer 1 in `docs/goals.md`, "Translations and other languages"). **The strings are gathered** (2026-10-22, `src/text/en.js`, `docs/interface.md`); what is left is `src/text/it.js` and a language setting. To plan with the owner first: who checks the Italian, whether a dictionary in Italian is wanted, and where it falls against the first release.
 
 Agreed with the owner on 2026-10-18. **The first release** means the first users beyond testers: a small group of learners and an online language-learning community, without advertising. They are strangers trying the app on their own, so it is about first impressions and keeping their data safe. **Changes to the layout come before it** (the owner: no big UX changes once there are real users, if it can be avoided). Each item is planned with the owner before it is built.
 
@@ -113,7 +119,7 @@ Agreed with the owner on 2026-10-18. **The first release** means the first users
 **Nice to have:**
 
 - Checking by hand with VoiceOver or TalkBack (`docs/interface.md`, "Accessibility").
-- A German interface after the Italian one, then other languages (`docs/goals.md`, "Translations").
+- A German interface after the Italian one, then other languages (`docs/goals.md`, "Translations"). The groundwork for both is done (2026-10-22): every text is in `src/text/en.js`.
 - The Skritter import, if the GDPR data arrives (the owner doesn't want the word list imported without its scheduling).
 - A mode for going from 繁體 to 簡體 or back, by character rather than by word (having written 們 → 们 once, the learner isn't asked again in 他們, 你們).
 - Mainland, Hong Kong or Taiwan traditional forms (needs stroke data for the other two); longer shortcuts (more strokes joined, reordered or dropped).
