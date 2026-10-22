@@ -5,7 +5,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-import { readDictionary, lookUp, proposeMeaning, otherScriptForm, splitIntoWords } from '../src/dictionary.js';
+import {
+  readDictionary,
+  lookUp,
+  proposeMeaning,
+  meaningWithoutChinese,
+  otherScriptForm,
+  splitIntoWords,
+} from '../src/dictionary.js';
 import { checkWord, tidyPinyin } from '../src/words.js';
 
 const SMALL = [
@@ -331,4 +338,14 @@ test('characters typed find the words written so, then the longer words beginnin
   assert.deepEqual(lookUpByCharacters(dictionary, '老', listed).map((entry) => entry.traditional), ['老', '老師', '老鼠', '老百姓']);
   // Either script.
   assert.deepEqual(lookUpByCharacters(dictionary, '老师', listed).map((entry) => entry.traditional), ['老師']);
+});
+
+test('a writing card leaves Chinese out of the meaning', () => {
+  assert.equal(meaningWithoutChinese('you (informal, as opposed to courteous 您)'), 'you (informal, as opposed to courteous …)');
+  assert.equal(meaningWithoutChinese('knife; blade (CL:把)/(slang) dollar'), 'knife; blade/(slang) dollar');
+  assert.equal(meaningWithoutChinese('classifier (CL:個|个[ge4])'), 'classifier');
+  assert.equal(meaningWithoutChinese('abbr. for 動詞, verb'), 'abbr. for …, verb');
+  assert.equal(meaningWithoutChinese('to eat (with chopsticks)'), 'to eat (with chopsticks)');
+  // A meaning typed all in Chinese is kept.
+  assert.equal(meaningWithoutChinese('你們'), '你們');
 });

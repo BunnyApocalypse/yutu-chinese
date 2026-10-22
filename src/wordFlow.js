@@ -602,6 +602,12 @@ export function createWordFlow(elements) {
       passedPerChar[index] = undefined;
       suggestedPerChar[index] = undefined;
     }
+    // Where the outline starts hidden (Review), it is shown for one
+    // character only: left on, it showed on the next one too and counted
+    // as peeking there (tester 4, 2026-10-21).
+    if (options.hideOutline && outlineVisible) {
+      setOutlineVisible(false);
+    }
     const soFar = practicing ? 0 : mistakesPerChar[index] || 0;
     showCurrentCharacter();
     carriedMistakes = soFar;

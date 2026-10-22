@@ -27,6 +27,7 @@ import {
 import { toneAnswers, readingsFor, describeReading } from './tones.js';
 import { scriptFor, scriptFlagFor } from './words.js';
 import { fillMixed } from './lang.js';
+import { meaningWithoutChinese } from './dictionary.js';
 import { isLeech, lapsesOf, isSuspended, withSuspended, becameLeech } from './leeches.js';
 import { speak } from './speech.js';
 import { markedKnown, withStartedOver } from './cardManager.js';
@@ -189,16 +190,18 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // The meaning is cut off after one line, a tap showing it all (clamp.js,
   // `data-clamp`); the sentence never is, being what is asked (the owner,
   // 2026-10-21: where the meaning took two lines, the gap was cut off).
+  // Chinese in the meaning is left out, as it can be taken for the answer
+  // (meaningWithoutChinese).
   function showMeaning(word, sentence, script) {
     meaningElement.classList.toggle('with-sentence', Boolean(sentence));
     if (!sentence) {
-      meaningElement.textContent = word.definition;
+      meaningElement.textContent = meaningWithoutChinese(word.definition);
       return;
     }
     const meaning = document.createElement('span');
     meaning.className = 'prompt-text';
     meaning.dataset.clamp = '';
-    meaning.textContent = word.definition;
+    meaning.textContent = meaningWithoutChinese(word.definition);
     const line = document.createElement('span');
     line.className = 'cloze-sentence';
     line.lang = script === 'traditional' ? 'zh-Hant-TW' : 'zh-Hans-CN';
@@ -482,7 +485,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // The answer stays up with the corrected meaning, still to be graded.
       current.word = after;
       if (current.type === 'writing') {
-        meaningElement.textContent = after.definition;
+        meaningElement.textContent = meaningWithoutChinese(after.definition);
       }
       flows.recall.update(after);
       flows.tone.update(after);
