@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, textOf, openSettings, choose } from './harness.js';
+import { startApp, startBrowsers, tap, textOf, openSettings, choose, waitUntil } from './harness.js';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -86,6 +86,8 @@ describe('the interface text', { concurrency: false }, () => {
 
   it('switches to Italian and back to English in Settings', async () => {
     await openSettings(page, 'settings-look');
+    // Filled in when Settings is set up, a moment after the page's text.
+    await waitUntil(page, `document.getElementById('language-select').options.length === 3`, 'the languages');
     assert.equal(await page.evaluate(`document.getElementById('language-select').value`), 'en');
     await page.evaluate('window.loadedBefore = true');
     await choose(page, 'language-select', 'it');

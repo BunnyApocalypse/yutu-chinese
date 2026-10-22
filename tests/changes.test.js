@@ -33,5 +33,9 @@ test('the real list has unique ids, newest first, each with something to say', (
   for (const entry of CHANGES) {
     assert.match(entry.id, /^\d{4}-\d{2}-\d{2}(-\d+)?$/);
     assert.ok(entry.items.length > 0);
+    // A translated entry has as many lines as the English.
+    for (const translated of [entry.it, entry.de].filter(Boolean)) {
+      assert.equal(translated.length, entry.items.length, entry.id);
+    }
   }
 });

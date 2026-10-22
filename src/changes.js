@@ -2,15 +2,30 @@
 // A new entry is written at the top whenever a release goes out
 // (docs/interface.md, "What's new"). `id` tells the entries apart and is the
 // release's date; a second release on the same day gets "-2" after it.
-// The entries so far are in English whatever the app's language, and stay
-// so (the owner, 2026-10-22); once a translation exists, a new entry's lines
-// are to be translated too (docs/interface.md, "Interface text").
+// `items` are in English; from 2026-10-22-2 on, an entry also has its lines
+// in Italian (`it`) and German (`de`), shown to readers in that language
+// (whatsNew.js). The entries before stay in English (the owner, 2026-10-22).
 // Each line is a short sentence about what a learner will notice, not how it
 // was built.
 
 import { formatDate } from './text.js';
 
 export const CHANGES = [
+  {
+    id: '2026-10-22-2',
+    items: [
+      'The app can now be used in Italian or German: choose in Settings › Look and sound › Language. Until you choose, it follows your browser\'s language.',
+      'The translations are new. If something reads oddly, please tell us with Send feedback, in the menu.',
+    ],
+    it: [
+      'Ora puoi usare l’app in italiano o in tedesco: scegli in Impostazioni › Aspetto e suono › Lingua. Finché non scegli, segue la lingua del tuo browser.',
+      'Le traduzioni sono nuove. Se qualcosa suona strano, faccelo sapere con «Invia un commento», nel menu.',
+    ],
+    de: [
+      'Die App gibt es jetzt auf Italienisch und Deutsch: Wähle unter Einstellungen › Aussehen und Ton › Sprache. Bis du wählst, folgt sie der Sprache deines Browsers.',
+      'Die Übersetzungen sind neu. Wenn dir etwas seltsam vorkommt, sag es uns mit „Feedback senden“ im Menü.',
+    ],
+  },
   {
     id: '2026-10-22',
     items: [

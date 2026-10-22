@@ -13,6 +13,7 @@
 
 import { CHANGES, changesSince, changeDate } from './changes.js';
 import { closeOnTapBeside } from './dialogs.js';
+import { language } from './text.js';
 
 const SEEN_KEY = __CHANNEL__ ? `changes-seen-${__CHANNEL__}` : 'changes-seen';
 
@@ -50,9 +51,15 @@ export function createWhatsNew(openFeedback) {
       const heading = document.createElement('h3');
       heading.textContent = changeDate(entry.id);
       const items = document.createElement('ul');
-      for (const text of entry.items) {
+      // In the reader's language when the entry has it (`it`, `de`), else
+      // in English, marked as such for screen readers.
+      const translated = entry[language];
+      for (const text of translated ?? entry.items) {
         const item = document.createElement('li');
         item.textContent = text;
+        if (!translated && language !== 'en') {
+          item.lang = 'en';
+        }
         items.append(item);
       }
       list.append(heading, items);
