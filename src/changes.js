@@ -12,6 +12,19 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-10-22',
+    items: [
+      'Opening Review with many cards to do, you can review all of them or a set number, such as 50, and Review stops after that many. Settings › Daily study can switch this off.',
+      'On a writing card the meaning is bold and sits just above the writing area, so it is plain what to write. Chinese in a meaning is left out there, so it can\'t be mistaken for the answer.',
+      'Answered cards show the word, its pinyin and its meaning in that order, bigger than the learning tip under them.',
+      'On a dictionary word\'s page, "Add to my words" is always at the bottom, apart from the button for adding the example sentence.',
+      'A list of words can be just the characters, one per line: the pinyin and meaning are filled in from the dictionary.',
+      'New settings: hide the number of mistakes while writing, and the OpenDyslexic font.',
+      '"Show outline" in Review now lasts for one character only.',
+      'Counts say "1 word" instead of "1 words", and a few other small fixes.',
+    ],
+  },
+  {
     id: '2026-10-21-3',
     items: [
       'More learning notes were checked and corrected by a native speaker.',
