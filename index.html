@@ -182,51 +182,44 @@
       <section id="words-panel" class="words-panel" hidden>
         <!-- The tab's two sections. -->
         <nav class="section-switch">
-          <button id="my-decks-button" class="selected" type="button">My decks</button>
-          <button id="ready-decks-button" type="button">Ready-made decks</button>
+          <button id="my-decks-button" class="selected" type="button" data-t="decks.myDecksButton"></button>
+          <button id="ready-decks-button" type="button" data-t="decks.readyDecksButton"></button>
         </nav>
 
         <!-- Ready-made decks: the word lists of the official tests. -->
         <section id="ready-decks-section" class="words-panel" hidden>
-          <p class="hint">
-            These are the word lists of the two official tests of Chinese for learners, the
-            <a href="https://en.wikipedia.org/wiki/Hanyu_Shuiping_Kaoshi" target="_blank" rel="noopener">HSK</a> and the
-            <a href="https://en.wikipedia.org/wiki/Test_of_Chinese_as_a_Foreign_Language" target="_blank" rel="noopener">TOCFL</a>.
-            They are a common answer to "which words should I learn first?", and many textbooks and courses follow
-            them. The lowest level is the easiest. Not sure? Start with HSK 3.0, level 1. The radicals, at the
-            end, go well alongside any of them.
-          </p>
+          <p class="hint" data-t-html="decks.theseAreTheWord"></p>
           <!-- The lists to choose from; tapping one shows its levels below
                (wordsPanel.js). data-list is the list's ID, as in READY_MADE_LISTS. -->
           <ul id="ready-list" class="word-list">
             <li>
               <button class="word-entry deck-entry ready-entry" type="button" data-list="hsk-3.0">
-                <span class="entry-characters">HSK 3.0</span>
-                <span class="entry-definition">Mainland China's test, as it is now: levels 1 to 6 and an advanced band 7-9.</span>
+                <span class="entry-characters" data-t="decks.hsk30"></span>
+                <span class="entry-definition" data-t="decks.mainlandChinasTestAs"></span>
               </button>
             </li>
             <li>
               <button class="word-entry deck-entry ready-entry" type="button" data-list="hsk-2.0">
-                <span class="entry-characters">HSK 2.0 (older)</span>
-                <span class="entry-definition">The six-level standard that HSK 3.0 replaces. A lot of teaching material still uses it.</span>
+                <span class="entry-characters" data-t="decks.hsk20Older"></span>
+                <span class="entry-definition" data-t="decks.theSixLevelStandard"></span>
               </button>
             </li>
             <li>
               <button class="word-entry deck-entry ready-entry" type="button" data-list="tocfl">
-                <span class="entry-characters">TOCFL (Taiwan)</span>
-                <span class="entry-definition">Taiwan's test: two Novice levels, then levels 1 to 5. Its words are the ones used in Taiwan, so it suits someone learning traditional characters there.</span>
+                <span class="entry-characters" data-t="decks.tocflTaiwan"></span>
+                <span class="entry-definition" data-t="decks.taiwansTestTwoNovice"></span>
               </button>
             </li>
             <li>
               <button class="word-entry deck-entry ready-entry" type="button" data-list="radicals">
-                <span class="entry-characters">Radicals <span lang="zh-Hant-TW">部首</span></span>
-                <span class="entry-definition">The parts characters are built from, such as <span lang="zh-Hans-CN">氵</span> "water" in <span lang="zh-Hans-CN">洗</span> and <span lang="zh-Hans-CN">河</span>. Knowing them makes new characters easier to remember. Start with Common: its 80 radicals are the radical of nearly 9 in 10 characters in the lists above, most useful first. Uncommon has the other 134, rare in modern characters and mostly of use for looking characters up in a paper dictionary.</span>
+                <span class="entry-characters"><span data-t="decks.radicals"></span> <span lang="zh-Hant-TW">部首</span></span>
+                <span class="entry-definition" data-t-html="decks.radicalsExplained"></span>
               </button>
             </li>
           </ul>
           <!-- One row per level, with how many of its words are new and a
                button to add it. Filled in by wordsPanel.js. -->
-          <h3 id="ready-levels-title" class="ready-levels-title">Levels</h3>
+          <h3 id="ready-levels-title" class="ready-levels-title" data-t="decks.readyLevelsTitle"></h3>
           <ul id="ready-levels" class="ready-levels"></ul>
           <!-- What adding makes, worded for the list chosen (wordsPanel.js). -->
           <p id="ready-levels-hint" class="hint"></p>
@@ -240,13 +233,13 @@
           <!-- What the Decks tab shows of this section: the decks. -->
           <div id="decks-part" class="words-panel">
           <div id="deck-path-row" class="deck-path-row" hidden>
-            <nav id="deck-path" class="deck-path" aria-label="Where you are"></nav>
+            <nav id="deck-path" class="deck-path" data-t-aria-label="decks.whereYouAre"></nav>
           </div>
           <!-- Only on a deck's page. -->
           <div id="deck-head" hidden>
             <div class="deck-title-row">
               <h2 id="deck-title"></h2>
-              <button id="deck-settings-button" class="icon-button" type="button" aria-label="Deck settings" title="Deck settings">
+              <button id="deck-settings-button" class="icon-button" type="button" data-t-aria-label="decks.deckSettings" data-t-title="decks.deckSettings">
                 <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor">
                   <!-- A cog wheel: eight teeth (a dashed ring) round a ring. -->
                   <circle cx="12" cy="12" r="8.5" stroke-width="3" stroke-dasharray="3.34 3.34" />
@@ -261,33 +254,33 @@
                  other small beside it (decksPanel.js; the owner, 2026-10-16). -->
             <div class="deck-study">
               <!-- On a deck without words, in the main button's place (decksPanel.js). -->
-              <button id="deck-add-button" class="primary" type="button" hidden>+ Add to deck</button>
-              <button id="deck-learn-button" class="primary" type="button">Learn new words</button>
-              <button id="deck-review-button" type="button">Review</button>
+              <button id="deck-add-button" class="primary" type="button" hidden data-t="decks.deckAddButton"></button>
+              <button id="deck-learn-button" class="primary" type="button" data-t="decks.deckLearnButton"></button>
+              <button id="deck-review-button" type="button" data-t="decks.deckReviewButton"></button>
             </div>
           </div>
 
           <!-- The heading, with the button for a new deck beside it, so that it
                stays in reach however many decks there are. -->
           <div class="list-heading">
-            <h2 id="deck-list-title">Decks</h2>
-            <button id="new-deck-button" class="small" type="button">+ New deck</button>
+            <h2 id="deck-list-title" data-t="decks.deckListTitle"></h2>
+            <button id="new-deck-button" class="small" type="button" data-t="decks.newDeckButton"></button>
           </div>
           <ul id="deck-list" class="word-list"></ul>
           <!-- Naming a new deck, in a panel of its own (decksPanel.js). -->
           <dialog id="new-deck-dialog" class="settings-panel">
             <form id="add-deck-form">
-              <h2 id="new-deck-title">New deck</h2>
-              <input id="add-deck-name" type="text" placeholder="Name of the deck" aria-label="Name of the deck" autocomplete="off" />
+              <h2 id="new-deck-title" data-t="decks.newDeckTitle"></h2>
+              <input id="add-deck-name" type="text" data-t-placeholder="decks.nameOfTheDeck" data-t-aria-label="decks.nameOfTheDeck" autocomplete="off" />
               <div class="buttons">
-                <button id="new-deck-cancel" class="small" type="button">Cancel</button>
-                <button class="small primary" type="submit">Create deck</button>
+                <button id="new-deck-cancel" class="small" type="button" data-t="decks.newDeckCancel"></button>
+                <button class="small primary" type="submit" data-t="decks.createDeck"></button>
               </div>
             </form>
             <!-- Bringing decks over from Anki (ankiImportForm.js). Only on the
                  front page (decksPanel.js): it makes decks of its own. -->
             <p id="anki-import-row" class="anki-import-row">
-              <button id="anki-import-button" class="link-button" type="button">Import a deck from Anki</button>
+              <button id="anki-import-button" class="link-button" type="button" data-t="decks.ankiImportButton"></button>
             </p>
             <button data-same-as="new-deck-cancel" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
           </dialog>
@@ -300,51 +293,51 @@
                  three fold-outs on the deck's page). -->
             <dialog id="add-dialog" class="settings-panel add-dialog">
               <div class="settings-heading">
-                <h2 id="add-title">Add to <span id="add-to-deck-name"></span></h2>
-                <button id="add-close" class="small" type="button">Done</button>
+                <h2 id="add-title"><span data-t="decks.addTo"></span> <span id="add-to-deck-name"></span></h2>
+                <button id="add-close" class="small" type="button" data-t="decks.addClose"></button>
               </div>
-              <nav id="add-choices" class="add-choices" aria-label="What to add">
-                <button type="button" data-add="add-word-fold">One word</button>
-                <button type="button" data-add="add-list-fold">A list of words</button>
-                <button type="button" data-add="add-sentence-fold">A sentence</button>
+              <nav id="add-choices" class="add-choices" data-t-aria-label="decks.whatToAdd">
+                <button type="button" data-add="add-word-fold" data-t="decks.oneWord"></button>
+                <button type="button" data-add="add-list-fold" data-t="decks.aListOfWords"></button>
+                <button type="button" data-add="add-sentence-fold" data-t="decks.aSentence"></button>
               </nav>
             <section id="add-word-fold" class="add-form" hidden>
             <form id="add-word-form" class="add-word-form">
-              <input id="add-traditional" type="text" placeholder="Traditional 繁體" aria-label="Traditional characters" lang="zh-Hant-TW" autocomplete="off" autocapitalize="off" />
-              <input id="add-simplified" type="text" placeholder="Simplified 简体 (if different)" aria-label="Simplified characters, if different" lang="zh-Hans-CN" autocomplete="off" autocapitalize="off" />
+              <input id="add-traditional" type="text" data-t-placeholder="decks.traditional" data-t-aria-label="decks.traditionalCharacters" lang="zh-Hant-TW" autocomplete="off" autocapitalize="off" />
+              <input id="add-simplified" type="text" data-t-placeholder="decks.simplifiedIfDifferent" data-t-aria-label="decks.simplifiedCharactersIfDifferent" lang="zh-Hans-CN" autocomplete="off" autocapitalize="off" />
               <!-- What the dictionary has for the characters typed, and whether the
                    word is in the list already. Filled in by wordsPanel.js. -->
               <div id="add-suggestions" class="suggestions"></div>
-              <input id="add-pinyin" type="text" placeholder="Pinyin with tone numbers: xue2xi2" aria-label="Pinyin with tone numbers" autocomplete="off" autocapitalize="off" spellcheck="false" />
+              <input id="add-pinyin" type="text" data-t-placeholder="decks.pinyinWithToneNumbers" data-t-aria-label="decks.pinyinWithToneNumbers2" autocomplete="off" autocapitalize="off" spellcheck="false" />
               <!-- The pinyin with tone marks, as a check on what was typed. -->
               <p id="add-pinyin-preview" class="pinyin-preview"></p>
-              <input id="add-pinyin-taiwan" type="text" placeholder="Taiwan reading (if different)" aria-label="Taiwan reading, if different" autocomplete="off" autocapitalize="off" spellcheck="false" />
-              <input id="add-definition" type="text" placeholder="Meaning" aria-label="Meaning" autocomplete="off" />
+              <input id="add-pinyin-taiwan" type="text" data-t-placeholder="decks.taiwanReadingIfDifferent" data-t-aria-label="decks.taiwanReadingIfDifferent2" autocomplete="off" autocapitalize="off" spellcheck="false" />
+              <input id="add-definition" type="text" data-t-placeholder="decks.meaning" data-t-aria-label="decks.meaning" autocomplete="off" />
               <!-- Only shown while both scripts are being learned (wordsPanel.js). -->
               <label id="add-card-script-row" class="setting">
-                Cards in
+                <span data-t="decks.cardsIn"></span>
                 <select id="add-card-script">
-                  <option value="">As in Settings</option>
-                  <option value="traditional">Traditional 繁體</option>
-                  <option value="simplified">Simplified 简体</option>
+                  <option value="" data-t="decks.asInSettings"></option>
+                  <option value="traditional" data-t="decks.traditional"></option>
+                  <option value="simplified" data-t="decks.simplified"></option>
                 </select>
               </label>
-              <button type="submit" class="primary">Add word</button>
+              <button type="submit" class="primary" data-t="decks.addWord"></button>
               <p id="add-word-note" role="status" class="note"></p>
               <!-- After a word is added that is still to be learned (wordsPanel.js). -->
-              <button id="add-learn-now" class="small" type="button" hidden>Learn it now</button>
+              <button id="add-learn-now" class="small" type="button" hidden data-t="decks.addLearnNow"></button>
             </form>
             </section>
 
             <section id="add-list-fold" class="add-form" hidden>
               <!-- Which columns a list has; worded by wordsPanel.js to suit the settings. -->
               <p id="list-hint" class="hint"></p>
-              <textarea id="list-text" rows="6" aria-label="Word list" spellcheck="false"></textarea>
+              <textarea id="list-text" rows="6" data-t-aria-label="decks.wordList" spellcheck="false"></textarea>
               <div class="buttons">
-                <button id="list-file-button" class="small" type="button">Choose a file</button>
+                <button id="list-file-button" class="small" type="button" data-t="decks.listFileButton"></button>
                 <input id="list-file" type="file" accept=".tsv,.csv,.txt,text/plain,text/csv,text/tab-separated-values" hidden />
-                <button id="check-list-button" class="small" type="button">Check list</button>
-                <button id="add-list-button" class="small primary" type="button" hidden>Add</button>
+                <button id="check-list-button" class="small" type="button" data-t="decks.checkListButton"></button>
+                <button id="add-list-button" class="small primary" type="button" hidden data-t="decks.addListButton"></button>
               </div>
               <p id="list-report" role="status" class="note"></p>
               <ul id="list-problems" class="list-problems"></ul>
@@ -353,12 +346,12 @@
             <!-- A sentence to study (sentences.js). Which boxes show follows the Script setting (wordsPanel.js). -->
             <section id="add-sentence-fold" class="add-form" hidden>
               <form id="add-sentence-form" class="add-word-form">
-                <input id="sentence-characters" type="text" placeholder="The sentence 句子" aria-label="The sentence" autocomplete="off" autocapitalize="off" />
-                <input id="sentence-other" type="text" placeholder="In the other script (if different)" aria-label="The sentence in the other script, if different" autocomplete="off" autocapitalize="off" />
-                <input id="sentence-pinyin" type="text" placeholder="Pinyin, as you like to read it (optional)" aria-label="Pinyin, optional" autocomplete="off" autocapitalize="off" spellcheck="false" />
-                <input id="sentence-meaning" type="text" placeholder="What it means" aria-label="What it means" autocomplete="off" />
-                <input id="sentence-cloze" type="text" placeholder="Word to fill in when writing (optional)" aria-label="Word of the sentence to fill in when writing, optional" autocomplete="off" autocapitalize="off" />
-                <button type="submit" class="primary">Add sentence</button>
+                <input id="sentence-characters" type="text" data-t-placeholder="decks.theSentence" data-t-aria-label="decks.theSentence2" autocomplete="off" autocapitalize="off" />
+                <input id="sentence-other" type="text" data-t-placeholder="decks.inTheOtherScript" data-t-aria-label="decks.theSentenceInThe" autocomplete="off" autocapitalize="off" />
+                <input id="sentence-pinyin" type="text" data-t-placeholder="decks.pinyinAsYouLike" data-t-aria-label="decks.pinyinOptional" autocomplete="off" autocapitalize="off" spellcheck="false" />
+                <input id="sentence-meaning" type="text" data-t-placeholder="decks.whatItMeans" data-t-aria-label="decks.whatItMeans" autocomplete="off" />
+                <input id="sentence-cloze" type="text" data-t-placeholder="decks.wordToFillIn" data-t-aria-label="decks.wordOfTheSentence" autocomplete="off" autocapitalize="off" />
+                <button type="submit" class="primary" data-t="decks.addSentence"></button>
                 <p id="add-sentence-note" role="status" class="note"></p>
               </form>
             </section>
@@ -373,8 +366,8 @@
           <div id="words-part" class="words-panel view-hidden">
             <div id="words-tab-tools" class="list-tools">
               <label>
-                Deck
-                <select id="words-deck-select" class="deck-select" aria-label="Deck whose words are listed"></select>
+                <span data-t="decks.deck"></span>
+                <select id="words-deck-select" class="deck-select" data-t-aria-label="decks.deckWhoseWordsAre"></select>
               </label>
               <!-- Searching the dictionary too, or your words only (wordsPanel.js):
                    an on/off switch, on to begin with. A checkbox "My words only"
@@ -383,59 +376,59 @@
                    switch named for what it shows. role="switch" makes a screen
                    reader say "on" and "off" instead of "checked". -->
               <label class="switch-label">
-                Dictionary results
+                <span data-t="decks.dictionaryResults"></span>
                 <input id="dictionary-results" class="switch" type="checkbox" role="switch" checked />
               </label>
             </div>
           <div class="list-heading">
-            <h2><span id="word-list-title">All your words</span> (<span id="word-count">0</span>)</h2>
+            <h2><span id="word-list-title" data-t="decks.wordListTitle"></span> (<span id="word-count">0</span>)</h2>
             <!-- On a deck's page only (wordsPanel.js). -->
-            <button id="add-to-deck-button" class="small" type="button" hidden>+ Add to deck</button>
+            <button id="add-to-deck-button" class="small" type="button" hidden data-t="decks.deckAddButton"></button>
           </div>
-          <input id="word-search" type="search" placeholder="Search characters, pinyin or meaning" aria-label="Search words" autocomplete="off" autocapitalize="off" />
+          <input id="word-search" type="search" data-t-placeholder="decks.searchCharactersPinyinOr" data-t-aria-label="decks.searchWords" autocomplete="off" autocapitalize="off" />
           <!-- Which of the words are listed, in what order, and picking several
                of them: side by side in one row (wordsPanel.js, cardsPanel.js). -->
           <div class="list-tools">
           <label>
-            Show
+            <span data-t="decks.show"></span>
             <select id="word-filter">
-              <option value="">All words</option>
-              <option value="leeches">Leeches: cards I keep forgetting</option>
-              <option value="suspended">Words with a suspended card</option>
+              <option value="" data-t="decks.allWords"></option>
+              <option value="leeches" data-t="decks.leechesCardsIKeep"></option>
+              <option value="suspended" data-t="decks.wordsWithASuspended"></option>
             </select>
           </label>
           <label>
-            Order
+            <span data-t="decks.order"></span>
             <select id="word-sort">
-              <option value="">Learning order</option>
-              <option value="due">Next due first</option>
-              <option value="lapses">Most forgotten first</option>
+              <option value="" data-t="decks.learningOrder"></option>
+              <option value="due" data-t="decks.nextDueFirst"></option>
+              <option value="lapses" data-t="decks.mostForgottenFirst"></option>
             </select>
           </label>
-            <button id="select-words-button" class="small" type="button">Select words</button>
+            <button id="select-words-button" class="small" type="button" data-t="decks.selectWordsButton"></button>
           </div>
           <div id="bulk-bar" class="add-list" hidden>
             <p id="bulk-count" class="hint"></p>
             <div class="buttons">
-              <button id="bulk-all-button" class="small" type="button">Select all listed</button>
-              <button id="bulk-know-button" class="small" type="button" data-needs-selection>I know these words</button>
-              <button id="bulk-suspend-button" class="small" type="button" data-needs-selection>Suspend</button>
-              <button id="bulk-unsuspend-button" class="small" type="button" data-needs-selection>Resume</button>
-              <button id="bulk-start-over-button" class="small danger" type="button" data-needs-selection>Start over</button>
-              <button id="bulk-remove-button" class="small danger" type="button" data-needs-selection>Remove</button>
+              <button id="bulk-all-button" class="small" type="button" data-t="decks.bulkAllButton"></button>
+              <button id="bulk-know-button" class="small" type="button" data-needs-selection data-t="decks.bulkKnowButton"></button>
+              <button id="bulk-suspend-button" class="small" type="button" data-needs-selection data-t="decks.bulkSuspendButton"></button>
+              <button id="bulk-unsuspend-button" class="small" type="button" data-needs-selection data-t="decks.bulkUnsuspendButton"></button>
+              <button id="bulk-start-over-button" class="small danger" type="button" data-needs-selection data-t="decks.bulkStartOverButton"></button>
+              <button id="bulk-remove-button" class="small danger" type="button" data-needs-selection data-t="decks.bulkRemoveButton"></button>
             </div>
             <div class="buttons">
-              <select id="bulk-deck" aria-label="Deck to put the selected words in"></select>
-              <button id="bulk-deck-button" class="small" type="button" data-needs-selection>Add to this deck</button>
+              <select id="bulk-deck" data-t-aria-label="decks.deckToPutThe"></select>
+              <button id="bulk-deck-button" class="small" type="button" data-needs-selection data-t="decks.bulkDeckButton"></button>
               <!-- On a deck's list only (cardsPanel.js): out of it, into the one chosen. -->
-              <button id="bulk-move-button" class="small" type="button" data-needs-selection hidden>Move to this deck</button>
+              <button id="bulk-move-button" class="small" type="button" data-needs-selection hidden data-t="decks.bulkMoveButton"></button>
             </div>
             <p id="bulk-note" role="status" class="note"></p>
           </div>
           <!-- Only with the leeches listed: two ways to take them elsewhere. -->
           <div id="leech-export" class="buttons" hidden>
-            <button id="leech-list-button" class="small" type="button">Download list</button>
-            <button id="leech-prompt-button" class="small" type="button">Copy as AI prompt</button>
+            <button id="leech-list-button" class="small" type="button" data-t="decks.leechListButton"></button>
+            <button id="leech-prompt-button" class="small" type="button" data-t="decks.leechPromptButton"></button>
           </div>
           <p id="word-list-note" class="note"></p>
           <ul id="word-list" class="word-list"></ul>
@@ -443,10 +436,10 @@
                are not among yours, by characters, pinyin or English; a tap
                opens the word's page, where it can be added (wordsPanel.js). -->
           <section id="dictionary-part" class="dictionary-part" hidden>
-            <h3>In the dictionary</h3>
+            <h3 data-t="decks.inTheDictionary"></h3>
             <p id="dictionary-note" class="hint" role="status"></p>
             <ul id="dictionary-list" class="word-list"></ul>
-            <button id="dictionary-more" class="link-button" type="button" hidden>Show more</button>
+            <button id="dictionary-more" class="link-button" type="button" hidden data-t="decks.dictionaryMore"></button>
           </section>
           </div>
         </section>
@@ -582,53 +575,53 @@
           <h2 id="word-dialog-title"></h2>
           <p id="word-dialog-status" class="hint"></p>
           <label class="setting stacked">
-            Meaning
+            <span data-t="edit.meaning"></span>
             <input id="edit-definition" type="text" autocomplete="off" />
           </label>
           <label class="setting stacked">
-            Traditional
+            <span data-t="edit.traditional"></span>
             <input id="edit-traditional" type="text" lang="zh-Hant-TW" autocomplete="off" autocapitalize="off" />
           </label>
           <label class="setting stacked">
-            <span id="edit-simplified-caption">Simplified</span>
+            <span id="edit-simplified-caption" data-t="edit.editSimplifiedCaption"></span>
             <input id="edit-simplified" type="text" lang="zh-Hans-CN" autocomplete="off" autocapitalize="off" />
           </label>
           <label class="setting stacked">
-            <span id="edit-pinyin-caption">Mainland reading</span>
+            <span id="edit-pinyin-caption" data-t="edit.editPinyinCaption"></span>
             <input id="edit-pinyin" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" />
           </label>
           <label class="setting stacked">
-            Taiwan reading (if different)
+            <span data-t="edit.taiwanReadingIfDifferent"></span>
             <input id="edit-pinyin-taiwan" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" />
           </label>
           <label class="setting stacked">
-            Readings also accepted on tone cards
+            <span data-t="edit.readingsAlsoAcceptedOn"></span>
             <input id="edit-pinyin-also" type="text" placeholder="xing1qi5" autocomplete="off" autocapitalize="off" spellcheck="false" />
           </label>
           <!-- Only for a sentence (wordsPanel.js). -->
           <label class="setting stacked" hidden>
-            Word to fill in when writing (optional)
+            <span data-t="edit.wordToFillIn"></span>
             <input id="edit-cloze" type="text" autocomplete="off" autocapitalize="off" />
           </label>
           <label class="setting">
-            Cards in
+            <span data-t="edit.cardsIn"></span>
             <select id="edit-card-script">
-              <option value="">As in Settings</option>
-              <option value="traditional">Traditional 繁體</option>
-              <option value="simplified">Simplified 简体</option>
+              <option value="" data-t="edit.asInSettings"></option>
+              <option value="traditional" data-t="edit.traditional2"></option>
+              <option value="simplified" data-t="edit.simplified2"></option>
             </select>
           </label>
           <!-- One checkbox per deck; only shown once there are decks (wordsPanel.js). -->
           <details id="edit-decks-row" class="add-list" hidden>
-            <summary id="edit-decks-summary">Decks</summary>
-            <fieldset id="edit-decks" class="setting"><legend>This word is in</legend></fieldset>
+            <summary id="edit-decks-summary" data-t="edit.editDecksSummary"></summary>
+            <fieldset id="edit-decks" class="setting"><legend data-t="edit.thisWordIsIn"></legend></fieldset>
           </details>
-          <p class="hint">Pinyin is written with tone numbers, like xue2xi2. Your progress with the word is kept whatever you change.</p>
+          <p class="hint" data-t="edit.pinyinIsWrittenWith"></p>
           <p id="word-dialog-note" role="status" class="note"></p>
           <div class="buttons">
-            <button type="submit" class="small primary">Save</button>
-            <button id="study-next-button" class="small" type="button">Learn this word next</button>
-            <button id="remove-word-button" class="small danger" type="button">Remove</button>
+            <button type="submit" class="small primary" data-t="edit.save"></button>
+            <button id="study-next-button" class="small" type="button" data-t="edit.studyNextButton"></button>
+            <button id="remove-word-button" class="small danger" type="button" data-t="edit.removeWordButton"></button>
           </div>
         </form>
         <button id="word-dialog-close" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
@@ -636,77 +629,37 @@
 
       <!-- Says when something has gone wrong, and offers the details to copy (errors.js). -->
       <p id="error-banner" class="error-banner" hidden>
-        Something went wrong.
-        <button id="error-details-button" class="link-button" type="button">Details</button>
+        <span data-t="error.somethingWentWrong"></span>
+        <button id="error-details-button" class="link-button" type="button" data-t="error.details"></button>
       </p>
       <dialog id="error-dialog" class="settings-panel">
-        <h2>Something went wrong</h2>
-        <p class="hint">
-          The app may still work; if it does not, close it and open it again. Your words and progress are not
-          touched by this. If you report it, these details help. They hold nothing about your words or your studying.
-        </p>
-        <textarea id="error-text" rows="8" readonly aria-label="Details of what went wrong"></textarea>
+        <h2 data-t="error.somethingWentWrong2"></h2>
+        <p class="hint" data-t="error.theAppMayStill"></p>
+        <textarea id="error-text" rows="8" readonly data-t-aria-label="error.detailsOfWhatWent"></textarea>
         <div class="buttons">
-          <button id="error-copy-button" class="small primary" type="button">Copy</button>
+          <button id="error-copy-button" class="small primary" type="button" data-t="error.errorCopyButton"></button>
         </div>
         <button id="error-close-button" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 
       <!-- Whose work the app is built on. Each of these asks to be credited where it is used. -->
       <dialog id="credits-dialog" class="settings-panel">
-        <h2>Credits and licenses</h2>
+        <h2 data-t="credits.creditsAndLicenses"></h2>
         <div class="word-page-body credits">
-          <p>
-            <b><span lang="zh-Hant-TW">玉兔中文</span></b> (Yùtù Zhōngwén, “Jade Rabbit Chinese”) is free software under the GNU General Public License, version 3. Its source is at
-            <a href="https://github.com/BunnyApocalypse/yutu-chinese" target="_blank" rel="noopener">github.com/BunnyApocalypse/yutu-chinese</a>.
-            It comes with no warranty.
-          </p>
-          <p>It is built on the work of others, each under its own license:</p>
+          <p data-t-html="credits.intro"></p>
+          <p data-t="credits.itIsBuiltOn"></p>
           <ul>
-            <li>
-              <b>Stroke data:</b> <a href="https://github.com/skishore/makemeahanzi" target="_blank" rel="noopener">Make Me a Hanzi</a>
-              (by way of hanzi-writer-data) and <a href="https://github.com/parsimonhi/animCJK" target="_blank" rel="noopener">AnimCJK</a>
-              for Taiwan's forms, both derived from fonts by Arphic Technology. Arphic Public License.
-            </li>
-            <li>
-              <b>Showing and checking strokes:</b> <a href="https://hanziwriter.org" target="_blank" rel="noopener">Hanzi Writer</a> by David Chanin. MIT License.
-            </li>
-            <li>
-              <b>Scheduling:</b> the FSRS method, in <a href="https://github.com/open-spaced-repetition/ts-fsrs" target="_blank" rel="noopener">ts-fsrs</a>. MIT License.
-            </li>
-            <li>
-              <b>Reading Anki files:</b> <a href="https://github.com/sql-js/sql.js" target="_blank" rel="noopener">sql.js</a> (SQLite in the browser), MIT License; <a href="https://github.com/101arrowz/fzstd" target="_blank" rel="noopener">fzstd</a> by Arjun Barrett, MIT License. SQLite itself is in the public domain.
-            </li>
-            <li>
-              <b>Dictionary and tones:</b> <a href="https://cc-cedict.org" target="_blank" rel="noopener">CC-CEDICT</a>.
-              Creative Commons Attribution-ShareAlike 4.0.
-            </li>
-            <li>
-              <b>Recordings:</b> <a href="https://github.com/hugolpz/audio-cmn" target="_blank" rel="noopener">audio-cmn</a>:
-              syllables spoken by Chen Wang, words spoken by Yue Tan (Shtooka project), collected by Hugo Lopez.
-              Creative Commons Attribution-ShareAlike.
-            </li>
-            <li>
-              <b>How characters are built:</b> the dictionary of Make Me a Hanzi (from Unihan and CJKlib). GNU Lesser General Public License.
-            </li>
-            <li>
-              <b>Learning tips and example sentences:</b> written for this app by an AI model (Anthropic's Claude), drawing on
-              <a href="https://en.wiktionary.org" target="_blank" rel="noopener">Wiktionary</a> for the origins of characters.
-              Creative Commons Attribution-ShareAlike 4.0. No fluent speaker has checked them line by line: they may be wrong.
-            </li>
-            <li>
-              <b>HSK word lists:</b> from <a href="https://github.com/ivankra/hsk30" target="_blank" rel="noopener">ivankra/hsk30</a>
-              and <a href="https://github.com/glxxyz/hskhsk.com" target="_blank" rel="noopener">glxxyz/hskhsk.com</a>. MIT License.
-              Their grouping into themes was made for this app by AI models. MIT License.
-            </li>
-            <li>
-              <b>TOCFL word list:</b> the <span lang="zh-Hant-TW">華語八千詞表</span> published by Taiwan's Steering Committee for the Test of Proficiency-Huayu.
-              The committee states no license for it.
-            </li>
-            <li>
-              <b>Radicals:</b> the 214 Kangxi radicals as listed by the Unicode Consortium (CJKRadicals.txt, Unicode License),
-              ranked by how often they occur, from Make Me a Hanzi; their meanings were written for this app. MIT License.
-            </li>
+            <li data-t-html="credits.strokeDataMakeMe"></li>
+            <li data-t-html="credits.showingAndCheckingStrokes"></li>
+            <li data-t-html="credits.schedulingTheFsrsMethod"></li>
+            <li data-t-html="credits.readingAnkiFilesSql"></li>
+            <li data-t-html="credits.dictionaryAndTonesCc"></li>
+            <li data-t-html="credits.recordingsAudioCmnSyllables"></li>
+            <li data-t-html="credits.howCharactersAreBuilt"></li>
+            <li data-t-html="credits.learningTipsAndExample"></li>
+            <li data-t-html="credits.hskWordListsFrom"></li>
+            <li data-t-html="credits.tocflWordListThe"></li>
+            <li data-t-html="credits.radicalsThe214Kangxi"></li>
           </ul>
         </div>
         <button id="credits-close" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
@@ -715,12 +668,12 @@
       <!-- What changed since the app was last opened on this device, or the
            whole list from Settings (whatsNew.js, src/changes.js). -->
       <dialog id="whats-new-dialog" class="settings-panel">
-        <h2>What's new</h2>
-        <p id="whats-new-intro" class="hint">Since you last opened the app:</p>
+        <h2 data-t="whatsNew.whatsNew"></h2>
+        <p id="whats-new-intro" class="hint" data-t="whatsNew.whatsNewIntro"></p>
         <div id="whats-new-list" class="whats-new-list"></div>
         <p class="hint whats-new-feedback">
-          Something not working, or an idea?
-          <button id="whats-new-feedback" class="link-button" type="button">Send feedback</button>
+          <span data-t="whatsNew.somethingNotWorkingOr"></span>
+          <button id="whats-new-feedback" class="link-button" type="button" data-t="whatsNew.whatsNewFeedback"></button>
         </p>
         <button id="whats-new-close" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
@@ -747,25 +700,20 @@
         </div>
         <h2 id="streak-label" class="streak-label"></h2>
         <div id="streak-detail" class="streak-detail"></div>
-        <button id="streak-continue" class="primary" type="button">Continue</button>
-        <button id="streak-off" class="link-button streak-off" type="button" hidden>Don't count streaks</button>
+        <button id="streak-continue" class="primary" type="button" data-t="streak.streakContinue"></button>
+        <button id="streak-off" class="link-button streak-off" type="button" hidden data-t="streak.streakOff"></button>
         <button id="streak-close" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 
       <!-- How to reach the people making the app, from the menu (feedback.js). -->
       <dialog id="feedback-dialog" class="settings-panel">
-        <h2>Send feedback</h2>
-        <p>Something broken or confusing, a question, an idea: every message helps make the app better.</p>
+        <h2 data-t="feedback.sendFeedback"></h2>
+        <p data-t="feedback.somethingBrokenOrConfusing"></p>
         <div class="buttons">
-          <button id="feedback-email" class="small primary" type="button">Write an email</button>
-          <button id="feedback-issue" class="small" type="button">Open an issue on GitHub</button>
+          <button id="feedback-email" class="small primary" type="button" data-t="feedback.feedbackEmail"></button>
+          <button id="feedback-issue" class="small" type="button" data-t="feedback.feedbackIssue"></button>
         </div>
-        <p class="hint">
-          The email opens in your mail app, with which version of the app this is and which device and
-          browser you use already written in. Nothing about your words or your studying is in it.
-          The address is <span class="feedback-address">yutufeedback.delicious577@passmail.com</span>.
-          An issue on GitHub needs a GitHub account.
-        </p>
+        <p class="hint" data-t-html="feedback.theEmailOpensIn"></p>
         <button id="feedback-close" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 
@@ -938,32 +886,30 @@
           <h2 id="deck-dialog-title"></h2>
           <p id="deck-dialog-status" class="hint"></p>
           <label class="setting stacked">
-            Name
+            <span data-t="deck.name"></span>
             <input id="deck-name" type="text" autocomplete="off" />
           </label>
           <label class="setting">
-            Inside
+            <span data-t="deck.inside"></span>
             <select id="deck-parent"></select>
           </label>
           <label class="setting">
-            New words per day
+            <span data-t="deck.newWordsPerDay"></span>
             <input id="deck-goal" type="number" min="0" max="50" step="1" inputmode="numeric" placeholder="—" />
-            <span class="hint">
-              The goal shown in Learn while this deck is studied. Leave it empty to use the number in Settings.
-            </span>
+            <span class="hint" data-t="deck.theGoalShownIn"></span>
           </label>
           <p id="deck-dialog-note" role="status" class="note"></p>
           <div id="deck-buttons" class="buttons">
-            <button type="submit" class="small primary">Save</button>
-            <button id="deck-delete-button" class="small danger" type="button">Delete deck</button>
+            <button type="submit" class="small primary" data-t="deck.save"></button>
+            <button id="deck-delete-button" class="small danger" type="button" data-t="deck.deckDeleteButton"></button>
           </div>
           <!-- Shown in place of the buttons once Delete is tapped. -->
           <div id="deck-delete-choice" hidden>
             <p id="deck-delete-text"></p>
             <div class="buttons">
-              <button id="deck-delete-keep" class="small" type="button">Delete the deck, keep the words</button>
+              <button id="deck-delete-keep" class="small" type="button" data-t="deck.deckDeleteKeep"></button>
               <button id="deck-delete-words" class="small danger" type="button"></button>
-              <button id="deck-delete-cancel" class="small" type="button">Don't delete</button>
+              <button id="deck-delete-cancel" class="small" type="button" data-t="deck.deckDeleteCancel"></button>
             </div>
           </div>
         </form>

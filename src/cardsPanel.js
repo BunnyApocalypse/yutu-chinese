@@ -9,11 +9,18 @@ import { cardsOfWord, withStartedOver, markedKnown } from './cardManager.js';
 import { fillDeckSelect } from './decksPanel.js';
 import { withDeck, withoutDecks, deckWithInside, readyMadeDeck } from './decks.js';
 import { ask } from './confirm.js';
+import { t } from './text.js';
 
 const byId = (id) => document.getElementById(id);
-const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`;
 
-const KIND_NAMES = { meaning: 'Meaning', pinyin: 'Pinyin', tone: 'Tones', writing: 'Writing' };
+const KIND_NAMES = { meaning: 'cards.kindMeaning', pinyin: 'cards.kindPinyin', tone: 'cards.kindTone', writing: 'cards.kindWriting' };
+const START_OVER_QUESTIONS = {
+  meaning: 'cards.startOverQuestionMeaning',
+  pinyin: 'cards.startOverQuestionPinyin',
+  tone: 'cards.startOverQuestionTone',
+  writing: 'cards.startOverQuestionWriting',
+};
+const SCRIPT_NAMES = { traditional: 'cards.traditional', simplified: 'cards.simplified' };
 
 // The cards of one kind of a word, in both scripts.
 const cardIdsOfKind = (word, type) => allCardIds(word).filter((id) => id.startsWith(`${word.id}#${type}`));
@@ -58,9 +65,9 @@ export function createCardsPanel({
   // "due in 3d", "due now", "new"
   function describeDue(card, now) {
     if (!card) {
-      return 'not studied yet';
+      return t('cards.notStudied');
     }
-    return card.due <= now ? 'due now' : `due in ${formatInterval(card.due - now)}`;
+    return card.due <= now ? t('cards.dueNow') : t('cards.dueIn', { wait: formatInterval(card.due - now) });
   }
 
   async function showCardsOf(word) {
@@ -76,11 +83,13 @@ export function createCardsPanel({
       const name = document.createElement('b');
       // The script is only named for a card in the other one than is studied.
       name.textContent =
-        KIND_NAMES[entry.type] + (entry.script !== scriptOf(word) || (both && entry.type === 'writing') ? ` (${entry.script})` : '');
+        entry.script !== scriptOf(word) || (both && entry.type === 'writing')
+          ? t('cards.kindInScript', { kind: t(KIND_NAMES[entry.type]), script: t(SCRIPT_NAMES[entry.script]) })
+          : t(KIND_NAMES[entry.type]);
       const facts = [
         describeDue(entry.card, now),
-        entry.card ? plural(entry.reviewCount, 'review') : '',
-        entry.lapses > 0 ? `forgotten ${plural(entry.lapses, 'time')}` : '',
+        entry.card ? t('cards.reviews', { count: entry.reviewCount }) : '',
+        entry.lapses > 0 ? t('cards.forgotten', { count: entry.lapses }) : '',
       ].filter(Boolean);
       const text = document.createElement('span');
       text.textContent = ` ${facts.join(' · ')}`;
@@ -92,7 +101,7 @@ export function createCardsPanel({
       if (entry.suspended) {
         const mark = document.createElement('em');
         mark.className = 'card-suspended';
-        mark.textContent = 'Suspended';
+        mark.textContent = t('cards.suspended');
         item.append(mark);
       }
       // Start over (a studied card) and Suspend or Resume, on a line of
@@ -110,16 +119,16 @@ export function createCardsPanel({
         buttons.append(made);
       };
       if (entry.card) {
-        button('Start over', () => startOver(entry.type));
+        button(t('cards.startOver'), () => startOver(entry.type));
       }
-      button(entry.suspended ? 'Resume' : 'Suspend', () => setSuspended(entry.type, !entry.suspended));
+      button(t(entry.suspended ? 'cards.resume' : 'cards.suspend'), () => setSuspended(entry.type, !entry.suspended));
       item.append(text, buttons);
       return item;
     });
     cardList.replaceChildren(...rows);
     // Said on the fold-out while it is closed.
     const suspendedCount = (word.suspended || []).length;
-    cardsSummary.textContent = suspendedCount > 0 ? `Cards (${suspendedCount} suspended)` : 'Cards';
+    cardsSummary.textContent = suspendedCount > 0 ? t('cards.summarySuspended', { count: suspendedCount }) : t('cards.summary');
     // Only offered while a card of a kind that is switched on is still new.
     knowButton.hidden = markedKnown(word, getCards(), getSettings().enabledTypes, scriptOf(word), now, randomId).cards.length === 0;
   }
@@ -137,9 +146,9 @@ export function createCardsPanel({
 
   async function startOver(type) {
     const confirmed = await ask({
-      question: `Start the ${KIND_NAMES[type].toLowerCase()} card of this word over?`,
-      detail: 'It becomes a new card, as if never studied. Its reviews are kept in the history but no longer count.',
-      yes: 'Start over',
+      question: t(START_OVER_QUESTIONS[type]),
+      detail: t('review.startOverDetail'),
+      yes: t('cards.startOver'),
     });
     if (!confirmed) {
       return;
@@ -186,9 +195,9 @@ export function createCardsPanel({
   const selectedWords = () => getWords().filter((word) => selected.has(word.id));
 
   function showBar() {
-    selectButton.textContent = selecting ? 'Done selecting' : 'Select words';
+    selectButton.textContent = t(selecting ? 'cards.doneSelecting' : 'decks.selectWordsButton');
     bar.hidden = !selecting;
-    countElement.textContent = `${plural(selected.size, 'word')} selected. Tap words in the list to select them.`;
+    countElement.textContent = t('cards.selected', { count: selected.size });
     for (const button of bar.querySelectorAll('button[data-needs-selection]')) {
       button.disabled = selected.size === 0;
     }
@@ -244,7 +253,7 @@ export function createCardsPanel({
         return entries.length;
       },
       (count) =>
-        `Marked ${plural(count, 'word')} as known: their new cards were answered "Easy" and will come up in Review in some days.`,
+        t('cards.markedKnown', { count }),
     ),
   );
 
@@ -254,7 +263,7 @@ export function createCardsPanel({
         await putAll('words', words.map((word) => ({ ...word, suspended: [...CARD_TYPES] })));
         return words.length;
       },
-      (count) => `Suspended every card of ${plural(count, 'word')}.`,
+      (count) => t('cards.suspendedAll', { count }),
     ),
   );
 
@@ -265,15 +274,15 @@ export function createCardsPanel({
         await putAll('words', suspended.map(({ suspended: unused, ...word }) => word));
         return suspended.length;
       },
-      (count) => `Resumed the suspended cards of ${plural(count, 'word')}.`,
+      (count) => t('cards.resumedAll', { count }),
     ),
   );
 
   byId('bulk-start-over-button').addEventListener('click', async () => {
     const confirmed = await ask({
-      question: `Start every card of ${plural(selected.size, 'word')} over?`,
-      detail: 'They become new cards, as if never studied. Their reviews are kept in the history but no longer count.',
-      yes: 'Start over',
+      question: t('cards.startOverAllQuestion', { count: selected.size }),
+      detail: t('cards.startOverAllDetail'),
+      yes: t('cards.startOver'),
     });
     if (!confirmed) {
       return;
@@ -287,7 +296,7 @@ export function createCardsPanel({
         }
         return words.length;
       },
-      (count) => `Started the cards of ${plural(count, 'word')} over.`,
+      (count) => t('cards.startedOverAll', { count }),
     );
   });
 
@@ -302,7 +311,7 @@ export function createCardsPanel({
         await putAll('words', added.map((word) => withDeck(word, deck.id)));
         return added.length;
       },
-      (count) => `Put ${plural(count, 'word')} in ${deck.name} as well.`,
+      (count) => t('cards.putInDeck', { count, deck: deck.name }),
     );
   });
 
@@ -329,15 +338,15 @@ export function createCardsPanel({
         await putAll('words', moved);
         return moved.length;
       },
-      (count) => `Moved ${plural(count, 'word')} to ${deck.name}.`,
+      (count) => t('cards.moved', { count, deck: deck.name }),
     );
   });
 
   byId('bulk-remove-button').addEventListener('click', async () => {
     const confirmed = await ask({
-      question: `Remove ${plural(selected.size, 'word')} from your words altogether?`,
-      detail: 'Their cards go too. Their reviews are kept in the history.',
-      yes: 'Remove',
+      question: t('cards.removeQuestion', { count: selected.size }),
+      detail: t('cards.removeDetail'),
+      yes: t('edit.remove'),
     });
     if (!confirmed) {
       return;
@@ -347,7 +356,7 @@ export function createCardsPanel({
         await removeWords(words.map((word) => ({ wordId: word.id, cardIds: allCardIds(word) })));
         return words.length;
       },
-      (count) => `Removed ${plural(count, 'word')}.`,
+      (count) => t('cards.removed', { count }),
     );
   });
 

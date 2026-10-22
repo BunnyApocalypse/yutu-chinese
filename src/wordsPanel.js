@@ -46,6 +46,7 @@ import {
 } from './dictionary.js';
 import { isSentence } from './sentences.js';
 import { isRadical } from './radicals.js';
+import { t } from './text.js';
 
 // With thousands of words, building a row for each would make the page slow,
 // so only this many are shown at a time; the search box narrows them down.
@@ -175,7 +176,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
       byId('my-decks-section').hidden = readyMade;
       byId('ready-decks-section').hidden = !readyMade;
     }
-    fillDeckSelect(listDeckSelect, decks, [{ value: '', label: 'All decks' }], { keep: listDeckId });
+    fillDeckSelect(listDeckSelect, decks, [{ value: '', label: t('words.allDecks') }], { keep: listDeckId });
     listDeckSelect.value = decks.some((deck) => deck.id === listDeckId) ? listDeckId : '';
   }
   listDeckSelect.addEventListener('change', () => {
@@ -404,7 +405,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     const deck = openDeck();
     byId('add-to-deck-button').hidden =
       !deck || !words.some((word) => isInDecks(word, deckWithInside(decks, deck.id)));
-    byId('word-list-title').textContent = listDeck() ? 'Words in this deck' : 'All your words';
+    byId('word-list-title').textContent = t(listDeck() ? 'words.inThisDeck' : 'decks.wordListTitle');
   }
 
   // ---- Adding to the deck whose page is open ----
@@ -502,7 +503,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
   // box is simply the pinyin.
   function showReadingBoxes(taiwanAsked) {
     const taiwanFirst = getSettings().pronunciation === 'taiwan';
-    const pinyinLabel = taiwanAsked ? 'Mainland reading' : 'Pinyin';
+    const pinyinLabel = t(taiwanAsked ? 'words.mainlandReading' : 'words.pinyin');
     addWordForm.placeReadingBoxes(taiwanFirst, pinyinLabel);
     wordDialog.placeReadingBoxes(taiwanFirst, pinyinLabel);
   }
@@ -523,7 +524,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     // On a deck's page: its words and those of the decks inside it. On the
     // front page: all words.
     const deck = listDeck();
-    byId('word-list-title').textContent = deck ? 'Words in this deck' : 'All your words';
+    byId('word-list-title').textContent = t(deck ? 'words.inThisDeck' : 'decks.wordListTitle');
     const inside = deck ? deckWithInside(decks, deck.id) : null;
     const listed = inside ? words.filter((word) => isInDecks(word, inside)) : words;
     const searched = listed.filter((word) => matchesSearch(word, searchInput.value));
@@ -573,16 +574,16 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     byId('leech-export').hidden = shownLeeches.length === 0;
     listNote.textContent =
       matching.length > MAX_ROWS
-        ? `Showing the first ${MAX_ROWS} of ${matching.length}. Search to narrow them down.`
+        ? t('words.showingFirst', { shown: MAX_ROWS, count: matching.length })
         : matching.length > 0
           ? ''
           : onlyLeeches
-            ? `No leeches here: no card has been forgotten ${leechLapses} times. (The number is in Settings.)`
+            ? t('words.noLeeches', { count: leechLapses })
             : onlySuspended
-              ? 'No suspended cards here.'
+              ? t('words.noSuspended')
               : dictionaryWanted()
-                ? 'None of your words match.'
-                : 'No words match.';
+                ? t('words.noneOfYoursMatch')
+                : t('words.noneMatch');
 
     const rows = matching.slice(0, MAX_ROWS).map((word) => {
       const span = (className, text) => {
@@ -603,13 +604,13 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
       // A word that is in a deck inside this one is marked with that deck.
       const where =
         deck && !word.decks.includes(deck.id)
-          ? `in ${nameOf.get(word.decks.find((id) => inside.has(id)))}`
+          ? t('words.inDeck', { deck: nameOf.get(word.decks.find((id) => inside.has(id))) })
           : '';
-      const waiting = studiedWordIds.has(word.id) ? '' : 'waiting';
+      const waiting = studiedWordIds.has(word.id) ? '' : t('words.waiting');
       // A sentence or a radical says so: a sentence beginning with a word in
       // the list read as that word added twice (tester 2, 2026-10-17; the
       // owner, 2026-10-18).
-      const kind = isSentence(word) ? 'sentence' : isRadical(word) ? 'radical' : '';
+      const kind = isSentence(word) ? t('words.sentence') : isRadical(word) ? t('words.radical') : '';
       if (kind || where || waiting) {
         button.append(span('entry-new', [kind, where, waiting].filter(Boolean).join(' · ')));
       }
@@ -701,7 +702,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     dictionarySearched = typed;
     dictionaryTimer = setTimeout(async () => {
       if (!getDictionary()) {
-        dictionaryNote.textContent = 'Opening the dictionary…';
+        dictionaryNote.textContent = t('words.openingDictionary');
       }
       await loadDictionary();
       const dictionary = getDictionary();
@@ -711,7 +712,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
         return;
       }
       if (!dictionary) {
-        dictionaryNote.textContent = 'The dictionary could not be opened.';
+        dictionaryNote.textContent = t('words.dictionaryFailed');
         dictionaryList.replaceChildren();
         return;
       }
@@ -731,7 +732,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
   }
 
   function showDictionaryRows() {
-    dictionaryNote.textContent = dictionaryFound.length === 0 ? 'No other words found.' : '';
+    dictionaryNote.textContent = dictionaryFound.length === 0 ? t('words.noOtherWords') : '';
     dictionaryList.replaceChildren(
       ...dictionaryFound.slice(0, dictionaryShown).map((entry) => {
         const row = document.createElement('li');
@@ -741,7 +742,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     );
     const more = dictionaryFound.length - dictionaryShown;
     dictionaryMore.hidden = more <= 0;
-    dictionaryMore.textContent = `Show more (${more} more)`;
+    dictionaryMore.textContent = t('words.showMore', { count: more });
   }
 
   dictionaryMore.addEventListener('click', () => {
@@ -809,10 +810,10 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     const prompt = leechPrompt(shownLeeches, scriptOfWord, formatPinyin);
     try {
       await navigator.clipboard.writeText(prompt);
-      listNote.textContent = 'Copied. Paste it into the AI you use.';
+      listNote.textContent = t('words.copied');
     } catch {
       downloadText(prompt, 'yutu-chinese-leeches-prompt.txt');
-      listNote.textContent = 'It could not be copied here, so it was saved as a file instead.';
+      listNote.textContent = t('words.savedInstead');
     }
   });
 

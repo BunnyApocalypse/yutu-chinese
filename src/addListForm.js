@@ -6,13 +6,12 @@ import { putAll } from './db.js';
 import { wordId } from './wordList.js';
 import { withDeck } from './decks.js';
 import { readWordList, newWordRecords, wordsWithSameCharacters, scriptFor } from './words.js';
+import { t, formatList } from './text.js';
 
 const byId = (id) => document.getElementById(id);
 
 // How many unreadable lines of a pasted list are spelled out.
 const MAX_PROBLEMS_SHOWN = 20;
-
-const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`;
 
 // shared: what the Decks and Words tabs keep (wordsPanel.js): words(),
 // getSettings(), openDeck() (the deck whose page is open), afterChange().
@@ -66,28 +65,34 @@ export function createListForm(shared, dictionaryLoader) {
     );
     const { toAdd, alreadyHave } = newWordRecords(readable, shared.words(), Date.now());
     if (readable.length === 0 && problems.length === 0) {
-      listReport.textContent = 'There is nothing in the box yet.';
+      listReport.textContent = t('addList.nothingYet');
       return;
     }
     // New words written like a word already in the list, but read differently.
     const sameCharacters = toAdd.filter((word) => wordsWithSameCharacters(word, shared.words()).length > 0);
     listReport.textContent =
-      `${plural(toAdd.length, 'new word')}, ${alreadyHave} you already have, ` +
-      `${plural(problems.length, 'line')} that can't be read.` +
+      t('addList.checked', {
+        new: t('addList.newWords', { count: toAdd.length }),
+        have: alreadyHave,
+        lines: t('addList.lines', { count: problems.length }),
+      }) +
       (sameCharacters.length > 0
-        ? ` Of the new words, ${sameCharacters.length} ${sameCharacters.length === 1 ? 'has' : 'have'} the same` +
-          ` characters as a word you already have, with another reading:` +
-          ` ${sameCharacters.slice(0, 10).map((word) => word[scriptFor(word, shared.getSettings())]).join(', ')}` +
-          `${sameCharacters.length > 10 ? ', …' : ''}.`
+        ? ` ${t('addList.sameCharacters', {
+            count: sameCharacters.length,
+            words: formatList([
+              ...sameCharacters.slice(0, 10).map((word) => word[scriptFor(word, shared.getSettings())]),
+              ...(sameCharacters.length > 10 ? ['…'] : []),
+            ]),
+          })}`
         : '');
     const shown = problems.slice(0, MAX_PROBLEMS_SHOWN).map(({ lineNumber, text, problem }) => {
       const item = document.createElement('li');
-      item.textContent = `Line ${lineNumber} (${text.slice(0, 30)}): ${problem}`;
+      item.textContent = t('addList.problem', { line: lineNumber, text: text.slice(0, 30), problem });
       return item;
     });
     if (problems.length > MAX_PROBLEMS_SHOWN) {
       const more = document.createElement('li');
-      more.textContent = `… and ${problems.length - MAX_PROBLEMS_SHOWN} more.`;
+      more.textContent = t('addList.andMore', { count: problems.length - MAX_PROBLEMS_SHOWN });
       shown.push(more);
     }
     listProblems.replaceChildren(...shown);
@@ -111,8 +116,8 @@ export function createListForm(shared, dictionaryLoader) {
     const toFile = listedButNotInDeck().length;
     addListButton.textContent =
       listToAdd.length > 0 || toFile === 0
-        ? `Add ${plural(listToAdd.length, 'word')}`
-        : `Put ${plural(toFile, 'word')} in this deck`;
+        ? t('addList.addWords', { count: listToAdd.length })
+        : t('addList.putInDeck', { count: toFile });
     addListButton.hidden = listToAdd.length === 0 && toFile === 0;
   }
 
@@ -127,9 +132,13 @@ export function createListForm(shared, dictionaryLoader) {
     forgetCheckedList();
     listText.value = '';
     listReport.textContent =
-      `Added ${plural(toAdd.length, 'word')}.` +
-      (toAdd.length > 0 ? ' They wait in Learn.' : '') +
-      (alreadyThere.length > 0 ? ` ${plural(alreadyThere.length, 'word')} you already had went into this deck.` : '');
+      [
+        t('addList.added', { count: toAdd.length }),
+        toAdd.length > 0 ? t('addList.waitInLearn') : '',
+        alreadyThere.length > 0 ? t('addList.wentIntoDeck', { count: alreadyThere.length }) : '',
+      ]
+        .filter(Boolean)
+        .join(' ');
     await shared.afterChange();
   });
 
@@ -140,10 +149,9 @@ export function createListForm(shared, dictionaryLoader) {
     // How the box says a list is laid out, by the scripts and readings asked
     // for (`asks` from asksFor(), `both` while both scripts are learned).
     applySettings(asks, both) {
-      const taiwanColumn = asks.taiwan ? ', and optionally the Taiwan reading' : '';
       listHint.textContent = both
-        ? `One word per line, as in a TSV or CSV file: simplified, traditional, pinyin with tone numbers, meaning${taiwanColumn}, separated by tabs or commas. With one column of characters instead of two, the other script is looked up in the dictionary.`
-        : `One word per line, as in a TSV or CSV file: characters, pinyin with tone numbers, meaning${taiwanColumn}, separated by tabs or commas. A list with two columns of characters (simplified, then traditional) works too.`;
+        ? t(asks.taiwan ? 'addList.hintBothTaiwan' : 'addList.hintBoth')
+        : t(asks.taiwan ? 'addList.hintOneTaiwan' : 'addList.hintOne');
     },
   };
 }

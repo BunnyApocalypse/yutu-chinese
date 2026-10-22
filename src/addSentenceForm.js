@@ -6,6 +6,7 @@
 import { putAll } from './db.js';
 import { withDeck } from './decks.js';
 import { sentenceId, sentenceRecord, clozeInBoth } from './sentences.js';
+import { t } from './text.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -52,11 +53,11 @@ export function createSentenceForm(shared) {
     const meaning = sentenceFields.meaning.value.trim();
     const clozeOwn = sentenceFields.cloze.value.trim();
     if (own === '' || meaning === '') {
-      sentenceNote.textContent = 'A sentence needs its characters and what it means.';
+      sentenceNote.textContent = t('sentence.needsCharactersAndMeaning');
       return;
     }
     if (clozeOwn !== '' && !own.includes(clozeOwn)) {
-      sentenceNote.textContent = `"${clozeOwn}" is not in the sentence.`;
+      sentenceNote.textContent = t('sentence.notInSentence', { cloze: clozeOwn });
       return;
     }
     const cloze = clozeInBoth(own, other, clozeOwn);
@@ -75,10 +76,10 @@ export function createSentenceForm(shared) {
     );
     sentenceNote.textContent =
       result === 'added'
-        ? `Added: ${own} Its cards come up in Review.`
+        ? t('sentence.added', { sentence: own })
         : result === 'put in deck'
-          ? 'You had this sentence already. It is in this deck now too.'
-          : 'This sentence is already in this deck.';
+          ? t('sentence.nowInDeckToo')
+          : t('sentence.alreadyInDeck');
     if (result === 'added') {
       for (const field of Object.values(sentenceFields)) {
         field.value = '';

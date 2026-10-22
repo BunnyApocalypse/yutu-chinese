@@ -6,12 +6,13 @@
 
 import { wordId, formatPinyin } from './wordList.js';
 import { radicalId } from './radicals.js';
+import { t } from './text.js';
 
 // One reading in numbered pinyin: syllables of letters each followed by a
 // tone number, with an optional apostrophe between them (nv3'er2).
 const READING_PATTERN = /^(?:[a-zA-Z]+[1-5]'?)+$/;
 
-const PINYIN_HELP = 'Write pinyin with tone numbers, like xue2xi2 (5 for the neutral tone).';
+const pinyinHelp = () => t('check.pinyinHelp');
 
 // Tidies numbered pinyin as typed, so the same reading is always stored the
 // same way: "Xue2 xi2" stays capitalized but loses its space (or hyphen), ü
@@ -50,42 +51,42 @@ export function checkWord(fields) {
   traditional = traditional || simplified;
   simplified = simplified || traditional;
   if (traditional === '') {
-    return { problem: 'Type the characters of the word.' };
+    return { problem: t('check.typeCharacters') };
   }
   // A word has at least one Chinese character: a tester typed an English
   // word, and "word1", which went in (2026-10-14). (AA制 and X光 still do.)
   const hasHan = (text) => /\p{Script=Han}/u.test(text);
   if (!hasHan(traditional) || !hasHan(simplified)) {
-    return { problem: 'Type the word in Chinese characters, not in pinyin or English.' };
+    return { problem: t('check.notCharacters') };
   }
   // A space would hide a typing slip; | and # are used inside the IDs of
   // words and cards.
   if (/[\s|#]/.test(traditional + simplified)) {
-    return { problem: 'The characters may not contain spaces, | or #.' };
+    return { problem: t('check.noSpaces') };
   }
   // Array.from counts whole characters, where .length would count rare
   // characters twice.
   if (Array.from(traditional).length !== Array.from(simplified).length) {
-    return { problem: 'The traditional and simplified forms must have the same number of characters.' };
+    return { problem: t('check.sameLength') };
   }
 
   if (clean(fields.pinyin) === '') {
-    return { problem: `The pinyin is missing. ${PINYIN_HELP}` };
+    return { problem: t('check.pinyinMissing', { help: pinyinHelp() }) };
   }
   const pinyin = tidyPinyin(clean(fields.pinyin));
   if (pinyin === null) {
-    return { problem: `"${clean(fields.pinyin)}" is not pinyin the app can read. ${PINYIN_HELP}` };
+    return { problem: t('check.notPinyin', { pinyin: clean(fields.pinyin), help: pinyinHelp() }) };
   }
   const definition = clean(fields.definition);
   if (definition === '') {
-    return { problem: 'The meaning is missing.' };
+    return { problem: t('check.meaningMissing') };
   }
 
   const word = { simplified, traditional, pinyin, definition };
   if (clean(fields.pinyinTaiwan) !== '') {
     const pinyinTaiwan = tidyPinyin(clean(fields.pinyinTaiwan));
     if (pinyinTaiwan === null) {
-      return { problem: `The Taiwan reading is not pinyin the app can read. ${PINYIN_HELP}` };
+      return { problem: t('check.taiwanNotPinyin', { help: pinyinHelp() }) };
     }
     // Only kept if it really differs.
     if (pinyinTaiwan !== pinyin) {
@@ -97,7 +98,7 @@ export function checkWord(fields) {
   if (clean(fields.pinyinAlso) !== '') {
     const pinyinAlso = tidyPinyin(clean(fields.pinyinAlso));
     if (pinyinAlso === null) {
-      return { problem: `The readings also accepted are not pinyin the app can read. ${PINYIN_HELP}` };
+      return { problem: t('check.alsoNotPinyin', { help: pinyinHelp() }) };
     }
     const extra = pinyinAlso.split(', ').filter((reading) => !pinyin.split(', ').includes(reading));
     if (extra.length > 0) {
@@ -134,7 +135,7 @@ export function scriptFlagFor(word, settings) {
   if (script === settings.script || word.traditional === word.simplified) {
     return '';
   }
-  return script === 'simplified' ? 'simp. 简体' : 'trad. 繁體';
+  return t(script === 'simplified' ? 'check.flagSimplified' : 'check.flagTraditional');
 }
 
 // ---- Reading a list of words ----
@@ -198,8 +199,6 @@ function columnsFromCsv(fields) {
   };
 }
 
-const COLUMNS_HELP =
-  'It needs four columns: simplified, traditional, pinyin, meaning. Or three: characters, pinyin, meaning.';
 
 // Reads the text of a word list: one word per line, with the columns
 // simplified, traditional, pinyin, meaning and optionally the Taiwan reading
@@ -241,7 +240,7 @@ export function readWordList(text, completeForms) {
       columns = columnsFromCsv(fields);
     }
     const result =
-      columns.definition === undefined ? { problem: COLUMNS_HELP } : checkWord(columns);
+      columns.definition === undefined ? { problem: t('check.columns') } : checkWord(columns);
     if (result.word && oneScript && completeForms) {
       Object.assign(result.word, completeForms(result.word.traditional, result.word.pinyin));
     }

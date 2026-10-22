@@ -4,6 +4,8 @@
 // run to a dozen lines, which would push a card's writing area down or make
 // it smaller; this way a long meaning takes no more room than a short one.
 
+import { t } from './text.js';
+
 // element:  what holds the text; it gets the class "clamped", and the class
 //           "has-more" while there is more than fits. A part of it marked
 //           `data-clamp` is the part cut off, the rest shown in full (a
@@ -27,7 +29,7 @@ export function clampWithPopup(element, showAll) {
     if (hasMore) {
       element.tabIndex = 0;
       element.setAttribute('role', 'button');
-      element.setAttribute('aria-description', 'Shows all of it');
+      element.setAttribute('aria-description', t('common.showsAll'));
     } else {
       element.removeAttribute('tabindex');
       element.removeAttribute('role');

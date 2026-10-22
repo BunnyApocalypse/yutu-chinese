@@ -9,10 +9,9 @@ import { READY_MADE_LISTS, missingReadyMadeDecks, readyMadeDeck } from './decks.
 import { radicalRecord } from './radicals.js';
 import { checkWord, newWordRecords, levelsOfReadyList, listTag, groupName } from './words.js';
 import { lookUp, proposeMeaning } from './dictionary.js';
+import { t } from './text.js';
 
 const byId = (id) => document.getElementById(id);
-
-const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`;
 
 // shared: what the Decks and Words tabs keep (wordsPanel.js): words(),
 // getSettings(), afterChange().
@@ -41,7 +40,7 @@ export function createReadyDecks(shared, dictionaryLoader) {
       // Says to a screen reader which row is the chosen one.
       row.setAttribute('aria-pressed', chosen);
       if (chosen) {
-        byId('ready-levels-title').textContent = `Levels of ${row.firstElementChild.textContent}`;
+        byId('ready-levels-title').textContent = t('ready.levelsOf', { list: row.firstElementChild.textContent });
       }
     }
     let entries;
@@ -49,7 +48,7 @@ export function createReadyDecks(shared, dictionaryLoader) {
       entries = await dictionaryLoader.readyEntries(listId);
     } catch {
       readyLevels.replaceChildren();
-      readyReport.textContent = 'The list could not be fetched. It needs a connection the first time.';
+      readyReport.textContent = t('ready.fetchFailed');
       return;
     }
     if (listId !== readyListId) {
@@ -57,15 +56,15 @@ export function createReadyDecks(shared, dictionaryLoader) {
     }
     const together = !READY_MADE_LISTS.find((list) => list.id === listId).levelName;
     byId('ready-levels-hint').textContent = together
-      ? `What you add goes into the deck ${readyMadeDeck(listId).name} under My decks, with a deck for each level inside it.`
-      : 'Each level you add becomes a deck of its own under My decks. Where a level is divided into smaller groups of words, each group is a deck inside it.';
+      ? t('ready.together', { deck: readyMadeDeck(listId).name })
+      : t('ready.apart');
     const rows = levelsOfReadyList(entries, shared.words()).map(({ level, count, newCount }) => {
       const row = document.createElement('li');
       const text = document.createElement('span');
       // TOCFL has two levels with names of their own before its level 1.
       text.textContent =
-        `${/^\d/.test(level) ? `Level ${level}` : level}: ${plural(count, 'word')}` +
-        (newCount === count ? '' : newCount === 0 ? ', all in your words already' : `, ${newCount} new`);
+        t('ready.levelWords', { level: /^\d/.test(level) ? t('ready.level', { level }) : level, count }) +
+        (newCount === count ? '' : newCount === 0 ? t('ready.allHaveAlready') : t('ready.newCount', { count: newCount }));
       if (together) {
         const box = document.createElement('input');
         box.type = 'checkbox';
@@ -81,7 +80,7 @@ export function createReadyDecks(shared, dictionaryLoader) {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'small';
-      button.textContent = 'Add';
+      button.textContent = t('ready.add');
       button.dataset.level = level;
       button.addEventListener('click', () => addReadyLevels(listId, [level]));
       row.append(text, button);
@@ -92,7 +91,7 @@ export function createReadyDecks(shared, dictionaryLoader) {
     addTogether.type = 'button';
     addTogether.className = 'small primary';
     addTogether.id = 'add-ready-button';
-    addTogether.textContent = 'Add';
+    addTogether.textContent = t('ready.add');
     addTogether.disabled = true;
     addTogether.addEventListener('click', () =>
       addReadyLevels(listId, [...readyLevels.querySelectorAll('input:checked')].map((box) => box.value)),
@@ -122,7 +121,7 @@ export function createReadyDecks(shared, dictionaryLoader) {
     for (const button of readyLevels.querySelectorAll('button')) {
       button.disabled = true;
     }
-    readyReport.textContent = 'Adding…';
+    readyReport.textContent = t('ready.adding');
     // Meanings come from the dictionary, as for a word typed by hand.
     await dictionaryLoader.load();
     const dictionary = dictionaryLoader.get();
@@ -171,10 +170,10 @@ export function createReadyDecks(shared, dictionaryLoader) {
     await shared.afterChange();
     await showReadyLevels();
     readyReport.textContent =
-      `Added ${plural(toAdd.length, 'word')}` +
-      (alreadyHave > 0 ? `; ${alreadyHave} you already had` : '') +
-      (noMeaning > 0 ? `; ${noMeaning} left out because the dictionary could not be fetched for their meaning` : '') +
-      `. They are in the deck ${(readyMadeDeck(listId) || readyMadeDeck(listTag(listId, levels[0]))).name} under My decks, and wait in Learn, last in line.`;
+      t('ready.added', { count: toAdd.length }) +
+      (alreadyHave > 0 ? t('ready.alreadyHad', { count: alreadyHave }) : '') +
+      (noMeaning > 0 ? t('ready.noMeaning', { count: noMeaning }) : '') +
+      t('ready.whereAdded', { deck: (readyMadeDeck(listId) || readyMadeDeck(listTag(listId, levels[0]))).name });
     return toAdd.length;
   }
 

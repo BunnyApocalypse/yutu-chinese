@@ -17,6 +17,7 @@ import { ask } from './confirm.js';
 import { isSentence, sentenceId, clozeInBoth } from './sentences.js';
 import { isRadical } from './radicals.js';
 import { checkWord, orderForStudyingNext, scriptFor, withFormerId } from './words.js';
+import { t, formatList } from './text.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -59,8 +60,8 @@ export function createWordDialog(shared) {
   // Says at the top of the pop-up panel whether the word has been learned.
   function showDialogStatus(word) {
     dialogStatus.textContent = shared.isLearned(word.id)
-      ? 'You have learned this word; its cards come up in Review.'
-      : 'Waiting: you have not learned this word yet. It comes up in Learn.';
+      ? t('edit.learned')
+      : t('edit.waiting');
   }
 
   // Fills in the cards part of a word's page: how its cards stand, with
@@ -129,7 +130,7 @@ export function createWordDialog(shared) {
       .map(({ label: name }) => name);
     const readyMadeLine = document.createElement('p');
     readyMadeLine.className = 'hint';
-    readyMadeLine.textContent = `Also in the ready-made ${readyMadeNames.length === 1 ? 'deck' : 'decks'} ${readyMadeNames.join(', ')}.`;
+    readyMadeLine.textContent = t('edit.alsoReadyMade', { count: readyMadeNames.length, decks: formatList(readyMadeNames) });
     readyMadeLine.hidden = readyMadeNames.length === 0;
     // The first child is the fieldset's caption, which stays.
     editDecks.replaceChildren(editDecks.firstElementChild, ...boxes, readyMadeLine);
@@ -158,7 +159,7 @@ export function createWordDialog(shared) {
   // opened to see.
   function showDeckCount() {
     const count = decksAfter().length;
-    byId('edit-decks-summary').textContent = count === 0 ? 'Decks: in none' : `Decks: in ${count}`;
+    byId('edit-decks-summary').textContent = count === 0 ? t('edit.decksNone') : t('edit.decksIn', { count });
   }
 
   byId('word-dialog-form').addEventListener('submit', async (event) => {
@@ -179,7 +180,7 @@ export function createWordDialog(shared) {
       const simplified = typed(editSimplified, asksSentence.simplified, openWord.simplified, editTraditional, openWord.traditional);
       const definition = editDefinition.value.trim();
       if (traditional === '' || simplified === '' || definition === '') {
-        dialogNote.textContent = 'A sentence needs its characters and what it means.';
+        dialogNote.textContent = t('sentence.needsCharactersAndMeaning');
         return;
       }
       const script = scriptFor(openWord, shared.getSettings());
@@ -187,12 +188,12 @@ export function createWordDialog(shared) {
       const clozeTyped = editCloze.value.trim();
       const cloze = clozeInBoth(own, other, clozeTyped);
       if (clozeTyped !== '' && !cloze) {
-        dialogNote.textContent = `"${clozeTyped}" is not in the sentence.`;
+        dialogNote.textContent = t('sentence.notInSentence', { cloze: clozeTyped });
         return;
       }
       if (decksAfter().length === 0) {
         byId('edit-decks-row').open = true;
-        dialogNote.textContent = 'A sentence has to be in at least one deck. To be rid of it, use Remove.';
+        dialogNote.textContent = t('sentence.needsDeck');
         return;
       }
       const { changedAt, suspended: wasSuspended, cloze: oldCloze, ...kept } = openWord;
@@ -218,7 +219,7 @@ export function createWordDialog(shared) {
       if (sentence.id === openWord.id) {
         await putAll('words', [sentence]);
       } else if (shared.words().some((word) => word.id === sentence.id)) {
-        dialogNote.textContent = 'This sentence is already in your words.';
+        dialogNote.textContent = t('sentence.alreadyInWords');
         return;
       } else {
         // Its characters changed, and its ID with them: its cards and
@@ -234,12 +235,12 @@ export function createWordDialog(shared) {
     if (isRadical(openWord)) {
       const definition = editDefinition.value.trim();
       if (definition === '') {
-        dialogNote.textContent = 'A radical needs its meaning.';
+        dialogNote.textContent = t('edit.radicalNeedsMeaning');
         return;
       }
       if (decksAfter().length === 0) {
         byId('edit-decks-row').open = true;
-        dialogNote.textContent = 'A radical has to be in at least one deck. To be rid of it, use Remove.';
+        dialogNote.textContent = t('edit.radicalNeedsDeck');
         return;
       }
       const { changedAt, ...kept } = openWord;
@@ -277,7 +278,7 @@ export function createWordDialog(shared) {
     };
     if (decksAfter().length === 0) {
       byId('edit-decks-row').open = true;
-      dialogNote.textContent = 'A word has to be in at least one deck. To be rid of the word, use Remove.';
+      dialogNote.textContent = t('edit.wordNeedsDeck');
       return;
     }
     saved.decks = decksAfter();
@@ -303,8 +304,10 @@ export function createWordDialog(shared) {
     if (saved.id === openWord.id) {
       await putAll('words', [saved]);
     } else if (shared.words().some((word) => word.id === saved.id)) {
-      dialogNote.textContent =
-        `${shared.charactersOf(saved)} (${formatPinyin(saved.pinyin)}) is already in your words.`;
+      dialogNote.textContent = t('edit.alreadyInWords', {
+        characters: shared.charactersOf(saved),
+        pinyin: formatPinyin(saved.pinyin),
+      });
       return;
     } else {
       await renameWord(openWord.id, withFormerId(saved, openWord));
@@ -330,9 +333,9 @@ export function createWordDialog(shared) {
   // true if it was removed. Here, and on a word's page (wordPage.js).
   async function removeAsked(word) {
     const confirmed = await ask({
-      question: `Remove ${shared.charactersOf(word)} from your words?`,
-      detail: 'Its cards and their schedule are removed too. Your review history is kept.',
-      yes: 'Remove',
+      question: t('edit.removeQuestion', { characters: shared.charactersOf(word) }),
+      detail: t('edit.removeDetail'),
+      yes: t('edit.remove'),
     });
     if (!confirmed) {
       return false;
@@ -384,7 +387,7 @@ export function createWordDialog(shared) {
     // wordsPanel.js): `asks` from asksFor(), `both` while both scripts are
     // learned.
     applySettings(asks, both) {
-      editSimplifiedCaption.textContent = both ? 'Simplified' : 'Characters';
+      editSimplifiedCaption.textContent = t(both ? 'edit.simplified' : 'edit.characters');
       // Each box sits in a <label>, which holds its caption.
       editTraditional.closest('label').hidden = !asks.traditional;
       editSimplified.closest('label').hidden = !asks.simplified;

@@ -24,10 +24,9 @@ import {
   isReadyMadeGroup,
   DEFAULT_DECK,
 } from './decks.js';
+import { t } from './text.js';
 
 const byId = (id) => document.getElementById(id);
-
-const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`;
 
 // Fills a <select> with one entry per deck, in tree order, after the entries
 // in `first` ([{ value, label }]). The choice made is kept if it is still
@@ -94,7 +93,7 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
   // The deck open in the dialog.
   let openDeck = null;
 
-  const NO_PARENT = [{ value: '', label: 'No other deck' }];
+  const NO_PARENT = [{ value: '', label: t('decks.noOtherDeck') }];
 
   // A deck's name into an element, its Chinese marked as Chinese (lang.js).
   // A name has no script of its own, so the learner's is taken.
@@ -125,9 +124,9 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
     const percent = inDeck.length > 0 ? Math.floor((100 * learned) / inDeck.length) : null;
     return {
       text:
-        `${plural(inDeck.length, 'word')} · ${learned} learned` +
-        (percent === null ? '' : ` (${percent}%)`) +
-        (due > 0 ? ` · ${due} due` : ''),
+        `${t('decks.countWords', { count: inDeck.length })} · ${t('decks.countLearned', { count: learned })}` +
+        (percent === null ? '' : ` ${t('decks.countPercent', { percent })}`) +
+        (due > 0 ? ` · ${t('decks.countDue', { count: due })}` : ''),
       percent,
     };
   }
@@ -204,14 +203,14 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
     byId('deck-head').hidden = !current;
     // An import from Anki makes decks of its own, so it is only offered on
     // the front page, in the new deck's panel (the owner, 2026-10-19).
-    byId('new-deck-button').textContent = current ? '+ New deck' : '+ New / import deck';
+    byId('new-deck-button').textContent = t(current ? 'decks.newDeckButton' : 'decks.newOrImport');
     byId('anki-import-row').hidden = Boolean(current);
     // (Whether the way back is in the top bar is decided in wordsPanel.js,
     // which knows whether this page is on screen.)
     if (current) {
       const parent = parentOf(current);
       // The arrow before it is drawn (index.html); only the name changes.
-      showName(byId('deck-back-label'), parent ? parent.name : 'Decks');
+      showName(byId('deck-back-label'), parent ? parent.name : t('menu.decks'));
       showName(byId('deck-title'), current.name);
       const counts = countsOf(current);
       byId('deck-counts').textContent = counts.text;
@@ -230,7 +229,7 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
       learnButton.classList.toggle('primary', learning);
       reviewButton.classList.toggle('primary', !learning);
       reviewButton.classList.toggle('link-button', learning);
-      reviewButton.textContent = learning ? 'Review' : 'Review this deck';
+      reviewButton.textContent = t(learning ? 'menu.review' : 'decks.reviewThisDeck');
     }
 
     // The decks right inside the one that is open; on the front page, those
@@ -263,12 +262,12 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
       // page. Until 2026-10-16 a tap opened the page, with Learn and Review
       // as two buttons beside the row.
       const action = mainAction(deck);
-      const TAP_SAYS = { learn: 'Tap to learn', review: 'Tap to review', open: 'Tap to add words' };
+      const TAP_SAYS = { learn: 'decks.tapToLearn', review: 'decks.tapToReview', open: 'decks.tapToAdd' };
       button.append(
         name,
-        span('entry-definition', counts.text + (inside > 0 ? ` · ${plural(inside, 'deck')} inside` : '')),
+        span('entry-definition', counts.text + (inside > 0 ? ` · ${t('decks.inside', { count: inside })}` : '')),
         bar,
-        span('deck-tap', TAP_SAYS[action]),
+        span('deck-tap', t(TAP_SAYS[action])),
       );
       button.dataset.action = action;
       button.addEventListener('click', () => (action === 'open' ? open(deck.id) : study(deck.id, action)));
@@ -279,8 +278,8 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
       openButton.innerHTML =
         '<svg class="back-arrow" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" ' +
         'stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5 L16 12 L9 19" /></svg>';
-      openButton.setAttribute('aria-label', `${deck.name}: its words and settings`);
-      openButton.title = 'Its words and settings';
+      openButton.setAttribute('aria-label', t('decks.openLabel', { name: deck.name }));
+      openButton.title = t('decks.openTitle');
       openButton.addEventListener('click', () => open(deck.id));
       const row = document.createElement('li');
       row.className = 'deck-row';
@@ -292,7 +291,7 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
     if (rows.length > 0) {
       document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'deckRows' }));
     }
-    byId('deck-list-title').textContent = current ? 'Decks inside this one' : 'Decks';
+    byId('deck-list-title').textContent = t(current ? 'decks.insideThisOne' : 'menu.decks');
   }
 
   // ---- Adding a deck ----
@@ -305,7 +304,7 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
   const newDeckDialog = byId('new-deck-dialog');
   byId('new-deck-button').addEventListener('click', () => {
     const current = getOpenDeck();
-    showName(byId('new-deck-title'), current ? `New deck inside ${current.name}` : 'New deck');
+    showName(byId('new-deck-title'), current ? t('decks.newDeckInside', { name: current.name }) : t('decks.newDeckTitle'));
     addName.value = '';
     newDeckDialog.showModal();
     addName.focus();
@@ -361,12 +360,12 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
     event.preventDefault();
     const name = nameInput.value.trim();
     if (name === '') {
-      note.textContent = 'The deck needs a name.';
+      note.textContent = t('decks.needsName');
       return;
     }
     const goal = goalInput.value.trim() === '' ? null : Number(goalInput.value);
     if (goal !== null && !(Number.isInteger(goal) && goal >= 0 && goal <= 50)) {
-      note.textContent = 'New words per day is a whole number from 0 to 50, or empty.';
+      note.textContent = t('decks.goalNotNumber');
       return;
     }
     // Start from the record as it is, without a goal; it gets one if given.
@@ -401,24 +400,31 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
     const onlyHere = wordsOnlyIn(getWords(), ids);
     const home = homeAfterDelete();
     const inside = ids.size - 1;
-    const these = onlyHere.length === inDeck.length ? 'They' : `${onlyHere.length} of them`;
-    byId('deck-delete-text').textContent =
-      `Delete "${openDeck.name}"` +
-      (inside > 0 ? ` and the ${plural(inside, 'deck')} inside it` : '') +
-      '? ' +
-      (inDeck.length === 0
-        ? 'It has no words.'
-        : `It has ${plural(inDeck.length, 'word')}. ` +
-          (onlyHere.length === 0
-            ? 'All of them are in another deck too, and stay there.'
-            : `${these} ${onlyHere.length === 1 && these !== 'They' ? 'is' : 'are'} in no other deck. ` +
-              (home
-                ? `Keep them, and they move to "${home.name}"; or remove them, with their cards. `
-                : 'There is no other deck for them to move to: put them in another deck first, or remove them, with their cards. ') +
-              'Your review history is kept either way.'));
-    deleteKeepButton.textContent = onlyHere.length > 0 ? 'Delete the deck, keep the words' : 'Delete the deck';
+    const sentences = [
+      inside > 0
+        ? t('decks.deleteQuestionInside', { name: openDeck.name, count: inside })
+        : t('decks.deleteQuestion', { name: openDeck.name }),
+    ];
+    if (inDeck.length === 0) {
+      sentences.push(t('decks.deleteNoWords'));
+    } else {
+      sentences.push(t('decks.deleteHasWords', { count: inDeck.length }));
+      if (onlyHere.length === 0) {
+        sentences.push(t('decks.deleteAllElsewhere'));
+      } else {
+        sentences.push(
+          onlyHere.length === inDeck.length
+            ? t('decks.deleteTheyOnlyHere')
+            : t('decks.deleteSomeOnlyHere', { count: onlyHere.length }),
+          home ? t('decks.deleteKeepMoves', { home: home.name }) : t('decks.deleteNowhere'),
+          t('decks.deleteHistoryKept'),
+        );
+      }
+    }
+    byId('deck-delete-text').textContent = sentences.join(' ');
+    deleteKeepButton.textContent = t(onlyHere.length > 0 ? 'decks.deleteKeepWords' : 'decks.deleteDeck');
     deleteKeepButton.hidden = onlyHere.length > 0 && !home;
-    deleteWordsButton.textContent = `Delete the deck and remove ${plural(onlyHere.length, 'word')}`;
+    deleteWordsButton.textContent = t('decks.deleteAndRemove', { count: onlyHere.length });
     deleteWordsButton.hidden = onlyHere.length === 0;
     showDeleteChoice(true);
   });

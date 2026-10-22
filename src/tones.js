@@ -13,6 +13,7 @@
 // data/cedict/tones.json (see the README in that folder).
 
 import { formatPinyin } from './wordList.js';
+import { t } from './text.js';
 
 // How each tone is shown on its button and in messages: the mark on the
 // letter a, which is easier to read at a glance than the bare mark. The
@@ -48,8 +49,8 @@ export function readingsFor(word, pronunciation, table) {
     return { primary: word.pinyin, other: null, otherLabel: null };
   }
   return pronunciation === 'taiwan'
-    ? { primary: taiwan, other: word.pinyin, otherLabel: 'mainland' }
-    : { primary: word.pinyin, other: taiwan, otherLabel: 'Taiwan' };
+    ? { primary: taiwan, other: word.pinyin, otherLabel: t('reading.mainland') }
+    : { primary: word.pinyin, other: taiwan, otherLabel: t('reading.taiwan') };
 }
 
 // Turns the result of readingsFor into text for the page:

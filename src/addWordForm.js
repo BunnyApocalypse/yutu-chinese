@@ -10,6 +10,7 @@ import { withDeck } from './decks.js';
 import { entryRow } from './wordRows.js';
 import { checkWord, newWordRecords, wordsWithSameCharacters, tidyPinyin } from './words.js';
 import { lookUp, lookUpByLetters, readTypedPinyin, proposeMeaning } from './dictionary.js';
+import { t } from './text.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -181,18 +182,18 @@ export function createAddWordForm(shared, dictionaryLoader) {
     }
     const entries = latinEntries(dictionary, typed);
     if (entries.length === 0) {
-      return [paragraph('hint', 'No word in the dictionary is read that way or means that. Check the spelling (v for ü), or type the characters.')];
+      return [paragraph('hint', t('add.noSuchWord'))];
     }
     const have = new Set(shared.words().map((word) => word.id));
     const parts = entries
       .slice(0, pinyinShown)
-      .map((entry) => entryButton(entry, have.has(wordId(entry)) ? 'in your words' : 'use this'));
+      .map((entry) => entryButton(entry, t(have.has(wordId(entry)) ? 'add.inYourWords' : 'add.useThis')));
     const more = entries.length - pinyinShown;
     if (more > 0) {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'link-button more-entries';
-      button.textContent = `Show more (${more} more)`;
+      button.textContent = t('words.showMore', { count: more });
       button.addEventListener('click', () => {
         pinyinShown += MAX_SUGGESTIONS;
         showSuggestions();
@@ -200,7 +201,7 @@ export function createAddWordForm(shared, dictionaryLoader) {
       parts.push(button);
       const pinyin = readTypedPinyin(typed);
       if (pinyin && pinyin.tones.length === 0) {
-        parts.push(paragraph('hint', 'Add tone numbers (shi4) to narrow it down.'));
+        parts.push(paragraph('hint', t('add.toneNumbers')));
       }
     }
     return parts;
@@ -232,7 +233,14 @@ export function createAddWordForm(shared, dictionaryLoader) {
       const alreadyHave = wordsWithSameCharacters({ traditional: typed, simplified: typed }, shared.words());
       for (const word of alreadyHave) {
         parts.push(
-          paragraph('note', `Already in your words: ${shared.charactersOf(word)} ${formatPinyin(word.pinyin)} (${word.definition})`),
+          paragraph(
+            'note',
+            t('add.alreadyInYourWords', {
+              characters: shared.charactersOf(word),
+              pinyin: formatPinyin(word.pinyin),
+              meaning: word.definition,
+            }),
+          ),
         );
       }
       const entries = dictionary ? lookUp(dictionary, typed) : [];
@@ -242,10 +250,10 @@ export function createAddWordForm(shared, dictionaryLoader) {
         autoFill(dictionaryLoader.likeliestEntry(entries, typed));
       }
       for (const entry of entries.slice(0, MAX_SUGGESTIONS)) {
-        parts.push(entryButton(entry, sameEntry(entry, filledEntry) ? 'filled in' : 'use this'));
+        parts.push(entryButton(entry, t(sameEntry(entry, filledEntry) ? 'add.filledIn' : 'add.useThis')));
       }
       if (dictionary && entries.length === 0 && alreadyHave.length === 0) {
-        parts.push(paragraph('hint', 'Not in the dictionary. Fill in the fields yourself.'));
+        parts.push(paragraph('hint', t('add.notInDictionary')));
       }
     }
     suggestions.replaceChildren(...parts);
@@ -296,7 +304,7 @@ export function createAddWordForm(shared, dictionaryLoader) {
     const dictionary = dictionaryLoader.get();
     const inBox = lookedUpField.value.trim();
     if (dictionary && isLatin(inBox) && latinEntries(dictionary, inBox).length > 0) {
-      addNote.textContent = 'Choose the word from the list under the box, or type its characters.';
+      addNote.textContent = t('add.chooseFromList');
       return;
     }
     const asked = scriptAsked();
@@ -320,7 +328,7 @@ export function createAddWordForm(shared, dictionaryLoader) {
     // A word that is there already is put in this deck as well.
     const existing = toAdd.length === 0 ? shared.words().find((word) => word.id === wordId(checked.word)) : null;
     if (existing && existing.decks.includes(deck.id)) {
-      addNote.textContent = `${name} is already in this deck.`;
+      addNote.textContent = t('add.alreadyInDeck', { name });
       return;
     }
     const added = withDeck(existing || toAdd[0], deck.id);
@@ -333,8 +341,8 @@ export function createAddWordForm(shared, dictionaryLoader) {
     pinyinPreview.textContent = '';
     suggestions.replaceChildren();
     addNote.textContent = existing
-      ? `${name} was already in your words, as you had it. It is in this deck now too.`
-      : `Added ${shared.charactersOf(toAdd[0])}. It waits in Learn, last in line.`;
+      ? t('add.nowInDeckToo', { name })
+      : t('add.added', { characters: shared.charactersOf(toAdd[0]) });
     await shared.afterChange();
     // "Learn it now", for a word still to be learned; typing the next word
     // puts it away.
@@ -375,10 +383,10 @@ export function createAddWordForm(shared, dictionaryLoader) {
       };
       // Either box also takes pinyin or English, to choose the word from a
       // list.
-      caption(addFields.traditional, both ? 'Traditional 繁體, pinyin or English' : 'Word: 漢字, pinyin or English');
+      caption(addFields.traditional, t(both ? 'add.traditionalOrSearch' : 'add.wordTraditional'));
       caption(
         addFields.simplified,
-        both ? `Simplified 简体${asked ? '' : ' (if different)'}` : 'Word: 汉字, pinyin or English',
+        t(both ? (asked ? 'add.simplified' : 'add.simplifiedIfDifferent') : 'add.wordSimplified'),
       );
       if (!lookedUpField || lookedUpField.hidden) {
         lookedUpField = asked === 'simplified' ? addFields.simplified : addFields.traditional;
@@ -394,8 +402,8 @@ export function createAddWordForm(shared, dictionaryLoader) {
     // pronunciation is chosen (see showReadingBoxes in wordsPanel.js).
     placeReadingBoxes(taiwanFirst, pinyinLabel) {
       // (The example shows the tone numbers; spelled out, it did not fit a phone.)
-      addFields.pinyin.placeholder = `${pinyinLabel}: xue2xi2`;
-      addFields.pinyin.setAttribute('aria-label', `${pinyinLabel}, with tone numbers`);
+      addFields.pinyin.placeholder = t('add.readingExample', { label: pinyinLabel });
+      addFields.pinyin.setAttribute('aria-label', t('add.readingLabel', { label: pinyinLabel }));
       if (taiwanFirst) {
         addFields.pinyin.before(addFields.pinyinTaiwan);
       } else {

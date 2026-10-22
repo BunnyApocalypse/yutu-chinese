@@ -3,6 +3,8 @@
 // plain "OK / Cancel" box would look foreign and cannot say what its buttons
 // do.
 
+import { t } from './text.js';
+
 const byId = (id) => document.getElementById(id);
 
 // Asks a question.
@@ -18,7 +20,7 @@ const byId = (id) => document.getElementById(id);
 // The question being asked: { answer, resolve }, until the panel closes.
 let asking = null;
 
-export function ask({ question, detail = '', yes, no = 'Cancel' }) {
+export function ask({ question, detail = '', yes, no = t('common.cancel') }) {
   const dialog = byId('confirm-dialog');
   listenOnce(dialog);
   byId('confirm-question').textContent = question;
@@ -70,4 +72,4 @@ function listenOnce(dialog) {
 }
 
 // Says something that needs no answer.
-export const tell = (question, detail = '') => ask({ question, detail, yes: 'OK', no: null });
+export const tell = (question, detail = '') => ask({ question, detail, yes: t('common.ok'), no: null });
