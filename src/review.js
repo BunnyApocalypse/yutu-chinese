@@ -994,6 +994,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     return flows.writing.start(asked.text, {
       script,
       rawInput: settings.rawInput,
+      hideMistakes: !settings.mistakeCount,
       continueLabel: null,
       hideOutline: true,
       // The stroke count is a hint: kept out of sight in Review unless the
@@ -1209,6 +1210,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       return flows.writing.start(word[script], {
         script,
         rawInput: settings.rawInput,
+        hideMistakes: !settings.mistakeCount,
         hideOutline: true,
         freshRestart: true,
         continueLabel: t('review.done'),
@@ -1284,6 +1286,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     return flows.writing.start(word[script], {
       script,
       rawInput: settings.rawInput,
+      hideMistakes: !settings.mistakeCount,
       showOutline: true,
       demoStrokes: step === 'trace',
       // The character is on screen in these steps, so the slots can show it.

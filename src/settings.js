@@ -20,6 +20,7 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 // elements: the panel's parts:
 //   panel, openButton, closeButton, scriptSelect, pronunciationSelect,
 //   handwritingSelect, themeRadios (the three choices of look), lessonsCheckbox, strokeCountCheckbox,
+//   mistakeCountCheckbox,
 //   hintSelect, newWordsInput, gradeButtonsSelect,
 //   meaningDetailSelect,
 //   typeCheckboxes (a list of the four checkboxes; each has a
@@ -56,6 +57,10 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //                   ("3/7") in Review too; it is always shown in Learn and
 //                   Free practice. Off by default, since it is a hint (the
 //                   owner, 2026-10-15).
+//   mistakeCount:   true (the default) to show the number of mistakes on
+//                   the status line while writing; tester 4 (2026-10-21)
+//                   didn't like seeing it (the owner, 2026-10-22: a
+//                   setting, on by default)
 //   gradeButtons:   'four' (the default: Again, Hard, Good, Easy) or 'two'
 //                   (Wrong and Right, Right recorded as Good; gradeButtons in
 //                   scheduler.js). The owner, 2026-10-20, after tester 3.
@@ -96,6 +101,7 @@ export async function createSettings(elements, onChange) {
     themeRadios,
     lessonsCheckbox,
     strokeCountCheckbox,
+    mistakeCountCheckbox,
     hintSelect,
     gradeButtonsSelect,
     meaningDetailSelect,
@@ -123,6 +129,7 @@ export async function createSettings(elements, onChange) {
     theme: await getSetting('theme', 'auto'),
     lessons: await getSetting('lessons', true),
     strokeCountInReview: await getSetting('strokeCountInReview', false),
+    mistakeCount: await getSetting('mistakeCount', true),
     hintCountsAs: await getSetting('hintCountsAs', 'missed'),
     gradeButtons: await getSetting('gradeButtons', 'four'),
     meaningDetail: await getSetting('meaningDetail', DEFAULT_MEANING_DETAIL),
@@ -153,6 +160,7 @@ export async function createSettings(elements, onChange) {
     }
     lessonsCheckbox.checked = settings.lessons;
     strokeCountCheckbox.checked = settings.strokeCountInReview;
+    mistakeCountCheckbox.checked = settings.mistakeCount;
     hintSelect.value = settings.hintCountsAs;
     gradeButtonsSelect.value = settings.gradeButtons;
     meaningDetailSelect.value = settings.meaningDetail;
@@ -209,6 +217,8 @@ export async function createSettings(elements, onChange) {
   strokeCountCheckbox.addEventListener('change', () =>
     change('strokeCountInReview', strokeCountCheckbox.checked),
   );
+
+  mistakeCountCheckbox.addEventListener('change', () => change('mistakeCount', mistakeCountCheckbox.checked));
 
   hintSelect.addEventListener('change', () => change('hintCountsAs', hintSelect.value));
   gradeButtonsSelect.addEventListener('change', () => change('gradeButtons', gradeButtonsSelect.value));

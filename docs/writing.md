@@ -45,6 +45,7 @@
 
 - **"3/7" beside the mistakes**, larger and bold (`#stroke-count`, `showProgress` in `src/wordFlow.js`; 2026-10-15, after a tester asked for a stroke counter they hadn't noticed inside a sentence). Emptied once a character is finished or animates. Before anything is drawn the line reads "Write the first stroke" (2026-10-16), unless earlier characters had mistakes.
 - **Hidden in Review, shown in Learn and Free practice** (the owner, 2026-10-15): it is a hint when writing from memory. A lesson shows it at every step. "Show the stroke count in Review" (`strokeCountInReview`, off by default, under Writing) shows it there too; the flow's option is `hideStrokeCount`, set in `showWritingCard`.
+- **The count of mistakes can be hidden** (tester 4, 2026-10-21, didn't like seeing it; the owner, 2026-10-22: a setting, on by default): "Show the number of mistakes" (`mistakeCount`, under Writing) off passes `hideMistakes` to every writing flow; the status line then keeps "Write the first stroke", "Practice", "Skipped" and "Word done", and says nothing else. The boxes still turn green or red.
 - **The browser tests read the count even where it is hidden**: the harness's status line is the count and the rest together ("3/7 · No mistakes"), which is how a test tells a stroke was taken.
 
 ## Gestures on the writing area

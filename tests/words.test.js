@@ -293,3 +293,33 @@ test('search matches the start of a syllable or of a word of the meaning', () =>
     assert.equal(matchesSearch(green, search), true, search);
   }
 });
+
+test('what a list leaves out is filled in from the dictionary', () => {
+  // A stand-in for the dictionary: 你好 nǐhǎo, and 行 read two ways.
+  const fillIn = (characters, pinyin) => {
+    const entries = {
+      你好: [{ pinyin: 'ni3hao3', definition: 'hello' }],
+      行: [
+        { pinyin: 'xing2', definition: 'to walk' },
+        { pinyin: 'hang2', definition: 'row' },
+      ],
+    }[characters];
+    if (!entries) return null;
+    if (pinyin === null) return entries[0];
+    return entries.find((entry) => entry.pinyin === pinyin || pinyin.startsWith(entry.pinyin[0])) || null;
+  };
+  const { words, problems } = readWordList('  你好  \n行\thang2\n行, a row of trees\n你好\tnǐ hǎo\n謝謝\n', null, fillIn);
+  assert.deepEqual(
+    words.map((word) => [word.traditional, word.pinyin, word.definition]),
+    [
+      ['你好', 'ni3hao3', 'hello'],
+      ['行', 'hang2', 'row'],
+      // The list's own meaning is kept.
+      ['行', 'xing2', 'a row of trees'],
+      // Tone marks are matched to the dictionary's reading.
+      ['你好', 'ni3hao3', 'hello'],
+    ],
+  );
+  // A word the dictionary doesn't have is still reported.
+  assert.deepEqual(problems.map((problem) => problem.lineNumber), [5]);
+});

@@ -6,6 +6,7 @@ import { putAll } from './db.js';
 import { wordId } from './wordList.js';
 import { withDeck } from './decks.js';
 import { readWordList, newWordRecords, wordsWithSameCharacters, scriptFor } from './words.js';
+import { proposeMeaning } from './dictionary.js';
 import { t, formatList } from './text.js';
 
 const byId = (id) => document.getElementById(id);
@@ -58,10 +59,26 @@ export function createListForm(shared, dictionaryLoader) {
 
   checkListButton.addEventListener('click', async () => {
     forgetCheckedList();
-    // A line with one column of characters has its other script looked up.
+    // A line with one column of characters has its other script looked up,
+    // and what a line leaves out (pinyin, a meaning) is filled in from the
+    // dictionary, the usual reading first (tester 4, 2026-10-21).
     await dictionaryLoader.load();
-    const { words: readable, problems } = readWordList(listText.value, (characters, pinyin) =>
-      dictionaryLoader.completeForms(shared.getSettings().script, characters, pinyin),
+    await dictionaryLoader.loadUsualReadings();
+    const settings = shared.getSettings();
+    const fillIn = (characters, pinyin) => {
+      const entry = dictionaryLoader.entryFor(characters, pinyin);
+      return (
+        entry && {
+          pinyin: entry.pinyin,
+          pinyinTaiwan: entry.pinyinTaiwan,
+          definition: proposeMeaning(entry.meanings, settings.meaningDetail),
+        }
+      );
+    };
+    const { words: readable, problems } = readWordList(
+      listText.value,
+      (characters, pinyin) => dictionaryLoader.completeForms(settings.script, characters, pinyin),
+      fillIn,
     );
     const { toAdd, alreadyHave } = newWordRecords(readable, shared.words(), Date.now());
     if (readable.length === 0 && problems.length === 0) {

@@ -91,6 +91,9 @@ export default {
   'settings.strokeCount': 'Show the stroke count in Review',
   'settings.strokeCountHint':
     'How many strokes the character has, as in "3/7". It is always shown in Learn and Free practice; in Review it is a hint, so it is off unless you want it.',
+  'settings.mistakeCount': 'Show the number of mistakes',
+  'settings.mistakeCountHint':
+    'While you write, as in "2 mistakes". Turned off, a character still turns green or red when it is done.',
   'settings.hintCounts': 'A character written with a hint counts as',
   'settings.hintMissed': 'Missed',
   'settings.hintHard': 'Passed, the word Hard at best',
@@ -483,6 +486,7 @@ export default {
   'write.skipped': 'Skipped',
   'write.onTry': '{ordinal} try',
   'write.wordDone': 'Word done · {status}',
+  'write.wordDoneAlone': 'Word done',
   'write.hideOutline': 'Hide outline',
   'write.noStrokeData': 'No stroke data for {chars}, so skipped.',
 
@@ -567,9 +571,9 @@ export default {
   // Decks and Words, adding words (index.html)
   'decks.myDecksButton': 'My decks',
   'decks.readyDecksButton': 'Ready-made decks',
-  'decks.theseAreTheWord': 'These are the word lists of the two official tests of Chinese for learners, the <a href="https://en.wikipedia.org/wiki/Hanyu_Shuiping_Kaoshi" target="_blank" rel="noopener">HSK</a> and the <a href="https://en.wikipedia.org/wiki/Test_of_Chinese_as_a_Foreign_Language" target="_blank" rel="noopener">TOCFL</a>. They are a common answer to "which words should I learn first?", and many textbooks and courses follow them. The lowest level is the easiest. Not sure? Start with HSK 3.0, level 1. The radicals, at the end, go well alongside any of them.',
+  'decks.theseAreTheWord': 'These are the word lists of the two official tests of Chinese for learners, the <a href="https://en.wikipedia.org/wiki/Hanyu_Shuiping_Kaoshi" target="_blank" rel="noopener">HSK</a> and the <a href="https://en.wikipedia.org/wiki/Test_of_Chinese_as_a_Foreign_Language" target="_blank" rel="noopener">TOCFL</a>. They are a common answer to "which words should I learn first?", and many textbooks and courses follow them. The lowest level is the easiest. Not sure? Start with level 1 of HSK 3.0, the newest version of the test. The radicals, at the end, go well alongside any of them.',
   'decks.hsk30': 'HSK 3.0',
-  'decks.mainlandChinasTestAs': "Mainland China's test, as it is now: levels 1 to 6 and an advanced band 7-9.",
+  'decks.mainlandChinasTestAs': "Mainland China's test in its newest version, 3.0 (2021; the 3.0 is not a level): levels 1 to 6 and an advanced band 7-9.",
   'decks.hsk20Older': 'HSK 2.0 (older)',
   'decks.theSixLevelStandard': 'The six-level standard that HSK 3.0 replaces. A lot of teaching material still uses it.',
   'decks.tocflTaiwan': 'TOCFL (Taiwan)',
@@ -767,13 +771,13 @@ export default {
   'addList.waitInLearn': 'They wait in Learn.',
   'addList.wentIntoDeck': { one: '{count} word you already had went into this deck.', other: '{count} words you already had went into this deck.' },
   'addList.hintBoth':
-    'One word per line, as in a TSV or CSV file: simplified, traditional, pinyin with tone numbers, meaning, separated by tabs or commas. With one column of characters instead of two, the other script is looked up in the dictionary.',
+    'One word per line, as in a TSV or CSV file: simplified, traditional, pinyin with tone numbers, meaning, separated by tabs or commas. With one column of characters instead of two, the other script is looked up in the dictionary. Pinyin or a meaning left out is filled in from the dictionary, so a list of words alone works too.',
   'addList.hintBothTaiwan':
-    'One word per line, as in a TSV or CSV file: simplified, traditional, pinyin with tone numbers, meaning, and optionally the Taiwan reading, separated by tabs or commas. With one column of characters instead of two, the other script is looked up in the dictionary.',
+    'One word per line, as in a TSV or CSV file: simplified, traditional, pinyin with tone numbers, meaning, and optionally the Taiwan reading, separated by tabs or commas. With one column of characters instead of two, the other script is looked up in the dictionary. Pinyin or a meaning left out is filled in from the dictionary, so a list of words alone works too.',
   'addList.hintOne':
-    'One word per line, as in a TSV or CSV file: characters, pinyin with tone numbers, meaning, separated by tabs or commas. A list with two columns of characters (simplified, then traditional) works too.',
+    'One word per line, as in a TSV or CSV file: characters, pinyin with tone numbers, meaning, separated by tabs or commas. A list with two columns of characters (simplified, then traditional) works too. Pinyin or a meaning left out is filled in from the dictionary, so a list of words alone works too.',
   'addList.hintOneTaiwan':
-    'One word per line, as in a TSV or CSV file: characters, pinyin with tone numbers, meaning, and optionally the Taiwan reading, separated by tabs or commas. A list with two columns of characters (simplified, then traditional) works too.',
+    'One word per line, as in a TSV or CSV file: characters, pinyin with tone numbers, meaning, and optionally the Taiwan reading, separated by tabs or commas. A list with two columns of characters (simplified, then traditional) works too. Pinyin or a meaning left out is filled in from the dictionary, so a list of words alone works too.',
 
   // Adding a sentence (addSentenceForm.js), a word's pop-up panel (wordDialog.js)
   'sentence.needsCharactersAndMeaning': 'A sentence needs its characters and what it means.',
@@ -861,6 +865,7 @@ export default {
   'check.meaningMissing': 'The meaning is missing.',
   'check.taiwanNotPinyin': 'The Taiwan reading is not pinyin the app can read. {help}',
   'check.alsoNotPinyin': 'The readings also accepted are not pinyin the app can read. {help}',
+  'check.notInDictionaryList': 'This word is not in the dictionary, so its pinyin and meaning are needed.',
   'check.columns': 'It needs four columns: simplified, traditional, pinyin, meaning. Or three: characters, pinyin, meaning.',
   'check.flagSimplified': 'simp. 简体',
   'check.flagTraditional': 'trad. 繁體',
@@ -987,6 +992,8 @@ export default {
   // A word's page (index.html)
   'page.startOverMakesA': '<b>Start over</b> makes a card new again. <b>Suspend</b> keeps a card from coming up, with its history and schedule, until resumed. <b>I know this word</b> answers its new cards "Easy", so the word skips its lesson and the cards come up in Review in some days.',
   'page.editCardsSummary': 'Cards',
+  'page.cardsExplained':
+    'A word is studied as a few cards, each asking one thing: its meaning, its pinyin, its tones, or writing it. Each card has its own schedule. Here is how each one stands.',
   'page.knowWordButton': 'I know this word',
   'page.back': 'Back',
   'page.wordPagePractice': 'Practice',
@@ -1310,7 +1317,7 @@ export default {
   'welcome.moreLevelsAndWords': 'More levels, and words of your own, can be added any time in <b>Decks</b>.',
   'welcome.startWith': 'Start with',
   'welcome.keepYourWordsSafe': 'Keep your words safe',
-  'welcome.hsk30Level': "HSK 3.0, level 1: mainland China's test, 512 words",
+  'welcome.hsk30Level': "HSK level 1 (version 3.0): mainland China's test, 512 words",
   'welcome.tocflNovice1Taiwans': "TOCFL, Novice 1: Taiwan's test, 182 words",
   'welcome.aDeckFromAnki': 'A deck from Anki: bring your words and their schedules',
   'welcome.noneIllAddMy': "None: I'll add my own words",

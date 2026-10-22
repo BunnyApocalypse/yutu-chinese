@@ -232,6 +232,7 @@ function startFreePractice() {
     return flow.start(text, {
       script: ownScript ? scriptFor(word, settings) : settings.script,
       rawInput: settings.rawInput,
+      hideMistakes: !settings.mistakeCount,
       continueLabel: t('practice.again'),
       onContinue: startFreePractice,
     });
@@ -848,6 +849,7 @@ async function startUp() {
       themeRadios: [...document.querySelectorAll('input[name="settings-theme"]')],
       lessonsCheckbox: byId('lessons-checkbox'),
       strokeCountCheckbox: byId('stroke-count-checkbox'),
+      mistakeCountCheckbox: byId('mistake-count-checkbox'),
       hintSelect: byId('hint-select'),
       gradeButtonsSelect: byId('grade-buttons-select'),
       meaningDetailSelect: byId('meaning-detail-select'),

@@ -4,8 +4,8 @@
 // all use them. No page code here: who wants to know when the dictionary or
 // the usual readings have arrived passes onReady.
 
-import { readDictionary, lookUp, otherScriptForm } from './dictionary.js';
-import { parseReadyList } from './words.js';
+import { readDictionary, lookUp, otherScriptForm, readTypedPinyin, readsAs } from './dictionary.js';
+import { parseReadyList, tidyPinyin } from './words.js';
 // "?url" makes Vite hand us the file's address instead of its contents, so
 // the dictionary stays a separate file that is only fetched when needed.
 import dictionaryUrl from '../data/cedict/dictionary.tsv?url';
@@ -100,6 +100,24 @@ export function createDictionaryLoader(onReady) {
     likeliestEntry(entries, typed) {
       const usual = usualReading.get(typed);
       return entries.find((entry) => entry.pinyin === usual) || entries[0] || null;
+    },
+
+    // The dictionary's entry for a word of a list (readWordList's fillIn):
+    // with `pinyin` null, the one with the usual reading; otherwise the one
+    // read as the list writes it, in numbered pinyin or with tone marks.
+    // null if there is none, or the dictionary isn't there.
+    entryFor(characters, pinyin) {
+      const entries = dictionary ? lookUp(dictionary, characters) : [];
+      if (pinyin === null) {
+        return this.likeliestEntry(entries, characters);
+      }
+      const numbered = tidyPinyin(pinyin);
+      const typed = readTypedPinyin(pinyin);
+      return (
+        entries.find((entry) => entry.pinyin === numbered) ||
+        (typed ? entries.find((entry) => readsAs(entry, typed)) : null) ||
+        null
+      );
     },
 
     // How a word typed in one script is written in both, for someone who is

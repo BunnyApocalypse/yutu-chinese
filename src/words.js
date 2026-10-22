@@ -207,20 +207,36 @@ function columnsFromCsv(fields) {
 // (see wordList.js). The columns may be separated by tabs (TSV) or by commas
 // (CSV); a line with a tab in it is read as TSV. Unlike parseWordList in
 // wordList.js, every line is checked, and lines that can't be used are
-// reported.
+// reported. Spaces at either end of a line or a column don't matter.
 //
 // A line may also have a single column of characters: characters, pinyin,
-// meaning. It is told apart by its second column being pinyin.
-// completeForms(characters, pinyin), if given, is then asked how the word is
-// written in both scripts and returns { traditional, simplified }; without
-// it both are taken to be the same.
+// meaning. It is told apart by its second column being pinyin, or having no
+// characters in it (characters and a meaning, the pinyin left out); a line
+// of characters alone is one too. completeForms(characters, pinyin), if
+// given, is then asked how the word is written in both scripts and returns
+// { traditional, simplified }; without it both are taken to be the same.
+//
+// fillIn(characters, pinyin), if given, is asked for what a line leaves out
+// (tester 4, 2026-10-21: a list of words one per line): with pinyin null,
+// the word's usual reading and its meaning; with pinyin as written in the
+// list, the meaning of the word read so, which also lets a reading with
+// tone marks ("nǐ hǎo") be taken for the dictionary's. It returns
+// { pinyin, definition, pinyinTaiwan } (pinyinTaiwan may be missing), or
+// null if the dictionary doesn't have the word. A line that gives a meaning
+// keeps it.
 //
 // Returns:
 //   words:    the tidied words
 //   problems: [{ lineNumber, text, problem }] for the lines left out
-export function readWordList(text, completeForms) {
+export function readWordList(text, completeForms, fillIn) {
   const words = [];
   const problems = [];
+  const isPinyin = (field) => tidyPinyin(field.trim()) !== null;
+  // Pinyin with tone marks ("nǐ hǎo"): not stored so, but told from a
+  // meaning, for the dictionary to read (fillIn).
+  const hasToneMarks = (field) => /^[a-zü\s'’-]*[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ][a-zü\s'’āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ-]*$/i.test(field.trim());
+  const hasHan = (field) => /\p{Script=Han}/u.test(field);
+  const missing = (field) => field === undefined || field.trim() === '';
   // Windows ends lines with \r\n; the \r is dropped along with other spaces.
   text.split('\n').forEach((rawLine, index) => {
     const line = rawLine.trim();
@@ -229,20 +245,45 @@ export function readWordList(text, completeForms) {
     }
     const isTsv = line.includes('\t');
     let fields = isTsv ? line.split('\t') : splitCsvLine(line);
-    // One column of characters: read it as if it were written out twice.
-    const oneScript = fields.length > 1 && tidyPinyin(fields[1].trim()) !== null;
+    // One column of characters: read it as if it were written out twice,
+    // with an empty pinyin column where the second is a meaning.
+    const oneScript = fields.length === 1 || isPinyin(fields[1]) || !hasHan(fields[1]);
     if (oneScript) {
-      fields = [fields[0], ...fields];
+      const second = fields[1] || '';
+      fields =
+        isPinyin(second) || hasToneMarks(second)
+          ? [fields[0], ...fields]
+          : [fields[0], fields[0], '', ...fields.slice(1)];
     }
     let columns;
-    if (isTsv) {
+    if (isTsv || fields.length <= 3) {
       const [simplified, traditional, pinyin, definition, pinyinTaiwan] = fields;
       columns = { simplified, traditional, pinyin, definition, pinyinTaiwan };
     } else {
       columns = columnsFromCsv(fields);
     }
-    const result =
-      columns.definition === undefined ? { problem: t('check.columns'), reason: 'columns' } : checkWord(columns);
+    let notFound = false;
+    if (fillIn && (missing(columns.pinyin) || !isPinyin(columns.pinyin) || missing(columns.definition))) {
+      const written = missing(columns.pinyin) ? null : columns.pinyin.trim();
+      const found = fillIn((columns.traditional || '').trim(), written);
+      notFound = !found && hasHan(columns.traditional || '') && (written === null || missing(columns.definition));
+      if (found) {
+        // The dictionary's reading where the list's isn't numbered pinyin
+        // (or isn't there); the list's own otherwise.
+        if (written === null || !isPinyin(written)) {
+          columns.pinyin = found.pinyin;
+          columns.pinyinTaiwan = columns.pinyinTaiwan || found.pinyinTaiwan;
+        }
+        if (missing(columns.definition)) {
+          columns.definition = found.definition;
+        }
+      }
+    }
+    const result = notFound
+      ? { problem: t('check.notInDictionaryList'), reason: 'notInDictionaryList' }
+      : columns.definition === undefined
+      ? { problem: t('check.columns'), reason: 'columns' }
+      : checkWord(columns);
     if (result.word && oneScript && completeForms) {
       Object.assign(result.word, completeForms(result.word.traditional, result.word.pinyin));
     }

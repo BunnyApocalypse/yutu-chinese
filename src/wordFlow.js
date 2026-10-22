@@ -360,18 +360,24 @@ export function createWordFlow(elements) {
     strokeCountElement.textContent = `${strokeNumber}/${totalStrokes}`;
     strokeCountElement.hidden = Boolean(options.hideStrokeCount);
     const mistakes = carriedMistakes + currentMistakes;
-    const status = !started && mistakes === 0 ? t('write.firstStroke') : describeMistakes(mistakes);
+    const status = !started && mistakes === 0 ? t('write.firstStroke') : mistakesShown(mistakes);
     // While practicing, the line says so, so that it is not taken for the
     // card's own result; short, or on a small phone it wraps beside the
     // boxes and moves the writing area down.
     if (practicing) {
       statusElement.textContent =
-        !started && mistakes === 0
+        (!started && mistakes === 0) || options.hideMistakes
           ? t('write.practice')
           : t('write.practiceStatus', { status: describeMistakes(mistakes, true) });
       return;
     }
     statusElement.textContent = status;
+  }
+
+  // The count of mistakes on the status line, or nothing where the setting
+  // keeps it out of sight (options.hideMistakes).
+  function mistakesShown(count) {
+    return options.hideMistakes ? '' : describeMistakes(count);
   }
 
   // The count is only for while a character is being written.
@@ -453,7 +459,9 @@ export function createWordFlow(elements) {
         tapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
         orderNote.hidden = order !== 'mainland';
         hideProgress();
-        statusElement.textContent = t('write.practiceStatus', { status: describeMistakes(totalMistakes, true) });
+        statusElement.textContent = options.hideMistakes
+          ? t('write.practice')
+          : t('write.practiceStatus', { status: describeMistakes(totalMistakes, true) });
         // Back to the character still being written, as after a real one.
         if (!wordFinished()) {
           nextButton.textContent = t('study.nextButton');
@@ -512,6 +520,8 @@ export function createWordFlow(elements) {
     hideProgress();
     statusElement.textContent = skippedPerChar[position]
       ? t('write.skipped')
+      : options.hideMistakes
+      ? ''
       : describeMistakes(mistakesPerChar[position]) +
         (passedPerChar[position] && retriesPerChar[position] > 0
           ? ` · ${t('write.onTry', { ordinal: ordinal(retriesPerChar[position] + 1) })}`
@@ -523,7 +533,9 @@ export function createWordFlow(elements) {
       return;
     }
     if (chars.length > 1) {
-      statusElement.textContent = t('write.wordDone', { status: describeMistakes(sum(mistakesPerChar), true) });
+      statusElement.textContent = options.hideMistakes
+        ? t('write.wordDoneAlone')
+        : t('write.wordDone', { status: describeMistakes(sum(mistakesPerChar), true) });
     }
     if (options.continueLabel) {
       nextButton.textContent = options.continueLabel;
@@ -768,6 +780,10 @@ export function createWordFlow(elements) {
     //                  otherwise they still count
     //   hideStrokeCount: true to keep the stroke count ("3/7") out of sight,
     //                  since it is a hint (Review, unless a setting says so)
+    //   hideMistakes:  true to keep the count of mistakes off the status
+    //                  line (the setting "Show the number of mistakes";
+    //                  tester 4, 2026-10-21, didn't like seeing it). A
+    //                  character's verdict still shows in its box.
     //   judgeChar({ mistakes, strokes, hintShown, peeked }):
     //                  returns true if the character counts as passed. Leave
     //                  it out for no verdicts at all (Free practice).
