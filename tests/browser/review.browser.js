@@ -606,4 +606,51 @@ describe('grading in Review', { concurrency: false }, () => {
     assert.deepEqual((await lastReview()).mistakesPerChar, [1]);
     await inDatabase(`stores.settings.put({ key: 'mistakeCount', value: true });`);
   });
+
+  it('asks how many cards to review, and stops after the number chosen', async () => {
+    // 25 words with a meaning card each, all due: more than the smallest number offered (20).
+    const chars = [...'一二三四五六七八九十上下人口手日月山水火木土田目耳'];
+    await inDatabase(`
+      ${JSON.stringify(chars)}.forEach((char, index) => {
+        stores.words.put({ id: char + '|x' + (index + 1) + '1', traditional: char, simplified: char, pinyin: 'x' + (index + 1) + '1', definition: 'number ' + index, order: 0, addedAt: 1, learnedAt: 1 });
+      });
+      stores.settings.put({ key: 'reviewStart', value: true });
+    `);
+    await makeDue(...chars.map((char, index) => [`${char}|x${index + 1}1#meaning`, `${char}|x${index + 1}1`, 'meaning']));
+    await waitUntil(page, `!document.getElementById('review-start').hidden`, 'the start of Review');
+    assert.equal(await textOf(page, 'review-start-count'), '50 cards to review');
+    // 25 due, and the 25 new writing cards of their words. Only the numbers below 50.
+    assert.deepEqual(
+      await page.evaluate(`[...document.querySelectorAll('#review-limit-buttons button')].filter((button) => !button.hidden).map((button) => button.textContent)`),
+      ['20', 'Other…'],
+    );
+    await tap(page, 'review-other-button');
+    await page.evaluate(`document.getElementById('review-other-input').value = '2'`);
+    await page.evaluate(`document.getElementById('review-other-form').requestSubmit()`);
+
+    const gradeOne = async (count) => {
+      await waitUntil(page, `document.getElementById('card-type').textContent === 'Meaning · ${count + 1}/2' && !document.getElementById('card-face').hidden`, `card ${count + 1}`);
+      await page.evaluate(`document.getElementById('card-face').dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))`);
+      await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
+      await chooseGrade('Good');
+    };
+    await gradeOne(0);
+    await gradeOne(1);
+    await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the end of the two');
+    assert.match(await textOf(page, 'done-message'), /^2 cards done48 cards still to review\.$/);
+    assert.equal(await textOf(page, 'review-more-button'), 'Keep going: 2 more');
+    await tap(page, 'review-more-button');
+    await gradeOne(0);
+
+    // Opening Review again asks again; with the setting off it doesn't.
+    await inDatabase(`stores.settings.put({ key: 'reviewStart', value: false });`);
+    await reloadApp(page);
+    await waitUntil(page, `!document.getElementById('card-face').hidden && document.getElementById('review-start').hidden`, 'a card at once');
+    await inDatabase(`
+      ${JSON.stringify(chars)}.forEach((char, index) => {
+        stores.words.delete(char + '|x' + (index + 1) + '1');
+        stores.cards.delete(char + '|x' + (index + 1) + '1#meaning');
+      });
+    `);
+  });
 });

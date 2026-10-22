@@ -590,6 +590,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       ...(duration !== null && { duration }),
     };
     await saveReview(newCard, review);
+    if (sitting) {
+      sitting.done += 1;
+    }
     cards.set(newCard.id, newCard);
     reviewTimes.push(reviewTime(review));
     remember({
@@ -1724,6 +1727,70 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     return parts;
   }
 
+  // ---- How many cards to review this time ----
+  //
+  // Opening Review with many cards to do, a screen asks whether to review
+  // all of them or a set number (tester 4, 2026-10-21; the owner chose a
+  // screen of its own, which a setting switches off, 2026-10-22). With a
+  // number, the kind of card counts ("Writing · 12/100") and Review stops
+  // after that many cards graded, with "Keep going" for as many again; with
+  // all, Review goes on as it did before the screen. The sitting lasts until
+  // Review is left: opening it again asks again. Cards looked back at and
+  // corrected don't count again.
+  const startPanel = document.getElementById('review-start');
+  const startCount = document.getElementById('review-start-count');
+  const limitButtons = [...document.querySelectorAll('#review-limit-buttons [data-limit]')];
+  const otherButton = document.getElementById('review-other-button');
+  const otherForm = document.getElementById('review-other-form');
+  const otherInput = document.getElementById('review-other-input');
+  const moreButton = document.getElementById('review-more-button');
+  // With no more cards to do than the smallest number offered, there is
+  // nothing to choose, and Review starts at once.
+  const SMALLEST_LIMIT = Math.min(...limitButtons.map((button) => Number(button.dataset.limit)));
+  // { limit, done }: the number chosen (null for all) and the cards graded
+  // since; null before anything is chosen.
+  let sitting = null;
+
+  function startSitting(limit) {
+    sitting = { limit, done: 0 };
+    startPanel.hidden = true;
+    otherForm.hidden = true;
+    showNext();
+  }
+
+  document.getElementById('review-all-button').addEventListener('click', () => startSitting(null));
+  for (const button of limitButtons) {
+    button.addEventListener('click', () => startSitting(Number(button.dataset.limit)));
+  }
+  otherButton.addEventListener('click', () => {
+    otherForm.hidden = false;
+    otherInput.focus();
+  });
+  otherForm.addEventListener('submit', (event) => {
+    event.preventDefault(); // or the browser would reload the page
+    const limit = Math.floor(Number(otherInput.value));
+    if (limit >= 1) {
+      startSitting(limit);
+    }
+  });
+  moreButton.addEventListener('click', () => startSitting(sitting.limit));
+
+  // The screen that asks; `total` is how many cards there are to do.
+  function showStart(total) {
+    current = null;
+    setFocus(false);
+    offerListen(false);
+    studyArea.hidden = true;
+    donePanel.hidden = true;
+    typeElement.textContent = '';
+    startCount.textContent = t('review.startCount', { count: total });
+    // Only numbers smaller than what there is to do.
+    for (const button of limitButtons) {
+      button.hidden = Number(button.dataset.limit) >= total;
+    }
+    startPanel.hidden = false;
+  }
+
   // Works out what is next and puts it on screen.
   async function showNext() {
     clearTimeout(recheckTimer);
@@ -1743,6 +1810,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     meaningElement.textContent = '';
     pinyinElement.hidden = true;
     pinyinButton.hidden = true;
+    startPanel.hidden = true;
+    moreButton.hidden = true;
     if (mode === 'learn') {
       showNextToLearn();
       return;
@@ -1762,6 +1831,17 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       hasCardType,
       scriptOf: (word) => scriptFor(word, settings),
     });
+    const total = plan.dueCount + plan.newCardCount;
+    if (plan.next && !sitting) {
+      if (settings.reviewStart && total > SMALLEST_LIMIT) {
+        countsElement.textContent = '';
+        showStart(total);
+        return;
+      }
+      sitting = { limit: null, done: 0 };
+    }
+    // The number chosen has been reviewed, with cards still to do.
+    const limitReached = Boolean(plan.next) && sitting.limit !== null && sitting.done >= sitting.limit;
     countsElement.textContent =
       t('review.counts', { due: plan.dueCount, new: plan.newCardCount }) +
       // Writing cards to be learned again after a change of script, or
@@ -1769,6 +1849,37 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       (plan.newWordsLeftToday > 0
         ? ` · ${t(plan.fromAnki ? 'review.moreNewToday' : 'review.toWriteAgain', { count: plan.newWordsLeftToday })}`
         : '');
+
+    if (limitReached) {
+      current = null;
+      setFocus(false);
+      offerListen(false);
+      studyArea.hidden = true;
+      typeElement.textContent = '';
+      const heading = document.createElement('h2');
+      heading.className = 'done-heading';
+      heading.textContent = t('review.limitDoneHeading', { count: sitting.done });
+      const still = document.createElement('p');
+      still.textContent = t('review.stillToReview', { count: total });
+      const parts = [heading, still];
+      const streak = settings.streaks ? streakLine(streakNow(now), streakGoal()) : '';
+      if (streak) {
+        const line = document.createElement('p');
+        line.className = 'done-streak';
+        line.textContent = streak;
+        parts.push(line);
+      }
+      doneMessage.replaceChildren(...parts);
+      moreButton.textContent = t('review.moreButton', { count: Math.min(sitting.limit, total) });
+      moreButton.hidden = false;
+      // Not "Learn new words": with cards still to do, keeping going is
+      // the one main button here.
+      lookBackButton.hidden = graded.length === 0;
+      donePanel.hidden = false;
+      // The end of Review, as when all cards are done (streakScreen.js).
+      atEnd = true;
+      return;
+    }
 
     if (!plan.next) {
       current = null;
@@ -1823,7 +1934,12 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     setFocus(true);
     donePanel.hidden = true;
     studyArea.hidden = false;
-    typeElement.textContent = labelFor(current.word, current.type);
+    // With a set number of cards, which this one is: "Writing · 3/100". (On
+    // the kind of card, since the counts line is put away while a card is
+    // up; short, or a sentence's label takes two lines on a phone.)
+    typeElement.textContent = sitting.limit
+      ? t('review.labelOfLimit', { label: labelFor(current.word, current.type), number: sitting.done + 1, limit: sitting.limit })
+      : labelFor(current.word, current.type);
     showScriptFlag(current.word);
     showPartsFor(current.type);
     offerListen(current.type === 'writing' || current.type === 'meaning');
@@ -1898,6 +2014,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       countsRow.hidden = mode === 'lesson';
       tappedSinceArriving = false;
       justLearned = null;
+      // Opening Review asks again how many cards to review.
+      if (mode === 'review') {
+        sitting = null;
+      }
       await loading;
       showDeckChoice(); // the deck studied may have been chosen on its page
       const shown = showNext();
@@ -1934,6 +2054,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       clearTimeout(recheckTimer);
       stopFlows();
       donePanel.hidden = true;
+      startPanel.hidden = true;
       learnNextButton.hidden = true;
       lookBackButton.hidden = true;
       offerAdding(false);

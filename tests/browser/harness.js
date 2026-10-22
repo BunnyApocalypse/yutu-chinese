@@ -328,7 +328,8 @@ export async function reloadApp(page) {
     try {
       const started = await page.evaluate(`!window.loadedBefore && (
         document.getElementById('card-type').textContent !== '' ||
-        !document.getElementById('done-panel').hidden)`);
+        !document.getElementById('done-panel').hidden ||
+        !document.getElementById('review-start').hidden)`);
       if (started) {
         return;
       }
@@ -352,7 +353,8 @@ async function openFreePractice(page, appUrl, keepWelcome = false) {
         // (A tab tapped before that is only opened once the app has started.)
         const started =
           document.getElementById('card-type').textContent !== '' ||
-          !document.getElementById('done-panel').hidden;
+          !document.getElementById('done-panel').hidden ||
+          !document.getElementById('review-start').hidden;
         // The introduction lies over the page and would catch the strokes.
         if (started && !${keepWelcome} && document.getElementById('welcome').open) {
           document.getElementById('welcome-skip').click();
@@ -388,6 +390,15 @@ async function openFreePractice(page, appUrl, keepWelcome = false) {
         if (started && !${keepWelcome} && streaks.checked) {
           streaks.checked = false;
           streaks.dispatchEvent(new Event('change', { bubbles: true }));
+          return '';
+        }
+        // Likewise the screen asking how many cards to review, so that
+        // Review goes straight to the cards as the tests expect
+        // (review.browser.js turns it on).
+        const reviewStart = document.getElementById('review-start-checkbox');
+        if (started && !${keepWelcome} && reviewStart.checked) {
+          reviewStart.checked = false;
+          reviewStart.dispatchEvent(new Event('change', { bubbles: true }));
           return '';
         }
         const tab = document.getElementById('practice-button');

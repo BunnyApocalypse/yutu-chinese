@@ -315,6 +315,20 @@ describe('accessibility', { concurrency: false }, () => {
     assert.equal(await page.evaluate(reviews), before + 1);
   });
 
+  it('the start of Review, asking how many cards', async () => {
+    // It needs more than 20 cards to do; shown here by hand, over the page
+    // as it is, with the box for another number open.
+    await page.evaluate(`(() => {
+      document.getElementById('study-area').hidden = true;
+      document.getElementById('done-panel').hidden = true;
+      document.getElementById('review-start-count').textContent = '243 cards to review';
+      document.getElementById('review-other-form').hidden = false;
+      document.getElementById('review-start').hidden = false;
+    })()`);
+    await check('the start of Review');
+    await page.evaluate(`document.getElementById('review-start').hidden = true`);
+  });
+
   it('the streak screen, and its settings', async () => {
     // Filled in by hand: what is in it is tested in streak.browser.js.
     await page.evaluate(`(() => {

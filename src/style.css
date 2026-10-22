@@ -824,6 +824,26 @@ main.focused .top-bar {
   margin-bottom: var(--space-large);
 }
 
+/* The start of Review (review.js): Review all, then the numbers side by
+   side, then the box for another number. */
+.review-limits {
+  justify-content: center;
+  margin-top: var(--space-medium);
+}
+
+.review-other {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-small);
+  margin: var(--space-medium) 0;
+}
+
+.review-start .hint {
+  margin-top: var(--space-large);
+}
+
 .done-next {
   color: var(--muted);
 }
@@ -2476,7 +2496,8 @@ fieldset.setting {
   border-radius: var(--radius);
 }
 
-.setting input[type='number'] {
+.setting input[type='number'],
+.review-other input {
   width: 5em;
   min-height: var(--tap-small);
   padding: 0 var(--space-small);

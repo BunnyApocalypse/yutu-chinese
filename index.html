@@ -146,6 +146,25 @@
       <p id="note" role="status" class="note"></p>
 
       <!-- Review mode, when nothing is due -->
+      <!-- Opening Review with many cards to do: how many to review this time,
+           all or a set number (review.js; tester 4 and the owner, 2026-10-22).
+           Switched off in Settings, Review starts at once on all of them. -->
+      <div id="review-start" class="done-panel review-start" hidden>
+        <h2 id="review-start-count" class="done-heading"></h2>
+        <p data-t="review.startQuestion"></p>
+        <button id="review-all-button" class="primary" type="button" data-t="review.allButton"></button>
+        <div id="review-limit-buttons" class="buttons review-limits" role="group" data-t-aria-label="review.limitGroup">
+          <button type="button" data-limit="20">20</button>
+          <button type="button" data-limit="50">50</button>
+          <button type="button" data-limit="100">100</button>
+          <button id="review-other-button" type="button" data-t="review.otherButton"></button>
+        </div>
+        <form id="review-other-form" class="review-other" hidden>
+          <label><span data-t="review.otherLabel"></span> <input id="review-other-input" type="number" min="1" step="1" inputmode="numeric" /></label>
+          <button type="submit" data-t="review.otherStart"></button>
+        </form>
+        <p class="hint" data-t="review.startHint"></p>
+      </div>
       <div id="done-panel" class="done-panel" hidden>
         <!-- A line of text, or at the end of Review a short summary of the day
              (doneSummary in review.js). -->
@@ -165,6 +184,9 @@
         <button id="lesson-back-button" type="button" hidden data-t="review.lessonBackButton"></button>
         <!-- At the end of Review: the card graded last, to change its grade,
              as the ‹ arrow on a card does (review.js). -->
+        <!-- At the end of a Review of a set number of cards, with cards still
+             to do: the same number again (review.js). -->
+        <button id="review-more-button" class="primary" type="button" hidden></button>
         <button id="look-back-button" class="link-button" type="button" hidden data-t="review.lookBackButton"></button>
         <!-- At the end of Review and between two words in Learn, every time,
              while the browser may delete the words (storageMessage.js). -->
@@ -1212,6 +1234,11 @@
           </select>
           <span class="hint" data-t="settings.gradeButtonsHint"></span>
         </label>
+
+        <div class="setting">
+          <label><input id="review-start-checkbox" type="checkbox" /> <span data-t="settings.reviewStart"></span></label>
+          <p class="hint" data-t="settings.reviewStartHint"></p>
+        </div>
 
         <div class="setting">
           <label><input id="lessons-checkbox" type="checkbox" /> <span data-t="settings.lessons"></span></label>
