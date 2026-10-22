@@ -8,6 +8,8 @@
 // Everything else drawn on the area is a stroke. This file only decides what
 // a touch was; src/quiz.js, which talks to Hanzi Writer, acts on it.
 
+import { t } from './text.js';
+
 // A hold: the finger or pen stays down this long...
 export const HOLD_MS = 500;
 // ...without moving further than this from where it landed, in pixels. A
@@ -98,11 +100,19 @@ export function describeSwipe(points, areaSize, strict, durationMs) {
   const dip = Math.max(...points.map((point) => point.y)) - first.y;
   const mark = (ok) => (ok ? '✓' : '✕');
   const parts = [
-    `rise ${Math.round((rise / areaSize) * 100)}% (≥ ${Math.round(minRise * 100)}%) ${mark(rise >= areaSize * minRise)}`,
-    `lean ${Math.round(lean)}° (≤ ${Math.round(maxLean)}°) ${mark(Math.abs(last.x - first.x) <= rise * SWIPE_MAX_DRIFT)}`,
-    `dip ${mark(dip <= rise * SWIPE_MAX_DIP_SHARE)}`,
-    `${Math.round(durationMs)} ms (≤ ${SWIPE_MAX_MS}) ${mark(durationMs <= SWIPE_MAX_MS)}`,
+    t('testing.swipeRise', {
+      rise: Math.round((rise / areaSize) * 100),
+      min: Math.round(minRise * 100),
+      mark: mark(rise >= areaSize * minRise),
+    }),
+    t('testing.swipeLean', {
+      lean: Math.round(lean),
+      max: Math.round(maxLean),
+      mark: mark(Math.abs(last.x - first.x) <= rise * SWIPE_MAX_DRIFT),
+    }),
+    t('testing.swipeDip', { mark: mark(dip <= rise * SWIPE_MAX_DIP_SHARE) }),
+    t('testing.swipeTime', { ms: Math.round(durationMs), max: SWIPE_MAX_MS, mark: mark(durationMs <= SWIPE_MAX_MS) }),
   ];
-  const verdict = isSwipeUp(points, areaSize, strict, durationMs) ? 'Swipe' : 'Not a swipe';
-  return `${verdict}: ${parts.join(' · ')}`;
+  const verdict = t(isSwipeUp(points, areaSize, strict, durationMs) ? 'testing.swipe' : 'testing.notSwipe');
+  return t('testing.swipeVerdict', { verdict, parts: parts.join(' · ') });
 }

@@ -13,7 +13,9 @@
 // (1,234 in English, 1.234 in German). A text whose wording changes with a
 // number is given as its forms, { one: '{count} word', other: '{count}
 // words' }: the browser's Intl.PluralRules says which form a number takes in
-// the language (English has two, Polish four, Chinese one).
+// the language (English has two, Polish four, Chinese one). With
+// { count, ordinal: true } the forms are for counting in order instead:
+// English { one: '{count}st', two: '{count}nd', few: '{count}rd', other: '{count}th' }.
 //
 // The page's own text (index.html) is marked with attributes instead and
 // filled in once at start-up by applyText():
@@ -62,6 +64,7 @@ export const locale = { en: 'en-US', pseudo: 'en-US' }[language];
 
 const strings = language === 'pseudo' ? pseudoStrings(en) : en;
 const pluralRules = new Intl.PluralRules(locale);
+const ordinalRules = new Intl.PluralRules(locale, { type: 'ordinal' });
 const numberFormat = new Intl.NumberFormat(locale);
 
 function pseudoStrings(english) {
@@ -85,7 +88,8 @@ export function t(key, values = {}) {
     return key;
   }
   if (typeof text === 'object') {
-    text = text[pluralRules.select(values.count ?? 0)] ?? text.other;
+    const rules = values.ordinal ? ordinalRules : pluralRules;
+    text = text[rules.select(values.count ?? 0)] ?? text.other;
   }
   return text.replace(/\{(\w+)\}/g, (whole, name) => {
     if (!(name in values)) {

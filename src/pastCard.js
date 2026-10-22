@@ -13,6 +13,7 @@
 import { faceArrow, BACK, FORWARD } from './faceArrow.js';
 import { langFor } from './lang.js';
 import { describeReading } from './tones.js';
+import { t } from './text.js';
 
 function paragraph(className, text) {
   const element = document.createElement('p');
@@ -41,10 +42,10 @@ function paragraph(className, text) {
 //   onForward(): the › arrow
 export function showPastCard(cardFace, card, { onVerdict, onBack, onForward }) {
   const parts = card.type === 'writing' ? [drawingsOf(card, onVerdict)] : answerOf(card);
-  const back = faceArrow('past-back-button', 'Go back to the card before', BACK);
+  const back = faceArrow('past-back-button', t('write.backToCard'), BACK);
   back.classList.toggle('unavailable', !onBack);
   back.addEventListener('click', () => onBack?.());
-  const forward = faceArrow('past-forward-button', 'Go on to the card after', FORWARD);
+  const forward = faceArrow('past-forward-button', t('past.onToCardAfter'), FORWARD);
   forward.addEventListener('click', onForward);
   cardFace.replaceChildren(...parts, back, forward);
 }
@@ -68,7 +69,7 @@ function drawingsOf(card, onVerdict) {
     square.className = 'past-square';
     if (several) {
       square.type = 'button';
-      const label = `${char}: ${passed ? 'got it' : 'missed'}. Tap to change.`;
+      const label = t('write.slotTitle', { char, verdict: t(passed ? 'write.gotIt' : 'write.missed') });
       square.title = label;
       square.setAttribute('aria-label', label);
       // Not a tap on the card, which goes on.

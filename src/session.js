@@ -6,6 +6,7 @@
 // Times are in milliseconds since 1970, the same as Date.now().
 
 import { AGAIN, HARD, GOOD } from './scheduler.js';
+import { t } from './text.js';
 
 // The four kinds of card a word can have, in the order they are introduced
 // for a new word: recognizing it first, producing it last.
@@ -399,13 +400,13 @@ export function suggestGrade({ passedPerChar, mistakes, hintPerChar = [] }) {
 // Describes a length of time briefly, for the grade buttons: "10m", "3d".
 export function formatInterval(milliseconds) {
   const minutes = milliseconds / 60000;
-  if (minutes < 1) return '<1m';
-  if (minutes < 60) return `${Math.round(minutes)}m`;
+  if (minutes < 1) return t('interval.underAMinute');
+  if (minutes < 60) return t('interval.minutes', { count: Math.round(minutes) });
   const hours = minutes / 60;
-  if (hours < 24) return `${Math.round(hours)}h`;
+  if (hours < 24) return t('interval.hours', { count: Math.round(hours) });
   const days = hours / 24;
-  if (days < 30) return `${Math.round(days)}d`;
+  if (days < 30) return t('interval.days', { count: Math.round(days) });
   const months = days / 30;
-  if (months < 12) return `${Math.round(months * 10) / 10}mo`;
-  return `${Math.round((days / 365) * 10) / 10}y`;
+  if (months < 12) return t('interval.months', { count: Math.round(months * 10) / 10 });
+  return t('interval.years', { count: Math.round((days / 365) * 10) / 10 });
 }

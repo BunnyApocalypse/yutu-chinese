@@ -10,6 +10,7 @@
 // minute, then ten minutes) before being scheduled days ahead.
 
 import { fsrs, generatorParameters, createEmptyCard } from 'ts-fsrs';
+import { t } from './text.js';
 
 // The four grades, in FSRS's own numbering.
 export const AGAIN = 1;
@@ -18,10 +19,10 @@ export const GOOD = 3;
 export const EASY = 4;
 
 export const GRADES = [
-  { value: AGAIN, label: 'Again' },
-  { value: HARD, label: 'Hard' },
-  { value: GOOD, label: 'Good' },
-  { value: EASY, label: 'Easy' },
+  { value: AGAIN, label: t('grade.again') },
+  { value: HARD, label: t('grade.hard') },
+  { value: GOOD, label: t('grade.good') },
+  { value: EASY, label: t('grade.easy') },
 ];
 
 // The grade buttons offered, by the setting `gradeButtons` (the owner,
@@ -30,8 +31,8 @@ export const GRADES = [
 // recorded as Good, whatever the app suggested; Hard and Easy are never
 // used, which FSRS handles well (as Anki's pass/fail add-ons do).
 const PASS_FAIL = [
-  { value: AGAIN, label: 'Wrong' },
-  { value: GOOD, label: 'Right' },
+  { value: AGAIN, label: t('grade.wrong') },
+  { value: GOOD, label: t('grade.right') },
 ];
 
 export function gradeButtons(kind) {

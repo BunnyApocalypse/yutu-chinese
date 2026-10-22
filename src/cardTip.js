@@ -5,6 +5,8 @@
 // start of the tip and the example sentence, with "About this word",
 // which opens the word's page.
 
+import { t } from './text.js';
+
 function paragraph(className, text) {
   const element = document.createElement('p');
   element.className = className;
@@ -34,7 +36,7 @@ export function cardTip(note, script, onMore, tappableText) {
   const more = document.createElement('button');
   more.type = 'button';
   more.className = 'link-button face-tip-more';
-  more.textContent = 'About this word';
+  more.textContent = t('tip.aboutThisWord');
   // A tap on the card's face reveals or moves on; a tap on this must not.
   more.addEventListener('pointerup', (event) => event.stopPropagation());
   more.addEventListener('click', (event) => {

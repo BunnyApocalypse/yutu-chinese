@@ -86,7 +86,7 @@
       <section id="review-header" class="review-header">
         <!-- Which deck is studied; only there once there are decks (review.js). -->
         <div class="counts-row">
-          <select id="deck-select" class="deck-select" aria-label="Deck to study" hidden></select>
+          <select id="deck-select" class="deck-select" data-t-aria-label="review.deckToStudy" hidden></select>
           <p id="review-counts" class="counts"></p>
         </div>
         <!-- Says so when the card just graded was suspended as a leech (review.js). -->
@@ -95,18 +95,18 @@
         <div class="type-row">
           <p id="card-type" class="card-type"></p>
           <!-- Speaks the word (review.js, speech.js). The picture is a loudspeaker. -->
-          <button id="listen-button" class="icon-button" type="button" aria-label="Hear the word" title="Hear the word" hidden>
+          <button id="listen-button" class="icon-button" type="button" data-t-aria-label="review.hearTheWord" data-t-title="review.hearTheWord" hidden>
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
               <path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor" />
               <path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
             </svg>
           </button>
           <!-- On a writing card: shows the word's pinyin, which does not count against the grade. -->
-          <button id="pinyin-button" class="link-button" type="button" hidden>Show pinyin</button>
+          <button id="pinyin-button" class="link-button" type="button" hidden data-t="review.pinyinButton"></button>
           <!-- Once the answer is showing: the word's page, and its panel to correct it
                (review.js). Up here, so that nothing is added under the writing area. -->
-          <button id="about-word-button" class="link-button" type="button" title="About this word" hidden>About</button>
-          <button id="edit-word-button" class="link-button" type="button" title="Edit this word" hidden>Edit</button>
+          <button id="about-word-button" class="link-button" type="button" data-t-title="review.aboutThisWord" hidden data-t="review.aboutWordButton"></button>
+          <button id="edit-word-button" class="link-button" type="button" data-t-title="review.editThisWord" hidden data-t="review.editWordButton"></button>
         </div>
         <p id="prompt-meaning" class="meaning"></p>
         <p id="prompt-pinyin" class="pinyin" hidden></p>
@@ -115,7 +115,7 @@
           <p id="lesson-note" class="hint" hidden></p>
           <!-- Skips the lesson: the word is known (review.js). Beside the note,
                so that it takes no room of its own on a phone. -->
-          <button id="skip-lesson-button" class="link-button" type="button" title="Skip this word's lesson: its cards are answered Easy" hidden>I know this word</button>
+          <button id="skip-lesson-button" class="link-button" type="button" data-t-title="review.skipThisWordsLesson" hidden data-t="review.skipLessonButton"></button>
         </div>
       </section>
 
@@ -125,24 +125,24 @@
           id="word-input"
           type="text"
           value="學"
-          placeholder="Character or word"
-          aria-label="Character or word to practice"
+          data-t-placeholder="review.characterOrWord"
+          data-t-aria-label="review.characterOrWordTo"
           autocomplete="off"
           autocapitalize="off"
           list="word-suggestions"
         />
         <!-- Suggestions for the text box: the words in the word list. Filled in by main.js. -->
         <datalist id="word-suggestions"></datalist>
-        <select id="practice-type" aria-label="Kind of card">
-          <option value="writing">Writing</option>
-          <option value="tone">Tone</option>
-          <option value="pinyin">Pinyin</option>
-          <option value="meaning">Meaning</option>
+        <select id="practice-type" data-t-aria-label="review.kindOfCard">
+          <option value="writing" data-t="review.writing"></option>
+          <option value="tone" data-t="review.tone"></option>
+          <option value="pinyin" data-t="review.pinyin"></option>
+          <option value="meaning" data-t="review.meaning"></option>
         </select>
-        <button id="practice-go" type="submit">Practice</button>
+        <button id="practice-go" type="submit" data-t="review.practiceGo"></button>
       </form>
       <!-- Said on every practice screen (the owner, 2026-10-17). -->
-      <p id="practice-note" class="hint practice-note" hidden>Practice only: nothing here counts as a review.</p>
+      <p id="practice-note" class="hint practice-note" hidden data-t="review.practiceNote"></p>
       <p id="note" role="status" class="note"></p>
 
       <!-- Review mode, when nothing is due -->
@@ -152,20 +152,20 @@
         <div id="done-message" role="status"></div>
         <!-- In Learn, between two words: on to the next one; in Review, with
              nothing due and words waiting: to Learn (review.js, main.js). -->
-        <button id="learn-next-button" class="primary" type="button" hidden>Learn the next word</button>
+        <button id="learn-next-button" class="primary" type="button" hidden data-t="review.learnNextButton"></button>
         <!-- With no words at all: the ready-made level suggested to start
              with, added and opened in Learn (review.js, main.js). -->
-        <button id="start-level-button" class="primary" type="button" hidden>Start with a level</button>
+        <button id="start-level-button" class="primary" type="button" hidden data-t="review.startLevelButton"></button>
         <!-- With no words, or none left to learn: to the Decks tab (review.js, main.js). -->
-        <button id="add-words-button" class="primary" type="button" hidden>Add words</button>
+        <button id="add-words-button" class="primary" type="button" hidden data-t="review.addWordsButton"></button>
         <!-- With no words at all: Decks' ready-made levels (review.js, main.js). -->
-        <button id="other-level-button" class="link-button" type="button" hidden>Choose another level</button>
+        <button id="other-level-button" class="link-button" type="button" hidden data-t="review.otherLevelButton"></button>
         <!-- At the end of a lesson repeated: back to the word's page, as the
              top bar's "‹ Back" (review.js, main.js). -->
-        <button id="lesson-back-button" type="button" hidden>Back to the word</button>
+        <button id="lesson-back-button" type="button" hidden data-t="review.lessonBackButton"></button>
         <!-- At the end of Review: the card graded last, to change its grade,
              as the ‹ arrow on a card does (review.js). -->
-        <button id="look-back-button" class="link-button" type="button" hidden>‹ Back to the last card</button>
+        <button id="look-back-button" class="link-button" type="button" hidden data-t="review.lookBackButton"></button>
         <!-- At the end of Review and between two words in Learn, every time,
              while the browser may delete the words (storageMessage.js). -->
         <div id="storage-message" class="storage-message" hidden>
@@ -514,13 +514,13 @@
         <!-- Hanzi Writer draws the character into this SVG. wordFlow.js sets its size and adds the guide grid. -->
         <div id="writing-row" class="writing-row">
           <!-- Beside the writing area: go back to a character skipped by accident, and skip the current character. -->
-          <button id="back-button" class="side-arrow" type="button" aria-label="Go back to the skipped character" title="Go back to the skipped character"><svg class="side-arrow-icon" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19" /></svg></button>
+          <button id="back-button" class="side-arrow" type="button" data-t-aria-label="study.goBackToThe" data-t-title="study.goBackToThe"><svg class="side-arrow-icon" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19" /></svg></button>
           <svg id="writing-area" class="writing-area"></svg>
-          <button id="skip-button" class="side-arrow" type="button" aria-label="Skip this character" title="Skip this character (counts as known)"><svg class="side-arrow-icon" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5 L16 12 L9 19" /></svg></button>
+          <button id="skip-button" class="side-arrow" type="button" data-t-aria-label="study.skipThisCharacter" data-t-title="study.skipThisCharacterCounts"><svg class="side-arrow-icon" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5 L16 12 L9 19" /></svg></button>
           <!-- Once a card is answered, "About this word" at the bottom of the
                writing area; on the other kinds it is moved into the card's
                face (showCardAbout in review.js). -->
-          <button id="card-about-button" class="link-button card-about" type="button" hidden>About this word</button>
+          <button id="card-about-button" class="link-button card-about" type="button" hidden data-t="study.cardAboutButton"></button>
         </div>
 
         <!-- Takes the writing area's place on tone, pinyin and meaning cards: shows the
@@ -528,22 +528,22 @@
         <div id="card-face" class="card-face" hidden></div>
 
         <div id="writing-buttons" class="buttons">
-          <button id="restart-button" type="button" title="Clear the character to write it again. A quick swipe up on the writing area does the same.">Clear</button>
-          <button id="outline-button" type="button">Show outline</button>
-          <button id="animate-button" type="button">Animate</button>
-          <button id="next-button" class="primary" type="button" hidden>Next</button>
+          <button id="restart-button" type="button" data-t-title="study.clearTheCharacterTo" data-t="study.restartButton"></button>
+          <button id="outline-button" type="button" data-t="study.outlineButton"></button>
+          <button id="animate-button" type="button" data-t="study.animateButton"></button>
+          <button id="next-button" class="primary" type="button" hidden data-t="study.nextButton"></button>
         </div>
 
         <!-- Tone cards: one button per tone. The last is the neutral tone.
              Bare tone marks, not a syllable: the word's own syllable would give
              its reading away, and a fixed "a" puzzled a tester (2026-10-15). -->
         <div id="tone-buttons" class="buttons tone-buttons" hidden>
-          <button type="button" data-tone="1" aria-label="First tone">ˉ</button>
-          <button type="button" data-tone="2" aria-label="Second tone">ˊ</button>
-          <button type="button" data-tone="3" aria-label="Third tone">ˇ</button>
-          <button type="button" data-tone="4" aria-label="Fourth tone">ˋ</button>
-          <button type="button" data-tone="5" aria-label="Neutral tone">·</button>
-          <button id="tone-next-button" class="primary" type="button" hidden>Next</button>
+          <button type="button" data-tone="1" data-t-aria-label="study.firstTone">ˉ</button>
+          <button type="button" data-tone="2" data-t-aria-label="study.secondTone">ˊ</button>
+          <button type="button" data-tone="3" data-t-aria-label="study.thirdTone">ˇ</button>
+          <button type="button" data-tone="4" data-t-aria-label="study.fourthTone">ˋ</button>
+          <button type="button" data-tone="5" data-t-aria-label="study.neutralTone">·</button>
+          <button id="tone-next-button" class="primary" type="button" hidden data-t="study.nextButton"></button>
         </div>
 
         <!-- Review mode: the four grades, shown once the word is written. Filled in by review.js. -->
@@ -555,29 +555,25 @@
         <!-- Under the grades of a writing card: write the character on screen
              again, as practice that changes nothing (wordFlow.js). A swipe up
              on the writing area does the same. -->
-        <button id="practice-again-button" class="link-button" type="button" hidden>Practice again</button>
+        <button id="practice-again-button" class="link-button" type="button" hidden data-t="study.practiceAgainButton"></button>
 
         <!-- During the lesson for a new word: on to its next step, where nothing
              else leads there; and straight to its last step. -->
-        <button id="lesson-next-button" class="primary" type="button" hidden>Next step</button>
+        <button id="lesson-next-button" class="primary" type="button" hidden data-t="study.lessonNextButton"></button>
 
         <!-- Review mode, with the grades: opens the word's panel to correct it (review.js). -->
         <!-- With the grades, on a card that keeps being forgotten (review.js). -->
         <p id="leech-note" class="order-note" hidden></p>
         <!-- With the note: takes the card out of Review there and then. -->
-        <button id="leech-suspend-button" class="small" type="button" hidden>Suspend this card</button>
+        <button id="leech-suspend-button" class="small" type="button" hidden data-t="study.leechSuspendButton"></button>
 
         <!-- Shown when a character with two accepted stroke orders was written in the mainland one. -->
-        <p id="order-note" class="order-note" hidden>
-          Accepted. You used the mainland stroke order; the
-          <a href="https://en.wikipedia.org/wiki/Stroke_order" target="_blank" rel="noopener">MOE order</a>
-          differs. Press Animate to see it.
-        </p>
+        <p id="order-note" class="order-note" hidden data-t-html="study.orderNote"></p>
       </div>
 
       <footer>
         <!-- Shown when a newer version of the app has been fetched (offline.js). -->
-        <button id="update-button" class="small primary" type="button" hidden>New version ready: tap to reload</button>
+        <button id="update-button" class="small primary" type="button" hidden data-t="study.updateButton"></button>
       </footer>
 
       <!-- One word from the Decks tab: change it, study it next, or remove it. -->

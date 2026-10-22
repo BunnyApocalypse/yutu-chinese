@@ -12,6 +12,7 @@
 // below are for.
 
 import { cardIdFor } from './session.js';
+import { t, formatList } from './text.js';
 
 export const DEFAULT_LEECH_LAPSES = 6;
 export const MIN_LEECH_LAPSES = 2;
@@ -118,27 +119,28 @@ export function findLeeches(words, cards, reviews, threshold) {
 }
 
 // What a card asks, in a few words.
-const KIND = {
-  meaning: 'meaning',
-  pinyin: 'pinyin',
-  tone: 'tones',
-  writing: 'writing',
+const KIND_KEYS = {
+  meaning: 'leech.kindMeaning',
+  pinyin: 'leech.kindPinyin',
+  tone: 'leech.kindTone',
+  writing: 'leech.kindWriting',
 };
+const kind = (type) => t(KIND_KEYS[type]);
 
 // "writing · forgotten 7 times · 習 missed 5 of 9 times · suspended"
 export function describeLeech(leech) {
   const { missedChar } = leech;
   return (
-    `${KIND[leech.card.type]} · forgotten ${leech.lapses} times` +
-    (missedChar ? ` · ${missedChar.char} missed ${missedChar.missed} of ${missedChar.of} times` : '') +
-    (isSuspended(leech.word, leech.card.type) ? ' · suspended' : '')
+    t('leech.forgotten', { kind: kind(leech.card.type), count: leech.lapses }) +
+    (missedChar ? ` · ${t('leech.missedChar', { char: missedChar.char, missed: missedChar.missed, count: missedChar.of })}` : '') +
+    (isSuspended(leech.word, leech.card.type) ? ` · ${t('leech.suspended')}` : '')
   );
 }
 
 // "suspended: meaning, writing", for a word with suspended cards; else ''.
 export function describeSuspended(word) {
-  const kinds = (word.suspended || []).map((type) => KIND[type]);
-  return kinds.length > 0 ? `suspended: ${kinds.join(', ')}` : '';
+  const kinds = (word.suspended || []).map(kind);
+  return kinds.length > 0 ? t('leech.suspendedKinds', { kinds: formatList(kinds) }) : '';
 }
 
 // The characters a leech is about: the script of a writing card, otherwise
@@ -158,12 +160,12 @@ export function leechList(leeches, scriptOf, formatPinyin) {
       formatPinyin(leech.word.pinyin),
       // A tab or line break inside a meaning would break the columns.
       leech.word.definition.replace(/\s+/g, ' '),
-      KIND[leech.card.type],
+      kind(leech.card.type),
       leech.lapses,
       leech.missedChar ? leech.missedChar.char : '',
     ].join('\t'),
   );
-  return ['word\tpinyin\tmeaning\tcard\ttimes forgotten\tcharacter missed most', ...lines].join('\n') + '\n';
+  return [t('leech.listCaptions'), ...lines].join('\n') + '\n';
 }
 
 // The leeches as a request to put to an AI model, for mnemonics. The app
@@ -179,26 +181,18 @@ export function leechPrompt(leeches, scriptOf, formatPinyin) {
   const lines = [...byWord.values()].map((group) => {
     const [{ word }] = group;
     const trouble = group
-      .map(
-        (leech) =>
-          `${KIND[leech.card.type]} (forgotten ${leech.lapses} times` +
-          (leech.missedChar ? `, mostly the character ${leech.missedChar.char}` : '') +
-          ')',
+      .map((leech) =>
+        leech.missedChar
+          ? t('leech.promptTroubleChar', { kind: kind(leech.card.type), count: leech.lapses, char: leech.missedChar.char })
+          : t('leech.promptTrouble', { kind: kind(leech.card.type), count: leech.lapses }),
       )
       .join('; ');
-    return `- ${charactersOf(group[0], scriptOf)} (${formatPinyin(word.pinyin)}): ${word.definition.replace(/\s+/g, ' ')}. I keep forgetting: ${trouble}.`;
+    return t('leech.promptWord', {
+      word: charactersOf(group[0], scriptOf),
+      pinyin: formatPinyin(word.pinyin),
+      meaning: word.definition.replace(/\s+/g, ' '),
+      trouble,
+    });
   });
-  return [
-    'I am learning Chinese with flashcards, and these are the words I keep forgetting. For each one I say what I forget: its meaning, its pinyin, its tones, or how to write it.',
-    '',
-    ...lines,
-    '',
-    'For each word, please give me:',
-    '1. A breakdown of each character into its components, with what each component means or sounds like. Say so when a traditional explanation is uncertain or made up; do not invent etymology.',
-    '2. A short, vivid mnemonic aimed at the thing I forget: a story linking the components for writing, a sound link for pinyin and tones, an image for meaning.',
-    '3. One short example sentence with pinyin and an English translation.',
-    '4. If the word is easily confused with a similar word or character, name it and say how to tell them apart.',
-    '',
-    'Keep each word to a few lines.',
-  ].join('\n') + '\n';
+  return [t('leech.promptStart'), '', ...lines, '', t('leech.promptAsk')].join('\n') + '\n';
 }

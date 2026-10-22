@@ -17,6 +17,7 @@
 // and the `learnedAt` it sets don't count.
 
 import { startOfStudyDay } from './session.js';
+import { t } from './text.js';
 
 export const DEFAULT_STREAK_CARDS = 10;
 export const DEFAULT_STREAK_WORDS = 2;
@@ -122,20 +123,20 @@ export function streakAt(days, now, goal) {
 
 // The line about the streak at the end of Review, or '' for none.
 export function streakLine(streak, goal) {
-  const days = (count) => `${count} ${count === 1 ? 'day' : 'days'}`;
   if (streak.todayDone) {
-    const best = streak.best > streak.current ? ` Your best: ${days(streak.best)}.` : '';
-    return `Streak: ${days(streak.current)} in a row.${best}`;
+    const best = streak.best > streak.current ? ` ${t('streak.best', { count: streak.best })}` : '';
+    return t('streak.inARow', { count: streak.current }) + best;
   }
   const cardsLeft = goal.cards - streak.today.cards;
   const wordsLeft = goal.words - streak.today.words;
   // "more" only once something was studied today.
-  const more = streak.today.cards > 0 || streak.today.words > 0 ? 'more ' : '';
-  const needed =
-    `review ${cardsLeft} ${more}${cardsLeft === 1 ? 'card' : 'cards'} ` +
-    `or learn ${wordsLeft} ${more}${wordsLeft === 1 ? 'word' : 'words'}`;
+  const more = streak.today.cards > 0 || streak.today.words > 0;
   if (streak.current > 0) {
-    return `To keep your ${streak.current}-day streak, ${needed} today.`;
+    return t('streak.toKeep', {
+      count: streak.current,
+      cards: t(more ? 'streak.reviewMoreCards' : 'streak.reviewCards', { count: cardsLeft }),
+      words: t(more ? 'streak.learnMoreWords' : 'streak.learnWords', { count: wordsLeft }),
+    });
   }
   return '';
 }

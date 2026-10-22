@@ -37,29 +37,37 @@ import { cardTip } from './cardTip.js';
 import { studyByDay, streakAt, streakLine, studyDayKey } from './streak.js';
 import { createStopwatch } from './timing.js';
 import { showPastCard } from './pastCard.js';
+import { t, formatDateTime } from './text.js';
 
 // The same for a sentence, which has two kinds of card (see sentences.js).
 const SENTENCE_LABELS = {
-  writing: 'Sentence · writing',
-  meaning: 'Sentence · reading',
+  writing: 'review.labelSentenceWriting',
+  meaning: 'review.labelSentenceReading',
 };
 
 const RADICAL_LABELS = {
-  writing: 'Radical · writing',
-  meaning: 'Radical · meaning',
+  writing: 'review.labelRadicalWriting',
+  meaning: 'review.labelRadicalMeaning',
 };
 
 const TYPE_LABELS = {
-  writing: 'Writing',
-  tone: 'Tone',
-  pinyin: 'Pinyin',
-  meaning: 'Meaning',
+  writing: 'review.labelWriting',
+  tone: 'review.labelTone',
+  pinyin: 'review.labelPinyin',
+  meaning: 'review.labelMeaning',
 };
+
+// The kind of card inside a sentence: "the writing card of 學".
+const KIND_NAMES = {
+  writing: 'review.kindWriting',
+  tone: 'review.kindTone',
+  pinyin: 'review.kindPinyin',
+  meaning: 'review.kindMeaning',
+};
+const kindName = (type) => t(KIND_NAMES[type]);
 
 // While waiting for the next card to become due, look again this often.
 const RECHECK_MS = 15 * 1000;
-
-const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`;
 
 // elements: the page elements review controls:
 //   countsElement, typeElement, meaningElement, pinyinElement, pinyinButton,
@@ -200,7 +208,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   // The kind of card, above it: "Writing", "Sentence · reading".
   function labelFor(word, type) {
-    return isSentence(word) ? SENTENCE_LABELS[type] : isRadical(word) ? RADICAL_LABELS[type] : TYPE_LABELS[type];
+    return t(isSentence(word) ? SENTENCE_LABELS[type] : isRadical(word) ? RADICAL_LABELS[type] : TYPE_LABELS[type]);
   }
 
   // Shows the parts of the study area that the given kind of card uses, and
@@ -337,7 +345,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // a pinyin or tone card once the answer is given.
   function offerListen(wanted) {
     listenButton.classList.remove('no-sound');
-    listenButton.title = 'Hear the word';
+    listenButton.title = t('review.hearTheWord');
     // A radical with no reading is not said aloud (see radicals.js).
     listenButton.hidden = !wanted || settings.sound === 'off' || (current !== null && isRadical(current.word));
   }
@@ -359,7 +367,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     listenButton.dataset.spoken = `${word.id} ${spoken}`;
     if (!spoken && current && current.word === word) {
       listenButton.classList.add('no-sound');
-      listenButton.title = 'No sound for this word on this device';
+      listenButton.title = t('review.noSound');
     }
   }
 
@@ -387,7 +395,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // on the other kinds it is moved into the card's face. A learning note on
   // the face brings its own (cardTip.js), which does the same.
   function showCardAbout() {
-    cardAboutButton.textContent = isSentence(current.word) ? 'About this sentence' : 'About this word';
+    cardAboutButton.textContent = t(isSentence(current.word) ? 'review.aboutSentence' : 'study.cardAboutButton');
     if (!writingRow.hidden) {
       writingRow.append(cardAboutButton);
       cardAboutButton.hidden = false;
@@ -417,7 +425,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       : {
           wordId: word.id,
           label: typeElement.textContent,
-          facts: lapsesOf(card) > 0 ? `forgotten ${lapsesOf(card)} time${lapsesOf(card) === 1 ? '' : 's'}` : '',
+          facts: lapsesOf(card) > 0 ? t('review.forgotten', { count: lapsesOf(card) }) : '',
           // Each returns true once done, and the page then closes.
           async suspend() {
             if (current !== shown || !options) {
@@ -425,10 +433,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
             }
             options = null;
             await suspend(word, type);
-            showNotice(
-              `Suspended: the ${type} card of ${word[scriptFor(word, settings)]}. ` +
-                'Resume it from the word\'s page (Words tab).',
-            );
+            showNotice(t('review.suspendedCard', { kind: kindName(type), word: word[scriptFor(word, settings)] }));
             showNext();
             return true;
           },
@@ -437,16 +442,16 @@ export function createReview(elements, flows, settings, editWord, showWord, note
               return false;
             }
             const confirmed = await ask({
-              question: `Start the ${type} card of this word over?`,
-              detail: 'It becomes a new card, as if never studied. Its reviews are kept in the history but no longer count.',
-              yes: 'Start over',
+              question: t('review.startOverQuestion', { kind: kindName(type) }),
+              detail: t('review.startOverDetail'),
+              yes: t('review.startOverYes'),
             });
             if (!confirmed || current !== shown || !options) {
               return false;
             }
             options = null;
             await startOver(word, type);
-            showNotice(`Started over: the ${type} card of ${word[scriptFor(word, settings)]} is new again.`);
+            showNotice(t('review.startedOver', { kind: kindName(type), word: word[scriptFor(word, settings)] }));
             showNext();
             return true;
           },
@@ -504,8 +509,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     options = null;
     await suspend(word, type);
     showNotice(
-      `Suspended: the ${type} card of ${word[scriptFor(word, settings)]}, forgotten ${lapsesOf(card)} times. ` +
-        'Resume it from the word\'s page (Words tab).',
+      t('review.suspendedLeech', { kind: kindName(type), word: word[scriptFor(word, settings)], count: lapsesOf(card) }),
     );
     showNext();
   });
@@ -600,8 +604,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       await suspend(word, type);
       // Said above the next card, until that one is graded.
       showNotice(
-        `Suspended: the ${type} card of ${word[scriptFor(word, settings)]}, forgotten ${lapsesOf(newCard)} times. ` +
-          'It will not come up again until you resume it from the word\'s page (Words tab).',
+        t('review.suspendedLeechNow', {
+          kind: kindName(type),
+          word: word[scriptFor(word, settings)],
+          count: lapsesOf(newCard),
+        }),
       );
     }
     showNext();
@@ -675,7 +682,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     current = { word: entry.word, type: entry.type, card: entry.card };
     const back = graded.length - index;
     // Short: "Sentence · writing · the card before" took two lines on a phone.
-    typeElement.textContent = `${labelFor(entry.word, entry.type)} · ${back} back`;
+    typeElement.textContent = t('review.labelBack', { label: labelFor(entry.word, entry.type), count: back });
     showScriptFlag(entry.word);
     // On the card's face, whatever its kind.
     showPartsFor('meaning');
@@ -736,7 +743,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       button.type = 'button';
       button.className = value === given ? 'grade primary' : 'grade';
       button.setAttribute('aria-pressed', String(value === given));
-      button.title = `${label} (key ${index + 1})`;
+      button.title = t('review.gradeKey', { grade: label, key: index + 1 });
       button.setAttribute('aria-keyshortcuts', String(index + 1));
       button.disabled = !changeable;
       const wait = document.createElement('span');
@@ -747,7 +754,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       gradeRow.appendChild(button);
     }
     gradeRow.hidden = false;
-    showNotice(changeable ? '' : 'Graded again since, so this grade stays.');
+    showNotice(changeable ? '' : t('review.gradedSince'));
   }
 
   // A review can be corrected while it is still the card's latest, and the
@@ -875,7 +882,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       button.className = value === gradeFor(suggested, settings.gradeButtons) ? 'grade primary' : 'grade';
       // Its key on a keyboard (see gradeByKey): shown when the mouse rests
       // on it, and told to screen readers by aria-keyshortcuts.
-      button.title = `${label} (key ${index + 1})`;
+      button.title = t('review.gradeKey', { grade: label, key: index + 1 });
       button.setAttribute('aria-keyshortcuts', String(index + 1));
       // Each button says when the card would come back.
       const wait = document.createElement('span');
@@ -892,7 +899,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     // A card that keeps being forgotten is pointed out, now that its answer
     // is in view: the moment to think of a way to remember it.
     const lapses = lapsesOf(current.card);
-    leechNote.textContent = `Leech: you have forgotten this card ${lapses} times. Words, in the menu, lists your leeches.`;
+    leechNote.textContent = t('review.leech', { count: lapses });
     leechNote.hidden = !isLeech(current.card, settings.leechLapses);
     leechSuspendButton.hidden = leechNote.hidden;
   }
@@ -1135,15 +1142,15 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   const LESSON_NOTES = {
     // Kept short: each shares a line with "I know this word", and a second
     // line pushes the writing area down the screen.
-    meet: 'A new word: have a look.',
+    meet: 'review.lessonMeet',
     // The same step in a lesson repeated, of a word already learned.
-    meetAgain: 'Have another look.',
-    tone: 'First its tones.',
-    trace: 'Write each stroke as it is shown.',
-    outline: 'Again, over the bare outline.',
-    test: 'From memory. This one counts.',
+    meetAgain: 'review.lessonMeetAgain',
+    tone: 'review.lessonTone',
+    trace: 'review.lessonTrace',
+    outline: 'review.lessonOutline',
+    test: 'review.lessonTest',
     // The same step in the Learn tab, where it is practice.
-    learnTest: 'Now from memory.',
+    learnTest: 'review.lessonLearnTest',
   };
 
   function endLesson() {
@@ -1170,10 +1177,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     const step = lesson.steps[lesson.index];
     // A lesson repeated is of a word already learned, not a new one (the
     // owner, 2026-10-18).
-    const kind = current.repeating ? 'Repeat lesson' : isRadical(word) ? 'New radical' : 'New word';
-    typeElement.textContent = `${kind} · step ${lesson.index + 1} of ${lesson.steps.length}`;
+    const kind = t(current.repeating ? 'review.repeatLesson' : isRadical(word) ? 'review.newRadical' : 'review.newWord');
+    typeElement.textContent = t('review.lessonStep', { kind, step: lesson.index + 1, steps: lesson.steps.length });
     const note = step === 'test' && current.learning ? 'learnTest' : step === 'meet' && current.repeating ? 'meetAgain' : step;
-    lessonNote.textContent = LESSON_NOTES[note];
+    lessonNote.textContent = t(LESSON_NOTES[note]);
     lessonNote.hidden = false;
     // "I know this word" is offered at every step, but not in a lesson
     // repeated, which saves nothing.
@@ -1201,7 +1208,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         rawInput: settings.rawInput,
         hideOutline: true,
         freshRestart: true,
-        continueLabel: 'Done',
+        continueLabel: t('review.done'),
         judgeChar: (facts) => judgeChar({ ...facts, hintCountsAs: settings.hintCountsAs }),
         onCharStart: () => putToolsAway(false),
         onWordDone() {
@@ -1280,7 +1287,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       showCharacters: step === 'trace' || step === 'outline',
       // Practice: starting again clears the mistakes.
       freshRestart: true,
-      continueLabel: 'Next step',
+      continueLabel: t('study.lessonNextButton'),
       onCharStart: () => putToolsAway(false),
       // The word is heard each time a step of its lesson is finished.
       onWordDone() {
@@ -1375,7 +1382,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     if (learning) {
       justLearned = null;
       const { learnedToday, waiting } = learnCounts();
-      countsElement.textContent = `${learnedToday} of ${goalForToday()} learned today · ${waiting} waiting`;
+      countsElement.textContent = t('review.learnCounts', { learned: learnedToday, goal: goalForToday(), waiting });
       startNextWord();
     } else {
       showNext();
@@ -1442,13 +1449,13 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   function offerAdding(on) {
     const start = on && words.length === 0 ? startingLevel(settings) : null;
     addWordsButton.hidden = !on;
-    addWordsButton.textContent = start ? 'Add my own words' : 'Add words';
+    addWordsButton.textContent = t(start ? 'review.addMyOwnWords' : 'review.addWordsButton');
     // One main button on a screen.
     addWordsButton.classList.toggle('primary', !start);
     startLevelButton.hidden = !start;
     otherLevelButton.hidden = !start;
     if (start) {
-      startLevelButton.textContent = `Start with ${start.name}`;
+      startLevelButton.textContent = t('review.startWith', { name: start.name });
     }
   }
 
@@ -1462,7 +1469,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     studyArea.hidden = true;
     typeElement.textContent = '';
     doneMessage.textContent = message;
-    learnNextButton.textContent = 'Learn the next word';
+    learnNextButton.textContent = t('review.learnNextButton');
     learnNextButton.hidden = !canGoOn;
     offerAdding(canAdd);
     lessonBackButton.hidden = true;
@@ -1531,8 +1538,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   }
 
   function showRepeatDone() {
-    showLearnMessage('Lesson done.', true);
-    learnNextButton.textContent = 'Repeat lesson';
+    showLearnMessage(t('review.lessonDone'), true);
+    learnNextButton.textContent = t('review.repeatLesson');
     lessonBackButton.hidden = false;
   }
 
@@ -1541,22 +1548,26 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   function showNextToLearn() {
     const { learnedToday, waiting } = learnCounts();
     const goal = goalForToday();
-    countsElement.textContent = `${learnedToday} of ${goal} learned today · ${waiting} waiting`;
+    countsElement.textContent = t('review.learnCounts', { learned: learnedToday, goal, waiting });
     // The end of today's words: the goal reached, or nothing left to learn.
     atEnd = waiting === 0 || learnedToday >= goal;
     const progress =
       learnedToday >= goal && goal > 0
-        ? `That is today's goal: ${learnedToday} of ${goal}. Stop here, or go on if you like.`
-        : `${learnedToday} of ${goal} today.`;
+        ? t('review.goalReached', { learned: learnedToday, goal })
+        : t('review.learnedOfGoal', { learned: learnedToday, goal });
 
     if (justLearned) {
       const name = justLearned[scriptFor(justLearned, settings)];
       showLearnMessage(
         // The count is on the line above; only reaching the goal is said here
         // (the owner, 2026-10-18: "1 of 5 today" twice on one screen).
-        `${name} is learned: its cards will come up in Review.` +
-          (learnedToday >= goal && goal > 0 ? ` ${progress}` : '') +
-          (waiting === 0 ? ' No more words are waiting.' : ''),
+        [
+          t('review.isLearned', { word: name }),
+          learnedToday >= goal && goal > 0 ? progress : '',
+          waiting === 0 ? t('review.noMoreWaiting') : '',
+        ]
+          .filter(Boolean)
+          .join(' '),
         waiting > 0,
       );
       // The moment for the message about long-term storage (storageMessage.js).
@@ -1564,10 +1575,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     } else if (waiting === 0) {
       showLearnMessage(
         words.length === 0
-          ? 'You have no words yet.'
+          ? t('review.noWordsYet')
           : studyDeck()
-            ? 'No words of this deck are waiting to be learned.'
-            : 'No words are waiting to be learned.',
+            ? t('review.noneWaitingInDeck')
+            : t('review.noneWaiting'),
         false,
         words.length === 0 || !studyDeck(),
       );
@@ -1608,7 +1619,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   function showDeckChoice() {
     // (The groups inside the ready-made levels are left out, unless one is
     // the deck studied: see fillDeckSelect.)
-    fillDeckSelect(deckSelect, decks, [{ value: '', label: 'All words' }], { keep: settings.studyDeck });
+    fillDeckSelect(deckSelect, decks, [{ value: '', label: t('review.allWords') }], { keep: settings.studyDeck });
     deckSelect.value = studyDeck() ? settings.studyDeck : '';
     deckSelect.hidden = decks.length < 2;
   }
@@ -1645,22 +1656,21 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // When the next card comes, for the summary at the end of Review.
   function describeWait(nextDueAt, now) {
     if (nextDueAt === null) {
-      return 'Nothing is scheduled yet';
+      return t('review.nothingScheduled');
     }
     const minutes = Math.ceil((nextDueAt - now) / 60000);
     if (minutes <= 60) {
-      return `Next card in ${minutes <= 1 ? 'about a minute' : `${minutes} minutes`}`;
+      return minutes <= 1 ? t('review.nextInAboutAMinute') : t('review.nextInMinutes', { count: minutes });
     }
     if (minutes < 12 * 60) {
-      const hours = Math.round(minutes / 60);
-      return `Next card in about ${hours} ${hours === 1 ? 'hour' : 'hours'}`;
+      return t('review.nextInHours', { count: Math.round(minutes / 60) });
     }
-    const when = new Date(nextDueAt).toLocaleString([], {
+    const when = formatDateTime(nextDueAt, {
       weekday: 'short',
       hour: '2-digit',
       minute: '2-digit',
     });
-    return `Next card: ${when}`;
+    return t('review.nextAt', { when });
   }
 
   // The end of Review (UX review, 2026-10-17; the owner said yes to it): a
@@ -1678,10 +1688,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     };
     const heading = document.createElement('h2');
     heading.className = 'done-heading';
-    heading.textContent = 'All done for now';
+    heading.textContent = t('review.allDone');
     const parts = [heading];
     if (plan.reviewedToday > 0) {
-      parts.push(line(`You reviewed ${plural(plan.reviewedToday, 'card')} today.`));
+      parts.push(line(t('review.reviewedToday', { count: plan.reviewedToday })));
     }
     const streak = settings.streaks ? streakLine(streakNow(now), streakGoal()) : '';
     if (streak) {
@@ -1690,17 +1700,17 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     const coming = [describeWait(plan.nextDueAt, now)];
     if (plan.laterToday > 1) {
       // The next card is one of those later today.
-      coming.push(`${plan.laterToday - 1} more later today`);
+      coming.push(t('review.laterToday', { count: plan.laterToday - 1 }));
     }
     if (plan.tomorrow > 0) {
-      coming.push(`${plan.tomorrow} tomorrow`);
+      coming.push(t('review.tomorrow', { count: plan.tomorrow }));
     }
     parts.push(line(coming.join(' · '), 'done-next'));
     // Cards are ready but kept back by another card of their word, which
     // looks like a fault with only a few words (the owner, 2026-10-20, after
     // tester 3).
     if (plan.nextHeldBack) {
-      parts.push(line("Cards of the same word are kept a few minutes apart, so one doesn't give away another's answer.", 'done-why'));
+      parts.push(line(t('review.keptApart'), 'done-why'));
     }
     if (waiting) {
       parts.push(line(waiting));
@@ -1747,11 +1757,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       scriptOf: (word) => scriptFor(word, settings),
     });
     countsElement.textContent =
-      `${plan.dueCount} to review · ${plan.newCardCount} new` +
+      t('review.counts', { due: plan.dueCount, new: plan.newCardCount }) +
       // Writing cards to be learned again after a change of script, or
       // cards of words from Anki that have no history there.
       (plan.newWordsLeftToday > 0
-        ? ` · ${plan.newWordsLeftToday} ${plan.fromAnki ? 'more new today' : 'to write again'}`
+        ? ` · ${t(plan.fromAnki ? 'review.moreNewToday' : 'review.toWriteAgain', { count: plan.newWordsLeftToday })}`
         : '');
 
     if (!plan.next) {
@@ -1763,14 +1773,14 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // The app starts with no words at all, and words wait to be learned.
       const waiting =
         plan.waitingCount > 0
-          ? ` ${plan.waitingCount} ${plan.waitingCount === 1 ? 'word is' : 'words are'} waiting in Learn.`
+          ? ` ${t('review.waitingInLearn', { count: plan.waitingCount })}`
           : '';
       if (words.length === 0) {
-        doneMessage.textContent = 'You have no words yet.';
+        doneMessage.textContent = t('review.noWordsYet');
       } else if (studied.length === 0) {
-        doneMessage.textContent = 'This deck has no words yet. Put some in it in Decks.';
+        doneMessage.textContent = t('review.deckEmpty');
       } else if (plan.waitingCount === studied.length) {
-        doneMessage.textContent = `Nothing to review yet.${waiting}`;
+        doneMessage.textContent = t('review.nothingToReview') + waiting;
       } else {
         // Review looks again every few seconds: put the summary in only
         // when it has changed, or it would be read out again each time.
@@ -1785,7 +1795,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       }
       // Learn is not in the menu (it is opened from a deck), so Review offers
       // the way there when words are waiting.
-      learnNextButton.textContent = 'Learn new words';
+      learnNextButton.textContent = t('review.learnNewWords');
       learnNextButton.hidden = plan.waitingCount === 0;
       lookBackButton.hidden = !(mode === 'review' && graded.length > 0);
       offerAdding(words.length === 0);

@@ -34,6 +34,7 @@
 /* global __CHANNEL__ */
 
 import { closeOnTapBeside } from './dialogs.js';
+import { t } from './text.js';
 
 const SHOWN_KEY = __CHANNEL__ ? `streak-shown-${__CHANNEL__}` : 'streak-shown';
 
@@ -55,8 +56,6 @@ function markShown(dayKey) {
     // As above: it may come again today.
   }
 }
-
-const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`;
 
 // A line of the pop-up's text, with an emoji after it that screen readers
 // leave out.
@@ -181,28 +180,30 @@ export function createStreakScreen(turnOff) {
       const first = shown === null;
       const fresh = streak.current === 1 && streak.lastRun > 0;
       mascot.dataset.mood = fresh ? 'fresh' : 'happy';
-      kicker.textContent = first ? 'New: streaks' : 'Study streak';
+      kicker.textContent = t(first ? 'streak.newStreaks' : 'streak.studyStreak');
       number.textContent = String(streak.current);
-      label.textContent = streak.current === 1 ? 'day studied!' : 'days in a row!';
+      label.textContent = t(streak.current === 1 ? 'streak.dayStudied' : 'streak.daysInARow');
       if (first) {
         detail.replaceChildren(
           line(
-            `Each day you review ${plural(goal.cards, 'card')} or learn ${plural(goal.words, 'word')}, ` +
-              'your streak grows by one. Miss a day and it starts again.',
+            t('streak.explained', {
+              cards: t('streak.cards', { count: goal.cards }),
+              words: t('streak.words', { count: goal.words }),
+            }),
           ),
         );
       } else {
-        const lines = [line('Your streak is safe for today. Keep going!', '✨')];
+        const lines = [line(t('streak.safe'), '✨')];
         if (fresh) {
-          lines.push(line(`A new start. Your last streak was ${plural(streak.lastRun, 'day')}.`, '', 'hint'));
+          lines.push(line(t('streak.newStart', { count: streak.lastRun }), '', 'hint'));
         } else if (streak.best > streak.current) {
-          lines.push(line(`Your best: ${plural(streak.best, 'day')}.`, '', 'hint'));
+          lines.push(line(t('streak.best', { count: streak.best }), '', 'hint'));
         } else if (streak.current > 1) {
-          lines.push(line('Your best yet!', '⭐', 'hint'));
+          lines.push(line(t('streak.bestYet'), '⭐', 'hint'));
         }
         detail.replaceChildren(...lines);
       }
-      continueButton.textContent = first ? 'Got it' : 'Continue';
+      continueButton.textContent = t(first ? 'streak.gotIt' : 'streak.continue');
       offButton.hidden = !first;
       afterClosing = then;
       dialog.showModal();
@@ -221,7 +222,7 @@ export function createStreakScreen(turnOff) {
       }
       pillDay = dayKey;
       pillStreak = [streak, dayKey, goal];
-      pillText.textContent = streak.current === 1 ? '1 day studied' : `${streak.current} days in a row`;
+      pillText.textContent = t('streak.pill', { count: streak.current });
       // Shown afresh, so that its animation starts from the beginning.
       hidePill();
       void pill.offsetWidth;

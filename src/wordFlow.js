@@ -10,6 +10,7 @@
 
 import { createQuiz } from './quiz.js';
 import { loadCharData } from './charData.js';
+import { t } from './text.js';
 
 // After a character is finished, tapping the writing area moves on, like the
 // Next button. Taps are ignored for this long first, so that a stray touch
@@ -93,16 +94,15 @@ function drawGrid(svg, size) {
   }
 }
 
-function describeMistakes(count) {
-  if (count === 0) return 'No mistakes';
-  return count === 1 ? '1 mistake' : `${count} mistakes`;
+// inLine: after "Practice · ", where English has no capital.
+function describeMistakes(count, inLine = false) {
+  if (count === 0) return t(inLine ? 'write.noMistakesInLine' : 'write.noMistakes');
+  return t('write.mistakes', { count });
 }
 
 // "2nd", "3rd", "4th"… for "on the 2nd try".
 function ordinal(number) {
-  const tens = number % 100;
-  const suffix = tens >= 11 && tens <= 13 ? 'th' : { 1: 'st', 2: 'nd', 3: 'rd' }[number % 10] || 'th';
-  return `${number}${suffix}`;
+  return t('write.ordinal', { count: number, ordinal: true });
 }
 
 function sum(numbers) {
@@ -212,9 +212,11 @@ export function createWordFlow(elements) {
       if (hasVerdict) {
         slot.type = 'button';
         const verdict = passedPerChar[index]
-          ? `got it${retried ? ` on the ${ordinal(retriesPerChar[index] + 1)} try` : ''}`
-          : 'missed';
-        slot.title = `${char}: ${verdict}. Tap to change.`;
+          ? retried
+            ? t('write.gotItOnTry', { ordinal: ordinal(retriesPerChar[index] + 1) })
+            : t('write.gotIt')
+          : t('write.missed');
+        slot.title = t('write.slotTitle', { char, verdict });
         slot.setAttribute('aria-label', slot.title);
         slot.addEventListener('click', () => setVerdict(index, !passedPerChar[index]));
       }
@@ -286,7 +288,7 @@ export function createWordFlow(elements) {
     const char = document.createElement('span');
     char.lang = wordRow.lang;
     char.textContent = chars[position];
-    button.append(mark, ' ', char, passed ? ' right' : ' missed');
+    button.append(mark, ' ', char, ` ${t(passed ? 'write.right' : 'write.missed')}`);
     const index = position;
     button.addEventListener('click', () => {
       if (passedPerChar[index] !== passed) {
@@ -344,7 +346,7 @@ export function createWordFlow(elements) {
   function showArrows() {
     skipButton.classList.toggle('unavailable', !canSkip());
     backButton.classList.toggle('unavailable', !canGoBack());
-    const label = backTarget() === -1 && canGoBackACard() ? 'Go back to the card before' : 'Go back to the character before';
+    const label = t(backTarget() === -1 && canGoBackACard() ? 'write.backToCard' : 'write.backToCharacter');
     backButton.setAttribute('aria-label', label);
     backButton.title = label;
   }
@@ -358,12 +360,15 @@ export function createWordFlow(elements) {
     strokeCountElement.textContent = `${strokeNumber}/${totalStrokes}`;
     strokeCountElement.hidden = Boolean(options.hideStrokeCount);
     const mistakes = carriedMistakes + currentMistakes;
-    const status = !started && mistakes === 0 ? 'Write the first stroke' : describeMistakes(mistakes);
+    const status = !started && mistakes === 0 ? t('write.firstStroke') : describeMistakes(mistakes);
     // While practicing, the line says so, so that it is not taken for the
     // card's own result; short, or on a small phone it wraps beside the
     // boxes and moves the writing area down.
     if (practicing) {
-      statusElement.textContent = !started && mistakes === 0 ? 'Practice' : `Practice · ${status.toLowerCase()}`;
+      statusElement.textContent =
+        !started && mistakes === 0
+          ? t('write.practice')
+          : t('write.practiceStatus', { status: describeMistakes(mistakes, true) });
       return;
     }
     statusElement.textContent = status;
@@ -448,10 +453,10 @@ export function createWordFlow(elements) {
         tapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
         orderNote.hidden = order !== 'mainland';
         hideProgress();
-        statusElement.textContent = `Practice · ${describeMistakes(totalMistakes).toLowerCase()}`;
+        statusElement.textContent = t('write.practiceStatus', { status: describeMistakes(totalMistakes, true) });
         // Back to the character still being written, as after a real one.
         if (!wordFinished()) {
-          nextButton.textContent = 'Next';
+          nextButton.textContent = t('study.nextButton');
           nextButton.hidden = false;
         }
         renderVerdictButtons();
@@ -494,7 +499,7 @@ export function createWordFlow(elements) {
       nextButton.hidden = true;
       orderNote.hidden = true;
       hideProgress();
-      statusElement.textContent = 'Watch the stroke order…';
+      statusElement.textContent = t('write.watch');
     },
     // A swipe up on the writing area (gestures.js).
     onWipe: startOver,
@@ -506,17 +511,19 @@ export function createWordFlow(elements) {
     renderWordRow();
     hideProgress();
     statusElement.textContent = skippedPerChar[position]
-      ? 'Skipped'
+      ? t('write.skipped')
       : describeMistakes(mistakesPerChar[position]) +
-        (passedPerChar[position] && retriesPerChar[position] > 0 ? ` · ${ordinal(retriesPerChar[position] + 1)} try` : '');
+        (passedPerChar[position] && retriesPerChar[position] > 0
+          ? ` · ${t('write.onTry', { ordinal: ordinal(retriesPerChar[position] + 1) })}`
+          : '');
 
     if (!wordFinished()) {
-      nextButton.textContent = 'Next';
+      nextButton.textContent = t('study.nextButton');
       nextButton.hidden = false;
       return;
     }
     if (chars.length > 1) {
-      statusElement.textContent = `Word done · ${describeMistakes(sum(mistakesPerChar)).toLowerCase()}`;
+      statusElement.textContent = t('write.wordDone', { status: describeMistakes(sum(mistakesPerChar), true) });
     }
     if (options.continueLabel) {
       nextButton.textContent = options.continueLabel;
@@ -605,7 +612,7 @@ export function createWordFlow(elements) {
   function setOutlineVisible(visible) {
     outlineVisible = visible;
     quiz.setOutlineVisible(visible);
-    outlineButton.textContent = visible ? 'Hide outline' : 'Show outline';
+    outlineButton.textContent = t(visible ? 'write.hideOutline' : 'study.outlineButton');
     if (visible && chars.length > 0 && !practicing) {
       peekedPerChar[position] = true;
       showArrows();
@@ -801,7 +808,7 @@ export function createWordFlow(elements) {
       const skipped = typed.filter((char, index) => data[index] === null && !/\p{P}/u.test(char));
 
       noteElement.textContent =
-        skipped.length > 0 ? `No stroke data for ${skipped.join(' ')}, so skipped.` : '';
+        skipped.length > 0 ? t('write.noStrokeData', { chars: skipped.join(' ') }) : '';
       if (usable.length === 0) {
         return false;
       }

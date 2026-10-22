@@ -3,6 +3,7 @@
 
 import { describeReading } from './tones.js';
 import { faceArrow, BACK } from './faceArrow.js';
+import { t } from './text.js';
 
 // A tap right after the answer appears is probably the same tap that revealed
 // it; ignore taps for this long.
@@ -12,8 +13,8 @@ import { faceArrow, BACK } from './faceArrow.js';
 const TAP_TO_CONTINUE_DELAY_MS = 200;
 
 const HINTS = {
-  meaning: 'Tap to show the meaning',
-  pinyin: 'Tap to show the reading',
+  meaning: 'recall.tapMeaning',
+  pinyin: 'recall.tapReading',
 };
 
 function paragraph(className, text) {
@@ -91,9 +92,9 @@ export function createRecallCard(cardFace) {
       const wordElement = paragraph(Array.from(text).length > 6 ? 'face-word long' : 'face-word', text);
       // Tells the browser which regional font to use for the characters.
       wordElement.lang = options.script === 'traditional' ? 'zh-Hant-TW' : 'zh-Hans-CN';
-      cardFace.replaceChildren(wordElement, paragraph('face-hint', HINTS[options.ask]));
+      cardFace.replaceChildren(wordElement, paragraph('face-hint', t(HINTS[options.ask])));
       if (options.backToCard) {
-        const back = faceArrow('recall-back-button', 'Go back to the card before', BACK);
+        const back = faceArrow('recall-back-button', t('write.backToCard'), BACK);
         back.addEventListener('click', () => options.backToCard());
         cardFace.append(back);
       }

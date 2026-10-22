@@ -6,6 +6,7 @@ import { TONE_LABELS, describeReading } from './tones.js';
 import { recognizeToneMark } from './toneMark.js';
 import { fillMixed, langFor } from './lang.js';
 import { faceArrow, BACK, FORWARD } from './faceArrow.js';
+import { t } from './text.js';
 
 // After a right answer, the next character comes up by itself after this long.
 const MOVE_ON_AFTER_MS = 500;
@@ -99,8 +100,8 @@ export function createToneFlow(elements) {
   // The arrows (faceArrow.js): back to the character before, and on past
   // this one. Put on the card's face with each question, since the face is
   // refilled.
-  const backArrow = faceArrow('tone-back-button', 'Go back to the character before', BACK);
-  const skipArrow = faceArrow('tone-skip-button', 'Skip this character (counts as right)', FORWARD);
+  const backArrow = faceArrow('tone-back-button', t('write.backToCharacter'), BACK);
+  const skipArrow = faceArrow('tone-skip-button', t('tone.skip'), FORWARD);
 
   // "What are tones?", under what to do while asking (the owner, 2026-10-21,
   // after tester 3, who had almost no Chinese). On the card's face, which is
@@ -111,7 +112,7 @@ export function createToneFlow(elements) {
   tonesLink.type = 'button';
   tonesLink.id = 'tones-link';
   tonesLink.className = 'link-button face-link';
-  tonesLink.textContent = 'What are tones?';
+  tonesLink.textContent = t('tone.whatAreTones');
   tonesLink.addEventListener('pointerdown', (event) => event.stopPropagation());
   tonesLink.addEventListener('pointerup', (event) => event.stopPropagation());
   tonesLink.addEventListener('click', () => onWhatAreTones());
@@ -124,7 +125,7 @@ export function createToneFlow(elements) {
 
   function showArrows() {
     backArrow.classList.toggle('unavailable', !(state === 'asking' && (position > 0 || canGoBackACard())));
-    const label = position === 0 ? 'Go back to the card before' : 'Go back to the character before';
+    const label = t(position === 0 ? 'write.backToCard' : 'write.backToCharacter');
     backArrow.setAttribute('aria-label', label);
     backArrow.title = label;
     skipArrow.classList.toggle('unavailable', !(state === 'asking' && chars.length > 1));
@@ -207,9 +208,9 @@ export function createToneFlow(elements) {
     cardFace.replaceChildren(
       asked,
       exampleMarks(),
-      paragraph('face-hint tone-ask', 'Draw one of these here'),
+      paragraph('face-hint tone-ask', t('tone.drawHere')),
       // In two columns (a screen held sideways) the buttons are to the left.
-      paragraph('face-hint', document.documentElement.dataset.layout === 'wide' ? 'or use the buttons on the left' : 'or use the buttons below'),
+      paragraph('face-hint', t(document.documentElement.dataset.layout === 'wide' ? 'tone.orButtonsLeft' : 'tone.orButtonsBelow')),
       // Only for someone who has graded few tone cards yet (review.js).
       ...(current.offerHelp ? [tonesLink] : []),
       ink,
@@ -219,11 +220,11 @@ export function createToneFlow(elements) {
     showArrows();
     // "Tone of 你 (1 of 2)": the character named, and the count for a word
     // with the same one twice (谢谢). The owner's wording, 2026-10-16.
-    const practice = practicing ? 'Practice · ' : '';
     if (chars.length > 1) {
-      fillMixed(statusElement, `${practice}Tone of ${chars[position]} (${position + 1} of ${chars.length})`, current.script);
+      const which = { char: chars[position], position: position + 1, count: chars.length };
+      fillMixed(statusElement, t(practicing ? 'tone.practiceToneOf' : 'tone.toneOf', which), current.script);
     } else {
-      statusElement.textContent = `${practice}Which tone?`;
+      statusElement.textContent = t(practicing ? 'tone.practiceWhichTone' : 'tone.whichTone');
     }
   }
 
@@ -268,7 +269,7 @@ export function createToneFlow(elements) {
   // Shows the word with its reading and meaning, and how it was answered.
   function showResult() {
     const wrong = passedPerChar.filter((passed) => !passed).length;
-    statusElement.textContent = wrong === 0 ? 'All tones right' : `${wrong} wrong`;
+    statusElement.textContent = wrong === 0 ? t('tone.allRight') : t('tone.wrong', { count: wrong });
     const described = describeReading(current.reading);
     const parts = [faceWord(chars.join('')), paragraph('face-pinyin', described.main)];
     if (described.other) {
@@ -283,14 +284,11 @@ export function createToneFlow(elements) {
     );
     const listedFirst = formatPinyin(current.answers.map((answer) => answer.syllable).join(''));
     if (wrong > 0) {
-      parts.push(paragraph('face-note missed', `You answered ${answered}.`));
+      parts.push(paragraph('face-note missed', t('tone.youAnswered', { answer: answered })));
     } else if (variantPerChar.includes(true)) {
       // Accepted, but not what is listed: say so, so the listed tone is learned.
       parts.push(
-        paragraph(
-          'face-note',
-          `You answered ${answered}: accepted as a regional or neutral-tone variant of ${listedFirst}.`,
-        ),
+        paragraph('face-note', t('tone.variant', { answer: answered, listed: listedFirst })),
       );
     }
     cardFace.replaceChildren(...parts);
@@ -353,7 +351,7 @@ export function createToneFlow(elements) {
     } else {
       state = 'wrong';
       tapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
-      statusElement.textContent = `Not ${TONE_LABELS[tone]}. Tap to continue.`;
+      statusElement.textContent = t('tone.not', { tone: TONE_LABELS[tone] });
       nextButton.hidden = false;
     }
   }
@@ -364,7 +362,7 @@ export function createToneFlow(elements) {
     drawing = null;
     const tone = recognizeToneMark(points, ink.getBoundingClientRect().width / zoomOf());
     if (tone === null) {
-      statusElement.textContent = 'Mark not recognized. Try again, or use the buttons.';
+      statusElement.textContent = t('tone.notRecognized');
       clearInkTimer = setTimeout(() => showInk([]), CLEAR_UNRECOGNIZED_AFTER_MS);
     } else {
       answer(tone);
