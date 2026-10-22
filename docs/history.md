@@ -8,7 +8,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 - **Built:** see the roadmap's "Tester 4's feedback" just below: the outline bug, no Chinese in a writing card's meaning, lists filled in from the dictionary, HSK 3.0 named as a version, a setting for the mistake count, a line on what a card is, the word page's top, OpenDyslexic, the Progress tab's charts for screen readers. Unit tests and all browser tests pass.
 - **The owner to look at:** the word page (`local/tester4/word-page-before.png`, `-after.png`) and OpenDyslexic (`local/tester4/opendyslexic-*.png`, against `device-font-lesson-small-phone.png`).
-- **To talk over first:** the bigger prompt, the way on after the first card, a goal of cards, and adding a sentence and its word (the owner thinks the first three were misread).
+- **Built after:** the bolder prompt by the writing area (B). **To talk over first:** the way on after the first card, a goal of cards, and adding a sentence and its word (the owner thinks the first three were misread).
 - **Corrected:** the SIL Open Font License is not GPL-compatible in the FSF's list (said wrongly when asking); the font is kept as separate files, like the stroke data (`CLAUDE.md`, Licensing).
 - **To release** when the owner wants: a "What's new" entry covering these and the earlier "1 word" fixes.
 
@@ -68,7 +68,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - [x] **OpenDyslexic** as a setting (the owner's choice; `docs/interface.md`). It moves the writing area 15 to 40px down in lessons (pictures `local/tester4/opendyslexic-*.png`). **The owner to look at it.**
 - [x] **The Progress tab with a screen reader:** each chart a slider saying the day in words (`docs/cards.md`). Not tried with VoiceOver or TalkBack.
 - **To talk over with the owner** (2026-10-22: "1, 2 and 4 may have been misunderstood"), nothing built:
-  - [ ] **The prompt was too small** when asked to write 你; they began writing the wrong character (perhaps 您 from the meaning, now gone).
+  - [x] **The prompt was too small** (the owner: shoved up at the top, not bold, not obviously the task): bold, bigger and just above the writing area (B, 2026-10-22; `docs/cards.md`).
   - [ ] **After the one card, didn't see there was more to do.**
   - [ ] **A goal of a set number of cards** to study.
   - [ ] **Added the sentence but not the word**, and was confused by adding the sentence to a deck in the extra details. Perhaps the add-word button beside the add-sentence button.

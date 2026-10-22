@@ -586,6 +586,32 @@ button.icon-button.no-sound {
   font-size: var(--size-title);
 }
 
+/* The prompt: bold and a size up, and just above the boxes and the writing
+   area, the pinyin's line (empty until shown) moved above it (tester 4,
+   2026-10-21: up under the kind of card it read as a heading, not as what
+   to write; the owner chose this, B of two, on 2026-10-22). Its line keeps
+   the height it had at the smaller size, so the writing area doesn't move
+   (docs/pitfalls.md): one line of 1.25 times this size is 1.5 times the old
+   one. The rows are placed with `order` (.review-header is a column). */
+#prompt-pinyin {
+  order: 1;
+}
+
+#prompt-meaning {
+  order: 2;
+  font-size: var(--size-big);
+  font-weight: 700;
+}
+
+#prompt-meaning.clamped {
+  line-height: 1.25;
+  max-height: 1.25em;
+}
+
+.review-header .lesson-row {
+  order: 3;
+}
+
 /* Text cut off after a few lines, with "…" (clamp.js adds a button that
    shows the rest). The three odd-looking lines are how browsers spell it. */
 .clamped {
@@ -718,9 +744,12 @@ main.focused .top-bar {
    there is anything on them (a new word's first look has both on the card
    instead), so that the card below is at the same height on every kind of
    card and at every step of a lesson. An empty line has no height by itself. */
-#prompt-meaning,
 #prompt-pinyin {
   min-height: 1.5em;
+}
+
+#prompt-meaning {
+  min-height: calc(1.5 * var(--size-title));
 }
 
 /* The same for the buttons that come and go beside the kind of card. */
@@ -740,6 +769,9 @@ main.focused .top-bar {
 #prompt-meaning.with-sentence {
   display: block;
   max-height: none;
+  /* The sentence under it is the bigger thing here; the meaning keeps its
+     old size, bold, so the card is as tall as before. */
+  font-size: var(--size-title);
 }
 
 #prompt-meaning.with-sentence .prompt-text {
