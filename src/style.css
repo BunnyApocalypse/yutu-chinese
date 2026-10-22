@@ -2953,6 +2953,34 @@ html:has(dialog[open]) {
   color: var(--muted);
 }
 
+/* "Add to my words" at the bottom edge of a dictionary word's page
+   (showAdding in wordPage.js): a line of its own above the other buttons,
+   the deck beside it, narrowing before it wraps on a small phone. */
+.page-add-word {
+  flex-basis: 100%;
+}
+
+.page-add-word-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-small);
+}
+
+.page-add-word-row button {
+  flex-shrink: 0;
+}
+
+.page-add-word-row select {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.page-add-word .note {
+  margin: var(--space-tiny) 0 0;
+  text-align: center;
+}
+
 .page-add-sentence select {
   flex: 0 1 auto;
   min-width: 0;

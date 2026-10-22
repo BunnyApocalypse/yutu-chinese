@@ -109,6 +109,8 @@ export function createWordPage({
   const editButton = byId('word-page-edit');
   const practiceButton = byId('word-page-practice');
   const removeButton = byId('word-page-remove');
+  // The bar at the page's bottom edge for adding a dictionary word (showAdding).
+  const addBar = byId('word-page-add');
   const lessonButton = byId('word-page-lesson');
 
   // Beside Practice (tester 2's R6; the owner, 2026-10-18): a word or
@@ -283,8 +285,9 @@ export function createWordPage({
     const adding = element('div', 'page-add-sentence');
     const deckSelect = deckChooser(t('page.deckForSentence'), shown.word);
     // Worded so that it is plain a card is made (the owner, 2026-10-14:
-    // "Study this sentence in" did not say so).
-    const addButton = element('button', 'small', t('page.add'));
+    // "Study this sentence in" did not say so), and that it is the sentence
+    // being added, not the word (tester 4, 2026-10-21).
+    const addButton = element('button', 'small', t('page.addSentence'));
     addButton.type = 'button';
     const said = element('p', 'note');
     addButton.addEventListener('click', async () => {
@@ -395,11 +398,16 @@ export function createWordPage({
 
   // For a word that is not one of yours: a way to add it to a deck (the
   // owner, 2026-10-15), in place of being told to type it on a deck's page.
+  // In the bar at the page's bottom edge, always in view, "Add to my words"
+  // with the deck beside it (tester 4, 2026-10-21, added the example
+  // sentence under the tip, its Add the one in view, and took it for the
+  // word; the owner chose this, B of two, 2026-10-22). Returns what goes in
+  // the bar.
   // The word gets the dictionary's meaning as a word typed on a deck's page
   // does (addEntry). With several readings, the one to add is chosen; the
   // first is the one tapped in the Words tab, or else the likeliest.
   function showAdding(entries) {
-    const adding = element('div', 'page-add-sentence page-add-word');
+    const adding = element('div', 'page-add-word-row');
     let readingSelect = null;
     if (entries.length > 1) {
       readingSelect = element('select', 'deck-select');
@@ -411,7 +419,7 @@ export function createWordPage({
       });
     }
     const deckSelect = deckChooser(t('page.deckForWord'));
-    const addButton = element('button', 'small', t('page.add'));
+    const addButton = element('button', 'small primary', t('page.addToMyWords'));
     addButton.type = 'button';
     const said = element('p', 'note');
     said.setAttribute('role', 'status');
@@ -432,13 +440,7 @@ export function createWordPage({
         show({ word, addedTo: deckSelect.value });
       }
     });
-    adding.append(
-      ...(readingSelect
-        ? [element('span', '', t('page.addReadingStart')), readingSelect, element('span', '', t('page.addReadingEnd'))]
-        : [element('span', '', t('page.addToWordsIn'))]),
-      deckSelect,
-      addButton,
-    );
+    adding.append(addButton, ...(readingSelect ? [readingSelect] : []), deckSelect);
     return [adding, said];
   }
 
@@ -509,6 +511,8 @@ export function createWordPage({
   async function show(target) {
     closePeek();
     const settings = getSettings();
+    // What goes in the bar for adding a dictionary word, if it is one.
+    let adding = null;
     // The word as it is stored now: what this was called with may be a copy
     // from before something on the page changed it.
     // A dictionary entry tapped (target.entry) is one of your words only if
@@ -577,7 +581,7 @@ export function createWordPage({
         parts.push(meaning);
       }
       if (entries.length > 0) {
-        parts.push(...showAdding(entries));
+        adding = showAdding(entries);
       } else {
         parts.push(element('p', 'hint', t('page.notAnywhere')));
       }
@@ -625,6 +629,8 @@ export function createWordPage({
       parts.unshift(added);
     }
     body.replaceChildren(...parts);
+    addBar.replaceChildren(...(adding || []));
+    addBar.hidden = !adding;
     scroller.scrollTop = 0;
     backButton.hidden = trail.length < 2;
     editButton.hidden = !shown.word;

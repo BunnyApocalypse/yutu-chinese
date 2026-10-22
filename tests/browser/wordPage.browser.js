@@ -76,8 +76,9 @@ describe('the word page', { concurrency: false }, () => {
     assert.match(await textOf(page, '#word-page-body .page-meaning'), /^mén: .*gate/);
     // It can be added to a deck from here, in either of its two readings
     // (the word and the surname), the likeliest first.
-    assert.match(await textOf(page, '#word-page-body .page-add-word'), /^Add.*to your words, in/);
-    assert.deepEqual(await page.evaluate(texts('.page-add-word select:first-of-type option')), ['mén', 'Mén']);
+    // In the bar at the page's bottom edge, beside the other buttons.
+    assert.equal(await textOf(page, '#word-page-add button'), 'Add to my words');
+    assert.deepEqual(await page.evaluate(`[...document.querySelectorAll('#word-page-add select:first-of-type option')].map((option) => option.textContent)`), ['mén', 'Mén']);
     assert.equal(await isShown(page, 'word-page-edit'), false);
     assert.equal(await isShown(page, 'word-page-back'), true);
     await tap(page, 'word-page-back');
