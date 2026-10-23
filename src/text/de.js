@@ -323,6 +323,11 @@ export default {
   'import.replace': 'Alles auf diesem Gerät ersetzen',
   'import.explained':
     '<b>Zusammenführen</b> behält, was auf diesem Gerät ist, und fügt hinzu, was die Sicherung hat: zum Lernen auf zwei Geräten. Zuvor wird eine Sicherung dieses Geräts in deinen Downloads gespeichert, falls du zurückwillst.<br /><b>Ersetzen</b> wirft weg, was auf diesem Gerät ist, und setzt die Sicherung an seine Stelle.',
+  'import.preparing': 'Sicherung wird vorbereitet …',
+  'import.saving': 'Speichern: {saved} von {total} Einträgen. Lass die App offen, bis es fertig ist.',
+  'import.unfinishedQuestion': 'Der letzte Import wurde nicht fertig',
+  'import.unfinishedDetail':
+    'Die App wurde geschlossen, während eine Sicherung gespeichert wurde, deshalb ist nur ein Teil davon auf diesem Gerät: Wörter, Karten oder Wiederholungen können fehlen. Importiere die Sicherung noch einmal (Einstellungen, Deine Daten und Sicherungen) und lass die App offen, bis es fertig ist.',
   'common.close': 'Schließen',
   'common.cancel': 'Abbrechen',
   // The study screen: Review, Learn and Free practice (index.html)

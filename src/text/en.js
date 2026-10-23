@@ -328,6 +328,11 @@ export default {
   'import.replace': 'Replace everything on this device',
   'import.explained':
     '<b>Combine</b> keeps what is on this device and adds what the backup has: for studying on two devices. A backup of this device is saved to your downloads first, in case you want to go back.<br /><b>Replace</b> throws away what is on this device and puts the backup in its place.',
+  'import.preparing': 'Getting the backup ready…',
+  'import.saving': 'Saving: {saved} of {total} records. Keep the app open until it is done.',
+  'import.unfinishedQuestion': 'The last import did not finish',
+  'import.unfinishedDetail':
+    'The app was closed while a backup was being saved, so only part of it is on this device: words, cards or reviews may be missing. Import the backup again (Settings, Your data and backups) and keep the app open until it is done.',
   'common.close': 'Close',
   'common.cancel': 'Cancel',
 

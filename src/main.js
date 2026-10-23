@@ -1,7 +1,7 @@
 // Entry point: sets up the page, the three tabs (Review, Free practice and
 // Words), settings and backups.
 
-import { getAll, putAll, getSetting, setSetting, removeWord, removeDecks, renameWord, replaceEverything } from './db.js';
+import { getAll, putAll, getSetting, setSetting, removeWord, removeDecks, renameWord, replaceEverything, IMPORT_UNFINISHED } from './db.js';
 import { allCardIds } from './session.js';
 import { OLD_BUILT_IN_WORD_IDS } from './oldBuiltInWords.js';
 import { createWordFlow } from './wordFlow.js';
@@ -37,7 +37,7 @@ import { createWhatsNew } from './whatsNew.js';
 import { createStreakScreen } from './streakScreen.js';
 import { createProgressPanel } from './progressPanel.js';
 import { setUpTesterSettings } from './testerSettings.js';
-import { applyText, t, formatList } from './text.js';
+import { applyText, t, formatList, formatNumber } from './text.js';
 
 // The page's own text, in the learner's language (src/text.js), before
 // anything else is set up.
@@ -694,13 +694,35 @@ importFile.addEventListener('change', async () => {
 
 byId('import-cancel-button').addEventListener('click', () => importDialog.close());
 
+// While the backup is being saved, the panel stays open with its buttons off,
+// and says how far it has got: a big backup takes a while on a slow device.
+let importSaving = false;
+const IMPORT_BUTTONS = ['import-combine-button', 'import-replace-button', 'import-cancel-button'];
+function startSaving() {
+  importSaving = true;
+  for (const id of IMPORT_BUTTONS) {
+    byId(id).disabled = true;
+  }
+  byId('import-note').textContent = t('import.preparing');
+}
+function showSaving(saved, total) {
+  byId('import-note').textContent = t('import.saving', { saved: formatNumber(saved), total: formatNumber(total) });
+}
+// Esc would close the panel; the "cancel" event lets the app say no to that.
+importDialog.addEventListener('cancel', (event) => {
+  if (importSaving) {
+    event.preventDefault();
+  }
+});
+
 byId('import-combine-button').addEventListener('click', async () => {
+  startSaving();
   // What is on the device is saved as a file first: combining cannot be undone.
   downloadBackup(onDevice, '-before-combining');
   // Worked out again from the database as it is now, in case something was
   // studied in another tab since the panel opened.
   const { data } = mergeBackups(await buildBackup(), chosenBackup);
-  await replaceEverything(data);
+  await replaceEverything(data, showSaving);
   // Start afresh from the combined data.
   window.location.reload();
 });
@@ -714,7 +736,8 @@ byId('import-replace-button').addEventListener('click', async () => {
   if (!confirmed) {
     return;
   }
-  await restoreBackup(chosenBackup);
+  startSaving();
+  await restoreBackup(chosenBackup, showSaving);
   // Start afresh from the restored data.
   window.location.reload();
 });
@@ -826,6 +849,12 @@ async function applyReadingFixes() {
 }
 
 async function startUp() {
+  // An import that was cut off halfway (replaceEverything in db.js) left only
+  // part of the backup. Said every time the app starts, until an import
+  // finishes.
+  if (await getSetting(IMPORT_UNFINISHED, false)) {
+    await tell(t('import.unfinishedQuestion'), t('import.unfinishedDetail'));
+  }
   await keepOldDefaults();
   await removeOldBuiltInWords();
   await fileListWordsInDecks();
