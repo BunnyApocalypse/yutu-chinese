@@ -192,5 +192,46 @@ describe('importing a backup', { concurrency: false }, () => {
     await tap(page, 'import-replace-button');
     await waitForRestart(page);
     assert.deepEqual((await stored(page, 'words')).map((word) => word.id), ['貓|mao1']);
+    assert.equal((await stored(page, 'settings')).some((setting) => setting.key === 'importUnfinished'), false);
+  });
+
+  it('saves a big backup in parts', async () => {
+    // More reviews than replaceEverything (db.js) saves in one transaction.
+    const reviews = Array.from({ length: 4500 }, (_, i) => ({ ...backup.reviews[0], id: `review-${i}`, time: backup.reviews[0].time - i }));
+    await chooseBackup(page, { ...backup, reviews });
+    await waitUntil(page, `document.getElementById('import-dialog').open`, 'the import panel');
+    await page.evaluate(`${ANSWER_YES}; window.loadedBefore = true`);
+    await tap(page, 'import-replace-button');
+    await waitForRestart(page);
+    assert.equal((await stored(page, 'reviews')).length, 4500);
+    assert.equal((await stored(page, 'settings')).some((setting) => setting.key === 'importUnfinished'), false);
+  });
+
+  it('says so when the last import did not finish', async () => {
+    // As replaceEverything leaves it when the app is closed halfway.
+    await page.evaluate(`new Promise((resolve, reject) => {
+      const request = indexedDB.open('hanzi-trainer');
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const tx = request.result.transaction(['settings'], 'readwrite');
+        tx.objectStore('settings').put({ key: 'importUnfinished', value: Date.now() });
+        tx.oncomplete = () => {
+          request.result.close();
+          resolve();
+        };
+      };
+    })`);
+    await page.evaluate('window.loadedBefore = true');
+    await page.send('Page.reload');
+    let shown = false;
+    for (let attempt = 0; attempt < 100 && !shown; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Fails while the page is between two loads; then it is looked at again.
+      shown = await page.evaluate(`!window.loadedBefore && document.getElementById('confirm-dialog').open`).catch(() => false);
+    }
+    assert.ok(shown, 'the message came up');
+    assert.equal(await textOf(page, 'confirm-question'), 'The last import did not finish');
+    await tap(page, 'confirm-yes');
+    await waitForRestart(page);
   });
 });

@@ -323,6 +323,11 @@ export default {
   'import.replace': 'Sostituisci tutto su questo dispositivo',
   'import.explained':
     '<b>Unisci</b> mantiene ciò che c\'è su questo dispositivo e aggiunge ciò che ha il backup: per studiare su due dispositivi. Prima viene salvato nei tuoi download un backup di questo dispositivo, nel caso tu voglia tornare indietro.<br /><b>Sostituisci</b> elimina ciò che c\'è su questo dispositivo e mette al suo posto il backup.',
+  'import.preparing': 'Preparazione del backup…',
+  'import.saving': 'Salvataggio: {saved} di {total} elementi. Tieni l\'app aperta finché non ha finito.',
+  'import.unfinishedQuestion': 'L\'ultima importazione non è finita',
+  'import.unfinishedDetail':
+    'L\'app è stata chiusa mentre salvava un backup, quindi su questo dispositivo ce n\'è solo una parte: potrebbero mancare parole, carte o ripassi. Importa di nuovo il backup (Impostazioni, I tuoi dati e i backup) e tieni l\'app aperta finché non ha finito.',
   'common.close': 'Chiudi',
   'common.cancel': 'Annulla',
   // The study screen: Review, Learn and Free practice (index.html)

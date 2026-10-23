@@ -326,19 +326,53 @@ export function setSetting(key, value) {
   return putAll('settings', [{ key, value }]);
 }
 
+// How many records replaceEverything saves in one transaction. A backup can
+// hold hundreds of thousands of reviews (a Skritter history), and saved in
+// one transaction they froze a tablet and ran Firefox on Android out of
+// memory (2026-10-23). In parts, the browser draws the page between them.
+const RECORDS_AT_A_TIME = 2000;
+
+// The setting that says an import was started and has not finished. It is
+// saved first and removed last, so it is only there if the app was closed
+// (or the browser gave up) halfway; startUp in main.js then says so.
+export const IMPORT_UNFINISHED = 'importUnfinished';
+
 // Empties every store and fills it from `data`, an object with one list of
-// records per store name. Used when a backup is imported. Because it is one
-// transaction, a failure halfway leaves the old data untouched.
-export function replaceEverything(data) {
-  return transaction(STORES, 'readwrite', (tx) => {
+// records per store name. Used when a backup is imported.
+//
+// onProgress(saved, total) is called after each part, with counts of records.
+//
+// The stores are emptied and the settings saved together, first; the other
+// records follow in parts. A failure halfway leaves part of the backup, with
+// IMPORT_UNFINISHED among the settings.
+export async function replaceEverything(data, onProgress = () => {}) {
+  const settings = data.settings.filter((setting) => setting.key !== IMPORT_UNFINISHED);
+  const total = STORES.reduce((sum, storeName) => sum + data[storeName].length, 0);
+  let saved = settings.length;
+  await transaction(STORES, 'readwrite', (tx) => {
     for (const storeName of STORES) {
-      const store = tx.objectStore(storeName);
-      store.clear();
-      for (const record of data[storeName]) {
-        store.put(record);
-      }
+      tx.objectStore(storeName).clear();
     }
+    for (const setting of settings) {
+      tx.objectStore('settings').put(setting);
+    }
+    tx.objectStore('settings').put({ key: IMPORT_UNFINISHED, value: Date.now() });
   });
+  onProgress(saved, total);
+  for (const storeName of STORES.filter((name) => name !== 'settings')) {
+    const records = data[storeName];
+    for (let start = 0; start < records.length; start += RECORDS_AT_A_TIME) {
+      const part = records.slice(start, start + RECORDS_AT_A_TIME);
+      await transaction([storeName], 'readwrite', (tx) => {
+        for (const record of part) {
+          tx.objectStore(storeName).put(record);
+        }
+      });
+      saved += part.length;
+      onProgress(saved, total);
+    }
+  }
+  await transaction(['settings'], 'readwrite', (tx) => tx.objectStore('settings').delete(IMPORT_UNFINISHED));
 }
 
 // A random ID for records that have no natural one (reviews). Random rather

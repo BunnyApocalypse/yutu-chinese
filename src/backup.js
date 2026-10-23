@@ -76,12 +76,13 @@ export function describeBackup(data) {
 }
 
 // Replaces everything in the database with the backup's contents.
-export function restoreBackup(data) {
+// onProgress: as for replaceEverything in db.js.
+export function restoreBackup(data, onProgress) {
   checkBackup(data);
   // Stores an older backup does not have are left empty.
   const everything = {};
   for (const storeName of STORES) {
     everything[storeName] = data[storeName] || [];
   }
-  return replaceEverything(everything);
+  return replaceEverything(everything, onProgress);
 }

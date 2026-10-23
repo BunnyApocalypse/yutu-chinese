@@ -49,6 +49,7 @@ const DEVICE_SETTINGS = [
   'storageMessageShown',
   'storageReminderOff',
   'theme',
+  'importUnfinished',
 ];
 
 const changedAt = (record) => (record && record.changedAt) || 0;
@@ -164,6 +165,18 @@ function mergeWords(mine, theirs, currentId, removedAt) {
   return words;
 }
 
+// Adds `item` to the list under `key` in a Map of lists. The list is added
+// to, not copied: copying it each time grew slow with a backup of 181,000
+// reviews.
+function addTo(map, key, item) {
+  const list = map.get(key);
+  if (list) {
+    list.push(item);
+  } else {
+    map.set(key, [item]);
+  }
+}
+
 // The cards of the combined words.
 //
 // words:     the combined words, by ID
@@ -178,15 +191,14 @@ function mergeCards(words, reviews, sides, removedAt) {
   const reviewsOf = new Map();
   for (const review of reviews) {
     if (words.has(review.wordId)) {
-      reviewsOf.set(groupOf(review), [...(reviewsOf.get(groupOf(review)) || []), review]);
+      addTo(reviewsOf, groupOf(review), review);
     }
   }
   // Each side's cards by group, so that they need not be searched each time.
   const cardsOf = new Map(sides.map((side) => [side, new Map()]));
   for (const side of sides) {
     for (const card of side.cards) {
-      const known = cardsOf.get(side).get(groupOf(card)) || [];
-      cardsOf.get(side).set(groupOf(card), [...known, card]);
+      addTo(cardsOf.get(side), groupOf(card), card);
     }
   }
   const storedCards = (side, group) => cardsOf.get(side).get(group) || [];
@@ -218,7 +230,7 @@ function mergeCards(words, reviews, sides, removedAt) {
     const reviewsOfCard = new Map();
     for (const review of counted) {
       const id = cardIdFor(word, review.type, review.script === 'simplified' ? 'simplified' : 'traditional');
-      reviewsOfCard.set(id, [...(reviewsOfCard.get(id) || []), review]);
+      addTo(reviewsOfCard, id, review);
     }
     for (const [id, cardReviews] of reviewsOfCard) {
       const times = cardReviews.map((review) => review.time);
