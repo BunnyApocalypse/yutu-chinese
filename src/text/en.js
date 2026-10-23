@@ -1235,7 +1235,6 @@ export default {
     other: '{count} words aren’t in the app’s dictionary, so they will be left out.',
   },
   'skritter.checkTitle': { one: 'Check {count} word', other: 'Check {count} words' },
-  'skritter.section': 'Section {number}',
   'skritter.sections': { one: '{count} section', other: '{count} sections' },
   'skritter.listAbout': '{words} in {sections}: {sample}…',
   'skritter.listNamePlaceholder': 'Name (empty: no deck)',

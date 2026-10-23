@@ -44,8 +44,13 @@ import { t } from './text.js';
 // Skritter's kinds of card as the app's.
 const TYPE_OF_PART = { rune: 'writing', rdng: 'pinyin', tone: 'tone', defn: 'meaning' };
 
-// The deck everything goes into, with the learner's own lists inside it.
+// The deck everything goes into, with the learner's own lists inside it,
+// and the name of a section of one of Skritter's lists, which the file
+// doesn't name: "Section 1", as Skritter names the learner's own. Saved as
+// decks' names, so not translated (as the ready-made decks' aren't): an
+// import in another language would make other decks.
 const DECK_NAME = 'Skritter';
+const sectionName = (number) => `Section ${number}`;
 
 // ---- The file ----
 
@@ -353,7 +358,7 @@ function listsOfWords(data, words, listsWithSection, sectionFirst, levels) {
             .map((section) => ({ id: section.id, name: section.name }))
         : [...used]
             .sort((a, b) => sectionFirst.get(a) - sectionFirst.get(b))
-            .map((sectionId, index) => ({ id: sectionId, name: t('skritter.section', { number: index + 1 }) }));
+            .map((sectionId, index) => ({ id: sectionId, name: sectionName(index + 1) }));
       const characters = new Set(listWords.map((word) => word.characters));
       return {
         id,

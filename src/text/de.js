@@ -607,6 +607,7 @@ export default {
   'decks.createDeck': 'Stapel erstellen',
   'decks.nameOfTheDeck': 'Name des Stapels',
   'decks.ankiImportButton': 'Stapel aus Anki importieren',
+  'decks.skritterImportButton': 'Aus Skritter importieren',
   'decks.addClose': 'Fertig',
   'decks.oneWord': 'Ein Wort',
   'decks.aListOfWords': 'Eine Wortliste',
@@ -1216,6 +1217,51 @@ export default {
   'anki.ankiImportNow': 'Importieren',
   'anki.theyWerenTBrought': 'Sie wurden nicht übernommen.',
   'anki.ankiDoneButton': 'Fertig',
+
+  // Importing from Skritter (skritterImportForm.js)
+  'skritter.notAnExport': 'Das ist nicht die .zip-Datei, die Skritter mit deinen Daten schickt.',
+  'skritter.words': { one: '{count} Wort', other: '{count} Wörter' },
+  'skritter.inFile': 'In der Datei: {words}, die du in Skritter gelernt hast, {cards}, {reviews}.',
+  'skritter.notInDictionary': {
+    one: '{count} Wort steht nicht im Wörterbuch der App und wird ausgelassen.',
+    other: '{count} Wörter stehen nicht im Wörterbuch der App und werden ausgelassen.',
+  },
+  'skritter.checkTitle': { one: '{count} Wort prüfen', other: '{count} Wörter prüfen' },
+  'skritter.sections': { one: '{count} Abschnitt', other: '{count} Abschnitten' },
+  'skritter.listAbout': '{words} in {sections}: {sample}…',
+  'skritter.listNamePlaceholder': 'Name (leer: kein Stapel)',
+  'skritter.groupHeading': '{characters} in Skritter · {reviews}',
+  'skritter.candidate': '{pinyin} · {meaning}',
+  'skritter.noDictionary': 'Das Wörterbuch konnte nicht geladen werden, und der Import braucht es für Pinyin und Bedeutung jedes Worts.',
+  'skritter.newWords': { one: '{count} neues Wort übernommen.', other: '{count} neue Wörter übernommen.' },
+  'skritter.wordsThere': {
+    one: '{count} Wort, das du schon hattest, wurde zum Stapel Skritter hinzugefügt.',
+    other: '{count} Wörter, die du schon hattest, wurden zum Stapel Skritter hinzugefügt.',
+  },
+  'skritter.withSchedule': {
+    one: '{count} Karte behält ihren Zeitplan aus Skritter, mit {reviews} Verlauf.',
+    other: '{count} Karten behalten ihren Zeitplan aus Skritter, mit {reviews} Verlauf.',
+  },
+  'skritter.suspended': {
+    one: '{count} Wort, das du in Skritter gesperrt hattest, ist ausgesetzt.',
+    other: '{count} Wörter, die du in Skritter gesperrt hattest, sind ausgesetzt.',
+  },
+  'skritter.leftOut': { one: '{count} Wort wurde ausgelassen', other: '{count} Wörter wurden ausgelassen' },
+
+  // Importing from Skritter (index.html)
+  'skritter.importFromSkritter': 'Aus Skritter importieren',
+  'skritter.bringYourStudyOver':
+    'Bring dein Lernen aus Skritter mit: deine Wörter und von jeder Karte den Zeitplan und den Verlauf der Wiederholungen, damit Karten fällig sind, wann Skritter es sagte.',
+  'skritter.fileButton': '.zip-Datei wählen',
+  'skritter.howToGetIt':
+    'Skritter hat keine Export-Schaltfläche: Bitte den Support um eine Kopie deiner Daten. Er schickt eine .zip-Datei; wähle sie so, wie sie kam.',
+  'skritter.becomes':
+    'Jedes Wort kommt mit Pinyin und Bedeutung aus dem Wörterbuch der App, denn die Datei von Skritter enthält beides nicht. Deine Wiederholungen in Skritter zählen für alle vier Karten: Bedeutung, Pinyin, Töne und Schreiben.',
+  'skritter.yourLists': 'Deine Skritter-Listen',
+  'skritter.listsHint':
+    'Die Datei von Skritter nennt die Listen nicht, die Skritter gemacht hat, etwa HSK-Stufen und Lehrbücher. Gib jeder einen Namen, um daraus einen Stapel in „Skritter“ zu machen, mit einem Stapel für jeden ihrer Abschnitte; ein Name ist schon eingetragen, wo die Wörter einer Liste fast alle einer HSK- oder TOCFL-Stufe angehören. Wörter von Listen ohne Namen kommen in „Skritter“ selbst.',
+  'skritter.checkHint':
+    'Die Datei von Skritter nennt ein Wort nur mit seinen vereinfachten Schriftzeichen, und diese können mehr als ein Wort sein. Jedes wird mit deinem Skritter-Verlauf übernommen: Nimm den Haken bei denen weg, die du nicht gelernt hast.',
 
   // The introduction (welcome.js), tips (tips.js), Basics of Chinese (basics.js)
   'welcome.pronunciationMainland': 'Festlandchina',
