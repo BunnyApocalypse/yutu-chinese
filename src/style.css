@@ -3736,6 +3736,34 @@ button.deck-open {
   font-size: var(--size-small);
 }
 
+/* "Import from Skritter" on a line of its own under the Anki one. */
+.anki-import-row .link-button {
+  display: block;
+  margin: 0 auto;
+}
+
+/* Importing from Skritter (skritterImportForm.js): the words its file
+   doesn't settle, each Skritter word's characters over a checkbox for each
+   word they could be. */
+.skritter-group {
+  margin-bottom: var(--space-medium);
+}
+
+.skritter-group-heading {
+  margin: 0 0 var(--space-tiny);
+  font-weight: 600;
+}
+
+/* The box beside the first line of a long meaning, at its own size. */
+.skritter-group label {
+  align-items: flex-start;
+}
+
+.skritter-group input[type='checkbox'] {
+  flex: none;
+  margin-top: 2px;
+}
+
 /* min-width: a fieldset is otherwise never narrower than its widest list. */
 .anki-dialog fieldset.setting {
   min-width: 0;

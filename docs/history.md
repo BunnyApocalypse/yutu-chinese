@@ -4,6 +4,13 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the session of 2026-10-23 (the Skritter import; committed on `main`, not pushed).**
+
+- **The owner's Skritter data arrived** (2026-10-22), unpacked into the git-ignored `exports/skritter-2026-10-22/`. **Built:** "Import from Skritter" in the Decks tab's "+ New / import deck" panel (`docs/skritter.md`): in the app, with the whole review history, and every word an unsettled Skritter word could be ticked for the learner to check (the owner's three choices, 2026-10-23). Unit and browser tests on a made-up export (`tests/fixtures/skritter/`).
+- **On the owner's file** (in a test browser, the pictures in the git-ignored `local/skritter/`): 2,401 words, 9,604 cards with Skritter's schedule, 186,374 reviews copied (180,079 answers, some copied to more than one word until the learner unticks), 180 groups to check, 150 words left out (zhuyin symbols, radicals, phrases); about 10 s to import.
+- **The owner to try:** importing their file in the app (best into a fresh copy, or the test copy, since their study is still in Skritter); the check list; whether the due dates look like Skritter's.
+- **Next, if wanted** (`docs/skritter.md`, "Not built"): the words left out as radicals or sentences; Skritter in the introduction's starting level.
+
 **Handover from the third session of 2026-10-22 (Italian and German interfaces drafted; released to `stable` the same day).**
 
 - **Built:** a Language choice at the top of Settings › Look and sound (English, Italiano, Deutsch); until one is chosen the app follows the browser's language (`docs/interface.md`). `src/text/it.js` and `de.js`, all 1,121 texts, informal *tu* / *du*, no dictionaries (the owner). Drafted by Sonnet agents from a shared glossary (`docs/translations.md`), then checked: `missing-text.js` clean for both, a unit test that each translation keeps the English's gaps, forms, markup and Chinese, a browser test of the switch, and pictures of the main screens at 360 and 390 wide (some labels shortened to fit, listed in `docs/translations.md`).
@@ -131,7 +138,6 @@ Agreed with the owner on 2026-10-18. **The first release** means the first users
 
 - Checking by hand with VoiceOver or TalkBack (`docs/interface.md`, "Accessibility").
 - Other languages after Italian and German (`docs/goals.md`, "Translations"): a file in `src/text/`, a line in `LANGUAGE_NAMES` and `LOCALES` (`src/text.js`), and the language's rules in `docs/translations.md`.
-- The Skritter import, if the GDPR data arrives (the owner doesn't want the word list imported without its scheduling).
 - A mode for going from 繁體 to 簡體 or back, by character rather than by word (having written 們 → 们 once, the learner isn't asked again in 他們, 你們).
 - Mainland, Hong Kong or Taiwan traditional forms (needs stroke data for the other two); longer shortcuts (more strokes joined, reordered or dropped).
 - Stroke data for the traditional characters animCJK doesn't cover.

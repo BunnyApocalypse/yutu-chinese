@@ -613,6 +613,7 @@ export default {
   'decks.createDeck': 'Create deck',
   'decks.nameOfTheDeck': 'Name of the deck',
   'decks.ankiImportButton': 'Import a deck from Anki',
+  'decks.skritterImportButton': 'Import from Skritter',
   'decks.addClose': 'Done',
   'decks.oneWord': 'One word',
   'decks.aListOfWords': 'A list of words',
@@ -1224,6 +1225,45 @@ export default {
   'anki.ankiImportNow': 'Import',
   'anki.theyWerenTBrought': 'They weren’t brought over.',
   'anki.ankiDoneButton': 'Done',
+
+  // Importing from Skritter (skritterImportForm.js)
+  'skritter.notAnExport': 'It isn’t the .zip file Skritter sends with your data.',
+  'skritter.words': { one: '{count} word', other: '{count} words' },
+  'skritter.inFile': 'In the file: {words} you studied in Skritter, {cards}, {reviews}.',
+  'skritter.notInDictionary': {
+    one: '{count} word isn’t in the app’s dictionary, so it will be left out.',
+    other: '{count} words aren’t in the app’s dictionary, so they will be left out.',
+  },
+  'skritter.checkTitle': { one: 'Check {count} word', other: 'Check {count} words' },
+  'skritter.groupHeading': '{characters} in Skritter · {reviews}',
+  'skritter.candidate': '{pinyin} · {meaning}',
+  'skritter.noDictionary': 'The dictionary could not be fetched, and the import needs it for every word’s pinyin and meaning.',
+  'skritter.newWords': { one: 'Brought over {count} new word.', other: 'Brought over {count} new words.' },
+  'skritter.wordsThere': {
+    one: '{count} word you already had was added to the Skritter deck.',
+    other: '{count} words you already had were added to the Skritter deck.',
+  },
+  'skritter.withSchedule': {
+    one: '{count} card keeps its schedule from Skritter, with {reviews} of history.',
+    other: '{count} cards keep their schedule from Skritter, with {reviews} of history.',
+  },
+  'skritter.suspended': {
+    one: '{count} word you had banned in Skritter is suspended.',
+    other: '{count} words you had banned in Skritter are suspended.',
+  },
+  'skritter.leftOut': { one: '{count} word was left out', other: '{count} words were left out' },
+
+  // Importing from Skritter (index.html)
+  'skritter.importFromSkritter': 'Import from Skritter',
+  'skritter.bringYourStudyOver':
+    'Bring your study over from Skritter: your words, and every card’s schedule and review history, so cards are due when Skritter said.',
+  'skritter.fileButton': 'Choose the .zip file',
+  'skritter.howToGetIt':
+    'Skritter has no export button: ask its support for a copy of your data. They send a .zip file; choose it as it came.',
+  'skritter.becomes':
+    'Each word comes over with its pinyin and meaning from the app’s dictionary, since Skritter’s file has neither. Your Skritter reviews count for all four cards: meaning, pinyin, tone and writing.',
+  'skritter.checkHint':
+    'Skritter’s file names a word only by its simplified characters, and these could be more than one word. Each is brought over with your Skritter history: untick the ones you didn’t study.',
 
   // The introduction (welcome.js), tips (tips.js), Basics of Chinese (basics.js)
   'welcome.pronunciationMainland': 'Mainland China',

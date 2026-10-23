@@ -122,10 +122,10 @@ export function nextToLearn(words, cards) {
 // learned again in this one, as if new: after someone who studied simplified
 // switches to traditional, say. Such cards are limited to newWordsPerDay a
 // day (less the words learned that day) and come in the order they were
-// first learned. So are the cards a word brought over from Anki has no
-// history for (its `importedAt`, see ankiImport.js), such as its writing
-// card: otherwise a thousand words from Anki would bring a thousand new
-// writing cards on the first day.
+// first learned. So are the cards a word brought over from Anki or
+// Skritter has no history for (its `importedAt`, see ankiImport.js and
+// skritterImport.js), such as its writing card: otherwise a thousand words
+// from Anki would bring a thousand new writing cards on the first day.
 //
 // A word's new cards come one at a time, each kind in turn (meaning, pinyin,
 // tone, writing), but each word starts at a different kind

@@ -24,6 +24,7 @@ import { createSentenceForm } from './addSentenceForm.js';
 import { createListForm } from './addListForm.js';
 import { createReadyDecks } from './readyDecks.js';
 import { createAnkiImport } from './ankiImportForm.js';
+import { createSkritterImport } from './skritterImportForm.js';
 import { createAddWordForm } from './addWordForm.js';
 import { charactersElement, mixedSpan, entryRow, whenHeld } from './wordRows.js';
 import { fillMixed } from './lang.js';
@@ -344,11 +345,11 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     dictionaryLoader,
   );
   const readyDecks = createReadyDecks({ words: () => words, getSettings, afterChange: () => afterChange() }, dictionaryLoader);
-  // Importing from Anki (ankiImportForm.js), under the decks.
-  createAnkiImport(
-    { words: () => words, decks: () => decks, cards: () => cards, getSettings, afterChange: () => afterChange() },
-    dictionaryLoader,
-  );
+  // Importing from Anki and Skritter (ankiImportForm.js,
+  // skritterImportForm.js), under the decks.
+  const importShared = { words: () => words, decks: () => decks, cards: () => cards, getSettings, afterChange: () => afterChange() };
+  createAnkiImport(importShared, dictionaryLoader);
+  createSkritterImport(importShared, dictionaryLoader);
 
   // Adding one word (addWordForm.js).
   const addWordForm = createAddWordForm(

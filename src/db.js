@@ -16,8 +16,8 @@
 //                          to come up (leeches.js); `startedOverAt` has, by
 //                          kind of card, when it was last started over
 //                          (cardManager.js). `importedAt` is when a word
-//                          whose cards came from Anki was brought over
-//                          (ankiImport.js).
+//                          whose cards came from Anki or Skritter was
+//                          brought over (ankiImport.js, skritterImport.js).
 //                          New words are introduced in the order of `order`,
 //                          lowest first; it may be negative.
 //                          `decks` lists the IDs of the decks the word is in.
@@ -46,7 +46,10 @@
 //                          each such card comes one record that is not a
 //                          review but the schedule Anki gave it:
 //                          `importedSchedule` in place of `grade` (replay
-//                          in scheduler.js). The cardId of a review made
+//                          in scheduler.js). Reviews from Skritter are
+//                          the same, with "skritter-…" IDs and
+//                          `fromSkritter: true` (skritterImport.js).
+//                          The cardId of a review made
 //                          before 2026-10-13 may be the plain id of a card
 //                          since moved to its "#simplified" id (see
 //                          scriptCards.js).

@@ -299,10 +299,12 @@
                 <button class="small primary" type="submit" data-t="decks.createDeck"></button>
               </div>
             </form>
-            <!-- Bringing decks over from Anki (ankiImportForm.js). Only on the
-                 front page (decksPanel.js): it makes decks of its own. -->
+            <!-- Bringing decks over from Anki (ankiImportForm.js) or Skritter
+                 (skritterImportForm.js). Only on the front page
+                 (decksPanel.js): they make decks of their own. -->
             <p id="anki-import-row" class="anki-import-row">
               <button id="anki-import-button" class="link-button" type="button" data-t="decks.ankiImportButton"></button>
+              <button id="skritter-import-button" class="link-button" type="button" data-t="decks.skritterImportButton"></button>
             </p>
             <button data-same-as="new-deck-cancel" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
           </dialog>
@@ -968,6 +970,51 @@
         <p id="anki-note" role="status" class="note"></p>
         <button id="anki-cancel-button" type="button" hidden></button>
         <button data-same-as="anki-cancel-button" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
+      </dialog>
+
+      <!-- Importing from Skritter, in three steps (skritterImportForm.js):
+           choosing the file, checking the words that could be more than one,
+           and what was brought over. -->
+      <dialog id="skritter-dialog" class="settings-panel anki-dialog">
+        <h2 data-t="skritter.importFromSkritter"></h2>
+        <section id="skritter-choose-step">
+          <p data-t="skritter.bringYourStudyOver"></p>
+          <div class="buttons">
+            <button id="skritter-file-button" class="small primary" type="button" data-t="skritter.fileButton"></button>
+            <input id="skritter-file" type="file" accept=".zip" hidden />
+          </div>
+          <p class="hint" data-t="skritter.howToGetIt"></p>
+        </section>
+        <section id="skritter-check-step" hidden>
+          <p id="skritter-summary"></p>
+          <p data-t="skritter.becomes"></p>
+          <!-- The words Skritter's file doesn't settle, a checkbox for each
+               word they could be (skritterImportForm.js). -->
+          <fieldset id="skritter-check" class="setting">
+            <legend id="skritter-check-title"></legend>
+            <p class="hint" data-t="skritter.checkHint"></p>
+            <div id="skritter-choices"></div>
+          </fieldset>
+          <p data-t="anki.looksRightPressImport"></p>
+          <div class="buttons">
+            <button id="skritter-import-now" class="small primary" type="button" data-t="anki.ankiImportNow"></button>
+          </div>
+        </section>
+        <section id="skritter-done-step" hidden>
+          <div id="skritter-result" class="anki-result"></div>
+          <!-- The words the dictionary doesn't have. -->
+          <section id="skritter-left-out" class="anki-left-out" hidden>
+            <p id="skritter-left-out-title" class="anki-fold-title"></p>
+            <p id="skritter-left-out-words" class="anki-problem-notes"></p>
+            <p class="hint" data-t="ankiReason.adviceWord"></p>
+          </section>
+          <div class="buttons">
+            <button id="skritter-done-button" class="small primary" type="button" data-t="anki.ankiDoneButton"></button>
+          </div>
+        </section>
+        <p id="skritter-note" role="status" class="note"></p>
+        <button id="skritter-cancel-button" type="button" hidden></button>
+        <button data-same-as="skritter-cancel-button" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 
       <!-- The introduction shown the first time the app is opened: a few screens,
