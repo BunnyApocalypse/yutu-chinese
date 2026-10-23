@@ -12,6 +12,21 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-10-23',
+    items: [
+      'Importing a big backup no longer freezes slower phones and tablets. The panel counts what has been saved; keep the app open until it is done.',
+      'If an import is cut off halfway, the app says so when it next opens, so you can import the backup again.',
+    ],
+    it: [
+      'Importare un backup grande non blocca più telefoni e tablet più lenti. Il pannello conta ciò che è stato salvato; tieni l’app aperta finché non ha finito.',
+      'Se un’importazione si interrompe a metà, l’app lo dice alla prossima apertura, così puoi importare di nuovo il backup.',
+    ],
+    de: [
+      'Eine große Sicherung zu importieren, legt langsamere Handys und Tablets nicht mehr lahm. Das Fenster zählt mit, was gespeichert ist; lass die App offen, bis es fertig ist.',
+      'Bricht ein Import mittendrin ab, sagt die App es beim nächsten Öffnen, damit du die Sicherung noch einmal importieren kannst.',
+    ],
+  },
+  {
     id: '2026-10-22-2',
     items: [
       'The app can now be used in Italian or German: choose in Settings › Look and sound › Language. Until you choose, it follows your browser\'s language.',
