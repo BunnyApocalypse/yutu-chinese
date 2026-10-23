@@ -8,6 +8,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 - **The owner's Skritter data arrived** (2026-10-22), unpacked into the git-ignored `exports/skritter-2026-10-22/`. **Built:** "Import from Skritter" in the Decks tab's "+ New / import deck" panel (`docs/skritter.md`): in the app, with the whole review history, and every word an unsettled Skritter word could be ticked for the learner to check (the owner's three choices, 2026-10-23). Unit and browser tests on a made-up export (`tests/fixtures/skritter/`).
 - **On the owner's file** (in a test browser, the pictures in the git-ignored `local/skritter/`): 2,401 words, 9,604 cards with Skritter's schedule, 186,374 reviews copied (180,079 answers, some copied to more than one word until the learner unticks), 180 groups to check, 150 words left out (zhuyin symbols, radicals, phrases); about 10 s to import.
+- **Added the same day** (the owner asked why their HSK and textbook decks were missing: the file names Skritter's lists only by number): a name box for each of Skritter's lists, suggested where a list is nearly all one HSK or TOCFL level (six of thirteen on the owner's file), and a deck for every section.
 - **The owner to try:** importing their file in the app (best into a fresh copy, or the test copy, since their study is still in Skritter); the check list; whether the due dates look like Skritter's.
 - **Next, if wanted** (`docs/skritter.md`, "Not built"): the words left out as radicals or sentences; Skritter in the introduction's starting level.
 

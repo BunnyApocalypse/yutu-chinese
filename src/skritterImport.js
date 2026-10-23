@@ -16,8 +16,14 @@
 //                    only, not for each answer.
 //   UserVocab        what the learner changed about a word: banned (left
 //                    out of study, here suspended) and their own meaning.
-//   VocabListInfo    the lists the learner made, with each word's
-//                    traditional form.
+//   VocabListInfo    the lists the learner made, with their sections and
+//                    each word's traditional form.
+//
+// Skritter's own lists (HSK, textbooks) are in the file only as numbers:
+// each item names the lists and sections it is in (`vocabListIds`,
+// `sectionIds`), but nothing names the lists. The learner names them in
+// the check step, with a name suggested where a list's words are nearly
+// all one level of a ready-made list (the owner, 2026-10-23).
 //
 // What the file lacks: the words' pinyin and meanings. A word is named only
 // by its simplified characters and a number ("zh-发-0"), so both come from
@@ -32,7 +38,7 @@ import { checkWord, newWordRecords, scriptFor } from './words.js';
 import { wordId } from './wordList.js';
 import { cardIdFor } from './session.js';
 import { emptyState } from './scheduler.js';
-import { READY_MADE_LISTS, newDeckRecord, withDeck } from './decks.js';
+import { READY_MADE_LISTS, newDeckRecord, withDeck, withoutDecks } from './decks.js';
 import { t } from './text.js';
 
 // Skritter's kinds of card as the app's.
@@ -190,6 +196,17 @@ export function describeSkritter(data, context) {
   const byVocab = new Map();
   let cards = 0;
   let reviews = 0;
+  // For Skritter's own lists: the lists each section is found with, to
+  // tell which list it is a section of, and when it was first studied, to
+  // put the sections in order (the file has neither their names nor their
+  // order).
+  // The learner's own lists are left out of this: the file has their
+  // sections (a word in one of them and in a list of Skritter's names a
+  // section of each).
+  const listsWithSection = new Map(); // section ID → Set of list IDs
+  const sectionFirst = new Map(); // section ID → time
+  const ownListIds = new Set(data.lists.map((list) => list.id));
+  const ownSectionIds = new Set(data.lists.flatMap((list) => (list.sections || []).map((section) => section.id)));
   for (const item of data.items) {
     const history = answers.get(item.id) || [];
     if (history.length === 0 && !item.reviews) {
@@ -201,10 +218,20 @@ export function describeSkritter(data, context) {
     const word = byVocab.get(vocabId) || { vocabId, characters, styles: new Set(), reviews: 0, first: Infinity };
     word.styles.add(item.style);
     word.reviews += history.length;
-    word.first = Math.min(word.first, history.length > 0 ? history[0].time : item.created * 1000);
+    const first = history.length > 0 ? history[0].time : item.created * 1000;
+    word.first = Math.min(word.first, first);
+    word.listIds = new Set([...(word.listIds || []), ...(item.vocabListIds || [])]);
+    word.sectionIds = new Set([...(word.sectionIds || []), ...(item.sectionIds || [])]);
+    for (const sectionId of (item.sectionIds || []).filter((id) => !ownSectionIds.has(id))) {
+      const lists = new Set((item.vocabListIds || []).filter((id) => !ownListIds.has(id)));
+      const seen = listsWithSection.get(sectionId);
+      listsWithSection.set(sectionId, seen ? new Set([...seen].filter((listId) => lists.has(listId))) : lists);
+      sectionFirst.set(sectionId, Math.min(sectionFirst.get(sectionId) ?? Infinity, first));
+    }
     byVocab.set(vocabId, word);
   }
   const words = [...byVocab.values()].sort((a, b) => a.first - b.first);
+  const lists = listsOfWords(data, words, listsWithSection, sectionFirst, context.readyLevels || []);
   for (const word of words) {
     const entries = context.dictionary
       ? candidatesFor(word.characters, word.styles, traditionalOf.get(word.vocabId), context.dictionary)
@@ -222,8 +249,129 @@ export function describeSkritter(data, context) {
       .filter((result) => result.word)
       .map((result) => ({ ...result.word, id: wordId(result.word) }));
     delete word.first;
+    delete word.listIds;
+    delete word.sectionIds;
   }
-  return { words, cards, reviews };
+  return { words, cards, reviews, lists };
+}
+
+// The levels of the ready-made lists, to suggest a name for a list of
+// Skritter's from.
+//
+// readyLists: [{ list, entries }], `list` from READY_MADE_LISTS (decks.js)
+//             and `entries` its words (parseReadyList in words.js)
+//
+// Returns [{ name, simplified: Set of the level's words }], named as the
+// app names the level's deck ("HSK 2 (3.0)", "TOCFL Novice 1").
+export function readyLevels(readyLists) {
+  const levels = [];
+  for (const { list, entries } of readyLists) {
+    for (const level of list.levels) {
+      const simplified = new Set(entries.filter((entry) => entry.level === level).map((entry) => entry.simplified));
+      levels.push({ name: list.levelName ? list.levelName(level) : `${list.name} ${level}`, simplified });
+    }
+  }
+  return levels;
+}
+
+// A list nearly all of whose words studied are in one ready-made level is
+// taken to be that level: 9 in 10 or more, of 10 words or more (on the
+// owner's file, six lists at 96% to 100%, the others below 70%). Of two
+// levels the one most of the words are in; HSK 3.0 first where equal.
+const SUGGEST_SHARE = 0.9;
+const SUGGEST_MIN_WORDS = 10;
+export function suggestName(characters, levels) {
+  if (characters.size < SUGGEST_MIN_WORDS) {
+    return '';
+  }
+  let best = null;
+  for (const level of levels) {
+    const share = [...characters].filter((word) => level.simplified.has(word)).length / characters.size;
+    if (share >= SUGGEST_SHARE && (!best || share > best.share)) {
+      best = { name: level.name, share };
+    }
+  }
+  return best ? best.name : '';
+}
+
+// The lists the words studied are in, and where in them each word is.
+//
+// Fills in each word's `places`: [{ listId, sectionId }], `sectionId` null
+// where the section isn't known.
+//
+// Returns, the lists with the most words first: [{ id, own, name,
+// suggestion, words, sample, sections: [{ id, name }] }]. `own`: made by
+// the learner, with its name and its sections' names and order from the
+// file. Skritter's: `name` null, `suggestion` a name or '', its sections
+// those found with it alone, in the order first studied, numbered
+// ("Section 1"). `sample`: the characters of its first few words.
+function listsOfWords(data, words, listsWithSection, sectionFirst, levels) {
+  const own = new Map(data.lists.map((list) => [list.id, list]));
+  // The learner's lists: each Skritter word's section, from the rows. A
+  // word studied in traditional is under `tradVocabId`.
+  const ownPlace = new Map(); // Skritter word → [{ listId, sectionId }]
+  for (const list of data.lists) {
+    for (const section of list.sections || []) {
+      for (const row of section.rows || []) {
+        for (const vocabId of new Set([row.vocabId, row.tradVocabId])) {
+          ownPlace.set(vocabId, [...(ownPlace.get(vocabId) || []), { listId: list.id, sectionId: section.id }]);
+        }
+      }
+    }
+  }
+  const ownerOf = (sectionId) => {
+    const lists = listsWithSection.get(sectionId);
+    return lists && lists.size === 1 ? [...lists][0] : null;
+  };
+  const wordsOf = new Map(); // list ID → its words, in the order first studied
+  const sectionsOf = new Map(); // list ID → Set of section IDs used
+  for (const word of words) {
+    const places = [...(ownPlace.get(word.vocabId) || [])];
+    for (const listId of word.listIds) {
+      if (places.some((place) => place.listId === listId)) {
+        continue;
+      }
+      const sectionId = own.has(listId) ? null : [...word.sectionIds].find((id) => ownerOf(id) === listId) || null;
+      places.push({ listId, sectionId });
+    }
+    word.places = places;
+    for (const { listId, sectionId } of places) {
+      wordsOf.set(listId, [...(wordsOf.get(listId) || []), word]);
+      if (sectionId) {
+        sectionsOf.set(listId, new Set([...(sectionsOf.get(listId) || []), sectionId]));
+      }
+    }
+  }
+  return [...wordsOf]
+    .map(([id, listWords]) => {
+      const used = sectionsOf.get(id) || new Set();
+      const ownList = own.get(id);
+      const sections = ownList
+        ? [...(ownList.sections || [])]
+            .filter((section) => used.has(section.id))
+            .sort((a, b) => a.position - b.position)
+            .map((section) => ({ id: section.id, name: section.name }))
+        : [...used]
+            .sort((a, b) => sectionFirst.get(a) - sectionFirst.get(b))
+            .map((sectionId, index) => ({ id: sectionId, name: t('skritter.section', { number: index + 1 }) }));
+      const characters = new Set(listWords.map((word) => word.characters));
+      return {
+        id,
+        own: Boolean(ownList),
+        name: ownList ? ownList.name : null,
+        suggestion: ownList ? '' : suggestName(characters, levels),
+        words: characters.size,
+        sample: [...characters].slice(0, 6),
+        sections,
+      };
+    })
+    .sort((a, b) => b.words - a.words);
+}
+
+// The names the check step starts with: each of Skritter's lists its
+// suggested name, or none. A Map from list ID to name.
+export function defaultListNames(description) {
+  return new Map(description.lists.filter((list) => !list.own).map((list) => [list.id, list.suggestion]));
 }
 
 // ---- The import ----
@@ -263,7 +411,9 @@ const isReadyMade = (deck) => READY_MADE_LISTS.some((list) => deck.id === list.i
 //              "<Skritter's characters>><word ID>" ("发>髮|fa4"): Skritter
 //              may have two words with the same characters (发 for 發 and
 //              for 髮), checked together, so a word unticked is left out
-//              of both }
+//              of both; listNames: a Map from the ID of each of Skritter's
+//              lists to the name the learner gave it, '' for none
+//              (defaultListNames) }
 // context:
 //   words, decks: the word and deck records there are
 //   cards:    a Map from card ID to the card records there are
@@ -304,15 +454,16 @@ export function planSkritterImport(data, description, choices, context) {
   const banned = new Map(
     data.vocab.filter((vocab) => vocab.banned && !vocab.unbanned).map((vocab) => [vocab.vocab, vocab.banned_parts || []]),
   );
-  const found = new Map(); // word ID → { word, vocabIds, sources: { type: item } }
+  const found = new Map(); // word ID → { word, vocabIds, places, sources: { type: item } }
   for (const skritterWord of description.words) {
     const kept = skritterWord.candidates.filter((word) => !choices.leftOut.has(`${skritterWord.characters}>${word.id}`));
     if (skritterWord.candidates.length === 0) {
       report.leftOut.push(skritterWord.characters);
     }
     for (const word of kept) {
-      const entry = found.get(word.id) || { word, vocabIds: [], sources: {} };
+      const entry = found.get(word.id) || { word, vocabIds: [], places: [], sources: {} };
       entry.vocabIds.push(skritterWord.vocabId);
+      entry.places.push(...skritterWord.places);
       for (const item of itemsOf.get(skritterWord.vocabId) || []) {
         const type = TYPE_OF_PART[item.part];
         if (type && studied(item) && (!entry.sources[type] || reviewCount(item) > reviewCount(entry.sources[type]))) {
@@ -323,8 +474,12 @@ export function planSkritterImport(data, description, choices, context) {
     }
   }
 
-  // The deck "Skritter", and inside it a deck for each list the learner
-  // made, each made where missing, so importing twice makes no new ones.
+  // The deck "Skritter", inside it a deck for each list named (the
+  // learner's own by Skritter, Skritter's by the learner), and inside each
+  // a deck for each of its sections (the owner, 2026-10-23, even an HSK
+  // level's twenty), each made where missing, so importing twice makes no
+  // new ones. Made in the lists' and sections' order, so the decks are in
+  // that order, and only where a word goes.
   const decks = [...context.decks];
   const newDecks = [];
   function deckNamed(name, parentId) {
@@ -336,15 +491,19 @@ export function planSkritterImport(data, description, choices, context) {
     }
     return deck.id;
   }
-  const listsOf = new Map(); // Skritter word → names of the learner's lists
-  for (const list of data.lists) {
-    for (const section of list.sections || []) {
-      for (const row of section.rows || []) {
-        // A word studied in traditional is under `tradVocabId`.
-        for (const vocabId of new Set([row.vocabId, row.tradVocabId])) {
-          listsOf.set(vocabId, new Set([...(listsOf.get(vocabId) || []), list.name]));
-        }
-      }
+  const nameOf = (list) => (list.own ? list.name : (choices.listNames?.get(list.id) ?? list.suggestion)).trim();
+  const used = new Set([...found.values()].flatMap(({ places }) => places.map((place) => place.listId)));
+  const usedSections = new Set([...found.values()].flatMap(({ places }) => places.map((place) => place.sectionId)));
+  const homeId = found.size > 0 ? deckNamed(DECK_NAME, null) : null;
+  const listDeck = new Map(); // list ID → deck ID
+  const sectionDeck = new Map(); // `${list ID} ${section ID}` → deck ID
+  for (const list of description.lists) {
+    if (!used.has(list.id) || nameOf(list) === '') {
+      continue;
+    }
+    listDeck.set(list.id, deckNamed(nameOf(list), homeId));
+    for (const section of list.sections.filter((candidate) => usedSections.has(candidate.id))) {
+      sectionDeck.set(`${list.id} ${section.id}`, deckNamed(section.name, listDeck.get(list.id)));
     }
   }
 
@@ -358,16 +517,25 @@ export function planSkritterImport(data, description, choices, context) {
   const words = [];
   const reviews = [];
   const cards = [];
-  for (const [id, { vocabIds, sources }] of found) {
+  for (const [id, { vocabIds, places, sources }] of found) {
     let word = existing.get(id) || added.get(id);
     report[existing.has(id) ? 'wordsThere' : 'newWords'] += 1;
-    const homeId = deckNamed(DECK_NAME, null);
-    const listNames = new Set(vocabIds.flatMap((vocabId) => [...(listsOf.get(vocabId) || [])]));
-    for (const name of listNames) {
-      word = withDeck(word, deckNamed(name, homeId));
+    // Its section's deck, or its list's where the section isn't known; in
+    // "Skritter" itself only if in no list named. A word an earlier import
+    // put in "Skritter" moves to its lists' decks, so importing again sorts
+    // the words into lists named since.
+    const deckIds = new Set(
+      places
+        .map(({ listId, sectionId }) => sectionDeck.get(`${listId} ${sectionId}`) || listDeck.get(listId))
+        .filter(Boolean),
+    );
+    if (deckIds.size > 0) {
+      word = withoutDecks(word, new Set([homeId]));
+    } else {
+      deckIds.add(homeId);
     }
-    if (listNames.size === 0) {
-      word = withDeck(word, homeId);
+    for (const deckId of deckIds) {
+      word = withDeck(word, deckId);
     }
     const suspended = new Set(word.suspended || []);
     for (const part of vocabIds.flatMap((vocabId) => banned.get(vocabId) || [])) {

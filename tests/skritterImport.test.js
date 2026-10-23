@@ -6,7 +6,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-import { readSkritterExport, describeSkritter, planSkritterImport, candidatesFor } from '../src/skritterImport.js';
+import {
+  readSkritterExport,
+  describeSkritter,
+  planSkritterImport,
+  candidatesFor,
+  readyLevels,
+  suggestName,
+  defaultListNames,
+} from '../src/skritterImport.js';
+import { READY_MADE_LISTS } from '../src/decks.js';
 import { readDictionary } from '../src/dictionary.js';
 import { replay } from '../src/scheduler.js';
 
@@ -41,8 +50,8 @@ function contextWith(changes = {}) {
   };
 }
 
-const plan = (leftOut = new Set(), changes = {}) =>
-  planSkritterImport(data, description, { leftOut }, contextWith(changes));
+const plan = (leftOut = new Set(), changes = {}, listNames = defaultListNames(description)) =>
+  planSkritterImport(data, description, { leftOut, listNames }, contextWith(changes));
 
 test('the export is read from the zip, without the files a Mac adds', () => {
   assert.equal(data.items.length, 9);
@@ -165,19 +174,82 @@ test('a word unticked is left out', () => {
   assert.ok(cards.some((card) => card.wordId === '發|fa1'));
 });
 
-test("the learner's lists become decks inside Skritter, and banned words are suspended", () => {
+test("the learner's lists become decks inside Skritter, with their sections, and banned words are suspended", () => {
   const { words, decks } = plan();
   assert.deepEqual(
     decks.map((deck) => [deck.id, deck.name, deck.parentId]),
     [
       ['deck-1', 'Skritter', null],
       ['deck-2', 'Textbook', 'deck-1'],
+      ['deck-3', 'Section 1', 'deck-2'],
     ],
   );
   const word = (id) => words.find((candidate) => candidate.id === id);
-  assert.deepEqual(word('學習|xue2xi2').decks, ['deck-2']);
+  assert.deepEqual(word('學習|xue2xi2').decks, ['deck-3']);
   // 发 is in the list too, under the traditional form's Skritter word.
-  assert.deepEqual(word('發|fa1').decks, ['deck-2']);
+  assert.deepEqual(word('發|fa1').decks, ['deck-3']);
+  // Only in a list of Skritter's not named: in "Skritter" itself.
   assert.deepEqual(word('你好|ni3hao3').decks, ['deck-1']);
   assert.deepEqual(word('你好|ni3hao3').suspended, ['meaning', 'writing']);
+});
+
+test("Skritter's lists are found by number, their sections in the order first studied", () => {
+  assert.deepEqual(description.lists, [
+    {
+      id: '5000',
+      own: false,
+      name: null,
+      suggestion: '',
+      words: 3,
+      sample: ['学习', '你好', '谢谢'],
+      sections: [
+        { id: '5001', name: 'Section 1' },
+        { id: '5002', name: 'Section 2' },
+      ],
+    },
+    { id: '100', own: true, name: 'Textbook', suggestion: '', words: 2, sample: ['学习', '发'], sections: [{ id: '200', name: 'Section 1' }] },
+  ]);
+  assert.deepEqual(defaultListNames(description), new Map([['5000', '']]));
+});
+
+test('a list of Skritter’s named becomes a deck, with a deck for each section', () => {
+  const { words, decks } = plan(new Set(), {}, new Map([['5000', ' My course ']]));
+  assert.deepEqual(
+    decks.map((deck) => [deck.id, deck.name, deck.parentId]),
+    [
+      ['deck-1', 'Skritter', null],
+      ['deck-2', 'My course', 'deck-1'],
+      ['deck-3', 'Section 1', 'deck-2'],
+      ['deck-4', 'Section 2', 'deck-2'],
+      ['deck-5', 'Textbook', 'deck-1'],
+      ['deck-6', 'Section 1', 'deck-5'],
+    ],
+  );
+  const word = (id) => words.find((candidate) => candidate.id === id);
+  assert.deepEqual([...word('學習|xue2xi2').decks].sort(), ['deck-3', 'deck-6']);
+  assert.deepEqual(word('你好|ni3hao3').decks, ['deck-4']);
+  assert.deepEqual(word('謝謝|xie4xie5').decks, ['deck-4']);
+});
+
+test('importing again with a list named since moves its words out of "Skritter"', () => {
+  const first = plan();
+  const second = plan(
+    new Set(),
+    { words: first.words, decks: first.decks, cards: new Map(first.cards.map((card) => [card.id, card])) },
+    new Map([['5000', 'My course']]),
+  );
+  const sectionTwo = second.decks.find((deck) => deck.name === 'Section 2');
+  assert.deepEqual(second.words.find((word) => word.id === '你好|ni3hao3').decks, [sectionTwo.id]);
+  assert.equal(second.reviews.length, 0);
+});
+
+test('a name is suggested where nearly all of a list’s words are one ready-made level', () => {
+  const entries = [...'一二三四五六七八九十'].map((simplified, index) => ({ level: index < 9 ? '1' : '2', simplified }));
+  const levels = readyLevels([{ list: READY_MADE_LISTS.find((list) => list.id === 'hsk-3.0'), entries }]);
+  assert.equal(levels[0].name, 'HSK 1 (3.0)');
+  // 9 of 10 words.
+  assert.equal(suggestName(new Set('一二三四五六七八九百'), levels), 'HSK 1 (3.0)');
+  // 8 of 10, and too few words.
+  assert.equal(suggestName(new Set('一二三四五六七八千百'), levels), '');
+  assert.equal(suggestName(new Set('一二三四五六七八九'), levels), '');
 });

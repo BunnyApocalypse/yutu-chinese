@@ -78,6 +78,11 @@ describe('importing from Skritter', { concurrency: false }, () => {
       await textOf(page, 'skritter-summary'),
       'In the file: 5 words you studied in Skritter, 8 cards, 10 reviews. 1 word isn’t in the app’s dictionary, so it will be left out.',
     );
+    // Skritter's list, named nowhere in the file: a box for its name.
+    assert.deepEqual(
+      await page.evaluate(`[...document.querySelectorAll('.skritter-list')].map((row) => [row.querySelector('span').textContent, row.querySelector('input').value])`),
+      [['3 words in 2 sections: 学习, 你好, 谢谢…', '']],
+    );
     // 发: a group with a ticked box for each word it may be, 發 and 髮 among them.
     assert.equal(await textOf(page, 'skritter-check-title'), 'Check 1 word');
     const group = await page.evaluate(`(() => {
@@ -104,6 +109,12 @@ describe('importing from Skritter', { concurrency: false }, () => {
         label.querySelector('input').click();
       }
     })`);
+    // The list named, as a learner types.
+    await page.evaluate(`(() => {
+      const input = document.querySelector('.skritter-list input');
+      input.value = 'My course';
+      input.dispatchEvent(new Event('input'));
+    })()`);
     await tap(page, 'skritter-import-now');
     await waitUntil(page, `!document.getElementById('skritter-done-step').hidden`, 'the result');
     assert.match(
@@ -118,6 +129,12 @@ describe('importing from Skritter', { concurrency: false }, () => {
     const decks = await stored(page, 'decks');
     const skritter = decks.find((deck) => deck.name === 'Skritter');
     assert.ok(decks.some((deck) => deck.name === 'Textbook' && deck.parentId === skritter.id));
+    const course = decks.find((deck) => deck.name === 'My course');
+    assert.equal(course.parentId, skritter.id);
+    assert.deepEqual(
+      decks.filter((deck) => deck.parentId === course.id).map((deck) => deck.name).sort(),
+      ['Section 1', 'Section 2'],
+    );
     const card = (await stored(page, 'cards')).find((candidate) => candidate.id === '學習|xue2xi2#writing');
     assert.equal(card.due, (START + 7 * 86400 + 10 + 20 * 86400) * 1000);
 

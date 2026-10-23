@@ -16,6 +16,11 @@ const WEEK_LATER = START + 7 * DAY;
 // A card ("item"). `vocab` is the word it belongs to, `idVocab` the word
 // named in its own ID, which for a word studied in traditional may differ
 // (Skritter numbers the traditional forms).
+//
+// Lists: '100' is the learner's own (VocabListInfo below), with its section
+// '200'; '5000' is one of Skritter's, named nowhere in the file, with the
+// sections '5001' and '5002'. Each item names its lists and sections.
+const places = (vocabListIds, sectionIds) => ({ vocabListIds, sectionIds });
 function item(idVocab, part, style, fields) {
   return {
     id: `${ACCOUNT}-${idVocab}-${part}`,
@@ -46,22 +51,24 @@ const schedule = (reviews, last, days, stability, difficulty) => ({
   difficulty,
 });
 
+const STUDY = places(['100', '5000'], ['200', '5001']); // 学习: in both lists
+const GREETINGS = places(['5000'], ['5002']);
 const items = [
   // 学习, studied in traditional (學習): all four cards, in both sessions.
-  { ...item('zh-学习-0', 'rune', 'trad', schedule(2, WEEK_LATER + 10, 20, 20.5, 4.2)), vocabIds: ['zh-学习-1'] },
-  { ...item('zh-学习-0', 'rdng', 'trad', schedule(2, START + 50, 3, 3.1, 6.5)), vocabIds: ['zh-学习-1'] },
-  { ...item('zh-学习-0', 'tone', 'trad', schedule(1, WEEK_LATER + 20, 10, 10, 5)), vocabIds: ['zh-学习-1'] },
+  { ...item('zh-学习-0', 'rune', 'trad', schedule(2, WEEK_LATER + 10, 20, 20.5, 4.2)), ...STUDY, vocabIds: ['zh-学习-1'] },
+  { ...item('zh-学习-0', 'rdng', 'trad', schedule(2, START + 50, 3, 3.1, 6.5)), ...STUDY, vocabIds: ['zh-学习-1'] },
+  { ...item('zh-学习-0', 'tone', 'trad', schedule(1, WEEK_LATER + 20, 10, 10, 5)), ...STUDY, vocabIds: ['zh-学习-1'] },
   // Without Skritter's memory: the interval stands in for it.
-  { ...item('zh-学习-0', 'defn', 'trad', { ...schedule(1, WEEK_LATER + 30, 15, 0, 0), stability: null, difficulty: null }), vocabIds: ['zh-学习-1'] },
+  { ...item('zh-学习-0', 'defn', 'trad', { ...schedule(1, WEEK_LATER + 30, 15, 0, 0), stability: null, difficulty: null }), ...STUDY, vocabIds: ['zh-学习-1'] },
   // 你好, the same in both scripts: its meaning studied, its writing never.
-  item('zh-你好-0', 'defn', 'both', schedule(1, START + 100, 4, 4, 5)),
-  item('zh-你好-0', 'rune', 'both', {}),
+  item('zh-你好-0', 'defn', 'both', { ...schedule(1, START + 100, 4, 4, 5), ...GREETINGS }),
+  item('zh-你好-0', 'rune', 'both', GREETINGS),
   // 发: two traditional forms (發 fā, 髮 fà), which the file doesn't settle.
-  { ...item('zh-发-0', 'rdng', 'trad', schedule(1, START + 150, 2, 2, 5)), vocabIds: ['zh-发-1'] },
+  { ...item('zh-发-0', 'rdng', 'trad', schedule(1, START + 150, 2, 2, 5)), ...places(['100'], ['200']), vocabIds: ['zh-发-1'] },
   // A word the dictionary doesn't have.
   item('zh-㐀-0', 'defn', 'both', schedule(1, START + 200, 1, 1, 5)),
   // 谢谢, written in simplified.
-  item('zh-谢谢-0', 'rune', 'simp', schedule(1, START + 250, 5, 5, 5)),
+  item('zh-谢谢-0', 'rune', 'simp', { ...schedule(1, START + 250, 5, 5, 5), ...GREETINGS }),
 ];
 
 const activity = (startedAt, seconds, spent, cards) => ({
@@ -102,7 +109,7 @@ const vocab = [
   { id: `${ACCOUNT}-zh-你好-0`, vocab: 'zh-你好-0', c_defn: '', banned: '2026-02-01T00:00:00.000Z', banned_parts: ['defn', 'rune'], unbanned: false },
 ];
 
-const lists = [
+const ownLists = [
   {
     id: '100',
     name: 'Textbook',
@@ -129,7 +136,7 @@ const write = (name, records) =>
 write('UserItem', items);
 write('ProgressActivity', activities);
 write('UserVocab', vocab);
-write('VocabListInfo', lists);
+write('VocabListInfo', ownLists);
 write('UserSentence', []);
 // What a Mac adds to a zip: a "._" file beside each, without the data.
 fs.mkdirSync(path.join(work, '__MACOSX', path.basename(folder)), { recursive: true });

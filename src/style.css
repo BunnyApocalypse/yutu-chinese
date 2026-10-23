@@ -2696,7 +2696,8 @@ button.primary:active {
 .words-panel input[type='text'],
 .words-panel input[type='search'],
 .words-panel textarea,
-.setting.stacked input {
+.setting.stacked input,
+.skritter-list input {
   width: 100%;
   min-height: var(--tap-small);
   padding: var(--space-small) var(--space-medium);
@@ -3752,6 +3753,14 @@ button.deck-open {
 .skritter-group-heading {
   margin: 0 0 var(--space-tiny);
   font-weight: 600;
+}
+
+/* Each of Skritter's lists: what it holds, then its name box under it. */
+.skritter-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-tiny);
+  margin-bottom: var(--space-medium);
 }
 
 /* The box beside the first line of a long meaning, at its own size. */

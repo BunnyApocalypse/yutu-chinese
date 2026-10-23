@@ -5,7 +5,8 @@
 // skritterImport.js; docs/skritter.md has the owner's decisions.
 
 import { saveImport, randomId } from './db.js';
-import { readSkritterExport, describeSkritter, planSkritterImport } from './skritterImport.js';
+import { readSkritterExport, describeSkritter, planSkritterImport, readyLevels, defaultListNames } from './skritterImport.js';
+import { READY_MADE_LISTS } from './decks.js';
 import { formatPinyin } from './wordList.js';
 import { fillMixed, langFor } from './lang.js';
 import { t, formatList } from './text.js';
@@ -47,10 +48,21 @@ export function createSkritterImport(shared, dictionaryLoader) {
     });
   }
   // The file read, what it holds, and the learner's choices: the words
-  // unticked, as "<Skritter's characters>><word ID>".
+  // unticked, as "<Skritter's characters>><word ID>", and the names given
+  // to Skritter's lists.
   let data = null;
   let description = null;
   const leftOut = new Set();
+  let listNames = new Map();
+
+  // The ready-made lists' levels, to suggest names for Skritter's lists
+  // from (readyLevels in skritterImport.js). A list that can't be fetched
+  // suggests nothing.
+  async function loadReadyLevels() {
+    const lists = READY_MADE_LISTS.filter((list) => list.levelName);
+    const entries = await Promise.all(lists.map((list) => dictionaryLoader.readyEntries(list.id).catch(() => [])));
+    return readyLevels(lists.map((list, index) => ({ list, entries: entries[index] })));
+  }
 
   function showStep(step) {
     for (const name of ['choose', 'check', 'done']) {
@@ -78,7 +90,11 @@ export function createSkritterImport(shared, dictionaryLoader) {
     const button = byId('skritter-file-button');
     await showWorking(t('anki.reading'), button);
     try {
-      const [read] = await Promise.all([readSkritterExport(new Uint8Array(await file.arrayBuffer())), dictionaryLoader.load()]);
+      const [read, levels] = await Promise.all([
+        readSkritterExport(new Uint8Array(await file.arrayBuffer())),
+        loadReadyLevels(),
+        dictionaryLoader.load(),
+      ]);
       data = read;
       if (!dictionaryLoader.get()) {
         note(t('skritter.noDictionary'));
@@ -87,8 +103,10 @@ export function createSkritterImport(shared, dictionaryLoader) {
       description = describeSkritter(data, {
         dictionary: dictionaryLoader.get(),
         meaningDetail: shared.getSettings().meaningDetail,
+        readyLevels: levels,
       });
       leftOut.clear();
+      listNames = defaultListNames(description);
       renderCheck();
       showStep('check');
       note('');
@@ -116,6 +134,8 @@ export function createSkritterImport(shared, dictionaryLoader) {
     ]
       .filter(Boolean)
       .join(' ');
+
+    renderLists();
 
     const groups = new Map(); // characters → { reviews, candidates by ID }
     for (const word of description.words.filter((candidate) => candidate.candidates.length > 1)) {
@@ -173,6 +193,40 @@ export function createSkritterImport(shared, dictionaryLoader) {
     );
   }
 
+  // A box for each of Skritter's lists, which the file doesn't name: its
+  // size and first words, and its name, filled in where the words are
+  // nearly all one ready-made level (the owner, 2026-10-23). A list named
+  // becomes a deck inside "Skritter", with a deck for each section.
+  function renderLists() {
+    const unnamed = description.lists.filter((list) => !list.own);
+    byId('skritter-lists').hidden = unnamed.length === 0;
+    byId('skritter-list-rows').replaceChildren(
+      ...unnamed.map((list) => {
+        const label = document.createElement('label');
+        label.className = 'skritter-list';
+        const about = document.createElement('span');
+        // Skritter's characters are simplified ones.
+        fillMixed(
+          about,
+          t('skritter.listAbout', {
+            words: t('skritter.words', { count: list.words }),
+            sections: t('skritter.sections', { count: list.sections.length }),
+            sample: formatList(list.sample),
+          }),
+          'simplified',
+        );
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.autocomplete = 'off';
+        input.placeholder = t('skritter.listNamePlaceholder');
+        input.value = listNames.get(list.id) || '';
+        input.addEventListener('input', () => listNames.set(list.id, input.value));
+        label.append(about, input);
+        return label;
+      }),
+    );
+  }
+
   byId('skritter-import-now').addEventListener('click', async () => {
     const button = byId('skritter-import-now');
     await showWorking(t('anki.importing'), button);
@@ -180,7 +234,7 @@ export function createSkritterImport(shared, dictionaryLoader) {
       const plan = planSkritterImport(
         data,
         description,
-        { leftOut },
+        { leftOut, listNames },
         {
           words: shared.words(),
           decks: shared.decks(),

@@ -1235,6 +1235,10 @@ export default {
     other: '{count} words aren’t in the app’s dictionary, so they will be left out.',
   },
   'skritter.checkTitle': { one: 'Check {count} word', other: 'Check {count} words' },
+  'skritter.section': 'Section {number}',
+  'skritter.sections': { one: '{count} section', other: '{count} sections' },
+  'skritter.listAbout': '{words} in {sections}: {sample}…',
+  'skritter.listNamePlaceholder': 'Name (empty: no deck)',
   'skritter.groupHeading': '{characters} in Skritter · {reviews}',
   'skritter.candidate': '{pinyin} · {meaning}',
   'skritter.noDictionary': 'The dictionary could not be fetched, and the import needs it for every word’s pinyin and meaning.',
@@ -1262,6 +1266,9 @@ export default {
     'Skritter has no export button: ask its support for a copy of your data. They send a .zip file; choose it as it came.',
   'skritter.becomes':
     'Each word comes over with its pinyin and meaning from the app’s dictionary, since Skritter’s file has neither. Your Skritter reviews count for all four cards: meaning, pinyin, tone and writing.',
+  'skritter.yourLists': 'Your Skritter lists',
+  'skritter.listsHint':
+    'Skritter’s file doesn’t name the lists it made, such as HSK levels and textbooks. Name each one to make it a deck inside “Skritter”, with a deck for each of its sections; a name is filled in where a list’s words are nearly all one HSK or TOCFL level. Words of lists left unnamed go in “Skritter” itself.',
   'skritter.checkHint':
     'Skritter’s file names a word only by its simplified characters, and these could be more than one word. Each is brought over with your Skritter history: untick the ones you didn’t study.',
 
