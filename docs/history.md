@@ -85,7 +85,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - [x] 4. **An old character flashed on the writing area:** emptied as a word or character begins (`blank()` in `src/quiz.js`, `docs/pitfalls.md`).
 - [x] 5. **Pulling down at stroke 4 reloaded the page once:** no pull-to-refresh while a card is up (`docs/pitfalls.md`).
 - [x] 6. **The hold hint:** 0.4 s to hold, the flash about a second (`docs/writing.md`).
-- [ ] 7. **Right and wrong on a tone card** changed by tapping a character's box, exactly as on a writing card (the owner: as far as UX and UI go, if possible), also on a card looked back at.
+- [x] 7. **Right and wrong on a tone card** changed by tapping a character's box, exactly as on a writing card, also on a card looked back at (`docs/cards.md`, "The tone card").
 - [ ] 8. **"…" for Chinese left out of a writing card's meaning** is unclear in Learn: pictures of `[字]` and of a small box, for the owner to choose.
 - [ ] 9. **Writing feels clunky and too strict;** strokes are moved (zoomed) too often; a smallest size for "writing small", so that wrong strokes don't pass as small ones. Tuning `LENIENCY`, `MIN_SCALE` (0.4), `fitsStroke`'s shortest first stroke and `zoomToFit`'s `ROOM`, measured over both stroke data sets first, then the trade-offs shown to the owner.
 - [ ] 11. **Review sometimes shows an empty writing area with no guidance,** more after going back with ‹: reproduce in a browser test first (two `showNext` calls overlapping is a guess).

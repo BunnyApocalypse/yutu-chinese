@@ -2,8 +2,9 @@
 // word (Good, Hard after a mistake or a hint, Again for a missed character),
 // what is saved once a grade is chosen (how long it took too), a meaning
 // card graded from its tap, the Card types setting leaving a kind of card
-// out, "missed" and "right" between the characters of a word, and going
-// back to a card graded to change its grade.
+// out, "missed" and "right" between the characters of a word, a tone's
+// verdict changed by a tap on its box, and going back to a card graded to
+// change its grade.
 //
 // Run with: npm run test:browser
 
@@ -585,6 +586,70 @@ describe('grading in Review', { concurrency: false }, () => {
     await tap(page, 'past-forward-button');
     await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the end of Review again');
   });
+
+  it('changes a tone\'s verdict by a tap on its box, as on a writing card, also on a card looked back at', async () => {
+    // Only 大小's tone card due, with tone cards switched on for this test.
+    await inDatabase(`
+      for (const card of ${JSON.stringify(['大|da4', '小|xiao3', '大小|da4xiao3'].flatMap((id) => ['meaning', 'writing'].map((type) => card(id + '#' + type, id, type, 30 * DAY))))}) {
+        stores.cards.put(card);
+      }
+      stores.settings.put({ key: 'enabledTypes', value: ['meaning', 'writing', 'tone'] });
+    `);
+    try {
+      await answerToneCard();
+    } finally {
+      await inDatabase(`stores.settings.put({ key: 'enabledTypes', value: ['meaning', 'writing'] });`);
+      await reloadApp(page);
+    }
+  });
+
+  async function answerToneCard() {
+    await makeDue(['大小|da4xiao3#tone', '大小|da4xiao3', 'tone']);
+    const giveTone = async (tone, which) => {
+      await waitUntil(page, `document.getElementById('status').textContent.includes('${which} of 2')`, `the tone of character ${which}`);
+      await page.evaluate(`document.querySelector('#tone-buttons [data-tone="${tone}"]').click()`);
+    };
+    const slots = `[...document.querySelectorAll('#word-row .slot')]`;
+    const slotClasses = () => page.evaluate(`${slots}.map((slot) => [slot.tagName, slot.classList.contains('passed') ? 'passed' : slot.classList.contains('missed') ? 'missed' : ''])`);
+
+    // 大 right (dà), 小 wrong (xiāo): Again suggested.
+    await giveTone(4, 1);
+    await giveTone(1, 2);
+    assert.deepEqual(await slotClasses(), [['BUTTON', 'passed'], ['BUTTON', 'missed']]);
+    await tap(page, 'tone-next-button');
+    await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
+    assert.equal(await page.evaluate(SUGGESTED), 'Again');
+
+    // 小's box tapped: right after all, Good suggested, what was answered still said.
+    await page.evaluate(`${slots}[1].click()`);
+    assert.deepEqual(await slotClasses(), [['BUTTON', 'passed'], ['BUTTON', 'passed']]);
+    assert.equal(await page.evaluate(SUGGESTED), 'Good');
+    assert.equal(await textOf(page, 'status'), 'All tones right');
+    assert.match(await textOf(page, 'card-face'), /You answered dàxiāo\./);
+    await chooseGrade('Good');
+    let review = await lastReview();
+    assert.equal(review.cardId, '大小|da4xiao3#tone');
+    assert.deepEqual(review.passedPerChar, [true, true]);
+    assert.deepEqual(review.givenTones, [4, 1]);
+    assert.equal(review.grade, 3);
+
+    // Looked back at with ‹ from the next card (a tone card new for 大 or
+    // 小): a square for each character, and a tap on one changes its
+    // verdict and the grade, saved at once.
+    await waitUntil(page, `document.getElementById('status').textContent === 'Which tone?'`, 'the next tone card');
+    await waitUntil(page, `!document.getElementById('tone-back-button').classList.contains('unavailable')`, 'the way back');
+    await tap(page, 'tone-back-button');
+    await waitUntil(page, `document.getElementById('card-type').textContent === 'Tone · 1 back'`, 'the card before');
+    const squares = `[...document.querySelectorAll('#card-face .past-square')]`;
+    assert.deepEqual(await page.evaluate(`${squares}.map((square) => square.className + ' ' + square.textContent)`), ['past-square passed 大', 'past-square passed 小']);
+    assert.equal(await textOf(page, 'prompt-meaning'), 'size');
+    await page.evaluate(`${squares}[1].click()`);
+    await waitUntil(page, `document.querySelectorAll('#card-face .past-square')[1]?.classList.contains('missed')`, 'the verdict changed');
+    review = (await all('reviews')).filter((each) => each.cardId === '大小|da4xiao3#tone').sort((a, b) => a.time - b.time).at(-1);
+    assert.deepEqual(review.passedPerChar, [true, false]);
+    assert.equal(review.grade, 1);
+    assert.equal(await page.evaluate(`document.querySelector('#grade-row .grade[aria-pressed="true"]')?.firstChild.textContent`), 'Again');
+  }
 
   it('goes on with a tap after practicing a character gone back to, the word unfinished', async () => {
     await makeDue(['大小|da4xiao3#writing', '大小|da4xiao3', 'writing']);

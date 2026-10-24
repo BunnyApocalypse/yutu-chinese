@@ -692,14 +692,17 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     showScriptFlag(entry.word);
     // On the card's face, whatever its kind.
     showPartsFor('meaning');
-    // Above a writing card, as when it was written; the other kinds have
-    // the reading and meaning on their face.
+    // Above a writing or tone card, whose face has a square for each
+    // character; the other kinds have the reading and meaning on their face.
     if (entry.type === 'writing') {
       showMeaning(entry.word, entry.withSentence ? entry.word[entry.script] : null, entry.script);
+    } else if (entry.type === 'tone') {
+      meaningElement.classList.remove('with-sentence');
+      meaningElement.textContent = entry.word.definition;
     } else {
       meaningElement.textContent = '';
     }
-    if (entry.type === 'writing') {
+    if (entry.type === 'writing' || entry.type === 'tone') {
       showPinyin();
     } else {
       pinyinElement.hidden = true;
@@ -772,13 +775,13 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   // Saves the review again with grade `value` (and these verdicts on a
   // writing card), and the card as that grade would have left it.
-  async function correct(entry, value, passedPerChar) {
+  async function correct(entry, value, passedPerChar, extra = {}) {
     const time = entry.review.time;
     const chosen = gradeOptions(entry.cardBefore ? entry.cardBefore.fsrsState : null, new Date(time))[value];
     // A word of one character: the grade is its verdict (as in grade()).
     const verdicts = entry.type === 'writing' && passedPerChar?.length === 1 ? [value !== AGAIN] : passedPerChar;
     const card = { ...entry.card, due: chosen.due, fsrsState: chosen.fsrsState };
-    const review = { ...entry.review, grade: value, log: chosen.log, ...(verdicts && { passedPerChar: verdicts }) };
+    const review = { ...entry.review, grade: value, log: chosen.log, ...(verdicts && { passedPerChar: verdicts }), ...extra };
     await saveReview(card, review);
     cards.set(card.id, card);
     entry.card = card;
@@ -797,8 +800,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     lookForward();
   }
 
-  // A character's square tapped on a writing card looked back at: its
-  // verdict turns, and the grade becomes the one then suggested.
+  // A character's square tapped on a writing or tone card looked back at:
+  // its verdict turns, and the grade becomes the one then suggested.
   async function changeVerdict(index) {
     const entry = graded[lookingBack];
     if (!entry || !canCorrect(entry)) {
@@ -807,8 +810,13 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     const verdicts = [...entry.review.passedPerChar];
     verdicts[index] = !verdicts[index];
     const mistakes = (entry.review.mistakesPerChar ?? []).reduce((total, count) => total + count, 0);
-    const suggestion = suggestGrade({ passedPerChar: verdicts, mistakes, hintPerChar: entry.review.hintPerChar ?? [] });
-    await correct(entry, gradeFor(suggestion, settings.gradeButtons), verdicts);
+    const suggestion =
+      entry.type === 'tone'
+        ? toneSuggestion(verdicts)
+        : suggestGrade({ passedPerChar: verdicts, mistakes, hintPerChar: entry.review.hintPerChar ?? [] });
+    // A tone's verdict given by the learner is not a variant accepted.
+    const variants = entry.review.variantPerChar?.map((variant, each) => variant && each !== index);
+    await correct(entry, gradeFor(suggestion, settings.gradeButtons), verdicts, variants ? { variantPerChar: variants } : {});
     showPast();
   }
 
@@ -1078,26 +1086,39 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   function showToneCard() {
     const { word } = current;
+    // What to save about a tone card.
+    const details = ({ givenTones, passedPerChar, variantPerChar }) => ({
+      givenTones,
+      passedPerChar,
+      // True where a tone was accepted only as a regional or neutral-tone variant.
+      variantPerChar,
+      pronunciation: settings.pronunciation,
+    });
     flows.tone.start({
       word,
       script: scriptFor(word, settings),
       reading: readingOf(word),
       answers: toneAnswersOf(word),
       offerHelp: offerToneHelp(),
-      onDone({ givenTones, passedPerChar, variantPerChar }) {
-        // One wrong tone fails the card.
-        const allRight = passedPerChar.every(Boolean);
-        offerGrades(allRight ? GOOD : AGAIN, {
-          givenTones,
-          passedPerChar,
-          // True where a tone was accepted only as a regional or neutral-tone variant.
-          variantPerChar,
-          pronunciation: settings.pronunciation,
-        });
+      onDone(result) {
+        offerGrades(toneSuggestion(result.passedPerChar), details(result));
+      },
+      // A box tapped once answered: the suggestion follows (as for writing).
+      onVerdictChange(result) {
+        if (options) {
+          suggested = toneSuggestion(result.passedPerChar);
+          answerDetails = details(result);
+          renderGrades();
+        }
       },
       onContinue: () => grade(suggested),
       backToCard: backToCard(),
     });
+  }
+
+  // One wrong tone fails the card.
+  function toneSuggestion(passedPerChar) {
+    return passedPerChar.every(Boolean) ? GOOD : AGAIN;
   }
 
   // Meaning and pinyin cards: nothing is checked, so "Good" is highlighted
