@@ -23,6 +23,7 @@ import {
   nextToLearn,
   CARD_TYPES,
   allCardIds,
+  startOfStudyDay,
 } from './session.js';
 import { toneAnswers, readingsFor, describeReading } from './tones.js';
 import { scriptFor, scriptFlagFor } from './words.js';
@@ -838,15 +839,45 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // is (the owner, 2026-10-21). A lesson's tone step is practice and is not
   // saved, and a word answered by "I know this word" was not answered at all,
   // so neither counts.
+  // Reviews are never deleted, so once enough are counted it stays so,
+  // without looking through them all again for each tone card.
   const TONE_HELP_UNTIL = 3;
+  let toneHelpOver = false;
   function offerToneHelp() {
-    const toneReviews = reviewTimes.filter((review) => /#tone(#|$)/.test(review.cardId) && !review.markedKnown);
-    return toneReviews.length < TONE_HELP_UNTIL;
+    if (!toneHelpOver) {
+      const toneReviews = reviewTimes.filter((review) => /#tone(#|$)/.test(review.cardId) && !review.markedKnown);
+      toneHelpOver = toneReviews.length >= TONE_HELP_UNTIL;
+    }
+    return !toneHelpOver;
   }
   const streakGoal = () => ({ cards: settings.streakCards, words: settings.streakWords });
 
+  // What was studied before today, counted once a day: counting all the
+  // reviews after every grade took a moment the card couldn't be used in,
+  // with years of history (the owner's 186,000 from Skritter, 2026-10-24).
+  // Only today's reviews and words are counted each time. Counted afresh
+  // when the reviews are read again (load(), after an import or combining
+  // backups), the only way the days before today can change.
+  let studyBefore = null; // { day, reviews, days }
+
   function streakNow(now) {
-    return streakAt(studyByDay(reviewTimes, words), now, streakGoal());
+    const day = studyDayKey(now);
+    const dayStart = startOfStudyDay(now);
+    if (studyBefore?.day !== day || studyBefore.reviews !== reviewTimes) {
+      studyBefore = {
+        day,
+        reviews: reviewTimes,
+        days: studyByDay(
+          reviewTimes.filter((review) => review.time < dayStart),
+          words.filter((word) => word.learnedAt < dayStart),
+        ),
+      };
+    }
+    const today = studyByDay(
+      reviewTimes.filter((review) => review.time >= dayStart),
+      words.filter((word) => word.learnedAt >= dayStart),
+    );
+    return streakAt(new Map([...studyBefore.days, ...today]), now, streakGoal());
   }
 
   // After a grade or a word learned, the moment today may start to count
