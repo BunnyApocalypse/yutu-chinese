@@ -37,21 +37,24 @@ import { closeOnTapBeside } from './dialogs.js';
 import { t } from './text.js';
 
 const SHOWN_KEY = __CHANNEL__ ? `streak-shown-${__CHANNEL__}` : 'streak-shown';
+// The day the pill was last shown, kept the same way: in memory only, a
+// reload brought it back the same day (the owner saw it twice, 2026-10-24).
+const PILL_KEY = __CHANNEL__ ? `streak-pill-shown-${__CHANNEL__}` : 'streak-pill-shown';
 
 const byId = (id) => document.getElementById(id);
 
-function readShown() {
+function readShown(key = SHOWN_KEY) {
   try {
-    return localStorage.getItem(SHOWN_KEY);
+    return localStorage.getItem(key);
   } catch {
     // Storage refused (a private window, for one): as if never shown.
     return null;
   }
 }
 
-function markShown(dayKey) {
+function markShown(dayKey, key = SHOWN_KEY) {
   try {
-    localStorage.setItem(SHOWN_KEY, dayKey);
+    localStorage.setItem(key, dayKey);
   } catch {
     // As above: it may come again today.
   }
@@ -127,9 +130,8 @@ export function createStreakScreen(turnOff) {
   const pillText = byId('streak-pill-text');
 
   // What to do once the screen is closed (the menu, when it was opened in
-  // the menu's place), and the day the pill was last shown.
+  // the menu's place).
   let afterClosing = null;
-  let pillDay = null;
   // What the pill opens when tapped.
   let pillStreak = null;
   let pillTimer = 0;
@@ -142,6 +144,12 @@ export function createStreakScreen(turnOff) {
   });
   closeOnTapBeside(dialog);
   dialog.addEventListener('close', () => {
+    // A close event can come late (docs/pitfalls.md): after the screen was
+    // shown again, it belongs to the time before, and must not run what
+    // the new one is to do once closed (it opened the menu over it).
+    if (dialog.open) {
+      return;
+    }
     const then = afterClosing;
     afterClosing = null;
     then?.();
@@ -217,10 +225,10 @@ export function createStreakScreen(turnOff) {
     // `role="status"` box, so screen readers say it without moving there,
     // and it never takes the keyboard's place.
     showPill(streak, dayKey, goal) {
-      if (!streak.todayDone || pillDay === dayKey || readShown() === dayKey) {
+      if (!streak.todayDone || readShown(PILL_KEY) === dayKey || readShown() === dayKey) {
         return;
       }
-      pillDay = dayKey;
+      markShown(dayKey, PILL_KEY);
       pillStreak = [streak, dayKey, goal];
       pillText.textContent = t('streak.pill', { count: streak.current });
       // Shown afresh, so that its animation starts from the beginning.
