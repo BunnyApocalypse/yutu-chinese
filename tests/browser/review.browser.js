@@ -294,6 +294,32 @@ describe('grading in Review', { concurrency: false }, () => {
     assert.equal(review.suggestedGrade, 3);
   });
 
+  // The owner, 2026-10-24: an old character flashed up on the writing area.
+  // The next word's stroke data is held back here, so the area is seen
+  // while it loads: nothing of the word before may be on it.
+  it('empties the writing area before the next word has loaded', async () => {
+    await makeDue(['大|da4#writing', '大|da4', 'writing'], ['小|xiao3#writing', '小|xiao3', 'writing']);
+    await waitForFirstStroke();
+    const first = (await textOf(page, 'prompt-meaning')) === 'big' ? '大' : '小';
+    await write(first);
+    const drawnPaths = `document.querySelectorAll('#writing-area .drawn-strokes path').length`;
+    assert.ok((await page.evaluate(drawnPaths)) > 0);
+    await page.evaluate(`(() => {
+      const fetchNow = window.fetch;
+      window.fetch = (url, ...rest) =>
+        String(url).includes('char-data')
+          ? new Promise((resolve) => setTimeout(() => resolve(fetchNow(url, ...rest)), 600))
+          : fetchNow(url, ...rest);
+    })()`);
+    const meaning = first === '大' ? 'big' : 'small';
+    await chooseGrade(await page.evaluate(SUGGESTED));
+    await waitUntil(page, `document.getElementById('prompt-meaning').textContent !== '${meaning}'`, 'the next card');
+    assert.equal(await page.evaluate(drawnPaths), 0);
+    // The other card graded too, for the tests after this one.
+    await write(first === '大' ? '小' : '大');
+    await chooseGrade(await page.evaluate(SUGGESTED));
+  });
+
   // No pause after the answer is shown (the owner, 2026-10-24): a new touch
   // moves on at once, while the end of the touch that showed it does not.
   it('takes a new tap at once after the answer, but not the end of the touch before', async () => {

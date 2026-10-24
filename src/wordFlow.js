@@ -807,6 +807,8 @@ export function createWordFlow(elements) {
       // Array.from splits text into whole characters. (Plain text.split('')
       // would cut some rare characters in half.) Spaces are dropped.
       const typed = Array.from(text).filter((char) => char.trim() !== '');
+      // Nothing of the word before shows while this one loads.
+      quiz.blank();
 
       // The outline is set now, before the stroke data has loaded: a tap on
       // "Hide outline" while it loads (a slow tablet) would otherwise be

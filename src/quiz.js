@@ -941,8 +941,29 @@ export function createQuiz(target, size, handlers) {
     endPress();
   });
 
+  // Empties the writing area at once: nothing of the character before (your
+  // strokes, its printed form, its outline) stays up while the next one's
+  // stroke data loads, or it flashed up as the next card came (the owner,
+  // 2026-10-24). start() puts back what the new character needs.
+  let blanked = false;
+  function blank() {
+    blanked = true;
+    clearTimeout(afterAnimationTimer);
+    animating = false;
+    writing = false;
+    completed = false;
+    drawnLayer.replaceChildren();
+    demoLayer.replaceChildren();
+    if (writer) {
+      writer.cancelQuiz();
+      writer.hideOutline({ duration: 0 });
+      setPrintedColor(() => INVISIBLE);
+    }
+  }
+
   // Starts (or restarts) the quiz for the current character, from a clean slate.
   async function start() {
+    blanked = false;
     clearTimeout(afterAnimationTimer);
     animating = false;
     completed = false;
@@ -1095,7 +1116,7 @@ export function createQuiz(target, size, handlers) {
     // (true) and snapping to the printed strokes (false). Returns false if
     // there is no stroke data for the character.
     async showCharacter(newChar, script, useRawInput) {
-      clearTimeout(afterAnimationTimer);
+      blank();
       const data = await loadCharData(newChar, script);
       if (!data) {
         return false;
@@ -1141,6 +1162,9 @@ export function createQuiz(target, size, handlers) {
 
     restart: start,
 
+    // Empties the writing area, before a new word's stroke data loads.
+    blank,
+
     // Whether a hint has been shown for the character being written, for
     // when it is left before it is finished (wordFlow.js keeps it).
     hintShownNow: () => hintShown,
@@ -1153,8 +1177,10 @@ export function createQuiz(target, size, handlers) {
 
     setOutlineVisible(visible) {
       outlineVisible = visible;
-      if (!writer) {
-        return; // applied when the first character starts
+      // Applied when the first character starts, or the next one after
+      // blank(): shown now, it would be the outline of the one before.
+      if (!writer || blanked) {
+        return;
       }
       if (visible) {
         writer.showOutline();
