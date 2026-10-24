@@ -53,6 +53,12 @@ const PAUSE_BETWEEN_STROKES_MS = 300;
 // before the quiz starts again.
 const PAUSE_AFTER_ANIMATION_MS = 1500;
 
+// How fast the next stroke flashes as a hint (after a hold, or three
+// misses): Hanzi Writer draws it, then fades it, each part taking longer
+// the slower this is. Its default, 2, was over in about 0.4 s, gone too
+// fast to take in (the owner, 2026-10-24); 0.8 takes about a second.
+const HINT_SPEED = 0.8;
+
 // The colors, from the named colors in style.css. They differ between the
 // light and the dark look (theme.js), so they are read each time they are
 // used, and set again when the look changes (see 'theme-changed' below).
@@ -1145,6 +1151,7 @@ export function createQuiz(target, size, handlers) {
           drawingColor: ink(),
           drawingWidth: penWidth,
           highlightColor: themeColor('--success'),
+          strokeHighlightSpeed: HINT_SPEED,
           strokeAnimationSpeed: STROKE_ANIMATION_SPEED,
           delayBetweenStrokes: PAUSE_BETWEEN_STROKES_MS,
           // Tells Hanzi Writer to use our own data instead of fetching from
