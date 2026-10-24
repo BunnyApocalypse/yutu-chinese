@@ -12,6 +12,7 @@ import {
   combineFrames,
   zoomToFit,
   ROOM,
+  strokeLeavesRoom,
   NO_FRAME,
 } from '../src/frame.js';
 import { toPoints, resample, averageDistance } from '../src/lines.js';
@@ -204,6 +205,17 @@ test('the left part of 鋼 written big zooms out until the right part fits', () 
   const zoom = zoomToFit(extent, frame);
   assert.ok(zoom.scale < 0.95, JSON.stringify(zoom));
   assert.ok(fitsInRoom(extent, combineFrames(zoom, frame)));
+});
+
+test('a zoom waits until the next stroke would leave the room', () => {
+  const data = JSON.parse(fs.readFileSync('node_modules/hanzi-writer-data/鋼.json', 'utf8'));
+  // 金 (strokes 1 to 8) written 1.4 times the size: the rest of 金 and the
+  // left side of 岡 (stroke 9) stay in the room, the right side of 岡 does not.
+  const written = { scale: 1.4, dx: -40, dy: -155 };
+  assert.ok([1, 2, 3, 4, 5, 6, 7, 8].every((stroke) => !strokeLeavesRoom(data.strokes[stroke], written)));
+  assert.equal(strokeLeavesRoom(data.strokes[9], written), true);
+  // At full size nothing leaves it.
+  assert.ok(data.strokes.every((outline) => !strokeLeavesRoom(outline, NO_FRAME)));
 });
 
 test('a zoom always brings the whole character into the room', () => {

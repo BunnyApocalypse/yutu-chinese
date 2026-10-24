@@ -22,6 +22,7 @@ import {
   sizeIsKnown,
   extentOf,
   zoomToFit,
+  strokeLeavesRoom,
   combineFrames,
   NO_FRAME,
 } from './frame.js';
@@ -424,22 +425,39 @@ export function createQuiz(target, size, handlers) {
       return false;
     }
     const fitted = fitFrame(acceptedStrokes);
-    if (!framesDiffer(fitted, frame)) {
-      return false;
+    if (framesDiffer(fitted, frame)) {
+      useFrame(fitted);
+      return true;
     }
-    useFrame(fitted);
-    return true;
+    // The frame stays, but the next stroke may still need a zoom.
+    if (zoomNeeded(frame)) {
+      useFrame(frame);
+      return true;
+    }
+    return false;
   }
 
-  // Moves the reference into `newFrame`. If the whole character would no
-  // longer fit in the writing area there, first zooms out: the strokes
-  // written so far shrink on screen, and the frame and the strokes'
-  // recorded points with them, so that everything stays as it was relative
-  // to everything else (see zoomToFit in frame.js). Not before the size
-  // being written is known: the first stroke says only where.
+  // The zoom that the next stroke needs in `aFrame`, or null: only once the
+  // size being written is known, and only if that stroke would reach beyond
+  // the writing area (strokeLeavesRoom in frame.js).
+  function zoomNeeded(aFrame) {
+    const last = acceptedStrokes.at(-1);
+    const next = last ? sequence[last.position + last.strokeCount] : undefined;
+    return sizeIsKnown(acceptedStrokes) && next !== undefined && strokeLeavesRoom(baseData.strokes[next], aFrame)
+      ? zoomToFit(extent, aFrame)
+      : null;
+  }
+
+  // Moves the reference into `newFrame`. If the next stroke would reach
+  // beyond the writing area there, first zooms out until the whole
+  // character fits: the strokes written so far shrink on screen, and the
+  // frame and the strokes' recorded points with them, so that everything
+  // stays as it was relative to everything else (see zoomToFit and
+  // strokeLeavesRoom in frame.js). Not before the size being written is
+  // known: the first stroke says only where.
   function useFrame(newFrame) {
     frame = newFrame;
-    const zoom = sizeIsKnown(acceptedStrokes) ? zoomToFit(extent, frame) : null;
+    const zoom = zoomNeeded(frame);
     if (zoom) {
       frame = combineFrames(zoom, frame);
       acceptedStrokes = acceptedStrokes.map((entry) => ({ ...entry, drawn: moved(entry.drawn, zoom) }));
