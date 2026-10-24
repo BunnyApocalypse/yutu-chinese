@@ -70,6 +70,20 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Roadmap
 
+**The owner's feedback from real study** (2026-10-24, after importing their Skritter history; on the branch `owner-feedback`, made from `skritter-import`, not pushed). One task at a time, the owner's go-ahead given for each as listed:
+
+- [x] 1. **The pause before a tap counts** made the card unresponsive: now a tap counts if its touch began after the step (`src/freshTap.js`, `docs/cards.md`).
+- [x] 2. **The streak recounted all reviews after each grade** (about 0.2 s on a PC with 186,000): past days counted once a day (`docs/cards.md`, "Streaks").
+- [ ] 3. **The streak pill twice in a day:** the day it was shown is kept in memory only (`pillDay` in `src/streakScreen.js`), so a reload shows it again. Keep it in `localStorage`, as `streak-shown` is.
+- [ ] 4. **An old character flashes on the writing area:** the last card's strokes and printed character stay up while the next card's stroke data loads (`drawnLayer` is emptied only in `start()` in `src/quiz.js`). Clear it as a card starts.
+- [ ] 5. **Pulling down at stroke 4 reloaded the page once** (the browser's pull-to-refresh): switch it off with `overscroll-behavior`.
+- [ ] 6. **The hold hint:** the hold quicker (`HOLD_MS` 500 to 400) and the flash slower (Hanzi Writer's `strokeHighlightSpeed`, now about 0.4 s in all, to about a second).
+- [ ] 7. **Right and wrong on a tone card** changed by tapping a character's box, exactly as on a writing card (the owner: as far as UX and UI go, if possible), also on a card looked back at.
+- [ ] 8. **"…" for Chinese left out of a writing card's meaning** is unclear in Learn: pictures of `[字]` and of a small box, for the owner to choose.
+- [ ] 9. **Writing feels clunky and too strict;** strokes are moved (zoomed) too often; a smallest size for "writing small", so that wrong strokes don't pass as small ones. Tuning `LENIENCY`, `MIN_SCALE` (0.4), `fitsStroke`'s shortest first stroke and `zoomToFit`'s `ROOM`, measured over both stroke data sets first, then the trade-offs shown to the owner.
+- [ ] 11. **Review sometimes shows an empty writing area with no guidance,** more after going back with ‹: reproduce in a browser test first (two `showNext` calls overlapping is a guess).
+- Struck: 10, the one-stroke ear of 阝 in 鄉 (traditional) not accepted now and then; in a test it always passes. Perhaps part of 9; to look at again if it comes back.
+
 **Tester 4's feedback** (2026-10-21; their notes and the original sheet are no longer on the computer, so this list is the record). About A2, a Skritter user switching from simplified to traditional, on release `2026-10-21-2`. Liked hearing words; added a word and looked one up without trouble. Not reached: changing a setting or a grade, the Progress tab, a backup. **Built on 2026-10-22** (on `main`, not pushed), the owner choosing where asked:
 
 - [x] **"Show outline" stayed on for the next character** in Review, which then counted as peeked: now it lasts one character (`docs/cards.md`).
