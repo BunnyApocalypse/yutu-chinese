@@ -4,7 +4,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
-**Handover from the session of 2026-10-24 (the owner's feedback from real study; on the branch `owner-feedback`, made from `skritter-import`, merged into `main` and pushed the same day, the owner saying so: the test copy has the Skritter import and all of this; `stable` has none of it).**
+**Handover from the session of 2026-10-24 (the owner's feedback from real study; on the branch `owner-feedback`, made from `skritter-import`, merged into `main` and **released to `stable` the same day** ("What's new" entry `2026-10-24`), the owner saying so).**
 
 - **The owner's 12 points are tasks in the roadmap** (just below, "The owner's feedback from real study"); the owner asked for one task at a time (2026-10-24), each its own commit with the full browser tests. **Done:** 1 no pause before a tap counts (`src/freshTap.js`), 2 the streak counted quickly with 186,000 reviews, 3 the pill once a day for good, 4 the writing area emptied before a new character, 5 no pull-to-refresh while a card is up, 6 a quicker hold and a slower hint flash. All browser tests pass.
 - **Done after (same day):** 7 right and wrong on a tone card by a tap on its box, also on a card looked back at; 8 a small gray box where Chinese is left out of a writing card's meaning (the owner chose it from pictures). **9 measured** (`local/strictness/`), the trade-offs shown to the owner, nothing changed yet. **Next:** the owner's choice on 9; 11 the empty writing area after ‹, reproduced in a test first. 10 (鄉) is struck unless it comes back.

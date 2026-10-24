@@ -14,6 +14,7 @@
 import { CHANGES, changesSince, changeDate } from './changes.js';
 import { closeOnTapBeside } from './dialogs.js';
 import { language } from './text.js';
+import { fillMixed } from './lang.js';
 
 const SEEN_KEY = __CHANNEL__ ? `changes-seen-${__CHANNEL__}` : 'changes-seen';
 
@@ -56,7 +57,9 @@ export function createWhatsNew(openFeedback) {
       const translated = entry[language];
       for (const text of translated ?? entry.items) {
         const item = document.createElement('li');
-        item.textContent = text;
+        // Chinese in a line (辶, 隨) marked as such; the entries write
+        // characters in their traditional forms.
+        fillMixed(item, text, 'traditional');
         if (!translated && language !== 'en') {
           item.lang = 'en';
         }

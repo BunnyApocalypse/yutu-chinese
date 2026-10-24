@@ -6,11 +6,39 @@
 // in Italian (`it`) and German (`de`), shown to readers in that language
 // (whatsNew.js). The entries before stay in English (the owner, 2026-10-22).
 // Each line is a short sentence about what a learner will notice, not how it
-// was built.
+// was built. Characters in a line are written in their traditional forms
+// (whatsNew.js marks them so).
 
 import { formatDate } from './text.js';
 
 export const CHANGES = [
+  {
+    id: '2026-10-24',
+    items: [
+      'You can bring over your study from Skritter: "Import from Skritter" in the Decks tab takes the .zip file Skritter sends you, with your whole review history.',
+      'Taps on a card count at once, and the writing area is empty before each new character.',
+      'On a tone card, tap a character\'s box to count its tone right or wrong, as on a writing card; also on a card you go back to.',
+      'Where Chinese is left out of a writing card\'s meaning, a small gray box stands in its place.',
+      'Writing: strokes are shrunk to fit far less often, the top of 辶 can be written in one stroke (隨, 這), and starting the wrong character no longer makes the app expect a tiny one.',
+      'A shorter hold shows the next stroke, which now flashes more slowly; pulling down on a card no longer reloads the page.',
+    ],
+    it: [
+      'Puoi portare qui il tuo studio da Skritter: «Importa da Skritter» nella scheda Mazzi prende il file .zip che Skritter ti invia, con tutta la cronologia dei ripassi.',
+      'I tocchi su una carta contano subito, e l’area di scrittura è vuota prima di ogni nuovo carattere.',
+      'Su una carta dei toni, tocca il riquadro di un carattere per contare il suo tono giusto o sbagliato, come su una carta di scrittura; anche su una carta a cui torni.',
+      'Dove il cinese è omesso dal significato di una carta di scrittura, al suo posto c’è un piccolo riquadro grigio.',
+      'Scrittura: i tratti vengono rimpiccioliti molto meno spesso, la parte alta di 辶 si può scrivere in un tratto (隨, 這), e iniziare il carattere sbagliato non fa più aspettare all’app un carattere minuscolo.',
+      'Basta tenere premuto meno a lungo per vedere il tratto successivo, che ora lampeggia più lentamente; tirare giù su una carta non ricarica più la pagina.',
+    ],
+    de: [
+      'Du kannst dein Lernen aus Skritter mitnehmen: „Aus Skritter importieren“ im Tab Stapel nimmt die .zip-Datei, die Skritter dir schickt, mit deinem ganzen Wiederholungsverlauf.',
+      'Tipps auf eine Karte zählen sofort, und das Schreibfeld ist vor jedem neuen Zeichen leer.',
+      'Auf einer Tonkarte tippst du auf das Kästchen eines Zeichens, um seinen Ton als richtig oder falsch zu zählen, wie auf einer Schreibkarte; auch auf einer Karte, zu der du zurückgehst.',
+      'Wo in der Bedeutung einer Schreibkarte Chinesisch ausgelassen ist, steht ein kleines graues Kästchen.',
+      'Schreiben: Striche werden viel seltener verkleinert, der obere Teil von 辶 kann in einem Strich geschrieben werden (隨, 這), und ein falsch begonnenes Zeichen lässt die App kein winziges mehr erwarten.',
+      'Ein kürzeres Halten zeigt den nächsten Strich, der jetzt langsamer aufleuchtet; Herunterziehen auf einer Karte lädt die Seite nicht mehr neu.',
+    ],
+  },
   {
     id: '2026-10-23',
     items: [
