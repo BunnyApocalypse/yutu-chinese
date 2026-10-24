@@ -123,6 +123,16 @@ test('a pair is joinable at any size the character is written', () => {
   assert.ok(isShortcutStroke(applyFrame(zhe, small), 8, joined, LENIENCY, small.scale));
 });
 
+test('the top of 辶 may be joined even where 辶 is small', () => {
+  // The Taiwan form: the dot, then the top in two strokes, then the long one.
+  for (const char of '隨這遠還') {
+    const data = charData(char, 'traditional');
+    const top = data.medians.length - 3;
+    assert.ok(isJoinable(data, top), char);
+    assert.ok(isShortcutStroke(data, top, joinedLine(data, top), LENIENCY), char);
+  }
+});
+
 test('strokes that do not meet end to start are not joinable', () => {
   const kou = bigSetData('口');
   for (let strokeNum = 0; strokeNum < kou.medians.length; strokeNum++) {

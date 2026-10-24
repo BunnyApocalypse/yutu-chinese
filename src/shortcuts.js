@@ -46,6 +46,14 @@ const MAX_LEAD_IN = 80;
 // its shape so little that "joined" could not be told apart from "just the
 // longer of the two", and a forgotten dot would pass unnoticed.
 const MIN_PART_LENGTH = 150;
+// But two parts of much the same length (the shorter at least
+// SIMILAR_PARTS_SHARE of the longer) may each be as short as this: neither is
+// a dot beside a long stroke. For a small component, such as the 辶 of 隨,
+// whose top is two parts of about 125 (the owner, 2026-10-24). Allowing this
+// made 23 more pairs of the Taiwan set joinable (of 166), among them the
+// 辶 of 遠 and 還, the two dots of 衤 in 衫 and 裡, and those of 雨.
+const SHORT_PART_LENGTH = 115;
+const SIMILAR_PARTS_SHARE = 0.5;
 
 // Joining must change the shape noticeably compared with either stroke on its
 // own (see shapeOf in lines.js; the number is an average distance between two
@@ -117,7 +125,12 @@ export function isJoinable(charData, strokeNum, scale = 1) {
   if (pair === null || pair.gap > MAX_GAP * scale || pair.leadIn > MAX_LEAD_IN * scale) {
     return false;
   }
-  if (lineLength(pair.first) < MIN_PART_LENGTH * scale || lineLength(pair.rest) < MIN_PART_LENGTH * scale) {
+  const shorter = Math.min(lineLength(pair.first), lineLength(pair.rest));
+  const longer = Math.max(lineLength(pair.first), lineLength(pair.rest));
+  const longEnough =
+    shorter >= MIN_PART_LENGTH * scale ||
+    (shorter >= SHORT_PART_LENGTH * scale && shorter >= SIMILAR_PARTS_SHARE * longer);
+  if (!longEnough) {
     return false;
   }
   const joinedShape = shapeOf(resample([...pair.first, ...pair.rest]));
