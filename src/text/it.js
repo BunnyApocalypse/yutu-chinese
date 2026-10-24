@@ -144,6 +144,13 @@ export default {
   'testing.swipeReadout': 'Mostra come è stato misurato ogni scorrimento verso l\'alto',
   'testing.swipeReadoutHint':
     'Dopo una linea tracciata verso l\'alto sull\'area di scrittura: quanto è salita, quanto era inclinata e quanto ha richiesto, rispetto a ciò che serve per uno scorrimento. Solo su questo dispositivo.',
+  'testing.recordRawInput': 'Registra il mio input grezzo',
+  'testing.recordRawInputHint':
+    'Conserva ogni tratto che scrivi, e come l\'app lo ha giudicato, per salvarlo come file e inviarlo per regolare la valutazione. Solo in questo browser, gli ultimi 500 caratteri.',
+  'testing.rawInputCount': { one: '{count} carattere registrato.', other: '{count} caratteri registrati.' },
+  'testing.saveRawInput': 'Salva come file',
+  'testing.clearRawInput': 'Cancella la registrazione',
+  'testing.clearRawInputQuestion': 'Cancellare l\'input grezzo registrato finora?',
   'testing.pseudoLanguage': 'Mostra la lingua di prova',
   'testing.pseudoLanguageHint':
     'Ogni testo con lettere simili e un terzo più lungo, come spesso sono le altre lingue: il testo ancora in inglese semplice non è stato preparato per la traduzione. L\'app riparte quando lo cambi. Solo su questo dispositivo.',

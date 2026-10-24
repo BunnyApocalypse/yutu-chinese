@@ -22,6 +22,7 @@
 - `src/tones.js`: which reading of a word applies (Taiwan or mainland), lining syllables up with characters, and which tones are accepted. Plain calculation.
 - `src/settings.js`: the settings and their panel.
 - `src/testerSettings.js`: Settings › For testing, only in the test copy and while developing (`docs/interface.md`).
+- `src/rawInputLog.js`: recording every stroke written and how it was judged, saved as a file from Settings › For testing (`docs/writing.md`).
 - `src/wordFlow.js`: writing a word one character after another (slot row, status line, Clear / Outline / Animate / Next, tap to continue). Shared by both modes; tracks mistakes, hints and peeking per character, and in Review shows each character's verdict.
 - `src/quiz.js`: the only file that imports Hanzi Writer. It reports plain results (strokes done, mistakes, hint shown) through handler functions. One Hanzi Writer instance is reused for all characters via `setCharacter()`.
 - `src/scheduler.js`: the only file that imports `ts-fsrs`. `gradeOptions(fsrsState, now)` returns what each of the four grades would do to a card.

@@ -28,6 +28,7 @@ import {
 } from './frame.js';
 import { toPoints, resample, averageDistance } from './lines.js';
 import { themeColor } from './theme.js';
+import * as rawInputLog from './rawInputLog.js';
 import { describeSwipe, HOLD_MS, HOLD_STILLNESS_PX, isSwipeUp, risesSteeply } from './gestures.js';
 import {
   fitsStroke,
@@ -115,8 +116,9 @@ export function createQuiz(target, size, handlers) {
   // would pile them up.
   let writer = null;
 
-  // The character being quizzed.
+  // The character being quizzed, and its script.
   let char = null;
+  let charScript = null;
   // Its stroke data as loaded, with the strokes in the standard order.
   let baseData = null;
   // The stroke data Hanzi Writer currently holds: baseData with its strokes
@@ -387,6 +389,12 @@ export function createQuiz(target, size, handlers) {
   // so far (frame.js) and move the reference into it, so the remaining strokes
   // are expected where you will naturally put them.
 
+  // For Settings › For testing: a stroke and how it was judged, in the
+  // recording of raw input (rawInputLog.js), with the frame it was judged in.
+  function record(stroke, verdict, judgedIn) {
+    rawInputLog.noteStroke({ points: stroke.drawnPath.points, verdict, expected: sequence[stroke.strokeNum], frame: judgedIn, hintShown });
+  }
+
   // Notes an accepted stroke. `position` is how many strokes had been written
   // before it; `baseStrokes` are the stroke numbers of baseData it covers:
   // one, or two for a joined stroke.
@@ -463,6 +471,7 @@ export function createQuiz(target, size, handlers) {
       acceptedStrokes = acceptedStrokes.map((entry) => ({ ...entry, drawn: moved(entry.drawn, zoom) }));
       zoomInk(zoom);
       noteZoom(combineFrames(zoom, zoomSoFar));
+      rawInputLog.noteZoom(zoom);
     }
     framedData = applyFrame(baseData, frame);
   }
@@ -996,6 +1005,7 @@ export function createQuiz(target, size, handlers) {
     strokesDone = 0;
     noteHint(false);
     handlers.onStart({ totalStrokes: baseData.strokes.length });
+    rawInputLog.beginCharacter({ char, script: charScript, strokeCount: baseData.strokes.length, size, rawInput, outlineVisible });
     setBusy(true);
     try {
       await useOriginalData();
@@ -1027,6 +1037,7 @@ export function createQuiz(target, size, handlers) {
       highlightOnComplete: false,
       // Hanzi Writer accepted the stroke as the textbook stroke.
       onCorrectStroke: (stroke) => {
+        const judgedIn = frame;
         keepDrawnStroke(stroke.drawnPath.pathString);
         const baseStrokes = [sequence[stroke.strokeNum]];
         let strokesDone = stroke.strokeNum + 1; // strokeNum counts from 0
@@ -1039,9 +1050,11 @@ export function createQuiz(target, size, handlers) {
             : toPoints(baseData.medians[sequence[stroke.strokeNum]]),
         );
         if (otherReading) {
+          record(stroke, 'otherOrder', judgedIn);
           switchToOtherOrder(stroke, otherReading, totalStrokes);
           return;
         }
+        record(stroke, isShortcut ? 'shortcut' : 'accepted', judgedIn);
         // A shortcut stroke can occasionally also pass as its first half. Then
         // the second half is already on the page, so move past it too.
         if (isShortcut) {
@@ -1059,8 +1072,10 @@ export function createQuiz(target, size, handlers) {
       // Hanzi Writer rejected the stroke. It may still be a shortcut, or the
       // next stroke of the character's other accepted order.
       onMistake: (stroke) => {
+        const judgedIn = frame;
         const otherReading = otherOrderFor(stroke);
         if (drewShortcut(stroke) && !(otherReading && otherOrderIsCloser(stroke, otherReading))) {
+          record(stroke, 'shortcut', judgedIn);
           keepDrawnStroke(stroke.drawnPath.pathString);
           noteAccepted(
             stroke.strokeNum,
@@ -1078,6 +1093,7 @@ export function createQuiz(target, size, handlers) {
           return;
         }
         if (otherReading) {
+          record(stroke, 'otherOrder', judgedIn);
           keepDrawnStroke(stroke.drawnPath.pathString);
           switchToOtherOrder(stroke, otherReading, totalStrokes);
           return;
@@ -1086,6 +1102,7 @@ export function createQuiz(target, size, handlers) {
         // centered reference than Hanzi Writer allows: accept it, and let the
         // frame follow it.
         if (isFirstStrokeAnywhere(stroke)) {
+          record(stroke, 'firstAnywhere', judgedIn);
           keepDrawnStroke(stroke.drawnPath.pathString);
           noteAccepted(0, [sequence[0]], stroke.drawnPath.points);
           reportProgress({ strokesDone: 1, totalStrokes, totalMistakes: mistakes });
@@ -1098,6 +1115,7 @@ export function createQuiz(target, size, handlers) {
         // The expected stroke, written at a size that was not known yet:
         // accept it, and let the frame take on that size.
         if (isExpectedStrokeAtAnotherSize(stroke)) {
+          record(stroke, 'atAnotherSize', judgedIn);
           keepDrawnStroke(stroke.drawnPath.pathString);
           noteAccepted(stroke.strokeNum, [sequence[stroke.strokeNum]], stroke.drawnPath.points);
           const strokesDone = stroke.strokeNum + 1;
@@ -1108,6 +1126,7 @@ export function createQuiz(target, size, handlers) {
           }
           return;
         }
+        record(stroke, 'mistake', judgedIn);
         mistakes += 1;
         // mistakesOnStroke counts the misses on this one stroke, including this one.
         if (stroke.mistakesOnStroke >= HINT_AFTER_MISSES) {
@@ -1128,6 +1147,7 @@ export function createQuiz(target, size, handlers) {
         }
         showDemo(sequence.length); // nothing left to show
         const passed = handlers.onComplete({ totalMistakes: mistakes, hintShown, order });
+        rawInputLog.endCharacter({ mistakes, passed, hintShown });
         setPrintedColor(() => referenceColor(passed));
       },
     });
@@ -1146,6 +1166,7 @@ export function createQuiz(target, size, handlers) {
         return false;
       }
       char = newChar;
+      charScript = script;
       rawInput = useRawInput;
       baseData = data;
       charData = data;

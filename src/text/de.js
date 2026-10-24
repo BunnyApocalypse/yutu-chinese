@@ -144,6 +144,13 @@ export default {
   'testing.swipeReadout': 'Zeigen, wie jede Wischgeste nach oben gemessen wurde',
   'testing.swipeReadoutHint':
     'Nach einer Linie nach oben auf dem Schreibfeld: wie weit sie stieg, wie schräg sie war und wie lange sie dauerte, im Vergleich zu dem, was eine Wischgeste braucht. Nur auf diesem Gerät.',
+  'testing.recordRawInput': 'Meine Roheingabe aufzeichnen',
+  'testing.recordRawInputHint':
+    'Bewahrt jeden Strich, den du schreibst, und wie die App ihn bewertet hat, um ihn als Datei zu speichern und zum Abstimmen der Bewertung zu schicken. Nur in diesem Browser, die neuesten 500 Zeichen.',
+  'testing.rawInputCount': { one: '{count} Zeichen aufgezeichnet.', other: '{count} Zeichen aufgezeichnet.' },
+  'testing.saveRawInput': 'Als Datei speichern',
+  'testing.clearRawInput': 'Aufzeichnung löschen',
+  'testing.clearRawInputQuestion': 'Die bisher aufgezeichnete Roheingabe löschen?',
   'testing.pseudoLanguage': 'Testsprache zeigen',
   'testing.pseudoLanguageHint':
     'Jeder Text in ähnlich aussehenden Buchstaben und ein Drittel länger, wie es andere Sprachen oft sind: Text, der noch in schlichtem Englisch steht, wurde nicht für die Übersetzung vorbereitet. Die App startet neu, wenn das geändert wird. Nur auf diesem Gerät.',

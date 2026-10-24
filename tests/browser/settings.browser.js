@@ -27,6 +27,7 @@ import {
   openDeckPage,
   useAddForm,
   reloadApp,
+  ANSWER_YES,
 } from './harness.js';
 
 // Text for "the Decks tab's list has this many rows".
@@ -551,6 +552,49 @@ describe('settings', { concurrency: false }, () => {
     // Asking says what the browser answered.
     await tap(page, 'storage-readout-ask');
     await waitUntil(page, `document.getElementById('storage-readout').textContent.startsWith('Asked just now: the browser said')`, 'the answer');
+    await tap(page, 'settings-close');
+  });
+
+  it('records raw input under "For testing", saved as a file', async () => {
+    await page.evaluate(`(() => {
+      URL.createObjectURL = (blob) => {
+        window.savedFile = blob;
+        return 'blob:caught';
+      };
+      URL.revokeObjectURL = () => {};
+      HTMLAnchorElement.prototype.click = function () {
+        window.savedName = this.download;
+      };
+    })()`);
+    await openSettings(page, 'settings-testing');
+    await page.evaluate(`document.getElementById('record-raw-input-checkbox').click()`);
+    await tap(page, 'settings-close');
+    await tap(page, 'practice-button');
+    await startWriting(page, '大');
+    const area = await writingArea(page);
+    // One stroke off the mark (a mistake), then the three right ones.
+    await drawStroke(page, area, [[512, 850], [512, 400], [512, -50]]);
+    for (const median of loadStrokeData('大').medians) {
+      await drawStroke(page, area, median);
+    }
+    await openSettings(page, 'settings-testing');
+    await waitUntil(page, `document.getElementById('raw-input-count').textContent === '1 character recorded.'`, 'the count');
+    await tap(page, 'raw-input-save');
+    await waitUntil(page, `window.savedFile !== undefined`, 'the file');
+    const file = JSON.parse(await page.evaluate(`window.savedFile.text()`));
+    assert.match(await page.evaluate('window.savedName'), /^yutu-raw-input-\d{4}-\d{2}-\d{2}-\d{4}\.json$/);
+    assert.equal(file.format, 'yutu-raw-input');
+    const [written] = file.characters;
+    assert.equal(written.char, '大');
+    assert.deepEqual(written.strokes.map((stroke) => stroke.verdict), ['mistake', 'accepted', 'accepted', 'accepted']);
+    assert.deepEqual(written.strokes.map((stroke) => stroke.expected), [0, 0, 1, 2]);
+    assert.equal(written.mistakes, 1);
+    assert.ok(written.strokes[1].points.length > 2);
+    // Cleared, and switched off again.
+    await page.evaluate(ANSWER_YES);
+    await tap(page, 'raw-input-clear');
+    await waitUntil(page, `document.getElementById('raw-input-count').textContent === '0 characters recorded.'`, 'the recording cleared');
+    await page.evaluate(`document.getElementById('record-raw-input-checkbox').click()`);
     await tap(page, 'settings-close');
   });
 

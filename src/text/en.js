@@ -149,6 +149,13 @@ export default {
   'testing.swipeReadout': 'Show how each swipe up measured',
   'testing.swipeReadoutHint':
     'After a line drawn upward on the writing area: how far it rose, how much it leaned and how long it took, against what a swipe needs. Only on this device.',
+  'testing.recordRawInput': 'Record my raw input',
+  'testing.recordRawInputHint':
+    'Keeps every stroke you write, and how the app judged it, so it can be saved as a file and sent for tuning the grading. Kept in this browser only, the newest 500 characters.',
+  'testing.rawInputCount': { one: '{count} character recorded.', other: '{count} characters recorded.' },
+  'testing.saveRawInput': 'Save as a file',
+  'testing.clearRawInput': 'Clear the recording',
+  'testing.clearRawInputQuestion': 'Clear the raw input recorded so far?',
   'testing.pseudoLanguage': 'Show the test language',
   'testing.pseudoLanguageHint':
     'Every text in look-alike letters and a third longer, as other languages often are: text still in plain English has not been made ready for translation. The app starts again when this is changed. Only on this device.',

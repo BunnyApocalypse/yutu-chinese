@@ -6,6 +6,8 @@
 // Each switch belongs to the device (DEVICE_SETTINGS in merge.js).
 //
 //   swipeReadout: show how each swipe up measured (quiz.js, gestures.js)
+//   recordRawInput: record every stroke written, with how it was judged, to
+//     save as a file for tuning the grading (rawInputLog.js)
 //   the test language: every text in look-alike letters (src/text.js; kept
 //     in localStorage, not as a setting)
 //
@@ -18,6 +20,8 @@
 import { getAll, getSetting, setSetting } from './db.js';
 import { keepData } from './offline.js';
 import { setSwipeReadout } from './quiz.js';
+import { setRecording, recordedCount, downloadRecording, clearRecording } from './rawInputLog.js';
+import { ask } from './confirm.js';
 import { wordsAtRisk } from './storageAdvice.js';
 import { t, language, setLanguage } from './text.js';
 
@@ -38,6 +42,28 @@ export async function setUpTesterSettings() {
     setSwipeReadout(swipeCheckbox.checked);
     await setSetting('swipeReadout', swipeCheckbox.checked);
   });
+
+  // Recording raw input (rawInputLog.js), with how many characters are
+  // recorded, shown again whenever the group is opened.
+  const recordCheckbox = document.getElementById('record-raw-input-checkbox');
+  recordCheckbox.checked = await getSetting('recordRawInput', false);
+  setRecording(recordCheckbox.checked);
+  const showCount = () => {
+    document.getElementById('raw-input-count').textContent = t('testing.rawInputCount', { count: recordedCount() });
+  };
+  recordCheckbox.addEventListener('change', async () => {
+    setRecording(recordCheckbox.checked);
+    await setSetting('recordRawInput', recordCheckbox.checked);
+  });
+  document.getElementById('raw-input-save').addEventListener('click', () => downloadRecording());
+  document.getElementById('raw-input-clear').addEventListener('click', async () => {
+    if (await ask({ question: t('testing.clearRawInputQuestion'), yes: t('testing.clearRawInput') })) {
+      clearRecording();
+      showCount();
+    }
+  });
+  navButton.addEventListener('click', showCount);
+  showCount();
 
   // The test language (src/text.js): kept with the browser rather than in
   // the database, and the app starts again in it.
