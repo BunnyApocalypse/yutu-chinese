@@ -299,8 +299,9 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
   // "+ New deck" beside the heading opens a small panel for its name (the
   // owner, 2026-10-14: a box under the list would be pushed out of sight by
   // many decks). A new deck goes inside the deck whose page is open. On the
-  // front page the panel also offers "Import a deck from Anki", which
-  // closes it and opens the import (ankiImportForm.js).
+  // front page the panel also offers "Import a deck from Anki" and "Import
+  // from Skritter", which close it and open the import (ankiImportForm.js,
+  // skritterImportForm.js).
   const newDeckDialog = byId('new-deck-dialog');
   byId('new-deck-button').addEventListener('click', () => {
     const current = getOpenDeck();
@@ -311,6 +312,7 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
   });
   byId('new-deck-cancel').addEventListener('click', () => newDeckDialog.close());
   byId('anki-import-button').addEventListener('click', () => newDeckDialog.close());
+  byId('skritter-import-button').addEventListener('click', () => newDeckDialog.close());
   addForm.addEventListener('submit', async (event) => {
     event.preventDefault(); // or the browser would reload the page
     const name = addName.value.trim();

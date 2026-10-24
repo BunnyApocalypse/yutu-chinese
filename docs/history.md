@@ -4,6 +4,21 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the session of 2026-10-24 (the owner's feedback from real study, tasks 1 to 6; on the branch `owner-feedback`, made from `skritter-import`, pushed, not merged into `main`).**
+
+- **The owner's 12 points are tasks in the roadmap** (just below, "The owner's feedback from real study"); the owner asked for one task at a time (2026-10-24), each its own commit with the full browser tests. **Done:** 1 no pause before a tap counts (`src/freshTap.js`), 2 the streak counted quickly with 186,000 reviews, 3 the pill once a day for good, 4 the writing area emptied before a new character, 5 no pull-to-refresh while a card is up, 6 a quicker hold and a slower hint flash. All browser tests pass.
+- **Done after (same day):** 7 right and wrong on a tone card by a tap on its box, also on a card looked back at; 8 a small gray box where Chinese is left out of a writing card's meaning (the owner chose it from pictures). **9 measured** (`local/strictness/`), the trade-offs shown to the owner, nothing changed yet. **Next:** the owner's choice on 9; 11 the empty writing area after ‹, reproduced in a test first. 10 (鄉) is struck unless it comes back.
+- **Not yet tried by the owner:** tasks 1 to 6. **Branches:** `owner-feedback` holds `skritter-import` and these; neither is in `main`, so merging `owner-feedback` also brings the Skritter import, which waits for the owner's word.
+- **Learned:** a test that taps the card sends `pointerdown` then `pointerup` (`tests/browser/CLAUDE.md`). Choosing the next card takes about 15 ms on the PC with the owner's 2,401 words (`planSession`); left alone. The streak screen's `close` event can come after it was opened again (`docs/pitfalls.md`); `streak.browser.js`'s menu test caught it.
+
+**Handover from the session of 2026-10-23 (the Skritter import; on the branch `skritter-import`, pushed, not merged into `main`, so on neither copy).**
+
+- **The owner's Skritter data arrived** (2026-10-22), unpacked into the git-ignored `exports/skritter-2026-10-22/`. **Built:** "Import from Skritter" in the Decks tab's "+ New / import deck" panel (`docs/skritter.md`): in the app, with the whole review history, and every word an unsettled Skritter word could be ticked for the learner to check (the owner's three choices, 2026-10-23). Then, the owner asking why their HSK and textbook decks were missing (the file names Skritter's lists only by number): a name box for each of Skritter's lists, suggested where a list is nearly all one HSK or TOCFL level, and a deck for every section, inside "Skritter" (the owner's choices). Italian and German drafts of the new texts. Unit and browser tests on a made-up export (`tests/fixtures/skritter/`); all pass.
+- **On the owner's file** (in a test browser; pictures in the git-ignored `local/skritter/`): 2,401 words, 9,604 cards with Skritter's schedule, 186,374 reviews copied (180,079 answers, some copied to more than one word until the learner unticks), 180 groups to check, 150 words left out (zhuyin symbols, radicals, phrases), 13 of Skritter's lists with 6 names suggested; about 10 s to import.
+- **The owner is testing it before it goes live** (2026-10-23): don't merge `skritter-import` into `main` (which publishes the test copy) or release it until they say. To try it locally: `git switch skritter-import`, `npm run dev`. Best tried in a browser profile without their real data, or after a backup, since their study is still in Skritter and a second import doesn't refresh cards already imported.
+- **Local `main` was set back to `origin/main`** when the branch was made, so a push of `main` can't publish the import early.
+- **Next, if wanted** (`docs/skritter.md`, "Not built"): the words left out as radicals or sentences; Skritter in the introduction's starting level.
+
 **Handover from the third session of 2026-10-22 (Italian and German interfaces drafted; released to `stable` the same day).**
 
 - **Built:** a Language choice at the top of Settings › Look and sound (English, Italiano, Deutsch); until one is chosen the app follows the browser's language (`docs/interface.md`). `src/text/it.js` and `de.js`, all 1,121 texts, informal *tu* / *du*, no dictionaries (the owner). Drafted by Sonnet agents from a shared glossary (`docs/translations.md`), then checked: `missing-text.js` clean for both, a unit test that each translation keeps the English's gaps, forms, markup and Chinese, a browser test of the switch, and pictures of the main screens at 360 and 390 wide (some labels shortened to fit, listed in `docs/translations.md`).
@@ -61,6 +76,23 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
   - Files in `~/Downloads` (the old test files, tester 3's `notes.txt`, now in `local/testing/`) are the owner's to delete.
 
 ## Roadmap
+
+**The owner's feedback from real study** (2026-10-24, after importing their Skritter history; on the branch `owner-feedback`, made from `skritter-import`, not pushed). One task at a time, the owner's go-ahead given for each as listed:
+
+- [x] 1. **The pause before a tap counts** made the card unresponsive: now a tap counts if its touch began after the step (`src/freshTap.js`, `docs/cards.md`).
+- [x] 2. **The streak recounted all reviews after each grade** (about 0.2 s on a PC with 186,000): past days counted once a day (`docs/cards.md`, "Streaks").
+- [x] 3. **The streak pill twice in a day:** its day is now kept in `localStorage` (`docs/cards.md`). On the way, a late `close` event of the streak screen ran the next screen's step (`docs/pitfalls.md`).
+- [x] 4. **An old character flashed on the writing area:** emptied as a word or character begins (`blank()` in `src/quiz.js`, `docs/pitfalls.md`).
+- [x] 5. **Pulling down at stroke 4 reloaded the page once:** no pull-to-refresh while a card is up (`docs/pitfalls.md`).
+- [x] 6. **The hold hint:** 0.4 s to hold, the flash about a second (`docs/writing.md`).
+- [x] 7. **Right and wrong on a tone card** changed by tapping a character's box, exactly as on a writing card, also on a card looked back at (`docs/cards.md`, "The tone card").
+- [x] 8. **"…" for Chinese left out of a writing card's meaning** was unclear: now a small gray box (the owner's choice from pictures; `docs/cards.md`).
+- [ ] 9. **Zooming: built** (the owner's yes, 2026-10-24): only when the next stroke would leave the area, with the whole margin (`docs/writing.md`). **Writing small:** half the box as the smallest size was tried and not kept (a simulation of the owner's 彳/足 and 臼/鼎 showed no difference, and it sits at the owner's usual size); **waiting for a recording of such a case. The owner is getting an example** of their own raw input ("Record my raw input" under Settings › For testing, built 2026-10-24; `docs/writing.md`). **Measured 2026-10-24** (`local/strictness/README.md`, git-ignored: zooming as now catches 1 in 5 characters written at exactly full size; zooming only when the next stroke would leave the area, with the whole margin, about 1 in 100; writing small lets other strokes pass for the expected one far more, and shrinking the leniency with the size refuses many more right strokes; the first stroke's 0.35 stays). **Writing feels clunky and too strict;** strokes are moved (zoomed) too often; a smallest size for "writing small", so that wrong strokes don't pass as small ones. Tuning `LENIENCY`, `MIN_SCALE` (0.4), `fitsStroke`'s shortest first stroke and `zoomToFit`'s `ROOM`, measured over both stroke data sets first, then the trade-offs shown to the owner.
+- [ ] 11. **Review sometimes shows an empty writing area with no guidance,** more after going back with ‹: reproduce in a browser test first (two `showNext` calls overlapping is a guess).
+- [ ] 12. **The top of 辶 can't be written in one stroke**, in 隨 and in 這 (the owner, 2026-10-24). **Fixed for writing small** (the owner's recording of 這, 2026-10-24): whether two strokes may be joined was judged on the stroke data moved into the frame, so at two thirds of the size the parts were too short; now the distances scale with the frame (`isJoinable`'s `scale`, `docs/writing.md`). 24 of the owner's 37 refused attempts pass now; the rest were drawn over 1.7 times the length or as like the second part alone. **隨 fixed too** (the owner's yes): two parts of similar length may each be 115 units (`SHORT_PART_LENGTH` in `src/shortcuts.js`).
+- [ ] 14. **Empty space at the bottom of the review screen** on the tablet held upright, in Firefox as an installed app (the owner, 2026-10-24, a picture of a pinyin card): the card and grades end halfway down.
+- [ ] 13. **A word with several readings** (得 de2, de5, dei3; 好 hǎo and hào): a meaning or pinyin card's front doesn't say which one it asks about, nor a tone card's (好 answered hǎo counted wrong for hào) (the owner, 2026-10-24: "I'm not sure what the solution is here"). To propose.
+- Struck: 10, the one-stroke ear of 阝 in 鄉 (traditional) not accepted now and then; in a test it always passes. Perhaps part of 9; to look at again if it comes back.
 
 **Tester 4's feedback** (2026-10-21; their notes and the original sheet are no longer on the computer, so this list is the record). About A2, a Skritter user switching from simplified to traditional, on release `2026-10-21-2`. Liked hearing words; added a word and looked one up without trouble. Not reached: changing a setting or a grade, the Progress tab, a backup. **Built on 2026-10-22** (on `main`, not pushed), the owner choosing where asked:
 
@@ -131,7 +163,6 @@ Agreed with the owner on 2026-10-18. **The first release** means the first users
 
 - Checking by hand with VoiceOver or TalkBack (`docs/interface.md`, "Accessibility").
 - Other languages after Italian and German (`docs/goals.md`, "Translations"): a file in `src/text/`, a line in `LANGUAGE_NAMES` and `LOCALES` (`src/text.js`), and the language's rules in `docs/translations.md`.
-- The Skritter import, if the GDPR data arrives (the owner doesn't want the word list imported without its scheduling).
 - A mode for going from 繁體 to 簡體 or back, by character rather than by word (having written 們 → 们 once, the learner isn't asked again in 他們, 你們).
 - Mainland, Hong Kong or Taiwan traditional forms (needs stroke data for the other two); longer shortcuts (more strokes joined, reordered or dropped).
 - Stroke data for the traditional characters animCJK doesn't cover.

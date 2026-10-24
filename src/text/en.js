@@ -149,6 +149,13 @@ export default {
   'testing.swipeReadout': 'Show how each swipe up measured',
   'testing.swipeReadoutHint':
     'After a line drawn upward on the writing area: how far it rose, how much it leaned and how long it took, against what a swipe needs. Only on this device.',
+  'testing.recordRawInput': 'Record my raw input',
+  'testing.recordRawInputHint':
+    'Keeps every stroke you write, and how the app judged it, so it can be saved as a file and sent for tuning the grading. Kept in this browser only, the newest 500 characters.',
+  'testing.rawInputCount': { one: '{count} character recorded.', other: '{count} characters recorded.' },
+  'testing.saveRawInput': 'Save as a file',
+  'testing.clearRawInput': 'Clear the recording',
+  'testing.clearRawInputQuestion': 'Clear the raw input recorded so far?',
   'testing.pseudoLanguage': 'Show the test language',
   'testing.pseudoLanguageHint':
     'Every text in look-alike letters and a third longer, as other languages often are: text still in plain English has not been made ready for translation. The app starts again when this is changed. Only on this device.',
@@ -394,6 +401,7 @@ export default {
   'review.labelRadicalWriting': 'Radical · writing',
   'review.labelRadicalMeaning': 'Radical · meaning',
   'review.labelBack': '{label} · {count} back',
+  'review.chineseLeftOut': 'Chinese left out',
   // The kind of card inside a sentence: "the writing card of 學"
   'review.kindWriting': 'writing',
   'review.kindTone': 'tone',
@@ -618,6 +626,7 @@ export default {
   'decks.createDeck': 'Create deck',
   'decks.nameOfTheDeck': 'Name of the deck',
   'decks.ankiImportButton': 'Import a deck from Anki',
+  'decks.skritterImportButton': 'Import from Skritter',
   'decks.addClose': 'Done',
   'decks.oneWord': 'One word',
   'decks.aListOfWords': 'A list of words',
@@ -1229,6 +1238,51 @@ export default {
   'anki.ankiImportNow': 'Import',
   'anki.theyWerenTBrought': 'They weren’t brought over.',
   'anki.ankiDoneButton': 'Done',
+
+  // Importing from Skritter (skritterImportForm.js)
+  'skritter.notAnExport': 'It isn’t the .zip file Skritter sends with your data.',
+  'skritter.words': { one: '{count} word', other: '{count} words' },
+  'skritter.inFile': 'In the file: {words} you studied in Skritter, {cards}, {reviews}.',
+  'skritter.notInDictionary': {
+    one: '{count} word isn’t in the app’s dictionary, so it will be left out.',
+    other: '{count} words aren’t in the app’s dictionary, so they will be left out.',
+  },
+  'skritter.checkTitle': { one: 'Check {count} word', other: 'Check {count} words' },
+  'skritter.sections': { one: '{count} section', other: '{count} sections' },
+  'skritter.listAbout': '{words} in {sections}: {sample}…',
+  'skritter.listNamePlaceholder': 'Name (empty: no deck)',
+  'skritter.groupHeading': '{characters} in Skritter · {reviews}',
+  'skritter.candidate': '{pinyin} · {meaning}',
+  'skritter.noDictionary': 'The dictionary could not be fetched, and the import needs it for every word’s pinyin and meaning.',
+  'skritter.newWords': { one: 'Brought over {count} new word.', other: 'Brought over {count} new words.' },
+  'skritter.wordsThere': {
+    one: '{count} word you already had was added to the Skritter deck.',
+    other: '{count} words you already had were added to the Skritter deck.',
+  },
+  'skritter.withSchedule': {
+    one: '{count} card keeps its schedule from Skritter, with {reviews} of history.',
+    other: '{count} cards keep their schedule from Skritter, with {reviews} of history.',
+  },
+  'skritter.suspended': {
+    one: '{count} word you had banned in Skritter is suspended.',
+    other: '{count} words you had banned in Skritter are suspended.',
+  },
+  'skritter.leftOut': { one: '{count} word was left out', other: '{count} words were left out' },
+
+  // Importing from Skritter (index.html)
+  'skritter.importFromSkritter': 'Import from Skritter',
+  'skritter.bringYourStudyOver':
+    'Bring your study over from Skritter: your words, and every card’s schedule and review history, so cards are due when Skritter said.',
+  'skritter.fileButton': 'Choose the .zip file',
+  'skritter.howToGetIt':
+    'Skritter has no export button: ask its support for a copy of your data. They send a .zip file; choose it as it came.',
+  'skritter.becomes':
+    'Each word comes over with its pinyin and meaning from the app’s dictionary, since Skritter’s file has neither. Your Skritter reviews count for all four cards: meaning, pinyin, tone and writing.',
+  'skritter.yourLists': 'Your Skritter lists',
+  'skritter.listsHint':
+    'Skritter’s file doesn’t name the lists it made, such as HSK levels and textbooks. Name each one to make it a deck inside “Skritter”, with a deck for each of its sections; a name is filled in where a list’s words are nearly all one HSK or TOCFL level. Words of lists left unnamed go in “Skritter” itself.',
+  'skritter.checkHint':
+    'Skritter’s file names a word only by its simplified characters, and these could be more than one word. Each is brought over with your Skritter history: untick the ones you didn’t study.',
 
   // The introduction (welcome.js), tips (tips.js), Basics of Chinese (basics.js)
   'welcome.pronunciationMainland': 'Mainland China',

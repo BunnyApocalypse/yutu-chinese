@@ -7,20 +7,16 @@ import { recognizeToneMark } from './toneMark.js';
 import { fillMixed, langFor } from './lang.js';
 import { faceArrow, BACK, FORWARD } from './faceArrow.js';
 import { t } from './text.js';
+import { freshTaps } from './freshTap.js';
 
 // After a right answer, the next character comes up by itself after this long.
 const MOVE_ON_AFTER_MS = 500;
 
-// After a wrong answer or at the end, tapping the card continues. Taps are
-// ignored for this long first, so a stray touch doesn't skip the answer.
-// (200 since 2026-10-13, down from 600: the owner found the wait in the way
-// when moving on quickly. It is still enough for the tap that finished the
-// step not to count as the tap that moves on.)
-const TAP_TO_CONTINUE_DELAY_MS = 200;
-
-// A new character ignores touches for this long, so the tap that brought it up
-// isn't taken for a neutral-tone dot.
-const DRAW_ALLOWED_AFTER_MS = 300;
+// After a wrong answer or at the end, tapping the card continues, but only
+// with a touch begun after the answer (freshTap.js): the one that gave it
+// doesn't skip it. Drawing a mark needs no such care: a stroke begins only
+// when a finger comes down, so the tap that brought a character up is never
+// taken for a neutral-tone dot.
 
 // How long a mark that wasn't recognized stays visible before it is cleared.
 const CLEAR_UNRECOGNIZED_AFTER_MS = 600;
@@ -86,7 +82,7 @@ export function createToneFlow(elements) {
   // 'wrong':   answered incorrectly; waiting for a tap
   // 'done':    every character answered
   let state = 'asking';
-  let tapAllowedFrom = 0;
+  const taps = freshTaps(cardFace);
   let moveOnTimer = null;
   // Skipped characters, counted as right (the › arrow), and whether the
   // character asked now was answered before and is only practice (gone
@@ -139,8 +135,10 @@ export function createToneFlow(elements) {
   ink.appendChild(inkPath);
   // The points of the stroke being drawn, or null when no stroke is under way.
   let drawing = null;
-  let drawAllowedFrom = 0;
   let clearInkTimer = null;
+  // The syllable shown after an answer, green or red; recolored if its box
+  // is tapped.
+  let shownSyllable = null;
 
   function showInk(points) {
     const d = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
@@ -163,15 +161,25 @@ export function createToneFlow(elements) {
     return { x: (event.clientX - box.left) / zoom, y: (event.clientY - box.top) / zoom };
   }
 
+  // The row of boxes above the card. An answered character's box is a
+  // button: a tap overrules the app's verdict, right becoming wrong and the
+  // other way round, exactly as on a writing card (the owner, 2026-10-24).
   function renderWordRow() {
     wordRow.replaceChildren();
     // The row is shown even for a word of one character (wordFlow hides it
     // then), as the top of a tone card (the owner, 2026-10-16).
     wordRow.classList.remove('single');
     chars.forEach((char, index) => {
-      const slot = document.createElement('span');
+      const answered = passedPerChar[index] !== undefined;
+      const slot = document.createElement(answered ? 'button' : 'span');
       slot.textContent = char;
       slot.className = 'slot';
+      if (answered) {
+        slot.type = 'button';
+        slot.title = t('write.slotTitle', { char, verdict: t(passedPerChar[index] ? 'write.right' : 'write.missed') });
+        slot.setAttribute('aria-label', slot.title);
+        slot.addEventListener('click', () => setVerdict(index, !passedPerChar[index]));
+      }
       if (index === position && state !== 'done') {
         slot.classList.add('current');
       }
@@ -183,6 +191,43 @@ export function createToneFlow(elements) {
       }
       wordRow.appendChild(slot);
     });
+  }
+
+  // A tap on an answered character's box: its verdict is overruled. The
+  // tone given stays as it was; only whether it counts as right changes.
+  function setVerdict(index, passed) {
+    if (!current) {
+      return;
+    }
+    passedPerChar[index] = passed;
+    // Right by the learner's word, not as a variant of the listed tone.
+    variantPerChar[index] = false;
+    renderWordRow();
+    if (index === position && shownSyllable && state !== 'asking') {
+      shownSyllable.className = passed ? 'face-pinyin passed' : 'face-pinyin missed';
+    }
+    if (state === 'done') {
+      showResult();
+      // Once graded, the change can alter the suggested grade (review.js).
+      if (doneOnce) {
+        current.onVerdictChange?.(results());
+      }
+    }
+  }
+
+  // Whether the tone given for a character is one the word accepts.
+  function accepted(index) {
+    const expected = current.answers[index];
+    const tone = givenTones[index];
+    return tone === undefined || expected.tones.includes(tone) || expected.variantTones.includes(tone);
+  }
+
+  function results() {
+    return {
+      givenTones: [...givenTones],
+      passedPerChar: [...passedPerChar],
+      variantPerChar: [...variantPerChar],
+    };
   }
 
   function faceWord(text) {
@@ -199,7 +244,7 @@ export function createToneFlow(elements) {
     clearTimeout(clearInkTimer);
     showInk([]);
     drawing = null;
-    drawAllowedFrom = Date.now() + DRAW_ALLOWED_AFTER_MS;
+    shownSyllable = null;
     // The character asked about, small, above what to do, large: drawn big
     // as before, it looked like something to draw over (a tester and the
     // owner, 2026-10-16).
@@ -285,6 +330,10 @@ export function createToneFlow(elements) {
     const listedFirst = formatPinyin(current.answers.map((answer) => answer.syllable).join(''));
     if (wrong > 0) {
       parts.push(paragraph('face-note missed', t('tone.youAnswered', { answer: answered })));
+    } else if (chars.some((char, index) => !accepted(index))) {
+      // A wrong tone counted as right by a tap on its box: still say what
+      // was answered.
+      parts.push(paragraph('face-note', t('tone.youAnswered', { answer: answered })));
     } else if (variantPerChar.includes(true)) {
       // Accepted, but not what is listed: say so, so the listed tone is learned.
       parts.push(
@@ -297,7 +346,7 @@ export function createToneFlow(elements) {
   function finish() {
     state = 'done';
     practicing = false;
-    tapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
+    taps.mark();
     nextButton.hidden = true;
     renderWordRow();
     showResult();
@@ -305,11 +354,7 @@ export function createToneFlow(elements) {
       return; // gone back after it was done: the answers stand as given
     }
     doneOnce = true;
-    current.onDone({
-      givenTones: [...givenTones],
-      passedPerChar: [...passedPerChar],
-      variantPerChar: [...variantPerChar],
-    });
+    current.onDone(results());
   }
 
   function moveOn() {
@@ -338,19 +383,21 @@ export function createToneFlow(elements) {
     }
     renderWordRow();
 
-    // Show the syllable with its tone mark, green or red.
-    const syllable = paragraph(
-      passed ? 'face-pinyin passed' : 'face-pinyin missed',
+    // Show the syllable with its tone mark, green or red (or as its box
+    // says, in practice).
+    const shown = passedPerChar[position];
+    shownSyllable = paragraph(
+      shown ? 'face-pinyin passed' : 'face-pinyin missed',
       formatPinyin(expected.syllable),
     );
-    cardFace.replaceChildren(faceWord(chars[position]), syllable);
+    cardFace.replaceChildren(faceWord(chars[position]), shownSyllable);
 
     if (passed) {
       state = 'right';
       moveOnTimer = setTimeout(moveOn, MOVE_ON_AFTER_MS);
     } else {
       state = 'wrong';
-      tapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
+      taps.mark();
       statusElement.textContent = t('tone.not', { tone: TONE_LABELS[tone] });
       nextButton.hidden = false;
     }
@@ -371,7 +418,7 @@ export function createToneFlow(elements) {
 
   // "pointer" events cover fingers, styluses and the mouse alike.
   cardFace.addEventListener('pointerdown', (event) => {
-    if (!current || state !== 'asking' || Date.now() < drawAllowedFrom) {
+    if (!current || state !== 'asking') {
       return;
     }
     // Keeps the rest of this stroke coming to the card even if the finger
@@ -410,7 +457,7 @@ export function createToneFlow(elements) {
       finishDrawing();
       return;
     }
-    if (!current || Date.now() < tapAllowedFrom) {
+    if (!current || !taps.isFresh()) {
       return;
     }
     if (state === 'wrong') {
@@ -431,6 +478,8 @@ export function createToneFlow(elements) {
     //   offerHelp: true to show "What are tones?" while asking
     //   onDone({ givenTones, passedPerChar, variantPerChar }): every
     //            character was answered
+    //   onVerdictChange({ givenTones, passedPerChar, variantPerChar }):
+    //            optional; a box was tapped after onDone, overruling a verdict
     //   onContinue(): the card was tapped after that
     //   backToCard(): optional; the ‹ arrow on the first character, before
     //            anything is answered, goes back to the card before (Review)

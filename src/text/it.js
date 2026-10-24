@@ -144,6 +144,13 @@ export default {
   'testing.swipeReadout': 'Mostra come è stato misurato ogni scorrimento verso l\'alto',
   'testing.swipeReadoutHint':
     'Dopo una linea tracciata verso l\'alto sull\'area di scrittura: quanto è salita, quanto era inclinata e quanto ha richiesto, rispetto a ciò che serve per uno scorrimento. Solo su questo dispositivo.',
+  'testing.recordRawInput': 'Registra il mio input grezzo',
+  'testing.recordRawInputHint':
+    'Conserva ogni tratto che scrivi, e come l\'app lo ha giudicato, per salvarlo come file e inviarlo per regolare la valutazione. Solo in questo browser, gli ultimi 500 caratteri.',
+  'testing.rawInputCount': { one: '{count} carattere registrato.', other: '{count} caratteri registrati.' },
+  'testing.saveRawInput': 'Salva come file',
+  'testing.clearRawInput': 'Cancella la registrazione',
+  'testing.clearRawInputQuestion': 'Cancellare l\'input grezzo registrato finora?',
   'testing.pseudoLanguage': 'Mostra la lingua di prova',
   'testing.pseudoLanguageHint':
     'Ogni testo con lettere simili e un terzo più lungo, come spesso sono le altre lingue: il testo ancora in inglese semplice non è stato preparato per la traduzione. L\'app riparte quando lo cambi. Solo su questo dispositivo.',
@@ -388,6 +395,7 @@ export default {
   'review.labelRadicalWriting': 'Radicale · scrittura',
   'review.labelRadicalMeaning': 'Radicale · significato',
   'review.labelBack': '{label} · {count} indietro',
+  'review.chineseLeftOut': 'cinese omesso',
   // The kind of card inside a sentence: "the writing card of 學"
   'review.kindWriting': 'scrittura',
   'review.kindTone': 'toni',
@@ -611,6 +619,7 @@ export default {
   'decks.createDeck': 'Crea mazzo',
   'decks.nameOfTheDeck': 'Nome del mazzo',
   'decks.ankiImportButton': 'Importa un mazzo da Anki',
+  'decks.skritterImportButton': 'Importa da Skritter',
   'decks.addClose': 'Fatto',
   'decks.oneWord': 'Una parola',
   'decks.aListOfWords': 'Una lista di parole',
@@ -1220,6 +1229,51 @@ export default {
   'anki.ankiImportNow': 'Importa',
   'anki.theyWerenTBrought': 'Non sono stati importati.',
   'anki.ankiDoneButton': 'Fine',
+
+  // Importing from Skritter (skritterImportForm.js)
+  'skritter.notAnExport': 'Non è il file .zip che Skritter invia con i tuoi dati.',
+  'skritter.words': { one: '{count} parola', other: '{count} parole' },
+  'skritter.inFile': 'Nel file: {words} studiate su Skritter, {cards}, {reviews}.',
+  'skritter.notInDictionary': {
+    one: '{count} parola non è nel dizionario dell’app, quindi sarà esclusa.',
+    other: '{count} parole non sono nel dizionario dell’app, quindi saranno escluse.',
+  },
+  'skritter.checkTitle': { one: 'Controlla {count} parola', other: 'Controlla {count} parole' },
+  'skritter.sections': { one: '{count} sezione', other: '{count} sezioni' },
+  'skritter.listAbout': '{words} in {sections}: {sample}…',
+  'skritter.listNamePlaceholder': 'Nome (vuoto: nessun mazzo)',
+  'skritter.groupHeading': '{characters} su Skritter · {reviews}',
+  'skritter.candidate': '{pinyin} · {meaning}',
+  'skritter.noDictionary': 'Non è stato possibile scaricare il dizionario, e l’importazione ne ha bisogno per il pinyin e il significato di ogni parola.',
+  'skritter.newWords': { one: 'Importata {count} parola nuova.', other: 'Importate {count} parole nuove.' },
+  'skritter.wordsThere': {
+    one: '{count} parola che avevi già è stata aggiunta al mazzo Skritter.',
+    other: '{count} parole che avevi già sono state aggiunte al mazzo Skritter.',
+  },
+  'skritter.withSchedule': {
+    one: '{count} carta mantiene la sua programmazione di Skritter, con {reviews} di storico.',
+    other: '{count} carte mantengono la loro programmazione di Skritter, con {reviews} di storico.',
+  },
+  'skritter.suspended': {
+    one: '{count} parola che avevi escluso su Skritter è sospesa.',
+    other: '{count} parole che avevi escluso su Skritter sono sospese.',
+  },
+  'skritter.leftOut': { one: '{count} parola è stata esclusa', other: '{count} parole sono state escluse' },
+
+  // Importing from Skritter (index.html)
+  'skritter.importFromSkritter': 'Importa da Skritter',
+  'skritter.bringYourStudyOver':
+    'Porta qui il tuo studio da Skritter: le tue parole, e la programmazione e lo storico dei ripassi di ogni carta, così le carte scadono quando diceva Skritter.',
+  'skritter.fileButton': 'Scegli il file .zip',
+  'skritter.howToGetIt':
+    'Skritter non ha un pulsante per esportare: chiedi al suo supporto una copia dei tuoi dati. Ti mandano un file .zip; sceglilo così com’è.',
+  'skritter.becomes':
+    'Ogni parola arriva con il pinyin e il significato del dizionario dell’app, perché il file di Skritter non li contiene. I tuoi ripassi su Skritter valgono per tutte e quattro le carte: significato, pinyin, toni e scrittura.',
+  'skritter.yourLists': 'Le tue liste di Skritter',
+  'skritter.listsHint':
+    'Il file di Skritter non dà un nome alle liste fatte da Skritter, come i livelli HSK e i libri di testo. Dai un nome a ciascuna per farne un mazzo dentro «Skritter», con un mazzo per ogni sua sezione; il nome è già scritto dove le parole di una lista sono quasi tutte di un livello HSK o TOCFL. Le parole delle liste senza nome vanno in «Skritter».',
+  'skritter.checkHint':
+    'Il file di Skritter indica una parola solo con i suoi caratteri semplificati, e questi potrebbero essere più parole. Ognuna viene importata con il tuo storico di Skritter: togli la spunta a quelle che non hai studiato.',
 
   // The introduction (welcome.js), tips (tips.js), Basics of Chinese (basics.js)
   'welcome.pronunciationMainland': 'Cina continentale',

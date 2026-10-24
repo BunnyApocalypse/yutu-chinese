@@ -4,10 +4,10 @@
 
 - **The study area is shared by all card kinds.** `showPartsFor` in `src/review.js` decides which parts show for each kind, and Free practice needs the writing parts back (`deactivate`). A new element in the study area must be added there.
 - **A flow that is not on screen must ignore taps.** `toneFlow` and `recallCard` both listen on the card face; each checks it has a current card, and `review.js` calls `stop()` on both before the next card.
-- **On a tone card a tap is an answer** (a dot is the neutral tone), so `toneFlow` ignores touches for 300 ms after a character comes up. A stroke the recognizer can't classify is neither answer nor mistake; the card says so and waits. The tone mark's layer is removed by `replaceChildren`; `ask()` puts it back each time.
+- **On a tone card a tap is an answer** (a dot is the neutral tone). A mark begins only on a finger coming down (`pointerdown`), so the touch that brought a character up is never taken for a dot; no pause is needed (until 2026-10-24, 300 ms). A stroke the recognizer can't classify is neither answer nor mistake; the card says so and waits. The tone mark's layer is removed by `replaceChildren`; `ask()` puts it back each time.
 - **The writing area is an SVG element, which has no `.hidden` property.** Hide its row (`#writing-row`) or use `toggleAttribute('hidden', ...)`.
 - **In Review the outline is switched off at the start of every word**; left on, it counts as peeking and every suggestion becomes Again. **`wordFlow.start` sets the outline before the stroke data loads**, so "Hide outline" tapped while loading isn't undone.
-- **A dialog's `close` event can come late**, after the next tap is handled: closing a word's page once closed the popup of a word tapped on the card beneath, so the next tap moved a lesson on. A `close` handler must check that what it undoes belongs to its dialog (`dialog.contains(peekCard)` in `src/wordPage.js`).
+- **A dialog's `close` event can come late**, after the next tap is handled: closing a word's page once closed the popup of a word tapped on the card beneath, so the next tap moved a lesson on. A `close` handler must check that what it undoes belongs to its dialog (`dialog.contains(peekCard)` in `src/wordPage.js`). It can even come after the same dialog was opened again: the streak screen's ignores it while open (2026-10-24; it opened the menu over the screen once the streak was counted quickly enough).
 - **Fold-out headings (`summary`) can't be selected**: with a pen, a tap that slides would select the text, and a tablet then neither opens nor closes the fold.
 
 ## The writing area's size
@@ -30,9 +30,10 @@
 - **Don't replace its character from inside one of its own callbacks.** `resume` in `src/quiz.js` waits a tick first.
 - **`charData` in `src/quiz.js` is what Hanzi Writer holds, which may be rearranged; `baseData` is the data as loaded.** Its stroke numbers refer to `charData`; `altOrder` and `sequence` to `baseData`.
 - **Never create a new Hanzi Writer per character**: each adds touch listeners that are never removed. Use `setCharacter()` (the one exception: rebuilding after a screen rotation).
+- **The writing area is emptied before a new word or character loads** (`blank()` in `src/quiz.js`, from `wordFlow.start` and `showCharacter`; the owner, 2026-10-24, saw the character before flash up): your strokes, the printed character and the outline go at once, and the outline is held back until `start()`, or it would be the old character's. Tested by holding the stroke data back (`review.browser.js`).
 - **`setCharacter()` rebuilds its layers and hides the outline**, and it adds its layers only once the data has loaded, later ones on top; so `start()` re-appends the layer of drawn strokes and re-applies the outline setting each time.
 - **It colors a radical's strokes separately** (`radicalColor`, defaulting to `strokeColor` only at creation): change both (`setPrintedColor`).
-- **It works out touch positions from the SVG's on-screen size**, so the `width`/`height` passed to it must match the real size. Don't scale the SVG with CSS. The area needs `touch-action: none`, or drawing scrolls the page on a phone.
+- **It works out touch positions from the SVG's on-screen size**, so the `width`/`height` passed to it must match the real size. Don't scale the SVG with CSS. The area needs `touch-action: none`, or drawing scrolls the page on a phone. A stroke begun just outside it, going down, could still pull the page down and reload it (the owner, 2026-10-24): while a card is up, `html:has(main.focused)` has `overscroll-behavior-y: contain`, which switches the browser's pull-to-refresh off.
 
 ## Stroke data
 

@@ -6,7 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { studyDayKey, previousDayKey, studyByDay, dayCounts, streakAt, streakLine } from '../src/streak.js';
+import { studyDayKey, previousDayKey, nextDayKey, studyByDay, dayCounts, streakAt, streakLine } from '../src/streak.js';
 
 const goal = { cards: 10, words: 2 };
 const at = (text) => new Date(text).getTime();
@@ -22,6 +22,9 @@ test('a study day starts at 4:00 and is named by the date it began', () => {
   assert.equal(previousDayKey('2026-01-01'), '2025-12-31');
   // Over a change of clocks (late October in Europe) too.
   assert.equal(previousDayKey('2026-10-26'), '2026-10-25');
+  assert.equal(nextDayKey('2026-10-31'), '2026-11-01');
+  assert.equal(nextDayKey('2025-12-31'), '2026-01-01');
+  assert.equal(nextDayKey('2026-10-25'), '2026-10-26');
 });
 
 test('a day counts with enough different cards or enough words learned', () => {

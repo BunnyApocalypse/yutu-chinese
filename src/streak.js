@@ -39,6 +39,13 @@ export function previousDayKey(key) {
   return studyDayKey(before.getTime());
 }
 
+// The name of the study day after.
+export function nextDayKey(key) {
+  const [year, month, day] = key.split('-').map(Number);
+  const after = new Date(year, month - 1, day + 1, 12);
+  return studyDayKey(after.getTime());
+}
+
 // What was studied on each day: day name → { cards, words }, how many
 // different cards were reviewed and how many words were learned.
 // reviews: { cardId, wordId, time, markedKnown } (other fields are ignored)
@@ -100,12 +107,15 @@ export function streakAt(days, now, goal) {
   const todayKey = studyDayKey(now);
   const todayDone = counted.has(todayKey);
   const current = runBack(todayDone ? todayKey : previousDayKey(todayKey));
-  // A run's length is counted from its last day: a day whose next one
-  // doesn't count.
+  // A run's length is counted back from its last day: a day whose next one
+  // doesn't count. (Counting back from every day instead took a long time
+  // with years of history, after every grade: 2026-10-24.)
   let best = current;
   let lastRun = 0;
   for (const key of counted) {
-    best = Math.max(best, runBack(key));
+    if (!counted.has(nextDayKey(key))) {
+      best = Math.max(best, runBack(key));
+    }
   }
   if (todayDone && current === 1) {
     // The newest counted day before today.

@@ -22,11 +22,13 @@ import {
   sizeIsKnown,
   extentOf,
   zoomToFit,
+  strokeLeavesRoom,
   combineFrames,
   NO_FRAME,
 } from './frame.js';
 import { toPoints, resample, averageDistance } from './lines.js';
 import { themeColor } from './theme.js';
+import * as rawInputLog from './rawInputLog.js';
 import { describeSwipe, HOLD_MS, HOLD_STILLNESS_PX, isSwipeUp, risesSteeply } from './gestures.js';
 import {
   fitsStroke,
@@ -52,6 +54,12 @@ const PAUSE_BETWEEN_STROKES_MS = 300;
 // How long the finished character stays on screen after the animation,
 // before the quiz starts again.
 const PAUSE_AFTER_ANIMATION_MS = 1500;
+
+// How fast the next stroke flashes as a hint (after a hold, or three
+// misses): Hanzi Writer draws it, then fades it, each part taking longer
+// the slower this is. Its default, 2, was over in about 0.4 s, gone too
+// fast to take in (the owner, 2026-10-24); 0.8 takes about a second.
+const HINT_SPEED = 0.8;
 
 // The colors, from the named colors in style.css. They differ between the
 // light and the dark look (theme.js), so they are read each time they are
@@ -108,8 +116,9 @@ export function createQuiz(target, size, handlers) {
   // would pile them up.
   let writer = null;
 
-  // The character being quizzed.
+  // The character being quizzed, and its script.
   let char = null;
+  let charScript = null;
   // Its stroke data as loaded, with the strokes in the standard order.
   let baseData = null;
   // The stroke data Hanzi Writer currently holds: baseData with its strokes
@@ -309,7 +318,8 @@ export function createQuiz(target, size, handlers) {
   }
 
   function drewShortcut(stroke) {
-    return isShortcutStroke(charData, stroke.strokeNum, stroke.drawnPath.points, LENIENCY);
+    // charData is moved into the frame, so drawn at its scale.
+    return isShortcutStroke(charData, stroke.strokeNum, stroke.drawnPath.points, LENIENCY, frame.scale);
   }
 
   // Hands Hanzi Writer a set of stroke data for the current character. It
@@ -380,6 +390,12 @@ export function createQuiz(target, size, handlers) {
   // so far (frame.js) and move the reference into it, so the remaining strokes
   // are expected where you will naturally put them.
 
+  // For Settings › For testing: a stroke and how it was judged, in the
+  // recording of raw input (rawInputLog.js), with the frame it was judged in.
+  function record(stroke, verdict, judgedIn) {
+    rawInputLog.noteStroke({ points: stroke.drawnPath.points, verdict, expected: sequence[stroke.strokeNum], frame: judgedIn, hintShown });
+  }
+
   // Notes an accepted stroke. `position` is how many strokes had been written
   // before it; `baseStrokes` are the stroke numbers of baseData it covers:
   // one, or two for a joined stroke.
@@ -418,27 +434,45 @@ export function createQuiz(target, size, handlers) {
       return false;
     }
     const fitted = fitFrame(acceptedStrokes);
-    if (!framesDiffer(fitted, frame)) {
-      return false;
+    if (framesDiffer(fitted, frame)) {
+      useFrame(fitted);
+      return true;
     }
-    useFrame(fitted);
-    return true;
+    // The frame stays, but the next stroke may still need a zoom.
+    if (zoomNeeded(frame)) {
+      useFrame(frame);
+      return true;
+    }
+    return false;
   }
 
-  // Moves the reference into `newFrame`. If the whole character would no
-  // longer fit in the writing area there, first zooms out: the strokes
-  // written so far shrink on screen, and the frame and the strokes'
-  // recorded points with them, so that everything stays as it was relative
-  // to everything else (see zoomToFit in frame.js). Not before the size
-  // being written is known: the first stroke says only where.
+  // The zoom that the next stroke needs in `aFrame`, or null: only once the
+  // size being written is known, and only if that stroke would reach beyond
+  // the writing area (strokeLeavesRoom in frame.js).
+  function zoomNeeded(aFrame) {
+    const last = acceptedStrokes.at(-1);
+    const next = last ? sequence[last.position + last.strokeCount] : undefined;
+    return sizeIsKnown(acceptedStrokes) && next !== undefined && strokeLeavesRoom(baseData.strokes[next], aFrame)
+      ? zoomToFit(extent, aFrame)
+      : null;
+  }
+
+  // Moves the reference into `newFrame`. If the next stroke would reach
+  // beyond the writing area there, first zooms out until the whole
+  // character fits: the strokes written so far shrink on screen, and the
+  // frame and the strokes' recorded points with them, so that everything
+  // stays as it was relative to everything else (see zoomToFit and
+  // strokeLeavesRoom in frame.js). Not before the size being written is
+  // known: the first stroke says only where.
   function useFrame(newFrame) {
     frame = newFrame;
-    const zoom = sizeIsKnown(acceptedStrokes) ? zoomToFit(extent, frame) : null;
+    const zoom = zoomNeeded(frame);
     if (zoom) {
       frame = combineFrames(zoom, frame);
       acceptedStrokes = acceptedStrokes.map((entry) => ({ ...entry, drawn: moved(entry.drawn, zoom) }));
       zoomInk(zoom);
       noteZoom(combineFrames(zoom, zoomSoFar));
+      rawInputLog.noteZoom(zoom);
     }
     framedData = applyFrame(baseData, frame);
   }
@@ -941,8 +975,29 @@ export function createQuiz(target, size, handlers) {
     endPress();
   });
 
+  // Empties the writing area at once: nothing of the character before (your
+  // strokes, its printed form, its outline) stays up while the next one's
+  // stroke data loads, or it flashed up as the next card came (the owner,
+  // 2026-10-24). start() puts back what the new character needs.
+  let blanked = false;
+  function blank() {
+    blanked = true;
+    clearTimeout(afterAnimationTimer);
+    animating = false;
+    writing = false;
+    completed = false;
+    drawnLayer.replaceChildren();
+    demoLayer.replaceChildren();
+    if (writer) {
+      writer.cancelQuiz();
+      writer.hideOutline({ duration: 0 });
+      setPrintedColor(() => INVISIBLE);
+    }
+  }
+
   // Starts (or restarts) the quiz for the current character, from a clean slate.
   async function start() {
+    blanked = false;
     clearTimeout(afterAnimationTimer);
     animating = false;
     completed = false;
@@ -951,6 +1006,7 @@ export function createQuiz(target, size, handlers) {
     strokesDone = 0;
     noteHint(false);
     handlers.onStart({ totalStrokes: baseData.strokes.length });
+    rawInputLog.beginCharacter({ char, script: charScript, strokeCount: baseData.strokes.length, size, rawInput, outlineVisible });
     setBusy(true);
     try {
       await useOriginalData();
@@ -982,6 +1038,7 @@ export function createQuiz(target, size, handlers) {
       highlightOnComplete: false,
       // Hanzi Writer accepted the stroke as the textbook stroke.
       onCorrectStroke: (stroke) => {
+        const judgedIn = frame;
         keepDrawnStroke(stroke.drawnPath.pathString);
         const baseStrokes = [sequence[stroke.strokeNum]];
         let strokesDone = stroke.strokeNum + 1; // strokeNum counts from 0
@@ -994,9 +1051,11 @@ export function createQuiz(target, size, handlers) {
             : toPoints(baseData.medians[sequence[stroke.strokeNum]]),
         );
         if (otherReading) {
+          record(stroke, 'otherOrder', judgedIn);
           switchToOtherOrder(stroke, otherReading, totalStrokes);
           return;
         }
+        record(stroke, isShortcut ? 'shortcut' : 'accepted', judgedIn);
         // A shortcut stroke can occasionally also pass as its first half. Then
         // the second half is already on the page, so move past it too.
         if (isShortcut) {
@@ -1014,8 +1073,10 @@ export function createQuiz(target, size, handlers) {
       // Hanzi Writer rejected the stroke. It may still be a shortcut, or the
       // next stroke of the character's other accepted order.
       onMistake: (stroke) => {
+        const judgedIn = frame;
         const otherReading = otherOrderFor(stroke);
         if (drewShortcut(stroke) && !(otherReading && otherOrderIsCloser(stroke, otherReading))) {
+          record(stroke, 'shortcut', judgedIn);
           keepDrawnStroke(stroke.drawnPath.pathString);
           noteAccepted(
             stroke.strokeNum,
@@ -1033,6 +1094,7 @@ export function createQuiz(target, size, handlers) {
           return;
         }
         if (otherReading) {
+          record(stroke, 'otherOrder', judgedIn);
           keepDrawnStroke(stroke.drawnPath.pathString);
           switchToOtherOrder(stroke, otherReading, totalStrokes);
           return;
@@ -1041,6 +1103,7 @@ export function createQuiz(target, size, handlers) {
         // centered reference than Hanzi Writer allows: accept it, and let the
         // frame follow it.
         if (isFirstStrokeAnywhere(stroke)) {
+          record(stroke, 'firstAnywhere', judgedIn);
           keepDrawnStroke(stroke.drawnPath.pathString);
           noteAccepted(0, [sequence[0]], stroke.drawnPath.points);
           reportProgress({ strokesDone: 1, totalStrokes, totalMistakes: mistakes });
@@ -1053,6 +1116,7 @@ export function createQuiz(target, size, handlers) {
         // The expected stroke, written at a size that was not known yet:
         // accept it, and let the frame take on that size.
         if (isExpectedStrokeAtAnotherSize(stroke)) {
+          record(stroke, 'atAnotherSize', judgedIn);
           keepDrawnStroke(stroke.drawnPath.pathString);
           noteAccepted(stroke.strokeNum, [sequence[stroke.strokeNum]], stroke.drawnPath.points);
           const strokesDone = stroke.strokeNum + 1;
@@ -1063,6 +1127,7 @@ export function createQuiz(target, size, handlers) {
           }
           return;
         }
+        record(stroke, 'mistake', judgedIn);
         mistakes += 1;
         // mistakesOnStroke counts the misses on this one stroke, including this one.
         if (stroke.mistakesOnStroke >= HINT_AFTER_MISSES) {
@@ -1083,6 +1148,7 @@ export function createQuiz(target, size, handlers) {
         }
         showDemo(sequence.length); // nothing left to show
         const passed = handlers.onComplete({ totalMistakes: mistakes, hintShown, order });
+        rawInputLog.endCharacter({ mistakes, passed, hintShown });
         setPrintedColor(() => referenceColor(passed));
       },
     });
@@ -1095,12 +1161,13 @@ export function createQuiz(target, size, handlers) {
     // (true) and snapping to the printed strokes (false). Returns false if
     // there is no stroke data for the character.
     async showCharacter(newChar, script, useRawInput) {
-      clearTimeout(afterAnimationTimer);
+      blank();
       const data = await loadCharData(newChar, script);
       if (!data) {
         return false;
       }
       char = newChar;
+      charScript = script;
       rawInput = useRawInput;
       baseData = data;
       charData = data;
@@ -1124,6 +1191,7 @@ export function createQuiz(target, size, handlers) {
           drawingColor: ink(),
           drawingWidth: penWidth,
           highlightColor: themeColor('--success'),
+          strokeHighlightSpeed: HINT_SPEED,
           strokeAnimationSpeed: STROKE_ANIMATION_SPEED,
           delayBetweenStrokes: PAUSE_BETWEEN_STROKES_MS,
           // Tells Hanzi Writer to use our own data instead of fetching from
@@ -1141,6 +1209,9 @@ export function createQuiz(target, size, handlers) {
 
     restart: start,
 
+    // Empties the writing area, before a new word's stroke data loads.
+    blank,
+
     // Whether a hint has been shown for the character being written, for
     // when it is left before it is finished (wordFlow.js keeps it).
     hintShownNow: () => hintShown,
@@ -1153,8 +1224,10 @@ export function createQuiz(target, size, handlers) {
 
     setOutlineVisible(visible) {
       outlineVisible = visible;
-      if (!writer) {
-        return; // applied when the first character starts
+      // Applied when the first character starts, or the next one after
+      // blank(): shown now, it would be the outline of the one before.
+      if (!writer || blanked) {
+        return;
       }
       if (visible) {
         writer.showOutline();

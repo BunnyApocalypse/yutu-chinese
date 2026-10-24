@@ -9,6 +9,7 @@ CLAUDE.md keeps the rules and points here. Each file has what an area does now, 
 | `decks.md` | The Decks tab, adding, how decks work, ready-made decks |
 | `word-lists.md` | HSK, TOCFL, groups, reading fixes, radicals |
 | `anki.md` | Importing from Anki: reading the file, the guesses, keeping schedules |
+| `skritter.md` | Importing from Skritter: what its export holds, the words to check, keeping schedules and history |
 | `merging.md` | What is kept for merging, combining backups |
 | `word-page.md` | The word page, sentences, hearing a word |
 | `writing.md` | Raw input, shortcuts, following the frame, two stroke orders, the stroke count, gestures |
@@ -18,7 +19,7 @@ CLAUDE.md keeps the rules and points here. Each file has what an area does now, 
 | `translations.md` | The Italian and German texts: rules for translating, the words used for the app's ideas |
 | `ux-review.md` | The screenshot atlas, and what the review of 2026-10-16 led to |
 | `layout.md` | Every file, one line each |
-| `goals.md` | Long-term goals, sharing the app, Skritter import, translations |
+| `goals.md` | Long-term goals, sharing the app, translations |
 | `history.md` | The latest handover, the roadmap, the testing sessions |
 
 Also: `alpha/` (what testers were given), `../tests/browser/CLAUDE.md` (browser tests), `../data/notes/CLAUDE.md` (writing learning notes).

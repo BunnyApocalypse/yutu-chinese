@@ -1,4 +1,4 @@
-# Long-term goals, testers and the Skritter import
+# Long-term goals and testers
 
 ## Long-term goals
 
@@ -26,9 +26,9 @@ Agreed with the owner on 2026-10-13.
 - **An Android app** through F-Droid is on the near-term roadmap (the owner, 2026-10-19); the web app stays. The Play Store and iPhone/iPad come later, only if heavily requested (`docs/history.md`, "Roadmap").
 - **Not deciding now:** scheduling settings (cards can be rebuilt from reviews) and the database's layout (versioned, with upgrade code).
 
-## Skritter import (future)
+## Skritter import
 
-The owner wants to bring their Skritter data across eventually, but not the word list without its scheduling (the GDPR request of 2026-10-12 hasn't been answered). Keep it in mind when the data model changes: words as well as single characters, both scripts, per-item review history and scheduling state. Look at a real export first. Personal exports go in the git-ignored `exports/`.
+Built on 2026-10-23, once the owner's data arrived (`docs/skritter.md`). Personal exports stay in the git-ignored `exports/`.
 
 ## Translations and other languages (future)
 

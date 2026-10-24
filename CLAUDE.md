@@ -52,6 +52,7 @@ Each area's file in `docs/` (index `docs/README.md`) has the names in the code, 
 - Cards, FSRS, Review and Learn, the lesson, leeches, suspending, the card manager, the Progress tab: `docs/cards.md`
 - Decks: `docs/decks.md`; HSK, TOCFL and radical lists, reading fixes: `docs/word-lists.md`
 - Importing from Anki (.apkg, .colpkg), imported schedules: `docs/anki.md`
+- Importing from Skritter (the .zip its support sends): `docs/skritter.md`
 - `changedAt`, removal marks, `formerIds`, combining backups: `docs/merging.md`
 - The word page, sentences, sound: `docs/word-page.md`
 - Writing a character (raw input, shortcuts, the frame, stroke orders, gestures): `docs/writing.md`
@@ -59,7 +60,7 @@ Each area's file in `docs/` (index `docs/README.md`) has the names in the code, 
 - Service worker, offline packs, the two deployed copies: `docs/offline.md`
 - Introduction, tips, menu, Settings, looks, shared sizes, accessibility: `docs/interface.md`; the pass over the looks: `docs/ux-review.md` (pictures of every screen: `node scripts/ux-atlas.js`)
 - Every file, one line each: `docs/layout.md`
-- Long-term goals, testers, Skritter import: `docs/goals.md`
+- Long-term goals, testers: `docs/goals.md`
 - Handover, roadmap, testing sessions: `docs/history.md`
 - Browser tests: `tests/browser/CLAUDE.md`; learning notes: `data/notes/CLAUDE.md` (both load by themselves)
 
@@ -67,7 +68,7 @@ Each area's file in `docs/` (index `docs/README.md`) has the names in the code, 
 
 ## Rules that cut across the code
 
-- **IDs are the same on every device.** A word's ID is `<traditional>|<pinyin>` (a sentence `<traditional>|sentence`, a radical `<traditional>|radical`); review IDs are random (`randomId()` in `src/db.js`; `crypto.randomUUID()` fails on the LAN address), except reviews brought over from Anki, named after Anki's own (`anki-…`, `docs/anki.md`) so a second import adds nothing. Never auto-incrementing keys.
+- **IDs are the same on every device.** A word's ID is `<traditional>|<pinyin>` (a sentence `<traditional>|sentence`, a radical `<traditional>|radical`); review IDs are random (`randomId()` in `src/db.js`; `crypto.randomUUID()` fails on the LAN address), except reviews brought over from Anki or Skritter, named after their own (`anki-…`, `docs/anki.md`; `skritter-…`, `docs/skritter.md`) so a second import adds nothing. Never auto-incrementing keys.
 - **Every review is logged and never deleted**, and never changed except when corrected in the same sitting of Review (looking back, `docs/cards.md`); cards can be rebuilt from reviews (`replay` in `src/scheduler.js`). Removing a word deletes its cards, never its reviews, and leaves a mark in `removed`.
 - **`changedAt` is stamped by `putAll` in `src/db.js`, never by callers**; a change the app makes by itself to old records passes `{ stamp: false }`. Compare records without it.
 - **The word's pop-up panel rebuilds the word from its form**, so fields not in the form are carried over by hand: `decks`, `formerIds`, `learnedAt`, `suspended`, `startedOverAt`, `importedAt`. A new such field must be added there.
@@ -97,6 +98,6 @@ Each area's file in `docs/` (index `docs/README.md`) has the names in the code, 
 
 - **Start with the handover at the top of `docs/history.md`**; the roadmap (agreed 2026-10-18) follows it.
 - **The name is 玉兔中文** (Yùtù Zhōngwén, "Jade Rabbit Chinese"; the owner, 2026-10-15); "Yutu Chinese" where Chinese can't be marked with `lang` (plain text, file names); the browser tab and the home-screen label are "玉兔 Yutu" (`docs/goals.md`). The database (`hanzi-trainer`) and backup format (`hanzi-trainer-backup`) keep the old name for good.
-- **The owner's real study is still in Skritter**; its scheduling data (GDPR request, 2026-10-12) has not arrived.
+- **The owner's real study is still in Skritter**; its data arrived on 2026-10-22 (`exports/`, git-ignored) and the import is built, not yet tried by the owner (`docs/skritter.md`).
 - **The owner has not tried** sentences, combining backups between real devices, or leeches: ask how it went before building further on them.
 - `tests/words.tsv` has 109 test words; the app itself starts with none.

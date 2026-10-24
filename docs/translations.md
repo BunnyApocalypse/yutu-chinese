@@ -68,6 +68,7 @@ At 360 pixels wide (a small phone), these were shortened so the rows around the 
 The drafts were made by Claude (2026-10-22). Most worth a native eye:
 
 - **Names of other apps' menus**, guessed: iOS and macOS (*Aggiungi a Home*, *Zum Home-Bildschirm*, *Ablage › Zum Dock hinzufügen*), Chrome (*Trasmetti, salva e condividi*, *Streamen, speichern und teilen*), Anki's export (*Includi le informazioni di pianificazione*, *Planungsinformationen einbeziehen*, *Anki-Stapelpaket*). Best checked on a device in that language.
+- **The Skritter import** (`skritter.…`, drafted 2026-10-23 after the rest): *escluso* for Skritter's "banned", *gesperrt* in German; "{words} in {sections}" built with a dative plural in German (*in 28 Abschnitten*). The decks it makes ("Skritter", "Section 1") are saved names and stay English.
 - **Basics of Chinese**: the pinyin sounds compared to Italian and German words (`basics.letter…`).
 - **Sentences built around a box or a word put in**: "A card is a leech after [n] times forgotten" (`settings.leechAfter`, `settings.leechHint`), the streak's goal (`settings.streakGoal…`), "the {kind} card of {word}" (`review.suspended…`: *la carta di toni*, *die Karte „Ton“*).
 - **Terms**: *sanguisuga* and *Problemkarte* for a leech, *input grezzo* and *Roheingabe* for raw input, *Rifai* and *Neu* for Clear.

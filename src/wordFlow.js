@@ -11,14 +11,7 @@
 import { createQuiz } from './quiz.js';
 import { loadCharData } from './charData.js';
 import { t } from './text.js';
-
-// After a character is finished, tapping the writing area moves on, like the
-// Next button. Taps are ignored for this long first, so that a stray touch
-// right after the last stroke doesn't skip the comparison.
-// (200 since 2026-10-13, down from 600: the owner found the wait in the way
-// when moving on quickly. It is still enough for the tap that finished the
-// step not to count as the tap that moves on.)
-const TAP_TO_CONTINUE_DELAY_MS = 200;
+import { freshTaps } from './freshTap.js';
 
 // As big as fits on the screen, leaving room for everything above and below.
 function chooseSize() {
@@ -169,9 +162,10 @@ export function createWordFlow(elements) {
   let currentMistakes = 0;
   let carriedMistakes = 0;
 
-  // The time (in milliseconds, as given by Date.now()) from which a tap on the
-  // writing area counts.
-  let tapAllowedFrom = 0;
+  // After a character is finished, tapping the writing area moves on, like
+  // the Next button, but only with a touch begun after it was finished
+  // (freshTap.js): the last stroke is not also the tap that moves on.
+  const taps = freshTaps(writingArea);
 
   let outlineVisible = false;
 
@@ -456,7 +450,7 @@ export function createWordFlow(elements) {
     onComplete({ totalMistakes, hintShown, order }) {
       charDone = true;
       if (practicing) {
-        tapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
+        taps.mark();
         orderNote.hidden = order !== 'mainland';
         hideProgress();
         statusElement.textContent = options.hideMistakes
@@ -478,7 +472,7 @@ export function createWordFlow(elements) {
       // Writing the mainland order is accepted; the note only points out that
       // the standard order is different.
       orderNote.hidden = order !== 'mainland';
-      tapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
+      taps.mark();
       mistakesPerChar[position] = carriedMistakes + totalMistakes;
       hintPerChar[position] = hintPerChar[position] || hintShown;
 
@@ -572,7 +566,7 @@ export function createWordFlow(elements) {
     // Nothing is left to write: show this character, since the word is now
     // complete, and finish as if it had been written.
     charDone = true;
-    tapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
+    taps.mark();
     quiz.reveal();
     afterCharFinished();
   }
@@ -725,7 +719,7 @@ export function createWordFlow(elements) {
     // the one still to be written, as Next does (the owner, 2026-10-21:
     // the tap had stopped working there, leaving only the arrow).
     const canGoOn = !practicing || !wordFinished();
-    if (writingArea.contains(event.target) && charDone && canGoOn && Date.now() >= tapAllowedFrom) {
+    if (writingArea.contains(event.target) && charDone && canGoOn && taps.isFresh()) {
       goOn();
     }
   });
@@ -813,6 +807,8 @@ export function createWordFlow(elements) {
       // Array.from splits text into whole characters. (Plain text.split('')
       // would cut some rare characters in half.) Spaces are dropped.
       const typed = Array.from(text).filter((char) => char.trim() !== '');
+      // Nothing of the word before shows while this one loads.
+      quiz.blank();
 
       // The outline is set now, before the stroke data has loaded: a tap on
       // "Hide outline" while it loads (a slow tablet) would otherwise be

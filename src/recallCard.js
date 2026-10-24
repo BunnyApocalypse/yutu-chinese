@@ -4,13 +4,7 @@
 import { describeReading } from './tones.js';
 import { faceArrow, BACK } from './faceArrow.js';
 import { t } from './text.js';
-
-// A tap right after the answer appears is probably the same tap that revealed
-// it; ignore taps for this long.
-// (200 since 2026-10-13, down from 600: the owner found the wait in the way
-// when moving on quickly. It is still enough for the tap that finished the
-// step not to count as the tap that moves on.)
-const TAP_TO_CONTINUE_DELAY_MS = 200;
+import { freshTaps } from './freshTap.js';
 
 const HINTS = {
   meaning: 'recall.tapMeaning',
@@ -31,7 +25,9 @@ export function createRecallCard(cardFace) {
   // What the card on screen needs; null when this kind of card isn't showing.
   let current = null;
   let revealed = false;
-  let tapAllowedFrom = 0;
+  // The tap that showed the answer is not also the tap that moves on
+  // (freshTap.js).
+  const taps = freshTaps(cardFace);
 
   // Shows the answer under the word.
   function showAnswer() {
@@ -51,7 +47,7 @@ export function createRecallCard(cardFace) {
 
   function reveal() {
     revealed = true;
-    tapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
+    taps.mark();
     showAnswer();
     current.onReveal();
   }
@@ -63,7 +59,7 @@ export function createRecallCard(cardFace) {
     }
     if (!revealed) {
       reveal();
-    } else if (Date.now() >= tapAllowedFrom) {
+    } else if (taps.isFresh()) {
       current.onContinue();
     }
   });

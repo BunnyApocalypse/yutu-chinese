@@ -113,9 +113,10 @@ export function fitFrame(pairs) {
 // again: as if the writer had stepped back from the paper.
 
 // Where a character may reach: the box the stroke data is drawn in (0 to
-// 1024 across, -124 to 900 upward) and halfway into the margin the writing
-// area leaves around it (PADDING_SHARE in quiz.js, about 70 units).
-export const ROOM = { left: -35, right: 1059, bottom: -159, top: 935 };
+// 1024 across, -124 to 900 upward) and the margin the writing area leaves
+// around it (PADDING_SHARE in quiz.js, about 70 units), to the area's edge.
+// Until 2026-10-24 only halfway into the margin.
+export const ROOM = { left: -70, right: 1094, bottom: -194, top: 970 };
 // A zoom leaves the character this much inside the room, so that a writer
 // who goes on a little big is not zoomed after every stroke.
 const ZOOM_SLACK = 25;
@@ -128,6 +129,24 @@ export function extentOf(charData) {
   const xs = numbers.filter((number, index) => index % 2 === 0);
   const ys = numbers.filter((number, index) => index % 2 === 1);
   return { left: Math.min(...xs), right: Math.max(...xs), bottom: Math.min(...ys), top: Math.max(...ys) };
+}
+
+// True if the stroke whose printed outline is `outline` would reach beyond
+// the writing area in `frame`. A zoom waits for this, for the next stroke
+// to be written (the owner, 2026-10-24: strokes were zoomed too often).
+// Zooming as soon as the whole character would not fit caught one
+// character in five written at exactly full size: its size is guessed from
+// the first few strokes, and a guess a little big made it "not fit"
+// (measured over both stroke data sets; local/strictness/ in the main
+// checkout). Waiting for the next stroke, about one in a hundred.
+export function strokeLeavesRoom(outline, frame) {
+  const box = extentOf({ strokes: [outline] });
+  return (
+    frame.scale * box.left + frame.dx < ROOM.left ||
+    frame.scale * box.right + frame.dx > ROOM.right ||
+    frame.scale * box.bottom + frame.dy < ROOM.bottom ||
+    frame.scale * box.top + frame.dy > ROOM.top
+  );
 }
 
 // The frame that does `inner` first and then `outer`.

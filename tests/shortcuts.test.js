@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 import { isJoinable, isShortcutStroke, joinedLine } from '../src/shortcuts.js';
+import { applyFrame } from '../src/frame.js';
 import { parseWordList } from '../src/wordList.js';
 
 // The same leniency the app uses (LENIENCY in src/quiz.js).
@@ -102,6 +103,33 @@ test('the hook of 子 may be joined wherever 子 appears', () => {
   for (const [char, strokeNum] of Object.entries(expected)) {
     assert.ok(isJoinable(charData(char, 'traditional'), strokeNum), `${char} in the Taiwan set`);
     assert.ok(isJoinable(bigSetData(char), strokeNum), `${char} in the big set`);
+  }
+});
+
+test('a pair is joinable at any size the character is written', () => {
+  // The character moved into a frame at 0.6 of its size, as quiz.js does
+  // for small writing: the same pairs, given the scale.
+  const small = { scale: 0.6, dx: 0.4 * 512, dy: 0.4 * 388 };
+  for (const char of '這子學道好') {
+    const data = charData(char, 'traditional');
+    const framed = applyFrame(data, small);
+    for (let strokeNum = 0; strokeNum < data.medians.length - 1; strokeNum++) {
+      assert.equal(isJoinable(framed, strokeNum, small.scale), isJoinable(data, strokeNum), `${char} stroke ${strokeNum}`);
+    }
+  }
+  // The top of 辶 in 這, written in one go at that size (the owner, 2026-10-24).
+  const zhe = charData('這', 'traditional');
+  const joined = joinedLine(applyFrame(zhe, small), 8);
+  assert.ok(isShortcutStroke(applyFrame(zhe, small), 8, joined, LENIENCY, small.scale));
+});
+
+test('the top of 辶 may be joined even where 辶 is small', () => {
+  // The Taiwan form: the dot, then the top in two strokes, then the long one.
+  for (const char of '隨這遠還') {
+    const data = charData(char, 'traditional');
+    const top = data.medians.length - 3;
+    assert.ok(isJoinable(data, top), char);
+    assert.ok(isShortcutStroke(data, top, joinedLine(data, top), LENIENCY), char);
   }
 });
 

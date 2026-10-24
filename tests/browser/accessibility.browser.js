@@ -291,7 +291,7 @@ describe('accessibility', { concurrency: false }, () => {
     await page.evaluate(`(() => {
       const tone = document.querySelector('#tone-buttons:not([hidden]) [data-tone]');
       if (tone) tone.click();
-      else document.getElementById('card-face').dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+      else ['pointerdown', 'pointerup'].forEach((type) => document.getElementById('card-face').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })));
     })()`);
     await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
     await check('the grades in Review');

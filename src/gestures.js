@@ -10,8 +10,9 @@
 
 import { t } from './text.js';
 
-// A hold: the finger or pen stays down this long...
-export const HOLD_MS = 500;
+// A hold: the finger or pen stays down this long... (400 since 2026-10-24,
+// down from 500: the owner found the hint a bit slow to come.)
+export const HOLD_MS = 400;
 // ...without moving further than this from where it landed, in pixels. A
 // finger always wobbles a little. A dot (點) moves further and is over in
 // well under HOLD_MS, so it stays a stroke.

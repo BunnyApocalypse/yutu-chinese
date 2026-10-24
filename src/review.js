@@ -23,11 +23,16 @@ import {
   nextToLearn,
   CARD_TYPES,
   allCardIds,
+  startOfStudyDay,
 } from './session.js';
 import { toneAnswers, readingsFor, describeReading } from './tones.js';
 import { scriptFor, scriptFlagFor } from './words.js';
 import { fillMixed } from './lang.js';
 import { meaningWithoutChinese } from './dictionary.js';
+
+// Marks where Chinese was left out of a meaning until the box takes its
+// place (a character for private use, never in a dictionary's text).
+const GAP_MARK = '\uE000';
 import { isLeech, lapsesOf, isSuspended, withSuspended, becameLeech } from './leeches.js';
 import { speak } from './speech.js';
 import { markedKnown, withStartedOver } from './cardManager.js';
@@ -38,6 +43,7 @@ import { cardTip } from './cardTip.js';
 import { studyByDay, streakAt, streakLine, studyDayKey } from './streak.js';
 import { createStopwatch } from './timing.js';
 import { showPastCard } from './pastCard.js';
+import { freshTaps } from './freshTap.js';
 import { t, formatDateTime } from './text.js';
 
 // The same for a sentence, which has two kinds of card (see sentences.js).
@@ -195,18 +201,40 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   function showMeaning(word, sentence, script) {
     meaningElement.classList.toggle('with-sentence', Boolean(sentence));
     if (!sentence) {
-      meaningElement.textContent = meaningWithoutChinese(word.definition);
+      fillWithoutChinese(meaningElement, word.definition);
       return;
     }
     const meaning = document.createElement('span');
     meaning.className = 'prompt-text';
     meaning.dataset.clamp = '';
-    meaning.textContent = meaningWithoutChinese(word.definition);
+    fillWithoutChinese(meaning, word.definition);
     const line = document.createElement('span');
     line.className = 'cloze-sentence';
     line.lang = script === 'traditional' ? 'zh-Hant-TW' : 'zh-Hans-CN';
     line.textContent = sentence;
     meaningElement.replaceChildren(meaning, line);
+  }
+
+  // Puts a meaning into `element` without its Chinese, a small gray box
+  // where it was (the owner chose it from pictures, 2026-10-24: "…" was
+  // unclear, and CC-CEDICT itself writes "..." for words left out). The
+  // box holds "…" out of sight, for the panel showing a cut-off meaning in
+  // full, and is named for a screen reader.
+  function fillWithoutChinese(element, definition) {
+    const parts = meaningWithoutChinese(definition, GAP_MARK).split(GAP_MARK);
+    element.replaceChildren(
+      ...parts.flatMap((text, index) => {
+        if (index === 0) {
+          return [text];
+        }
+        const box = document.createElement('span');
+        box.className = 'chinese-gap';
+        box.textContent = '…';
+        box.setAttribute('role', 'img');
+        box.setAttribute('aria-label', t('review.chineseLeftOut'));
+        return [box, text];
+      }),
+    );
   }
 
   // The kind of card, above it: "Writing", "Sentence · reading".
@@ -485,7 +513,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // The answer stays up with the corrected meaning, still to be graded.
       current.word = after;
       if (current.type === 'writing') {
-        meaningElement.textContent = meaningWithoutChinese(after.definition);
+        fillWithoutChinese(meaningElement, after.definition);
       }
       flows.recall.update(after);
       flows.tone.update(after);
@@ -645,16 +673,14 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // the newest back to Review, which shows the next card afresh. Kept in
   // memory only, for as long as the page is open.
   const LOOK_BACK_LIMIT = 10;
-  // A tap on the face this soon after a card looked back at comes up is
-  // taken for the tap that brought it (as in the other files' own
-  // TAP_TO_CONTINUE_DELAY_MS).
-  const TAP_TO_CONTINUE_DELAY_MS = 200;
+  // A tap on the face goes on only with a touch begun after the card looked
+  // back at came up, not the one that brought it (freshTap.js).
+  const pastTaps = freshTaps(cardFace);
   // { word, type, script, cardBefore, card, review, drawings, withSentence },
   // oldest first.
   let graded = [];
   // Which of them is on screen, or null.
   let lookingBack = null;
-  let pastTapAllowedFrom = 0;
   // At the end of Review, where there is no card to tap ‹ on.
   const lookBackButton = document.getElementById('look-back-button');
   lookBackButton.addEventListener('click', () => lookBackAt(graded.length - 1));
@@ -692,14 +718,17 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     showScriptFlag(entry.word);
     // On the card's face, whatever its kind.
     showPartsFor('meaning');
-    // Above a writing card, as when it was written; the other kinds have
-    // the reading and meaning on their face.
+    // Above a writing or tone card, whose face has a square for each
+    // character; the other kinds have the reading and meaning on their face.
     if (entry.type === 'writing') {
       showMeaning(entry.word, entry.withSentence ? entry.word[entry.script] : null, entry.script);
+    } else if (entry.type === 'tone') {
+      meaningElement.classList.remove('with-sentence');
+      meaningElement.textContent = entry.word.definition;
     } else {
       meaningElement.textContent = '';
     }
-    if (entry.type === 'writing') {
+    if (entry.type === 'writing' || entry.type === 'tone') {
       showPinyin();
     } else {
       pinyinElement.hidden = true;
@@ -707,7 +736,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     pinyinButton.hidden = true;
     offerListen(true);
     showPast();
-    pastTapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
+    pastTaps.mark();
   }
 
   function showPast() {
@@ -772,13 +801,13 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   // Saves the review again with grade `value` (and these verdicts on a
   // writing card), and the card as that grade would have left it.
-  async function correct(entry, value, passedPerChar) {
+  async function correct(entry, value, passedPerChar, extra = {}) {
     const time = entry.review.time;
     const chosen = gradeOptions(entry.cardBefore ? entry.cardBefore.fsrsState : null, new Date(time))[value];
     // A word of one character: the grade is its verdict (as in grade()).
     const verdicts = entry.type === 'writing' && passedPerChar?.length === 1 ? [value !== AGAIN] : passedPerChar;
     const card = { ...entry.card, due: chosen.due, fsrsState: chosen.fsrsState };
-    const review = { ...entry.review, grade: value, log: chosen.log, ...(verdicts && { passedPerChar: verdicts }) };
+    const review = { ...entry.review, grade: value, log: chosen.log, ...(verdicts && { passedPerChar: verdicts }), ...extra };
     await saveReview(card, review);
     cards.set(card.id, card);
     entry.card = card;
@@ -797,8 +826,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     lookForward();
   }
 
-  // A character's square tapped on a writing card looked back at: its
-  // verdict turns, and the grade becomes the one then suggested.
+  // A character's square tapped on a writing or tone card looked back at:
+  // its verdict turns, and the grade becomes the one then suggested.
   async function changeVerdict(index) {
     const entry = graded[lookingBack];
     if (!entry || !canCorrect(entry)) {
@@ -807,8 +836,13 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     const verdicts = [...entry.review.passedPerChar];
     verdicts[index] = !verdicts[index];
     const mistakes = (entry.review.mistakesPerChar ?? []).reduce((total, count) => total + count, 0);
-    const suggestion = suggestGrade({ passedPerChar: verdicts, mistakes, hintPerChar: entry.review.hintPerChar ?? [] });
-    await correct(entry, gradeFor(suggestion, settings.gradeButtons), verdicts);
+    const suggestion =
+      entry.type === 'tone'
+        ? toneSuggestion(verdicts)
+        : suggestGrade({ passedPerChar: verdicts, mistakes, hintPerChar: entry.review.hintPerChar ?? [] });
+    // A tone's verdict given by the learner is not a variant accepted.
+    const variants = entry.review.variantPerChar?.map((variant, each) => variant && each !== index);
+    await correct(entry, gradeFor(suggestion, settings.gradeButtons), verdicts, variants ? { variantPerChar: variants } : {});
     showPast();
   }
 
@@ -825,7 +859,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // A tap on the face of a card looked back at goes on (the arrows and the
   // squares keep their taps to themselves).
   cardFace.addEventListener('pointerup', () => {
-    if (lookingBack !== null && Date.now() >= pastTapAllowedFrom) {
+    if (lookingBack !== null && pastTaps.isFresh()) {
       lookForward();
     }
   });
@@ -839,15 +873,45 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // is (the owner, 2026-10-21). A lesson's tone step is practice and is not
   // saved, and a word answered by "I know this word" was not answered at all,
   // so neither counts.
+  // Reviews are never deleted, so once enough are counted it stays so,
+  // without looking through them all again for each tone card.
   const TONE_HELP_UNTIL = 3;
+  let toneHelpOver = false;
   function offerToneHelp() {
-    const toneReviews = reviewTimes.filter((review) => /#tone(#|$)/.test(review.cardId) && !review.markedKnown);
-    return toneReviews.length < TONE_HELP_UNTIL;
+    if (!toneHelpOver) {
+      const toneReviews = reviewTimes.filter((review) => /#tone(#|$)/.test(review.cardId) && !review.markedKnown);
+      toneHelpOver = toneReviews.length >= TONE_HELP_UNTIL;
+    }
+    return !toneHelpOver;
   }
   const streakGoal = () => ({ cards: settings.streakCards, words: settings.streakWords });
 
+  // What was studied before today, counted once a day: counting all the
+  // reviews after every grade took a moment the card couldn't be used in,
+  // with years of history (the owner's 186,000 from Skritter, 2026-10-24).
+  // Only today's reviews and words are counted each time. Counted afresh
+  // when the reviews are read again (load(), after an import or combining
+  // backups), the only way the days before today can change.
+  let studyBefore = null; // { day, reviews, days }
+
   function streakNow(now) {
-    return streakAt(studyByDay(reviewTimes, words), now, streakGoal());
+    const day = studyDayKey(now);
+    const dayStart = startOfStudyDay(now);
+    if (studyBefore?.day !== day || studyBefore.reviews !== reviewTimes) {
+      studyBefore = {
+        day,
+        reviews: reviewTimes,
+        days: studyByDay(
+          reviewTimes.filter((review) => review.time < dayStart),
+          words.filter((word) => word.learnedAt < dayStart),
+        ),
+      };
+    }
+    const today = studyByDay(
+      reviewTimes.filter((review) => review.time >= dayStart),
+      words.filter((word) => word.learnedAt >= dayStart),
+    );
+    return streakAt(new Map([...studyBefore.days, ...today]), now, streakGoal());
   }
 
   // After a grade or a word learned, the moment today may start to count
@@ -1048,26 +1112,39 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   function showToneCard() {
     const { word } = current;
+    // What to save about a tone card.
+    const details = ({ givenTones, passedPerChar, variantPerChar }) => ({
+      givenTones,
+      passedPerChar,
+      // True where a tone was accepted only as a regional or neutral-tone variant.
+      variantPerChar,
+      pronunciation: settings.pronunciation,
+    });
     flows.tone.start({
       word,
       script: scriptFor(word, settings),
       reading: readingOf(word),
       answers: toneAnswersOf(word),
       offerHelp: offerToneHelp(),
-      onDone({ givenTones, passedPerChar, variantPerChar }) {
-        // One wrong tone fails the card.
-        const allRight = passedPerChar.every(Boolean);
-        offerGrades(allRight ? GOOD : AGAIN, {
-          givenTones,
-          passedPerChar,
-          // True where a tone was accepted only as a regional or neutral-tone variant.
-          variantPerChar,
-          pronunciation: settings.pronunciation,
-        });
+      onDone(result) {
+        offerGrades(toneSuggestion(result.passedPerChar), details(result));
+      },
+      // A box tapped once answered: the suggestion follows (as for writing).
+      onVerdictChange(result) {
+        if (options) {
+          suggested = toneSuggestion(result.passedPerChar);
+          answerDetails = details(result);
+          renderGrades();
+        }
       },
       onContinue: () => grade(suggested),
       backToCard: backToCard(),
     });
+  }
+
+  // One wrong tone fails the card.
+  function toneSuggestion(passedPerChar) {
+    return passedPerChar.every(Boolean) ? GOOD : AGAIN;
   }
 
   // Meaning and pinyin cards: nothing is checked, so "Good" is highlighted

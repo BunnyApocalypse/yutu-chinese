@@ -396,7 +396,7 @@ describe('learning new words', { concurrency: false }, () => {
     assert.match(await write('下'), /^Practice · /);
     assert.equal(await page.evaluate(suggested), 'Good');
     // A tap on the writing area does not grade while practicing.
-    await page.evaluate(`document.getElementById('writing-area').dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))`);
+    await page.evaluate(`['pointerdown', 'pointerup'].forEach((type) => document.getElementById('writing-area').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`);
     await new Promise((resolve) => setTimeout(resolve, 300));
     assert.equal(await isShown(page, 'grade-row'), true);
     assert.equal(await reviewCount(), reviewsBefore);

@@ -1,0 +1,52 @@
+# Importing from Skritter
+
+Built on 2026-10-23, after the owner's GDPR request of 2026-10-12 was answered with a .zip on 2026-10-22. Decided with the owner that day, from Claude's proposals: **in the app** (for testers who come from Skritter too), not a script for the owner alone; **the whole review history**, not only today's schedules; and for a word the file doesn't settle, **every word it could be, for the learner to untick** ("make multiple cards, let the user check").
+
+## What Skritter sends
+
+Skritter has no export button: its support sends a .zip on request. Inside, a folder of `export_<account>_<Name>_<date>.json` files (and, made on a Mac, `__MACOSX/…/._…` files with no data, skipped). The import reads four:
+
+- **`UserItem`**: one record a card. `part` is its kind (`rune` writing, `rdng` pinyin, `tone`, `defn` meaning); `style` the script it is studied in (`trad`, `simp`, or `both` for a word written the same in both; `none` for the parts of words Skritter makes items for, nearly all never studied); `vocabIds[0]` the word; `reviews`, `successes`; the schedule: `last` and `next` (seconds), `interval`, and FSRS's `stability` (days) and `difficulty` (1 to 10), which Skritter uses too.
+- **`ProgressActivity`**: one record a study session (`learn`, `review`, `rejuvenate`): `startedAt`, `finishedAt`, `time` (seconds spent), and `cards`, every card answered in it in order, with `score` 1 to 4 (the same four grades as here). A card failed is asked again in the same session, so it may appear twice. An entry without a score was seen in a lesson, not graded.
+- **`UserVocab`**: words the learner changed: `banned` with `banned_parts`, and `c_defn`, a meaning of their own.
+- **`VocabListInfo`**: the lists the learner made: `name` and `sections[]` (`id`, `name`, `position`) with `rows[]`: `vocabId`, `tradVocabId`, `writing`, `writingTrad`.
+- **Skritter's own lists** (HSK, textbooks) **are named nowhere.** Each item names the lists and sections it is in (`vocabListIds`, `sectionIds`, numbers such as `4510900867432448`, one `list7`), with no pairing between the two; the sessions name the list studied (`settings.deckFilters`). Nothing in the file says "HSK" or a textbook's name.
+
+**What it lacks: pinyin and meanings.** A word is named only as `zh-<simplified characters>-<number>`. The number tells apart Skritter's words with the same simplified form (a word studied in traditional is usually `-1` or `-2`, and an item's own ID may say `-0` while its `vocabIds` say `-1`), but **it doesn't follow the dictionary's order** (checked on the owner's lists), so it can't settle which word is meant. A list's `writingTrad` mostly repeats the simplified form (497 of the owner's 1,201 rows, where the dictionary's differs), so only a different one is taken.
+
+The owner's file: 9,912 cards, 9,440 studied, of 2,476 words; 2,043 sessions with 180,079 graded answers from May 2025; 4 lists of their own (3 with words studied) and 13 of Skritter's.
+
+## What it does
+
+- **Where:** "Import from Skritter" under "Import a deck from Anki" in the Decks tab's "+ New / import deck" panel, on the front page only (`skritter-import-button`, which closes that panel). It opens a pop-up (`skritter-dialog`, styled as the Anki one) in three steps: choose the .zip; check; what was brought over. The introduction's starting level doesn't offer it.
+- **The check step:** what the file holds ("2,476 words you studied in Skritter, 9,440 cards, 180,079 reviews") and how many words the dictionary lacks; a line on where pinyin and meanings come from; then **"Check 180 words"**: a group for each set of Skritter characters with more than one word it could be ("子 in Skritter · 47 reviews"), a checkbox each, all ticked: the traditional form (marked as such, since it is what tells 發 from 髮), the pinyin and the first three senses. A box unticked leaves that word out (`choices.leftOut`, `"<characters>><word ID>"`); two Skritter words with the same characters share a group and the choice.
+- **"Your Skritter lists"** (the owner, 2026-10-23), before the words to check: a row for each of Skritter's lists with words studied, the most words first: "442 words in 39 sections: 小, 又, 好, …" (the characters first studied) over a name box ("Name (empty: no deck)"). **A name is suggested** (`suggestName`) where 90% or more of the list's words studied, of 10 or more, are one ready-made level (`readyLevels`: HSK 3.0, HSK 2.0, TOCFL, fetched with `dictionaryLoader.readyEntries`), named as the app names the level's deck ("HSK 2 (3.0)", "TOCFL Novice 1"); of two, the one with the larger share. On the owner's file six lists are suggested (96% to 100%: HSK 3.0 1, 2 and 4, HSK 2.0 1 and 2, TOCFL Novice 1) and seven are left for the owner (below 70%: textbooks, `list7`). The names are `choices.listNames` (from `defaultListNames`).
+- **Which words** (`candidatesFor`): the dictionary's entries with those simplified characters, narrowed where something is left by: a list's traditional form; for a word studied as `trad` or `simp`, entries whose forms differ, for `both`, entries whose forms are the same; names (a capital in the pinyin) only if there is nothing else; one entry a traditional form and reading. Pinyin and the Taiwan reading are the entry's, the meaning the learner's own (`c_defn`) or the dictionary's (`proposeMeaning`, the "Dictionary meanings" setting). A word with no entry is left out and listed in the result, with how to add one (the owner's file: 150, mostly zhuyin symbols, radicals and phrases).
+- **The words** are new words in the order first studied (`newWordRecords`), or words already there, which keep everything and are put in the decks.
+- **Decks** (the owner, 2026-10-23: inside "Skritter", not the app's ready-made decks, and sections as decks "even if it's weird"): a deck "Skritter"; inside it a deck for each list named, the learner's own by their name and Skritter's by the name given; inside each a deck for each section with a word, the learner's own by name and in their order, Skritter's numbered "Section 1", "Section 2", … in the order first studied. A word goes in its section's deck (several if it is in several lists), its list's if the section isn't known, "Skritter" itself if in no list named. Decks are made in the lists' and sections' order, and reused by name and place, so a second import makes none; **a word an earlier import put in "Skritter" moves to its lists' decks**, so importing again sorts words into lists named since.
+- **Which section** a Skritter section belongs to (`listsOfWords`): the list it is found with in every item that names it, leaving out the learner's own lists, whose sections the file has; a section found with two lists belongs to neither. On the owner's file: 38 words with a list but no known section, 664 words in no list named with only the suggestions (in "Skritter").
+- **Banned** in Skritter (and not unbanned): those kinds suspended (`suspended`). In the owner's file the banned words were never studied, so they don't come over at all.
+- **The result:** new words, words already there, cards keeping Skritter's schedule with how many reviews, words suspended, cards left alone; then the words left out, by their characters.
+
+## Schedules
+
+- **Every graded answer is copied as a review** (`fromSkritter: true`), with the grade as given. Skritter keeps one time a session, so the answers are spread over it at an even pace, by the time actually spent (`time`) where the session stayed open longer (one lasted three days); `duration` is that pace.
+- **One more record holds Skritter's schedule** (`importedSchedule`, as for Anki; `replay` in `src/scheduler.js` goes on from it): due at Skritter's `next`, with its stability and difficulty (difficulty kept within 1 to 10); without Skritter's memory (no stability), the interval as stability and difficulty 5. State "review" (Skritter has no learning steps), `reps` its review count, `lapses` reviews less successes. Dated a millisecond after the later of Skritter's `last` and the last copied answer.
+- **A card in the script it was studied in:** `simp` gives the simplified writing card (`cardIdFor`), `trad` the traditional one, `both` the learner's script. A writing card studied only in the other script is learned again when wanted, as after a change of script.
+- **Several sources for one card** (a word two Skritter words may be): the item with the most answers counts.
+- **A word with cards from Skritter gets `importedAt`**, so its cards without history (usually none) come a few a day, as for Anki.
+- **Importing again changes nothing studied:** a card already here is left as it is. Review IDs are made from the session's start and the answer's place in it, `skritter-<start ms>-<place>-<word ID>`, the schedule's `skritter-<item ID without the account>-<word ID>-schedule`, so the same file imported on two devices gives the same reviews when combined.
+- **Speed:** the owner's file reads in about 0.7 s and imports in about 10 s in the test browser on the laptop, most of it saving 186,000 reviews; the turning sign shows meanwhile (`showWorking`, as the Anki pop-up).
+
+## Names in the code
+
+- `src/skritterImport.js` (plain calculation, `tests/skritterImport.test.js`): `readSkritterExport(bytes)` (with `filesInZip` and `unpack` from `src/ankiFile.js`), `candidatesFor`, `readyLevels`, `suggestName`, `defaultListNames`, `describeSkritter(data, context)` → `{ words: [{ vocabId, characters, styles, reviews, candidates, places }], cards, reviews, lists: [{ id, own, name, suggestion, words, sample, sections }] }`, `planSkritterImport(data, description, choices, context)` → `{ words, decks, reviews, cards, report }`, saved by `saveImport` in `src/db.js`.
+- `src/skritterImportForm.js`: the pop-up.
+- **Tests:** `tests/fixtures/skritter/export.zip`, a made-up export in Skritter's shape (made by `make-fixture.js`, see its README); `tests/browser/skritter.browser.js` imports it in the real app.
+
+## Not built
+
+- **The words left out:** zhuyin symbols and radicals could become the app's radicals (`<traditional>|radical`) where the ready-made list has them, and phrases its sentences, if their meaning came from somewhere (the file has none).
+- **The starting level** in the introduction doesn't offer Skritter.
+- Skritter's own lists by their real names (not in the file), its mnemonics, sentences (`UserSentence`, empty in the owner's file) and settings.
+- **Not yet tried by the owner** in the app.

@@ -123,10 +123,10 @@ export function proposeMeaning(meanings, detail = DEFAULT_MEANING_DETAIL) {
 // there can be taken for the answer (tester 4, 2026-10-21: 你's meaning,
 // "you (informal, as opposed to courteous 您)", had them write 您; the
 // owner's choice, 2026-10-22). Brackets holding only Chinese, such as
-// "(CL:道)", go; Chinese anywhere else becomes "…", so the sentence still
-// reads: "you (informal, as opposed to courteous …)". The stored meaning is
-// unchanged, and other cards show it whole.
-export function meaningWithoutChinese(meaning) {
+// "(CL:道)", go; Chinese anywhere else becomes "…" (or `gap`), so the
+// sentence still reads: "you (informal, as opposed to courteous …)". The
+// stored meaning is unchanged, and other cards show it whole.
+export function meaningWithoutChinese(meaning, gap = '…') {
   // A run of characters, with the pinyin CC-CEDICT may give after it
   // ("個|个[ge4]") and the | between two forms.
   const chinese = /[\p{Script=Han}|·]+(?:\[[^\]]*\])?/gu;
@@ -137,7 +137,7 @@ export function meaningWithoutChinese(meaning) {
     .replace(/\(([^()]*)\)/g, (bracket, inside) =>
       inside.replace(chinese, '').replace(/CL:|[\s,;:、，]/g, '') === '' ? '' : bracket,
     )
-    .replace(chinese, '…')
+    .replace(chinese, gap)
     .replace(/\s+([,;)/])/g, '$1')
     .replace(/\(\s+/g, '(')
     .replace(/\s{2,}/g, ' ')

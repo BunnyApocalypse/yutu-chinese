@@ -7,8 +7,9 @@
 // A writing card shows your raw input on each character as you wrote it
 // (quiz.drawing), side by side, each in a square green or red like its box
 // in the row of slots, and in a word of several characters a tap on one
-// changes its verdict. The other kinds show the word, its reading and its
-// meaning, as once answered.
+// changes its verdict. A tone card shows its characters so, each square
+// tapped to change its verdict as its box was (the owner, 2026-10-24). The
+// other kinds show the word, its reading and its meaning, as once answered.
 
 import { faceArrow, BACK, FORWARD } from './faceArrow.js';
 import { langFor } from './lang.js';
@@ -33,15 +34,18 @@ function paragraph(className, text) {
 //   drawings: on a writing card, each character written with a picture of
 //             your strokes on it ({ char, picture }: an SVG element, or
 //             undefined where it was skipped; wordFlow's drawings())
-//   passedPerChar, skippedPerChar: on a writing card, each character's
-//             verdict, and whether it was skipped
+//   passedPerChar, skippedPerChar: on a writing or tone card, each
+//             character's verdict, and whether it was skipped
 // actions:
-//   onVerdict(index): a character's square was tapped (a word of several
-//             characters only)
+//   onVerdict(index): a character's square was tapped (on a writing card a
+//             word of several characters only)
 //   onBack():    the ‹ arrow; null where there is no card further back
 //   onForward(): the › arrow
 export function showPastCard(cardFace, card, { onVerdict, onBack, onForward }) {
-  const parts = card.type === 'writing' ? [drawingsOf(card, onVerdict)] : answerOf(card);
+  const tone = card.type === 'tone' && Array.isArray(card.passedPerChar);
+  // A tone card's squares hold the characters themselves.
+  const squares = tone ? { ...card, drawings: Array.from(card.text, (char) => ({ char })) } : card;
+  const parts = card.type === 'writing' || tone ? [drawingsOf(squares, onVerdict, tone)] : answerOf(card);
   const back = faceArrow('past-back-button', t('write.backToCard'), BACK);
   back.classList.toggle('unavailable', !onBack);
   back.addEventListener('click', () => onBack?.());
@@ -53,23 +57,26 @@ export function showPastCard(cardFace, card, { onVerdict, onBack, onForward }) {
 // The squares, as many to a row as make a square of them (two for 2 to 4
 // characters, three for 5 to 9, four for 10 to 16, and so on), so that all
 // fit on the face, as big as it allows.
-function drawingsOf(card, onVerdict) {
+// `tone`: a tone card's, where even one character's square can be tapped,
+// as its box could.
+function drawingsOf(card, onVerdict, tone = false) {
   const chars = card.drawings.map((drawing) => drawing.char);
   const grid = document.createElement('div');
   grid.className = 'past-drawings';
   const columns = Math.ceil(Math.sqrt(chars.length));
   grid.style.setProperty('--columns', String(columns));
   grid.classList.toggle('many', columns >= 4);
-  const several = chars.length > 1;
+  const tappable = chars.length > 1 || tone;
   chars.forEach((char, index) => {
     const passed = card.passedPerChar?.[index];
-    // A tap changes its verdict, as on its box while writing; a word of one
-    // character has none of its own (its grade is its verdict).
-    const square = document.createElement(several ? 'button' : 'div');
+    // A tap changes its verdict, as on its box while writing; a written word
+    // of one character has none of its own (its grade is its verdict).
+    const square = document.createElement(tappable ? 'button' : 'div');
     square.className = 'past-square';
-    if (several) {
+    if (tappable) {
       square.type = 'button';
-      const label = t('write.slotTitle', { char, verdict: t(passed ? 'write.gotIt' : 'write.missed') });
+      const verdict = t(passed ? (tone ? 'write.right' : 'write.gotIt') : 'write.missed');
+      const label = t('write.slotTitle', { char, verdict });
       square.title = label;
       square.setAttribute('aria-label', label);
       // Not a tap on the card, which goes on.

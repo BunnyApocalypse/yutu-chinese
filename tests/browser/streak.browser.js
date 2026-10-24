@@ -68,7 +68,7 @@ describe('streaks', { concurrency: false }, () => {
   // Taps the meaning card on screen and grades it Good.
   async function gradeMeaningCard() {
     await waitUntil(page, `!document.getElementById('card-face').hidden && document.getElementById('card-face').textContent !== ''`, 'a card');
-    await page.evaluate(`document.getElementById('card-face').dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))`);
+    await page.evaluate(`['pointerdown', 'pointerup'].forEach((type) => document.getElementById('card-face').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`);
     await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
     await page.evaluate(`[...document.querySelectorAll('#grade-row .grade')].find((button) => button.firstChild.textContent === 'Good').click()`);
   }
@@ -142,6 +142,10 @@ describe('streaks', { concurrency: false }, () => {
     assert.equal(await textOf(page, 'streak-continue'), 'Continue');
     assert.equal(await isShown(page, 'streak-off'), false);
     await tap(page, 'streak-continue');
+    // The pill's day is kept on the device, so a reload doesn't bring it
+    // back the same day (the owner saw it twice, 2026-10-24).
+    const [pillDay, screenDay] = await page.evaluate(`[localStorage.getItem('streak-pill-shown'), localStorage.getItem('streak-shown')]`);
+    assert.equal(pillDay, screenDay);
   });
 
   it('does not show either again the same day, and says the streak at the end of Review', async () => {
