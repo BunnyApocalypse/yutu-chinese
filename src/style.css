@@ -2924,6 +2924,14 @@ html:has(dialog[open]) {
   overflow: hidden;
 }
 
+/* While a card is up, pulling down doesn't reload the page: a stroke
+   begun just outside the writing area, going down, once did (the owner,
+   2026-10-24). "overscroll-behavior" says what the browser does when the
+   page is pulled past its end; "contain" leaves out its own reload. */
+html:has(main.focused) {
+  overscroll-behavior-y: contain;
+}
+
 .word-page-body {
   max-height: 72vh;
   /* "dvh" follows the visible height as the address bar comes and goes;

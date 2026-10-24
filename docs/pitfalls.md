@@ -33,7 +33,7 @@
 - **The writing area is emptied before a new word or character loads** (`blank()` in `src/quiz.js`, from `wordFlow.start` and `showCharacter`; the owner, 2026-10-24, saw the character before flash up): your strokes, the printed character and the outline go at once, and the outline is held back until `start()`, or it would be the old character's. Tested by holding the stroke data back (`review.browser.js`).
 - **`setCharacter()` rebuilds its layers and hides the outline**, and it adds its layers only once the data has loaded, later ones on top; so `start()` re-appends the layer of drawn strokes and re-applies the outline setting each time.
 - **It colors a radical's strokes separately** (`radicalColor`, defaulting to `strokeColor` only at creation): change both (`setPrintedColor`).
-- **It works out touch positions from the SVG's on-screen size**, so the `width`/`height` passed to it must match the real size. Don't scale the SVG with CSS. The area needs `touch-action: none`, or drawing scrolls the page on a phone.
+- **It works out touch positions from the SVG's on-screen size**, so the `width`/`height` passed to it must match the real size. Don't scale the SVG with CSS. The area needs `touch-action: none`, or drawing scrolls the page on a phone. A stroke begun just outside it, going down, could still pull the page down and reload it (the owner, 2026-10-24): while a card is up, `html:has(main.focused)` has `overscroll-behavior-y: contain`, which switches the browser's pull-to-refresh off.
 
 ## Stroke data
 

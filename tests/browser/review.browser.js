@@ -282,6 +282,8 @@ describe('grading in Review', { concurrency: false }, () => {
     await makeDue(['小|xiao3#meaning', '小|xiao3', 'meaning']);
     await waitUntil(page, `!document.getElementById('card-face').hidden && document.getElementById('card-face').textContent.includes('小')`, 'the card');
     assert.equal(await isShown(page, 'grade-row'), false);
+    // While a card is up, pulling down doesn't reload the page (style.css).
+    assert.equal(await page.evaluate(`getComputedStyle(document.documentElement).overscrollBehaviorY`), 'contain');
     await page.evaluate(`['pointerdown', 'pointerup'].forEach((type) => document.getElementById('card-face').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`);
     await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
     assert.match(await textOf(page, 'card-face'), /small/);
