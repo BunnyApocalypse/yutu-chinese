@@ -3,28 +3,35 @@
 
 // Reads a notes file: one word per line with tabs between the columns
 //   simplified, pinyin, note, example (simplified), example (traditional),
-//   example pinyin (tone marks, a space between words), example in English
+//   example pinyin (tone marks, a space between words), example in English,
+//   and, optionally, how the note was checked (see below)
 //
 // A file of notes about parts of characters (the radicals) has the part in
 // the first column, nothing in the second, and no example sentence: such a
 // note is found by the character alone.
 //
+// The eighth column says how the note was checked, as words with a space
+// between them; for now only "native": a native speaker of Chinese read the
+// note and its sentence (the owner, 2026-10-21; data/notes/README.md).
+//
 // Returns a Map from "simplified pinyin" (pinyin as stored, with tone
-// numbers) to { note, example }, where example is { simplified,
-// traditional, pinyin, english } or null.
+// numbers) to { note, example, checks }, where example is { simplified,
+// traditional, pinyin, english } or null, and checks a list of those words
+// (often empty).
 export function parseNotes(text) {
   const notes = new Map();
   for (const line of text.split('\n')) {
     if (line.trim() === '' || line.startsWith('#')) {
       continue;
     }
-    const [simplified, pinyin, note, exampleSimplified, exampleTraditional, examplePinyin, english] = line.split('\t');
+    const [simplified, pinyin, note, exampleSimplified, exampleTraditional, examplePinyin, english, checks = ''] = line.split('\t');
     notes.set(`${simplified} ${pinyin}`, {
       note,
       // A note about a part of a character (see below) has no sentence.
       example: exampleSimplified
         ? { simplified: exampleSimplified, traditional: exampleTraditional, pinyin: examplePinyin, english }
         : null,
+      checks: checks.split(/\s+/).filter(Boolean),
     });
   }
   return notes;

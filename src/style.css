@@ -3119,6 +3119,18 @@ button.chip-button {
   margin: 0 0 var(--space-small);
 }
 
+/* "Usage checked by a native speaker" under a learning note: a quiet
+   label in the shape of a tag, not a button (it does nothing when tapped). */
+.note-check {
+  display: inline-block;
+  margin: 0 0 var(--space-small);
+  padding: 2px var(--space-small);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-round);
+  color: var(--success-text);
+  font-size: var(--size-tiny);
+}
+
 .page-sentence {
   margin: var(--space-small) 0 2px;
   font-size: 1.5rem;

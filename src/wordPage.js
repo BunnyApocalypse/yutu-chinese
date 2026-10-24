@@ -244,6 +244,12 @@ export function createWordPage({
     const noteText = element('p', 'page-note');
     tappableText(noteText, note.note);
     section.append(element('h3', '', t('page.learningTips')), noteText);
+    // A small tag under a note a native speaker has read, with its sentence
+    // (the owner, 2026-10-21; data/notes/README.md). A note without one
+    // shows nothing; Settings › Help says what the tag means.
+    if (note.checks.includes('native')) {
+      section.append(element('p', 'note-check', t('page.checkedByNative')));
+    }
 
     // A note about a part of a character has no example sentence.
     if (!note.example) {

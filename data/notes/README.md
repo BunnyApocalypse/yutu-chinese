@@ -11,6 +11,7 @@ One file per level, named like the level's group file (`hsk-3.0-1.tsv` is HSK 3.
 5. the same sentence in traditional characters (Taiwan forms)
 6. the sentence's pinyin with tone marks, a space between words (the app tells the words of the sentence apart by these spaces)
 7. the sentence in English
+8. how the note was checked, if at all: `native` when a native speaker of Chinese has read the note and its sentence (see below). Most lines have no eighth column. The app then shows "Usage checked by a native speaker" under the note.
 
 So far: HSK 3.0 levels 1 (509 words, written as a trial) and 2 (755 words), written on 2026-10-13; levels 3 (931 words), 4 (977) and 5 (1,056), written on 2026-10-14 (level 3 leans on usage more than on how characters are built); `tocfl-novice.tsv`, the 74 words of the TOCFL's two beginner levels that those do not cover; `tocfl-1.tsv` to `tocfl-3.tsv`, the 44, 112 and 301 words of the TOCFL's levels 1 to 3 that none of the others cover (2026-10-14); and `tocfl-4.tsv`, the 1,135 words of its level 4 that none of the others cover (2026-10-14, the same evening). A word has one note, whichever list it is met in. The notes for the HSK levels have the Chinese inside the note in simplified characters; those written for the TOCFL have it in traditional characters and describe Taiwan's usage first.
 
@@ -20,7 +21,7 @@ So far: HSK 3.0 levels 1 (509 words, written as a trial) and 2 (755 words), writ
 
 They were written in October 2026 by an AI model (Anthropic's Claude Sonnet) working to a brief, for this project. For what it says about how characters are built, the model was given two sources and told to use nothing else: the character dictionary of Make Me a Hanzi (`data/makemeahanzi/`) and the glyph-origin sections of the English Wiktionary's entries for the characters. Usage remarks and example sentences are the model's own.
 
-A script checked the form (every word once, lengths, that each sentence contains its word); samples were read by another model and by the project's owner. **No fluent speaker has checked them line by line.** Native speakers have checked only the notes whose writers were unsure, or that make claims about region, register or politeness: a Taiwanese reader on 2026-10-14, and a mainland reader from 2026-10-15. A note may be wrong, and an example sentence may be stiff. They are meant to be corrected by hand: edit the file.
+A script checked the form (every word once, lengths, that each sentence contains its word); samples were read by another model and by the project's owner. **No fluent speaker has checked them line by line.** Native speakers have checked only the notes whose writers were unsure, or that make claims about region, register or politeness: a Taiwanese reader on 2026-10-14, and a mainland reader from 2026-10-15. A note may be wrong, and an example sentence may be stiff. The notes they read, with their sentences, are marked `native` in the eighth column: all 80 on the Taiwanese reader's page and the first 80 of the 131 on the mainland reader's page, 160 notes in all (2026-10-24). A reader's correction was worked into the note afterwards in condensed form, so the wording is not always the reader's own. They are meant to be corrected by hand: edit the file.
 
 A note does not name its sources; this file does.
 

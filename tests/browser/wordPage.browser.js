@@ -55,6 +55,8 @@ describe('the word page', { concurrency: false }, () => {
     // Shown in both scripts, each line says which it is.
     assert.deepEqual(await page.evaluate(texts('.sentence-script')), ['trad.', 'simp.']);
     assert.equal(await textOf(page, '#word-page-body .page-english'), 'We are classmates.');
+    // No native speaker has read this note, so it has no tag.
+    assert.deepEqual(await page.evaluate(texts('.note-check')), []);
     // Each character with its parts; 們 has one for the meaning and one for the sound.
     assert.deepEqual(await page.evaluate(texts('.character-big')), ['我', '們']);
     assert.deepEqual(await page.evaluate(texts('.part.meaning, .part.sound')), ['亻meaning', '門sound']);
@@ -163,5 +165,18 @@ describe('the word page', { concurrency: false }, () => {
     await waitUntil(page, `document.getElementById('confirm-dialog').open`, 'the question again');
     await tap(page, 'confirm-yes');
     await waitUntil(page, `!document.getElementById('word-page').open && document.querySelectorAll('#word-list li').length === 0`, 'the word removed');
+  });
+
+  it('tags a note a native speaker has read', async () => {
+    // 後天's note was on the Taiwanese reader's page (data/notes/hsk-3.0-1.tsv).
+    await type(page, 'add-traditional', '後天');
+    await type(page, 'add-simplified', '后天');
+    await type(page, 'add-pinyin', 'hou4tian1');
+    await type(page, 'add-definition', 'day after tomorrow');
+    await page.evaluate(`document.getElementById('add-word-form').requestSubmit()`);
+    await waitUntil(page, `document.querySelectorAll('#word-list li').length === 1`, 'the word');
+    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await waitUntil(page, `${shown('後天|hou4tian1')} && document.querySelector('#word-page-body .page-note')`, "the word's page");
+    assert.deepEqual(await page.evaluate(texts('.note-check')), ['Usage checked by a native speaker']);
   });
 });

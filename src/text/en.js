@@ -144,6 +144,7 @@ export default {
   'settings.credits': 'Credits and licenses',
   'settings.tips': 'Show a tip the first time each screen is opened',
   'settings.tipsAgain': 'Show all tips again',
+  'settings.notesChecked': 'Learning tips were written by an AI model and may be wrong. A tip marked “Usage checked by a native speaker” was read, with its example sentence, by someone whose first language is Chinese.',
 
   // Settings › For testing (testerSettings.js)
   'testing.swipeReadout': 'Show how each swipe up measured',
@@ -955,7 +956,7 @@ export default {
   'credits.dictionaryAndTonesCc': '<b>Dictionary and tones:</b> <a href="https://cc-cedict.org" target="_blank" rel="noopener">CC-CEDICT</a>. Creative Commons Attribution-ShareAlike 4.0.',
   'credits.recordingsAudioCmnSyllables': '<b>Recordings:</b> <a href="https://github.com/hugolpz/audio-cmn" target="_blank" rel="noopener">audio-cmn</a>: syllables spoken by Chen Wang, words spoken by Yue Tan (Shtooka project), collected by Hugo Lopez. Creative Commons Attribution-ShareAlike.',
   'credits.howCharactersAreBuilt': '<b>How characters are built:</b> the dictionary of Make Me a Hanzi (from Unihan and CJKlib). GNU Lesser General Public License.',
-  'credits.learningTipsAndExample': '<b>Learning tips and example sentences:</b> written for this app by an AI model (Anthropic\'s Claude), drawing on <a href="https://en.wiktionary.org" target="_blank" rel="noopener">Wiktionary</a> for the origins of characters. Creative Commons Attribution-ShareAlike 4.0. No fluent speaker has checked them line by line: they may be wrong.',
+  'credits.learningTipsAndExample': '<b>Learning tips and example sentences:</b> written for this app by an AI model (Anthropic\'s Claude), drawing on <a href="https://en.wiktionary.org" target="_blank" rel="noopener">Wiktionary</a> for the origins of characters. Creative Commons Attribution-ShareAlike 4.0. No fluent speaker has checked them line by line: they may be wrong. Those marked “Usage checked by a native speaker” were read by one, with their sentence.',
   'credits.hskWordListsFrom': '<b>HSK word lists:</b> from <a href="https://github.com/ivankra/hsk30" target="_blank" rel="noopener">ivankra/hsk30</a> and <a href="https://github.com/glxxyz/hskhsk.com" target="_blank" rel="noopener">glxxyz/hskhsk.com</a>. MIT License. Their grouping into themes was made for this app by AI models. MIT License.',
   'credits.tocflWordListThe': '<b>TOCFL word list:</b> the <span lang="zh-Hant-TW">華語八千詞表</span> published by Taiwan\'s Steering Committee for the Test of Proficiency-Huayu. The committee states no license for it.',
   'credits.radicalsThe214Kangxi': '<b>Radicals:</b> the 214 Kangxi radicals as listed by the Unicode Consortium (CJKRadicals.txt, Unicode License), ranked by how often they occur, from Make Me a Hanzi; their meanings were written for this app. MIT License.',
@@ -995,6 +996,7 @@ export default {
   'page.learnItNow': 'Learn it now',
   'page.hearIt': 'Hear it',
   'page.learningTips': 'Learning tips',
+  'page.checkedByNative': 'Usage checked by a native speaker',
   'page.deckForSentence': 'Deck to add the sentence to',
   'page.addToMyWords': 'Add to my words',
   'page.addSentence': 'Add sentence',

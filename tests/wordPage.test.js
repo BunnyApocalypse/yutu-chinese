@@ -37,8 +37,24 @@ test('a note is found by the word and its reading, or by the character alone for
   assert.equal(noteFor(notes, { simplified: '我们', pinyin: 'wo3men5' }).example.english, 'We are classmates.');
   assert.equal(noteFor(notes, { simplified: '我们', pinyin: 'wo3men2' }), null);
   // A part of a character: whatever reading the dictionary gives it, and no sentence.
-  assert.deepEqual(noteFor(notes, { simplified: '氵', pinyin: 'shui3' }), { note: 'The water radical.', example: null });
-  assert.deepEqual(noteFor(notes, { simplified: '氵', pinyin: '' }), { note: 'The water radical.', example: null });
+  assert.deepEqual(noteFor(notes, { simplified: '氵', pinyin: 'shui3' }), { note: 'The water radical.', example: null, checks: [] });
+  assert.deepEqual(noteFor(notes, { simplified: '氵', pinyin: '' }), { note: 'The water radical.', example: null, checks: [] });
+});
+
+test('a note says how it was checked, from its eighth column', () => {
+  const notes = parseNotes('我们\two3men5\tA note.\t我们是同学。\t我們是同學。\tWǒmen shì tóngxué.\tWe are classmates.\tnative\n你\tni3\tAnother.\t你好。\t你好。\tNǐ hǎo.\tHello.\n');
+  assert.deepEqual(noteFor(notes, { simplified: '我们', pinyin: 'wo3men5' }).checks, ['native']);
+  assert.equal(noteFor(notes, { simplified: '我们', pinyin: 'wo3men5' }).example.english, 'We are classmates.');
+  assert.deepEqual(noteFor(notes, { simplified: '你', pinyin: 'ni3' }).checks, []);
+});
+
+test('every check named in the notes files is one the app knows', () => {
+  const known = new Set(['native']);
+  for (const file of fs.readdirSync('data/notes').filter((name) => name.endsWith('.tsv'))) {
+    for (const note of parseNotes(fs.readFileSync(`data/notes/${file}`, 'utf8')).values()) {
+      note.checks.forEach((check) => assert.ok(known.has(check), `${file}: ${check}`));
+    }
+  }
 });
 
 test('a character\'s parts are listed, with the one for meaning and the one for sound', () => {
