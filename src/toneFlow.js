@@ -7,20 +7,16 @@ import { recognizeToneMark } from './toneMark.js';
 import { fillMixed, langFor } from './lang.js';
 import { faceArrow, BACK, FORWARD } from './faceArrow.js';
 import { t } from './text.js';
+import { freshTaps } from './freshTap.js';
 
 // After a right answer, the next character comes up by itself after this long.
 const MOVE_ON_AFTER_MS = 500;
 
-// After a wrong answer or at the end, tapping the card continues. Taps are
-// ignored for this long first, so a stray touch doesn't skip the answer.
-// (200 since 2026-10-13, down from 600: the owner found the wait in the way
-// when moving on quickly. It is still enough for the tap that finished the
-// step not to count as the tap that moves on.)
-const TAP_TO_CONTINUE_DELAY_MS = 200;
-
-// A new character ignores touches for this long, so the tap that brought it up
-// isn't taken for a neutral-tone dot.
-const DRAW_ALLOWED_AFTER_MS = 300;
+// After a wrong answer or at the end, tapping the card continues, but only
+// with a touch begun after the answer (freshTap.js): the one that gave it
+// doesn't skip it. Drawing a mark needs no such care: a stroke begins only
+// when a finger comes down, so the tap that brought a character up is never
+// taken for a neutral-tone dot.
 
 // How long a mark that wasn't recognized stays visible before it is cleared.
 const CLEAR_UNRECOGNIZED_AFTER_MS = 600;
@@ -86,7 +82,7 @@ export function createToneFlow(elements) {
   // 'wrong':   answered incorrectly; waiting for a tap
   // 'done':    every character answered
   let state = 'asking';
-  let tapAllowedFrom = 0;
+  const taps = freshTaps(cardFace);
   let moveOnTimer = null;
   // Skipped characters, counted as right (the › arrow), and whether the
   // character asked now was answered before and is only practice (gone
@@ -139,7 +135,6 @@ export function createToneFlow(elements) {
   ink.appendChild(inkPath);
   // The points of the stroke being drawn, or null when no stroke is under way.
   let drawing = null;
-  let drawAllowedFrom = 0;
   let clearInkTimer = null;
 
   function showInk(points) {
@@ -199,7 +194,6 @@ export function createToneFlow(elements) {
     clearTimeout(clearInkTimer);
     showInk([]);
     drawing = null;
-    drawAllowedFrom = Date.now() + DRAW_ALLOWED_AFTER_MS;
     // The character asked about, small, above what to do, large: drawn big
     // as before, it looked like something to draw over (a tester and the
     // owner, 2026-10-16).
@@ -297,7 +291,7 @@ export function createToneFlow(elements) {
   function finish() {
     state = 'done';
     practicing = false;
-    tapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
+    taps.mark();
     nextButton.hidden = true;
     renderWordRow();
     showResult();
@@ -350,7 +344,7 @@ export function createToneFlow(elements) {
       moveOnTimer = setTimeout(moveOn, MOVE_ON_AFTER_MS);
     } else {
       state = 'wrong';
-      tapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
+      taps.mark();
       statusElement.textContent = t('tone.not', { tone: TONE_LABELS[tone] });
       nextButton.hidden = false;
     }
@@ -371,7 +365,7 @@ export function createToneFlow(elements) {
 
   // "pointer" events cover fingers, styluses and the mouse alike.
   cardFace.addEventListener('pointerdown', (event) => {
-    if (!current || state !== 'asking' || Date.now() < drawAllowedFrom) {
+    if (!current || state !== 'asking') {
       return;
     }
     // Keeps the rest of this stroke coming to the card even if the finger
@@ -410,7 +404,7 @@ export function createToneFlow(elements) {
       finishDrawing();
       return;
     }
-    if (!current || Date.now() < tapAllowedFrom) {
+    if (!current || !taps.isFresh()) {
       return;
     }
     if (state === 'wrong') {

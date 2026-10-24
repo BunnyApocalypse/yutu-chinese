@@ -70,7 +70,7 @@ describe('settings', { concurrency: false }, () => {
 
   // Taps the card, as a finger would.
   const tapCard = () =>
-    page.evaluate(`document.getElementById('card-face').dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))`);
+    page.evaluate(`['pointerdown', 'pointerup'].forEach((type) => document.getElementById('card-face').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`);
 
   // Gives these tones on a tone card, one per character, and returns the status line at the end.
   async function giveTones(tones) {

@@ -282,7 +282,7 @@ describe('grading in Review', { concurrency: false }, () => {
     await makeDue(['小|xiao3#meaning', '小|xiao3', 'meaning']);
     await waitUntil(page, `!document.getElementById('card-face').hidden && document.getElementById('card-face').textContent.includes('小')`, 'the card');
     assert.equal(await isShown(page, 'grade-row'), false);
-    await page.evaluate(`document.getElementById('card-face').dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))`);
+    await page.evaluate(`['pointerdown', 'pointerup'].forEach((type) => document.getElementById('card-face').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`);
     await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
     assert.match(await textOf(page, 'card-face'), /small/);
     assert.equal(await page.evaluate(SUGGESTED), 'Good');
@@ -292,6 +292,28 @@ describe('grading in Review', { concurrency: false }, () => {
     assert.equal(typeof review.duration, 'number');
     assert.equal(review.grade, 4);
     assert.equal(review.suggestedGrade, 3);
+  });
+
+  // No pause after the answer is shown (the owner, 2026-10-24): a new touch
+  // moves on at once, while the end of the touch that showed it does not.
+  it('takes a new tap at once after the answer, but not the end of the touch before', async () => {
+    await makeDue(['小|xiao3#meaning', '小|xiao3', 'meaning']);
+    await waitUntil(page, `document.getElementById('card-face').textContent.includes('小')`, 'the card');
+    const face = `document.getElementById('card-face')`;
+    const fire = (type) => `${face}.dispatchEvent(new PointerEvent('${type}', { bubbles: true, isPrimary: true }))`;
+    // Down and up in one go: the answer shows, and a second lift without a
+    // new touch is still that tap.
+    await page.evaluate(`${fire('pointerdown')}; ${fire('pointerup')}; ${fire('pointerup')}`);
+    await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
+    assert.equal(await isShown(page, 'grade-row'), true);
+    const before = (await lastReview())?.id;
+    // A new touch right away takes the suggestion, Good.
+    await page.evaluate(`${fire('pointerdown')}; ${fire('pointerup')}`);
+    await waitUntil(page, `document.getElementById('grade-row').hidden`, 'the grade taken');
+    const review = await lastReview();
+    assert.notEqual(review.id, before);
+    assert.equal(review.cardId, '小|xiao3#meaning');
+    assert.equal(review.grade, 3);
   });
 
   it('leaves out the kinds of card switched off in Card types', async () => {
@@ -310,7 +332,7 @@ describe('grading in Review', { concurrency: false }, () => {
     // Only the meaning card is left: once it is graded, Review is done.
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('小')`, 'the meaning card');
     assert.equal(await isShown(page, 'writing-row'), false);
-    await page.evaluate(`document.getElementById('card-face').dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))`);
+    await page.evaluate(`['pointerdown', 'pointerup'].forEach((type) => document.getElementById('card-face').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`);
     await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
     await chooseGrade('Good');
     await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the end of Review');
@@ -330,7 +352,7 @@ describe('grading in Review', { concurrency: false }, () => {
     const gradeMeaning = async () => {
       await makeDue(['小|xiao3#meaning', '小|xiao3', 'meaning']);
       await waitUntil(page, `document.getElementById('card-face').textContent.includes('小')`, 'the meaning card');
-      await page.evaluate(`document.getElementById('card-face').dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))`);
+      await page.evaluate(`['pointerdown', 'pointerup'].forEach((type) => document.getElementById('card-face').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`);
       await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
       await chooseGrade('Good');
       await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the end of Review');
@@ -630,7 +652,7 @@ describe('grading in Review', { concurrency: false }, () => {
 
     const gradeOne = async (count) => {
       await waitUntil(page, `document.getElementById('card-type').textContent === 'Meaning · ${count + 1}/2' && !document.getElementById('card-face').hidden`, `card ${count + 1}`);
-      await page.evaluate(`document.getElementById('card-face').dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))`);
+      await page.evaluate(`['pointerdown', 'pointerup'].forEach((type) => document.getElementById('card-face').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`);
       await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
       await chooseGrade('Good');
     };

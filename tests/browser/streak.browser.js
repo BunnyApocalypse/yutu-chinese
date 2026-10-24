@@ -68,7 +68,7 @@ describe('streaks', { concurrency: false }, () => {
   // Taps the meaning card on screen and grades it Good.
   async function gradeMeaningCard() {
     await waitUntil(page, `!document.getElementById('card-face').hidden && document.getElementById('card-face').textContent !== ''`, 'a card');
-    await page.evaluate(`document.getElementById('card-face').dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))`);
+    await page.evaluate(`['pointerdown', 'pointerup'].forEach((type) => document.getElementById('card-face').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`);
     await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
     await page.evaluate(`[...document.querySelectorAll('#grade-row .grade')].find((button) => button.firstChild.textContent === 'Good').click()`);
   }

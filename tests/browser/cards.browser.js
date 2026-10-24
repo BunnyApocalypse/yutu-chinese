@@ -260,7 +260,7 @@ describe('managing cards', { concurrency: false }, () => {
       await page.evaluate(ANSWER_YES);
       await tap(page, 'review-tab');
       await waitUntil(page, `document.getElementById('card-type').textContent === '${kind}'`, `the ${kind} card`);
-      await page.evaluate(`document.getElementById('card-face').dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))`);
+      await page.evaluate(`['pointerdown', 'pointerup'].forEach((type) => document.getElementById('card-face').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`);
       await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
       // "About this word" in the card: the learning note's, or the card's own.
       await page.evaluate(`(document.querySelector('#card-face .face-tip-more') || document.getElementById('card-about-button')).click()`);

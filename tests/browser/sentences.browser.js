@@ -138,7 +138,7 @@ describe('sentences', { concurrency: false }, () => {
     await tap(page, 'settings-close');
     await waitUntil(page, cardType('Sentence · reading'), 'the sentence\'s reading card');
     assert.match(await textOf(page, 'card-face'), /^我們是同學。/);
-    await page.evaluate(`document.getElementById('card-face').dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))`);
+    await page.evaluate(`['pointerdown', 'pointerup'].forEach((type) => document.getElementById('card-face').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`);
     await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
     // The sentence, its pinyin, then its meaning, as on every card.
     assert.match(await textOf(page, 'card-face'), /Wǒmen shì tóngxué\.We are classmates\.About this sentence$/);

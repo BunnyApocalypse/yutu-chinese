@@ -120,7 +120,7 @@ describe('leeches', { concurrency: false }, () => {
     await tap(page, 'review-tab');
     await waitUntil(page, `document.getElementById('card-type').textContent.toLowerCase().includes('meaning')`, 'the meaning card');
     // Tap to see the answer: the grades come up, and the note with them.
-    await page.evaluate(`document.getElementById('card-face').dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))`);
+    await page.evaluate(`['pointerdown', 'pointerup'].forEach((type) => document.getElementById('card-face').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`);
     await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
     assert.match(await textOf(page, 'leech-note'), /^Leech: you have forgotten this card 7 times/);
 

@@ -38,6 +38,7 @@ import { cardTip } from './cardTip.js';
 import { studyByDay, streakAt, streakLine, studyDayKey } from './streak.js';
 import { createStopwatch } from './timing.js';
 import { showPastCard } from './pastCard.js';
+import { freshTaps } from './freshTap.js';
 import { t, formatDateTime } from './text.js';
 
 // The same for a sentence, which has two kinds of card (see sentences.js).
@@ -645,16 +646,14 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // the newest back to Review, which shows the next card afresh. Kept in
   // memory only, for as long as the page is open.
   const LOOK_BACK_LIMIT = 10;
-  // A tap on the face this soon after a card looked back at comes up is
-  // taken for the tap that brought it (as in the other files' own
-  // TAP_TO_CONTINUE_DELAY_MS).
-  const TAP_TO_CONTINUE_DELAY_MS = 200;
+  // A tap on the face goes on only with a touch begun after the card looked
+  // back at came up, not the one that brought it (freshTap.js).
+  const pastTaps = freshTaps(cardFace);
   // { word, type, script, cardBefore, card, review, drawings, withSentence },
   // oldest first.
   let graded = [];
   // Which of them is on screen, or null.
   let lookingBack = null;
-  let pastTapAllowedFrom = 0;
   // At the end of Review, where there is no card to tap ‹ on.
   const lookBackButton = document.getElementById('look-back-button');
   lookBackButton.addEventListener('click', () => lookBackAt(graded.length - 1));
@@ -707,7 +706,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     pinyinButton.hidden = true;
     offerListen(true);
     showPast();
-    pastTapAllowedFrom = Date.now() + TAP_TO_CONTINUE_DELAY_MS;
+    pastTaps.mark();
   }
 
   function showPast() {
@@ -825,7 +824,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // A tap on the face of a card looked back at goes on (the arrows and the
   // squares keep their taps to themselves).
   cardFace.addEventListener('pointerup', () => {
-    if (lookingBack !== null && Date.now() >= pastTapAllowedFrom) {
+    if (lookingBack !== null && pastTaps.isFresh()) {
       lookForward();
     }
   });
