@@ -36,3 +36,11 @@ Real shared Anki decks, for trying the Anki import (`docs/anki.md`) on something
 - `study-data/`: the same decks with made-up study histories of three learners, exported by Anki itself in its different formats. Made by `scripts/anki-study-data.py` (what each learner does is written there); it needs `local/anki-venv` (`tests/fixtures/anki/README.md`):
 
       local/anki-venv/bin/python -I scripts/anki-study-data.py local/anki-decks/downloads local/anki-decks/study-data
+
+## `strictness/`
+
+Tools for tuning the writing grading (the owner's feedback, task 9, 2026-10-24; findings in `strictness/README.md`). `hw.cjs` is a copy of `node_modules/hanzi-writer/dist/index.cjs.js` with `strokeMatches` and `parseCharData` exported at its end (MIT); make it again after updating Hanzi Writer:
+
+    { cat node_modules/hanzi-writer/dist/index.cjs.js; echo; echo "module.exports.__strokeMatches = strokeMatches; module.exports.__parseCharData = parseCharData;"; } > local/strictness/hw.cjs
+
+`recordings/` holds the owner's files from "Record my raw input" (Settings › For testing): their own writing, kept here, never committed.
