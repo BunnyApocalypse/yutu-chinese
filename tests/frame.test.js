@@ -79,6 +79,18 @@ test('one short stroke gives a shift but leaves the size alone', () => {
   assert.ok(Math.abs(fitted.dx) > 30 || Math.abs(fitted.dy) > 30, 'expected some shift');
 });
 
+test('one long stroke written short does not make the character tiny', () => {
+  // 鼎 begun where 臼 was asked (the owner, 2026-10-24): its first stroke,
+  // shorter than 臼's long first stroke, was taken for a 臼 written at 0.4.
+  const random = makeRandom(4);
+  const first = JSON.parse(fs.readFileSync('node_modules/hanzi-writer-data/臼.json', 'utf8')).medians.slice(0, 1);
+  const fitted = fitFrame(pairsFor(first, { scale: 0.45, dx: 100, dy: 150 }, random));
+  assert.equal(fitted.scale, 1);
+  // Two strokes written small are followed at their size.
+  const two = JSON.parse(fs.readFileSync('node_modules/hanzi-writer-data/臼.json', 'utf8')).medians.slice(0, 2);
+  assert.ok(fitFrame(pairsFor(two, { scale: 0.6, dx: 100, dy: 150 }, random)).scale < 0.7);
+});
+
 test('the frame stays within its limits', () => {
   const random = makeRandom(3);
   const medians = taiwanData.get('學').medians;

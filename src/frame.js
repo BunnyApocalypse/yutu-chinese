@@ -24,6 +24,13 @@ const BOX_CENTER = { x: 512, y: 388 };
 // at least this much, across or down. One short stroke says where the
 // character is, but nothing reliable about how big it is.
 const MIN_SPAN_FOR_SCALE = 200;
+// Nor from a single stroke, however long (the owner, 2026-10-24): with 鼎
+// begun where 臼 was asked, a first stroke shorter than 臼's long first
+// stroke made the app take it for a 臼 written tiny, and every later stroke
+// was expected inside that tiny 臼 (the same with 足 begun for 彳). The first
+// stroke says where the character is; the second, how big (if it is written
+// small, isExpectedStrokeAtAnotherSize in quiz.js accepts it at that size).
+const MIN_STROKES_FOR_SCALE = 2;
 
 // The frame never goes beyond these. A character written smaller, bigger or
 // further off than this is no longer followed.
@@ -52,7 +59,7 @@ function spanOf(reference) {
 // the character is being written. Until then fitFrame only says where.
 export function sizeIsKnown(pairs) {
   return (
-    pairs.length > 0 &&
+    pairs.length >= MIN_STROKES_FOR_SCALE &&
     spanOf(pairs.flatMap((pair) => resample(pair.reference, POINTS_PER_STROKE))) >= MIN_SPAN_FOR_SCALE
   );
 }
@@ -76,7 +83,7 @@ export function fitFrame(pairs) {
   // The size that fits best, by least squares: compare how the points are
   // spread around their centers in the reference and in the drawing.
   let scale = 1;
-  if (spanOf(reference) >= MIN_SPAN_FOR_SCALE) {
+  if (sizeIsKnown(pairs)) {
     let spread = 0;
     let together = 0;
     reference.forEach((point, index) => {

@@ -588,9 +588,11 @@ export function createQuiz(target, size, handlers) {
     const reference = toPoints(baseData.medians[reading.strokeNum]);
     // Read differently, the strokes say something different about where the
     // character is being written. If they are too few to say how big (see
-    // isExpectedStrokeAtAnotherSize), the stroke just drawn is counted in.
+    // isExpectedStrokeAtAnotherSize), the stroke just drawn is counted in:
+    // also at the parting of the ways, while the size is not known yet (a
+    // single stroke no longer gives it, MIN_STROKES_FOR_SCALE in frame.js).
     let otherFrame = frame;
-    if (reading.sinceSync > 0 && canFollow()) {
+    if ((reading.sinceSync > 0 || !sizeIsKnown(reading.accepted)) && canFollow()) {
       otherFrame = fitFrame(
         sizeIsKnown(reading.accepted)
           ? reading.accepted
