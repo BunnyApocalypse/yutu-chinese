@@ -318,7 +318,8 @@ export function createQuiz(target, size, handlers) {
   }
 
   function drewShortcut(stroke) {
-    return isShortcutStroke(charData, stroke.strokeNum, stroke.drawnPath.points, LENIENCY);
+    // charData is moved into the frame, so drawn at its scale.
+    return isShortcutStroke(charData, stroke.strokeNum, stroke.drawnPath.points, LENIENCY, frame.scale);
   }
 
   // Hands Hanzi Writer a set of stroke data for the current character. It

@@ -105,12 +105,19 @@ function describePair(charData, strokeNum) {
 
 // True if textbook strokes `strokeNum` and `strokeNum + 1` (counting from 0)
 // may be written as one stroke.
-export function isJoinable(charData, strokeNum) {
+//
+// `scale`: how big `charData` is drawn compared with the stroke data as it
+// comes (the frame's scale in quiz.js, frame.js). Whether two strokes may be
+// joined belongs to the character, not to how big it is written, so the
+// distances above are scaled with it. Until 2026-10-24 they were not, and
+// the top of 辶 in 這 written at two thirds of the size could not be joined
+// (the owner's recording of their raw input).
+export function isJoinable(charData, strokeNum, scale = 1) {
   const pair = describePair(charData, strokeNum);
-  if (pair === null || pair.gap > MAX_GAP || pair.leadIn > MAX_LEAD_IN) {
+  if (pair === null || pair.gap > MAX_GAP * scale || pair.leadIn > MAX_LEAD_IN * scale) {
     return false;
   }
-  if (lineLength(pair.first) < MIN_PART_LENGTH || lineLength(pair.rest) < MIN_PART_LENGTH) {
+  if (lineLength(pair.first) < MIN_PART_LENGTH * scale || lineLength(pair.rest) < MIN_PART_LENGTH * scale) {
     return false;
   }
   const joinedShape = shapeOf(resample([...pair.first, ...pair.rest]));
@@ -122,9 +129,10 @@ export function isJoinable(charData, strokeNum) {
 
 // True if `drawnPoints` (a list of { x, y }) looks like textbook strokes
 // `strokeNum` and `strokeNum + 1` written as one stroke, and that pair is
-// joinable. `charData` is the character's stroke data.
-export function isShortcutStroke(charData, strokeNum, drawnPoints, leniency) {
-  if (drawnPoints.length < 2 || !isJoinable(charData, strokeNum)) {
+// joinable. `charData` is the character's stroke data, drawn at `scale` (see
+// isJoinable).
+export function isShortcutStroke(charData, strokeNum, drawnPoints, leniency, scale = 1) {
+  if (drawnPoints.length < 2 || !isJoinable(charData, strokeNum, scale)) {
     return false;
   }
   const { first, rest } = describePair(charData, strokeNum);
