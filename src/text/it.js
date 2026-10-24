@@ -388,6 +388,7 @@ export default {
   'review.labelRadicalWriting': 'Radicale · scrittura',
   'review.labelRadicalMeaning': 'Radicale · significato',
   'review.labelBack': '{label} · {count} indietro',
+  'review.chineseLeftOut': 'cinese omesso',
   // The kind of card inside a sentence: "the writing card of 學"
   'review.kindWriting': 'scrittura',
   'review.kindTone': 'toni',

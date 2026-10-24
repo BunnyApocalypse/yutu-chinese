@@ -608,6 +608,24 @@ button.icon-button.no-sound {
   max-height: 1.25em;
 }
 
+/* Where Chinese was left out of a writing card's meaning (review.js): a
+   small gray box. Its "…" is there for the panel and kept out of sight. */
+.chinese-gap {
+  display: inline-block;
+  width: 0.7em;
+  height: 0.7em;
+  vertical-align: -0.02em;
+  /* The text's own color at half strength, as in the picture the owner chose. */
+  border: 2px solid currentColor;
+  opacity: 0.5;
+  border-radius: calc(var(--radius) / 2);
+  box-sizing: border-box;
+  overflow: hidden;
+  /* Pushed out of the box, out of sight. */
+  text-indent: 1em;
+  white-space: nowrap;
+}
+
 .review-header .lesson-row {
   order: 3;
 }

@@ -29,6 +29,10 @@ import { toneAnswers, readingsFor, describeReading } from './tones.js';
 import { scriptFor, scriptFlagFor } from './words.js';
 import { fillMixed } from './lang.js';
 import { meaningWithoutChinese } from './dictionary.js';
+
+// Marks where Chinese was left out of a meaning until the box takes its
+// place (a character for private use, never in a dictionary's text).
+const GAP_MARK = '\uE000';
 import { isLeech, lapsesOf, isSuspended, withSuspended, becameLeech } from './leeches.js';
 import { speak } from './speech.js';
 import { markedKnown, withStartedOver } from './cardManager.js';
@@ -197,18 +201,40 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   function showMeaning(word, sentence, script) {
     meaningElement.classList.toggle('with-sentence', Boolean(sentence));
     if (!sentence) {
-      meaningElement.textContent = meaningWithoutChinese(word.definition);
+      fillWithoutChinese(meaningElement, word.definition);
       return;
     }
     const meaning = document.createElement('span');
     meaning.className = 'prompt-text';
     meaning.dataset.clamp = '';
-    meaning.textContent = meaningWithoutChinese(word.definition);
+    fillWithoutChinese(meaning, word.definition);
     const line = document.createElement('span');
     line.className = 'cloze-sentence';
     line.lang = script === 'traditional' ? 'zh-Hant-TW' : 'zh-Hans-CN';
     line.textContent = sentence;
     meaningElement.replaceChildren(meaning, line);
+  }
+
+  // Puts a meaning into `element` without its Chinese, a small gray box
+  // where it was (the owner chose it from pictures, 2026-10-24: "…" was
+  // unclear, and CC-CEDICT itself writes "..." for words left out). The
+  // box holds "…" out of sight, for the panel showing a cut-off meaning in
+  // full, and is named for a screen reader.
+  function fillWithoutChinese(element, definition) {
+    const parts = meaningWithoutChinese(definition, GAP_MARK).split(GAP_MARK);
+    element.replaceChildren(
+      ...parts.flatMap((text, index) => {
+        if (index === 0) {
+          return [text];
+        }
+        const box = document.createElement('span');
+        box.className = 'chinese-gap';
+        box.textContent = '…';
+        box.setAttribute('role', 'img');
+        box.setAttribute('aria-label', t('review.chineseLeftOut'));
+        return [box, text];
+      }),
+    );
   }
 
   // The kind of card, above it: "Writing", "Sentence · reading".
@@ -487,7 +513,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // The answer stays up with the corrected meaning, still to be graded.
       current.word = after;
       if (current.type === 'writing') {
-        meaningElement.textContent = meaningWithoutChinese(after.definition);
+        fillWithoutChinese(meaningElement, after.definition);
       }
       flows.recall.update(after);
       flows.tone.update(after);

@@ -689,6 +689,8 @@ describe('grading in Review', { concurrency: false }, () => {
     await makeDue(['大小|da4xiao3#writing', '大小|da4xiao3', 'writing']);
     await waitForFirstStroke();
     assert.equal(await textOf(page, 'prompt-meaning'), 'size (opposite of …)');
+    // The Chinese left out is a small box, named for a screen reader.
+    assert.equal(await page.evaluate(`document.querySelector('#prompt-meaning .chinese-gap')?.getAttribute('aria-label')`), 'Chinese left out');
     const area = await writingArea(page);
     await tap(page, 'outline-button');
     assert.equal(await textOf(page, 'outline-button'), 'Hide outline');
