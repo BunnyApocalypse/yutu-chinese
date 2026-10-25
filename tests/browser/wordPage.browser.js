@@ -55,8 +55,12 @@ describe('the word page', { concurrency: false }, () => {
     // Shown in both scripts, each line says which it is.
     assert.deepEqual(await page.evaluate(texts('.sentence-script')), ['trad.', 'simp.']);
     assert.equal(await textOf(page, '#word-page-body .page-english'), 'We are classmates.');
-    // No native speaker has read this note, so it has no tag.
-    assert.deepEqual(await page.evaluate(texts('.note-check')), []);
+    // Nobody has checked this note: the box beside its heading says AI, and
+    // a tap on it says what that means.
+    assert.equal(await textOf(page, '#word-page-body .note-badge'), 'AI');
+    assert.equal(await page.evaluate(`document.querySelector('#word-page-body .note-badge-text').hidden`), true);
+    await page.evaluate(`document.querySelector('#word-page-body .note-badge').click()`);
+    assert.match(await textOf(page, '#word-page-body .note-badge-text'), /^This learning tip and its example sentence were written by an AI model and have not been checked/);
     // Each character with its parts; 們 has one for the meaning and one for the sound.
     assert.deepEqual(await page.evaluate(texts('.character-big')), ['我', '們']);
     assert.deepEqual(await page.evaluate(texts('.part.meaning, .part.sound')), ['亻meaning', '門sound']);
@@ -167,7 +171,7 @@ describe('the word page', { concurrency: false }, () => {
     await waitUntil(page, `!document.getElementById('word-page').open && document.querySelectorAll('#word-list li').length === 0`, 'the word removed');
   });
 
-  it('tags a note a native speaker has read', async () => {
+  it('marks a note a native speaker has read', async () => {
     // 後天's note was on the Taiwanese reader's page (data/notes/hsk-3.0-1.tsv).
     await type(page, 'add-traditional', '後天');
     await type(page, 'add-simplified', '后天');
@@ -177,12 +181,14 @@ describe('the word page', { concurrency: false }, () => {
     await waitUntil(page, `document.querySelectorAll('#word-list li').length === 1`, 'the word');
     await page.evaluate(`document.querySelector('#word-list li button').click()`);
     await waitUntil(page, `${shown('後天|hou4tian1')} && document.querySelector('#word-page-body .page-note')`, "the word's page");
-    assert.deepEqual(await page.evaluate(texts('.note-check')), ['Usage checked by a native speaker']);
+    assert.equal(await textOf(page, '#word-page-body .note-badge'), '✓');
+    await page.evaluate(`document.querySelector('#word-page-body .note-badge').click()`);
+    assert.equal(await textOf(page, '#word-page-body .note-badge-text'), 'Written by an AI model. A native speaker of Chinese has read this tip and its example sentence.');
   });
 
-  it('tags a note whose character facts were checked against the sources', async () => {
+  it('marks a note checked both ways', async () => {
     // 從's note was read by the mainland reader and passed the source check
-    // (data/notes/hsk-3.0-1.tsv), so it has both tags, in this order.
+    // (data/notes/hsk-3.0-1.tsv): one box, whose explanation names both.
     // 後天, from the step before, is removed first; its page is still open.
     await tap(page, 'word-page-remove');
     await waitUntil(page, `document.getElementById('confirm-dialog').open`, 'the question');
@@ -196,6 +202,8 @@ describe('the word page', { concurrency: false }, () => {
     await waitUntil(page, `document.querySelectorAll('#word-list li').length === 1`, 'the word');
     await page.evaluate(`document.querySelector('#word-list li button').click()`);
     await waitUntil(page, `${shown('從|cong2')} && document.querySelector('#word-page-body .page-note')`, "the word's page");
-    assert.deepEqual(await page.evaluate(texts('.note-check')), ['Usage checked by a native speaker', 'Character facts from the sources']);
+    assert.equal(await textOf(page, '#word-page-body .note-badge'), '✓');
+    await page.evaluate(`document.querySelector('#word-page-body .note-badge').click()`);
+    assert.match(await textOf(page, '#word-page-body .note-badge-text'), /read this tip and its example sentence, and everything it says about its characters/);
   });
 });

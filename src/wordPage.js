@@ -78,6 +78,10 @@ function element(tag, className, text) {
 //                     cards and which of them are suspended
 //
 // Returns { open(word), openText(characters), openEntry(entry) }.
+// Numbers the explanations of the boxes beside "Learning tips", so that each
+// has an id of its own for its box's aria-controls (noteHeading).
+let noteBadgeCount = 0;
+
 export function createWordPage({
   getWords,
   getDecks,
@@ -236,6 +240,58 @@ export function createWordPage({
     return heading;
   }
 
+  // "Learning tips" with a small box beside it saying how far to trust the
+  // note: ✓ when it was checked, by a native speaker, against the sources
+  // or both, and AI when it was not (the owner, 2026-10-25;
+  // data/notes/README.md). What it means shows while a mouse is over the
+  // box, and on a tap until the next one, like the "?" in Settings.
+  // Returns the heading and the explanation under it.
+  function noteHeading(note) {
+    const native = note.checks.includes('native');
+    const sources = note.checks.includes('sources');
+    const checked = native || sources;
+    let meaning = 'page.noteUnchecked';
+    if (native && sources) meaning = 'page.noteNativeAndSources';
+    else if (native) meaning = 'page.noteNative';
+    else if (sources) meaning = 'page.noteSources';
+    else if (!note.example) meaning = 'page.noteUncheckedNoSentence';
+
+    const explanation = element('p', 'hint note-badge-text', t(meaning));
+    noteBadgeCount += 1;
+    explanation.id = `note-badge-text-${noteBadgeCount}`;
+    explanation.hidden = true;
+
+    const badge = element('button', checked ? 'note-badge checked' : 'note-badge', checked ? '✓' : t('page.noteBadgeAi'));
+    badge.type = 'button';
+    badge.setAttribute('aria-label', t(checked ? 'page.noteCheckedLabel' : 'page.noteUncheckedLabel'));
+    badge.setAttribute('aria-controls', explanation.id);
+    badge.setAttribute('aria-expanded', 'false');
+    let pinned = false;
+    const show = (shown) => {
+      explanation.hidden = !shown;
+      badge.setAttribute('aria-expanded', String(shown));
+    };
+    badge.addEventListener('click', () => {
+      pinned = !pinned;
+      show(pinned);
+    });
+    // Pointer events cover mouse, finger and pen; pointerType says which.
+    badge.addEventListener('pointerenter', (event) => {
+      if (event.pointerType === 'mouse') {
+        show(true);
+      }
+    });
+    badge.addEventListener('pointerleave', (event) => {
+      if (event.pointerType === 'mouse') {
+        show(pinned);
+      }
+    });
+
+    const heading = element('h3', 'note-heading', t('page.learningTips'));
+    heading.append(badge);
+    return [heading, explanation];
+  }
+
   // The learning note and the example sentence. `forms`: the page's word in
   // both scripts, which is the word to fill in if the sentence is studied.
   function showNote(note, forms) {
@@ -243,20 +299,7 @@ export function createWordPage({
     const section = element('section', 'page-section');
     const noteText = element('p', 'page-note');
     tappableText(noteText, note.note);
-    section.append(element('h3', '', t('page.learningTips')), noteText);
-    // Small tags under a note: a native speaker has read it, with its
-    // sentence; its facts about the characters were checked against the
-    // sources (the owner, 2026-10-21 and 2026-10-25; data/notes/README.md).
-    // A note with neither shows nothing; Settings › Help says what they mean.
-    const tags = [
-      ['native', 'page.checkedByNative'],
-      ['sources', 'page.checkedSources'],
-    ].filter(([check]) => note.checks.includes(check));
-    if (tags.length) {
-      const row = element('p', 'note-checks');
-      row.append(...tags.map(([, key]) => element('span', 'note-check', t(key))));
-      section.append(row);
-    }
+    section.append(...noteHeading(note), noteText);
 
     // A note about a part of a character has no example sentence.
     if (!note.example) {

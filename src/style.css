@@ -3119,22 +3119,34 @@ button.chip-button {
   margin: 0 0 var(--space-small);
 }
 
-/* "Usage checked by a native speaker" and "Character facts from the
-   sources" under a learning note: quiet labels in the shape of tags, not
-   buttons (they do nothing when tapped), side by side when they fit. */
-.note-checks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-tiny);
-  margin: 0 0 var(--space-small);
+/* The small box beside "Learning tips": ✓ when the note was checked, AI when
+   not; a tap or a mouse over it shows what it means, on a line of its own
+   under the heading (wordPage.js, noteHeading). */
+.note-badge {
+  min-width: 32px;
+  height: 28px;
+  /* Buttons are otherwise made tall enough for a finger. */
+  min-height: 0;
+  margin-left: var(--space-small);
+  padding: 0 var(--space-tiny);
+  font: inherit;
+  font-size: var(--size-tiny);
+  line-height: 1;
+  vertical-align: middle;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: help;
 }
 
-.note-check {
-  padding: 2px var(--space-small);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-round);
+.note-badge.checked {
   color: var(--success-text);
-  font-size: var(--size-tiny);
+  font-size: var(--size-small);
+}
+
+.note-badge-text {
+  margin: 0 0 var(--space-small);
 }
 
 .page-sentence {
