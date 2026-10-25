@@ -4,6 +4,13 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the second session of 2026-10-25 (the owner's tasks 11, 13, 14 and 15; released to `main` and `stable` the same day, "What's new" entry `2026-10-25-3`).**
+
+- **Built:** 13, the meaning above tone and pinyin cards and the reading on a meaning card when another word has the same characters (`docs/cards.md`); 14, the writing area up to 760px and the card centered on tall screens (`docs/pitfalls.md`); 15, meanings above a card on up to three lines where there is room, a size smaller when needed, cut between whole meanings, and grown with the area on a tablet (`src/meaningFit.js`, `docs/pitfalls.md`). 11 closed as probably fixed by the streak change.
+- **To try (the owner):** four lines for a meaning card's answer beside a learning tip, a draft (`docs/word-page.md`); the tablet's bigger meaning. Pictures in `local/task13/`, `local/task14/`, `local/task15/`.
+- **Tests:** all 373 browser tests and the unit tests pass; new: `readings.browser.js`, `meaning.browser.js`.
+- **Next:** the source check's chunks (below).
+
 **Handover from the session of 2026-10-25 (the source check's trial, and a box beside "Learning tips"; released to `main` and `stable` the same day, "What's new" entry `2026-10-25`, with the native-speaker tag of 2026-10-24).**
 
 - **Built:** the box beside "Learning tips" on the word page: ✓ when a note has `native` or `sources`, AI when neither; a tap or a mouse over it says which (`docs/word-page.md`; the owner: "lgtm"). It replaced the two tags under the note. Settings › Help and the credits say what it means. English, Italian, German.
