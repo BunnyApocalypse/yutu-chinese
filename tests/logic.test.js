@@ -473,6 +473,17 @@ test('tone answers line up with the characters', () => {
   assert.equal(toneAnswers(['學', '校'], '', null, null), null);
 });
 
+test('the spoken tone of 一 and 不 is right too', () => {
+  assert.deepEqual(toneAnswers(['一', '些'], 'yi1xie1', null, null)[0].tones, [1, 4]);
+  assert.deepEqual(toneAnswers(['一', '個'], 'yi1ge4', null, null)[0].tones, [1, 2]);
+  assert.deepEqual(toneAnswers(['不', '是'], 'bu4shi4', null, null)[0].tones, [4, 2]);
+  // Not as a number, nor before a neutral tone.
+  assert.deepEqual(toneAnswers(['第', '一'], 'di4yi1', null, null)[1].tones, [1]);
+  assert.deepEqual(toneAnswers(['十', '一'], 'shi2yi1', null, null)[1].tones, [1]);
+  // The third tone before a third is not written, so not accepted.
+  assert.deepEqual(toneAnswers(['你', '好'], 'ni3hao3', null, null)[0].tones, [3]);
+});
+
 test('the pronunciation setting decides which reading is expected', () => {
   const week = { traditional: '星期', pinyin: 'xing1qi1', pinyinTaiwan: 'xing1qi2' };
   assert.deepEqual(readingsFor(week, 'mainland', null), {

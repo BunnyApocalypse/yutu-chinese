@@ -14,6 +14,9 @@
 
 import { formatPinyin } from './wordList.js';
 import { t } from './text.js';
+// speechPlan.js imports splitSyllables from here too; that is fine, since
+// neither function is called while the files are being loaded.
+import { spokenSyllables } from './speechPlan.js';
 
 // How each tone is shown on its button and in messages: the mark on the
 // letter a, which is easier to read at a glance than the bare mark. The
@@ -73,6 +76,20 @@ function fittingReadings(pinyinField, charCount) {
     .filter((syllables) => syllables.length === charCount && charCount > 0);
 }
 
+// The readings with the tones of 一 and 不 as spoken before the next
+// syllable: 一些 yìxiē, 一個 yígè, 不是 búshì. Many textbooks write these, so
+// a learner may well give them (the owner, 2026-10-25, on 一些). The change
+// of a third tone before a third (nǐhǎo said níhǎo) is left out: nobody
+// writes it.
+function spokenReadingsOf(chars, readings) {
+  return readings.map((reading) => {
+    const spoken = spokenSyllables(chars, reading);
+    return reading.map((syllable, index) =>
+      chars[index] === '一' || chars[index] === '不' ? spoken[index] : syllable,
+    );
+  });
+}
+
 // Works out the tone answers for a word.
 //
 // chars:   the word's characters, as a list (traditional form, which is what
@@ -89,7 +106,8 @@ function fittingReadings(pinyinField, charCount) {
 // Returns one entry per character:
 //   syllable:     the syllable of the first listed reading, e.g. "xue2"
 //   tones:        the tones that are simply right (numbers 1 to 5): the tone
-//                 of every listed reading at this position
+//                 of every listed reading at this position, and the spoken
+//                 tone of 一 and 不 (spokenReadingsOf)
 //   variantTones: tones that are also accepted, but pointed out as variants:
 //                 - the other region's tone for this word
 //                 - a tone the tone table links to a listed one as a mainland
@@ -108,7 +126,8 @@ export function toneAnswers(chars, primary, other, table, regional = true, also 
   if (listedReadings.length === 0) {
     return null;
   }
-  const readings = [...listedReadings, ...fittingReadings(also, chars.length)];
+  const ownReadings = [...listedReadings, ...fittingReadings(also, chars.length)];
+  const readings = [...ownReadings, ...spokenReadingsOf(chars, ownReadings)];
   const otherReadings = fittingReadings(other, chars.length);
   // The dictionary's neutral-tone readings of this word that are a listed
   // reading with some of its tones made neutral.
