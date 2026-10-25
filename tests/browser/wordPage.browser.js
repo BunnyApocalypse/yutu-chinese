@@ -179,4 +179,23 @@ describe('the word page', { concurrency: false }, () => {
     await waitUntil(page, `${shown('後天|hou4tian1')} && document.querySelector('#word-page-body .page-note')`, "the word's page");
     assert.deepEqual(await page.evaluate(texts('.note-check')), ['Usage checked by a native speaker']);
   });
+
+  it('tags a note whose character facts were checked against the sources', async () => {
+    // 從's note was read by the mainland reader and passed the source check
+    // (data/notes/hsk-3.0-1.tsv), so it has both tags, in this order.
+    // 後天, from the step before, is removed first; its page is still open.
+    await tap(page, 'word-page-remove');
+    await waitUntil(page, `document.getElementById('confirm-dialog').open`, 'the question');
+    await tap(page, 'confirm-yes');
+    await waitUntil(page, `!document.getElementById('word-page').open && document.querySelectorAll('#word-list li').length === 0`, '後天 removed');
+    await type(page, 'add-traditional', '從');
+    await type(page, 'add-simplified', '从');
+    await type(page, 'add-pinyin', 'cong2');
+    await type(page, 'add-definition', 'from');
+    await page.evaluate(`document.getElementById('add-word-form').requestSubmit()`);
+    await waitUntil(page, `document.querySelectorAll('#word-list li').length === 1`, 'the word');
+    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await waitUntil(page, `${shown('從|cong2')} && document.querySelector('#word-page-body .page-note')`, "the word's page");
+    assert.deepEqual(await page.evaluate(texts('.note-check')), ['Usage checked by a native speaker', 'Character facts from the sources']);
+  });
 });

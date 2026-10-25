@@ -139,7 +139,7 @@ export default {
   'settings.credits': 'Danksagungen und Lizenzen',
   'settings.tips': 'Beim ersten Öffnen jedes Bildschirms einen Tipp zeigen',
   'settings.tipsAgain': 'Alle Tipps wieder zeigen',
-  'settings.notesChecked': 'Die Lerntipps wurden von einem KI-Modell geschrieben und können Fehler enthalten. Ein Tipp mit dem Hinweis „Gebrauch muttersprachlich geprüft“ wurde samt Beispielsatz von jemandem gelesen, dessen Muttersprache Chinesisch ist.',
+  'settings.notesChecked': 'Die Lerntipps wurden von einem KI-Modell geschrieben und können Fehler enthalten. Ein Tipp mit dem Hinweis „Gebrauch muttersprachlich geprüft“ wurde samt Beispielsatz von jemandem gelesen, dessen Muttersprache Chinesisch ist. Bei einem Tipp mit dem Hinweis „Zeichenangaben aus den Quellen“ wurde alles, was er über seine Zeichen sagt (Bedeutungen, Lesungen, Bestandteile, Herkunft), in Wiktionary, Make Me a Hanzi oder CC-CEDICT gefunden; seine Hinweise zum Gebrauch wurden nicht geprüft.',
 
   // Settings › For testing (testerSettings.js)
   'testing.swipeReadout': 'Zeigen, wie jede Wischgeste nach oben gemessen wurde',
@@ -949,7 +949,7 @@ export default {
   'credits.dictionaryAndTonesCc': '<b>Wörterbuch und Töne:</b> <a href="https://cc-cedict.org" target="_blank" rel="noopener">CC-CEDICT</a>. Creative Commons Attribution-ShareAlike 4.0.',
   'credits.recordingsAudioCmnSyllables': '<b>Aufnahmen:</b> <a href="https://github.com/hugolpz/audio-cmn" target="_blank" rel="noopener">audio-cmn</a>: Silben gesprochen von Chen Wang, Wörter gesprochen von Yue Tan (Shtooka-Projekt), gesammelt von Hugo Lopez. Creative Commons Attribution-ShareAlike.',
   'credits.howCharactersAreBuilt': '<b>Aufbau der Schriftzeichen:</b> das Wörterbuch von Make Me a Hanzi (aus Unihan und CJKlib). GNU Lesser General Public License.',
-  'credits.learningTipsAndExample': '<b>Lerntipps und Beispielsätze:</b> für diese App von einem KI-Modell (Claude von Anthropic) geschrieben, mit <a href="https://en.wiktionary.org" target="_blank" rel="noopener">Wiktionary</a> als Quelle für die Herkunft der Zeichen. Creative Commons Attribution-ShareAlike 4.0. Kein Muttersprachler hat sie Zeile für Zeile geprüft: Sie können Fehler enthalten. Die mit „Gebrauch muttersprachlich geprüft“ markierten wurden samt Satz von einer Person mit Chinesisch als Muttersprache gelesen.',
+  'credits.learningTipsAndExample': '<b>Lerntipps und Beispielsätze:</b> für diese App von einem KI-Modell (Claude von Anthropic) geschrieben, mit <a href="https://en.wiktionary.org" target="_blank" rel="noopener">Wiktionary</a> als Quelle für die Herkunft der Zeichen. Creative Commons Attribution-ShareAlike 4.0. Kein Muttersprachler hat sie Zeile für Zeile geprüft: Sie können Fehler enthalten. Die mit „Gebrauch muttersprachlich geprüft“ markierten wurden samt Satz von einer Person mit Chinesisch als Muttersprache gelesen. Bei den mit „Zeichenangaben aus den Quellen“ markierten wurde, was sie über ihre Zeichen sagen, mit Wiktionary, Make Me a Hanzi und CC-CEDICT abgeglichen.',
   'credits.hskWordListsFrom': '<b>HSK-Wortlisten:</b> von <a href="https://github.com/ivankra/hsk30" target="_blank" rel="noopener">ivankra/hsk30</a> und <a href="https://github.com/glxxyz/hskhsk.com" target="_blank" rel="noopener">glxxyz/hskhsk.com</a>. MIT License. Ihre Einteilung in Themen wurde für diese App von KI-Modellen erstellt. MIT License.',
   'credits.tocflWordListThe': '<b>TOCFL-Wortliste:</b> die <span lang="zh-Hant-TW">華語八千詞表</span>, veröffentlicht vom Steering Committee for the Test of Proficiency-Huayu in Taiwan. Das Komitee nennt keine Lizenz dafür.',
   'credits.radicalsThe214Kangxi': '<b>Radikale:</b> die 214 Kangxi-Radikale, wie sie das Unicode Consortium auflistet (CJKRadicals.txt, Unicode License), nach Häufigkeit geordnet, aus Make Me a Hanzi; ihre Bedeutungen wurden für diese App geschrieben. MIT License.',
@@ -990,6 +990,7 @@ export default {
   'page.hearIt': 'Anhören',
   'page.learningTips': 'Lerntipps',
   'page.checkedByNative': 'Gebrauch muttersprachlich geprüft',
+  'page.checkedSources': 'Zeichenangaben aus den Quellen',
   'page.deckForSentence': 'Stapel, dem der Satz hinzugefügt wird',
   'page.addToMyWords': 'Zu meinen Wörtern',
   'page.addSentence': 'Satz hinzufügen',

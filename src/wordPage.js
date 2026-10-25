@@ -244,11 +244,18 @@ export function createWordPage({
     const noteText = element('p', 'page-note');
     tappableText(noteText, note.note);
     section.append(element('h3', '', t('page.learningTips')), noteText);
-    // A small tag under a note a native speaker has read, with its sentence
-    // (the owner, 2026-10-21; data/notes/README.md). A note without one
-    // shows nothing; Settings › Help says what the tag means.
-    if (note.checks.includes('native')) {
-      section.append(element('p', 'note-check', t('page.checkedByNative')));
+    // Small tags under a note: a native speaker has read it, with its
+    // sentence; its facts about the characters were checked against the
+    // sources (the owner, 2026-10-21 and 2026-10-25; data/notes/README.md).
+    // A note with neither shows nothing; Settings › Help says what they mean.
+    const tags = [
+      ['native', 'page.checkedByNative'],
+      ['sources', 'page.checkedSources'],
+    ].filter(([check]) => note.checks.includes(check));
+    if (tags.length) {
+      const row = element('p', 'note-checks');
+      row.append(...tags.map(([, key]) => element('span', 'note-check', t(key))));
+      section.append(row);
     }
 
     // A note about a part of a character has no example sentence.

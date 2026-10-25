@@ -139,7 +139,7 @@ export default {
   'settings.credits': 'Crediti e licenze',
   'settings.tips': 'Mostra un consiglio la prima volta che si apre ogni schermata',
   'settings.tipsAgain': 'Mostra di nuovo tutti i consigli',
-  'settings.notesChecked': 'I consigli di studio sono stati scritti da un modello di IA e potrebbero essere sbagliati. Un consiglio con la scritta «Uso verificato da un madrelingua» è stato letto, con la sua frase d\'esempio, da una persona di madrelingua cinese.',
+  'settings.notesChecked': 'I consigli di studio sono stati scritti da un modello di IA e potrebbero essere sbagliati. Un consiglio con la scritta «Uso verificato da un madrelingua» è stato letto, con la sua frase d\'esempio, da una persona di madrelingua cinese. Per un consiglio con la scritta «Dati sui caratteri dalle fonti», tutto ciò che dice dei suoi caratteri (significati, letture, componenti, origine) è stato trovato in Wiktionary, Make Me a Hanzi o CC-CEDICT; le osservazioni sull\'uso non sono state controllate.',
 
   // Settings › For testing (testerSettings.js)
   'testing.swipeReadout': 'Mostra come è stato misurato ogni scorrimento verso l\'alto',
@@ -948,7 +948,7 @@ export default {
   'credits.dictionaryAndTonesCc': '<b>Dizionario e toni:</b> <a href="https://cc-cedict.org" target="_blank" rel="noopener">CC-CEDICT</a>. Creative Commons Attribution-ShareAlike 4.0.',
   'credits.recordingsAudioCmnSyllables': '<b>Registrazioni:</b> <a href="https://github.com/hugolpz/audio-cmn" target="_blank" rel="noopener">audio-cmn</a>: sillabe pronunciate da Chen Wang, parole pronunciate da Yue Tan (progetto Shtooka), raccolte da Hugo Lopez. Creative Commons Attribution-ShareAlike.',
   'credits.howCharactersAreBuilt': '<b>Come sono costruiti i caratteri:</b> il dizionario di Make Me a Hanzi (da Unihan e CJKlib). GNU Lesser General Public License.',
-  'credits.learningTipsAndExample': "<b>Consigli di studio e frasi d'esempio:</b> scritti per questa app da un modello di IA (Claude di Anthropic), con l'aiuto di <a href=\"https://en.wiktionary.org\" target=\"_blank\" rel=\"noopener\">Wiktionary</a> per le origini dei caratteri. Creative Commons Attribution-ShareAlike 4.0. Nessun madrelingua li ha controllati riga per riga: potrebbero essere sbagliati. Quelli con la scritta «Uso verificato da un madrelingua» sono stati letti da un madrelingua, con la loro frase.",
+  'credits.learningTipsAndExample': "<b>Consigli di studio e frasi d'esempio:</b> scritti per questa app da un modello di IA (Claude di Anthropic), con l'aiuto di <a href=\"https://en.wiktionary.org\" target=\"_blank\" rel=\"noopener\">Wiktionary</a> per le origini dei caratteri. Creative Commons Attribution-ShareAlike 4.0. Nessun madrelingua li ha controllati riga per riga: potrebbero essere sbagliati. Quelli con la scritta «Uso verificato da un madrelingua» sono stati letti da un madrelingua, con la loro frase. Per quelli con la scritta «Dati sui caratteri dalle fonti», ciò che dicono dei loro caratteri è stato controllato su Wiktionary, Make Me a Hanzi e CC-CEDICT.",
   'credits.hskWordListsFrom': '<b>Liste di parole HSK:</b> da <a href="https://github.com/ivankra/hsk30" target="_blank" rel="noopener">ivankra/hsk30</a> e <a href="https://github.com/glxxyz/hskhsk.com" target="_blank" rel="noopener">glxxyz/hskhsk.com</a>. MIT License. Il loro raggruppamento in temi è stato fatto per questa app da modelli di IA. MIT License.',
   'credits.tocflWordListThe': "<b>Lista di parole TOCFL:</b> la <span lang=\"zh-Hant-TW\">華語八千詞表</span> pubblicata dallo Steering Committee for the Test of Proficiency-Huayu di Taiwan. Il comitato non dichiara alcuna licenza per essa.",
   'credits.radicalsThe214Kangxi': "<b>Radicali:</b> i 214 radicali Kangxi come elencati dall'Unicode Consortium (CJKRadicals.txt, Unicode License), ordinati per frequenza, da Make Me a Hanzi; i loro significati sono stati scritti per questa app. MIT License.",
@@ -989,6 +989,7 @@ export default {
   'page.hearIt': 'Ascolta',
   'page.learningTips': 'Consigli di studio',
   'page.checkedByNative': 'Uso verificato da un madrelingua',
+  'page.checkedSources': 'Dati sui caratteri dalle fonti',
   'page.deckForSentence': 'Mazzo in cui aggiungere la frase',
   'page.addToMyWords': 'Aggiungi alle mie parole',
   'page.addSentence': 'Aggiungi frase',

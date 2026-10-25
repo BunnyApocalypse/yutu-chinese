@@ -49,7 +49,7 @@ test('a note says how it was checked, from its eighth column', () => {
 });
 
 test('every check named in the notes files is one the app knows', () => {
-  const known = new Set(['native']);
+  const known = new Set(['native', 'sources']);
   for (const file of fs.readdirSync('data/notes').filter((name) => name.endsWith('.tsv'))) {
     for (const note of parseNotes(fs.readFileSync(`data/notes/${file}`, 'utf8')).values()) {
       note.checks.forEach((check) => assert.ok(known.has(check), `${file}: ${check}`));

@@ -11,8 +11,10 @@
 // note is found by the character alone.
 //
 // The eighth column says how the note was checked, as words with a space
-// between them; for now only "native": a native speaker of Chinese read the
-// note and its sentence (the owner, 2026-10-21; data/notes/README.md).
+// between them: "native", a native speaker of Chinese read the note and its
+// sentence (the owner, 2026-10-21); "sources", every fact the note gives
+// about its characters was found in the sources (the owner, 2026-10-25).
+// data/notes/README.md says more.
 //
 // Returns a Map from "simplified pinyin" (pinyin as stored, with tone
 // numbers) to { note, example, checks }, where example is { simplified,

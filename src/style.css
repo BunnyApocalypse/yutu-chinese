@@ -3119,11 +3119,17 @@ button.chip-button {
   margin: 0 0 var(--space-small);
 }
 
-/* "Usage checked by a native speaker" under a learning note: a quiet
-   label in the shape of a tag, not a button (it does nothing when tapped). */
-.note-check {
-  display: inline-block;
+/* "Usage checked by a native speaker" and "Character facts from the
+   sources" under a learning note: quiet labels in the shape of tags, not
+   buttons (they do nothing when tapped), side by side when they fit. */
+.note-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-tiny);
   margin: 0 0 var(--space-small);
+}
+
+.note-check {
   padding: 2px var(--space-small);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-round);
