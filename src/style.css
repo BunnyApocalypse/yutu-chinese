@@ -797,6 +797,19 @@ main.focused #prompt-meaning {
   min-height: 0;
 }
 
+main.focused #prompt-meaning:not(.with-sentence) {
+  /* Bigger with a big writing area (--meaning-zoom, wordFlow.js), as the
+     card's face is (--face-zoom). */
+  font-size: calc(var(--meaning-size, var(--size-big)) * var(--meaning-zoom, 1));
+}
+
+/* And as wide as the writing area, past the header's 520px (centered in
+   it, as the header's rows are), except beside it in two columns. */
+:root:not([data-layout='wide']) main.focused #prompt-meaning:not(.with-sentence) {
+  width: max(100%, var(--area-size, 0px));
+  flex-shrink: 0;
+}
+
 /* The same for the buttons that come and go beside the kind of card. */
 .type-row .link-button[hidden] {
   display: none;
@@ -1848,8 +1861,11 @@ button.slot {
   flex-shrink: 0;
 }
 
+/* Beside a learning tip, the meaning has four lines rather than five, the
+   tip starting lower and the face scrolling to it (the owner, 2026-10-25,
+   to try: at two lines a meaning card's answer was cut too often). */
 .card-face.with-tip .face-meaning {
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 4;
 }
 
 

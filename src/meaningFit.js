@@ -21,7 +21,21 @@ const LINE_HEIGHT = 1.25;
 // The text sizes tried, the prompt's first (style.css).
 const SIZES = ['var(--size-big)', 'var(--size-title)'];
 
-const fits = (element) => element.scrollHeight <= element.clientHeight + 1;
+// How many lines the meaning takes in full, at the size set now. Counted
+// with no limit on the lines rather than by comparing the browser's heights,
+// which it rounds to whole pixels in opposite directions where a line is a
+// fraction of a pixel tall (the text grown on a tablet), and bold letters
+// can reach past their line.
+function linesNeeded(element) {
+  const lines = element.style.getPropertyValue('--meaning-lines');
+  element.style.setProperty('--meaning-lines', '99');
+  const lineHeight = parseFloat(getComputedStyle(element).fontSize) * LINE_HEIGHT;
+  const needed = Math.round(element.getBoundingClientRect().height / lineHeight);
+  element.style.setProperty('--meaning-lines', lines);
+  return needed;
+}
+
+const fits = (element) => linesNeeded(element) <= Number(element.style.getPropertyValue('--meaning-lines'));
 
 // The meaning's parts as spans of class "sense", one for each meaning
 // between "; ", each keeping its "; " so the text reads as before (a cut-off
@@ -57,8 +71,9 @@ function sensesOf(element) {
   return spans;
 }
 
-// Fits the meaning in `element` into its room. Returns true if meanings
-// were left out, which a tap then shows.
+// Fits the meaning in `element` into its room. Returns true if any of it
+// is left out (whole meanings, or the end of the first), which a tap then
+// shows.
 export function fitMeaning(element) {
   const root = document.documentElement;
   // The room for it: one line at the prompt's former size (style.css,
@@ -94,7 +109,10 @@ export function fitMeaning(element) {
       senses.forEach((sense, index) => sense.classList.toggle('cut-after', index === last - 1));
       cut = true;
     }
+    cut = cut || (element.textContent !== '' && !fits(element));
   }
-  root.style.setProperty('--meaning-unused', `${Math.max(0, Math.floor(room - element.offsetHeight))}px`);
+  // Measured exactly (offsetHeight is rounded), or the card moved by a pixel
+  // from one meaning to the next.
+  root.style.setProperty('--meaning-unused', `${Math.max(0, room - element.getBoundingClientRect().height)}px`);
   return cut;
 }

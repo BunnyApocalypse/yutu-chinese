@@ -13,7 +13,7 @@ import { t } from './text.js';
 //           own in the panel.
 // showAll(text): called when the element is tapped while it has more
 // fit(element): optional; fits the text in first (meaningFit.js), and
-//           returns true if it left some of it out
+//           returns true if it left some of it out, which then decides
 //
 // Whenever the element's contents change, this is worked out afresh.
 // Returns a function that works it out again, for when the room has changed.
@@ -22,9 +22,10 @@ export function clampWithPopup(element, showAll, { fit = null } = {}) {
     element.classList.add('clamped');
     const leftOut = fit ? fit(element) : false;
     // scrollHeight is how tall the text is in full; clientHeight how much of
-    // that is showing.
+    // that is showing. (A sentence's writing card is not fitted.)
     const part = element.querySelector('[data-clamp]') ?? element;
-    const hasMore = leftOut || part.scrollHeight > part.clientHeight + 1;
+    const fitted = fit && !element.querySelector('[data-clamp]');
+    const hasMore = fitted ? leftOut : part.scrollHeight > part.clientHeight + 1;
     element.classList.toggle('has-more', hasMore);
     // While it has more, it acts as a button for the keyboard and screen
     // readers too: tabindex="0" lets Tab reach it, and role="button" makes a

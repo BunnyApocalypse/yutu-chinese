@@ -657,8 +657,17 @@ export function createWordFlow(elements) {
     // took the kind of card away from the corner. In two columns the meaning
     // is beside the area, and only a window too short for the column (a
     // phone held sideways) keeps it to one line.
+    // On a big area the meaning grows with it, as the card's face does (the
+    // owner, 2026-10-25: on the tablet it was a phone's size in a room for
+    // more), and so does its room; not in two columns, whose side column
+    // is 360px wide whatever the area.
+    const meaningZoom = wide ? 1 : Math.max(1, size / 400);
+    document.documentElement.style.setProperty('--meaning-zoom', String(meaningZoom));
     const spare = Math.max(0, window.innerHeight - ROOM_ABOVE_BELOW - size);
-    const extra = wide ? (window.innerHeight >= 640 ? MEANING_EXTRA_MAX : 0) : Math.min(spare, MEANING_EXTRA_MAX);
+    // (Not rounded: three lines must fill it exactly, or the card moves by a
+    // fraction of a pixel when they do.)
+    const extraMax = MEANING_EXTRA_MAX * meaningZoom;
+    const extra = wide ? (window.innerHeight >= 640 ? extraMax : 0) : Math.min(spare, extraMax);
     document.documentElement.style.setProperty('--meaning-extra', `${extra}px`);
     document.documentElement.style.setProperty('--card-offset', `${wide ? 0 : Math.floor((spare - extra) / 2)}px`);
     drawGrid(writingArea, size);
