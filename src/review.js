@@ -510,8 +510,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     if (onlyMeaningChanged) {
       // The answer stays up with the corrected meaning, still to be graded.
       current.word = after;
-      // (Above every kind of card but a meaning card, whose answer it is.)
-      if (current.type !== 'meaning') {
+      // (Above a writing card, and a tone or pinyin card not yet answered.)
+      if (current.type === 'writing' || (current.type !== 'meaning' && meaningElement.textContent !== '')) {
         fillWithoutChinese(meaningElement, after.definition);
       }
       flows.recall.update(after);
@@ -999,6 +999,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // The card has been answered: work out what each grade would do and offer
   // the grade buttons.
   function offerGrades(suggestedGrade, details) {
+    // Once a tone or pinyin card is answered, its meaning is on the card:
+    // not twice (the owner, 2026-10-25).
+    if (current.type === 'tone' || current.type === 'pinyin') {
+      meaningElement.textContent = '';
+    }
     if (practicing) {
       return;
     }

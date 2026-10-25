@@ -12,15 +12,19 @@ import { t } from './text.js';
 //           sentence's writing card, review.js); each part on a line of its
 //           own in the panel.
 // showAll(text): called when the element is tapped while it has more
+// fit(element): optional; fits the text in first (meaningFit.js), and
+//           returns true if it left some of it out
 //
 // Whenever the element's contents change, this is worked out afresh.
-export function clampWithPopup(element, showAll) {
+// Returns a function that works it out again, for when the room has changed.
+export function clampWithPopup(element, showAll, { fit = null } = {}) {
   const check = () => {
     element.classList.add('clamped');
+    const leftOut = fit ? fit(element) : false;
     // scrollHeight is how tall the text is in full; clientHeight how much of
     // that is showing.
     const part = element.querySelector('[data-clamp]') ?? element;
-    const hasMore = part.scrollHeight > part.clientHeight + 1;
+    const hasMore = leftOut || part.scrollHeight > part.clientHeight + 1;
     element.classList.toggle('has-more', hasMore);
     // While it has more, it acts as a button for the keyboard and screen
     // readers too: tabindex="0" lets Tab reach it, and role="button" makes a
@@ -53,6 +57,14 @@ export function clampWithPopup(element, showAll) {
   });
   // A MutationObserver is told whenever the element's contents change, so
   // the rest of the app can go on setting its text as it always did.
-  new MutationObserver(check).observe(element, { childList: true, characterData: true, subtree: true });
+  // What fit() itself changes is not taken for new contents
+  // (takeRecords() empties the list of changes waiting).
+  const observer = new MutationObserver(() => {
+    check();
+    observer.takeRecords();
+  });
+  observer.observe(element, { childList: true, characterData: true, subtree: true });
   check();
+  observer.takeRecords();
+  return check;
 }

@@ -101,6 +101,14 @@ describe('words with several readings', { concurrency: false }, () => {
   it('shows the meaning above a pinyin card', async () => {
     await showCard('好|hao3', 'pinyin');
     assert.equal(await textOf(page, 'prompt-meaning'), 'good; well');
+    // Once answered the meaning is on the card, and not above it too.
+    await page.evaluate(`(() => {
+      const face = document.getElementById('card-face');
+      face.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, isPrimary: true }));
+      face.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, isPrimary: true }));
+    })()`);
+    await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
+    assert.equal(await textOf(page, 'prompt-meaning'), '');
   });
 
   it('shows the reading on a meaning card when another word has the same characters', async () => {

@@ -23,6 +23,7 @@ import { buildBackup, checkBackup, describeBackup, restoreBackup } from './backu
 import { mergeBackups, describeMerge } from './merge.js';
 import { ask, tell } from './confirm.js';
 import { clampWithPopup } from './clamp.js';
+import { fitMeaning } from './meaningFit.js';
 import { watchForErrors, showVersion } from './errors.js';
 import { parseReadingFixes, wordsToCorrect, correctedWord } from './readingFixes.js';
 import { readDictionary, lookUp, DEFAULT_MEANING_DETAIL } from './dictionary.js';
@@ -151,7 +152,10 @@ byId('whats-new-button').addEventListener('click', whatsNew.openAll);
 
 // A long meaning in the prompt above a card is cut off after one line; a tap
 // on it shows the whole of it in a panel.
-clampWithPopup(byId('prompt-meaning'), (text) => tell(t('main.meaning'), text));
+// The meaning above a card, fitted into its room (meaningFit.js); measured
+// again when the room changes (the screen turned) or a font arrives.
+const refitMeaning = clampWithPopup(byId('prompt-meaning'), (text) => tell(t('main.meaning'), text), { fit: fitMeaning });
+document.fonts?.addEventListener('loadingdone', () => refitMeaning());
 
 // ---- Modes ----
 
@@ -764,6 +768,7 @@ window.addEventListener('resize', () => {
   }
   lastWidth = window.innerWidth;
   flow.rebuild();
+  refitMeaning();
 });
 
 // ---- Startup ----

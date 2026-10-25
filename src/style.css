@@ -599,13 +599,23 @@ button.icon-button.no-sound {
 
 #prompt-meaning {
   order: 2;
-  font-size: var(--size-big);
+  /* A size smaller when a long meaning needs it (meaningFit.js). */
+  font-size: var(--meaning-size, var(--size-big));
   font-weight: 700;
 }
 
+/* As many lines as its room holds (meaningFit.js; one unless the screen
+   has height to spare). */
 #prompt-meaning.clamped {
   line-height: 1.25;
-  max-height: 1.25em;
+  max-height: calc(1.25em * var(--meaning-lines, 1));
+  -webkit-line-clamp: var(--meaning-lines, 1);
+}
+
+/* Meanings left out from the end of a long one, after the last shown
+   (meaningFit.js): "good; proper; …". */
+#prompt-meaning .sense.cut-after::after {
+  content: '…';
 }
 
 /* Where Chinese was left out of a writing card's meaning (review.js): a
@@ -670,9 +680,11 @@ main.focused #study-back-label {
    is moved down by half the room left over (--card-offset, set by
    wordFlow.js), so that the card sits in the middle while the kind of card
    stays in the corner (the owner, 2026-10-25). A fixed amount for the
-   screen: nothing moves within a card. */
+   screen: nothing moves within a card. The room the meaning above the card
+   doesn't use is added too (--meaning-unused, meaningFit.js), so the card
+   is in the same place whatever the meaning's length. */
 main.focused .type-row {
-  margin-bottom: var(--card-offset, 0px);
+  margin-bottom: calc(var(--card-offset, 0px) + var(--meaning-unused, 0px));
 }
 
 /* The menu button sits over the left end of the line with the kind of card,
@@ -777,6 +789,12 @@ main.focused .top-bar {
 
 #prompt-meaning {
   min-height: calc(1.5 * var(--size-title));
+}
+
+/* While a card is up, its room is kept by the margin above it instead
+   (--meaning-unused), which also holds the extra lines' room. */
+main.focused #prompt-meaning {
+  min-height: 0;
 }
 
 /* The same for the buttons that come and go beside the kind of card. */

@@ -50,6 +50,10 @@ function chooseSize() {
 const ROOM_ABOVE_BELOW = 380;
 // The area's largest size, in one column or two.
 const AREA_MAX = 760;
+// How much taller than one line the meaning above the card may be, where the
+// screen has the height to spare: three lines at the smaller size
+// (meaningFit.js; the owner, 2026-10-25).
+const MEANING_EXTRA_MAX = 45;
 // The layout in two columns (style.css, data-layout="wide"): the room above
 // and below the area (main's padding and a little), and the width of the
 // column beside it with its gap.
@@ -645,13 +649,18 @@ export function createWordFlow(elements) {
     document.documentElement.style.setProperty('--area-size', `${size}px`);
     // Its text grows with it above a phone's size (style.css, .card-face).
     document.documentElement.style.setProperty('--face-zoom', String(Math.max(1, size / 400)));
-    // Where the screen is taller than the card needs (an upright tablet), the
-    // card is moved down by half the room left over, so that it sits in the
-    // middle (the owner, 2026-10-25). A fixed amount, worked out here with
-    // the size: centering by the style sheet moved the area whenever the
-    // grades came up, and took the kind of card away from the corner.
-    const spare = wide ? 0 : window.innerHeight - ROOM_ABOVE_BELOW - size;
-    document.documentElement.style.setProperty('--card-offset', `${Math.max(0, Math.floor(spare / 2))}px`);
+    // Where the screen is taller than the card needs, the meaning above it
+    // may take more lines (meaningFit.js), and the card is moved down by half
+    // the room still left over, so that it sits in the middle (the owner,
+    // 2026-10-25). Fixed amounts, worked out here with the size: centering
+    // by the style sheet moved the area whenever the grades came up, and
+    // took the kind of card away from the corner. In two columns the meaning
+    // is beside the area, and only a window too short for the column (a
+    // phone held sideways) keeps it to one line.
+    const spare = Math.max(0, window.innerHeight - ROOM_ABOVE_BELOW - size);
+    const extra = wide ? (window.innerHeight >= 640 ? MEANING_EXTRA_MAX : 0) : Math.min(spare, MEANING_EXTRA_MAX);
+    document.documentElement.style.setProperty('--meaning-extra', `${extra}px`);
+    document.documentElement.style.setProperty('--card-offset', `${wide ? 0 : Math.floor((spare - extra) / 2)}px`);
     drawGrid(writingArea, size);
     quiz = createQuiz(writingArea, size, quizHandlers);
     quiz.setOutlineVisible(outlineVisible);
