@@ -57,6 +57,9 @@ describe("what's new and feedback", { concurrency: false }, () => {
     await tap(page, 'whats-new-button');
     assert.equal(await isOpen(page, 'whats-new-dialog'), true);
     assert.equal(await page.evaluate(`document.getElementById('whats-new-intro').hidden`), true);
+    // One date heading a day, however many releases it had.
+    const headings = await page.evaluate(`[...document.querySelectorAll('#whats-new-list h3')].map((h) => h.textContent)`);
+    assert.deepEqual(headings, [...new Set(CHANGES.map((c) => changeDate(c.id)))]);
     // Its line at the bottom leads to feedback.
     await tap(page, 'whats-new-feedback');
     assert.equal(await isOpen(page, 'whats-new-dialog'), false);

@@ -48,9 +48,17 @@ export function createWhatsNew(openFeedback) {
 
   function show(entries, sinceLastTime) {
     list.replaceChildren();
+    let lastDate = null;
     for (const entry of entries) {
-      const heading = document.createElement('h3');
-      heading.textContent = changeDate(entry.id);
+      // Two releases on one day ("2026-10-22", "2026-10-22-2") go under one
+      // date (the owner, 2026-10-25).
+      const date = changeDate(entry.id);
+      if (date !== lastDate) {
+        const heading = document.createElement('h3');
+        heading.textContent = date;
+        list.append(heading);
+        lastDate = date;
+      }
       const items = document.createElement('ul');
       // In the reader's language when the entry has it (`it`, `de`), else
       // in English, marked as such for screen readers.
@@ -65,7 +73,7 @@ export function createWhatsNew(openFeedback) {
         }
         items.append(item);
       }
-      list.append(heading, items);
+      list.append(items);
     }
     intro.hidden = !sinceLastTime;
     dialog.showModal();
