@@ -13,6 +13,24 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-10-25-2',
+    items: [
+      'On a tone card, the tone 一 and 不 take in speech is right too: yì for 一 in 一些, bú for 不 in 不是.',
+      '學 written in the mainland stroke order, left side before 爻, is recognized from the first stroke.',
+      'Writing a character in the mainland stroke order no longer shows a note under the buttons; it was always accepted.',
+    ],
+    it: [
+      'Su una carta dei toni, è giusto anche il tono che 一 e 不 prendono nel parlato: yì per 一 in 一些, bú per 不 in 不是.',
+      '學 scritto nell’ordine dei tratti della Cina continentale, il lato sinistro prima di 爻, viene riconosciuto dal primo tratto.',
+      'Scrivere un carattere nell’ordine dei tratti della Cina continentale non mostra più una nota sotto i pulsanti; è sempre stato accettato.',
+    ],
+    de: [
+      'Auf einer Tonkarte ist auch der Ton richtig, den 一 und 不 beim Sprechen annehmen: yì für 一 in 一些, bú für 不 in 不是.',
+      '學 in der Strichfolge des Festlands geschrieben, die linke Seite vor 爻, wird ab dem ersten Strich erkannt.',
+      'Ein Zeichen in der Strichfolge des Festlands zu schreiben, zeigt keinen Hinweis unter den Knöpfen mehr; es wurde immer akzeptiert.',
+    ],
+  },
+  {
     id: '2026-10-25',
     items: [
       'Beside "Learning tips" on a word\'s page, a small box says how far to trust the tip: ✓ when it has been checked, AI when it has not. Tap it to see what was checked.',
