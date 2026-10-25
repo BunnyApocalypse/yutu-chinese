@@ -510,7 +510,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     if (onlyMeaningChanged) {
       // The answer stays up with the corrected meaning, still to be graded.
       current.word = after;
-      if (current.type === 'writing') {
+      // (Above every kind of card but a meaning card, whose answer it is.)
+      if (current.type !== 'meaning') {
         fillWithoutChinese(meaningElement, after.definition);
       }
       flows.recall.update(after);
@@ -1110,6 +1111,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   function showToneCard() {
     const { word } = current;
+    showAskedMeaning(word);
     // What to save about a tone card.
     const details = ({ givenTones, passedPerChar, variantPerChar }) => ({
       givenTones,
@@ -1150,17 +1152,42 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   function showRecallCard(ask) {
     const { word } = current;
     const script = scriptFor(word, settings);
+    if (ask === 'pinyin') {
+      showAskedMeaning(word);
+    }
     flows.recall.start({
       word,
       script,
       reading: readingOf(current.word),
       ask,
+      // Which of the words written so is asked (the owner, 2026-10-25).
+      showReading: ask === 'meaning' && hasSameCharacters(word, script),
       onReveal: () => offerGrades(GOOD, {}),
       onContinue: () => grade(suggested),
       backToCard: backToCard(),
       // Under the answer, the word's learning tip (cardTip.js).
       onAnswerShown: () => addTip(word, script, () => current && current.word === word && current.type === ask),
     });
+  }
+
+  // A word with several readings (好 hǎo and hào, 得 dé, de and děi) is
+  // several words, and the characters alone don't say which one a card asks
+  // about: 好 answered hǎo on a tone card counted wrong for hào (the owner,
+  // 2026-10-24). So tone and pinyin cards show the meaning above them, as
+  // writing cards do (the owner chose it, 2026-10-25), always: the meaning
+  // gives neither the tone nor the reading away. Its Chinese is left out,
+  // as on a writing card, since CC-CEDICT writes readings there ("variant
+  // of 好[hao3]").
+  function showAskedMeaning(word) {
+    meaningElement.classList.remove('with-sentence');
+    fillWithoutChinese(meaningElement, word.definition);
+  }
+
+  // A meaning card shows the reading under the word only when another of
+  // the learner's words is written with the same characters, which is when
+  // it is needed: the reading would otherwise help recall the meaning.
+  function hasSameCharacters(word, script) {
+    return words.some((other) => other.id !== word.id && other[script] === word[script]);
   }
 
   // Puts the word's learning tip on the card's face once its note is there,

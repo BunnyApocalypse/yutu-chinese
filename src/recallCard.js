@@ -72,6 +72,9 @@ export function createRecallCard(cardFace) {
     //   script:  'traditional' or 'simplified'
     //   ask:     'meaning' or 'pinyin'
     //   reading: which reading to show (from readingsFor in tones.js)
+    //   showReading: true to show the reading under the word before the
+    //            answer (a meaning card for a word whose characters have
+    //            another reading among the learner's words)
     //   onReveal():   the answer was shown
     //   onContinue(): the card was tapped again after the answer was shown
     //   onAnswerShown(): optional; the answer was put on the face (each time,
@@ -87,7 +90,8 @@ export function createRecallCard(cardFace) {
       const wordElement = paragraph(Array.from(text).length > 6 ? 'face-word long' : 'face-word', text);
       // Tells the browser which regional font to use for the characters.
       wordElement.lang = options.script === 'traditional' ? 'zh-Hant-TW' : 'zh-Hans-CN';
-      cardFace.replaceChildren(wordElement, paragraph('face-hint', t(HINTS[options.ask])));
+      const reading = options.showReading ? [paragraph('face-pinyin', describeReading(options.reading).main)] : [];
+      cardFace.replaceChildren(wordElement, ...reading, paragraph('face-hint', t(HINTS[options.ask])));
       if (options.backToCard) {
         const back = faceArrow('recall-back-button', t('write.backToCard'), BACK);
         back.addEventListener('click', () => options.backToCard());
