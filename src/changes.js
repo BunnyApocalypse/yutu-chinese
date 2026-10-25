@@ -13,6 +13,21 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-10-25',
+    items: [
+      'Beside "Learning tips" on a word\'s page, a small box says how far to trust the tip: ✓ when it has been checked, AI when it has not. Tap it to see what was checked.',
+      'The first learning tips have had their facts about the characters checked against dictionaries, and a few tips were corrected.',
+    ],
+    it: [
+      'Accanto a «Consigli di studio», nella pagina di una parola, un piccolo riquadro dice quanto fidarsi del consiglio: ✓ se è stato verificato, IA se no. Toccalo per vedere cosa è stato verificato.',
+      'I primi consigli di studio hanno avuto i loro dati sui caratteri controllati sui dizionari, e alcuni consigli sono stati corretti.',
+    ],
+    de: [
+      'Neben „Lerntipps“ auf der Seite eines Worts zeigt ein kleines Kästchen, wie sehr du dem Tipp trauen kannst: ✓, wenn er geprüft wurde, KI, wenn nicht. Tippe darauf, um zu sehen, was geprüft wurde.',
+      'Bei den ersten Lerntipps wurden die Angaben zu den Zeichen mit Wörterbüchern abgeglichen, und einige Tipps wurden korrigiert.',
+    ],
+  },
+  {
     id: '2026-10-24',
     items: [
       'You can bring over your study from Skritter: "Import from Skritter" in the Decks tab takes the .zip file Skritter sends you, with your whole review history.',
