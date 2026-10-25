@@ -13,6 +13,27 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-10-25-3',
+    items: [
+      'Tone and pinyin cards show the meaning above them, so you know which word is asked when its characters have several readings (好 hǎo or hào). A meaning card shows the reading when you have both.',
+      'Meanings above a card are cut off far less often: they take up to three lines where the screen has room, and one still too long stops after a whole meaning.',
+      'On a tablet held upright, the writing area is bigger, the card sits in the middle of the screen, and the meaning above it is bigger too.',
+      'A meaning card\'s answer shows more of the meaning above its learning tip.',
+    ],
+    it: [
+      'Le carte dei toni e del pinyin mostrano il significato sopra di sé, così sai quale parola viene chiesta quando i suoi caratteri hanno più letture (好 hǎo o hào). Una carta del significato mostra la lettura quando le hai entrambe.',
+      'I significati sopra una carta vengono tagliati molto meno spesso: occupano fino a tre righe dove lo schermo ha spazio, e uno ancora troppo lungo si ferma dopo un significato intero.',
+      'Su un tablet tenuto in verticale, l’area di scrittura è più grande, la carta sta al centro dello schermo e anche il significato sopra è più grande.',
+      'La risposta di una carta del significato mostra una parte maggiore del significato sopra il suo consiglio di studio.',
+    ],
+    de: [
+      'Ton- und Pinyin-Karten zeigen die Bedeutung über sich, damit du weißt, welches Wort gefragt ist, wenn seine Zeichen mehrere Lesungen haben (好 hǎo oder hào). Eine Bedeutungskarte zeigt die Lesung, wenn du beide hast.',
+      'Bedeutungen über einer Karte werden viel seltener abgeschnitten: Sie nehmen bis zu drei Zeilen ein, wo der Bildschirm Platz hat, und eine noch zu lange endet nach einer ganzen Bedeutung.',
+      'Auf einem hochkant gehaltenen Tablet ist das Schreibfeld größer, die Karte steht in der Mitte des Bildschirms, und auch die Bedeutung darüber ist größer.',
+      'Die Antwort einer Bedeutungskarte zeigt mehr von der Bedeutung über ihrem Lerntipp.',
+    ],
+  },
+  {
     id: '2026-10-25-2',
     items: [
       'On a tone card, the tone 一 and 不 take in speech is right too: yì for 一 in 一些, bú for 不 in 不是.',
