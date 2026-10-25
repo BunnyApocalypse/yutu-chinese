@@ -382,7 +382,6 @@ export default {
   'study.practiceAgainButton': 'Noch mal üben',
   'study.lessonNextButton': 'Nächster Schritt',
   'study.leechSuspendButton': 'Diese Karte aussetzen',
-  'study.orderNote': 'Akzeptiert. Du hast die Strichfolge des Festlands benutzt; die <a href="https://en.wikipedia.org/wiki/Stroke_order" target="_blank" rel="noopener">Strichfolge des MOE</a> weicht ab. Tippe auf „Animieren“, um sie zu sehen.',
   'study.updateButton': 'Neue Version bereit: tippen zum Neuladen',
 
   // Review and Learn (review.js)

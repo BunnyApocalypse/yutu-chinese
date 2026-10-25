@@ -382,7 +382,6 @@ export default {
   'study.practiceAgainButton': 'Esercitati ancora',
   'study.lessonNextButton': 'Passo successivo',
   'study.leechSuspendButton': 'Sospendi questa carta',
-  'study.orderNote': 'Accettato. Hai usato l\'ordine dei tratti della Cina continentale; l\'<a href="https://en.wikipedia.org/wiki/Stroke_order" target="_blank" rel="noopener">ordine MOE</a> è diverso. Premi Anima per vederlo.',
   'study.updateButton': 'Nuova versione pronta: tocca per ricaricare',
 
   // Review and Learn (review.js)

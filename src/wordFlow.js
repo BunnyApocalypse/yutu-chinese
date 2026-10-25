@@ -105,7 +105,6 @@ function sum(numbers) {
 // elements: the page elements the flow controls:
 //   writingArea, wordRow, statusElement, strokeCountElement, noteElement,
 //   nextButton, restartButton, outlineButton, animateButton,
-//   orderNote,
 //   skipButton, backButton, verdictRow
 //
 // Returns { start, rebuild }.
@@ -120,7 +119,6 @@ export function createWordFlow(elements) {
     restartButton,
     outlineButton,
     animateButton,
-    orderNote,
     skipButton,
     backButton,
     verdictRow,
@@ -417,7 +415,6 @@ export function createWordFlow(elements) {
         // The way on stays where the word is finished (a lesson's "Next
         // step"); Review has none, its grades are the way on.
         nextButton.hidden = !(wordFinished() && options.continueLabel);
-        orderNote.hidden = true;
         renderWordRow(); // the arrows do nothing while practicing
         showProgress(1, totalStrokes, false);
         options.onPracticeStart?.();
@@ -431,7 +428,6 @@ export function createWordFlow(elements) {
         peekedPerChar[position] = true;
       }
       nextButton.hidden = true;
-      orderNote.hidden = true;
       renderWordRow();
       showProgress(1, totalStrokes, false);
       // A tip the first time, about the gestures on the writing area (tips.js).
@@ -451,7 +447,6 @@ export function createWordFlow(elements) {
       charDone = true;
       if (practicing) {
         taps.mark();
-        orderNote.hidden = order !== 'mainland';
         hideProgress();
         statusElement.textContent = options.hideMistakes
           ? t('write.practice')
@@ -469,9 +464,6 @@ export function createWordFlow(elements) {
       orderPerChar[position] = order;
       // Before the quiz colors the printed character: your strokes alone.
       drawingPerChar[position] = quiz.drawing();
-      // Writing the mainland order is accepted; the note only points out that
-      // the standard order is different.
-      orderNote.hidden = order !== 'mainland';
       taps.mark();
       mistakesPerChar[position] = carriedMistakes + totalMistakes;
       hintPerChar[position] = hintPerChar[position] || hintShown;
@@ -499,7 +491,6 @@ export function createWordFlow(elements) {
     onAnimateStart() {
       showArrows();
       nextButton.hidden = true;
-      orderNote.hidden = true;
       hideProgress();
       statusElement.textContent = t('write.watch');
     },

@@ -388,7 +388,6 @@ export default {
   'study.practiceAgainButton': 'Practice again',
   'study.lessonNextButton': 'Next step',
   'study.leechSuspendButton': 'Suspend this card',
-  'study.orderNote': 'Accepted. You used the mainland stroke order; the <a href="https://en.wikipedia.org/wiki/Stroke_order" target="_blank" rel="noopener">MOE order</a> differs. Press Animate to see it.',
   'study.updateButton': 'New version ready: tap to reload',
 
   // Review and Learn (review.js)

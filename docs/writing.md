@@ -38,7 +38,7 @@
 - **No mixing inside a differing stretch:** changing order is only offered where the strokes written so far are a complete beginning of both orders (`remainingInOtherOrder`). A character with two separate differing stretches (錢) may use a different order in each.
 - **Clear and Animate always return to the MOE order.**
 - **Writing during Animate stops it, and the stroke counts** (`catchStroke` in `src/quiz.js`; the owner, 2026-10-18: "the user should be allowed to write and interrupt the animation"), also during the pause after it (`animating`). The touch starts the quiz (`start`). Hanzi Writer only listens once its quiz runs, so the touch's points are kept, and if the browser's own `mousedown`/`touchstart` didn't reach it (`heard`), they are handed to it as mouse events. **Starting a quiz doesn't call off Hanzi Writer's animation**: its end still arrives, and is ignored once anything else has started (it used to restart the quiz 1.5 s later, wiping strokes). Tested both ways in `gestures.browser.js`.
-- **The note:** when a character was written in the mainland order, a line under the buttons says so and links "MOE order" to Wikipedia's Stroke order article. A link the user taps is fine under the offline rule.
+- **No note when the mainland order is used** (the owner, 2026-10-25: the order is accepted, so nothing needs saying). Until then a line under the buttons pointed out that the MOE order differs.
 - Reviews store `orderPerChar`: `'moe'`, `'mainland'`, or `null` for characters with only one order.
 - **Limits:** characters whose shapes differ between the sets (為) accept only the MOE order. Traditional characters outside the Taiwan set come from the big set and so follow the mainland order, with no MOE alternative.
 

@@ -2563,7 +2563,7 @@ button:active {
   background: var(--pressed);
 }
 
-/* The note about stroke order. Its height is always reserved, so the page
+/* A note under the buttons (the leech note). Its height is always reserved, so the page
    doesn't jump when it appears: "hidden" is overridden below to hide the text
    only. */
 .order-note {
@@ -2614,7 +2614,7 @@ button.small {
   order: 1;
 }
 
-.study-area.practicing > :is(#leech-note, #leech-suspend-button, #order-note) {
+.study-area.practicing > :is(#leech-note, #leech-suspend-button) {
   order: 2;
 }
 

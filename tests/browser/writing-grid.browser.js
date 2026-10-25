@@ -17,7 +17,6 @@ import {
   startWriting,
   writingArea,
   drawStroke,
-  isShown,
   loadStrokeData,
 } from './harness.js';
 
@@ -74,7 +73,6 @@ function makeRandom(name) {
 // is not accepted. Returns:
 //   status:         the status line at the end ("No mistakes" if all went well)
 //   strokesDrawn:   how many strokes were drawn
-//   orderNoteShown: whether the note about the mainland order is showing
 async function writeChar(page, char, strokeOrder, position, random) {
   const data = loadStrokeData(char);
   await startWriting(page, char);
@@ -104,7 +102,6 @@ async function writeChar(page, char, strokeOrder, position, random) {
   return {
     status,
     strokesDrawn,
-    orderNoteShown: await isShown(page, 'order-note'),
     zoomed: await page.evaluate(`document.getElementById('writing-area').hasAttribute('data-zoom')`),
   };
 }
@@ -153,19 +150,13 @@ describe('writing grid', { concurrency: BROWSER_COUNT }, () => {
           const result = await browsers.use((page) =>
             writeChar(page, char, strokeOrder, position, makeRandom(name)),
           );
-          const passed =
-            result.status === 'No mistakes' && result.orderNoteShown === (orderName === 'mainland');
+          const passed = result.status === 'No mistakes';
           tally[positionName][passed ? 'passed' : 'failed'] += 1;
 
           assert.equal(
             result.status,
             'No mistakes',
             `stroke ${result.strokesDrawn} of ${strokeOrder.length} was not accepted`,
-          );
-          assert.equal(
-            result.orderNoteShown,
-            orderName === 'mainland',
-            'the note about the mainland order should show for that order only',
           );
         });
       }

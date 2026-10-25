@@ -83,7 +83,7 @@ const RECHECK_MS = 15 * 1000;
 //   startLevelButton, otherLevelButton, lessonBackButton, countsRow,
 //   and the parts of the study area that differ per kind of card:
 //   wordRow, statusRow, strokeCountElement, writingRow, writingButtons, cardFace,
-//   toneButtonRow, orderNote
+//   toneButtonRow
 // flows:    { writing, tone, recall }: the three pieces of code named above
 // settings: the current settings (see settings.js)
 // editWord(word): opens the word's panel to change it; returns a promise for
@@ -137,7 +137,6 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     writingButtons,
     cardFace,
     toneButtonRow,
-    orderNote,
   } = elements;
 
   let words = [];
@@ -269,7 +268,6 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     }
     // These belong to the writing card and may be left over from the last
     // one. (A writing card shows its stroke count again when it starts.)
-    orderNote.hidden = true;
     strokeCountElement.hidden = true;
     // Shown again by wordFlow.js between the characters of a writing card.
     verdictRow.hidden = true;
