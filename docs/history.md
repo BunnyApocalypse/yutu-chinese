@@ -4,6 +4,14 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the session of 2026-10-25 (the source check's trial, and a box beside "Learning tips"; on `main`, not pushed, not released).**
+
+- **Built:** the box beside "Learning tips" on the word page: ✓ when a note has `native` or `sources`, AI when neither; a tap or a mouse over it says which (`docs/word-page.md`; the owner: "lgtm"). It replaced the two tags under the note. Settings › Help and the credits say what it means. English, Italian, German.
+- **The source check** (roadmap, "How sure a note is"; `data/notes/README.md`): option C, only facts about the characters count. Trial of 50 notes of HSK 3.0 level 1: 25 passed and are tagged `sources`. Tools, briefs and the owner's rulings in `local/source-check/` (`briefs.md`). **Next:** chunks of 25 notes (about 270,000 tokens each), the first starting with the seven notes corrected on 2026-10-25 (我, 教, 做, 去年, 有, 学院, 汉字); the owner looks at each chunk's sample before its tags go in.
+- **Notes changed:** Taiwan filler taken out of nine HSK notes (they keep `native`; `data/notes/CLAUDE.md`), seven corrected after the trial.
+- **Still on `main` only, unpushed:** the native-speaker tag (2026-10-24) and all of this. Publishing to the test copy is `git push origin main`, on the owner's word. Still to ask: was TOCFL 第4級筆記校對 ever answered?
+- **Tests:** unit tests and the word-page and accessibility browser tests pass; the full browser run has not been made since 2026-10-24.
+
 **Handover from the session of 2026-10-24 (the owner's feedback from real study, and the Skritter import; all on `main` and released to `stable` the same day, "What's new" entry `2026-10-24`; the branches `owner-feedback` and `skritter-import` merged and deleted).**
 
 - **Built on 2026-10-24, after the release: the "Usage checked by a native speaker" tag** (roadmap, "How sure a note is"), while the owner was away; on the branch `native-tag` (pushed 2026-10-24, the owner's word), not yet merged into `main` on GitHub, so the test copy doesn't have it. To publish it to the test copy: `git push origin native-tag:main`. **For the owner to look at:** the tag under the note of a checked word (後天, 对不起, 公車), the line in Settings › Help, the wording in Italian and German. **To ask:** was the third checking page, TOCFL 第4級筆記校對 (148 notes), ever answered? Nothing in the docs says so, so none of its notes are tagged.
