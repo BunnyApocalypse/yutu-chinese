@@ -666,6 +666,15 @@ main.focused #study-back-label {
   display: none;
 }
 
+/* On a screen taller than the card needs, everything under the kind of card
+   is moved down by half the room left over (--card-offset, set by
+   wordFlow.js), so that the card sits in the middle while the kind of card
+   stays in the corner (the owner, 2026-10-25). A fixed amount for the
+   screen: nothing moves within a card. */
+main.focused .type-row {
+  margin-bottom: var(--card-offset, 0px);
+}
+
 /* The menu button sits over the left end of the line with the kind of card,
    so that line keeps clear of it: on a 375px phone "New word · step 5 of 5"
    with About and Edit ran into it (UX review, 2026-10-16). */

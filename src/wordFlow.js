@@ -32,24 +32,29 @@ function chooseSize() {
   //          margins: about 167 (155 left the page 9px too tall).
   // The area is the point of the app: if a row is added, find its room in
   // the rows there are, do not raise this number.
-  const fitsHeight = window.innerHeight - 380;
-  const oneColumn = Math.max(200, Math.min(fitsWidth, fitsHeight, 640));
+  const fitsHeight = window.innerHeight - ROOM_ABOVE_BELOW;
+  // Up to the same largest size as in two columns: until 2026-10-25 it
+  // stopped at 640, which left a third of an upright tablet empty (the owner).
+  const oneColumn = Math.max(200, Math.min(fitsWidth, fitsHeight, AREA_MAX));
   // Held sideways (a tablet or phone in landscape, a computer), the area can
   // be much bigger in a column of its own, beside everything else (the
   // owner, 2026-10-17: "we wont be able to stop people from going into
   // landscape"). Only where that gains clearly, and never on an upright
   // screen.
-  const twoColumns = Math.min(window.innerHeight - WIDE_ROOM_ABOVE_BELOW, window.innerWidth - 32 - WIDE_SIDE_COLUMN, WIDE_MAX);
+  const twoColumns = Math.min(window.innerHeight - WIDE_ROOM_ABOVE_BELOW, window.innerWidth - 32 - WIDE_SIDE_COLUMN, AREA_MAX);
   wide = window.innerWidth > window.innerHeight && twoColumns >= oneColumn + 60;
   return wide ? twoColumns : oneColumn;
 }
 
+// The room kept above and below the area in one column (see chooseSize).
+const ROOM_ABOVE_BELOW = 380;
+// The area's largest size, in one column or two.
+const AREA_MAX = 760;
 // The layout in two columns (style.css, data-layout="wide"): the room above
-// and below the area (main's padding and a little), the width of the column
-// beside it with its gap, and the area's largest size there.
+// and below the area (main's padding and a little), and the width of the
+// column beside it with its gap.
 const WIDE_ROOM_ABOVE_BELOW = 40;
 const WIDE_SIDE_COLUMN = 360 + 24;
-const WIDE_MAX = 760;
 // Whether chooseSize chose two columns.
 let wide = false;
 
@@ -640,6 +645,13 @@ export function createWordFlow(elements) {
     document.documentElement.style.setProperty('--area-size', `${size}px`);
     // Its text grows with it above a phone's size (style.css, .card-face).
     document.documentElement.style.setProperty('--face-zoom', String(Math.max(1, size / 400)));
+    // Where the screen is taller than the card needs (an upright tablet), the
+    // card is moved down by half the room left over, so that it sits in the
+    // middle (the owner, 2026-10-25). A fixed amount, worked out here with
+    // the size: centering by the style sheet moved the area whenever the
+    // grades came up, and took the kind of card away from the corner.
+    const spare = wide ? 0 : window.innerHeight - ROOM_ABOVE_BELOW - size;
+    document.documentElement.style.setProperty('--card-offset', `${Math.max(0, Math.floor(spare / 2))}px`);
     drawGrid(writingArea, size);
     quiz = createQuiz(writingArea, size, quizHandlers);
     quiz.setOutlineVisible(outlineVisible);
