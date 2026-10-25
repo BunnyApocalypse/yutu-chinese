@@ -28,6 +28,59 @@ const MIN_LENGTH_RATIO_FIRST_STROKE = 0.35;
 // (see shapeOf in lines.js). Not multiplied by leniency.
 const SHAPE_TOLERANCE = 0.2;
 
+// ---- The brush's entry ----
+//
+// Many strokes of the Taiwan set begin with a short dab down or down-right,
+// where the brush of the printed form pressed in, before the stroke proper
+// turns down-left or down. Nobody writes that dab with a finger, and with it
+// the stroke's shape can be far from what is written: the ノ at the left of
+// 學's 臼 runs at 62° with it and at 41° without (the owner's own ran at about
+// 40°, and were refused as the mainland order's first stroke, 2026-10-25).
+// So a stroke that begins like that is also compared without its first point.
+// About 760 of the Taiwan set's 10,561 strokes do.
+//
+// Judged by direction and share of the stroke, not by length: the stroke may
+// come here shrunk into a frame (frame.js). Coordinates have y going up (see
+// charData.js), so "down" is a negative angle. Real turns such as the top of
+// 𠃍 (across, then down) or 𠃊 (down, then across) don't fit these directions.
+const ENTRY_MAX_SHARE = 0.35; // of the whole stroke's length
+const ENTRY_DIRECTIONS = [-110, -20]; // the dab: down to down-right, in degrees
+const AFTER_ENTRY_DIRECTIONS = [-180, -80]; // then: down to down-left
+const ENTRY_MIN_TURN = 45; // degrees between the dab and what follows
+
+const directionOf = (from, to) => (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI;
+const isBetween = (angle, [low, high]) => angle >= low && angle <= high;
+
+// The textbook stroke (a list of { x, y }) without its first point, if it
+// begins with the brush's entry; otherwise null.
+export function withoutEntry(textbook) {
+  if (textbook.length < 3) {
+    return null;
+  }
+  const [start, turn, next] = textbook;
+  const entry = directionOf(start, turn);
+  const after = directionOf(turn, next);
+  const turned = Math.abs(entry - after);
+  const isEntry =
+    distance(start, turn) < ENTRY_MAX_SHARE * lineLength(textbook) &&
+    isBetween(entry, ENTRY_DIRECTIONS) &&
+    isBetween(after, AFTER_ENTRY_DIRECTIONS) &&
+    Math.min(turned, 360 - turned) > ENTRY_MIN_TURN;
+  return isEntry ? textbook.slice(1) : null;
+}
+
+// How different the shapes of two lines are (both resampled lists of
+// { x, y }), with position and size taken away.
+const shapeDifference = (drawn, target) => averageDistance(shapeOf(drawn), shapeOf(target));
+
+// The same against a textbook stroke, with or without the brush's entry,
+// whichever is nearer.
+function shapeDifferenceFrom(drawn, textbook) {
+  const plain = shapeDifference(drawn, resample(textbook));
+  const body = withoutEntry(textbook);
+  return body ? Math.min(plain, shapeDifference(drawn, resample(body))) : plain;
+}
+
 // True if `drawnPoints` (a list of { x, y }) is an acceptable attempt at the
 // textbook stroke whose middle line is `median` ([[x, y], ...]).
 // `isFirstStroke` says nothing of the character has been written yet, so its
@@ -50,7 +103,7 @@ export function fitsStroke(drawnPoints, median, leniency, isFirstStroke = false)
   if (distance(drawn[0], target[0]) > endTolerance) return false;
   if (distance(drawn[last], target[last]) > endTolerance) return false;
   if (averageDistance(drawn, target) > AVERAGE_TOLERANCE * leniency) return false;
-  return averageDistance(shapeOf(drawn), shapeOf(target)) <= SHAPE_TOLERANCE;
+  return shapeDifferenceFrom(drawn, textbook) <= SHAPE_TOLERANCE;
 }
 
 // How far `drawnPoints` is, on average, from the textbook stroke `median`.
@@ -63,7 +116,7 @@ export function distanceFromStroke(drawnPoints, median) {
 // position and size taken away. Smaller means more alike. Used for the first
 // stroke of a character, whose position says nothing yet.
 export function shapeDifferenceFromStroke(drawnPoints, median) {
-  return averageDistance(shapeOf(resample(drawnPoints)), shapeOf(resample(toPoints(median))));
+  return shapeDifferenceFrom(resample(drawnPoints), toPoints(median));
 }
 
 // ---- Keeping track of two stroke orders ----

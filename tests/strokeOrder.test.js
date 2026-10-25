@@ -14,6 +14,7 @@ import {
   remainingInOtherOrder,
   lastSyncPoint,
   isStandardOrder,
+  withoutEntry,
 } from '../src/strokeMatch.js';
 import { toPoints } from '../src/lines.js';
 
@@ -200,4 +201,19 @@ test('shape tells a level stroke from an upright one, wherever they are', () => 
   const upright = [[250, 700], [250, 300]];
   const drawn = toPoints([[600, 100], [760, 104]]); // level, small, elsewhere
   assert.ok(shapeDifferenceFromStroke(drawn, level) < shapeDifferenceFromStroke(drawn, upright));
+});
+
+test('the brush entry at the start of a printed stroke is not asked for', () => {
+  // The ノ at the left of 學's 臼 begins with a dab downward in the Taiwan set
+  // and so runs at 62°; written plainly it runs at about 40° (the owner's,
+  // 2026-10-25), and must still fit as the mainland order's first stroke.
+  const median = taiwanData.get('學').medians[4];
+  assert.ok(withoutEntry(toPoints(median)));
+  const drawn = toPoints([[340, 760], [270, 700], [200, 640]]);
+  assert.equal(fitsStroke(drawn, median, 6, true), true);
+  // A real turn is no brush entry: the across-then-down of 口.
+  const turn = taiwanData.get('口').medians[1];
+  assert.equal(withoutEntry(toPoints(turn)), null);
+  // Nor is its upright alone taken for it.
+  assert.equal(fitsStroke(toPoints([[700, 700], [700, 200]]), turn, LENIENCY), false);
 });

@@ -85,6 +85,12 @@ const FIRST_STROKE_EXTRA_LENIENCY = 4;
 const OTHER_ORDER_MISFIT_SHARE = 0.6;
 const OTHER_ORDER_MISFIT_MARGIN = 15;
 
+// A first stroke that fits both orders' first strokes is read by its shape,
+// but where the two shapes are this close (shapeDifferenceFromStroke), by
+// where it lies. Both of 學's first strokes are a ノ: the owner's, at the
+// left, were as like the ノ of 爻 as the left one (2026-10-25).
+const SAME_SHAPE_MARGIN = 0.08;
+
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
 // The empty margin around the character, as a share of the writing area's size.
@@ -619,16 +625,22 @@ export function createQuiz(target, size, handlers) {
       // better than the one that was expected.
       const expectedMedian = framedData.medians[sequence[stroke.strokeNum]];
       if (nothingWritten) {
-        // Where the first stroke lands says nothing about which stroke it is
+        // Where the first stroke lands says little about which stroke it is
         // (written small in a corner, it may be nearer the wrong one). So if
-        // it could be the expected stroke as well, go by shape alone.
+        // it could be the expected stroke as well, go by shape, and only
+        // where the shapes are as good as the same, by where it lies. A wrong
+        // guess is put right a stroke later (otherOrderFor, otherOrderBeats).
         const otherMedian = baseData.medians[reading.strokeNum];
-        if (
-          fitsStroke(points, expectedMedian, leniency, true) &&
-          shapeDifferenceFromStroke(points, otherMedian) >=
-            shapeDifferenceFromStroke(points, expectedMedian)
-        ) {
-          return null;
+        if (fitsStroke(points, expectedMedian, leniency, true)) {
+          const fromOther = shapeDifferenceFromStroke(points, otherMedian);
+          const fromExpected = shapeDifferenceFromStroke(points, expectedMedian);
+          const nearerExpected =
+            Math.abs(fromOther - fromExpected) < SAME_SHAPE_MARGIN
+              ? distanceFromStroke(points, expectedMedian) <= distanceFromStroke(points, otherMedian)
+              : fromOther >= fromExpected;
+          if (nearerExpected) {
+            return null;
+          }
         }
       } else {
         const fromOther = averageDistance(resample(points), resample(moved(reference, otherFrame)));
