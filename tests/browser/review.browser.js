@@ -603,6 +603,56 @@ describe('grading in Review', { concurrency: false }, () => {
     }
   });
 
+  it('takes an answer or a tap while a right tone is shown, without waiting', async () => {
+    await inDatabase(`
+      for (const card of ${JSON.stringify(['大|da4', '小|xiao3', '大小|da4xiao3'].flatMap((id) => ['meaning', 'writing'].map((type) => card(id + '#' + type, id, type, 30 * DAY))))}) {
+        stores.cards.put(card);
+      }
+      stores.settings.put({ key: 'enabledTypes', value: ['meaning', 'writing', 'tone'] });
+    `);
+    try {
+      const toneButton = (tone) => page.evaluate(`document.querySelector('#tone-buttons [data-tone="${tone}"]').click()`);
+      // A real tap in the middle of the card's face (a dot, were it asking).
+      const tapFace = async () => {
+        const middle = await page.evaluate(`(() => {
+          const box = document.getElementById('card-face').getBoundingClientRect();
+          return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+        })()`);
+        for (const type of ['mousePressed', 'mouseReleased']) {
+          await page.send('Input.dispatchMouseEvent', { type, ...middle, button: 'left', clickCount: 1 });
+        }
+      };
+      const slotClasses = () => page.evaluate(`[...document.querySelectorAll('#word-row .slot')].map((slot) => slot.classList.contains('passed') ? 'passed' : slot.classList.contains('missed') ? 'missed' : '')`);
+
+      // Both tones at once: the second is 小's, not lost in 大's pause.
+      await makeDue(['大小|da4xiao3#tone', '大小|da4xiao3', 'tone']);
+      await waitUntil(page, `document.getElementById('status').textContent.includes('1 of 2')`, 'the tone of 大');
+      await toneButton(4);
+      await toneButton(3);
+      await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
+      assert.deepEqual(await slotClasses(), ['passed', 'passed']);
+      await chooseGrade('Good');
+
+      // A tap in the pause goes on at once, and isn't taken for the
+      // neutral tone; in the last one's pause it shows the result.
+      await makeDue(['大小|da4xiao3#tone', '大小|da4xiao3', 'tone']);
+      await waitUntil(page, `document.getElementById('status').textContent.includes('1 of 2')`, 'the tone of 大');
+      await toneButton(4);
+      await tapFace();
+      assert.match(await textOf(page, 'status'), /2 of 2/);
+      assert.deepEqual(await slotClasses(), ['passed', '']);
+      await toneButton(3);
+      await tapFace();
+      await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
+      assert.equal(await textOf(page, 'status'), 'All tones right');
+      assert.equal(await page.evaluate(SUGGESTED), 'Good');
+      await chooseGrade('Good');
+    } finally {
+      await inDatabase(`stores.settings.put({ key: 'enabledTypes', value: ['meaning', 'writing'] });`);
+      await reloadApp(page);
+    }
+  });
+
   async function answerToneCard() {
     await makeDue(['大小|da4xiao3#tone', '大小|da4xiao3', 'tone']);
     const giveTone = async (tone, which) => {

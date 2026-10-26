@@ -10,6 +10,9 @@ import { t } from './text.js';
 import { freshTaps } from './freshTap.js';
 
 // After a right answer, the next character comes up by itself after this long.
+// The pause holds nobody up (the owner, 2026-10-26: it felt like the app
+// lagging): an answer given meanwhile, by a tone button or a mark drawn, is
+// for the next character, and a tap on the card moves on at once.
 const MOVE_ON_AFTER_MS = 500;
 
 // After a wrong answer or at the end, tapping the card continues, but only
@@ -85,12 +88,16 @@ export function createToneFlow(elements) {
   // in tones.js), not because it is the tone listed.
   let variantPerChar = [];
   // 'asking':  waiting for a tone
-  // 'right':   just answered correctly; about to move on by itself
+  // 'right':   just answered correctly; about to move on by itself, or at
+  //            once with a touch or an answer (MOVE_ON_AFTER_MS)
   // 'wrong':   answered incorrectly; waiting for a tap
   // 'done':    every character answered
   let state = 'asking';
   const taps = freshTaps(cardFace);
   let moveOnTimer = null;
+  // True while a touch begun as a right answer was shown is being drawn: if
+  // it turns out a dot, it was a tap to move on, not the neutral tone.
+  let hurried = false;
   // Skipped characters, counted as right (the › arrow), and whether the
   // character asked now was answered before and is only practice (gone
   // back to with the ‹ arrow): its first answer stands (the owner,
@@ -375,6 +382,10 @@ export function createToneFlow(elements) {
 
   // A tone was given for the current character (1 to 4, or 5 for neutral).
   function answer(tone) {
+    // Given while a right answer is shown: for the next character.
+    if (current && state === 'right' && position < chars.length - 1) {
+      moveOn();
+    }
     if (!current || state !== 'asking') {
       return;
     }
@@ -415,6 +426,10 @@ export function createToneFlow(elements) {
     const points = drawing;
     drawing = null;
     const tone = recognizeToneMark(points, ink.getBoundingClientRect().width / zoomOf());
+    if (hurried && tone === 5) {
+      showInk([]); // a tap to move on (see `hurried`)
+      return;
+    }
     if (tone === null) {
       statusElement.textContent = t('tone.notRecognized');
       clearInkTimer = setTimeout(() => showInk([]), CLEAR_UNRECOGNIZED_AFTER_MS);
@@ -425,7 +440,17 @@ export function createToneFlow(elements) {
 
   // "pointer" events cover fingers, styluses and the mouse alike.
   cardFace.addEventListener('pointerdown', (event) => {
-    if (!current || state !== 'asking') {
+    if (!current) {
+      return;
+    }
+    // A right answer is shown: on at once. After the last character this
+    // shows the result, and the touch ends there (it isn't fresh, so its
+    // lifting doesn't also go on to the grade).
+    hurried = state === 'right';
+    if (hurried) {
+      moveOn();
+    }
+    if (state !== 'asking') {
       return;
     }
     // Keeps the rest of this stroke coming to the card even if the finger
