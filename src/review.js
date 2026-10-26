@@ -399,12 +399,12 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   }
 
   // "Leech" beside the kind of card, on a card that keeps being forgotten,
-  // from its start: the moment to think of a way to remember it. It opens
-  // the word's page only once the card is answered (showLeechTag(true)),
-  // since the page shows the word.
-  function showLeechTag(answered = false) {
+  // once it is answered: the moment to think of a way to remember it. Not
+  // before (the owner, 2026-10-26): that a card keeps being forgotten is a
+  // hint in itself, and the word's page it opens shows the word. Put away
+  // again with the grades (hideGrades).
+  function showLeechTag() {
     leechTag.hidden = !current || practicing || !isLeech(current.card, settings.leechLapses);
-    leechTag.disabled = !answered;
   }
   leechTag.addEventListener('click', () => openAbout());
 
@@ -1047,7 +1047,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     editWordButton.hidden = false;
     showCardAbout();
     offerListen(true);
-    showLeechTag(true);
+    showLeechTag();
   }
 
   // On a keyboard, the keys 1 to 4 press the grade buttons, Again to Easy
@@ -1161,7 +1161,6 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // outline and Animate, which offerGrades put away.
       onCharStart: () => {
         hideGrades();
-        showLeechTag();
         writingButtons.hidden = false;
       },
       // Once written, it can be practiced again (practice-again-button, or a
@@ -2146,7 +2145,6 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     typeElement.textContent = sitting.limit
       ? t('review.labelOfLimit', { label: labelFor(current.word, current.type), number: sitting.done + 1, limit: sitting.limit })
       : labelFor(current.word, current.type);
-    showLeechTag();
     showScriptFlag(current.word);
     showPartsFor(current.type);
     offerListen(current.type === 'writing' || current.type === 'meaning');

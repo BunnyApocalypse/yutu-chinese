@@ -570,8 +570,7 @@ dialog.side-menu::backdrop {
 }
 
 /* "Leech", right after the kind of card (review.js), which then leaves the
-   room after it to the tag. A label until the card is answered, then a
-   button: the same look either way. */
+   room after it to the tag. */
 .type-row .card-type:has(+ .leech-tag:not([hidden])) {
   margin-right: 0;
 }
@@ -589,14 +588,6 @@ dialog.side-menu::backdrop {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--danger);
-}
-
-.leech-tag:disabled {
-  opacity: 1;
-  cursor: default;
-}
-
-.leech-tag:not(:disabled) {
   text-decoration: underline;
 }
 
