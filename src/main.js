@@ -1044,4 +1044,7 @@ async function startUp() {
   });
 }
 
-startUp();
+// Once the first screen is ready, "Loading…" goes and the page is shown
+// (main.starting in index.html). Also if starting fails partway: errors.js
+// says what went wrong, and the page is shown as far as it got.
+startUp().finally(() => document.querySelector('main').classList.remove('starting'));

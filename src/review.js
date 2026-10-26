@@ -9,7 +9,7 @@
 // What they share lives here: choosing the next card, the grade buttons, and
 // saving.
 
-import { getAll, putAll, saveReview, saveKnown, startCardsOver, randomId } from './db.js';
+import { getAll, getAllInParts, putAll, saveReview, saveKnown, startCardsOver, randomId } from './db.js';
 import { gradeOptions, gradeButtons, gradeFor, AGAIN, GOOD } from './scheduler.js';
 import { deckWithInside, isInDecks, dailyGoal, startingLevel } from './decks.js';
 import { fillDeckSelect } from './decksPanel.js';
@@ -154,8 +154,18 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // Card ID → card, for every card that has been studied.
   const cards = new Map();
   // When each review was made and of which card, for the streak (streak.js):
-  // { cardId, wordId, time, markedKnown }, the rest of each review left out.
+  // { id, cardId, wordId, time, markedKnown }, the rest of each review left out.
   let reviewTimes = [];
+  // The reviews are read after the first card is up (readReviews), since
+  // choosing a card doesn't need them and the owner has 186,000: reading
+  // them first left the writing area empty for seconds on a tablet
+  // (2026-10-26). Until they are read the first time, the streak waits and
+  // "What are tones?" is not offered.
+  let reviewsRead = false;
+  let reviewsReading = Promise.resolve();
+  // The times of reviews saved while the reviews are being read, which the
+  // reading may have missed; null when no reading is under way.
+  let savedWhileReading = null;
   // The tone table (see data/cedict/README.md), loaded at startup. Supplies
   // Taiwan readings and tone variants.
   let toneTable = null;
@@ -650,7 +660,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       sitting.done += 1;
     }
     cards.set(newCard.id, newCard);
-    reviewTimes.push(reviewTime(review));
+    noteReviews([review]);
     remember({
       word,
       type,
@@ -894,7 +904,37 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   // ---- Streaks (streak.js) ----
 
-  const reviewTime = ({ cardId, wordId, time, markedKnown }) => ({ cardId, wordId, time, markedKnown });
+  const reviewTime = ({ id, cardId, wordId, time, markedKnown }) => ({ id, cardId, wordId, time, markedKnown });
+
+  // Adds reviews just saved to those counted.
+  function noteReviews(reviews) {
+    const times = reviews.map(reviewTime);
+    reviewTimes.push(...times);
+    savedWhileReading?.push(...times);
+  }
+
+  // Reads the reviews' times from the database, in the background (see
+  // reviewsRead). Until a new reading is done, the times read before stand.
+  function readReviews() {
+    const saved = [];
+    savedWhileReading = saved;
+    reviewsReading = (async () => {
+      const times = [];
+      await getAllInParts('reviews', (part) => {
+        for (const review of part) {
+          times.push(reviewTime(review));
+        }
+      });
+      if (savedWhileReading !== saved) {
+        return; // a newer reading has begun
+      }
+      // There are only ever a few saved meanwhile, so looking for each is quick.
+      const missed = saved.filter((time) => !times.some((read) => read.id === time.id));
+      reviewTimes = [...times, ...missed];
+      savedWhileReading = null;
+      reviewsRead = true;
+    })();
+  }
 
   // "What are tones?" on a tone card (toneFlow.js) until this many tone
   // cards have been graded: by then the learner shows they know what a tone
@@ -906,6 +946,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   const TONE_HELP_UNTIL = 3;
   let toneHelpOver = false;
   function offerToneHelp() {
+    if (!reviewsRead) {
+      return false; // only for a moment, as the app starts
+    }
     if (!toneHelpOver) {
       const toneReviews = reviewTimes.filter((review) => /#tone(#|$)/.test(review.cardId) && !review.markedKnown);
       toneHelpOver = toneReviews.length >= TONE_HELP_UNTIL;
@@ -951,6 +994,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     if (!settings.streaks) {
       return;
     }
+    if (!reviewsRead) {
+      reviewsReading.then(noteStreak);
+      return;
+    }
     const now = Date.now();
     const shown = atEnd || streakScreen.isFirst() ? showStreakIfWaiting() : false;
     if (!shown) {
@@ -961,7 +1008,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // The streak screen, if today counts and it hasn't been shown today: at
   // a pause in studying. then: what to do once it is closed. True if shown.
   function showStreakIfWaiting(then = null) {
-    if (!settings.streaks) {
+    // Not yet while the app is starting: it waits for the next pause.
+    if (!settings.streaks || !reviewsRead) {
       return false;
     }
     const now = Date.now();
@@ -1527,7 +1575,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     for (const card of known.cards) {
       cards.set(card.id, card);
     }
-    reviewTimes.push(...known.reviews.map(reviewTime));
+    noteReviews(known.reviews);
     words = words.map((entry) => (entry.id === word.id ? known.word : entry));
     stopFlows();
     endLesson();
@@ -1935,7 +1983,12 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   }
 
   // Works out what is next and puts it on screen.
+  // Each call of showNext and of activate, counted, so that one which waited
+  // can tell whether another came since.
+  let showNextCalls = 0;
+  let activations = 0;
   async function showNext() {
+    showNextCalls += 1;
     clearTimeout(recheckTimer);
     lookingBack = null;
     if (!active) {
@@ -1985,6 +2038,15 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     }
     // The number chosen has been reviewed, with cards still to do.
     const limitReached = Boolean(plan.next) && sitting.limit !== null && sitting.done >= sitting.limit;
+    // The end of Review shows the streak, which needs the reviews: just
+    // after the app started, they may still be being read.
+    if (settings.streaks && !reviewsRead && (limitReached || !plan.next)) {
+      const asked = showNextCalls;
+      await reviewsReading;
+      if (asked !== showNextCalls || !active) {
+        return; // showNext was called again meanwhile
+      }
+    }
     countsElement.textContent =
       t('review.counts', { due: plan.dueCount, new: plan.newCardCount }) +
       // Writing cards to be learned again after a change of script, or
@@ -2114,28 +2176,27 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       loading = (async () => {
         // Everything is read first and put in place together, so that nothing
         // sees new words beside old cards.
-        const newWords = await getAll('words');
-        const newCards = await getAll('cards');
-        const newDecks = await getAll('decks');
-        const newReviewTimes = (await getAll('reviews')).map(reviewTime);
-        // import() fetches the table as its own file, so it doesn't make the
-        // main program bigger. If it can't be loaded, tones are judged
-        // against the word list alone.
-        let table = null;
-        try {
-          table = (await import('../data/cedict/tones.json')).default;
-        } catch {
-          // left as null
-        }
+        // import() fetches the tone table as its own file, so it doesn't
+        // make the main program bigger. If it can't be loaded, tones are
+        // judged against the word list alone.
+        const [newWords, newCards, newDecks, table] = await Promise.all([
+          getAll('words'),
+          getAll('cards'),
+          getAll('decks'),
+          import('../data/cedict/tones.json').then(
+            (module) => module.default,
+            () => null,
+          ),
+        ]);
         words = newWords;
         decks = newDecks;
         showDeckChoice();
         toneTable = table;
-        reviewTimes = newReviewTimes;
         cards.clear();
         for (const card of newCards) {
           cards.set(card.id, card);
         }
+        readReviews(); // not waited for
       })();
       return loading;
     },
@@ -2147,6 +2208,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     // newMode: 'review', 'learn' for the Learn tab, or 'lesson' for
     //          repeating `word`'s lesson ("Repeat lesson" on its page)
     async activate(newMode = 'review', { word = null } = {}) {
+      activations += 1;
       active = true;
       mode = newMode;
       repeatedWord = word;
@@ -2167,7 +2229,18 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // Back to studying the same study day, the streak screen not yet seen
       // (after the app was closed, say): now, before the next card.
       if (mode !== 'lesson') {
-        showStreakIfWaiting();
+        if (reviewsRead) {
+          showStreakIfWaiting();
+        } else {
+          // Just after the app started: once the reviews are read, unless
+          // the card has been touched by then.
+          const activated = activations;
+          reviewsReading.then(() => {
+            if (activated === activations && active && !tappedSinceArriving) {
+              showStreakIfWaiting();
+            }
+          });
+        }
       }
       return shown;
     },

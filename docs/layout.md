@@ -91,6 +91,7 @@
 - `tests/decks.test.js`: tests for `src/decks.js`.
 - `tests/browser/decks.browser.js`: decks from making one to deleting it, and studying one in Learn.
 - `tests/cardManager.test.js`, `tests/browser/cards.browser.js`: managing cards, as a calculation and in the app.
+- `tests/browser/startup.browser.js`: opening the app: "Loading…", and the first card before the reviews are read.
 - `tests/streak.test.js`, `tests/browser/streak.browser.js`: which days count and the streak, as a calculation and in the app.
 - `tests/progress.test.js`, `tests/browser/progress.browser.js`: the Progress tab's numbers, as a calculation and in the app.
 - `tests/leeches.test.js`, `tests/browser/leeches.browser.js`: leeches and suspending, as a calculation and in the app.

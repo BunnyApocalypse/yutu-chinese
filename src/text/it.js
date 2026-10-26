@@ -296,6 +296,7 @@ export default {
   'practice.again': 'Ripeti',
   'main.meaning': 'Significato',
   'main.addingWords': 'Aggiunta delle parole…',
+  'main.loading': 'Caricamento…',
 
   // Backups in Settings (main.js)
   'backup.saved':

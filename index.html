@@ -13,7 +13,8 @@
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <main>
+    <!-- "starting" until the first screen is ready (main.js). -->
+    <main class="starting">
       <!-- The top of the page: the menu button and where you are. While a
            card is up only the button stays, in the corner (main.focused). -->
       <header class="top-bar">
@@ -40,6 +41,10 @@
         <button id="study-back-button" class="top-back" type="button" hidden><svg class="back-arrow" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19" /></svg><span id="study-back-label" data-t="menu.decks"></span></button>
         <button id="practice-back-button" class="top-back" type="button" hidden><svg class="back-arrow" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 L8 12 L15 19" /></svg><span data-t="menu.settings"></span></button>
       </header>
+      <!-- While the app starts, in place of an empty review screen (the
+           owner, 2026-10-26: on a tablet it looked like a card that
+           wouldn't come). -->
+      <p id="starting-note" class="starting-note" role="status" data-t="main.loading"></p>
       <!-- The menu: a panel that slides in from the left (main.js). The
            buttons keep the IDs they had as tabs. -->
       <dialog id="side-menu" class="side-menu" data-t-aria-label="menu.menu">

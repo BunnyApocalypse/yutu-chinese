@@ -167,6 +167,31 @@ export async function getAll(storeName) {
   return request.result;
 }
 
+// Reads every record in a store a part at a time, handing each part to
+// `onPart` as it comes, in key order. For a store too big to read at once
+// without the page freezing (the reviews: the owner has 186,000): the
+// browser unpacks what is read on the page's own thread, so one getAll of
+// them all held up writing for over a second on a tablet. Between parts,
+// taps and strokes are handled. Each part is read on its own, so a record
+// saved meanwhile may or may not be among them.
+export async function getAllInParts(storeName, onPart, partSize = 5000) {
+  let after = null; // the key of the last record read so far
+  for (;;) {
+    const range = after === null ? null : IDBKeyRange.lowerBound(after, true);
+    const request = await transaction([storeName], 'readonly', (tx) =>
+      tx.objectStore(storeName).getAll(range, partSize),
+    );
+    const part = request.result;
+    if (part.length > 0) {
+      onPart(part);
+    }
+    if (part.length < partSize) {
+      return;
+    }
+    after = part[part.length - 1][request.source.keyPath];
+  }
+}
+
 // Saves records, replacing any that have the same key. Words, settings and
 // decks are marked with the time (`changedAt`).
 //

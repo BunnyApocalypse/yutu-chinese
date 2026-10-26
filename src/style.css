@@ -239,6 +239,28 @@ main {
   position: relative;
 }
 
+/* While the app starts (main.starting, until main.js has the first screen
+   ready): "Loading…" in place of the review screen, which is kept in its
+   place but not shown, so nothing is measured differently. */
+.starting-note {
+  display: none;
+}
+main.starting .starting-note {
+  display: block;
+  position: absolute;
+  top: 40vh;
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: var(--size-large);
+}
+main.starting #review-header,
+main.starting #study-area {
+  visibility: hidden;
+}
+
 /* Held sideways (data-layout="wide", set by wordFlow.js when it gains): the
    writing area, or a card's face, in a column of its own, and everything
    else in a column beside it (the owner, 2026-10-17). The area is taken out

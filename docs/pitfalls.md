@@ -2,6 +2,7 @@
 
 ## The study area
 
+- **The app says "Loading…" until the first screen is ready** (`main.starting` in `index.html`, removed when `startUp` in `src/main.js` ends; 2026-10-26: the owner saw an empty writing area while the app started). The review header and study area are kept in place but `visibility: hidden`, so nothing is measured differently. **Nothing slow may come before the first card:** Review reads the reviews afterwards (`docs/cards.md`, "Streaks"). Tested in `tests/browser/startup.browser.js`, which holds reads back by keeping a writing transaction open.
 - **The study area is shared by all card kinds.** `showPartsFor` in `src/review.js` decides which parts show for each kind, and Free practice needs the writing parts back (`deactivate`). A new element in the study area must be added there.
 - **A flow that is not on screen must ignore taps.** `toneFlow` and `recallCard` both listen on the card face; each checks it has a current card, and `review.js` calls `stop()` on both before the next card.
 - **On a tone card a tap is an answer** (a dot is the neutral tone). A mark begins only on a finger coming down (`pointerdown`), so the touch that brought a character up is never taken for a dot; no pause is needed (until 2026-10-24, 300 ms). A stroke the recognizer can't classify is neither answer nor mistake; the card says so and waits. The tone mark's layer is removed by `replaceChildren`; `ask()` puts it back each time.

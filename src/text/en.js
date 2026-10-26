@@ -301,6 +301,8 @@ export default {
   'practice.again': 'Again',
   'main.meaning': 'Meaning',
   'main.addingWords': 'Adding words…',
+  // While the app starts, in place of the review screen
+  'main.loading': 'Loading…',
 
   // Backups in Settings (main.js)
   'backup.saved':
