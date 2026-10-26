@@ -88,7 +88,7 @@ const RECHECK_MS = 15 * 1000;
 
 // elements: the page elements review controls:
 //   countsElement, typeElement, meaningElement, pinyinElement, pinyinButton,
-//   gradeRow, verdictRow, practiceAgainButton, editWordButton, leechNote, donePanel, doneMessage, studyArea, scriptFlag,
+//   gradeRow, verdictRow, practiceAgainButton, editWordButton, leechTag, donePanel, doneMessage, studyArea, scriptFlag,
 //   lessonNote, skipLessonButton, lessonNextButton, learnNextButton, addWordsButton,
 //   startLevelButton, otherLevelButton, lessonBackButton, countsRow,
 //   and the parts of the study area that differ per kind of card:
@@ -123,8 +123,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     practiceAgainButton,
     editWordButton,
     aboutWordButton,
-    leechNote,
-    leechSuspendButton,
+    leechTag,
     listenButton,
     noticeElement,
     donePanel,
@@ -220,13 +219,13 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   function showMeaning(word, sentence, script) {
     meaningElement.classList.toggle('with-sentence', Boolean(sentence));
     if (!sentence) {
-      fillWithoutChinese(meaningElement, word.definition);
+      fillWithoutChinese(meaningElement, word);
       return;
     }
     const meaning = document.createElement('span');
     meaning.className = 'prompt-text';
     meaning.dataset.clamp = '';
-    fillWithoutChinese(meaning, word.definition);
+    fillWithoutChinese(meaning, word);
     const line = document.createElement('span');
     line.className = 'cloze-sentence';
     line.lang = script === 'traditional' ? 'zh-Hant-TW' : 'zh-Hans-CN';
@@ -238,20 +237,27 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // where it was (the owner chose it from pictures, 2026-10-24: "…" was
   // unclear, and CC-CEDICT itself writes "..." for words left out). The
   // box holds "…" out of sight, for the panel showing a cut-off meaning in
-  // full, and is named for a screen reader.
-  function fillWithoutChinese(element, definition) {
-    const parts = meaningWithoutChinese(definition, GAP_MARK).split(GAP_MARK);
+  // full, and is named for a screen reader. Chinese kept (a radical's
+  // full form) is marked as Chinese in the word's script.
+  function fillWithoutChinese(element, word) {
+    const parts = meaningWithoutChinese(word.definition, GAP_MARK).split(GAP_MARK);
+    const script = scriptFor(word, settings);
+    const mixed = (text) => {
+      const holder = document.createElement('span');
+      fillMixed(holder, text, script);
+      return [...holder.childNodes];
+    };
     element.replaceChildren(
       ...parts.flatMap((text, index) => {
         if (index === 0) {
-          return [text];
+          return mixed(text);
         }
         const box = document.createElement('span');
         box.className = 'chinese-gap';
         box.textContent = '…';
         box.setAttribute('role', 'img');
         box.setAttribute('aria-label', t('review.chineseLeftOut'));
-        return [box, text];
+        return [box, ...mixed(text)];
       }),
     );
   }
@@ -388,10 +394,19 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     editWordButton.hidden = true;
     aboutWordButton.hidden = true;
     cardAboutButton.hidden = true;
-    leechNote.hidden = true;
-    leechSuspendButton.hidden = true;
+    leechTag.hidden = true;
     options = null;
   }
+
+  // "Leech" beside the kind of card, on a card that keeps being forgotten,
+  // from its start: the moment to think of a way to remember it. It opens
+  // the word's page only once the card is answered (showLeechTag(true)),
+  // since the page shows the word.
+  function showLeechTag(answered = false) {
+    leechTag.hidden = !current || practicing || !isLeech(current.card, settings.leechLapses);
+    leechTag.disabled = !answered;
+  }
+  leechTag.addEventListener('click', () => openAbout());
 
   // ---- Hearing the word ----
 
@@ -493,7 +508,12 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       : {
           wordId: word.id,
           label: typeElement.textContent,
-          facts: lapsesOf(card) > 0 ? t('review.forgotten', { count: lapsesOf(card) }) : '',
+          // On a leech, what that is and where leeches are listed.
+          facts: isLeech(card, settings.leechLapses)
+            ? t('review.leech', { count: lapsesOf(card) })
+            : lapsesOf(card) > 0
+              ? t('review.forgotten', { count: lapsesOf(card) })
+              : '',
           // Each returns true once done, and the page then closes.
           async suspend() {
             if (current !== shown || !options) {
@@ -551,7 +571,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       current.word = after;
       // (Above a writing card, and a tone or pinyin card not yet answered.)
       if (current.type === 'writing' || (current.type !== 'meaning' && meaningElement.textContent !== '')) {
-        fillWithoutChinese(meaningElement, after.definition);
+        fillWithoutChinese(meaningElement, after);
       }
       flows.recall.update(after);
       flows.tone.update(after);
@@ -567,21 +587,6 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     noticeElement.textContent = text;
     noticeElement.hidden = text === '';
   }
-
-  // "Suspend this card", offered with the note on a leech: the card is taken
-  // out of Review there and then, ungraded, and the next one comes.
-  leechSuspendButton.addEventListener('click', async () => {
-    if (!current || !options) {
-      return;
-    }
-    const { word, type, card } = current;
-    options = null;
-    await suspend(word, type);
-    showNotice(
-      t('review.suspendedLeech', { kind: kindName(type), word: word[scriptFor(word, settings)], count: lapsesOf(card) }),
-    );
-    showNext();
-  });
 
   // Suspends one kind of card of a word, here and in the database.
   async function suspend(word, type) {
@@ -1042,12 +1047,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     editWordButton.hidden = false;
     showCardAbout();
     offerListen(true);
-    // A card that keeps being forgotten is pointed out, now that its answer
-    // is in view: the moment to think of a way to remember it.
-    const lapses = lapsesOf(current.card);
-    leechNote.textContent = t('review.leech', { count: lapses });
-    leechNote.hidden = !isLeech(current.card, settings.leechLapses);
-    leechSuspendButton.hidden = leechNote.hidden;
+    showLeechTag(true);
   }
 
   // On a keyboard, the keys 1 to 4 press the grade buttons, Again to Easy
@@ -1161,6 +1161,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // outline and Animate, which offerGrades put away.
       onCharStart: () => {
         hideGrades();
+        showLeechTag();
         writingButtons.hidden = false;
       },
       // Once written, it can be practiced again (practice-again-button, or a
@@ -1264,7 +1265,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // of 好[hao3]").
   function showAskedMeaning(word) {
     meaningElement.classList.remove('with-sentence');
-    fillWithoutChinese(meaningElement, word.definition);
+    fillWithoutChinese(meaningElement, word);
   }
 
   // A meaning card shows the reading under the word only when another of
@@ -2145,6 +2146,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     typeElement.textContent = sitting.limit
       ? t('review.labelOfLimit', { label: labelFor(current.word, current.type), number: sitting.done + 1, limit: sitting.limit })
       : labelFor(current.word, current.type);
+    showLeechTag();
     showScriptFlag(current.word);
     showPartsFor(current.type);
     offerListen(current.type === 'writing' || current.type === 'meaning');

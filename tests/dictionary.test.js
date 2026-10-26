@@ -349,3 +349,18 @@ test('a writing card leaves Chinese out of the meaning', () => {
   // A meaning typed all in Chinese is kept.
   assert.equal(meaningWithoutChinese('你們'), '你們');
 });
+
+test('a writing card keeps a radical\'s full form in the meaning', () => {
+  assert.equal(meaningWithoutChinese('clothing (side form of 衣)'), 'clothing (side form of 衣)');
+  assert.equal(meaningWithoutChinese('fire (bottom form of 火)'), 'fire (bottom form of 火)');
+  assert.equal(meaningWithoutChinese('the left-radical form of Kangxi radical 145, 衣'), 'the left-radical form of Kangxi radical 145, 衣');
+  assert.equal(meaningWithoutChinese('Kangxi radical 61 (心) as a vertical side element'), 'Kangxi radical 61 (心) as a vertical side element');
+  assert.equal(
+    meaningWithoutChinese('Kangxi radical 18 (刀) as a vertical side element, referred to as 立刀旁 or 側刀旁'),
+    'Kangxi radical 18 (刀) as a vertical side element, referred to as … or …',
+  );
+  // What shows the shape still goes (the owner, 2026-10-26).
+  assert.equal(meaningWithoutChinese('"right open box" radical (Kangxi radical 22), occurring in 区, 医, 匹 etc'), '"right open box" radical (Kangxi radical 22), occurring in …, …, … etc');
+  // And other forms, which would give the answer away.
+  assert.equal(meaningWithoutChinese('erhua form of 一點'), 'erhua form of …');
+});

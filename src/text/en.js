@@ -398,7 +398,6 @@ export default {
   'study.neutralTone': 'Neutral tone',
   'study.practiceAgainButton': 'Practice again',
   'study.lessonNextButton': 'Next step',
-  'study.leechSuspendButton': 'Suspend this card',
   'study.updateButton': 'New version ready: tap to reload',
 
   // Review and Learn (review.js)
@@ -422,10 +421,6 @@ export default {
   'review.aboutSentence': 'About this sentence',
   'review.forgotten': { one: 'forgotten {count} time', other: 'forgotten {count} times' },
   'review.suspendedCard': "Suspended: the {kind} card of {word}. Resume it from the word's page (Words tab).",
-  'review.suspendedLeech': {
-    one: "Suspended: the {kind} card of {word}, forgotten {count} time. Resume it from the word's page (Words tab).",
-    other: "Suspended: the {kind} card of {word}, forgotten {count} times. Resume it from the word's page (Words tab).",
-  },
   'review.suspendedLeechNow': {
     one: "Suspended: the {kind} card of {word}, forgotten {count} time. It will not come up again until you resume it from the word's page (Words tab).",
     other: "Suspended: the {kind} card of {word}, forgotten {count} times. It will not come up again until you resume it from the word's page (Words tab).",
@@ -436,6 +431,8 @@ export default {
   'review.startedOver': 'Started over: the {kind} card of {word} is new again.',
   'review.gradeKey': '{grade} (key {key})',
   'review.gradedSince': 'Graded again since, so this grade stays.',
+  // Beside the kind of card on a leech (a card forgotten many times); short
+  'review.leechTag': 'Leech',
   'review.leech': {
     one: 'Leech: you have forgotten this card {count} time. Words, in the menu, lists your leeches.',
     other: 'Leech: you have forgotten this card {count} times. Words, in the menu, lists your leeches.',

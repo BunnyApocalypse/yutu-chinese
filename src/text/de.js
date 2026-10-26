@@ -391,7 +391,6 @@ export default {
   'study.neutralTone': 'Neutraler Ton',
   'study.practiceAgainButton': 'Noch mal üben',
   'study.lessonNextButton': 'Nächster Schritt',
-  'study.leechSuspendButton': 'Diese Karte aussetzen',
   'study.updateButton': 'Neue Version bereit: tippen zum Neuladen',
 
   // Review and Learn (review.js)
@@ -415,10 +414,6 @@ export default {
   'review.aboutSentence': 'Über diesen Satz',
   'review.forgotten': { one: '{count} Mal vergessen', other: '{count} Mal vergessen' },
   'review.suspendedCard': 'Ausgesetzt: die Karte „{kind}“ von {word}. Setze sie auf der Seite des Worts (Reiter „Wörter“) fort.',
-  'review.suspendedLeech': {
-    one: 'Ausgesetzt: die Karte „{kind}“ von {word}, {count} Mal vergessen. Setze sie auf der Seite des Worts (Reiter „Wörter“) fort.',
-    other: 'Ausgesetzt: die Karte „{kind}“ von {word}, {count} Mal vergessen. Setze sie auf der Seite des Worts (Reiter „Wörter“) fort.',
-  },
   'review.suspendedLeechNow': {
     one: 'Ausgesetzt: die Karte „{kind}“ von {word}, {count} Mal vergessen. Sie kommt nicht mehr dran, bis du sie auf der Seite des Worts (Reiter „Wörter“) fortsetzt.',
     other: 'Ausgesetzt: die Karte „{kind}“ von {word}, {count} Mal vergessen. Sie kommt nicht mehr dran, bis du sie auf der Seite des Worts (Reiter „Wörter“) fortsetzt.',
@@ -429,6 +424,7 @@ export default {
   'review.startedOver': 'Neu begonnen: Die Karte „{kind}“ von {word} ist wieder neu.',
   'review.gradeKey': '{grade} (Taste {key})',
   'review.gradedSince': 'Seitdem erneut bewertet, daher bleibt diese Bewertung.',
+  'review.leechTag': 'Problemkarte',
   'review.leech': {
     one: 'Problemkarte: Du hast diese Karte {count} Mal vergessen. Unter „Wörter“ im Menü findest du alle deine Problemkarten.',
     other: 'Problemkarte: Du hast diese Karte {count} Mal vergessen. Unter „Wörter“ im Menü findest du alle deine Problemkarten.',

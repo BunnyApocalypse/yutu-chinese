@@ -119,10 +119,20 @@ describe('leeches', { concurrency: false }, () => {
     await tap(page, 'settings-close');
     await tap(page, 'review-tab');
     await waitUntil(page, `document.getElementById('card-type').textContent.toLowerCase().includes('meaning')`, 'the meaning card');
-    // Tap to see the answer: the grades come up, and the note with them.
+    // "Leech" beside the kind of card from the start, not yet a way to the
+    // word's page, which would give the answer away.
+    assert.equal(await textOf(page, 'leech-tag'), 'Leech');
+    assert.equal(await page.evaluate(`document.getElementById('leech-tag').disabled`), true);
+    // Tap to see the answer: the grades come up, and the tag opens the
+    // word's page with this card's strip, saying what a leech is.
     await page.evaluate(`['pointerdown', 'pointerup'].forEach((type) => document.getElementById('card-face').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`);
     await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
-    assert.match(await textOf(page, 'leech-note'), /^Leech: you have forgotten this card 7 times/);
+    // Nothing under the grades any more (the owner, 2026-10-26: the page scrolled).
+    assert.equal(await page.evaluate(`document.getElementById('leech-note')`), null);
+    await tap(page, 'leech-tag');
+    await waitUntil(page, `document.querySelector('.page-this-card') !== null`, 'the card\'s strip');
+    assert.match(await textOf(page, '.page-this-card'), /Leech: you have forgotten this card 7 times/);
+    await page.evaluate(`document.getElementById('word-page').close()`);
 
     // Forgotten again: that is the eighth time, and the card is suspended.
     await page.evaluate(`document.querySelector('#grade-row button').click()`);

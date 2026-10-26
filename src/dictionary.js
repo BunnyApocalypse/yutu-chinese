@@ -119,6 +119,12 @@ export function proposeMeaning(meanings, detail = DEFAULT_MEANING_DETAIL) {
     .join('; ');
 }
 
+// Text ending where a radical's full form is named (meaningWithoutChinese):
+// "side form of ", "top form of (", "Kangxi radical 145, ", "Kangxi radical 61 (".
+// Only these: "erhua form of 一點" or "simplified form of …" would give the
+// answer away.
+const FULL_FORM_BEFORE = /(?:\b(?:side|top|bottom|left-radical) form of|\bKangxi radical \d+)[\s,(]*$/i;
+
 // A meaning as a writing card asks for it: without Chinese characters, which
 // there can be taken for the answer (tester 4, 2026-10-21: 你's meaning,
 // "you (informal, as opposed to courteous 您)", had them write 您; the
@@ -126,6 +132,13 @@ export function proposeMeaning(meanings, detail = DEFAULT_MEANING_DETAIL) {
 // "(CL:道)", go; Chinese anywhere else becomes "…" (or `gap`), so the
 // sentence still reads: "you (informal, as opposed to courteous …)". The
 // stored meaning is unchanged, and other cards show it whole.
+//
+// Except a radical's full form, named after "side form of" and the like or
+// after "Kangxi radical 145": "clothing (side form of 衣)", "the left-radical
+// form of Kangxi radical 145, 衣" (the owner, 2026-10-26: left out, nothing
+// said which radical was asked, unless one knew their numbers). It is
+// another character than the one written. Not every radical's Chinese: 匚's
+// "occurring in 区, 医, 匹" shows its shape (the owner).
 export function meaningWithoutChinese(meaning, gap = '…') {
   // A run of characters, with the pinyin CC-CEDICT may give after it
   // ("個|个[ge4]") and the | between two forms.
@@ -133,11 +146,13 @@ export function meaningWithoutChinese(meaning, gap = '…') {
   if (!/\p{Script=Han}/u.test(meaning)) {
     return meaning;
   }
+  // True if the text just before names a full form.
+  const namesFullForm = (before) => FULL_FORM_BEFORE.test(before);
   const cleaned = meaning
-    .replace(/\(([^()]*)\)/g, (bracket, inside) =>
-      inside.replace(chinese, '').replace(/CL:|[\s,;:、，]/g, '') === '' ? '' : bracket,
+    .replace(/\(([^()]*)\)/g, (bracket, inside, offset, whole) =>
+      !namesFullForm(whole.slice(0, offset)) && inside.replace(chinese, '').replace(/CL:|[\s,;:、，]/g, '') === '' ? '' : bracket,
     )
-    .replace(chinese, gap)
+    .replace(chinese, (run, offset, whole) => (namesFullForm(whole.slice(0, offset)) ? run : gap))
     .replace(/\s+([,;)/])/g, '$1')
     .replace(/\(\s+/g, '(')
     .replace(/\s{2,}/g, ' ')

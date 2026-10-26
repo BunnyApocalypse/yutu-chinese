@@ -569,6 +569,37 @@ dialog.side-menu::backdrop {
   margin-right: auto;
 }
 
+/* "Leech", right after the kind of card (review.js), which then leaves the
+   room after it to the tag. A label until the card is answered, then a
+   button: the same look either way. */
+.type-row .card-type:has(+ .leech-tag:not([hidden])) {
+  margin-right: 0;
+}
+
+/* No taller than the row (36px), so the row keeps its height; 24px is the
+   least for a tap. */
+.leech-tag {
+  margin-right: auto;
+  min-height: var(--tap-least);
+  padding: 0 var(--space-tiny);
+  border: none;
+  background: none;
+  font-size: var(--size-small);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--danger);
+}
+
+.leech-tag:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.leech-tag:not(:disabled) {
+  text-decoration: underline;
+}
+
 .type-row #listen-button {
   order: 1;
 }
@@ -723,14 +754,14 @@ main.focused .type-row {
     gap: var(--space-small);
   }
 
-  main.focused .card-type {
+  main.focused :is(.card-type, .leech-tag) {
     letter-spacing: 0.02em;
   }
 
   /* And the other labels' size again in Review, or with About and Edit
      beside it "New word · step 5 of 5" takes two lines (measured at 360
      and 375px; at 390 it fits). Learn has neither, so it keeps its size. */
-  main.focused:not(.learning) .card-type {
+  main.focused:not(.learning) :is(.card-type, .leech-tag) {
     font-size: var(--size-tiny);
   }
 }
@@ -2698,10 +2729,6 @@ button.small {
    Animate come back under the grades, so the grades do not move. */
 .study-area.practicing #writing-buttons {
   order: 1;
-}
-
-.study-area.practicing > :is(#leech-note, #leech-suspend-button) {
-  order: 2;
 }
 
 .grade-row {

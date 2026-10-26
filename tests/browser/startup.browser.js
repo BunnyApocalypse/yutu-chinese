@@ -84,6 +84,21 @@ describe('opening the app', { concurrency: false }, () => {
     await page.send('Page.enable');
     await page.send('Page.addScriptToEvaluateOnNewDocument', { source: HOLD_BACK });
     await page.send('Page.reload');
+    // Until the new page is there, asking it anything fails ("Inspected
+    // target navigated or closed"): try again.
+    for (let attempt = 0; ; attempt++) {
+      try {
+        if (await page.evaluate(`typeof window.__release === 'function'`)) {
+          break;
+        }
+      } catch {
+        // between the two pages
+      }
+      if (attempt > 100) {
+        throw new Error('The page did not load again.');
+      }
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
   });
 
   after(async () => {
@@ -99,7 +114,7 @@ describe('opening the app', { concurrency: false }, () => {
   })()`;
 
   it('says "Loading…" and hides the writing area until the card is ready', async () => {
-    await waitUntil(page, `typeof window.__release === 'function' && document.getElementById('starting-note')?.textContent === 'Loading…'`, '"Loading…"');
+    await waitUntil(page, `document.getElementById('starting-note')?.textContent === 'Loading…'`, '"Loading…"');
     assert.equal(await page.evaluate(shown('#starting-note')), true);
     assert.equal(await page.evaluate(shown('#study-area')), false);
     assert.equal(await page.evaluate(shown('#review-header')), false);

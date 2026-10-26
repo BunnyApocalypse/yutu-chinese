@@ -391,7 +391,6 @@ export default {
   'study.neutralTone': 'Tono neutro',
   'study.practiceAgainButton': 'Esercitati ancora',
   'study.lessonNextButton': 'Passo successivo',
-  'study.leechSuspendButton': 'Sospendi questa carta',
   'study.updateButton': 'Nuova versione pronta: tocca per ricaricare',
 
   // Review and Learn (review.js)
@@ -415,10 +414,6 @@ export default {
   'review.aboutSentence': 'Info su questa frase',
   'review.forgotten': { one: 'dimenticata {count} volta', other: 'dimenticata {count} volte' },
   'review.suspendedCard': 'Sospesa: la carta di {kind} di {word}. Riattivala dalla pagina della parola (scheda Parole).',
-  'review.suspendedLeech': {
-    one: 'Sospesa: la carta di {kind} di {word}, dimenticata {count} volta. Riattivala dalla pagina della parola (scheda Parole).',
-    other: 'Sospesa: la carta di {kind} di {word}, dimenticata {count} volte. Riattivala dalla pagina della parola (scheda Parole).',
-  },
   'review.suspendedLeechNow': {
     one: 'Sospesa: la carta di {kind} di {word}, dimenticata {count} volta. Non tornerà finché non la riattivi dalla pagina della parola (scheda Parole).',
     other: 'Sospesa: la carta di {kind} di {word}, dimenticata {count} volte. Non tornerà finché non la riattivi dalla pagina della parola (scheda Parole).',
@@ -429,6 +424,7 @@ export default {
   'review.startedOver': 'Ricominciata: la carta di {kind} di {word} è di nuovo nuova.',
   'review.gradeKey': '{grade} (tasto {key})',
   'review.gradedSince': 'Valutata di nuovo da allora, quindi questo voto resta.',
+  'review.leechTag': 'Sanguisuga',
   'review.leech': {
     one: 'Sanguisuga: hai dimenticato questa carta {count} volta. Parole, nel menu, elenca le tue sanguisughe.',
     other: 'Sanguisuga: hai dimenticato questa carta {count} volte. Parole, nel menu, elenca le tue sanguisughe.',
