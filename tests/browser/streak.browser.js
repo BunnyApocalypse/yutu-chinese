@@ -67,7 +67,11 @@ describe('streaks', { concurrency: false }, () => {
 
   // Taps the meaning card on screen and grades it Good.
   async function gradeMeaningCard() {
-    await waitUntil(page, `!document.getElementById('card-face').hidden && document.getElementById('card-face').textContent !== ''`, 'a card');
+    // A card asking (its hint, "Tap to see…", is only there then), not the
+    // answer of the card graded before, which stays up until the next comes:
+    // a tap on that did nothing, and the grades never came (the failure now
+    // and then in a full run, 2026-10-20 to 2026-10-26).
+    await waitUntil(page, `!document.getElementById('card-face').hidden && document.querySelector('#card-face .face-hint') !== null && document.getElementById('grade-row').hidden`, 'a card');
     await page.evaluate(`['pointerdown', 'pointerup'].forEach((type) => document.getElementById('card-face').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`);
     await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
     await page.evaluate(`[...document.querySelectorAll('#grade-row .grade')].find((button) => button.firstChild.textContent === 'Good').click()`);
