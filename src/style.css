@@ -787,6 +787,27 @@ main.focused .top-bar {
   min-height: 1.5em;
 }
 
+/* A word's reading keeps to one line (showPinyin in review.js), a size
+   smaller when it must be; the line keeps its own size, and so its height. */
+#prompt-pinyin.one-line {
+  /* As wide as the header, not as its text (the header centers its rows). */
+  align-self: stretch;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#prompt-pinyin.smaller > span {
+  font-size: var(--size-small);
+}
+
+/* Zhuyin breaks onto a new line only between syllables (lang.js marks it):
+   by itself a browser may break between any two of its symbols. */
+.zhuyin {
+  word-break: keep-all;
+}
+
 #prompt-meaning {
   min-height: calc(1.5 * var(--size-title));
 }

@@ -1,10 +1,10 @@
 // Tone cards: you see the word and give the tone of each character in turn,
 // either with the five tone buttons or by drawing the tone mark on the card.
 
-import { formatPinyin } from './wordList.js';
+import { showReading } from './readingStyle.js';
 import { TONE_LABELS, describeReading } from './tones.js';
 import { recognizeToneMark } from './toneMark.js';
-import { fillMixed, langFor } from './lang.js';
+import { fillMixed, fillReading, langFor } from './lang.js';
 import { faceArrow, BACK, FORWARD } from './faceArrow.js';
 import { t } from './text.js';
 import { freshTaps } from './freshTap.js';
@@ -27,6 +27,13 @@ function paragraph(className, text) {
   const element = document.createElement('p');
   element.className = className;
   element.textContent = text;
+  return element;
+}
+
+// A paragraph with a reading in it, its zhuyin marked as Chinese (lang.js).
+function readingParagraph(className, text) {
+  const element = paragraph(className, '');
+  fillReading(element, text);
   return element;
 }
 
@@ -316,28 +323,28 @@ export function createToneFlow(elements) {
     const wrong = passedPerChar.filter((passed) => !passed).length;
     statusElement.textContent = wrong === 0 ? t('tone.allRight') : t('tone.wrong', { count: wrong });
     const described = describeReading(current.reading);
-    const parts = [faceWord(chars.join('')), paragraph('face-pinyin', described.main)];
+    const parts = [faceWord(chars.join('')), readingParagraph('face-pinyin', described.main)];
     if (described.other) {
-      parts.push(paragraph('face-hint', described.other));
+      parts.push(readingParagraph('face-hint', described.other));
     }
     parts.push(paragraph('face-meaning', current.word.definition));
     // If the tones given differ from the listed reading, show what was
     // answered: the syllables with the tones that were chosen.
-    const answered = formatPinyin(
+    const answered = showReading(
       // A skipped character is shown with its listed tone.
       current.answers.map((answer, index) => (givenTones[index] === undefined ? answer.syllable : answer.syllable.slice(0, -1) + givenTones[index])).join(''),
     );
-    const listedFirst = formatPinyin(current.answers.map((answer) => answer.syllable).join(''));
+    const listedFirst = showReading(current.answers.map((answer) => answer.syllable).join(''));
     if (wrong > 0) {
-      parts.push(paragraph('face-note missed', t('tone.youAnswered', { answer: answered })));
+      parts.push(readingParagraph('face-note missed', t('tone.youAnswered', { answer: answered })));
     } else if (chars.some((char, index) => !accepted(index))) {
       // A wrong tone counted as right by a tap on its box: still say what
       // was answered.
-      parts.push(paragraph('face-note', t('tone.youAnswered', { answer: answered })));
+      parts.push(readingParagraph('face-note', t('tone.youAnswered', { answer: answered })));
     } else if (variantPerChar.includes(true)) {
       // Accepted, but not what is listed: say so, so the listed tone is learned.
       parts.push(
-        paragraph('face-note', t('tone.variant', { answer: answered, listed: listedFirst })),
+        readingParagraph('face-note', t('tone.variant', { answer: answered, listed: listedFirst })),
       );
     }
     cardFace.replaceChildren(...parts);
@@ -386,9 +393,9 @@ export function createToneFlow(elements) {
     // Show the syllable with its tone mark, green or red (or as its box
     // says, in practice).
     const shown = passedPerChar[position];
-    shownSyllable = paragraph(
+    shownSyllable = readingParagraph(
       shown ? 'face-pinyin passed' : 'face-pinyin missed',
-      formatPinyin(expected.syllable),
+      showReading(expected.syllable),
     );
     cardFace.replaceChildren(faceWord(chars[position]), shownSyllable);
 

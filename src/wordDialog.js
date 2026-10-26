@@ -9,7 +9,9 @@
 // learnDuration, suspended, startedOverAt, importedAt (CLAUDE.md).
 
 import { putAll, removeWord, renameWord } from './db.js';
-import { formatPinyin, wordId } from './wordList.js';
+import { wordId } from './wordList.js';
+import { showReading } from './readingStyle.js';
+import { fillMixed } from './lang.js';
 import { allCardIds } from './session.js';
 import { fileCardsByScript } from './scriptCards.js';
 import { deckTree, readyMadeDeck } from './decks.js';
@@ -99,7 +101,8 @@ export function createWordDialog(shared) {
     openWord = word;
     dialogResult = { changed: false, word };
     const studied = shared.isLearned(word.id);
-    dialogTitle.textContent = `${word[scriptFor(word, shared.getSettings())]} ${formatPinyin(word.pinyin)}`;
+    const script = scriptFor(word, shared.getSettings());
+    fillMixed(dialogTitle, `${word[script]} ${showReading(word.pinyin)}`, script);
     showDialogStatus(word);
     editDefinition.value = word.definition;
     editTraditional.value = word.traditional;
@@ -304,10 +307,11 @@ export function createWordDialog(shared) {
     if (saved.id === openWord.id) {
       await putAll('words', [saved]);
     } else if (shared.words().some((word) => word.id === saved.id)) {
-      dialogNote.textContent = t('edit.alreadyInWords', {
-        characters: shared.charactersOf(saved),
-        pinyin: formatPinyin(saved.pinyin),
-      });
+      fillMixed(
+        dialogNote,
+        t('edit.alreadyInWords', { characters: shared.charactersOf(saved), pinyin: showReading(saved.pinyin) }),
+        scriptFor(saved, shared.getSettings()),
+      );
       return;
     } else {
       await renameWord(openWord.id, withFormerId(saved, openWord));

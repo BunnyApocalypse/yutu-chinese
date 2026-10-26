@@ -5,7 +5,9 @@
 // on 2026-10-17, when it was split by screen.
 
 import { putAll } from './db.js';
-import { formatPinyin, wordId } from './wordList.js';
+import { wordId } from './wordList.js';
+import { showReading } from './readingStyle.js';
+import { fillMixed, fillReading } from './lang.js';
 import { withDeck } from './decks.js';
 import { entryRow } from './wordRows.js';
 import { checkWord, newWordRecords, wordsWithSameCharacters, tidyPinyin } from './words.js';
@@ -49,9 +51,10 @@ export function createAddWordForm(shared, dictionaryLoader) {
     return bothScripts ? addFields.cardScript.value || null : script;
   }
 
-  // Shows the pinyin with tone marks as it is typed, to check it by eye.
+  // Shows the pinyin with tone marks (or in zhuyin, readingStyle.js) as it
+  // is typed, to check it by eye.
   function showPinyinPreview() {
-    pinyinPreview.textContent = formatPinyin(addFields.pinyin.value.trim());
+    fillReading(pinyinPreview, showReading(addFields.pinyin.value.trim()));
   }
   addFields.pinyin.addEventListener('input', showPinyinPreview);
 
@@ -71,6 +74,12 @@ export function createAddWordForm(shared, dictionaryLoader) {
     const element = document.createElement('p');
     element.className = className;
     element.textContent = text;
+    return element;
+  };
+  // The same with Chinese or zhuyin in it, marked as such (lang.js).
+  const mixedParagraph = (className, text) => {
+    const element = paragraph(className, '');
+    fillMixed(element, text, shared.getSettings().script);
     return element;
   };
 
@@ -233,11 +242,11 @@ export function createAddWordForm(shared, dictionaryLoader) {
       const alreadyHave = wordsWithSameCharacters({ traditional: typed, simplified: typed }, shared.words());
       for (const word of alreadyHave) {
         parts.push(
-          paragraph(
+          mixedParagraph(
             'note',
             t('add.alreadyInYourWords', {
               characters: shared.charactersOf(word),
-              pinyin: formatPinyin(word.pinyin),
+              pinyin: showReading(word.pinyin),
               meaning: word.definition,
             }),
           ),
@@ -324,11 +333,11 @@ export function createAddWordForm(shared, dictionaryLoader) {
     // The word goes into the deck whose page is open.
     const deck = shared.openDeck();
     const { toAdd } = newWordRecords([checked.word], shared.words(), Date.now());
-    const name = `${shared.charactersOf(checked.word)} (${formatPinyin(checked.word.pinyin)})`;
+    const name = `${shared.charactersOf(checked.word)} (${showReading(checked.word.pinyin)})`;
     // A word that is there already is put in this deck as well.
     const existing = toAdd.length === 0 ? shared.words().find((word) => word.id === wordId(checked.word)) : null;
     if (existing && existing.decks.includes(deck.id)) {
-      addNote.textContent = t('add.alreadyInDeck', { name });
+      fillMixed(addNote, t('add.alreadyInDeck', { name }), shared.getSettings().script);
       return;
     }
     const added = withDeck(existing || toAdd[0], deck.id);
@@ -340,9 +349,11 @@ export function createAddWordForm(shared, dictionaryLoader) {
 
     pinyinPreview.textContent = '';
     suggestions.replaceChildren();
-    addNote.textContent = existing
-      ? t('add.nowInDeckToo', { name })
-      : t('add.added', { characters: shared.charactersOf(toAdd[0]) });
+    fillMixed(
+      addNote,
+      existing ? t('add.nowInDeckToo', { name }) : t('add.added', { characters: shared.charactersOf(toAdd[0]) }),
+      shared.getSettings().script,
+    );
     await shared.afterChange();
     // "Learn it now", for a word still to be learned; typing the next word
     // puts it away.

@@ -4,7 +4,7 @@
 // dictionary. Moved here from wordsPanel.js on 2026-10-17, when it was
 // split by screen.
 
-import { formatPinyin } from './wordList.js';
+import { showReading } from './readingStyle.js';
 import { langFor, fillMixed } from './lang.js';
 import { scriptsShown } from './words.js';
 
@@ -52,7 +52,7 @@ export function entryRow(entry, label, settings, { selected = false, onTap }) {
   button.className = 'word-entry';
   button.append(
     charactersElement(entry, settings),
-    span('entry-pinyin', formatPinyin(entry.pinyin)),
+    mixedSpan('entry-pinyin', showReading(entry.pinyin), settings.script),
     mixedSpan(
       'entry-definition',
       meanings.length > MAX_MEANINGS_LENGTH ? `${meanings.slice(0, MAX_MEANINGS_LENGTH)}…` : meanings,

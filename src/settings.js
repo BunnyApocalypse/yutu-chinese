@@ -8,6 +8,7 @@ import { DEFAULT_LEECH_LAPSES, MIN_LEECH_LAPSES, MAX_LEECH_LAPSES } from './leec
 import { speak } from './speech.js';
 import { setTheme } from './theme.js';
 import { setFont } from './font.js';
+import { setReadingStyle } from './readingStyle.js';
 import { closeOnTapBeside } from './dialogs.js';
 import {
   DEFAULT_STREAK_CARDS,
@@ -21,6 +22,7 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 
 // elements: the panel's parts:
 //   panel, openButton, closeButton, scriptSelect, pronunciationSelect,
+//   readingStyleSelect,
 //   handwritingSelect, themeRadios (the three choices of look), lessonsCheckbox, strokeCountCheckbox,
 //   mistakeCountCheckbox, fontSelect, languageSelect, reviewStartCheckbox,
 //   hintSelect, newWordsInput, gradeButtonsSelect,
@@ -45,6 +47,10 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //                   beside it and its tones accepted too
 //                   'mainlandOnly': the mainland one, and Taiwan readings
 //                   are kept out of sight
+//   readingStyle:   how readings are shown: 'pinyin' (the default),
+//                   'zhuyin', 'zhuyinPinyin' or 'pinyinZhuyin', both with
+//                   the one named first (readingStyle.js; the owner,
+//                   2026-10-26)
 //   rawInput:      true to keep your own strokes on screen when writing,
 //                   false to replace each correct stroke with the printed one
 //   theme:          'auto' (the default: as the device is set, where the
@@ -104,6 +110,7 @@ export async function createSettings(elements, onChange) {
     closeButton,
     scriptSelect,
     pronunciationSelect,
+    readingStyleSelect,
     handwritingSelect,
     themeRadios,
     lessonsCheckbox,
@@ -133,6 +140,7 @@ export async function createSettings(elements, onChange) {
     script: await getSetting('script', 'simplified'),
     bothScripts: await getSetting('bothScripts', false),
     pronunciation: await getSetting('pronunciation', 'mainlandOnly'),
+    readingStyle: await getSetting('readingStyle', 'pinyin'),
     // Saved as 'rawSquigs' before the setting was renamed; a device that still
     // has it under the old name keeps its choice.
     rawInput: await getSetting('rawInput', await getSetting('rawSquigs', true)),
@@ -161,12 +169,14 @@ export async function createSettings(elements, onChange) {
   // "Follow device theme" needs nothing: the style sheet does that by itself.
   setTheme(settings.theme);
   setFont(settings.font);
+  setReadingStyle(settings.readingStyle);
 
   // Shows the current settings in the panel's controls.
   function fillPanel() {
     // The Script list has four choices, for the two settings together.
     scriptSelect.value = settings.bothScripts ? `both-${settings.script}` : settings.script;
     pronunciationSelect.value = settings.pronunciation;
+    readingStyleSelect.value = settings.readingStyle;
     handwritingSelect.value = settings.rawInput ? 'raw' : 'snap';
     for (const radio of themeRadios) {
       radio.checked = radio.value === settings.theme;
@@ -205,6 +215,9 @@ export async function createSettings(elements, onChange) {
     if (key === 'font') {
       setFont(value);
     }
+    if (key === 'readingStyle') {
+      setReadingStyle(value);
+    }
     await setSetting(key, value);
     onChange();
   }
@@ -221,6 +234,7 @@ export async function createSettings(elements, onChange) {
   pronunciationSelect.addEventListener('change', () =>
     change('pronunciation', pronunciationSelect.value),
   );
+  readingStyleSelect.addEventListener('change', () => change('readingStyle', readingStyleSelect.value));
 
   handwritingSelect.addEventListener('change', () =>
     change('rawInput', handwritingSelect.value === 'raw'),

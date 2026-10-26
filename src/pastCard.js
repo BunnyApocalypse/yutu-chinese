@@ -12,7 +12,7 @@
 // other kinds show the word, its reading and its meaning, as once answered.
 
 import { faceArrow, BACK, FORWARD } from './faceArrow.js';
-import { langFor } from './lang.js';
+import { langFor, fillReading } from './lang.js';
 import { describeReading } from './tones.js';
 import { t } from './text.js';
 
@@ -20,6 +20,13 @@ function paragraph(className, text) {
   const element = document.createElement('p');
   element.className = className;
   element.textContent = text;
+  return element;
+}
+
+// A paragraph with a reading in it, its zhuyin marked as Chinese (lang.js).
+function readingParagraph(className, text) {
+  const element = paragraph(className, '');
+  fillReading(element, text);
   return element;
 }
 
@@ -111,5 +118,5 @@ function answerOf(card) {
   const word = paragraph(Array.from(card.text).length > 6 ? 'face-word long' : 'face-word', card.text);
   word.lang = langFor(card.script);
   const described = describeReading(card.reading);
-  return [word, paragraph('face-pinyin', described.main), paragraph('face-meaning', card.meaning)];
+  return [word, readingParagraph('face-pinyin', described.main), paragraph('face-meaning', card.meaning)];
 }

@@ -40,6 +40,13 @@ export default {
   'settings.pronunciationBoth': 'Accept both',
   'settings.pronunciationHint':
     'A few words are read differently in Taiwan and on the mainland: <span lang="zh-Hant-TW">星期</span> is xīngqí in Taiwan and xīngqī on the mainland (more on <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">Taiwan\'s Mandarin</a>). The reading you choose is the one shown and tested. With Taiwan, the mainland reading also appears beside it in small print, because dictionaries file words under it. With Accept both, cards show both readings and accept either tone. With Mainland China, Taiwan readings are never shown or asked for.',
+  'settings.readingStyle': 'Readings in',
+  'settings.readingPinyin': 'Pinyin',
+  'settings.readingZhuyin': 'Zhuyin (注音)',
+  'settings.readingZhuyinPinyin': 'Zhuyin, then pinyin',
+  'settings.readingPinyinZhuyin': 'Pinyin, then zhuyin',
+  'settings.readingStyleHint':
+    'How readings are written on cards, word pages and lists. <span lang="zh-Hant-TW">學校</span> is xuéxiào in pinyin, which spells the sounds in the Latin alphabet, and <span lang="zh-Hant-TW">ㄒㄩㄝˊ ㄒㄧㄠˋ</span> in <a href="https://en.wikipedia.org/wiki/Bopomofo" target="_blank" rel="noopener">zhuyin</a> (bopomofo), the symbols used in Taiwan. With both, each reading is shown in both, the one named first. Pinyin is still what you type when adding or searching for a word.',
   'settings.cardTypes': 'Card types',
   'settings.cardTypeMeaning': 'Meaning: see the word, recall what it means',
   'settings.cardTypePinyin': 'Pinyin: see the word, recall how it is read',
@@ -348,6 +355,8 @@ export default {
   'review.deckToStudy': 'Deck to study',
   'review.hearTheWord': 'Hear the word',
   'review.pinyinButton': 'Show pinyin',
+  'review.zhuyinButton': 'Show zhuyin',
+  'review.readingButton': 'Show reading',
   'review.aboutWordButton': 'About',
   'review.editWordButton': 'Edit',
   'review.aboutThisWord': 'About this word',

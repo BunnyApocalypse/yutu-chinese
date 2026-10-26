@@ -35,6 +35,13 @@ export default {
   'settings.pronunciationBoth': 'Accetta entrambe',
   'settings.pronunciationHint':
     'Alcune parole si leggono in modo diverso a Taiwan e nella Cina continentale: <span lang="zh-Hant-TW">星期</span> è xīngqí a Taiwan e xīngqī nella Cina continentale (di più sul <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">mandarino di Taiwan</a>). La lettura che scegli è quella mostrata e verificata. Con Taiwan, la lettura continentale compare accanto in piccolo, perché i dizionari schedano le parole sotto quella. Con Accetta entrambe, le carte mostrano entrambe le letture e accettano uno dei due toni. Con Cina continentale, le letture di Taiwan non vengono mai mostrate né chieste.',
+  'settings.readingStyle': 'Letture in',
+  'settings.readingPinyin': 'Pinyin',
+  'settings.readingZhuyin': 'Zhuyin (注音)',
+  'settings.readingZhuyinPinyin': 'Zhuyin, poi pinyin',
+  'settings.readingPinyinZhuyin': 'Pinyin, poi zhuyin',
+  'settings.readingStyleHint':
+    'Come sono scritte le letture su carte, pagine delle parole ed elenchi. <span lang="zh-Hant-TW">學校</span> è xuéxiào in pinyin, che scrive i suoni con l\'alfabeto latino, e <span lang="zh-Hant-TW">ㄒㄩㄝˊ ㄒㄧㄠˋ</span> in <a href="https://en.wikipedia.org/wiki/Bopomofo" target="_blank" rel="noopener">zhuyin</a> (bopomofo), i simboli usati a Taiwan. Con entrambi, ogni lettura compare in tutti e due, prima quello indicato per primo. Per aggiungere o cercare una parola si scrive sempre in pinyin.',
   'settings.cardTypes': 'Tipi di carta',
   'settings.cardTypeMeaning': 'Significato: vedi la parola, ricorda cosa significa',
   'settings.cardTypePinyin': 'Pinyin: vedi la parola, ricorda come si legge',
@@ -342,6 +349,8 @@ export default {
   'review.deckToStudy': 'Mazzo da studiare',
   'review.hearTheWord': 'Ascolta la parola',
   'review.pinyinButton': 'Mostra pinyin',
+  'review.zhuyinButton': 'Mostra zhuyin',
+  'review.readingButton': 'Mostra lettura',
   'review.aboutWordButton': 'Info',
   'review.editWordButton': 'Modifica',
   'review.aboutThisWord': 'Info su questa parola',

@@ -7,7 +7,7 @@
 import { saveImport, randomId } from './db.js';
 import { readSkritterExport, describeSkritter, planSkritterImport, readyLevels, defaultListNames } from './skritterImport.js';
 import { READY_MADE_LISTS } from './decks.js';
-import { formatPinyin } from './wordList.js';
+import { showReading } from './readingStyle.js';
 import { fillMixed, langFor } from './lang.js';
 import { t, formatList } from './text.js';
 
@@ -180,7 +180,7 @@ export function createSkritterImport(shared, dictionaryLoader) {
           const rest = document.createElement('span');
           fillMixed(
             rest,
-            t('skritter.candidate', { pinyin: formatPinyin(candidate.pinyin), meaning: shortMeaning(candidate.definition) }),
+            t('skritter.candidate', { pinyin: showReading(candidate.pinyin), meaning: shortMeaning(candidate.definition) }),
             settings.script,
           );
           text.append(chinese, ' ', rest);

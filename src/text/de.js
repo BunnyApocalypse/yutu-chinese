@@ -35,6 +35,13 @@ export default {
   'settings.pronunciationBoth': 'Beide akzeptieren',
   'settings.pronunciationHint':
     'Einige Wörter werden in Taiwan und auf dem Festland unterschiedlich gelesen: <span lang="zh-Hant-TW">星期</span> ist in Taiwan xīngqí und auf dem Festland xīngqī (mehr zum <a href="https://en.wikipedia.org/wiki/Taiwanese_Mandarin" target="_blank" rel="noopener">Mandarin in Taiwan</a>). Die gewählte Lesung wird angezeigt und abgefragt. Bei Taiwan steht die Festlandlesung klein daneben, weil Wörterbücher die Wörter darunter einordnen. Bei „Beide akzeptieren“ zeigen die Karten beide Lesungen und akzeptieren jeden der Töne. Bei Festlandchina werden Taiwan-Lesungen nie angezeigt oder abgefragt.',
+  'settings.readingStyle': 'Lesungen in',
+  'settings.readingPinyin': 'Pinyin',
+  'settings.readingZhuyin': 'Zhuyin (注音)',
+  'settings.readingZhuyinPinyin': 'Zhuyin, dann Pinyin',
+  'settings.readingPinyinZhuyin': 'Pinyin, dann Zhuyin',
+  'settings.readingStyleHint':
+    'Wie Lesungen auf Karten, Wortseiten und in Listen geschrieben werden. <span lang="zh-Hant-TW">學校</span> ist in Pinyin xuéxiào, das die Laute mit dem lateinischen Alphabet schreibt, und in <a href="https://en.wikipedia.org/wiki/Bopomofo" target="_blank" rel="noopener">Zhuyin</a> (Bopomofo), den in Taiwan verwendeten Zeichen, <span lang="zh-Hant-TW">ㄒㄩㄝˊ ㄒㄧㄠˋ</span>. Bei beiden wird jede Lesung in beiden gezeigt, die zuerst genannte vorne. Zum Hinzufügen oder Suchen eines Wortes tippst du weiterhin Pinyin.',
   'settings.cardTypes': 'Kartentypen',
   'settings.cardTypeMeaning': 'Bedeutung: Wort sehen, die Bedeutung abrufen',
   'settings.cardTypePinyin': 'Pinyin: Wort sehen, die Lesung abrufen',
@@ -342,6 +349,8 @@ export default {
   'review.deckToStudy': 'Stapel zum Lernen',
   'review.hearTheWord': 'Wort anhören',
   'review.pinyinButton': 'Pinyin zeigen',
+  'review.zhuyinButton': 'Zhuyin zeigen',
+  'review.readingButton': 'Lesung zeigen',
   'review.aboutWordButton': 'Info',
   'review.editWordButton': 'Ändern',
   'review.aboutThisWord': 'Über dieses Wort',

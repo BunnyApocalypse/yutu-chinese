@@ -35,7 +35,8 @@
 - `src/dialogs.js`: pop-up panels that close with a tap beside them.
 - `src/basics.js`, `src/basicsSounds.js`: "Basics of Chinese", five screens for someone new to Chinese, and the recordings it plays (`docs/interface.md`).
 - `src/changes.js`, `src/whatsNew.js`, `src/feedback.js`: the list of what changed in each release (a new entry for every release), the "What's new" pop-up, and "Send feedback" (`docs/interface.md`).
-- `src/lang.js`: marks Chinese text with its language (`lang`) for screen readers and the regional font.
+- `src/lang.js`: marks Chinese text, and zhuyin, with its language (`lang`) for screen readers and the regional font.
+- `src/zhuyin.js`: numbered pinyin into zhuyin (plain calculation, `tests/zhuyin.test.js`); `src/readingStyle.js`: shows a reading in pinyin, zhuyin or both, as the setting says (`docs/words.md`, "Zhuyin"); `scripts/check-zhuyin.js`: checks the zhuyin against Wiktionary (run by hand).
 - `src/meaningFit.js`: fits the meaning above a card into its room (more lines where the screen allows, a size smaller, whole meanings left out from the end).
 - `src/text.js`: the interface's text by key (`t()`), dates and numbers in the language, and the page's own text filled in (`applyText`); `src/text/en.js` holds every English text, `src/text/it.js` and `de.js` the Italian and German (`docs/translations.md`), `src/text/pseudo.js` makes the test language (`docs/interface.md`, "Interface text and translations").
 - `src/theme.js`: the light or dark look (the "Look" setting); the colors themselves are named at the top of `src/style.css`.

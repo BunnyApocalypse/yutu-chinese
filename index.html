@@ -1238,6 +1238,20 @@
           <p id="pronunciation-hint" class="hint" hidden data-t-html="settings.pronunciationHint"></p>
         </div>
 
+        <div class="setting">
+          <span>
+            <label for="reading-style-select" data-t="settings.readingStyle"></label>
+            <button class="help-button" type="button" data-t-aria-label="settings.whatDoesThisDo" aria-expanded="false" aria-controls="reading-style-hint">?</button>
+          </span>
+          <select id="reading-style-select">
+            <option value="pinyin" data-t="settings.readingPinyin"></option>
+            <option value="zhuyin" data-t="settings.readingZhuyin"></option>
+            <option value="zhuyinPinyin" data-t="settings.readingZhuyinPinyin"></option>
+            <option value="pinyinZhuyin" data-t="settings.readingPinyinZhuyin"></option>
+          </select>
+          <p id="reading-style-hint" class="hint" hidden data-t-html="settings.readingStyleHint"></p>
+        </div>
+
         <fieldset class="setting">
           <legend data-t="settings.cardTypes"></legend>
           <label><input type="checkbox" data-card-type="meaning" /> <span data-t="settings.cardTypeMeaning"></span></label>

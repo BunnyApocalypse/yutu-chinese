@@ -878,6 +878,7 @@ async function startUp() {
       closeButton: byId('settings-close'),
       scriptSelect: byId('script-select'),
       pronunciationSelect: byId('pronunciation-select'),
+      readingStyleSelect: byId('reading-style-select'),
       handwritingSelect: byId('handwriting-select'),
       themeRadios: [...document.querySelectorAll('input[name="settings-theme"]')],
       lessonsCheckbox: byId('lessons-checkbox'),

@@ -17,7 +17,7 @@ import {
   countOtherMeanings,
 } from './ankiImport.js';
 import { isRadical } from './radicals.js';
-import { formatPinyin } from './wordList.js';
+import { showReading } from './readingStyle.js';
 import { CARD_TYPES } from './session.js';
 import { fillMixed } from './lang.js';
 import { t, formatList, formatAndList } from './text.js';
@@ -383,7 +383,7 @@ export function createAnkiImport(shared, dictionaryLoader) {
       }
       const { word } = result;
       // A radical has no reading of its own.
-      const reading = isRadical(word) ? t('anki.radical') : formatPinyin(word.pinyin);
+      const reading = isRadical(word) ? t('anki.radical') : showReading(word.pinyin);
       becomes.textContent = t('anki.becomesWord');
       const example = document.createElement('strong');
       fillMixed(example, `${word[settings.script]} ${reading} · ${word.definition}`, settings.script);

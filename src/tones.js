@@ -12,7 +12,7 @@
 // if present, its Taiwan reading. The "tone table" used below is
 // data/cedict/tones.json (see the README in that folder).
 
-import { formatPinyin } from './wordList.js';
+import { showReading } from './readingStyle.js';
 import { t } from './text.js';
 // speechPlan.js imports splitSyllables from here too; that is fine, since
 // neither function is called while the files are being loaded.
@@ -57,13 +57,16 @@ export function readingsFor(word, pronunciation, table) {
 }
 
 // Turns the result of readingsFor into text for the page:
-//   main:  the expected reading with tone marks, e.g. "xīngqí"
+//   main:  the expected reading as the learner chose to see it
+//          (readingStyle.js), e.g. "xīngqí" or "ㄒㄧㄥ ㄑㄧˊ"
 //   other: the other region's reading with its label, e.g. "mainland: xīngqī",
 //          or null if there is none
+// Either may have zhuyin in it, so it goes on the page with fillReading
+// (lang.js).
 export function describeReading(reading) {
   return {
-    main: formatPinyin(reading.primary),
-    other: reading.other ? `${reading.otherLabel}: ${formatPinyin(reading.other)}` : null,
+    main: showReading(reading.primary),
+    other: reading.other ? `${reading.otherLabel}: ${showReading(reading.other)}` : null,
   };
 }
 

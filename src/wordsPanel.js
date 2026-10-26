@@ -28,6 +28,7 @@ import { createSkritterImport } from './skritterImportForm.js';
 import { createAddWordForm } from './addWordForm.js';
 import { charactersElement, mixedSpan, entryRow, whenHeld } from './wordRows.js';
 import { fillMixed } from './lang.js';
+import { showReading } from './readingStyle.js';
 import { lapsesOf } from './leeches.js';
 import { findLeeches, describeLeech, describeSuspended, leechList, leechPrompt } from './leeches.js';
 import {
@@ -599,7 +600,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
       button.className = 'word-entry';
       button.append(
         charactersElement(word, getSettings()),
-        span('entry-pinyin', formatPinyin(word.pinyin)),
+        mixedSpan('entry-pinyin', showReading(word.pinyin), scriptFor(word, getSettings())),
         mixedSpan('entry-definition', word.definition, scriptFor(word, getSettings())),
       );
       // A word that is in a deck inside this one is marked with that deck.

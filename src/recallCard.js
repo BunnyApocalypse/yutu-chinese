@@ -2,6 +2,7 @@
 // reading, tap to see the answer, and grade yourself.
 
 import { describeReading } from './tones.js';
+import { fillReading } from './lang.js';
 import { faceArrow, BACK } from './faceArrow.js';
 import { t } from './text.js';
 import { freshTaps } from './freshTap.js';
@@ -15,6 +16,13 @@ function paragraph(className, text) {
   const element = document.createElement('p');
   element.className = className;
   element.textContent = text;
+  return element;
+}
+
+// A paragraph with a reading in it, its zhuyin marked as Chinese (lang.js).
+function readingParagraph(className, text) {
+  const element = paragraph(className, '');
+  fillReading(element, text);
   return element;
 }
 
@@ -33,9 +41,9 @@ export function createRecallCard(cardFace) {
   function showAnswer() {
     const { word, reading } = current;
     const described = describeReading(reading);
-    const pinyin = [paragraph('face-pinyin', described.main)];
+    const pinyin = [readingParagraph('face-pinyin', described.main)];
     if (described.other) {
-      pinyin.push(paragraph('face-hint', described.other));
+      pinyin.push(readingParagraph('face-hint', described.other));
     }
     const meaning = paragraph('face-meaning', word.definition);
     // Always the word, its pinyin, its meaning, as on the word's page and
@@ -90,7 +98,7 @@ export function createRecallCard(cardFace) {
       const wordElement = paragraph(Array.from(text).length > 6 ? 'face-word long' : 'face-word', text);
       // Tells the browser which regional font to use for the characters.
       wordElement.lang = options.script === 'traditional' ? 'zh-Hant-TW' : 'zh-Hans-CN';
-      const reading = options.showReading ? [paragraph('face-pinyin', describeReading(options.reading).main)] : [];
+      const reading = options.showReading ? [readingParagraph('face-pinyin', describeReading(options.reading).main)] : [];
       cardFace.replaceChildren(wordElement, ...reading, paragraph('face-hint', t(HINTS[options.ask])));
       if (options.backToCard) {
         const back = faceArrow('recall-back-button', t('write.backToCard'), BACK);

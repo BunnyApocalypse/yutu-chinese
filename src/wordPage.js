@@ -14,8 +14,9 @@
 // opened and saved for offline use with the other big files.
 
 import { formatPinyin, wordId } from './wordList.js';
+import { showReading } from './readingStyle.js';
 import { scriptFor } from './words.js';
-import { langFor, fillMixed } from './lang.js';
+import { langFor, fillMixed, fillReading } from './lang.js';
 import { t } from './text.js';
 import { closeOnTapBeside } from './dialogs.js';
 import { readingsFor, describeReading } from './tones.js';
@@ -228,14 +229,18 @@ export function createWordPage({
       heading.append(characters);
     });
     const line = element('div', 'page-reading');
-    line.append(element('span', 'entry-pinyin', reading));
+    const readingElement = element('span', 'entry-pinyin');
+    fillReading(readingElement, reading);
+    line.append(readingElement);
     // (A radical with no reading has nothing to speak: see radicals.js.)
     if (settings.sound !== 'off' && speakable) {
       line.append(loudspeaker(speakable.word, speakable.reading));
     }
     heading.append(line);
     if (other) {
-      heading.append(element('p', 'hint', other));
+      const otherElement = element('p', 'hint');
+      fillReading(otherElement, other);
+      heading.append(otherElement);
     }
     return heading;
   }
@@ -469,7 +474,11 @@ export function createWordPage({
       readingSelect = element('select', 'deck-select');
       readingSelect.setAttribute('aria-label', t('page.whichReading'));
       entries.forEach((entry, index) => {
-        const option = element('option', '', formatPinyin(entry.pinyin));
+        // An option can't hold a marked part, so zhuyin marks the whole of it.
+        const option = element('option', '', showReading(entry.pinyin));
+        if (/[\u3105-\u312f]/u.test(option.textContent)) {
+          option.lang = langFor('traditional');
+        }
         option.value = String(index);
         readingSelect.append(option);
       });
@@ -629,11 +638,11 @@ export function createWordPage({
       const speakable = first
         ? { word: first, reading: first.pinyin }
         : { word: { simplified: target.text, traditional: target.text, pinyin: '' }, reading: '' };
-      parts.push(showHeading(forms, first ? formatPinyin(first.pinyin) : '', null, speakable));
+      parts.push(showHeading(forms, first ? showReading(first.pinyin) : '', null, speakable));
       // Every reading the dictionary has, each with its meanings.
       for (const entry of entries) {
         const meaning = element('p', 'page-meaning');
-        fillMixed(meaning, `${formatPinyin(entry.pinyin)}: ${entry.meanings.join('; ')}`, script);
+        fillMixed(meaning, `${showReading(entry.pinyin)}: ${entry.meanings.join('; ')}`, script);
         parts.push(meaning);
       }
       if (entries.length > 0) {

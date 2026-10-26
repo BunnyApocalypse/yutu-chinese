@@ -7,7 +7,8 @@
 // - everything that can be tapped is at least 24px by 24px (WCAG 2.2, AA);
 // - everything that can be tapped has a name a screen reader can say;
 // - Chinese text is marked as Chinese (lang.js), or a screen reader reads
-//   it with an English voice.
+//   it with an English voice; zhuyin too, with readings shown in it (the
+//   last test).
 // Not checked here: what a screen reader actually says, and the order Tab
 // goes through things. Those need a person.
 //
@@ -96,8 +97,8 @@ const CHECK = `(() => {
         failures.push('text contrast ' + ratio.toFixed(2) + ': ' + describe(element));
       }
     }
-    // Chinese marked as Chinese.
-    if (/\\p{Script=Han}/u.test(ownText) && !element.closest('[lang]').lang.startsWith('zh')) {
+    // Chinese marked as Chinese, zhuyin too (readingStyle.js).
+    if (/[\\p{Script=Han}\\p{Script=Bopomofo}]/u.test(ownText) && !element.closest('[lang]').lang.startsWith('zh')) {
       failures.push('Chinese not marked as Chinese: ' + describe(element));
     }
   }
@@ -357,6 +358,31 @@ describe('accessibility', { concurrency: false }, () => {
     await setStreaks(true);
     await check('Settings, streaks on');
     await setStreaks(false);
+    await tap(page, 'settings-close');
+  });
+
+  it('readings in zhuyin and pinyin: the Words tab, a word\'s page, a lesson', async () => {
+    const choose = (style) =>
+      page.evaluate(`(() => {
+        const select = document.getElementById('reading-style-select');
+        select.value = '${style}';
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      })()`);
+    await openSettings(page, 'settings-learning');
+    await choose('zhuyinPinyin');
+    await tap(page, 'settings-close');
+    await tap(page, 'words-tab');
+    await waitUntil(page, `/[\\u3105-\\u312f]/u.test(document.querySelector('#word-list .entry-pinyin')?.textContent ?? '')`, 'the words in zhuyin');
+    await check('the Words tab in zhuyin');
+    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await waitUntil(page, `document.getElementById('word-page').open && document.querySelector('#word-page .page-reading')`, "the word's page");
+    await check("a word's page in zhuyin");
+    await page.evaluate(`document.getElementById('word-page').close()`);
+    await openLearn(page);
+    await waitUntil(page, `document.querySelector('#card-face .face-pinyin')`, 'the first look at a word');
+    await check('a lesson in zhuyin');
+    await openSettings(page, 'settings-learning');
+    await choose('pinyin');
     await tap(page, 'settings-close');
   });
 

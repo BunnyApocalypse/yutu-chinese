@@ -27,12 +27,22 @@ import {
 } from './session.js';
 import { toneAnswers, readingsFor, describeReading } from './tones.js';
 import { scriptFor, scriptFlagFor } from './words.js';
-import { fillMixed } from './lang.js';
+import { fillMixed, fillReading } from './lang.js';
+import { readingStyle } from './readingStyle.js';
 import { meaningWithoutChinese } from './dictionary.js';
 
 // Marks where Chinese was left out of a meaning until the box takes its
 // place (a character for private use, never in a dictionary's text).
 const GAP_MARK = '\uE000';
+
+// The button that shows the reading on a writing card, named by how readings
+// are shown (readingStyle.js).
+const PINYIN_BUTTON = {
+  pinyin: 'review.pinyinButton',
+  zhuyin: 'review.zhuyinButton',
+  zhuyinPinyin: 'review.readingButton',
+  pinyinZhuyin: 'review.readingButton',
+};
 import { isLeech, lapsesOf, isSuspended, withSuspended, becameLeech } from './leeches.js';
 import { speak } from './speech.js';
 import { markedKnown, withStartedOver } from './cardManager.js';
@@ -306,13 +316,32 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     );
   }
 
+  // A word's reading keeps to one line above the writing area, which would
+  // move down if it took two (docs/pitfalls.md): in zhuyin and pinyin both,
+  // with the other region's reading beside it, it can be too long for a
+  // phone (2026-10-26). Then the other region's reading is left out, then
+  // the reading is a size smaller (in a span, so the line keeps its
+  // height), and only then cut short with "…". A sentence's may wrap.
   function showPinyin() {
     const described = describeReading(readingOf(current.word));
-    pinyinElement.textContent = described.other
-      ? `${described.main} (${described.other})`
-      : described.main;
+    const text = document.createElement('span');
+    pinyinElement.replaceChildren(text);
+    const oneLine = !isSentence(current.word);
+    pinyinElement.classList.toggle('one-line', oneLine);
+    pinyinElement.classList.remove('smaller');
     pinyinElement.hidden = false;
     pinyinButton.hidden = true;
+    // Measured with the line on show: scrollWidth is how wide the text
+    // would be, clientWidth the room (a pixel allowed for rounding).
+    const fits = () => pinyinElement.scrollWidth <= pinyinElement.clientWidth + 1;
+    const tries = described.other ? [`${described.main} (${described.other})`, described.main] : [described.main];
+    for (const shown of tries) {
+      fillReading(text, shown);
+      if (!oneLine || fits()) {
+        return;
+      }
+    }
+    pinyinElement.classList.add('smaller');
   }
 
   pinyinButton.addEventListener('click', showPinyin);
@@ -1044,6 +1073,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     showPrompt(asked.prompt);
     // Kept for looking back at the card (the sentence shown in full then).
     current.withSentence = Boolean(asked.prompt);
+    // "Show pinyin", "Show zhuyin" or, with both, "Show reading".
+    pinyinButton.textContent = t(PINYIN_BUTTON[readingStyle()]);
     pinyinButton.hidden = false;
 
     // What to save about a written word.
@@ -1351,10 +1382,15 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // Tells the browser which regional font to use for the characters.
       characters.lang = script === 'traditional' ? 'zh-Hant-TW' : 'zh-Hans-CN';
       const described = describeReading(readingOf(word));
+      const reading = (className, text) => {
+        const element = face(className, '');
+        fillReading(element, text);
+        return element;
+      };
       cardFace.replaceChildren(
         characters,
-        face('face-pinyin', described.main),
-        ...(described.other ? [face('face-hint', described.other)] : []),
+        reading('face-pinyin', described.main),
+        ...(described.other ? [reading('face-hint', described.other)] : []),
         face('face-meaning', word.definition),
       );
       // The word's learning tip, so that every word's is seen once, as it is
