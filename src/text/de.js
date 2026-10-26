@@ -299,6 +299,7 @@ export default {
   'main.loading': 'Wird geladen…',
 
   // Backups in Settings (main.js)
+  'backup.making': 'Sicherung wird erstellt …',
   'backup.saved':
     'Gespeichert in deinen Downloads als {name}. Bewahre auch eine Kopie außerhalb dieses Geräts auf (eine Cloud oder per E-Mail an dich selbst). Um sie zurückzuholen, hier oder auf einem neuen Gerät, nutze „Sicherung importieren“.',
   'backup.remindAgain': 'Wieder an Sicherungen erinnern',

@@ -562,12 +562,25 @@ function downloadBackup(backup, label = '') {
 }
 
 exportButton.addEventListener('click', async () => {
-  const name = downloadBackup(await buildBackup());
+  const saved = byId('export-done');
+  // Said at once, and the button put away until done (the owner,
+  // 2026-10-26: on the tablet a tap seemed to do nothing for seconds, with
+  // 186,000 reviews to read and write out). The work holds up the page, so
+  // the browser is given a moment to show this first (two frames: one to
+  // lay it out, one to paint it).
+  exportButton.disabled = true;
+  saved.textContent = t('backup.making');
+  saved.hidden = false;
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  let name;
+  try {
+    name = downloadBackup(await buildBackup());
+  } finally {
+    exportButton.disabled = false;
+  }
   // Where the file went and what it is for: a backup left on the same
   // device is lost with it (roadmap item 7, data safety seen by a stranger).
-  const saved = byId('export-done');
   saved.textContent = t('backup.saved', { name });
-  saved.hidden = false;
   // When a backup was last made on this device, for the reminder below.
   await setSetting('lastBackupAt', Date.now());
   showBackupStatus();

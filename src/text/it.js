@@ -299,6 +299,7 @@ export default {
   'main.loading': 'Caricamento…',
 
   // Backups in Settings (main.js)
+  'backup.making': 'Creazione del backup…',
   'backup.saved':
     'Salvato nei tuoi download come {name}. Tieni una copia anche fuori da questo dispositivo (un cloud, o mandala a te stesso via email). Per recuperarlo, qui o su un nuovo dispositivo, usa Importa backup.',
   'backup.remindAgain': 'Ricordami di nuovo i backup',

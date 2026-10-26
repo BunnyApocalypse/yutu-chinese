@@ -305,6 +305,8 @@ export default {
   'main.loading': 'Loading…',
 
   // Backups in Settings (main.js)
+  // Under Export backup while the file is being made
+  'backup.making': 'Making the backup…',
   'backup.saved':
     'Saved to your downloads as {name}. Keep a copy off this device too (a cloud drive, or email it to yourself). To bring it back, here or on a new device, use Import backup.',
   'backup.remindAgain': 'Remind me about backups again',

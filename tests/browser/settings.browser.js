@@ -520,8 +520,15 @@ describe('settings', { concurrency: false }, () => {
     })()`);
     await openSettings(page, 'settings-data');
     assert.match(await textOf(page, 'backup-status'), /^No backup has been made on this device yet\./);
-    await tap(page, 'export-button');
+    // Said at once, before the work (the owner, 2026-10-26: a tap seemed to
+    // do nothing for seconds): read in the same moment as the tap.
+    const atTap = await page.evaluate(`(() => {
+      document.getElementById('export-button').click();
+      return [document.getElementById('export-done').textContent, document.getElementById('export-button').disabled];
+    })()`);
+    assert.deepEqual(atTap, ['Making the backup…', true]);
     await waitUntil(page, `window.savedBackup !== undefined && window.savedName !== undefined`, 'the backup file');
+    await waitUntil(page, `!document.getElementById('export-button').disabled`, 'the button back');
     assert.match(await page.evaluate('window.savedName'), /^yutu-chinese-backup-\d{4}-\d\d-\d\d-\d{4}\.json$/);
     const backup = JSON.parse(await page.evaluate('window.savedBackup.text()'));
     assert.equal(backup.format, 'hanzi-trainer-backup');
