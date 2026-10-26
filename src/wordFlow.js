@@ -690,9 +690,10 @@ export function createWordFlow(elements) {
     // Its text grows with it above a phone's size (style.css, .card-face).
     document.documentElement.style.setProperty('--face-zoom', String(Math.max(1, size / FACE_BASE)));
     // Where the screen is taller than the card needs, the meaning above it
-    // may take more lines (meaningFit.js), and the card is moved down by half
-    // the room still left over, so that it sits in the middle (the owner,
-    // 2026-10-25). Fixed amounts, worked out here with the size: centering
+    // may take more lines (meaningFit.js), and the card is moved down by a
+    // third of the room still left over, so that it sits a little above the
+    // middle (the owner, 2026-10-25; a third rather than half, 2026-10-26:
+    // in the middle it felt low on the tablet). Fixed amounts, worked out here with the size: centering
     // by the style sheet moved the area whenever the grades came up, and
     // took the kind of card away from the corner. In two columns the meaning
     // is beside the area, and only a window too short for the column (a
@@ -709,7 +710,7 @@ export function createWordFlow(elements) {
     const extraMax = MEANING_EXTRA_MAX * meaningZoom;
     const extra = wide ? (window.innerHeight >= 640 ? extraMax : 0) : Math.min(spare, extraMax);
     document.documentElement.style.setProperty('--meaning-extra', `${extra}px`);
-    document.documentElement.style.setProperty('--card-offset', `${wide ? 0 : Math.floor((spare - extra) / 2)}px`);
+    document.documentElement.style.setProperty('--card-offset', `${wide ? 0 : Math.floor((spare - extra) / 3)}px`);
     drawGrid(writingArea, size);
     quiz = createQuiz(writingArea, size, quizHandlers);
     quiz.setOutlineVisible(outlineVisible);

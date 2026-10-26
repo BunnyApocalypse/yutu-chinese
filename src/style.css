@@ -721,9 +721,9 @@ main.focused #study-back-label {
 }
 
 /* On a screen taller than the card needs, everything under the kind of card
-   is moved down by half the room left over (--card-offset, set by
-   wordFlow.js), so that the card sits in the middle while the kind of card
-   stays in the corner (the owner, 2026-10-25). A fixed amount for the
+   is moved down by a third of the room left over (--card-offset, set by
+   wordFlow.js), so that the card sits a little above the middle while the
+   kind of card stays in the corner (the owner, 2026-10-25 and 2026-10-26). A fixed amount for the
    screen: nothing moves within a card. The room the meaning above the card
    doesn't use is added too (--meaning-unused, meaningFit.js), so the card
    is in the same place whatever the meaning's length. */
