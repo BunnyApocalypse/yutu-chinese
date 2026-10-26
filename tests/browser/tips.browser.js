@@ -118,7 +118,7 @@ describe('tips', { concurrency: false }, () => {
     // when a character of a word of several is first judged (wordFlow.js).
     // It goes above the row of boxes, leaving the writing area clear.
     await page.evaluate(`document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'verdict' }))`);
-    await waitUntil(page, tipSays('Tap a character\'s box'), 'the verdict tip');
+    await waitUntil(page, tipSays('Tap the writing area to go on'), 'the verdict tip');
     assert.deepEqual(await page.evaluate(besideOf('#word-row')), ['above', 10]);
     // Switching tips off takes away the one on screen.
     await tap(page, 'settings-button');

@@ -483,8 +483,14 @@ describe('grading in Review', { concurrency: false }, () => {
     assert.deepEqual(await state(), [['✕ 大 missed', 'false'], ['✓ 大 right', 'true']]);
     assert.ok(await page.evaluate(`document.querySelector('#word-row .slot').classList.contains('passed')`));
 
-    // On to 小: the buttons go, and after it the grades take their place.
-    await tap(page, 'next-button');
+    // No Next button between characters (the owner, 2026-10-26); the ›
+    // arrow says it goes on. Enter on a keyboard, as a tap on the area: on
+    // to 小. The buttons go, and after it the grades take their place.
+    assert.equal(await isShown(page, 'next-button'), false);
+    assert.equal(await page.evaluate(`document.getElementById('skip-button').getAttribute('aria-label')`), 'Next character');
+    for (const type of ['keyDown', 'keyUp']) {
+      await page.send('Input.dispatchKeyEvent', { type, key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
+    }
     await waitUntil(page, `document.getElementById('verdict-row').hidden`, 'the verdict buttons to go');
     await waitForFirstStroke();
     for (const median of loadStrokeData('小').medians) {
@@ -563,7 +569,7 @@ describe('grading in Review', { concurrency: false }, () => {
       await drawStroke(page, area, median);
     }
     await waitUntil(page, `!document.getElementById('verdict-row').hidden`, 'the verdict buttons');
-    await tap(page, 'next-button');
+    await tap(page, 'skip-button');
     await write('小');
     assert.equal(await page.evaluate(SUGGESTED), 'Again');
     await chooseGrade('Again');
@@ -708,7 +714,7 @@ describe('grading in Review', { concurrency: false }, () => {
     for (const median of loadStrokeData('大').medians) {
       await drawStroke(page, area, median);
     }
-    await tap(page, 'next-button');
+    await tap(page, 'skip-button');
     await waitForFirstStroke();
     // Back to 大, written again as practice.
     await tap(page, 'back-button');
@@ -747,7 +753,10 @@ describe('grading in Review', { concurrency: false }, () => {
     for (const median of loadStrokeData('大').medians) {
       await drawStroke(page, area, median);
     }
-    await tap(page, 'next-button');
+    // → on a keyboard, as the › arrow.
+    for (const type of ['keyDown', 'keyUp']) {
+      await page.send('Input.dispatchKeyEvent', { type, key: 'ArrowRight', code: 'ArrowRight', windowsVirtualKeyCode: 39 });
+    }
     await waitForFirstStroke();
     // 小 starts without the outline, and so isn't counted as peeked.
     assert.equal(await textOf(page, 'outline-button'), 'Show outline');

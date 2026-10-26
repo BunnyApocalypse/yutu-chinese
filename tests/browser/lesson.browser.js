@@ -435,7 +435,7 @@ describe('learning new words', { concurrency: false }, () => {
     await waitForFirstStroke();
     assert.equal(await page.evaluate(arrowShown('back-button')), false);
     await write('小');
-    await tap(page, 'next-button');
+    await tap(page, 'skip-button');
     // 孩, with one wrong stroke; then back to 小, which is there to go to.
     await waitForFirstStroke();
     const area = await writingArea(page);

@@ -524,6 +524,8 @@ export default {
   'write.practiceStatus': 'Practice · {status}',
   'write.watch': 'Watch the stroke order…',
   'write.skipped': 'Skipped',
+  // The › arrow's name on a character already written (it goes on)
+  'write.nextCharacter': 'Next character',
   'write.onTry': '{ordinal} try',
   'write.wordDone': 'Word done · {status}',
   'write.wordDoneAlone': 'Word done',
@@ -1321,7 +1323,7 @@ export default {
   'tips.gotIt': 'Got it',
   'tips.grades': 'How was this card? Choose, or tap the card to take the suggestion.',
   'tips.lesson': 'Already know a word? "I know this word" skips its lesson.',
-  'tips.verdict': "Tap a character's box if the app judged it wrong.",
+  'tips.verdict': "Tap the writing area to go on, or a character's box if the app judged it wrong.",
   'tips.gestures': 'Hold still on the writing area for a hint; swipe up quickly to start again.',
   'tips.menu': 'Everything else is in the menu, ☰ at the top left.',
   'tips.decks': 'Tap a deck to study it; › for its words and settings.',

@@ -311,8 +311,15 @@ export function createWordFlow(elements) {
   // full word before returning to 孩"). Written ones are practiced again
   // there, which changes nothing (see practicing); a skipped one is written
   // after all. Until 2026-10-17 it only undid a skip.
+  //
+  // Since there is no Next button between characters (2026-10-26), › on a
+  // written character goes where a tap on the area goes: to the next one
+  // still to write, while there is one (goOn).
   function canSkip() {
-    return finishedPerChar[position] ? position < chars.length - 1 : !charDone && chars.length > 1;
+    if (finishedPerChar[position]) {
+      return !wordFinished() || position < chars.length - 1;
+    }
+    return !charDone && chars.length > 1;
   }
 
   // The character the back arrow goes to, or -1 if there is none: the one
@@ -346,6 +353,10 @@ export function createWordFlow(elements) {
 
   function showArrows() {
     skipButton.classList.toggle('unavailable', !canSkip());
+    // Named for what it does now: on, or skipping the one being written.
+    const onward = Boolean(finishedPerChar[position]);
+    skipButton.setAttribute('aria-label', t(onward ? 'write.nextCharacter' : 'study.skipThisCharacter'));
+    skipButton.title = t(onward ? 'write.nextCharacter' : 'study.skipThisCharacterCounts');
     backButton.classList.toggle('unavailable', !canGoBack());
     const label = t(backTarget() === -1 && canGoBackACard() ? 'write.backToCard' : 'write.backToCharacter');
     backButton.setAttribute('aria-label', label);
@@ -460,11 +471,9 @@ export function createWordFlow(elements) {
         statusElement.textContent = options.hideMistakes
           ? t('write.practice')
           : t('write.practiceStatus', { status: describeMistakes(totalMistakes, true) });
-        // Back to the character still being written, as after a real one.
-        if (!wordFinished()) {
-          nextButton.textContent = t('study.nextButton');
-          nextButton.hidden = false;
-        }
+        // Back to the character still being written: a tap on the area, ›,
+        // or a key (goOn), as after a real one.
+        showArrows();
         renderVerdictButtons();
         // The printed character keeps the color of the verdict that stands.
         return passedPerChar[position];
@@ -521,9 +530,10 @@ export function createWordFlow(elements) {
           ? ` · ${t('write.onTry', { ordinal: ordinal(retriesPerChar[position] + 1) })}`
           : '');
 
+    // On to the next character: a tap on the area, ›, or a key (goOn). No
+    // Next button (the owner, 2026-10-26: it felt vestigial).
     if (!wordFinished()) {
-      nextButton.textContent = t('study.nextButton');
-      nextButton.hidden = false;
+      showArrows();
       return;
     }
     if (chars.length > 1) {
@@ -544,7 +554,7 @@ export function createWordFlow(elements) {
       return;
     }
     if (finishedPerChar[position]) {
-      goTo(position + 1);
+      goTo(wordFinished() ? position + 1 : nextUnfinished());
       return;
     }
     skippedPerChar[position] = true;
@@ -739,9 +749,42 @@ export function createWordFlow(elements) {
     // character gone back to while the word is unfinished, it goes on to
     // the one still to be written, as Next does (the owner, 2026-10-21:
     // the tap had stopped working there, leaving only the arrow).
-    const canGoOn = !practicing || !wordFinished();
-    if (writingArea.contains(event.target) && charDone && canGoOn && taps.isFresh()) {
+    if (writingArea.contains(event.target) && canGoOn() && taps.isFresh()) {
       goOn();
+    }
+  });
+
+  // Whether a tap on the area (or Enter) goes on now: once the character is
+  // written; while practicing a finished word, never, as a tap there never
+  // grades.
+  function canGoOn() {
+    return charDone && (!practicing || !wordFinished());
+  }
+
+  // On a keyboard (the owner, 2026-10-26, with the Next button gone): Enter
+  // or Space as a tap on the area, → as the › arrow on a written character
+  // (never skipping one not yet written), ← as the ‹ arrow. Only while the
+  // writing area is on screen, no pop-up is open, nothing is being typed and
+  // no button has the focus (there Enter and Space press it).
+  document.addEventListener('keydown', (event) => {
+    if (chars.length === 0 || writingArea.parentElement.offsetParent === null) {
+      return;
+    }
+    if (event.ctrlKey || event.altKey || event.metaKey || event.repeat || document.querySelector('dialog[open]')) {
+      return;
+    }
+    if (event.target.closest?.('input, select, textarea, button, a, [contenteditable]')) {
+      return;
+    }
+    if ((event.key === 'Enter' || event.key === ' ') && canGoOn()) {
+      event.preventDefault(); // Space would scroll the page
+      goOn();
+    } else if (event.key === 'ArrowRight' && finishedPerChar[position] && canSkip()) {
+      event.preventDefault();
+      skipChar();
+    } else if (event.key === 'ArrowLeft' && canGoBack()) {
+      event.preventDefault();
+      goBack();
     }
   });
 
