@@ -505,7 +505,10 @@ describe('learning new words', { concurrency: false }, () => {
     assert.equal(await page.evaluate(shownArrow('tone-skip-button')), true);
     // 小 answered wrong, then back to it: practice, answered right.
     await toneButton(1);
-    await page.evaluate(`document.getElementById('tone-next-button').click()`);
+    // Enter goes on, as a tap on the card (no Next button since 2026-10-26).
+    for (const type of ['keyDown', 'keyUp']) {
+      await page.send('Input.dispatchKeyEvent', { type, key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
+    }
     await waitUntil(page, asked('Tone of 孩 (2 of 2)'), '孩');
     await new Promise((resolve) => setTimeout(resolve, 350)); // touches are ignored at first
     await page.evaluate(`document.getElementById('tone-back-button').click()`);

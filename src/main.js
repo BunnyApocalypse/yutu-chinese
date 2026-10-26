@@ -83,7 +83,6 @@ const toneFlow = createToneFlow({
   wordRow: byId('word-row'),
   statusElement: byId('status'),
   toneButtons: [...document.querySelectorAll('#tone-buttons [data-tone]')],
-  nextButton: byId('tone-next-button'),
   // "What are tones?" on the card: the basics at its screen on tones.
   onWhatAreTones: () => basics.open('tones'),
 });

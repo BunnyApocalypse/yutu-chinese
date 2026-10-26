@@ -525,6 +525,7 @@ export default {
 
   // Tone cards (toneFlow.js)
   'tone.skip': 'Salta questo carattere (conta come giusto)',
+  'tone.goOn': 'Avanti',
   'tone.whatAreTones': 'Cosa sono i toni?',
   'tone.drawHere': 'Disegnane uno qui',
   'tone.orButtonsLeft': 'oppure usa i pulsanti a sinistra',

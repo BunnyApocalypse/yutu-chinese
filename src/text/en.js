@@ -534,6 +534,8 @@ export default {
 
   // Tone cards (toneFlow.js)
   'tone.skip': 'Skip this character (counts as right)',
+  // The › arrow on a tone card once a tone was wrong
+  'tone.goOn': 'Go on',
   'tone.whatAreTones': 'What are tones?',
   'tone.drawHere': 'Draw one of these here',
   'tone.orButtonsLeft': 'or use the buttons on the left',

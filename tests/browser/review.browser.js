@@ -672,7 +672,10 @@ describe('grading in Review', { concurrency: false }, () => {
     await giveTone(4, 1);
     await giveTone(1, 2);
     assert.deepEqual(await slotClasses(), [['BUTTON', 'passed'], ['BUTTON', 'missed']]);
-    await tap(page, 'tone-next-button');
+    // No Next button: › goes on, here named so (the owner, 2026-10-26).
+    assert.equal(await page.evaluate(`document.getElementById('tone-next-button')`), null);
+    assert.equal(await page.evaluate(`document.getElementById('tone-skip-button').getAttribute('aria-label')`), 'Go on');
+    await tap(page, 'tone-skip-button');
     await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
     assert.equal(await page.evaluate(SUGGESTED), 'Again');
 

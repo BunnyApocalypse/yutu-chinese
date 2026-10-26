@@ -68,13 +68,12 @@ function exampleMarks() {
 // elements: the page elements the tone card uses:
 //   cardFace, wordRow, statusElement,
 //   toneButtons (the list of five tone buttons; each has a data-tone attribute),
-//   nextButton,
 //   onWhatAreTones (called by "What are tones?" on the card: main.js opens
 //   "Basics of Chinese" at its screen on tones)
 //
 // Returns { start, stop }.
 export function createToneFlow(elements) {
-  const { cardFace, wordRow, statusElement, toneButtons, nextButton, onWhatAreTones } = elements;
+  const { cardFace, wordRow, statusElement, toneButtons, onWhatAreTones } = elements;
 
   // What the card on screen needs; null when no tone card is showing.
   let current = null;
@@ -138,7 +137,11 @@ export function createToneFlow(elements) {
     const label = t(position === 0 ? 'write.backToCard' : 'write.backToCharacter');
     backArrow.setAttribute('aria-label', label);
     backArrow.title = label;
-    skipArrow.classList.toggle('unavailable', !(state === 'asking' && chars.length > 1));
+    skipArrow.classList.toggle('unavailable', !((state === 'asking' && chars.length > 1) || state === 'wrong'));
+    // After a wrong tone it goes on, in a word of one character too.
+    const skipLabel = t(state === 'wrong' ? 'tone.goOn' : 'tone.skip');
+    skipArrow.setAttribute('aria-label', skipLabel);
+    skipArrow.title = skipLabel;
   }
 
   // Drawing the tone mark. The "ink" is a see-through layer over the card
@@ -253,7 +256,6 @@ export function createToneFlow(elements) {
   // Puts the next character up and asks for its tone.
   function ask() {
     state = 'asking';
-    nextButton.hidden = true;
     renderWordRow();
     clearTimeout(clearInkTimer);
     showInk([]);
@@ -300,6 +302,10 @@ export function createToneFlow(elements) {
   // answer yet. Not on the result once all are answered (the arrows are
   // only on a question).
   function skip() {
+    if (current && state === 'wrong') {
+      moveOn();
+      return;
+    }
     if (!current || state !== 'asking' || chars.length < 2) {
       return;
     }
@@ -361,7 +367,6 @@ export function createToneFlow(elements) {
     state = 'done';
     practicing = false;
     taps.mark();
-    nextButton.hidden = true;
     renderWordRow();
     showResult();
     if (doneOnce) {
@@ -417,7 +422,10 @@ export function createToneFlow(elements) {
       state = 'wrong';
       taps.mark();
       statusElement.textContent = t('tone.not', { tone: TONE_LABELS[tone] });
-      nextButton.hidden = false;
+      // No Next button (the owner, 2026-10-26, as on a writing card): a tap
+      // on the card goes on, or › (here "Go on"), or Enter.
+      cardFace.append(skipArrow);
+      showArrows();
     }
   }
 
@@ -478,9 +486,34 @@ export function createToneFlow(elements) {
     button.addEventListener('click', () => answer(Number(button.dataset.tone)));
   }
 
-  nextButton.addEventListener('click', () => {
-    if (current && state === 'wrong') {
+  // On a keyboard, as on a writing card (wordFlow.js): Enter or Space as a
+  // tap on the card, → as › once a tone was wrong (never skipping one not
+  // answered), ← as ‹. Only while the card is on screen, no pop-up is open,
+  // nothing is being typed and no button has the focus.
+  document.addEventListener('keydown', (event) => {
+    if (!current || cardFace.offsetParent === null || cardFace.hidden) {
+      return;
+    }
+    if (event.ctrlKey || event.altKey || event.metaKey || event.repeat || document.querySelector('dialog[open]')) {
+      return;
+    }
+    if (event.target.closest?.('input, select, textarea, button, a, [contenteditable]')) {
+      return;
+    }
+    if (event.key === 'Enter' || event.key === ' ') {
+      if (state === 'wrong' || state === 'right') {
+        event.preventDefault(); // Space would scroll the page
+        moveOn();
+      } else if (state === 'done') {
+        event.preventDefault();
+        current.onContinue();
+      }
+    } else if (event.key === 'ArrowRight' && state === 'wrong') {
+      event.preventDefault();
       moveOn();
+    } else if (event.key === 'ArrowLeft' && state === 'asking') {
+      event.preventDefault();
+      goBack();
     }
   });
 
