@@ -13,6 +13,33 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-10-26',
+    items: [
+      'Readings can be shown in zhuyin, or in zhuyin and pinyin together: "Readings in" in Settings › Chinese.',
+      'The app says "Loading…" while it opens, and the first card comes up sooner when you have a long history.',
+      'Tone cards move on faster: answer the next tone during the green pause, or tap the card to go on at once.',
+      'No Next button between the characters of a word or after a wrong tone: tap the writing area or the card, or use ›. On a keyboard, Enter or Space go on, and the arrow keys move between characters.',
+      'A card you keep forgetting says "Leech" beside its kind once answered; tap it for the word\'s page, where you can suspend the card. Nothing is added under the grades any more.',
+      'Radicals\' meanings show their full form again, as in "water (side form of 水)", and Export backup says so while it makes the file.',
+    ],
+    it: [
+      'Le letture possono essere mostrate in zhuyin, o in zhuyin e pinyin insieme: «Letture in» in Impostazioni › Cinese.',
+      'L’app dice «Caricamento…» mentre si apre, e la prima carta arriva prima quando hai una lunga cronologia.',
+      'Le carte dei toni vanno avanti più in fretta: rispondi al tono successivo durante la pausa verde, o tocca la carta per andare subito avanti.',
+      'Niente più pulsante Avanti tra i caratteri di una parola o dopo un tono sbagliato: tocca l’area di scrittura o la carta, o usa ›. Con una tastiera, Invio o Spazio vanno avanti, e le frecce passano da un carattere all’altro.',
+      'Una carta che continui a dimenticare dice «Sanguisuga» accanto al suo tipo una volta risposta; toccala per la pagina della parola, dove puoi sospendere la carta. Sotto i voti non si aggiunge più niente.',
+      'I significati dei radicali mostrano di nuovo la loro forma piena, come in «water (side form of 水)», ed Esporta backup lo dice mentre crea il file.',
+    ],
+    de: [
+      'Lesungen können in Zhuyin angezeigt werden, oder in Zhuyin und Pinyin zusammen: „Lesungen in“ unter Einstellungen › Chinesisch.',
+      'Die App sagt „Wird geladen…“, während sie sich öffnet, und die erste Karte kommt schneller, wenn du einen langen Verlauf hast.',
+      'Tonkarten gehen schneller weiter: Beantworte den nächsten Ton schon während der grünen Pause, oder tippe auf die Karte, um sofort weiterzugehen.',
+      'Kein Weiter-Knopf mehr zwischen den Zeichen eines Wortes oder nach einem falschen Ton: Tippe auf die Schreibfläche oder die Karte, oder nutze ›. Mit einer Tastatur gehen Enter oder Leertaste weiter, und die Pfeiltasten wechseln zwischen den Zeichen.',
+      'Eine Karte, die du immer wieder vergisst, zeigt nach der Antwort „Problemkarte“ neben ihrer Art; tippe darauf für die Seite des Wortes, wo du die Karte aussetzen kannst. Unter den Bewertungen kommt nichts mehr hinzu.',
+      'Die Bedeutungen von Radikalen zeigen wieder ihre volle Form, wie in „water (side form of 水)“, und „Sicherung exportieren“ sagt Bescheid, während die Datei erstellt wird.',
+    ],
+  },
+  {
     id: '2026-10-25-3',
     items: [
       'Tone and pinyin cards show the meaning above them, so you know which word is asked when its characters have several readings (好 hǎo or hào). A meaning card shows the reading when you have both.',

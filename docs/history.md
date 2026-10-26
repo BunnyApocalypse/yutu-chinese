@@ -4,6 +4,14 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the session of 2026-10-26 (the owner's notes 16 to 20 from the tablet, and Export's feedback; released to `main` and `stable` that day with the morning's zhuyin, "What's new" entry `2026-10-26`).**
+
+- **Built:** 17, "Loading…" while the app opens and the reviews read after the first card (`docs/pitfalls.md`; measured with 186,000 reviews and the processor slowed four times: 2.4 s to 1.3 s); 16, an answer or a tap during a right tone's pause goes on at once (`docs/cards.md`, "The tone card"); 18, "Leech" beside the kind of card once answered, opening the word's page with Suspend (`docs/cards.md`, "Leeches"); 19, a radical's full form kept in a writing card's meaning (`FULL_FORM_BEFORE`, `docs/cards.md`); 20, no Next between characters nor after a wrong tone, with Enter, Space and the arrow keys (`docs/cards.md`, "No Next button between characters"); Export backup says "Making the backup…" at once (`docs/interface.md`).
+- **To try (the owner):** all of the above on the tablet, most of all how long "Loading…" stays up. Pictures of 18, 20 and Export were in the session's scratchpad, not kept.
+- **Open:** in Learn and Free practice nothing but › tells a newcomer that a tap goes on (the verdict tip, which says it, comes only in Review); watch testers. A "Build failed" line showed once in a browser test run and didn't come back.
+- **Tests:** all 382 browser tests and 288 unit tests pass; new: `startup.browser.js`. The streak test's failure now and then was the test tapping the card before (`tests/browser/CLAUDE.md`).
+- **Learned:** a test can hold IndexedDB reads back by keeping a writing transaction open on the store (`startup.browser.js`). A worktree lacks the git-ignored data some tests need, so compare old code in the project folder instead. `pkill -f` with a path that is also in your own command line kills that command.
+
 **Handover from the second session of 2026-10-25 (the owner's tasks 11, 13, 14 and 15; released to `main` and `stable` the same day, "What's new" entry `2026-10-25-3`).**
 
 - **Built:** 13, the meaning above tone and pinyin cards and the reading on a meaning card when another word has the same characters (`docs/cards.md`); 14, the writing area up to 760px and the card centered on tall screens (`docs/pitfalls.md`); 15, meanings above a card on up to three lines where there is room, a size smaller when needed, cut between whole meanings, and grown with the area on a tablet (`src/meaningFit.js`, `docs/pitfalls.md`). 11 closed as probably fixed by the streak change.
