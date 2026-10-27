@@ -4,6 +4,16 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the session of 2026-10-27 (tester 4's two messages, the short-phone writing area; practice released to `main` and `stable` that day, "What's new" entry `2026-10-27`; the rest committed on `main`, not pushed, with its entry `2026-10-27-2` written).**
+
+- **Released:** practice at the end of Review (tester 4's first message): "Practice again", today's cards with those missed first, then "Practice all my cards"; nothing saved (`docs/cards.md`, "Practice at the end of Review").
+- **Committed, not pushed** (the owner: "don't push"): the writing area on short phones (360×640: 260 → 328px; one row under the area, "Practice again" on its edge and "Done practicing", the script's line in its corner, shorter lesson notes, the reserved room 380 → 305 growing with the meaning on a tablet; `docs/pitfalls.md`), and the tone card waiting for a tap after a right tone too (tester 4's second message; `docs/cards.md`, "The tone card"). On the way: with OpenDyslexic the status line is under the slots (the area moved while writing), and the atlas no longer waits for the removed Next. **To release:** the entry `2026-10-27-2` is at the top of `src/changes.js`; if it goes out another day, give it that day's date.
+- **To try (the owner):** the bigger area and "Done practicing" on the phone and tablet (pictures `local/ux-atlas-draft/index.html`); the tone card's tap after a right tone. Tell tester 4 both are in once released.
+- **Open:** after the last tone right the result comes at once, so a habitual tap there accepts the suggested grade (Good, which is right when all tones are). A 320×568 phone still scrolls a little, as before. The Italian of the new texts (practice, "La conosco già", "Fine esercizio", the shorter lesson notes) is for the Italian tester's list.
+- **Next:** the setting for target retention (plan agreed, roadmap "Near-term").
+- **Tests:** all 385 browser tests and 289 unit tests pass; new: `practice.browser.js`, `areaSize.browser.js`.
+- **Learned:** a made-up `PointerEvent` has no pointer to capture, so a test tapping a tone card while it asks needs real mouse input (`Input.dispatchMouseEvent`).
+
 **Handover from the session of 2026-10-26 (the owner's notes 16 to 20 from the tablet, and Export's feedback; released to `main` and `stable` that day with the morning's zhuyin, "What's new" entry `2026-10-26`).**
 
 - **Built:** 17, "Loading…" while the app opens and the reviews read after the first card (`docs/pitfalls.md`; measured with 186,000 reviews and the processor slowed four times: 2.4 s to 1.3 s); 16, an answer or a tap during a right tone's pause goes on at once (`docs/cards.md`, "The tone card"); 18, "Leech" beside the kind of card once answered, opening the word's page with Suspend (`docs/cards.md`, "Leeches"); 19, a radical's full form kept in a writing card's meaning (`FULL_FORM_BEFORE`, `docs/cards.md`); 20, no Next between characters nor after a wrong tone, with Enter, Space and the arrow keys (`docs/cards.md`, "No Next button between characters"); Export backup says "Making the backup…" at once (`docs/interface.md`).

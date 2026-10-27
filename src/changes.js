@@ -13,6 +13,21 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-10-27-2',
+    items: [
+      'A bigger writing area on smaller phones: the buttons under it take one row, "Practice again" sits on its bottom edge, and while you practice, "Done practicing" brings the grades back.',
+      'Tone cards wait for a tap after a right tone too, so a tap to go on is never taken for the neutral tone. A tone button or a drawn mark answers the next character straight away.',
+    ],
+    it: [
+      'Un’area di scrittura più grande sui telefoni più piccoli: i pulsanti sotto stanno su una riga, «Esercitati ancora» è sul suo bordo inferiore e, mentre ti eserciti, «Fine esercizio» riporta i voti.',
+      'Le carte dei toni aspettano un tocco anche dopo un tono giusto, così un tocco per andare avanti non viene mai preso per il tono neutro. Un pulsante del tono o un segno disegnato risponde subito al carattere successivo.',
+    ],
+    de: [
+      'Eine größere Schreibfläche auf kleineren Handys: Die Knöpfe darunter passen in eine Reihe, „Noch mal üben“ sitzt an ihrem unteren Rand, und beim Üben bringt „Üben beenden“ die Bewertungen zurück.',
+      'Tonkarten warten auch nach einem richtigen Ton auf ein Tippen, damit ein Tippen zum Weitergehen nie als neutraler Ton zählt. Ein Tonknopf oder ein gezeichnetes Zeichen beantwortet gleich das nächste Zeichen.',
+    ],
+  },
+  {
     id: '2026-10-27',
     items: [
       'Done for the day and want more? "Practice again" at the end of Review goes through today\'s cards once more, the ones you missed first, and then all your cards if you like. Practice is never saved, so your schedule stays as it was.',
