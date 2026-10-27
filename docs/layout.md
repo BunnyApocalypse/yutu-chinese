@@ -47,8 +47,8 @@
 - `src/storageMessage.js`: the message about long-term storage once per device, after the first word learned.
 - `src/scriptCards.js`: files writing cards under the script they were learned in (`docs/cards.md`).
 - `src/backup.js`: build, check and restore a backup file.
-- `src/wordPage.js`: the page of a word or character (`docs/word-page.md`); `src/notes.js` and `src/characters.js` are the plain calculation behind it (learning notes and example sentences; the parts of characters).
-- `data/notes/`: learning notes and example sentences per level, CC BY-SA 4.0. `local/`: development-only downloads, git-ignored.
+- `src/wordPage.js`: the page of a word or character (`docs/word-page.md`); `src/notes.js`, `src/characters.js` and `src/characterTips.js` are the plain calculation behind it (learning notes and example sentences; the parts of characters and their sound parts; "How to remember it").
+- `data/notes/`: learning notes and example sentences per level, CC BY-SA 4.0. `data/character-tips/`: "How to remember it" for characters, CC BY-SA 4.0. `local/`: development-only downloads, git-ignored.
 - `src/confirm.js`: the app's own panel for asking before something that cannot be undone.
 - `src/sentences.js`: sentences as things to study (`docs/word-page.md`). Plain calculation.
 - `src/speechPlan.js`, `src/speech.js`: speaking a word (`docs/word-page.md`): which recordings to play, as plain calculation, and playing them.

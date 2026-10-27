@@ -208,4 +208,34 @@ describe('the word page', { concurrency: false }, () => {
     await page.evaluate(`document.querySelector('#word-page-body .note-badge').click()`);
     assert.match(await textOf(page, '#word-page-body .note-badge-text'), /read this tip and its example sentence, and everything it says about its characters/);
   });
+
+  it('shows a way to remember a character, marked as written by AI', async () => {
+    // 時 has a tip (data/character-tips/tips.tsv); 從, from the step before,
+    // is removed first; its page is still open.
+    await tap(page, 'word-page-remove');
+    await waitUntil(page, `document.getElementById('confirm-dialog').open`, 'the question');
+    await tap(page, 'confirm-yes');
+    await waitUntil(page, `!document.getElementById('word-page').open && document.querySelectorAll('#word-list li').length === 0`, '從 removed');
+    await type(page, 'add-traditional', '時');
+    await type(page, 'add-simplified', '时');
+    await type(page, 'add-pinyin', 'shi2');
+    await type(page, 'add-definition', 'time');
+    await page.evaluate(`document.getElementById('add-word-form').requestSubmit()`);
+    await waitUntil(page, `document.querySelectorAll('#word-list li').length === 1`, 'the word');
+    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await waitUntil(page, `${shown('時|shi2')} && document.querySelector('#word-page-body .character-tip')`, 'the tip');
+    // Under Make Me a Hanzi's line and the sound's, never in their place.
+    assert.deepEqual(await page.evaluate(texts('.character-card > .hint')), [
+      'One part gives the meaning (day) and one the sound.',
+      '寺 sì gives the sound: 時 shí rhymes with it.',
+    ]);
+    assert.match(await textOf(page, '#word-page-body .character-tip-heading'), /^How to remember it:AI$/);
+    assert.match(await textOf(page, '#word-page-body .character-tip-text'), /日/);
+    // Its Chinese is marked as Chinese.
+    assert.equal(await page.evaluate(`document.querySelector('#word-page-body .character-tip-text span[lang]').lang`), 'zh-Hant-TW');
+    // The AI box says what it means on a tap.
+    assert.equal(await page.evaluate(`document.querySelector('#word-page-body .character-tip .note-badge-text').hidden`), true);
+    await page.evaluate(`document.querySelector('#word-page-body .character-tip .note-badge').click()`);
+    assert.match(await textOf(page, '#word-page-body .character-tip .note-badge-text'), /^Written by an AI model as a way to remember the character, not as its history/);
+  });
 });

@@ -147,6 +147,7 @@ export default {
   'settings.tips': 'Mostra un consiglio la prima volta che si apre ogni schermata',
   'settings.tipsAgain': 'Mostra di nuovo tutti i consigli',
   'settings.notesChecked': "I consigli di studio e le loro frasi d'esempio sono stati scritti da un modello di IA e potrebbero essere sbagliati. Il riquadro accanto a «Consigli di studio» dice quanto fidarsi: IA se non è stato verificato, ✓ se l'ha letto un madrelingua o se i suoi dati sui caratteri sono stati trovati nelle fonti. Tocca il riquadro per vedere quale.",
+  'settings.characterTips': "«Come ricordarlo» sotto un carattere nella pagina di una parola è un aiuto per la memoria scritto da un modello di IA, non la storia del carattere, e potrebbe essere sbagliato.",
 
   // Settings › For testing (testerSettings.js)
   'testing.swipeReadout': 'Mostra come è stato misurato ogni scorrimento verso l\'alto',
@@ -974,6 +975,7 @@ export default {
   'credits.recordingsAudioCmnSyllables': '<b>Registrazioni:</b> <a href="https://github.com/hugolpz/audio-cmn" target="_blank" rel="noopener">audio-cmn</a>: sillabe pronunciate da Chen Wang, parole pronunciate da Yue Tan (progetto Shtooka), raccolte da Hugo Lopez. Creative Commons Attribution-ShareAlike.',
   'credits.howCharactersAreBuilt': '<b>Come sono costruiti i caratteri:</b> il dizionario di Make Me a Hanzi (da Unihan e CJKlib). GNU Lesser General Public License.',
   'credits.learningTipsAndExample': "<b>Consigli di studio e frasi d'esempio:</b> scritti per questa app da un modello di IA (Claude di Anthropic), con l'aiuto di <a href=\"https://en.wiktionary.org\" target=\"_blank\" rel=\"noopener\">Wiktionary</a> per le origini dei caratteri. Creative Commons Attribution-ShareAlike 4.0. Nessun madrelingua li ha controllati riga per riga: potrebbero essere sbagliati. Alcuni sono stati letti da un madrelingua, o hanno avuto ciò che dicono dei loro caratteri controllato su Wiktionary, Make Me a Hanzi e CC-CEDICT: il riquadro accanto a un consiglio dice quale.",
+  'credits.characterTips': "<b>«Come ricordarlo» per i caratteri:</b> scritti per questa app da un modello di IA (Claude di Anthropic) a partire dalle parti in Make Me a Hanzi, con <a href=\"https://en.wiktionary.org\" target=\"_blank\" rel=\"noopener\">Wiktionary</a> per l'origine di un carattere. Creative Commons Attribuzione-Condividi allo stesso modo 4.0. Nessuno li ha controllati: potrebbero essere sbagliati.",
   'credits.hskWordListsFrom': '<b>Liste di parole HSK:</b> da <a href="https://github.com/ivankra/hsk30" target="_blank" rel="noopener">ivankra/hsk30</a> e <a href="https://github.com/glxxyz/hskhsk.com" target="_blank" rel="noopener">glxxyz/hskhsk.com</a>. MIT License. Il loro raggruppamento in temi è stato fatto per questa app da modelli di IA. MIT License.',
   'credits.tocflWordListThe': "<b>Lista di parole TOCFL:</b> la <span lang=\"zh-Hant-TW\">華語八千詞表</span> pubblicata dallo Steering Committee for the Test of Proficiency-Huayu di Taiwan. Il comitato non dichiara alcuna licenza per essa.",
   'credits.radicalsThe214Kangxi': "<b>Radicali:</b> i 214 radicali Kangxi come elencati dall'Unicode Consortium (CJKRadicals.txt, Unicode License), ordinati per frequenza, da Make Me a Hanzi; i loro significati sono stati scritti per questa app. MIT License.",
@@ -1044,6 +1046,8 @@ export default {
   'page.sound.rhyme': '{part} {partReading} dà il suono: {character} {reading} fa rima con esso.',
   'page.sound.close': '{part} {partReading} suggerisce il suono: {character} si legge {reading}.',
   'page.sound.changed': '{part} {partReading} un tempo dava il suono, che poi è cambiato: {character} oggi si legge {reading}.',
+  'page.rememberIt': 'Come ricordarlo:',
+  'page.tipUnchecked': 'Scritto da un modello di IA come modo per ricordare il carattere, non come la sua storia (tranne una prima frase sulla sua origine, trovata in Wiktionary). Non è stato controllato da una persona e può essere sbagliato.',
   'page.oneWayToSee': 'Un modo di vederlo: {hint}.',
   'page.pictureHint': "Visto come un'immagine: {hint}.",
   'page.picture': "Visto come un'immagine.",

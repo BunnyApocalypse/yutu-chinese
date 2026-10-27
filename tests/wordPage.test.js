@@ -9,6 +9,7 @@ import fs from 'node:fs';
 
 import { parseNotes, noteFor, sentenceWords } from '../src/notes.js';
 import { parseCharacters, structureOf, soundClue } from '../src/characters.js';
+import { parseTips } from '../src/characterTips.js';
 
 test('an example sentence is split into its words by its pinyin', () => {
   const texts = (sentence, pinyin) => sentenceWords(sentence, pinyin).map((piece) => piece.text);
@@ -89,4 +90,13 @@ test('how far a sound part still gives the sound', () => {
   // No sound part: a compound of meanings, a picture.
   assert.equal(soundClue(characters, '好'), null);
   assert.equal(soundClue(characters, '山'), null);
+});
+
+test('a character\'s tip is read with its origin, if any', () => {
+  const tips = parseTips('# a comment\n好\tA woman 女 with her child 子.\n子\tThe arms 一 across.\tA picture of a baby.\n\n學\t\n');
+  assert.deepEqual(tips.get('好'), { tip: 'A woman 女 with her child 子.', origin: '' });
+  assert.deepEqual(tips.get('子'), { tip: 'The arms 一 across.', origin: 'A picture of a baby.' });
+  // A line without a tip is left out.
+  assert.equal(tips.has('學'), false);
+  assert.equal(tips.size, 2);
 });

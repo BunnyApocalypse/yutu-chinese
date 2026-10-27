@@ -147,6 +147,7 @@ export default {
   'settings.tips': 'Beim ersten Öffnen jedes Bildschirms einen Tipp zeigen',
   'settings.tipsAgain': 'Alle Tipps wieder zeigen',
   'settings.notesChecked': "Die Lerntipps und ihre Beispielsätze wurden von einem KI-Modell geschrieben und können Fehler enthalten. Das Kästchen neben „Lerntipps“ zeigt, wie sehr du einem Tipp trauen kannst: KI, wenn er nicht geprüft wurde, ✓, wenn ihn eine Person mit Chinesisch als Muttersprache gelesen hat oder seine Angaben zu den Zeichen in den Quellen gefunden wurden. Tippe auf das Kästchen, um zu sehen, was davon.",
+  'settings.characterTips': '„So merkst du es dir“ unter einem Zeichen auf der Seite eines Wortes ist eine Merkhilfe, von einem KI-Modell geschrieben, nicht die Geschichte des Zeichens, und kann falsch sein.',
 
   // Settings › For testing (testerSettings.js)
   'testing.swipeReadout': 'Zeigen, wie jede Wischgeste nach oben gemessen wurde',
@@ -975,6 +976,7 @@ export default {
   'credits.recordingsAudioCmnSyllables': '<b>Aufnahmen:</b> <a href="https://github.com/hugolpz/audio-cmn" target="_blank" rel="noopener">audio-cmn</a>: Silben gesprochen von Chen Wang, Wörter gesprochen von Yue Tan (Shtooka-Projekt), gesammelt von Hugo Lopez. Creative Commons Attribution-ShareAlike.',
   'credits.howCharactersAreBuilt': '<b>Aufbau der Schriftzeichen:</b> das Wörterbuch von Make Me a Hanzi (aus Unihan und CJKlib). GNU Lesser General Public License.',
   'credits.learningTipsAndExample': '<b>Lerntipps und Beispielsätze:</b> für diese App von einem KI-Modell (Claude von Anthropic) geschrieben, mit <a href="https://en.wiktionary.org" target="_blank" rel="noopener">Wiktionary</a> als Quelle für die Herkunft der Zeichen. Creative Commons Attribution-ShareAlike 4.0. Kein Muttersprachler hat sie Zeile für Zeile geprüft: Sie können Fehler enthalten. Einige wurden von einer Person mit Chinesisch als Muttersprache gelesen oder ihre Angaben zu den Zeichen mit Wiktionary, Make Me a Hanzi und CC-CEDICT abgeglichen: Das Kästchen neben einem Tipp zeigt, was davon.',
+  'credits.characterTips': '<b>„So merkst du es dir“ für Zeichen:</b> für diese App von einem KI-Modell (Claude von Anthropic) aus den Teilen in Make Me a Hanzi geschrieben, mit <a href="https://en.wiktionary.org" target="_blank" rel="noopener">Wiktionary</a> für die Herkunft eines Zeichens. Creative Commons Namensnennung – Weitergabe unter gleichen Bedingungen 4.0. Niemand hat sie geprüft: Sie können falsch sein.',
   'credits.hskWordListsFrom': '<b>HSK-Wortlisten:</b> von <a href="https://github.com/ivankra/hsk30" target="_blank" rel="noopener">ivankra/hsk30</a> und <a href="https://github.com/glxxyz/hskhsk.com" target="_blank" rel="noopener">glxxyz/hskhsk.com</a>. MIT License. Ihre Einteilung in Themen wurde für diese App von KI-Modellen erstellt. MIT License.',
   'credits.tocflWordListThe': '<b>TOCFL-Wortliste:</b> die <span lang="zh-Hant-TW">華語八千詞表</span>, veröffentlicht vom Steering Committee for the Test of Proficiency-Huayu in Taiwan. Das Komitee nennt keine Lizenz dafür.',
   'credits.radicalsThe214Kangxi': '<b>Radikale:</b> die 214 Kangxi-Radikale, wie sie das Unicode Consortium auflistet (CJKRadicals.txt, Unicode License), nach Häufigkeit geordnet, aus Make Me a Hanzi; ihre Bedeutungen wurden für diese App geschrieben. MIT License.',
@@ -1045,6 +1047,8 @@ export default {
   'page.sound.rhyme': '{part} {partReading} gibt den Klang an: {character} {reading} reimt sich darauf.',
   'page.sound.close': '{part} {partReading} deutet den Klang an: {character} wird {reading} gelesen.',
   'page.sound.changed': '{part} {partReading} gab einst den Klang an, der sich seitdem verändert hat: {character} wird heute {reading} gelesen.',
+  'page.rememberIt': 'So merkst du es dir:',
+  'page.tipUnchecked': 'Von einem KI-Modell geschrieben, als Hilfe, sich das Zeichen zu merken, nicht als seine Geschichte (außer einem ersten Satz über seine Herkunft, der in Wiktionary steht). Kein Mensch hat es geprüft; es kann falsch sein.',
   'page.oneWayToSee': 'Eine Sichtweise: {hint}.',
   'page.pictureHint': 'Als Bild gesehen: {hint}.',
   'page.picture': 'Als Bild gesehen.',

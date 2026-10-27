@@ -152,6 +152,7 @@ export default {
   'settings.tips': 'Show a tip the first time each screen is opened',
   'settings.tipsAgain': 'Show all tips again',
   'settings.notesChecked': "Learning tips and their example sentences were written by an AI model and may be wrong. The box beside “Learning tips” says how far to trust one: AI when it has not been checked, ✓ when a native speaker has read it or its facts about the characters were found in the sources. Tap the box to see which.",
+  'settings.characterTips': "“How to remember it” under a character on a word's page is a memory aid written by an AI model, not the character's history, and may be wrong.",
 
   // Settings › For testing (testerSettings.js)
   'testing.swipeReadout': 'Show how each swipe up measured',
@@ -987,6 +988,7 @@ export default {
   'credits.recordingsAudioCmnSyllables': '<b>Recordings:</b> <a href="https://github.com/hugolpz/audio-cmn" target="_blank" rel="noopener">audio-cmn</a>: syllables spoken by Chen Wang, words spoken by Yue Tan (Shtooka project), collected by Hugo Lopez. Creative Commons Attribution-ShareAlike.',
   'credits.howCharactersAreBuilt': '<b>How characters are built:</b> the dictionary of Make Me a Hanzi (from Unihan and CJKlib). GNU Lesser General Public License.',
   'credits.learningTipsAndExample': '<b>Learning tips and example sentences:</b> written for this app by an AI model (Anthropic\'s Claude), drawing on <a href="https://en.wiktionary.org" target="_blank" rel="noopener">Wiktionary</a> for the origins of characters. Creative Commons Attribution-ShareAlike 4.0. No fluent speaker has checked them line by line: they may be wrong. Some have been read by a native speaker, or had what they say about their characters checked against Wiktionary, Make Me a Hanzi and CC-CEDICT: the box beside a tip says which.',
+  'credits.characterTips': '<b>“How to remember it” for characters:</b> written for this app by an AI model (Anthropic\'s Claude) from the parts in Make Me a Hanzi, with <a href="https://en.wiktionary.org" target="_blank" rel="noopener">Wiktionary</a> for where a character came from. Creative Commons Attribution-ShareAlike 4.0. No person has checked them: they may be wrong.',
   'credits.hskWordListsFrom': '<b>HSK word lists:</b> from <a href="https://github.com/ivankra/hsk30" target="_blank" rel="noopener">ivankra/hsk30</a> and <a href="https://github.com/glxxyz/hskhsk.com" target="_blank" rel="noopener">glxxyz/hskhsk.com</a>. MIT License. Their grouping into themes was made for this app by AI models. MIT License.',
   'credits.tocflWordListThe': '<b>TOCFL word list:</b> the <span lang="zh-Hant-TW">華語八千詞表</span> published by Taiwan\'s Steering Committee for the Test of Proficiency-Huayu. The committee states no license for it.',
   'credits.radicalsThe214Kangxi': '<b>Radicals:</b> the 214 Kangxi radicals as listed by the Unicode Consortium (CJKRadicals.txt, Unicode License), ranked by how often they occur, from Make Me a Hanzi; their meanings were written for this app. MIT License.',
@@ -1058,6 +1060,8 @@ export default {
   'page.sound.rhyme': '{part} {partReading} gives the sound: {character} {reading} rhymes with it.',
   'page.sound.close': '{part} {partReading} gives a hint of the sound: {character} is {reading}.',
   'page.sound.changed': '{part} {partReading} once gave the sound, which has changed since: {character} is now {reading}.',
+  'page.rememberIt': 'How to remember it:',
+  'page.tipUnchecked': 'Written by an AI model as a way to remember the character, not as its history (except a first sentence on where it came from, which was found in Wiktionary). It has not been checked by a person and may be wrong.',
   'page.oneWayToSee': 'One way to see it: {hint}.',
   'page.pictureHint': 'Seen as a picture: {hint}.',
   'page.picture': 'Seen as a picture.',

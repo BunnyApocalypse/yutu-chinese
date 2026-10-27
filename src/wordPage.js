@@ -22,6 +22,7 @@ import { closeOnTapBeside } from './dialogs.js';
 import { readingsFor, describeReading } from './tones.js';
 import { parseNotes, noteFor, sentenceWords } from './notes.js';
 import { parseCharacters, structureOf, soundClue } from './characters.js';
+import { parseTips } from './characterTips.js';
 import { deckTree, readyMadeDeck, isReadyMadeGroup } from './decks.js';
 import { fillDeckSelect } from './decksPanel.js';
 import { speak } from './speech.js';
@@ -32,6 +33,7 @@ import charactersUrl from '../data/makemeahanzi/dictionary.txt?url';
 
 // Every notes file there is: { path: address }.
 const NOTE_URLS = import.meta.glob('../data/notes/*.tsv', { query: '?url', import: 'default', eager: true });
+const TIP_URLS = import.meta.glob('../data/character-tips/*.tsv', { query: '?url', import: 'default', eager: true });
 
 const byId = (id) => document.getElementById(id);
 const isHan = (char) => /\p{Script=Han}/u.test(char);
@@ -145,6 +147,19 @@ export function createWordPage({
       ).then((texts) => parseNotes(texts.join('\n')));
     return notesPromise;
   }
+  let tipsPromise = null;
+  function loadTips() {
+    tipsPromise =
+      tipsPromise ||
+      Promise.all(
+        Object.values(TIP_URLS).map((url) =>
+          fetch(url)
+            .then((response) => response.text())
+            .catch(() => ''),
+        ),
+      ).then((texts) => parseTips(texts.join('\n')));
+    return tipsPromise;
+  }
   function loadCharacters() {
     charactersPromise =
       charactersPromise ||
@@ -245,30 +260,19 @@ export function createWordPage({
     return heading;
   }
 
-  // "Learning tips" with a small box beside it saying how far to trust the
-  // note: ✓ when it was checked, by a native speaker, against the sources
-  // or both, and AI when it was not (the owner, 2026-10-25;
-  // data/notes/README.md). What it means shows while a mouse is over the
-  // box, and on a tap until the next one, like the "?" in Settings.
-  // Returns the heading and the explanation under it.
-  function noteHeading(note) {
-    const native = note.checks.includes('native');
-    const sources = note.checks.includes('sources');
-    const checked = native || sources;
-    let meaning = 'page.noteUnchecked';
-    if (native && sources) meaning = 'page.noteNativeAndSources';
-    else if (native) meaning = 'page.noteNative';
-    else if (sources) meaning = 'page.noteSources';
-    else if (!note.example) meaning = 'page.noteUncheckedNoSentence';
-
-    const explanation = element('p', 'hint note-badge-text', t(meaning));
+  // A small box saying how far to trust a text (✓ or AI), and the
+  // explanation it shows: while a mouse is over the box, and on a tap until
+  // the next one, like the "?" in Settings. Returns [box, explanation]; the
+  // explanation starts hidden and goes wherever the caller puts it.
+  function trustBadge(label, ariaLabel, meaning, checked) {
+    const explanation = element('p', 'hint note-badge-text', meaning);
     noteBadgeCount += 1;
     explanation.id = `note-badge-text-${noteBadgeCount}`;
     explanation.hidden = true;
 
-    const badge = element('button', checked ? 'note-badge checked' : 'note-badge', checked ? '✓' : t('page.noteBadgeAi'));
+    const badge = element('button', checked ? 'note-badge checked' : 'note-badge', label);
     badge.type = 'button';
-    badge.setAttribute('aria-label', t(checked ? 'page.noteCheckedLabel' : 'page.noteUncheckedLabel'));
+    badge.setAttribute('aria-label', ariaLabel);
     badge.setAttribute('aria-controls', explanation.id);
     badge.setAttribute('aria-expanded', 'false');
     let pinned = false;
@@ -291,7 +295,31 @@ export function createWordPage({
         show(pinned);
       }
     });
+    return [badge, explanation];
+  }
 
+  // "Learning tips" with a small box beside it saying how far to trust the
+  // note: ✓ when it was checked, by a native speaker, against the sources
+  // or both, and AI when it was not (the owner, 2026-10-25;
+  // data/notes/README.md). What it means shows while a mouse is over the
+  // box, and on a tap until the next one, like the "?" in Settings.
+  // Returns the heading and the explanation under it.
+  function noteHeading(note) {
+    const native = note.checks.includes('native');
+    const sources = note.checks.includes('sources');
+    const checked = native || sources;
+    let meaning = 'page.noteUnchecked';
+    if (native && sources) meaning = 'page.noteNativeAndSources';
+    else if (native) meaning = 'page.noteNative';
+    else if (sources) meaning = 'page.noteSources';
+    else if (!note.example) meaning = 'page.noteUncheckedNoSentence';
+
+    const [badge, explanation] = trustBadge(
+      checked ? '✓' : t('page.noteBadgeAi'),
+      t(checked ? 'page.noteCheckedLabel' : 'page.noteUncheckedLabel'),
+      t(meaning),
+      checked,
+    );
     const heading = element('h3', 'note-heading', t('page.learningTips'));
     heading.append(badge);
     return [heading, explanation];
@@ -509,9 +537,10 @@ export function createWordPage({
     return [adding, said];
   }
 
-  // How each character is built. `chars`: the characters to show, written
-  // in `script` (for marking them as Chinese, lang.js).
-  function showCharacters(characters, chars, single, script) {
+  // How each character is built, and a way to remember it. `chars`: the
+  // characters to show, written in `script` (for marking them as Chinese,
+  // lang.js); `tips`: from parseTips.
+  function showCharacters(characters, tips, chars, single, script) {
     // Text with Chinese in it, its Chinese marked.
     const mixed = (tag, className, text) => {
       const made = element(tag, className);
@@ -564,6 +593,7 @@ export function createWordPage({
         meaning: structure.hint ? t('page.oneWayToSee', { hint: structure.hint.replace(/\.$/, '') }) : '',
         picture: structure.hint ? t('page.pictureHint', { hint: structure.hint.replace(/\.$/, '') }) : t('page.picture'),
       };
+      const tip = tips.get(char);
       if (KINDS[structure.kind]) {
         card.append(mixed('p', 'hint', KINDS[structure.kind]));
       }
@@ -585,6 +615,20 @@ export function createWordPage({
           changed: 'page.sound.changed',
         };
         card.append(mixed('p', 'hint', t(SOUND_TEXTS[clue.how], said)));
+      }
+      // A way to remember it, with where it really came from first, if told
+      // (the owner, 2026-10-27: under Make Me a Hanzi's line, which is human
+      // work, never in its place). Marked as written by an AI model, with
+      // the same box as a learning note.
+      if (tip) {
+        const box = element('div', 'character-tip');
+        const [badge, explanation] = trustBadge(t('page.noteBadgeAi'), t('page.noteUncheckedLabel'), t('page.tipUnchecked'), false);
+        const heading = element('p', 'character-tip-heading');
+        heading.append(element('strong', '', t('page.rememberIt')), badge);
+        const text = element('p', 'character-tip-text');
+        fillMixed(text, [tip.origin, tip.tip].filter(Boolean).join(' '), script);
+        box.append(heading, explanation, text);
+        card.append(box);
       }
       section.append(card);
     }
@@ -677,8 +721,8 @@ export function createWordPage({
     if (note) {
       parts.push(showNote(note, forms));
     }
-    const characters = await loadCharacters();
-    const built = showCharacters(characters, chars, chars.length === 1 && Array.from(forms.own).length === 1, script);
+    const [characters, tips] = await Promise.all([loadCharacters(), loadTips()]);
+    const built = showCharacters(characters, tips, chars, chars.length === 1 && Array.from(forms.own).length === 1, script);
     if (built) {
       parts.push(built);
     }

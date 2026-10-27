@@ -3490,6 +3490,27 @@ button.part.sound .part-role {
   color: var(--accent);
 }
 
+/* "How to remember it" (characterTips.js): a box of its own under the
+   lines on how the character is built, in the text's color, not muted. */
+.character-tip {
+  margin: 0 0 var(--space-small);
+  padding: var(--space-small) var(--space-medium);
+  background: var(--raised);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  font-size: var(--size-small);
+}
+
+.character-tip-heading,
+.character-tip-text {
+  margin: 0;
+}
+
+/* The AI box beside "How to remember it" sits on the heading's line. */
+.character-tip-heading .note-badge {
+  height: 24px;
+}
+
 /* A part of the Decks and Words tabs that the other of the two shows. (A
    class, not the "hidden" attribute: the part is still kept up to date.) */
 .view-hidden {
