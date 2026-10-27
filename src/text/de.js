@@ -555,6 +555,7 @@ export default {
   'tone.wrong': '{count} falsch',
   'tone.youAnswered': 'Du hast {answer} geantwortet.',
   'tone.variant': 'Du hast {answer} geantwortet: akzeptiert als regionale oder neutraltonige Variante von {listed}.',
+  'tone.right': 'Richtig. Tippen zum Weitermachen.',
   'tone.not': 'Nicht {tone}. Tippen zum Weitermachen.',
   'tone.notRecognized': 'Zeichen nicht erkannt. Versuche es noch einmal oder nimm die Tasten.',
 

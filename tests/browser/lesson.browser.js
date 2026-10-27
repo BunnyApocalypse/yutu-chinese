@@ -526,7 +526,20 @@ describe('learning new words', { concurrency: false }, () => {
     await page.evaluate(`document.getElementById('tone-back-button').click()`);
     await waitUntil(page, asked('Practice · Tone of 小 (1 of 2)'), '小 again, as practice');
     await toneButton(3);
+    // Right, and waiting for a tap to go on, as after a wrong tone (tester 4,
+    // 2026-10-27: the tap meant to go on was taken for a neutral tone once
+    // the card had gone on by itself). The tap is not a dot for 孩.
+    await waitUntil(page, asked('Right. Tap to continue.'), 'waiting after a right tone');
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    assert.equal(await page.evaluate(`document.getElementById('status').textContent`), 'Right. Tap to continue.');
+    // A real tap (a made-up event has no pointer to capture for a mark).
+    const face = await page.evaluate(`(() => { const box = document.getElementById('card-face').getBoundingClientRect(); return { x: box.left + box.width / 2, y: box.top + box.height * 0.8 }; })()`);
+    for (const type of ['mousePressed', 'mouseReleased']) {
+      await page.send('Input.dispatchMouseEvent', { type, x: face.x, y: face.y, button: 'left', clickCount: 1 });
+    }
     await waitUntil(page, asked('Tone of 孩 (2 of 2)'), '孩 again');
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    assert.equal(await page.evaluate(`document.getElementById('status').textContent`), 'Tone of 孩 (2 of 2)', 'the tap was not an answer');
     await toneButton(2);
     await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
     await page.evaluate(`document.querySelector('#grade-row button.primary').click()`);

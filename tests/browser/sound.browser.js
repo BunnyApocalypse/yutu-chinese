@@ -134,8 +134,10 @@ describe('hearing a word', { concurrency: false }, () => {
     assert.equal(await isShown(page, 'listen-button'), true);
     // Step 2 is the word's tones: once both are given, the word is spoken.
     await page.evaluate(`delete document.getElementById('listen-button').dataset.spoken`);
+    // (After a right tone the card waits for a tap, but a tone button
+    // answers the next character directly.)
     for (const tone of [1, 2]) {
-      await waitUntil(page, `document.getElementById('status').textContent.includes('${tone} of 2')`, `tone ${tone}`);
+      await waitUntil(page, `document.getElementById('status').textContent.includes('${tone} of 2') || (${tone} > 1 && document.getElementById('status').textContent.startsWith('Right.'))`, `tone ${tone}`);
       await page.evaluate(`document.querySelector('#tone-buttons [data-tone="${tone}"]').click()`);
     }
     await waitUntil(page, `${spoken} === '星期|xing1qi1 syllables'`, 'the word spoken after the step');

@@ -609,7 +609,7 @@ describe('grading in Review', { concurrency: false }, () => {
     }
   });
 
-  it('takes an answer or a tap while a right tone is shown, without waiting', async () => {
+  it('waits after a right tone for a tap, which is not a dot, or takes the next answer at once', async () => {
     await inDatabase(`
       for (const card of ${JSON.stringify(['大|da4', '小|xiao3', '大小|da4xiao3'].flatMap((id) => ['meaning', 'writing'].map((type) => card(id + '#' + type, id, type, 30 * DAY))))}) {
         stores.cards.put(card);
@@ -639,16 +639,19 @@ describe('grading in Review', { concurrency: false }, () => {
       assert.deepEqual(await slotClasses(), ['passed', 'passed']);
       await chooseGrade('Good');
 
-      // A tap in the pause goes on at once, and isn't taken for the
-      // neutral tone; in the last one's pause it shows the result.
+      // After a right tone the card waits for a tap (tester 4, 2026-10-27:
+      // it went on by itself, and the tap meant to go on became a neutral
+      // tone); the tap goes on and isn't taken for the neutral tone. After
+      // the last one the result comes at once.
       await makeDue(['大小|da4xiao3#tone', '大小|da4xiao3', 'tone']);
       await waitUntil(page, `document.getElementById('status').textContent.includes('1 of 2')`, 'the tone of 大');
       await toneButton(4);
+      await new Promise((resolve) => setTimeout(resolve, 700));
+      assert.equal(await textOf(page, 'status'), 'Right. Tap to continue.');
       await tapFace();
       assert.match(await textOf(page, 'status'), /2 of 2/);
       assert.deepEqual(await slotClasses(), ['passed', '']);
       await toneButton(3);
-      await tapFace();
       await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
       assert.equal(await textOf(page, 'status'), 'All tones right');
       assert.equal(await page.evaluate(SUGGESTED), 'Good');
@@ -661,8 +664,14 @@ describe('grading in Review', { concurrency: false }, () => {
 
   async function answerToneCard() {
     await makeDue(['大小|da4xiao3#tone', '大小|da4xiao3', 'tone']);
+    // After a right tone the card waits for a tap, but a tone button answers
+    // the next character directly (src/toneFlow.js).
     const giveTone = async (tone, which) => {
-      await waitUntil(page, `document.getElementById('status').textContent.includes('${which} of 2')`, `the tone of character ${which}`);
+      await waitUntil(
+        page,
+        `document.getElementById('status').textContent.includes('${which} of 2') || (${which} > 1 && document.getElementById('status').textContent.startsWith('Right.'))`,
+        `the tone of character ${which}`,
+      );
       await page.evaluate(`document.querySelector('#tone-buttons [data-tone="${tone}"]').click()`);
     };
     const slots = `[...document.querySelectorAll('#word-row .slot')]`;

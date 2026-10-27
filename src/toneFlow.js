@@ -9,17 +9,19 @@ import { faceArrow, BACK, FORWARD } from './faceArrow.js';
 import { t } from './text.js';
 import { freshTaps } from './freshTap.js';
 
-// After a right answer, the next character comes up by itself after this long.
-// The pause holds nobody up (the owner, 2026-10-26: it felt like the app
-// lagging): an answer given meanwhile, by a tone button or a mark drawn, is
-// for the next character, and a tap on the card moves on at once.
-const MOVE_ON_AFTER_MS = 500;
-
-// After a wrong answer or at the end, tapping the card continues, but only
-// with a touch begun after the answer (freshTap.js): the one that gave it
-// doesn't skip it. Drawing a mark needs no such care: a stroke begins only
-// when a finger comes down, so the tap that brought a character up is never
-// taken for a neutral-tone dot.
+// After any answer, right or wrong, the card waits for a tap to go on
+// (tester 4, 2026-10-27: a right answer went on by itself after half a
+// second, and the tap given to go on, as after a wrong one, landed on the
+// next character as a neutral-tone dot; the owner chose to always wait, as
+// Skritter does). It holds nobody up: an answer given meanwhile, by a tone
+// button or a mark drawn, is for the next character, so only a tap (or the
+// dot) waits for the next character. After the last character the result
+// comes at once, and it waits for its own tap.
+//
+// Tapping the card continues only with a touch begun after the answer
+// (freshTap.js): the one that gave it doesn't skip it. Drawing a mark needs
+// no such care: a stroke begins only when a finger comes down, so the tap
+// that brought a character up is never taken for a neutral-tone dot.
 
 // How long a mark that wasn't recognized stays visible before it is cleared.
 const CLEAR_UNRECOGNIZED_AFTER_MS = 600;
@@ -87,13 +89,11 @@ export function createToneFlow(elements) {
   // in tones.js), not because it is the tone listed.
   let variantPerChar = [];
   // 'asking':  waiting for a tone
-  // 'right':   just answered correctly; about to move on by itself, or at
-  //            once with a touch or an answer (MOVE_ON_AFTER_MS)
+  // 'right':   answered correctly; waiting for a tap, or the next answer
   // 'wrong':   answered incorrectly; waiting for a tap
   // 'done':    every character answered
   let state = 'asking';
   const taps = freshTaps(cardFace);
-  let moveOnTimer = null;
   // True while a touch begun as a right answer was shown is being drawn: if
   // it turns out a dot, it was a tap to move on, not the neutral tone.
   let hurried = false;
@@ -137,9 +137,10 @@ export function createToneFlow(elements) {
     const label = t(position === 0 ? 'write.backToCard' : 'write.backToCharacter');
     backArrow.setAttribute('aria-label', label);
     backArrow.title = label;
-    skipArrow.classList.toggle('unavailable', !((state === 'asking' && chars.length > 1) || state === 'wrong'));
-    // After a wrong tone it goes on, in a word of one character too.
-    const skipLabel = t(state === 'wrong' ? 'tone.goOn' : 'tone.skip');
+    const answered = state === 'wrong' || state === 'right';
+    skipArrow.classList.toggle('unavailable', !((state === 'asking' && chars.length > 1) || answered));
+    // After an answer it goes on, in a word of one character too.
+    const skipLabel = t(answered ? 'tone.goOn' : 'tone.skip');
     skipArrow.setAttribute('aria-label', skipLabel);
     skipArrow.title = skipLabel;
   }
@@ -291,7 +292,6 @@ export function createToneFlow(elements) {
 
   // Asks the character at `index`: practice if it was answered before.
   function askAt(index) {
-    clearTimeout(moveOnTimer);
     position = index;
     // A skipped one is answered after all, as on the writing area.
     practicing = givenTones[index] !== undefined;
@@ -302,7 +302,7 @@ export function createToneFlow(elements) {
   // answer yet. Not on the result once all are answered (the arrows are
   // only on a question).
   function skip() {
-    if (current && state === 'wrong') {
+    if (current && (state === 'wrong' || state === 'right')) {
       moveOn();
       return;
     }
@@ -377,7 +377,6 @@ export function createToneFlow(elements) {
   }
 
   function moveOn() {
-    clearTimeout(moveOnTimer);
     if (position < chars.length - 1) {
       askAt(position + 1);
     } else {
@@ -415,18 +414,18 @@ export function createToneFlow(elements) {
     );
     cardFace.replaceChildren(faceWord(chars[position]), shownSyllable);
 
-    if (passed) {
-      state = 'right';
-      moveOnTimer = setTimeout(moveOn, MOVE_ON_AFTER_MS);
-    } else {
-      state = 'wrong';
-      taps.mark();
-      statusElement.textContent = t('tone.not', { tone: TONE_LABELS[tone] });
-      // No Next button (the owner, 2026-10-26, as on a writing card): a tap
-      // on the card goes on, or › (here "Go on"), or Enter.
-      cardFace.append(skipArrow);
-      showArrows();
+    // The last character: the result at once, which waits for a tap.
+    if (passed && position === chars.length - 1) {
+      moveOn();
+      return;
     }
+    state = passed ? 'right' : 'wrong';
+    taps.mark();
+    statusElement.textContent = passed ? t('tone.right') : t('tone.not', { tone: TONE_LABELS[tone] });
+    // No Next button (the owner, 2026-10-26, as on a writing card): a tap
+    // on the card goes on, or › (here "Go on"), or Enter.
+    cardFace.append(skipArrow);
+    showArrows();
   }
 
   // A stroke was finished: work out which tone mark it is.
@@ -508,7 +507,7 @@ export function createToneFlow(elements) {
         event.preventDefault();
         current.onContinue();
       }
-    } else if (event.key === 'ArrowRight' && state === 'wrong') {
+    } else if (event.key === 'ArrowRight' && (state === 'wrong' || state === 'right')) {
       event.preventDefault();
       moveOn();
     } else if (event.key === 'ArrowLeft' && state === 'asking') {
@@ -525,7 +524,7 @@ export function createToneFlow(elements) {
     if (!current || !taps.isFresh()) {
       return;
     }
-    if (state === 'wrong') {
+    if (state === 'wrong' || state === 'right') {
       moveOn();
     } else if (state === 'done') {
       current.onContinue();
@@ -549,8 +548,7 @@ export function createToneFlow(elements) {
     //   backToCard(): optional; the ‹ arrow on the first character, before
     //            anything is answered, goes back to the card before (Review)
     start(options) {
-      clearTimeout(moveOnTimer);
-      current = options;
+        current = options;
       // Lets the style sheet stop the page from scrolling under a drawing finger.
       cardFace.classList.add('drawable');
       chars = Array.from(options.word[options.script]);
@@ -575,8 +573,7 @@ export function createToneFlow(elements) {
     },
 
     stop() {
-      clearTimeout(moveOnTimer);
-      clearTimeout(clearInkTimer);
+        clearTimeout(clearInkTimer);
       drawing = null;
       cardFace.classList.remove('drawable');
       current = null;

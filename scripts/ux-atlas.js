@@ -361,10 +361,10 @@ async function walk(page, sizeName, size, shots) {
         await tap(page, 'lesson-next-button');
       } else if (await page.evaluate(`Boolean(document.querySelector('#tone-buttons:not([hidden]) [data-tone]')?.offsetParent)`)) {
         for (const tone of tonesOf(word.pinyin)) {
+          // A tone button answers the next character directly, without the
+          // tap that goes on after each answer (src/toneFlow.js).
           await page.evaluate(`document.querySelector('#tone-buttons [data-tone="${tone}"]').click()`);
-          // The next character comes up half a second after a right tone
-          // (MOVE_ON_AFTER_MS in src/toneFlow.js).
-          await sleep(800);
+          await sleep(200);
         }
         await waitUntil(page, `document.getElementById('status').textContent === 'All tones right'`, 'the tones');
         await tap(page, 'lesson-next-button');

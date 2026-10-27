@@ -566,6 +566,7 @@ export default {
   'tone.wrong': '{count} wrong',
   'tone.youAnswered': 'You answered {answer}.',
   'tone.variant': 'You answered {answer}: accepted as a regional or neutral-tone variant of {listed}.',
+  'tone.right': 'Right. Tap to continue.',
   'tone.not': 'Not {tone}. Tap to continue.',
   'tone.notRecognized': 'Mark not recognized. Try again, or use the buttons.',
 

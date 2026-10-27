@@ -74,9 +74,11 @@ describe('settings', { concurrency: false }, () => {
     page.evaluate(`['pointerdown', 'pointerup'].forEach((type) => document.getElementById('card-face').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`);
 
   // Gives these tones on a tone card, one per character, and returns the status line at the end.
+  // After a right tone the card waits for a tap, but a tone button answers
+  // the next character directly (src/toneFlow.js).
   async function giveTones(tones) {
     for (const [index, tone] of tones.entries()) {
-      await waitUntil(page, `document.getElementById('status').textContent.includes('${index + 1} of ${tones.length}')`);
+      await waitUntil(page, `document.getElementById('status').textContent.includes('${index + 1} of ${tones.length}') || (${index} > 0 && document.getElementById('status').textContent.startsWith('Right.'))`);
       await page.evaluate(`document.querySelector('#tone-buttons [data-tone="${tone}"]').click()`);
     }
     await waitUntil(page, `/right|wrong|Not/.test(document.getElementById('status').textContent)`, 'the result');

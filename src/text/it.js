@@ -555,6 +555,7 @@ export default {
   'tone.wrong': '{count} sbagliati',
   'tone.youAnswered': 'Hai risposto {answer}.',
   'tone.variant': 'Hai risposto {answer}: accettato come variante regionale o a tono neutro di {listed}.',
+  'tone.right': 'Giusto. Tocca per continuare.',
   'tone.not': 'Non {tone}. Tocca per continuare.',
   'tone.notRecognized': 'Segno non riconosciuto. Riprova, oppure usa i pulsanti.',
 

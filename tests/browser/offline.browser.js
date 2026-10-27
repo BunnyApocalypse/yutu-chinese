@@ -168,7 +168,8 @@ describe('offline use', { concurrency: false }, () => {
     })()`);
     await waitUntil(page, `document.getElementById('status').textContent.includes('1 of 2')`, 'a tone card');
     await page.evaluate(`document.querySelector('#tone-buttons [data-tone="1"]').click()`);
-    await waitUntil(page, `document.getElementById('status').textContent.includes('2 of 2')`);
+    // Right: waiting for a tap, or the next tone (src/toneFlow.js).
+    await waitUntil(page, `document.getElementById('status').textContent === 'Right. Tap to continue.'`);
     await page.evaluate(`document.querySelector('#tone-buttons [data-tone="2"]').click()`);
     await waitUntil(page, `document.getElementById('status').textContent === 'All tones right'`, 'the Taiwan tone accepted');
     // And it says how things stand.
