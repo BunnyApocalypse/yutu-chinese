@@ -13,6 +13,18 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-10-27',
+    items: [
+      'Done for the day and want more? "Practice again" at the end of Review goes through today\'s cards once more, the ones you missed first, and then all your cards if you like. Practice is never saved, so your schedule stays as it was.',
+    ],
+    it: [
+      'Finito per oggi e ne vuoi ancora? «Esercitati ancora» alla fine del Ripasso ripropone le carte di oggi, prima quelle sbagliate, e poi tutte le tue carte, se vuoi. L’esercizio non viene mai salvato, quindi il tuo programma resta com’era.',
+    ],
+    de: [
+      'Für heute fertig und willst mehr? „Noch mal üben“ am Ende der Wiederholung geht die Karten von heute noch einmal durch, die verpassten zuerst, und danach, wenn du magst, alle deine Karten. Üben wird nie gespeichert, dein Zeitplan bleibt also, wie er war.',
+    ],
+  },
+  {
     id: '2026-10-26',
     items: [
       'Readings can be shown in zhuyin, or in zhuyin and pinyin together: "Readings in" in Settings › Chinese.',
