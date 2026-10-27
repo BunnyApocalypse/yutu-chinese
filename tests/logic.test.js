@@ -21,6 +21,7 @@ import {
   CARD_TYPES,
   SIBLING_GAP_MS,
   startingTypeFirst,
+  practiceCards,
 } from '../src/session.js';
 import { splitSyllables, toneAnswers, readingsFor } from '../src/tones.js';
 
@@ -679,4 +680,28 @@ test('the Taiwan-form stroke data is well formed', () => {
   // The reason this data is here: 為 in its Taiwan form has 9 strokes.
   const wei = lines.map((line) => JSON.parse(line)).find((entry) => entry.character === '為');
   assert.equal(wei.strokes.length, 9);
+});
+
+test('practice at the end of Review: today\'s cards, missed first, or all, the most likely forgotten first', () => {
+  const now = at('2026-10-12T22:00:00');
+  const card = (wordId, type, last, chance) => {
+    const [id, fields] = studied(wordId, type, { due: now + DAY, first: at('2026-10-01T09:00:00'), last });
+    return [id, { ...fields, id, chance }];
+  };
+  const cards = new Map([
+    card('w0', 'writing', at('2026-10-12T09:00:00'), 0.9),
+    card('w1', 'writing', at('2026-10-12T10:00:00'), 0.5),
+    card('w1', 'meaning', at('2026-10-12T11:00:00'), 0.95),
+    // Yesterday's.
+    card('w2', 'writing', at('2026-10-11T20:00:00'), 0.7),
+  ]);
+  const words = makeWords(4);
+  const options = { retrievability: (entry) => entry.chance };
+  const names = (list) => list.map((entry) => `${entry.word.id} ${entry.type}`);
+
+  const today = practiceCards(words, cards, now, { ...options, which: 'today', missedToday: new Set([cardId('w1', 'meaning')]) });
+  assert.deepEqual(names(today), ['w1 meaning', 'w0 writing', 'w1 writing']);
+  // w3 has no cards; a kind switched off or suspended is left out.
+  const all = practiceCards(words, cards, now, { ...options, which: 'all', hasCardType: (word, type) => type === 'writing' });
+  assert.deepEqual(names(all), ['w1 writing', 'w2 writing', 'w0 writing']);
 });

@@ -2757,6 +2757,11 @@ button.verdict.missed[aria-pressed='true'] {
   background: var(--danger-bg);
 }
 
+/* In practice at the end of Review, "Next card" alone in their place. */
+.grade-row.one {
+  grid-template-columns: 1fr;
+}
+
 /* Wrong and Right (the setting "Grade buttons"): two, each twice as wide.
    Stacked on a tablet held sideways all the same (the rule there wins). */
 .grade-row.two {

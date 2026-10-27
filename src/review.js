@@ -10,7 +10,7 @@
 // saving.
 
 import { getAll, getAllInParts, putAll, saveReview, saveKnown, startCardsOver, randomId } from './db.js';
-import { gradeOptions, gradeButtons, gradeFor, AGAIN, GOOD } from './scheduler.js';
+import { gradeOptions, gradeButtons, gradeFor, retrievability, AGAIN, GOOD } from './scheduler.js';
 import { deckWithInside, isInDecks, dailyGoal, startingLevel } from './decks.js';
 import { fillDeckSelect } from './decksPanel.js';
 import {
@@ -24,6 +24,7 @@ import {
   CARD_TYPES,
   allCardIds,
   startOfStudyDay,
+  practiceCards,
 } from './session.js';
 import { toneAnswers, readingsFor, describeReading } from './tones.js';
 import { scriptFor, scriptFlagFor } from './words.js';
@@ -153,7 +154,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // Card ID → card, for every card that has been studied.
   const cards = new Map();
   // When each review was made and of which card, for the streak (streak.js):
-  // { id, cardId, wordId, time, markedKnown }, the rest of each review left out.
+  // { id, cardId, wordId, time, markedKnown, grade }, the rest of each review
+  // left out.
   let reviewTimes = [];
   // The reviews are read after the first card is up (readReviews), since
   // choosing a card doesn't need them and the owner has 186,000: reading
@@ -182,8 +184,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // True while the end of Review, or of today's words in Learn, is on
   // screen (showNext sets it): a moment for the streak screen.
   let atEnd = false;
-  // True while a card is being shown for Free practice: it is not scheduled,
-  // gets no grade buttons, and nothing is saved.
+  // True while a card is being shown for Free practice, or in practice at the
+  // end of Review (`round`): it is not scheduled, gets no grade buttons, and
+  // nothing is saved.
   let practicing = false;
   let recheckTimer = null;
   // "About this word" inside the card's frame (showCardAbout).
@@ -612,6 +615,16 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // Saves the review with the chosen grade and moves on.
   async function grade(value) {
     if (practicing) {
+      if (round) {
+        // In practice at the end of Review: on to the next card, once (not
+        // again for a double tap, which finds the button put away).
+        if (!gradeRow.hidden) {
+          hideGrades();
+          round.done += 1;
+          showNext();
+        }
+        return;
+      }
       // In Free practice, "continue" just shows the same card again.
       practice(current.word, current.type);
       return;
@@ -909,7 +922,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   // ---- Streaks (streak.js) ----
 
-  const reviewTime = ({ id, cardId, wordId, time, markedKnown }) => ({ id, cardId, wordId, time, markedKnown });
+  // (The grade is kept for practice, which takes cards missed today first.)
+  const reviewTime = ({ id, cardId, wordId, time, markedKnown, grade }) => ({ id, cardId, wordId, time, markedKnown, grade });
 
   // Adds reviews just saved to those counted.
   function noteReviews(reviews) {
@@ -1023,10 +1037,23 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   // Shows the grade buttons (four, or Wrong and Right: the setting
   // gradeButtons) with the suggested one highlighted.
+  // In practice at the end of Review, one button in their place, "Next
+  // card", as a tap on the card does: nothing is graded.
   function renderGrades() {
     gradeRow.replaceChildren();
-    const buttons = gradeButtons(settings.gradeButtons);
+    const buttons = practicing ? [] : gradeButtons(settings.gradeButtons);
     gradeRow.classList.toggle('two', buttons.length === 2);
+    gradeRow.classList.toggle('one', practicing);
+    if (practicing) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'grade primary';
+      button.textContent = t('review.practiceNextCard');
+      button.title = t('review.gradeKey', { grade: button.textContent, key: 1 });
+      button.setAttribute('aria-keyshortcuts', '1');
+      button.addEventListener('click', () => grade(GOOD));
+      gradeRow.appendChild(button);
+    }
     for (const [index, { value, label }] of buttons.entries()) {
       const button = document.createElement('button');
       button.type = 'button';
@@ -1081,13 +1108,17 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     if (current.type === 'tone' || current.type === 'pinyin') {
       meaningElement.textContent = '';
     }
-    if (practicing) {
+    // Free practice has nothing in the grades' place; practice at the end
+    // of Review has "Next card" (renderGrades).
+    if (practicing && !round) {
       return;
     }
-    finishedAt = new Date();
-    options = gradeOptions(current.card ? current.card.fsrsState : null, finishedAt);
-    suggested = suggestedGrade;
-    answerDetails = details;
+    if (!practicing) {
+      finishedAt = new Date();
+      options = gradeOptions(current.card ? current.card.fsrsState : null, finishedAt);
+      suggested = suggestedGrade;
+      answerDetails = details;
+    }
     // Once answered, only the grades are under the card: Clear, Show
     // outline and Animate, or the tone buttons, are no use any more (UX
     // review item 10; the owner chose this from pictures on 2026-10-17, over
@@ -1099,8 +1130,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     // changing its grade (the owner, 2026-10-17).
     practiceAgainButton.hidden = writingRow.hidden;
     renderGrades();
-    // A tip beside them, the first time (tips.js).
-    document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'grades' }));
+    // A tip beside them, the first time (tips.js); not beside "Next card".
+    if (!practicing) {
+      document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'grades' }));
+    }
     if (settings.sound === 'auto') {
       speakCurrent();
     }
@@ -1949,9 +1982,13 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     showNext();
   }
 
-  document.getElementById('review-all-button').addEventListener('click', () => startSitting(null));
+  // The same screen asks before practicing all cards (see "Practice at the
+  // end of Review"): what a choice starts.
+  let startChosen = startSitting;
+  const allButton = document.getElementById('review-all-button');
+  allButton.addEventListener('click', () => startChosen(null));
   for (const button of limitButtons) {
-    button.addEventListener('click', () => startSitting(Number(button.dataset.limit)));
+    button.addEventListener('click', () => startChosen(Number(button.dataset.limit)));
   }
   otherButton.addEventListener('click', () => {
     otherForm.hidden = false;
@@ -1961,25 +1998,190 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     event.preventDefault(); // or the browser would reload the page
     const limit = Math.floor(Number(otherInput.value));
     if (limit >= 1) {
-      startSitting(limit);
+      startChosen(limit);
     }
   });
-  moreButton.addEventListener('click', () => startSitting(sitting.limit));
+  moreButton.addEventListener('click', () => {
+    if (round) {
+      round.limit += round.step;
+      showNext();
+    } else {
+      startSitting(sitting.limit);
+    }
+  });
 
-  // The screen that asks; `total` is how many cards there are to do.
-  function showStart(total) {
+  // The screen that asks; `total` is how many cards there are to do, and
+  // `forPractice` true when they are to be practiced (see "Practice at the
+  // end of Review").
+  function showStart(total, forPractice = false) {
+    startChosen = forPractice ? startAllRound : startSitting;
+    allButton.textContent = t(forPractice ? 'review.practiceAllOfThem' : 'review.allButton');
     current = null;
     setFocus(false);
     offerListen(false);
     studyArea.hidden = true;
     donePanel.hidden = true;
     typeElement.textContent = '';
-    startCount.textContent = t('review.startCount', { count: total });
+    startCount.textContent = t(forPractice ? 'review.practiceStartCount' : 'review.startCount', { count: total });
     // Only numbers smaller than what there is to do.
     for (const button of limitButtons) {
       button.hidden = Number(button.dataset.limit) >= total;
     }
     startPanel.hidden = false;
+  }
+
+  // ---- Practice at the end of Review ----
+  //
+  // With all of today's cards done, "Practice again" goes through them once
+  // more, those missed today first; at the end of that, "Practice all my
+  // cards" goes through every card, the most likely to be forgotten first,
+  // asking how many first as Review does (tester 4, 2026-10-27: with few
+  // cards the day was over too soon; the owner chose this). It is practice:
+  // nothing is saved, the schedule, the Progress tab and the streak are
+  // untouched, and "Next card" takes the grades' place. Cards that come due
+  // meanwhile wait for Review, which comes back when practice ends or Review
+  // is left.
+  //
+  // { which: 'today' or 'all', cards: [{ word, type, card }] in order,
+  //   done: how many went by, limit: how many to do (all of them, or the
+  //   number chosen), step: the number chosen, for "Keep going" }, or null.
+  let round = null;
+  const practiceRoundButton = document.getElementById('practice-round-button');
+  const practiceAllButton = document.getElementById('practice-all-button');
+  const roundBackButton = document.getElementById('round-back-button');
+
+  // The cards to practice; nothing when the reviews are not read yet, only
+  // for a moment as the app starts.
+  async function cardsToPractice(which) {
+    await reviewsReading;
+    const now = Date.now();
+    const dayStart = startOfStudyDay(now);
+    const missedToday = new Set(
+      reviewTimes
+        .filter((review) => review.time >= dayStart && review.grade === AGAIN && !review.markedKnown)
+        .map((review) => review.cardId),
+    );
+    return practiceCards(studyWords(), cards, now, {
+      which,
+      missedToday,
+      retrievability: (card) => retrievability(card.fsrsState, now),
+      hasCardType,
+      scriptOf: (word) => scriptFor(word, settings),
+    });
+  }
+
+  // Whether any card was reviewed today, which "Practice again" goes through.
+  function reviewedToday() {
+    return practiceCards(studyWords(), cards, Date.now(), { which: 'today', hasCardType, scriptOf: (word) => scriptFor(word, settings) }).length > 0;
+  }
+
+  async function startRound(which, limit = null) {
+    const chosen = await cardsToPractice(which);
+    round = { which, cards: chosen, done: 0, limit: limit ?? chosen.length, step: limit };
+    startPanel.hidden = true;
+    otherForm.hidden = true;
+    showNext();
+  }
+
+  // All cards: as many as chosen on the screen that asks (startChosen).
+  function startAllRound(limit) {
+    return startRound('all', limit);
+  }
+
+  // All cards, asking how many first when there are many, as Review does.
+  async function practiceAll() {
+    const total = (await cardsToPractice('all')).length;
+    if (settings.reviewStart && total > SMALLEST_LIMIT) {
+      round = null;
+      // The end of Review looks again every few seconds: not over this.
+      clearTimeout(recheckTimer);
+      donePanel.hidden = true;
+      showStart(total, true);
+      return;
+    }
+    startRound('all');
+  }
+
+  // "Practice again" goes through today's cards; with none reviewed today it
+  // is "Practice my cards", and goes through all of them.
+  practiceRoundButton.addEventListener('click', () => (reviewedToday() ? startRound('today') : practiceAll()));
+  practiceAllButton.addEventListener('click', practiceAll);
+  roundBackButton.addEventListener('click', () => {
+    round = null;
+    showNext();
+  });
+
+  // The next card to practice, or the end of practice.
+  async function showRoundCard() {
+    const entry = round.cards[round.done];
+    if (!entry || round.done >= round.limit) {
+      showRoundEnd();
+      return;
+    }
+    // The card as it is now (it may have been reviewed since practice began).
+    current = { ...entry, card: cards.get(entry.card.id) ?? entry.card };
+    practicing = true;
+    setFocus(true);
+    donePanel.hidden = true;
+    studyArea.hidden = false;
+    showScriptFlag(current.word);
+    showPartsFor(current.type);
+    offerListen(current.type === 'writing' || current.type === 'meaning');
+    showRoundLabel();
+    if (current.type === 'writing') {
+      if (!(await showWritingCard())) {
+        unwritable.add(current.word.id);
+        round.done += 1;
+        showNext();
+      }
+    } else if (current.type === 'tone') {
+      showToneCard();
+    } else {
+      showRecallCard(current.type);
+    }
+  }
+
+  // "Writing · practice 3/12" above the card, or where that would take two
+  // lines and move the card down (a sentence's or a radical's on a phone),
+  // "Practice · 3/12": the card itself shows its kind. Measured with Edit
+  // beside it, which comes once the card is answered.
+  function showRoundLabel() {
+    const number = round.done + 1;
+    const count = Math.min(round.limit, round.cards.length);
+    typeElement.textContent = t('review.labelOfPractice', { label: labelFor(current.word, current.type), number, count });
+    const editHidden = editWordButton.hidden;
+    editWordButton.hidden = false;
+    const range = document.createRange();
+    range.selectNodeContents(typeElement);
+    if (range.getClientRects().length > 1) {
+      typeElement.textContent = t('review.labelOfPracticeShort', { number, count });
+    }
+    editWordButton.hidden = editHidden;
+  }
+
+  function showRoundEnd() {
+    current = null;
+    practicing = false;
+    setFocus(false);
+    offerListen(false);
+    studyArea.hidden = true;
+    typeElement.textContent = '';
+    const heading = document.createElement('h2');
+    heading.className = 'done-heading';
+    heading.textContent = t('review.practiceDone');
+    const line = document.createElement('p');
+    line.textContent = t('review.practicedCount', { count: round.done });
+    doneMessage.replaceChildren(heading, line);
+    const left = round.cards.length - round.done;
+    // Today's cards done: on to all of them. A number of all of them done,
+    // with more left: as many again.
+    practiceAllButton.hidden = round.which !== 'today';
+    if (round.which === 'all' && left > 0) {
+      moreButton.textContent = t('review.moreButton', { count: Math.min(round.step, left) });
+      moreButton.hidden = false;
+    }
+    roundBackButton.hidden = false;
+    donePanel.hidden = false;
   }
 
   // Works out what is next and puts it on screen.
@@ -2008,6 +2210,13 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     pinyinButton.hidden = true;
     startPanel.hidden = true;
     moreButton.hidden = true;
+    practiceRoundButton.hidden = true;
+    practiceAllButton.hidden = true;
+    roundBackButton.hidden = true;
+    if (round && mode === 'review') {
+      showRoundCard();
+      return;
+    }
     if (mode === 'learn') {
       showNextToLearn();
       return;
@@ -2120,6 +2329,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       learnNextButton.textContent = t('review.learnNewWords');
       learnNextButton.hidden = plan.waitingCount === 0;
       lookBackButton.hidden = !(mode === 'review' && graded.length > 0);
+      // Practice once the cards are done, when there are cards (see
+      // "Practice at the end of Review").
+      practiceRoundButton.hidden = !(mode === 'review' && atEnd);
+      practiceRoundButton.textContent = t(reviewedToday() ? 'review.practiceAgain' : 'review.practiceMyCards');
       offerAdding(words.length === 0);
       // The end of Review with words studied, as it comes up (not at each
       // look again): the moment for the message about keeping the words
@@ -2223,6 +2436,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       if (mode === 'review') {
         sitting = null;
       }
+      // Leaving Review ends practice.
+      round = null;
       await loading;
       showDeckChoice(); // the deck studied may have been chosen on its page
       const shown = showNext();
@@ -2265,6 +2480,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       offerListen(false);
       active = false;
       practicing = false;
+      round = null;
       // The card is put away unanswered; its time is not kept.
       stopwatch.stop();
       clearTimeout(recheckTimer);
@@ -2273,6 +2489,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       startPanel.hidden = true;
       learnNextButton.hidden = true;
       lookBackButton.hidden = true;
+      practiceRoundButton.hidden = true;
+      practiceAllButton.hidden = true;
+      roundBackButton.hidden = true;
       offerAdding(false);
       studyArea.hidden = false;
       endLesson();

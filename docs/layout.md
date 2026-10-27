@@ -85,6 +85,7 @@
 - `tests/browser/words.browser.js`: the Decks tab from adding a word to finding it in Review.
 - `tests/browser/settings.browser.js`: the Script and Pronunciation settings, on cards and on the Decks tab; then the Look, raw input and saving a backup.
 - `tests/browser/review.browser.js`: grading in Review: the suggested grade, what a grade saves, the hint setting and Card types.
+- `tests/browser/practice.browser.js`: practice at the end of Review: today's cards, missed first, then all of them, saving nothing.
 - `tests/browser/repeatLesson.browser.js`: "Repeat lesson" on a word's page, saving nothing, and "Learn it now" for a word still waiting.
 - `tests/browser/lesson.browser.js`, `tests/browser/welcome.browser.js`, `tests/browser/offline.browser.js`: the Learn tab and its lesson, the introduction, and offline use.
 - `tests/browser/database.browser.js`: a database from before brought up to date, and what is kept for merging (removal marks, `changedAt`, `formerIds`).

@@ -329,6 +329,54 @@ export function planSession(words, cards, now, options) {
   };
 }
 
+// The cards to go through again as practice once Review is done (tester 4,
+// 2026-10-27: with few cards, the day's were over too soon; the owner chose
+// practice that saves nothing, today's cards first, then all of them).
+//
+// words:   the words studied (the deck chosen)
+// cards:   a Map from card ID to card, as for planSession
+// options: which:          'today', the cards reviewed this study day, those
+//                          missed today first; or 'all', every card studied,
+//                          the most likely to be forgotten first
+//          missedToday:    a Set of the IDs of cards graded Again today
+//          retrievability(card): the chance, 0 to 1, that the card is still
+//                          remembered now (scheduler.js)
+//          hasCardType, scriptOf: as for planSession
+//
+// Returns [{ word, type, card }], in the order to practice them.
+export function practiceCards(words, cards, now, options) {
+  const {
+    which,
+    missedToday = new Set(),
+    retrievability = () => 1,
+    hasCardType = () => true,
+    scriptOf = () => 'traditional',
+  } = options;
+  const dayStart = startOfStudyDay(now);
+  const found = [];
+  for (const word of words) {
+    for (const type of CARD_TYPES) {
+      // Only the card in the script studied, of a kind switched on and not
+      // suspended: the card Review would show.
+      const card = cards.get(cardIdFor(word, type, scriptOf(word)));
+      if (!card || !hasCardType(word, type)) {
+        continue;
+      }
+      if (which === 'today' && lastReviewOf(card) < dayStart) {
+        continue;
+      }
+      found.push({ word, type, card });
+    }
+  }
+  if (which === 'today') {
+    // Missed first, then in the order reviewed.
+    const missed = (entry) => (missedToday.has(entry.card.id) ? 0 : 1);
+    return found.sort((a, b) => missed(a) - missed(b) || lastReviewOf(a.card) - lastReviewOf(b.card));
+  }
+  const chance = new Map(found.map((entry) => [entry, retrievability(entry.card)]));
+  return found.sort((a, b) => chance.get(a) - chance.get(b));
+}
+
 // The steps of the lesson a word is taught by (see "The lesson for a new
 // word" in review.js):
 //   'meet':    look at the word: its characters, reading and meaning. Only

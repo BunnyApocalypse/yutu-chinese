@@ -81,6 +81,13 @@ export function gradeOptions(fsrsState, now) {
   return options;
 }
 
+// The chance, from 0 to 1, that a card is still remembered at `now` (a Date
+// or milliseconds): what FSRS calls retrievability. Practicing all cards
+// takes the lowest first (practiceCards in session.js).
+export function retrievability(fsrsState, now) {
+  return scheduler.get_retrievability(fsrsState, now, false);
+}
+
 // Works out a card's schedule afresh from the reviews made of it, as if they
 // were being made again one after another. Since every review is kept, this
 // gives the same result as the state saved with the card, and it is how a

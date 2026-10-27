@@ -182,6 +182,11 @@
         <!-- In Learn, between two words: on to the next one; in Review, with
              nothing due and words waiting: to Learn (review.js, main.js). -->
         <button id="learn-next-button" class="primary" type="button" hidden data-t="review.learnNextButton"></button>
+        <!-- At the end of Review: today's cards again, as practice; at the
+             end of that, all cards; and back to Review (review.js, "Practice
+             at the end of Review"). -->
+        <button id="practice-round-button" type="button" hidden></button>
+        <button id="practice-all-button" class="primary" type="button" hidden data-t="review.practiceAll"></button>
         <!-- With no words at all: the ready-made level suggested to start
              with, added and opened in Learn (review.js, main.js). -->
         <button id="start-level-button" class="primary" type="button" hidden data-t="review.startLevelButton"></button>
@@ -198,6 +203,7 @@
              to do: the same number again (review.js). -->
         <button id="review-more-button" class="primary" type="button" hidden></button>
         <button id="look-back-button" class="link-button" type="button" hidden data-t="review.lookBackButton"></button>
+        <button id="round-back-button" type="button" hidden data-t="review.practiceBack"></button>
         <!-- At the end of Review and between two words in Learn, every time,
              while the browser may delete the words (storageMessage.js). -->
         <div id="storage-message" class="storage-message" hidden>
