@@ -17,14 +17,20 @@ export const CHANGES = [
     items: [
       'A bigger writing area on smaller phones: the buttons under it take one row, "Practice again" sits on its bottom edge, and while you practice, "Done practicing" brings the grades back.',
       'Tone cards wait for a tap after a right tone too, so a tap to go on is never taken for the neutral tone. A tone button or a drawn mark answers the next character straight away.',
+      'On a word\'s page, each character with a sound part now says how far that part still gives the sound: the same, only the tone differs, rhymes, a hint, or changed since.',
+      'Some characters have a new "How to remember it": a short memory aid written by AI, under the lines on how the character is built. Learning tips for more words, too.',
     ],
     it: [
       'Un’area di scrittura più grande sui telefoni più piccoli: i pulsanti sotto stanno su una riga, «Esercitati ancora» è sul suo bordo inferiore e, mentre ti eserciti, «Fine esercizio» riporta i voti.',
       'Le carte dei toni aspettano un tocco anche dopo un tono giusto, così un tocco per andare avanti non viene mai preso per il tono neutro. Un pulsante del tono o un segno disegnato risponde subito al carattere successivo.',
+      'Nella pagina di una parola, ogni carattere con una parte fonetica ora dice quanto quella parte indica ancora il suono: uguale, cambia solo il tono, fa rima, un indizio, o cambiato da allora.',
+      'Alcuni caratteri hanno un nuovo «Come ricordarlo»: un breve aiuto per la memoria scritto dall’IA, sotto le righe su come è fatto il carattere. E consigli di studio per altre parole.',
     ],
     de: [
       'Eine größere Schreibfläche auf kleineren Handys: Die Knöpfe darunter passen in eine Reihe, „Noch mal üben“ sitzt an ihrem unteren Rand, und beim Üben bringt „Üben beenden“ die Bewertungen zurück.',
       'Tonkarten warten auch nach einem richtigen Ton auf ein Tippen, damit ein Tippen zum Weitergehen nie als neutraler Ton zählt. Ein Tonknopf oder ein gezeichnetes Zeichen beantwortet gleich das nächste Zeichen.',
+      'Auf der Seite eines Wortes sagt jedes Zeichen mit einem Lautteil jetzt, wie gut dieser Teil noch den Klang angibt: gleich, nur der Ton ist anders, reimt sich, ein Hinweis, oder seitdem verändert.',
+      'Manche Zeichen haben ein neues „So merkst du es dir“: eine kurze, von KI geschriebene Merkhilfe unter den Zeilen zum Aufbau des Zeichens. Und Lerntipps für weitere Wörter.',
     ],
   },
   {
