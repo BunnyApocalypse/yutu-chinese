@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { syllableZhuyin, toZhuyin } from '../src/zhuyin.js';
+import { syllableZhuyin, toZhuyin, finalOf } from '../src/zhuyin.js';
 import { SYLLABLES } from '../src/pinyinSyllables.js';
 import { formatPinyin } from '../src/wordList.js';
 
@@ -125,4 +125,14 @@ test("a syllable zhuyin can't spell is shown by the function given", () => {
 
 test('an empty reading stays empty', () => {
   assert.equal(toZhuyin(''), '');
+});
+
+test('a syllable\'s final, the same however pinyin spells it', () => {
+  assert.equal(finalOf('gu'), 'ㄨ');
+  assert.equal(finalOf('ku'), 'ㄨ');
+  assert.equal(finalOf('yan'), finalOf('jian')); // ㄧㄢ
+  assert.equal(finalOf('wei'), finalOf('gui')); // ㄨㄟ
+  assert.equal(finalOf('xue'), finalOf('yue')); // ㄩㄝ
+  assert.equal(finalOf('shi'), '');
+  assert.equal(finalOf('bv'), null);
 });

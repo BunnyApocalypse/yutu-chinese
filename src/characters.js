@@ -2,6 +2,9 @@
 // and which the sound. From Make Me a Hanzi's dictionary (data/makemeahanzi/;
 // see the README there). Plain calculation, no page.
 
+import { readTypedPinyin } from './dictionary.js';
+import { finalOf } from './zhuyin.js';
+
 // Reads the dictionary file: one JSON object per line.
 // Returns a Map from character to its entry.
 export function parseCharacters(text) {
@@ -67,4 +70,76 @@ export function structureOf(characters, character) {
     definition: entry.definition || '',
     pinyin: entry.pinyin || [],
   };
+}
+
+// How the sound part of a sound-meaning character sounds next to the
+// character today. Sound parts were chosen some three thousand years ago,
+// and many readings have drifted since: 河 hé still rhymes with 可 kě, but
+// 江 jiāng sounds nothing like 工 gōng. So the page says, for each, how far
+// the part still helps.
+//
+// Returns null for a character with no sound part (or no readings to
+// compare), otherwise { part, how, reading, partReading }:
+//   how: 'same' (the same syllable and tone), 'tone' (the same syllable in
+//        another tone), 'rhyme' (the same final: 河 hé and 可 kě),
+//        'close' (the same initial, 讲 jiǎng and 井 jǐng; or finals that
+//        differ only by an i, u or ü before them, 缓 huǎn and 爰 yuán) or
+//        'changed'
+//   reading, partReading: the two readings compared, as stored ("ku1"),
+//        the closest pair where either has several readings
+const CLOSENESS = ['same', 'tone', 'rhyme', 'close', 'changed'];
+export function soundClue(characters, character) {
+  const entry = characters.get(character);
+  const etymology = entry?.etymology;
+  if (etymology?.type !== 'pictophonetic' || !etymology.phonetic) {
+    return null;
+  }
+  const part = characters.get(etymology.phonetic);
+  let best = null;
+  for (const reading of (entry.pinyin || []).map(syllable).filter(Boolean)) {
+    for (const partReading of (part?.pinyin || []).map(syllable).filter(Boolean)) {
+      const how =
+        reading.letters === partReading.letters
+          ? reading.tone === partReading.tone
+            ? 'same'
+            : 'tone'
+          : finalOf(reading.letters) === finalOf(partReading.letters)
+            ? 'rhyme'
+            : sameInitial(reading.letters, partReading.letters) || sameFinalWithoutGlide(reading.letters, partReading.letters)
+              ? 'close'
+              : 'changed';
+      if (!best || CLOSENESS.indexOf(how) < CLOSENESS.indexOf(best.how)) {
+        best = { part: etymology.phonetic, how, reading: reading.stored, partReading: partReading.stored };
+      }
+    }
+  }
+  return best;
+}
+
+// One reading as Make Me a Hanzi gives it ("gǔ") taken apart: its letters
+// ("gu", v for ü), its tone (5 for none) and the reading as the app stores
+// it ("gu3"). Null for anything but a single syllable.
+function syllable(text) {
+  const read = readTypedPinyin(text);
+  if (!read || read.tones.length > 1 || finalOf(read.letters) === null) {
+    return null;
+  }
+  const tone = read.tones.length ? read.tones[0].tone : 5;
+  return { letters: read.letters, tone, stored: `${read.letters}${tone}` };
+}
+
+// Whether two syllables start with the same consonant (the "zh" of
+// zhang); syllables with none (an, yan, wu) don't count.
+function sameInitial(a, b) {
+  const initial = (letters) => (/^[yw]/.test(letters) ? '' : (letters.match(/^(zh|ch|sh|[bpmfdtnlgkhjqxrzcs])/) || [''])[0]);
+  return initial(a) !== '' && initial(a) === initial(b);
+}
+
+// Whether two finals are the same once the ㄧ, ㄨ or ㄩ before the rest is
+// taken off (ㄨㄢ and ㄩㄢ are both ㄢ). At least one must have had one, and
+// something must be left: i, u and ü alone are too short to call close.
+function sameFinalWithoutGlide(a, b) {
+  const [first, second] = [finalOf(a), finalOf(b)];
+  const rest = (final) => final.replace(/^[ㄧㄨㄩ]/, '');
+  return rest(first) !== '' && rest(first) === rest(second) && (rest(first) !== first || rest(second) !== second);
 }

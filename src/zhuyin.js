@@ -93,6 +93,21 @@ export function syllableZhuyin(letters) {
   return symbols === undefined ? null : INITIALS[initial] + symbols;
 }
 
+// A syllable's final in zhuyin, without its initial and tone ("gu" and
+// "ku" both give ㄨ), or null if the letters are not a syllable. Two
+// syllables rhyme when their finals are the same. Zhuyin is used because it
+// spells each final one way, where pinyin writes the same final as yan and
+// -ian, wei and -ui. zhi, chi, shi, ri, zi, ci and si have no final
+// symbol, so they give ''.
+const INITIAL_SYMBOLS = new Set(Object.values(INITIALS));
+export function finalOf(letters) {
+  const symbols = syllableZhuyin(letters);
+  if (symbols === null) {
+    return null;
+  }
+  return INITIAL_SYMBOLS.has(symbols[0]) ? symbols.slice(1) : symbols;
+}
+
 // One syllable with its tone (1 to 5) in zhuyin, or null if the letters
 // are not a syllable.
 function withTone(letters, tone) {

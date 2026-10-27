@@ -21,7 +21,7 @@ import { t } from './text.js';
 import { closeOnTapBeside } from './dialogs.js';
 import { readingsFor, describeReading } from './tones.js';
 import { parseNotes, noteFor, sentenceWords } from './notes.js';
-import { parseCharacters, structureOf } from './characters.js';
+import { parseCharacters, structureOf, soundClue } from './characters.js';
 import { deckTree, readyMadeDeck, isReadyMadeGroup } from './decks.js';
 import { fillDeckSelect } from './decksPanel.js';
 import { speak } from './speech.js';
@@ -566,6 +566,25 @@ export function createWordPage({
       };
       if (KINDS[structure.kind]) {
         card.append(mixed('p', 'hint', KINDS[structure.kind]));
+      }
+      // How far the sound part still helps with the reading: many have
+      // drifted since the characters were made (soundClue).
+      const clue = soundClue(characters, char);
+      if (clue) {
+        const said = {
+          part: clue.part,
+          partReading: showReading(clue.partReading),
+          character: char,
+          reading: showReading(clue.reading),
+        };
+        const SOUND_TEXTS = {
+          same: 'page.sound.same',
+          tone: 'page.sound.tone',
+          rhyme: 'page.sound.rhyme',
+          close: 'page.sound.close',
+          changed: 'page.sound.changed',
+        };
+        card.append(mixed('p', 'hint', t(SOUND_TEXTS[clue.how], said)));
       }
       section.append(card);
     }

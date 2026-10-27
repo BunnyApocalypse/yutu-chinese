@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 import { parseNotes, noteFor, sentenceWords } from '../src/notes.js';
-import { parseCharacters, structureOf } from '../src/characters.js';
+import { parseCharacters, structureOf, soundClue } from '../src/characters.js';
 
 test('an example sentence is split into its words by its pinyin', () => {
   const texts = (sentence, pinyin) => sentenceWords(sentence, pinyin).map((piece) => piece.text);
@@ -70,4 +70,23 @@ test('a character\'s parts are listed, with the one for meaning and the one for 
   assert.equal(good.kind, 'meaning');
   assert.equal(structureOf(characters, '山').kind, 'picture');
   assert.equal(structureOf(characters, '𠀀'), null);
+});
+
+test('how far a sound part still gives the sound', () => {
+  const characters = parseCharacters(fs.readFileSync('data/makemeahanzi/dictionary.txt', 'utf8'));
+  const how = (character) => soundClue(characters, character)?.how;
+  assert.deepEqual(soundClue(characters, '清'), { part: '青', how: 'same', reading: 'qing1', partReading: 'qing1' });
+  assert.equal(how('媽'), 'tone'); // mā and mǎ
+  assert.equal(how('河'), 'rhyme'); // hé and kě
+  assert.equal(how('讲'), 'close'); // jiǎng and jǐng: the same initial
+  assert.equal(how('缓'), 'close'); // huǎn and yuán: ㄨㄢ and ㄩㄢ
+  assert.equal(how('绿'), 'close'); // lǜ and lù
+  assert.equal(how('江'), 'changed'); // jiāng and gōng
+  // Neither two syllables without an initial (yǔ, wú) nor two finals with
+  // nothing to take off (hǎi, měi) are close.
+  assert.equal(how('語'), 'changed');
+  assert.equal(how('海'), 'changed');
+  // No sound part: a compound of meanings, a picture.
+  assert.equal(soundClue(characters, '好'), null);
+  assert.equal(soundClue(characters, '山'), null);
 });

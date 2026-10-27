@@ -1052,6 +1052,12 @@ export default {
   'page.roleSound': 'sound',
   'page.soundMeaningHint': 'One part gives the meaning ({hint}) and one the sound.',
   'page.soundMeaning': 'One part gives the meaning and one the sound.',
+  // How far a character's sound part still helps (characters.js, soundClue):
+  'page.sound.same': '{part} {partReading} gives the sound: {character} is read the same.',
+  'page.sound.tone': '{part} {partReading} gives the sound: {character} {reading} differs only in its tone.',
+  'page.sound.rhyme': '{part} {partReading} gives the sound: {character} {reading} rhymes with it.',
+  'page.sound.close': '{part} {partReading} gives a hint of the sound: {character} is {reading}.',
+  'page.sound.changed': '{part} {partReading} once gave the sound, which has changed since: {character} is now {reading}.',
   'page.oneWayToSee': 'One way to see it: {hint}.',
   'page.pictureHint': 'Seen as a picture: {hint}.',
   'page.picture': 'Seen as a picture.',

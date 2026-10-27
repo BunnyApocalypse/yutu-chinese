@@ -64,6 +64,8 @@ describe('the word page', { concurrency: false }, () => {
     // Each character with its parts; 們 has one for the meaning and one for the sound.
     assert.deepEqual(await page.evaluate(texts('.character-big')), ['我', '們']);
     assert.deepEqual(await page.evaluate(texts('.part.meaning, .part.sound')), ['亻meaning', '門sound']);
+    // How far 門 still gives the sound of 們.
+    assert.ok((await page.evaluate(texts('.character-card .hint'))).includes('門 mén gives the sound: 們 men differs only in its tone.'));
     assert.equal(await isShown(page, 'word-page-edit'), true);
     assert.equal(await isShown(page, 'word-page-back'), false);
   });
