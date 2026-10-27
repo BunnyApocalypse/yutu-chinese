@@ -524,7 +524,20 @@ wordForm.addEventListener('submit', (event) => {
 // ---- Settings ----
 
 // Called whenever a setting changes: show the current card or word afresh.
+// The font the writing area was last sized for: OpenDyslexic has more room
+// around the area (roomAboveBelow in wordFlow.js). The area is first built
+// before the settings are read, for the device's own font.
+let fontSizedFor = 'system';
+function sizeForFont() {
+  if (settings.font !== fontSizedFor) {
+    fontSizedFor = settings.font;
+    flow.rebuild();
+    refitMeaning();
+  }
+}
+
 function onSettingsChange() {
+  sizeForFont();
   loadWordList(); // the suggestions are in the script being learned
   if (mode === 'decks' || mode === 'words') {
     wordsPanel.show();
@@ -917,6 +930,7 @@ async function startUp() {
     },
     onSettingsChange,
   );
+  sizeForFont();
 
   review = createReview(
     {

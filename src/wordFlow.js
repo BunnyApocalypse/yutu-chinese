@@ -21,18 +21,13 @@ function chooseSize() {
   // The writing area has one size, and everything else has fixed room
   // above and below it, so that the area never moves or changes size from
   // one card or one step of a lesson to the next (the owner's rule,
-  // 2026-10-13). 380 is that room, measured with the tabs put away (see
-  // "Focus" in review.js):
-  //   above: the kind of card, the meaning (one line), the pinyin, a
-  //          lesson's note, and the row of slots (words of several
-  //          characters) with the status line beside them: 213. Each keeps
-  //          its room when empty. (Until 2026-10-14 the slots and the status
-  //          line had a row each, and the number was 420.)
-  //   below: the three buttons and the four grade buttons, with the
-  //          margins: about 167 (155 left the page 9px too tall).
-  // The area is the point of the app: if a row is added, find its room in
-  // the rows there are, do not raise this number.
-  const fitsHeight = window.innerHeight - ROOM_ABOVE_BELOW;
+  // 2026-10-13). ROOM_ABOVE_BELOW is that room (roomAboveBelow). Above a
+  // phone's size it grows with the area, as the meaning does: solved for
+  // the size at which the two together fill the height.
+  let fitsHeight = window.innerHeight - roomAboveBelow(0);
+  if (fitsHeight > FACE_BASE) {
+    fitsHeight = Math.floor((fitsHeight + ZOOMED_ROOM) / (1 + ZOOMED_ROOM / FACE_BASE));
+  }
   // Up to the same largest size as in two columns: until 2026-10-25 it
   // stopped at 640, which left a third of an upright tablet empty (the owner).
   const oneColumn = Math.max(200, Math.min(fitsWidth, fitsHeight, AREA_MAX));
@@ -46,8 +41,40 @@ function chooseSize() {
   return wide ? twoColumns : oneColumn;
 }
 
-// The room kept above and below the area in one column (see chooseSize).
-const ROOM_ABOVE_BELOW = 380;
+// The room kept above and below the area in one column (see chooseSize),
+// measured with the tabs put away (see "Focus" in review.js) on a 360×640
+// phone, in the step of a lesson that needs the most: 301 (2026-10-27).
+//   above: the kind of card, the reading, the meaning (one line), a
+//          lesson's note with "I know this word" (one line), and the row
+//          of slots with the status line beside them. Each keeps its room
+//          when empty. The line saying a word is in another script lies
+//          over the area (style.css).
+//   below: one row of buttons, never two (Clear, Show outline and Animate;
+//          the grades; a lesson's "Next step"; the tone buttons), and
+//          main's padding and gap.
+// Until 2026-10-27 it was 380, with a second row below ("Practice again"
+// under the grades, the tools under them while practicing, "Next step"
+// under the tone buttons) and the script's line above: a 360×640 phone's
+// area was 260px where its width allows 328 (the owner: "if the canvas
+// isn't optimally large on small phones then thats a problem").
+// The area is the point of the app: if a row is added, find its room in
+// the rows there are, do not raise this number.
+const ROOM_ABOVE_BELOW = 305;
+// OpenDyslexic's lines are taller, and its status line is under the slots
+// (style.css): as much more for it (font.js). 336 measured, with a lesson's
+// note on two lines.
+const DYSLEXIC_ROOM = 40;
+// On an area bigger than a phone's (FACE_BASE), the meaning above it grows
+// with it (--meaning-zoom): its line needs this much more room for each
+// time FACE_BASE more (328 measured on a tablet at 1.9 times, 2026-10-27).
+const ZOOMED_ROOM = 30;
+const FACE_BASE = 400;
+
+// The room above and below an area of `size` in one column.
+function roomAboveBelow(size) {
+  const font = document.documentElement.dataset.font === 'dyslexic' ? DYSLEXIC_ROOM : 0;
+  return ROOM_ABOVE_BELOW + font + ZOOMED_ROOM * Math.max(0, size / FACE_BASE - 1);
+}
 // The area's largest size, in one column or two.
 const AREA_MAX = 760;
 // How much taller than one line the meaning above the card may be, where the
@@ -475,6 +502,9 @@ export function createWordFlow(elements) {
         // or a key (goOn), as after a real one.
         showArrows();
         renderVerdictButtons();
+        if (wordFinished()) {
+          options.onPracticeDone?.();
+        }
         // The printed character keeps the color of the verdict that stands.
         return passedPerChar[position];
       }
@@ -658,7 +688,7 @@ export function createWordFlow(elements) {
     // Lets the style sheet give the card face (see style.css) the same size.
     document.documentElement.style.setProperty('--area-size', `${size}px`);
     // Its text grows with it above a phone's size (style.css, .card-face).
-    document.documentElement.style.setProperty('--face-zoom', String(Math.max(1, size / 400)));
+    document.documentElement.style.setProperty('--face-zoom', String(Math.max(1, size / FACE_BASE)));
     // Where the screen is taller than the card needs, the meaning above it
     // may take more lines (meaningFit.js), and the card is moved down by half
     // the room still left over, so that it sits in the middle (the owner,
@@ -671,9 +701,9 @@ export function createWordFlow(elements) {
     // owner, 2026-10-25: on the tablet it was a phone's size in a room for
     // more), and so does its room; not in two columns, whose side column
     // is 360px wide whatever the area.
-    const meaningZoom = wide ? 1 : Math.max(1, size / 400);
+    const meaningZoom = wide ? 1 : Math.max(1, size / FACE_BASE);
     document.documentElement.style.setProperty('--meaning-zoom', String(meaningZoom));
-    const spare = Math.max(0, window.innerHeight - ROOM_ABOVE_BELOW - size);
+    const spare = Math.max(0, window.innerHeight - roomAboveBelow(size) - size);
     // (Not rounded: three lines must fill it exactly, or the card moves by a
     // fraction of a pixel when they do.)
     const extraMax = MEANING_EXTRA_MAX * meaningZoom;
@@ -854,6 +884,8 @@ export function createWordFlow(elements) {
     //   onCharStart(): a character starts (or starts over)
     //   onPracticeStart(): practicing a written character begins (see
     //                  practiceAgain, goTo)
+    //   onPracticeDone(): the character practiced once the word was finished
+    //                  is written (Review brings back its grades)
     //   onPracticeEnd(): the arrows went from practicing back to the
     //                  character still being written
     //   onWordDone(result): the last character was finished. `result` has

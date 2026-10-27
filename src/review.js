@@ -309,6 +309,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   function showScriptFlag(word) {
     fillMixed(scriptFlag, word ? scriptFlagFor(word, settings) : '', word ? scriptFor(word, settings) : settings.script);
     scriptFlag.hidden = scriptFlag.textContent === '';
+    // It lies in the face's top corner: the face's text starts below it.
+    cardFace.classList.toggle('flagged', !scriptFlag.hidden);
   }
 
   function stopFlows() {
@@ -365,19 +367,45 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   pinyinButton.addEventListener('click', showPinyin);
 
-  // Practicing again (see practiceWhenDone in wordFlow.js): the grades stay
-  // where they are, and Clear, Show outline and Animate come back under
-  // them (the owner, 2026-10-17: above, they would push the grades down).
+  // Practicing again (see practiceWhenDone in wordFlow.js): Clear, Show
+  // outline and Animate take the grades' place while the character is
+  // written again, as before the card was answered, and the grades come back
+  // once it is, or at "Done practicing", which takes the place of "Practice
+  // again" meanwhile (donePracticing). Until 2026-10-27 the tools came back
+  // under the grades, a second row that short phones needed for the area
+  // (the owner).
+  // True while the grades are put away for practice.
+  let gradesAway = false;
   function startPractice() {
-    practiceAgainButton.hidden = true;
     // Out of the way of the writing while practicing.
     cardAboutButton.hidden = true;
     writingButtons.hidden = false;
+    // Once answered (graded in Review, or "Next card" in practice at its
+    // end), the way back to the grades; not while the word is unfinished.
+    gradesAway = Boolean(options || (practicing && round));
+    gradeRow.hidden = true;
+    practiceAgainButton.textContent = t('study.donePracticing');
+    practiceAgainButton.hidden = !gradesAway;
     studyArea.classList.add('practicing');
   }
 
   function endPractice() {
     studyArea.classList.remove('practicing');
+  }
+
+  // The character practiced is written, or "Done practicing": the grades
+  // (or "Next card") again.
+  function donePracticing() {
+    endPractice();
+    if (!gradesAway) {
+      return;
+    }
+    gradesAway = false;
+    writingButtons.hidden = true;
+    practiceAgainButton.textContent = t('study.practiceAgainButton');
+    practiceAgainButton.hidden = false;
+    gradeRow.hidden = false;
+    showCardAbout();
   }
 
   // In a lesson's writing steps, once the word is written, Clear, Show
@@ -389,10 +417,12 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     practiceAgainButton.hidden = !away;
   }
 
-  practiceAgainButton.addEventListener('click', () => flows.writing.practiceAgain());
+  practiceAgainButton.addEventListener('click', () => (gradesAway ? donePracticing() : flows.writing.practiceAgain()));
 
   function hideGrades() {
     gradeRow.hidden = true;
+    gradesAway = false;
+    practiceAgainButton.textContent = t('study.practiceAgainButton');
     practiceAgainButton.hidden = true;
     editWordButton.hidden = true;
     aboutWordButton.hidden = true;
@@ -1203,6 +1233,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // Back from practicing an earlier character to the one still to be
       // written (the arrows, wordFlow.js).
       onPracticeEnd: endPractice,
+      // The finished word's character written again.
+      onPracticeDone: donePracticing,
       onWordDone(result) {
         showPinyin();
         // The gap is filled in: the whole sentence is shown.
@@ -1501,7 +1533,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         answers: toneAnswersOf(word),
         offerHelp: offerToneHelp(),
         // Practice: nothing is saved, and the tone card comes by itself later.
+        // Once answered, "Next step" takes the tone buttons' place, as the
+        // grades do in Review: one row under the card (the owner, 2026-10-27).
         onDone() {
+          toneButtonRow.hidden = true;
           lessonNextButton.hidden = false;
           speakAfterStep();
         },

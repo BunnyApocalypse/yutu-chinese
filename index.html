@@ -526,8 +526,6 @@
       </section>
 
       <div id="study-area" class="study-area">
-        <!-- Says so when this word is in another script than the rest of the deck: "simp. 简体". -->
-        <p id="script-flag" class="script-flag" hidden></p>
         <!-- One row above the writing area: the slots, and the status line beside them. -->
         <div class="progress-row">
           <!-- One slot per character of the word. Filled in by wordFlow.js. -->
@@ -544,6 +542,12 @@
           </div>
         </div>
 
+        <!-- Says so when this word is in another script than the rest of the
+             deck: "simp. 简体". A line of no height, its text lying in the
+             top left corner of the writing area or the card's face below,
+             so that it takes no room from the area (style.css). -->
+        <p id="script-flag" class="script-flag" hidden></p>
+
         <!-- Hanzi Writer draws the character into this SVG. wordFlow.js sets its size and adds the guide grid. -->
         <div id="writing-row" class="writing-row">
           <!-- Beside the writing area: go back to a character skipped by accident, and skip the current character. -->
@@ -554,6 +558,11 @@
                writing area; on the other kinds it is moved into the card's
                face (showCardAbout in review.js). -->
           <button id="card-about-button" class="link-button card-about" type="button" hidden data-t="study.cardAboutButton"></button>
+          <!-- Once a word is written, at the bottom right of the writing
+               area: write the character on screen again, as practice that
+               changes nothing (wordFlow.js). A swipe up on the writing area
+               does the same. -->
+          <button id="practice-again-button" class="link-button practice-again" type="button" hidden data-t="study.practiceAgainButton"></button>
         </div>
 
         <!-- Takes the writing area's place on tone, pinyin and meaning cards: shows the
@@ -584,10 +593,6 @@
              just written, "✕ 姓 missed" and "✓ 姓 right", in the grades' place
              (wordFlow.js). -->
         <div id="verdict-row" class="grade-row two verdict-row" hidden></div>
-        <!-- Under the grades of a writing card: write the character on screen
-             again, as practice that changes nothing (wordFlow.js). A swipe up
-             on the writing area does the same. -->
-        <button id="practice-again-button" class="link-button" type="button" hidden data-t="study.practiceAgainButton"></button>
 
         <!-- During the lesson for a new word: on to its next step, where nothing
              else leads there; and straight to its last step. -->

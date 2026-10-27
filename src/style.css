@@ -1039,6 +1039,34 @@ main.focused #prompt-meaning:not(.with-sentence) {
   color: var(--muted);
 }
 
+/* Above a card, the line saying a word is in another script (index.html)
+   has no height: its text lies in the top left corner of the writing area
+   or the card's face just below, so that it takes no room from the area
+   (the owner, 2026-10-27, for short phones). The negative margin takes back
+   the study area's gap it adds. Taps go through it to the area. */
+.study-area > .script-flag {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  width: var(--area-size, 300px);
+  height: 0;
+  margin-bottom: calc(-1 * var(--space-medium));
+  padding-left: var(--space-medium);
+  line-height: 1.2;
+  transform: translateY(calc(var(--space-medium) + var(--space-small)));
+  pointer-events: none;
+}
+
+/* In two columns the area is in a column of its own, and the line has room
+   in the other. */
+:root[data-layout='wide'] .study-area > .script-flag {
+  width: auto;
+  height: auto;
+  margin-bottom: 0;
+  padding-left: 0;
+  transform: none;
+}
+
 /* The introduction: one screen of it at a time. */
 .welcome p {
   margin: 0 0 var(--space-medium);
@@ -1601,6 +1629,23 @@ button.slot {
   text-align: center;
 }
 
+/* In OpenDyslexic's wider letters, "Write the first stroke" or "Word done ·
+   no mistakes" beside two or three slots took a second line on a phone, and
+   the writing area moved down while the word was written (2026-10-27). So
+   with that font the status line is always under the slots, a size smaller,
+   in a row as tall as both whether there are slots or not (roomAboveBelow
+   in wordFlow.js keeps the room). */
+:root[data-font='dyslexic'] .progress-row {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: var(--space-tiny);
+  min-height: 64px;
+}
+
+:root[data-font='dyslexic'] .status {
+  font-size: var(--size-small);
+}
+
 .writing-area {
   background: var(--surface);
   border: 2px solid var(--border);
@@ -1983,6 +2028,26 @@ button.slot {
 
 .card-face > .card-about {
   left: 0;
+}
+
+/* Under the line saying the word is in another script, which lies in the
+   face's top left corner (.script-flag): the face's text starts below it. */
+.card-face.flagged {
+  padding-top: calc(var(--space-medium) + 1.4em);
+}
+
+/* "Practice again" once a word is written (review.js), at the bottom right
+   of the writing area as "About this word" is at its left: under the
+   buttons it took a row of its own, which short phones need for the area
+   (the owner, 2026-10-27). */
+.practice-again {
+  position: absolute;
+  bottom: 0;
+  right: calc(50% - var(--area-size, 300px) / 2);
+  z-index: 1;
+  min-height: 0;
+  margin: 0;
+  padding: var(--space-small) var(--space-medium) var(--space-medium);
 }
 
 /* When the tip does not fit, "About this word" stays at the card's
@@ -2700,11 +2765,6 @@ button.small {
 
 /* The four grade buttons share the row equally, so they always fit side by
    side on a phone. Each shows the grade with the waiting time underneath. */
-/* Close under the grades: the study area's gap is space enough. */
-#practice-again-button {
-  margin-top: 0;
-}
-
 /* The app's name in the storage message stays on one line. */
 #storage-message-advice [lang] {
   white-space: nowrap;
@@ -2716,10 +2776,12 @@ button.small {
   display: none;
 }
 
-/* Practicing a written word again (review.js): Clear, Show outline and
-   Animate come back under the grades, so the grades do not move. */
-.study-area.practicing #writing-buttons {
-  order: 1;
+/* OpenDyslexic's letters are wider: Clear, Show outline and Animate a size
+   smaller and closer in, so that they stay on one row on a phone (a second
+   row takes height from the writing area). */
+:root[data-font='dyslexic'] #writing-buttons > button {
+  padding-inline: var(--space-small);
+  font-size: var(--size-small);
 }
 
 .grade-row {

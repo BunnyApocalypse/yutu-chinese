@@ -169,7 +169,7 @@ describe('learning new words', { concurrency: false }, () => {
 
   it('then shows each stroke until it is written', { timeout: 60000 }, async () => {
     await waitUntil(page, stepIs('step 3 of 5'), 'step 3');
-    assert.match(await textOf(page, 'lesson-note'), /each stroke as it is shown/);
+    assert.match(await textOf(page, 'lesson-note'), /each stroke as shown/);
     await waitForFirstStroke();
     assert.equal(await outlineButton(), 'Hide outline');
     const strokes = loadStrokeData('大').medians;
@@ -378,22 +378,28 @@ describe('learning new words', { concurrency: false }, () => {
     const gradesTop = `Math.round(document.getElementById('grade-row').getBoundingClientRect().top)`;
     const top = await page.evaluate(gradesTop);
 
-    // Practice: the tools come back under the grades, which stay put.
+    // Practice: the tools take the grades' place (one row under the area,
+    // for short phones; the owner, 2026-10-27), and the grades come back,
+    // where they were, once the character is written.
     await tap(page, 'practice-again-button');
     await waitForFirstStroke();
     assert.equal(await isShown(page, 'writing-buttons'), true);
-    assert.equal(await isShown(page, 'grade-row'), true);
-    assert.equal(await isShown(page, 'practice-again-button'), false);
-    assert.equal(await page.evaluate(gradesTop), top, 'the grades did not move');
-    assert.ok(
-      await page.evaluate(`document.getElementById('writing-buttons').getBoundingClientRect().top > document.getElementById('grade-row').getBoundingClientRect().bottom`),
-      'the tools are under the grades',
+    assert.equal(await isShown(page, 'grade-row'), false);
+    assert.equal(await textOf(page, 'practice-again-button'), 'Done practicing');
+    assert.equal(
+      await page.evaluate(`Math.round(document.getElementById('writing-buttons').getBoundingClientRect().top)`),
+      top,
+      'the tools are in the grades\' place',
     );
     // A wrong stroke, the outline, then the character: none of it counts.
     const area = await writingArea(page);
     await drawStroke(page, area, [[100, 100], [900, 800]]);
     await tap(page, 'outline-button');
     assert.match(await write('下'), /^Practice · /);
+    await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades again');
+    assert.equal(await page.evaluate(gradesTop), top, 'the grades are where they were');
+    assert.equal(await isShown(page, 'writing-buttons'), false);
+    assert.equal(await textOf(page, 'practice-again-button'), 'Practice again');
     assert.equal(await page.evaluate(suggested), 'Good');
     // A tap on the writing area does not grade while practicing.
     await page.evaluate(`['pointerdown', 'pointerup'].forEach((type) => document.getElementById('writing-area').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`);
@@ -455,11 +461,17 @@ describe('learning new words', { concurrency: false }, () => {
     await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
     const suggested = `document.querySelector('#grade-row button.primary').firstChild.textContent`;
     assert.equal(await page.evaluate(suggested), 'Hard');
-    // Once the word is done, back again: practice, the grades stay.
+    // Once the word is done, back again: practice, the tools in the grades'
+    // place; "Done practicing" brings the grades back unchanged.
     await tap(page, 'back-button');
     await waitForFirstStroke();
     assert.equal(await textOf(page, 'status'), 'Practice');
+    assert.equal(await isShown(page, 'grade-row'), false);
+    assert.equal(await textOf(page, 'practice-again-button'), 'Done practicing');
+    await tap(page, 'practice-again-button');
     assert.equal(await isShown(page, 'grade-row'), true);
+    assert.equal(await isShown(page, 'writing-buttons'), false);
+    assert.equal(await textOf(page, 'practice-again-button'), 'Practice again');
     assert.equal(await page.evaluate(suggested), 'Hard');
 
     await page.evaluate(`document.querySelector('#grade-row button.primary').click()`);

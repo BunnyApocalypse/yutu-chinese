@@ -481,9 +481,10 @@ async function walk(page, sizeName, size, shots) {
   });
 
   // Writes the word's characters (traditional, as the test settings have
-  // it), tapping Next between two characters as a learner does
-  // (wordFlow.js). `afterStroke(index, strokeIndex, lastOfChar)` is called
-  // after each stroke, for pictures in between.
+  // it), tapping the writing area between two characters as a learner does
+  // (wordFlow.js; there is no Next button since 2026-10-26).
+  // `afterStroke(index, strokeIndex, lastOfChar)` is called after each
+  // stroke, for pictures in between.
   async function writeWord(word, afterStroke = async () => {}) {
     const chars = [...word.traditional];
     for (const [index, char] of chars.entries()) {
@@ -499,8 +500,8 @@ async function walk(page, sizeName, size, shots) {
         await afterStroke(index, strokeIndex, strokeIndex === strokes.length - 1);
       }
       if (index < chars.length - 1) {
-        await waitUntil(page, `!document.getElementById('next-button').hidden`, 'Next');
-        await tap(page, 'next-button');
+        await sleep(300);
+        await page.evaluate(`['pointerdown', 'pointerup'].forEach((type) => document.getElementById('writing-area').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`);
       }
     }
   }
