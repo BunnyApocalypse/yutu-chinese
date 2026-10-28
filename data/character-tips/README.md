@@ -14,7 +14,9 @@ Written in October 2026 by an AI model (Anthropic's Claude Sonnet) to a brief, f
 
 Checked by script: a tip names no character but the character itself and its own parts (Make Me a Hanzi's decomposition), and the origin sentence, where there is one, is backed by a passage found word for word in Wiktionary's entry. Then a second model (Claude Opus) read each tip for parts given a wrong meaning, place or look, for parts left out (so that the learner would write the character wrong), for history passed off as fact, and for tips that don't help; the tips it questioned were reworded or dropped, and it judged each origin sentence against its passage. **No person has checked them.** They may be wrong, and are meant to be corrected by hand: edit the file.
 
-So far (2026-10-27): 32 tips, from a trial on 50 characters.
+From 2026-10-28 a tip is written together with the learning note of a word it is in (`data/notes/README.md`), by the same writer from the same sources, for the forms the owner studies (traditional), and read by the same Opus judge; a character gets a tip only where it adds to Make Me a Hanzi's line, with no hint at the sound.
+
+So far: 32 tips from a trial on 50 characters (2026-10-27); 45 more from the first batch written with notes (2026-10-28, 92 characters, the others declined).
 
 ## License
 
