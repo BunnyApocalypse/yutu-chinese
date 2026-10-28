@@ -1018,6 +1018,7 @@ export default {
   'page.learningTips': 'Lerntipps',
   'page.noteNativeAndSources': "Von einem KI-Modell geschrieben. Eine Person mit Chinesisch als Muttersprache hat diesen Tipp und seinen Beispielsatz gelesen, und alles, was er über seine Zeichen sagt (Bedeutungen, Lesungen, Bestandteile, Herkunft), wurde in Wiktionary, Make Me a Hanzi oder CC-CEDICT gefunden.",
   'page.noteSources': "Von einem KI-Modell geschrieben. Alles, was dieser Tipp über seine Zeichen sagt (Bedeutungen, Lesungen, Bestandteile, Herkunft), wurde in Wiktionary, Make Me a Hanzi oder CC-CEDICT gefunden. Seine Hinweise zum Gebrauch und der Beispielsatz wurden nicht geprüft.",
+  'page.noteJudged': "Von einem KI-Modell geschrieben. Was er darüber sagt, wie seine Zeichen aufgebaut sind oder woher sie kommen, wurde in Wiktionary oder CC-CEDICT gefunden; den Rest und den Beispielsatz hat ein zweites KI-Modell gelesen. Keine Person hat ihn geprüft, er kann also Fehler enthalten.",
   'page.noteNative': "Von einem KI-Modell geschrieben. Eine Person mit Chinesisch als Muttersprache hat diesen Tipp und seinen Beispielsatz gelesen.",
   'page.noteUncheckedNoSentence': "Dieser Lerntipp wurde von einem KI-Modell geschrieben und nicht geprüft. Er kann Fehler enthalten.",
   'page.noteUnchecked': "Dieser Lerntipp und sein Beispielsatz wurden von einem KI-Modell geschrieben und nicht geprüft. Sie können Fehler enthalten.",

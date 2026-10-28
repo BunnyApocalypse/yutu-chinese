@@ -1017,6 +1017,7 @@ export default {
   'page.learningTips': 'Consigli di studio',
   'page.noteNativeAndSources': "Scritto da un modello di IA. Una persona di madrelingua cinese ha letto questo consiglio e la sua frase d'esempio, e tutto ciò che dice dei suoi caratteri (significati, letture, componenti, origine) è stato trovato in Wiktionary, Make Me a Hanzi o CC-CEDICT.",
   'page.noteSources': "Scritto da un modello di IA. Tutto ciò che questo consiglio dice dei suoi caratteri (significati, letture, componenti, origine) è stato trovato in Wiktionary, Make Me a Hanzi o CC-CEDICT. Le osservazioni sull'uso e la frase d'esempio non sono state verificate.",
+  'page.noteJudged': "Scritto da un modello di IA. Ciò che dice su come sono composti i suoi caratteri o da dove vengono è stato trovato in Wiktionary o CC-CEDICT; il resto, con la frase d'esempio, è stato letto da un secondo modello di IA. Nessuna persona l'ha verificato, quindi potrebbe essere sbagliato.",
   'page.noteNative': "Scritto da un modello di IA. Una persona di madrelingua cinese ha letto questo consiglio e la sua frase d'esempio.",
   'page.noteUncheckedNoSentence': "Questo consiglio di studio è stato scritto da un modello di IA e non è stato verificato. Potrebbe essere sbagliato.",
   'page.noteUnchecked': "Questo consiglio di studio e la sua frase d'esempio sono stati scritti da un modello di IA e non sono stati verificati. Potrebbero essere sbagliati.",

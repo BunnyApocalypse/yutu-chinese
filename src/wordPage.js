@@ -301,7 +301,10 @@ export function createWordPage({
   // "Learning tips" with a small box beside it saying how far to trust the
   // note: ✓ when it was checked, by a native speaker, against the sources
   // or both, and AI when it was not (the owner, 2026-10-25;
-  // data/notes/README.md). What it means shows while a mouse is over the
+  // data/notes/README.md). A note written checked (`judged`: its facts on
+  // how characters were built found in the sources, the rest read by a
+  // second AI model) still shows AI, as no person has read it, and says so
+  // on a tap (the owner, 2026-10-28). What it means shows while a mouse is over the
   // box, and on a tap until the next one, like the "?" in Settings.
   // Returns the heading and the explanation under it.
   function noteHeading(note) {
@@ -312,6 +315,7 @@ export function createWordPage({
     if (native && sources) meaning = 'page.noteNativeAndSources';
     else if (native) meaning = 'page.noteNative';
     else if (sources) meaning = 'page.noteSources';
+    else if (note.checks.includes('judged')) meaning = 'page.noteJudged';
     else if (!note.example) meaning = 'page.noteUncheckedNoSentence';
 
     const [badge, explanation] = trustBadge(

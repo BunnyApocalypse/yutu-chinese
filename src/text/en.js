@@ -1030,6 +1030,7 @@ export default {
   'page.learningTips': 'Learning tips',
   'page.noteNativeAndSources': "Written by an AI model. A native speaker of Chinese has read this tip and its example sentence, and everything it says about its characters (meanings, readings, parts, origin) was found in Wiktionary, Make Me a Hanzi or CC-CEDICT.",
   'page.noteSources': "Written by an AI model. Everything this tip says about its characters (meanings, readings, parts, origin) was found in Wiktionary, Make Me a Hanzi or CC-CEDICT. Its remarks on usage and the example sentence have not been checked.",
+  'page.noteJudged': "Written by an AI model. What it says about how its characters were built or where they came from was found in Wiktionary or CC-CEDICT; the rest, with the example sentence, was read by a second AI model. No person has checked it, so it may be wrong.",
   'page.noteNative': "Written by an AI model. A native speaker of Chinese has read this tip and its example sentence.",
   'page.noteUncheckedNoSentence': "This learning tip was written by an AI model and has not been checked. It may be wrong.",
   'page.noteUnchecked': "This learning tip and its example sentence were written by an AI model and have not been checked. They may be wrong.",
