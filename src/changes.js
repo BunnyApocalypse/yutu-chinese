@@ -13,6 +13,18 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-10-28',
+    items: [
+      'Learning tips for more words, and "How to remember it" for more characters. On the newest tips, a tap on the AI box beside "Learning tips" says how they were checked.',
+    ],
+    it: [
+      'Consigli di studio per altre parole e «Come ricordarlo» per altri caratteri. Sui consigli più recenti, un tocco sul riquadro IA accanto a «Consigli di studio» dice come sono stati verificati.',
+    ],
+    de: [
+      'Lerntipps für weitere Wörter und „So merkst du es dir“ für weitere Zeichen. Bei den neuesten Tipps sagt ein Tippen auf das KI-Kästchen neben „Lerntipps“, wie sie geprüft wurden.',
+    ],
+  },
+  {
     id: '2026-10-27-2',
     items: [
       'A bigger writing area on smaller phones: the buttons under it take one row, "Practice again" sits on its bottom edge, and while you practice, "Done practicing" brings the grades back.',
