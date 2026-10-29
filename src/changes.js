@@ -13,6 +13,24 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-10-29',
+    items: [
+      'New in Settings › Daily study: "How much to remember", from 80% to 95%. Higher means many more reviews; a change applies from each card\'s next review.',
+      'Learning tips are now in the script you study, simplified or traditional (Taiwan\'s forms), and "How to remember it" has tips for simplified forms too.',
+      'Learning tips for more words and "How to remember it" for many more characters.',
+    ],
+    it: [
+      'Novità in Impostazioni › Studio quotidiano: «Quanto ricordare», dall’80% al 95%. Più alto significa molti più ripassi; una modifica vale dal prossimo ripasso di ogni carta.',
+      'I consigli di studio ora sono nella scrittura che studi, semplificata o tradizionale (le forme di Taiwan), e «Come ricordarlo» ha consigli anche per le forme semplificate.',
+      'Consigli di studio per altre parole e «Come ricordarlo» per molti altri caratteri.',
+    ],
+    de: [
+      'Neu unter Einstellungen › Tägliches Lernen: „Wie viel behalten“, von 80 % bis 95 %. Höher heißt viel mehr Wiederholungen; eine Änderung gilt ab der nächsten Wiederholung jeder Karte.',
+      'Lerntipps stehen jetzt in der Schrift, die du lernst, vereinfacht oder traditionell (die Formen Taiwans), und „So merkst du es dir“ hat auch Tipps für vereinfachte Formen.',
+      'Lerntipps für weitere Wörter und „So merkst du es dir“ für viele weitere Zeichen.',
+    ],
+  },
+  {
     id: '2026-10-28',
     items: [
       'Learning tips for more words, and "How to remember it" for more characters. On the newest tips, a tap on the AI box beside "Learning tips" says how they were checked.',
