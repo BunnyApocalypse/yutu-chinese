@@ -116,12 +116,14 @@ describe('the word page', { concurrency: false }, () => {
     assert.ok(await page.evaluate(shown('我們|wo3men5')));
     // The words of the learning note can be tapped too, once the dictionary
     // has split it into words. With no sentence to say which reading is
-    // meant, the usual one is shown: 的 is "de", not "dí".
+    // meant, the usual one is shown: 的 is "de", not "dí". The note is in
+    // the script of the word's cards, traditional here, and marked so.
     await waitUntil(page, `document.querySelectorAll('#word-page-body .note-word').length > 0`, 'the note\'s words');
     assert.deepEqual(
       await page.evaluate(texts('.note-word')),
-      ['我', '们', '的', '我们', '的', '老师'],
+      ['我', '們', '的', '我們', '的', '老師'],
     );
+    assert.equal(await page.evaluate(`document.querySelector('#word-page-body .note-word').lang`), 'zh-Hant-TW');
     await page.evaluate(`document.querySelectorAll('#word-page-body .note-word')[2].click()`);
     await waitUntil(page, `${peekOpen} && document.getElementById('word-peek-word').textContent === '的'`, 'the popup for 的');
     assert.equal(await textOf(page, 'word-peek-pinyin'), 'de');
@@ -237,5 +239,30 @@ describe('the word page', { concurrency: false }, () => {
     assert.equal(await page.evaluate(`document.querySelector('#word-page-body .character-tip .note-badge-text').hidden`), true);
     await page.evaluate(`document.querySelector('#word-page-body .character-tip .note-badge').click()`);
     assert.match(await textOf(page, '#word-page-body .character-tip .note-badge-text'), /^Written by an AI model as a way to remember the character, not as its history/);
+  });
+
+  it('shows a note in the script of the word\'s cards', async () => {
+    // 我們 learned in simplified among traditional words: its note's Chinese
+    // is in simplified too. 時, from the step before, is removed first; its
+    // page is still open.
+    await tap(page, 'word-page-remove');
+    await waitUntil(page, `document.getElementById('confirm-dialog').open`, 'the question');
+    await tap(page, 'confirm-yes');
+    await waitUntil(page, `!document.getElementById('word-page').open && document.querySelectorAll('#word-list li').length === 0`, '時 removed');
+    await type(page, 'add-traditional', '我們');
+    await type(page, 'add-simplified', '我们');
+    await type(page, 'add-pinyin', 'wo3men5');
+    await type(page, 'add-definition', 'we; us');
+    await page.evaluate(`(() => {
+      const select = document.getElementById('add-card-script');
+      select.value = 'simplified';
+      select.dispatchEvent(new Event('change'));
+    })()`);
+    await page.evaluate(`document.getElementById('add-word-form').requestSubmit()`);
+    await waitUntil(page, `document.querySelectorAll('#word-list li').length === 1`, 'the word');
+    await page.evaluate(`document.querySelector('#word-list li button').click()`);
+    await waitUntil(page, `${shown('我們|wo3men5')} && document.querySelectorAll('#word-page-body .note-word').length > 0`, 'the note\'s words');
+    assert.deepEqual(await page.evaluate(texts('.note-word')), ['我', '们', '的', '我们', '的', '老师']);
+    assert.equal(await page.evaluate(`document.querySelector('#word-page-body .note-word').lang`), 'zh-Hans-CN');
   });
 });

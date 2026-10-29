@@ -38,8 +38,8 @@ test('a note is found by the word and its reading, or by the character alone for
   assert.equal(noteFor(notes, { simplified: '我们', pinyin: 'wo3men5' }).example.english, 'We are classmates.');
   assert.equal(noteFor(notes, { simplified: '我们', pinyin: 'wo3men2' }), null);
   // A part of a character: whatever reading the dictionary gives it, and no sentence.
-  assert.deepEqual(noteFor(notes, { simplified: '氵', pinyin: 'shui3' }), { note: 'The water radical.', example: null, checks: [] });
-  assert.deepEqual(noteFor(notes, { simplified: '氵', pinyin: '' }), { note: 'The water radical.', example: null, checks: [] });
+  assert.deepEqual(noteFor(notes, { simplified: '氵', pinyin: 'shui3' }), { note: { simplified: 'The water radical.', traditional: 'The water radical.' }, example: null, checks: [] });
+  assert.deepEqual(noteFor(notes, { simplified: '氵', pinyin: '' }), { note: { simplified: 'The water radical.', traditional: 'The water radical.' }, example: null, checks: [] });
 });
 
 test('a note says how it was checked, from its eighth column', () => {
@@ -47,6 +47,22 @@ test('a note says how it was checked, from its eighth column', () => {
   assert.deepEqual(noteFor(notes, { simplified: '我们', pinyin: 'wo3men5' }).checks, ['native']);
   assert.equal(noteFor(notes, { simplified: '我们', pinyin: 'wo3men5' }).example.english, 'We are classmates.');
   assert.deepEqual(noteFor(notes, { simplified: '你', pinyin: 'ni3' }).checks, []);
+});
+
+test('a note has its Chinese in each script, from its third and ninth columns', () => {
+  const notes = parseNotes('说\tshuo1\t讠 is speech.\t我说。\t我說。\tWǒ shuō.\tI say.\t\t言 is speech.\n');
+  assert.deepEqual(noteFor(notes, { simplified: '说', pinyin: 'shuo1' }).note, { simplified: '讠 is speech.', traditional: '言 is speech.' });
+});
+
+test('every note in the notes files is there in both scripts', () => {
+  for (const file of fs.readdirSync('data/notes').filter((name) => name.endsWith('.tsv'))) {
+    for (const line of fs.readFileSync(`data/notes/${file}`, 'utf8').split('\n')) {
+      if (line.trim() !== '' && !line.startsWith('#')) {
+        const columns = line.split('\t');
+        assert.ok(columns[2] && columns[8], `${file}: ${columns[0]} needs its note in both scripts (scripts/convert-notes.js)`);
+      }
+    }
+  }
 });
 
 test('every check named in the notes files is one the app knows', () => {

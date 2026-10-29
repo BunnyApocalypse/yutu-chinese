@@ -838,7 +838,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
   return {
     addReadyLevels: (listId, levels) => readyDecks.addReadyLevels(listId, levels),
     noteOf: (word) => wordPage.noteOf(word),
-    tappableText: (element, text) => wordPage.tappableText(element, text),
+    tappableText: (element, text, script) => wordPage.tappableText(element, text, script),
 
     // Opens a word's panel from elsewhere in the app (Review's "Edit word").
     // Returns a promise for what became of the word once the panel is closed:

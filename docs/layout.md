@@ -75,6 +75,7 @@
 - `scripts/ux-atlas.js`: the screenshot atlas and layout report, every screen at four sizes in both looks, into `local/ux-atlas/` (run by hand; see `docs/ux-review.md`).
 - `scripts/icon.html`, `scripts/make-icons.js`: the app's icon as an SVG, and the script that draws it into `public/icons/` (run by hand; see "Icons" in `docs/offline.md`).
 - `scripts/build-tone-table.js`, `data/cedict/`: the tone table extracted from CC-CEDICT (run by hand; `docs/words.md`).
+- `scripts/convert-notes.js`: writes each learning note in the other script and lists those it can't be sure of (run by hand after adding notes; `data/notes/README.md`).
 - `scripts/build-word-lists.js`, `data/wordlists/`: the ready-made word lists (run by hand, uses the internet; `docs/word-lists.md`).
 - `data/animcjk/`: the animCJK traditional stroke data, copied unchanged from that project at a pinned commit. Its README records the source, license and how to update. This is vendored data, not an npm dependency.
 - `tests/logic.test.js`, `tests/shortcuts.test.js`, `tests/strokeOrder.test.js`, `tests/toneMark.test.js`, `tests/frame.test.js`, `tests/storageAdvice.test.js`: tests for the plain-calculation code.

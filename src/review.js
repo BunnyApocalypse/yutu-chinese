@@ -102,8 +102,8 @@ const RECHECK_MS = 15 * 1000;
 // showWord(word, thisCard): opens the word's page; thisCard, if given, is the
 //                  card it was opened from, for the strip at its top (wordPage.js)
 // noteOf(word): a promise for the word's learning note, or null
-// tappableText(element, text): fills an element with a learning note whose
-//   words can be tapped (see cardTip.js)
+// tappableText(element, text, script): fills an element with a learning note
+//   whose words can be tapped (see cardTip.js)
 // streakScreen: the pop-up for a day that counts for the streak
 //   (streakScreen.js)
 //

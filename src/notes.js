@@ -2,9 +2,12 @@
 // files in data/notes/ (see the README there). Plain calculation, no page.
 
 // Reads a notes file: one word per line with tabs between the columns
-//   simplified, pinyin, note, example (simplified), example (traditional),
-//   example pinyin (tone marks, a space between words), example in English,
-//   and, optionally, how the note was checked (see below)
+//   simplified, pinyin, note (its Chinese in simplified), example
+//   (simplified), example (traditional), example pinyin (tone marks, a space
+//   between words), example in English, how the note was checked (see
+//   below; often empty), and the note with its Chinese in traditional
+//   (Taiwan's forms; the owner, 2026-10-29: shown to a learner of
+//   traditional; scripts/convert-notes.js)
 //
 // A file of notes about parts of characters (the radicals) has the part in
 // the first column, nothing in the second, and no example sentence: such a
@@ -17,18 +20,19 @@
 // data/notes/README.md says more.
 //
 // Returns a Map from "simplified pinyin" (pinyin as stored, with tone
-// numbers) to { note, example, checks }, where example is { simplified,
-// traditional, pinyin, english } or null, and checks a list of those words
-// (often empty).
+// numbers) to { note, example, checks }, where note is { simplified,
+// traditional }, example { simplified, traditional, pinyin, english } or
+// null, and checks a list of those words (often empty). A line without the
+// traditional note uses the simplified one for both.
 export function parseNotes(text) {
   const notes = new Map();
   for (const line of text.split('\n')) {
     if (line.trim() === '' || line.startsWith('#')) {
       continue;
     }
-    const [simplified, pinyin, note, exampleSimplified, exampleTraditional, examplePinyin, english, checks = ''] = line.split('\t');
+    const [simplified, pinyin, note, exampleSimplified, exampleTraditional, examplePinyin, english, checks = '', noteTraditional] = line.split('\t');
     notes.set(`${simplified} ${pinyin}`, {
-      note,
+      note: { simplified: note, traditional: noteTraditional || note },
       // A note about a part of a character (see below) has no sentence.
       example: exampleSimplified
         ? { simplified: exampleSimplified, traditional: exampleTraditional, pinyin: examplePinyin, english }

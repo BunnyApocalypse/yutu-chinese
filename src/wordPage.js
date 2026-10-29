@@ -331,11 +331,13 @@ export function createWordPage({
 
   // The learning note and the example sentence. `forms`: the page's word in
   // both scripts, which is the word to fill in if the sentence is studied.
-  function showNote(note, forms) {
+  // `script`: the script the page's word is in, which the note's Chinese is
+  // shown in too (the owner, 2026-10-29).
+  function showNote(note, forms, script) {
     const settings = getSettings();
     const section = element('section', 'page-section');
     const noteText = element('p', 'page-note');
-    tappableText(noteText, note.note);
+    tappableText(noteText, note.note[script], script);
     section.append(...noteHeading(note), noteText);
 
     // A note about a part of a character has no example sentence.
@@ -723,7 +725,7 @@ export function createWordPage({
     const notes = await loadNotes();
     const note = noteFor(notes, word || { simplified: forms.simplified, pinyin: shown.entries?.[0]?.pinyin || '' });
     if (note) {
-      parts.push(showNote(note, forms));
+      parts.push(showNote(note, forms, script));
     }
     const [characters, tips] = await Promise.all([loadCharacters(), loadTips()]);
     const built = showCharacters(characters, tips, chars, chars.length === 1 && Array.from(forms.own).length === 1, script);
@@ -937,13 +939,12 @@ export function createWordPage({
   // A button for a word of a learning note, which shows the popup. On a
   // card, a tap on the card's face reveals or moves on; a tap on this must
   // not.
-  function noteWordButton(piece) {
+  function noteWordButton(piece, script) {
     const button = element('button', 'note-word', piece.text);
     button.type = 'button';
-    // Marked as Chinese for screen readers and the font (lang.js). A note's
-    // Chinese may be in either script (data/notes/CLAUDE.md), so the
-    // learner's is taken.
-    button.lang = langFor(getSettings().script);
+    // Marked as Chinese in the note's script, for screen readers and the
+    // font (lang.js).
+    button.lang = langFor(script);
     button.addEventListener('pointerup', (event) => event.stopPropagation());
     button.addEventListener('click', (event) => {
       event.stopPropagation();
@@ -952,15 +953,15 @@ export function createWordPage({
     return button;
   }
 
-  // Fills `target` with `text`, a learning note, whose Chinese words can be
-  // tapped for the popup. The text is there at once; its words become
+  // Fills `target` with `text`, a learning note in `script` (the learner's,
+  // if not given), whose Chinese words can be tapped for the popup. The text is there at once; its words become
   // buttons once the dictionary is there to split it into words (the first
   // time, it is fetched). The owner asked for this on 2026-10-15, in place of
   // pinyin written into the notes of the beginner levels.
-  function tappableText(target, text) {
-    // Its Chinese marked as Chinese from the start (lang.js), in the
-    // learner's script, as the buttons below are.
-    fillMixed(target, text, getSettings().script);
+  function tappableText(target, text, script = getSettings().script) {
+    // Its Chinese marked as Chinese from the start (lang.js), as the buttons
+    // below are.
+    fillMixed(target, text, script);
     splitWords(text).then((pieces) => {
       // (Unless the element was given other text meanwhile, or the text has
       // no Chinese in it.)
@@ -981,10 +982,10 @@ export function createWordPage({
         const punctuation = next && !next.word ? next.text.match(/^[^\s\p{L}\p{N}]+/u)?.[0] : null;
         if (punctuation) {
           const together = element('span', 'nowrap');
-          together.append(noteWordButton(piece), punctuation);
+          together.append(noteWordButton(piece, script), punctuation);
           parts.push(together);
         } else {
-          parts.push(noteWordButton(piece));
+          parts.push(noteWordButton(piece, script));
         }
       });
       target.replaceChildren(...parts);

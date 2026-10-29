@@ -17,7 +17,7 @@ function paragraph(className, text) {
 // note:   the word's note (see noteFor in notes.js)
 // script: 'traditional' or 'simplified', the script the card is shown in
 // onMore(): opens the word's page
-// tappableText(element, text): fills the element with the note, its
+// tappableText(element, text, script): fills the element with the note, its
 //         Chinese words to be tapped for their reading and meaning (wordPage.js)
 //
 // Returns the element to put on the card's face.
@@ -25,7 +25,7 @@ export function cardTip(note, script, onMore, tappableText) {
   const tip = document.createElement('div');
   tip.className = 'face-tip';
   const text = paragraph('face-tip-text', '');
-  tappableText(text, note.note);
+  tappableText(text, note.note[script], script);
   tip.append(text);
   if (note.example) {
     const sentence = paragraph('face-tip-sentence', note.example[script]);

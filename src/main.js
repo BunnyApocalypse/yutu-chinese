@@ -977,7 +977,7 @@ async function startUp() {
     (word) => wordsPanel.edit(word),
     (word, thisCard) => wordsPanel.showWord(word, thisCard),
     (word) => wordsPanel.noteOf(word),
-    (element, text) => wordsPanel.tappableText(element, text),
+    (element, text, script) => wordsPanel.tappableText(element, text, script),
     createStreakScreen(() => settings.change('streaks', false)),
   );
 
