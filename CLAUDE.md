@@ -98,6 +98,6 @@ Each area's file in `docs/` (index `docs/README.md`) has the names in the code, 
 
 - **Start with the handover at the top of `docs/history.md`**; the roadmap (agreed 2026-10-18) follows it.
 - **The name is 玉兔中文** (Yùtù Zhōngwén, "Jade Rabbit Chinese"; the owner, 2026-10-15); "Yutu Chinese" where Chinese can't be marked with `lang` (plain text, file names); the browser tab and the home-screen label are "玉兔 Yutu" (`docs/goals.md`). The database (`hanzi-trainer`) and backup format (`hanzi-trainer-backup`) keep the old name for good.
-- **The owner's Skritter data** arrived on 2026-10-22 (`exports/`, git-ignored); the import was released on 2026-10-24, after the owner imported their history and studied with it (`docs/skritter.md`). **Their study has moved over to the app for good** (the owner, 2026-10-26).
+- **The owner studies in the app for good** (2026-10-26), with their Skritter history imported (`exports/`, git-ignored; `docs/skritter.md`).
 - **The owner has not tried** sentences, combining backups between real devices, or leeches: ask how it went before building further on them.
 - `tests/words.tsv` has 109 test words; the app itself starts with none.
