@@ -13,6 +13,18 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-10-29-2',
+    items: [
+      'On a tall screen, such as a tablet held upright, the card sits a little higher, with more of the spare room below it than above.',
+    ],
+    it: [
+      'Su uno schermo alto, come un tablet in verticale, la carta sta un po’ più in alto, con più spazio libero sotto che sopra.',
+    ],
+    de: [
+      'Auf einem hohen Bildschirm, etwa einem hochkant gehaltenen Tablet, sitzt die Karte etwas höher, mit mehr freiem Platz darunter als darüber.',
+    ],
+  },
+  {
     id: '2026-10-29',
     items: [
       'New in Settings › Daily study: "How much to remember", from 80% to 95%. Higher means many more reviews; a change applies from each card\'s next review.',
