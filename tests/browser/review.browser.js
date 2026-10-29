@@ -460,6 +460,39 @@ describe('grading in Review', { concurrency: false }, () => {
     await tap(page, 'settings-close');
   });
 
+  it('saves How much to remember as a number, 90% unless chosen', async () => {
+    const retentionSetting = (value) =>
+      page.evaluate(`(() => {
+        const list = document.getElementById('retention-select');
+        list.value = '${value}';
+        list.dispatchEvent(new Event('change', { bubbles: true }));
+      })()`);
+    await openSettings(page, 'settings-studying');
+    const choices = await page.evaluate(`[...document.getElementById('retention-select').options].map((option) => [option.value, option.textContent])`);
+    assert.deepEqual(choices, [['0.8', '80%'], ['0.85', '85%'], ['0.9', '90%'], ['0.95', '95%']]);
+    assert.equal(await page.evaluate(`document.getElementById('retention-select').value`), '0.9');
+    await retentionSetting('0.95');
+    await waitUntil(page, `document.getElementById('retention-select').value === '0.95'`);
+    // The setting is saved a moment after the change (settings.js awaits
+    // the database), so the test asks again until it is there.
+    const savedAs = async (expected) => {
+      for (let tries = 0; tries < 50; tries++) {
+        const { value } = await inDatabase(
+          `stores.settings.get('targetRetention').onsuccess = (event) => { result.value = event.target.result?.value; };`,
+        );
+        if (value === expected) {
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      assert.fail(`targetRetention never saved as ${expected}`);
+    };
+    await savedAs(0.95);
+    await retentionSetting('0.9');
+    await savedAs(0.9);
+    await tap(page, 'settings-close');
+  });
+
   it('offers missed and right between the characters of a word, the verdict changed by a tap', async () => {
     await makeDue(['大小|da4xiao3#writing', '大小|da4xiao3', 'writing']);
     await waitForFirstStroke();

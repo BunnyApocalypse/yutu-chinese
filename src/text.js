@@ -126,6 +126,12 @@ export function formatNumber(number) {
   return numberFormat.format(number);
 }
 
+// A fraction as a percentage, as the language writes it (0.9: "90%"; in
+// German "90 %").
+export function formatPercent(fraction) {
+  return new Intl.NumberFormat(locale, { style: 'percent' }).format(fraction);
+}
+
 // A date (or time) as the language writes it; `options` as for the
 // browser's toLocaleDateString, such as { month: 'short', day: 'numeric' }.
 export function formatDate(date, options) {

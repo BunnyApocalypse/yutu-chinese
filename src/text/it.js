@@ -67,6 +67,8 @@ export default {
   'settings.gradeButtonsFour': 'Ripeti, Difficile, Bene, Facile',
   'settings.gradeButtonsTwo': 'Sbagliato, Giusto',
   'settings.gradeButtonsHint': 'Come dici com\'è andata una carta. Due è più semplice: Giusto vale come Bene.',
+  'settings.retention': 'Quanto ricordare',
+  'settings.retentionHint': 'Quanto è probabile che ricordi ancora una carta quando torna. Più alto significa molti più ripassi: una carta che indovini sempre torna dopo 2, 11, 46 e 163 giorni al 90%, ma dopo 1, 3, 8 e 19 giorni al 95%. Una modifica vale dal prossimo ripasso di ogni carta.',
   'settings.reviewStart': 'Chiedi quante carte ripassare',
   'settings.reviewStartHint': 'Quando ci sono molte carte da fare, il Ripasso chiede prima se ripassarle tutte o un numero stabilito, come 50, e si ferma dopo quel numero. Disattivato, il Ripasso parte subito con tutte.',
   'settings.lessons': 'Nel Ripasso, insegna prima di verificare',

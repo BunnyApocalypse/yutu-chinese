@@ -67,6 +67,8 @@ export default {
   'settings.gradeButtonsFour': 'Nochmal, Schwer, Gut, Einfach',
   'settings.gradeButtonsTwo': 'Falsch, Richtig',
   'settings.gradeButtonsHint': 'Wie du angibst, wie eine Karte lief. Zwei ist einfacher: Richtig zählt als Gut.',
+  'settings.retention': 'Wie viel behalten',
+  'settings.retentionHint': 'Wie wahrscheinlich du eine Karte noch weißt, wenn sie wiederkommt. Höher heißt viel mehr Wiederholungen: Eine Karte, die du immer richtig hast, kommt bei 90 % nach 2, 11, 46 und 163 Tagen wieder, bei 95 % aber nach 1, 3, 8 und 19 Tagen. Eine Änderung gilt ab der nächsten Wiederholung jeder Karte.',
   'settings.reviewStart': 'Fragen, wie viele Karten wiederholt werden',
   'settings.reviewStartHint': 'Sind viele Karten fällig, fragt Wiederholen zuerst, ob alle oder eine bestimmte Anzahl, etwa 50, wiederholt werden sollen, und hört danach auf. Ist das ausgeschaltet, beginnt Wiederholen sofort mit allen.',
   'settings.lessons': 'Beim Wiederholen erst beibringen, dann abfragen',

@@ -6,7 +6,18 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-import { gradeOptions, replay, gradeButtons, gradeFor, AGAIN, HARD, GOOD, EASY } from '../src/scheduler.js';
+import {
+  gradeOptions,
+  replay,
+  gradeButtons,
+  gradeFor,
+  setTargetRetention,
+  DEFAULT_TARGET_RETENTION,
+  AGAIN,
+  HARD,
+  GOOD,
+  EASY,
+} from '../src/scheduler.js';
 import {
   planSession,
   nextToLearn,
@@ -56,6 +67,30 @@ test('with two grade buttons, Wrong is Again and Right is always Good', () => {
   assert.deepEqual([AGAIN, HARD, GOOD, EASY].map((value) => gradeFor(value, 'two')), [AGAIN, GOOD, GOOD, GOOD]);
   // With four, every grade stays as it is.
   assert.deepEqual([AGAIN, HARD, GOOD, EASY].map((value) => gradeFor(value, 'four')), [AGAIN, HARD, GOOD, EASY]);
+});
+
+test('a higher target for remembering brings cards back sooner', () => {
+  // Five Goods from new, without fuzz's small random changes being able to
+  // hide the difference: the gaps in days after the first learning step.
+  function gaps(target) {
+    setTargetRetention(target);
+    let now = new Date('2026-01-01T08:00:00Z');
+    let state = null;
+    const days = [];
+    for (let review = 0; review < 5; review += 1) {
+      const outcome = gradeOptions(state, now)[GOOD];
+      days.push((outcome.due - now.getTime()) / 86400000);
+      state = outcome.fsrsState;
+      now = new Date(outcome.due);
+    }
+    return days.slice(1);
+  }
+  const at95 = gaps(0.95);
+  const at90 = gaps(0.9);
+  setTargetRetention(DEFAULT_TARGET_RETENTION);
+  assert.ok(at95.at(-1) < 30, `at 95%: ${at95}`);
+  assert.ok(at90.at(-1) > 100, `at 90%: ${at90}`);
+  at95.forEach((gap, index) => assert.ok(gap <= at90[index]));
 });
 
 test('better grades never bring a card back sooner', () => {

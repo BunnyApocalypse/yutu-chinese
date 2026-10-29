@@ -16,7 +16,8 @@ import {
   MAX_STREAK_CARDS,
   MAX_STREAK_WORDS,
 } from './streak.js';
-import { LANGUAGE_NAMES, language, setLanguage } from './text.js';
+import { TARGET_RETENTIONS, DEFAULT_TARGET_RETENTION, setTargetRetention } from './scheduler.js';
+import { LANGUAGE_NAMES, language, setLanguage, formatPercent } from './text.js';
 
 const MAX_NEW_WORDS_PER_DAY = 50;
 
@@ -25,7 +26,7 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //   readingStyleSelect,
 //   handwritingSelect, themeRadios (the three choices of look), lessonsCheckbox, strokeCountCheckbox,
 //   mistakeCountCheckbox, fontSelect, languageSelect, reviewStartCheckbox,
-//   hintSelect, newWordsInput, gradeButtonsSelect,
+//   hintSelect, newWordsInput, gradeButtonsSelect, retentionSelect,
 //   meaningDetailSelect,
 //   typeCheckboxes (a list of the four checkboxes; each has a
 //   data-card-type attribute saying which type it is)
@@ -77,6 +78,10 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //   gradeButtons:   'four' (the default: Again, Hard, Good, Easy) or 'two'
 //                   (Wrong and Right, Right recorded as Good; gradeButtons in
 //                   scheduler.js). The owner, 2026-10-20, after tester 3.
+//   targetRetention: how likely a card should still be remembered when it
+//                   comes back, 0.8, 0.85, 0.9 (the default) or 0.95
+//                   (setTargetRetention in scheduler.js; the owner,
+//                   2026-10-27). Follows the learner to their other devices.
 //   hintCountsAs:   'missed' (the default) or 'hard': how a character
 //                   written with a hint is judged (judgeChar in session.js)
 //   newWordsPerDay: a number
@@ -121,6 +126,7 @@ export async function createSettings(elements, onChange) {
     reviewStartCheckbox,
     hintSelect,
     gradeButtonsSelect,
+    retentionSelect,
     meaningDetailSelect,
     newWordsInput,
     leechInput,
@@ -152,6 +158,7 @@ export async function createSettings(elements, onChange) {
     mistakeCount: await getSetting('mistakeCount', true),
     hintCountsAs: await getSetting('hintCountsAs', 'missed'),
     gradeButtons: await getSetting('gradeButtons', 'four'),
+    targetRetention: await getSetting('targetRetention', DEFAULT_TARGET_RETENTION),
     meaningDetail: await getSetting('meaningDetail', DEFAULT_MEANING_DETAIL),
     newWordsPerDay: await getSetting('newWordsPerDay', DEFAULT_NEW_WORDS_PER_DAY),
     leechLapses: await getSetting('leechLapses', DEFAULT_LEECH_LAPSES),
@@ -170,6 +177,7 @@ export async function createSettings(elements, onChange) {
   setTheme(settings.theme);
   setFont(settings.font);
   setReadingStyle(settings.readingStyle);
+  setTargetRetention(settings.targetRetention);
 
   // Shows the current settings in the panel's controls.
   function fillPanel() {
@@ -188,6 +196,7 @@ export async function createSettings(elements, onChange) {
     fontSelect.value = settings.font;
     hintSelect.value = settings.hintCountsAs;
     gradeButtonsSelect.value = settings.gradeButtons;
+    retentionSelect.value = String(settings.targetRetention);
     meaningDetailSelect.value = settings.meaningDetail;
     newWordsInput.value = settings.newWordsPerDay;
     leechInput.value = settings.leechLapses;
@@ -217,6 +226,9 @@ export async function createSettings(elements, onChange) {
     }
     if (key === 'readingStyle') {
       setReadingStyle(value);
+    }
+    if (key === 'targetRetention') {
+      setTargetRetention(value);
     }
     await setSetting(key, value);
     onChange();
@@ -269,6 +281,12 @@ export async function createSettings(elements, onChange) {
 
   hintSelect.addEventListener('change', () => change('hintCountsAs', hintSelect.value));
   gradeButtonsSelect.addEventListener('change', () => change('gradeButtons', gradeButtonsSelect.value));
+
+  // The choices are written as the language writes a percentage.
+  for (const target of TARGET_RETENTIONS) {
+    retentionSelect.append(new Option(formatPercent(target), String(target)));
+  }
+  retentionSelect.addEventListener('change', () => change('targetRetention', Number(retentionSelect.value)));
 
   meaningDetailSelect.addEventListener('change', () =>
     change('meaningDetail', meaningDetailSelect.value),

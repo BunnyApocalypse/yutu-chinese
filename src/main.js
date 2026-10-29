@@ -914,6 +914,7 @@ async function startUp() {
       reviewStartCheckbox: byId('review-start-checkbox'),
       hintSelect: byId('hint-select'),
       gradeButtonsSelect: byId('grade-buttons-select'),
+      retentionSelect: byId('retention-select'),
       meaningDetailSelect: byId('meaning-detail-select'),
       newWordsInput: byId('new-words-input'),
       leechInput: byId('leech-input'),

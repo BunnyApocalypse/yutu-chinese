@@ -45,10 +45,28 @@ export function gradeFor(value, kind) {
   return kind === 'two' && value !== AGAIN ? GOOD : value;
 }
 
-// Default FSRS settings: aim for 90% recall. "Fuzz" varies long intervals by
-// a small random amount so that cards learned together don't all come back
-// on the same day forever.
-const scheduler = fsrs(generatorParameters({ enable_fuzz: true }));
+// How likely a card should still be remembered when it comes back: the
+// setting "How much to remember" (`targetRetention`, the owner, 2026-10-27),
+// 0.9 unless the learner chooses otherwise. Higher means shorter gaps and
+// many more reviews.
+export const TARGET_RETENTIONS = [0.8, 0.85, 0.9, 0.95];
+export const DEFAULT_TARGET_RETENTION = 0.9;
+
+// The FSRS scheduler, built afresh when the target changes. "Fuzz" varies
+// long intervals by a small random amount so that cards learned together
+// don't all come back on the same day forever.
+function buildScheduler(targetRetention) {
+  return fsrs(generatorParameters({ enable_fuzz: true, request_retention: targetRetention }));
+}
+
+let scheduler = buildScheduler(DEFAULT_TARGET_RETENTION);
+
+// Sets the target (one of TARGET_RETENTIONS) for every card graded from now
+// on; due dates already set stay as they are. Settings calls it on starting
+// and whenever the setting changes.
+export function setTargetRetention(targetRetention) {
+  scheduler = buildScheduler(targetRetention);
+}
 
 // ts-fsrs works with Date objects. We store plain data instead (dates become
 // text like "2026-10-12T08:00:00.000Z"), because plain data can go straight
@@ -106,7 +124,8 @@ export function retrievability(fsrsState, now) {
 // For speed (an Anki import replays tens of thousands of reviews), each
 // review works out only the grade given (`next`, where gradeOptions works
 // out all four), and the card is turned into plain data once, at the end.
-// It gives exactly what gradeOptions would, review after review.
+// It gives exactly what gradeOptions would, review after review. Every
+// review is replayed at today's target, whatever it was when it was made.
 export function replay(reviews) {
   let card = null;
   for (const review of [...reviews].sort((a, b) => a.time - b.time)) {

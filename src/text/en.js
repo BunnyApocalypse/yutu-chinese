@@ -72,6 +72,8 @@ export default {
   'settings.gradeButtonsFour': 'Four: Again, Hard, Good, Easy',
   'settings.gradeButtonsTwo': 'Two: Wrong, Right',
   'settings.gradeButtonsHint': 'How you say how a card went. Two is simpler: Right counts as Good.',
+  'settings.retention': 'How much to remember',
+  'settings.retentionHint': 'How likely you are to still remember a card when it comes back. Higher means many more reviews: a card you keep getting right comes back after 2, 11, 46 and 163 days at 90%, but after 1, 3, 8 and 19 days at 95%. A change applies from each card\'s next review.',
   'settings.reviewStart': 'Ask how many cards to review',
   'settings.reviewStartHint': 'With many cards to do, Review first asks whether to review all of them or a set number, such as 50, and stops after that many. Turned off, Review starts on all of them at once.',
   'settings.lessons': 'In Review, teach before testing',
