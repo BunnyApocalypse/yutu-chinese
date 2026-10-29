@@ -54,12 +54,22 @@ test('a note has its Chinese in each script, from its third and ninth columns', 
   assert.deepEqual(noteFor(notes, { simplified: '说', pinyin: 'shuo1' }).note, { simplified: '讠 is speech.', traditional: '言 is speech.' });
 });
 
+test('a word may have only an example sentence, its note empty', () => {
+  const notes = parseNotes('山坡\tshan1po1\t\t羊在山坡上。\t羊在山坡上。\tYáng zài shānpō shàng.\tThe sheep are on the hillside.\tjudged\t\n');
+  const note = noteFor(notes, { simplified: '山坡', pinyin: 'shan1po1' });
+  assert.deepEqual(note.note, { simplified: '', traditional: '' });
+  assert.equal(note.example.english, 'The sheep are on the hillside.');
+});
+
 test('every note in the notes files is there in both scripts', () => {
   for (const file of fs.readdirSync('data/notes').filter((name) => name.endsWith('.tsv'))) {
     for (const line of fs.readFileSync(`data/notes/${file}`, 'utf8').split('\n')) {
       if (line.trim() !== '' && !line.startsWith('#')) {
         const columns = line.split('\t');
-        assert.ok(columns[2] && columns[8], `${file}: ${columns[0]} needs its note in both scripts (scripts/convert-notes.js)`);
+        // A plain word may have only an example sentence, its note empty in
+        // both scripts.
+        const exampleOnly = !columns[2] && !columns[8] && columns[3];
+        assert.ok(exampleOnly || (columns[2] && columns[8]), `${file}: ${columns[0]} needs its note in both scripts (scripts/convert-notes.js)`);
       }
     }
   }

@@ -6,7 +6,7 @@ One file per level, named like the level's group file (`hsk-3.0-1.tsv` is HSK 3.
 
 1. the word in simplified characters
 2. its pinyin as the app stores it (tone numbers)
-3. the note, in English, with its Chinese in simplified characters
+3. the note, in English, with its Chinese in simplified characters; empty for a plain word that has only an example sentence (then the ninth column is empty too)
 4. the example sentence in simplified characters
 5. the same sentence in traditional characters (Taiwan forms)
 6. the sentence's pinyin with tone marks, a space between words (the app tells the words of the sentence apart by these spaces)

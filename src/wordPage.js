@@ -336,9 +336,14 @@ export function createWordPage({
   function showNote(note, forms, script) {
     const settings = getSettings();
     const section = element('section', 'page-section');
-    const noteText = element('p', 'page-note');
-    tappableText(noteText, note.note[script], script);
-    section.append(...noteHeading(note), noteText);
+    section.append(...noteHeading(note));
+    // A plain word may have only an example sentence, its note empty (the
+    // owner, 2026-10-29: no filler).
+    if (note.note[script]) {
+      const noteText = element('p', 'page-note');
+      tappableText(noteText, note.note[script], script);
+      section.append(noteText);
+    }
 
     // A note about a part of a character has no example sentence.
     if (!note.example) {

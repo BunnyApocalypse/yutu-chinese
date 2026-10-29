@@ -24,9 +24,12 @@ function paragraph(className, text) {
 export function cardTip(note, script, onMore, tappableText) {
   const tip = document.createElement('div');
   tip.className = 'face-tip';
-  const text = paragraph('face-tip-text', '');
-  tappableText(text, note.note[script], script);
-  tip.append(text);
+  // A plain word's note may be empty, leaving only the example sentence.
+  if (note.note[script]) {
+    const text = paragraph('face-tip-text', '');
+    tappableText(text, note.note[script], script);
+    tip.append(text);
+  }
   if (note.example) {
     const sentence = paragraph('face-tip-sentence', note.example[script]);
     // Tells the browser which regional font to use for the characters.
