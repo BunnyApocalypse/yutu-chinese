@@ -3316,6 +3316,12 @@ button.chip-button {
   font-size: var(--size-small);
 }
 
+/* Not checked by anyone: a dashed border, against the solid one of a text
+   an AI model checked (the owner, 2026-10-29). */
+.note-badge.unchecked {
+  border-style: dashed;
+}
+
 .note-badge-text {
   margin: 0 0 var(--space-small);
 }

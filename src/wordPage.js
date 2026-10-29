@@ -262,15 +262,17 @@ export function createWordPage({
 
   // A small box saying how far to trust a text (✓ or AI), and the
   // explanation it shows: while a mouse is over the box, and on a tap until
-  // the next one, like the "?" in Settings. Returns [box, explanation]; the
+  // the next one, like the "?" in Settings. `kind`: 'checked' (✓, a person
+  // read it), 'ai-checked' (an AI model checked it: a solid border) or
+  // 'unchecked' (a dashed border). Returns [box, explanation]; the
   // explanation starts hidden and goes wherever the caller puts it.
-  function trustBadge(label, ariaLabel, meaning, checked) {
+  function trustBadge(label, ariaLabel, meaning, kind) {
     const explanation = element('p', 'hint note-badge-text', meaning);
     noteBadgeCount += 1;
     explanation.id = `note-badge-text-${noteBadgeCount}`;
     explanation.hidden = true;
 
-    const badge = element('button', checked ? 'note-badge checked' : 'note-badge', label);
+    const badge = element('button', `note-badge ${kind}`, label);
     badge.type = 'button';
     badge.setAttribute('aria-label', ariaLabel);
     badge.setAttribute('aria-controls', explanation.id);
@@ -299,18 +301,19 @@ export function createWordPage({
   }
 
   // "Learning tips" with a small box beside it saying how far to trust the
-  // note: ✓ when it was checked, by a native speaker, against the sources
-  // or both, and AI when it was not (the owner, 2026-10-25;
-  // data/notes/README.md). A note written checked (`judged`: its facts on
-  // how characters were built found in the sources, the rest read by a
-  // second AI model) still shows AI, as no person has read it, and says so
-  // on a tap (the owner, 2026-10-28). What it means shows while a mouse is over the
-  // box, and on a tap until the next one, like the "?" in Settings.
+  // note (the owner, 2026-10-25; data/notes/README.md): ✓ only when a
+  // native speaker has read it; AI in a solid box when an AI model checked
+  // it (`judged`: its facts on how characters were built found in the
+  // sources, the rest read by a second AI model; or the older `sources`
+  // check); AI in a dashed box when nothing checked it (the owner,
+  // 2026-10-29). What it means shows while a mouse is over the box, and on
+  // a tap until the next one, like the "?" in Settings.
   // Returns the heading and the explanation under it.
   function noteHeading(note) {
     const native = note.checks.includes('native');
     const sources = note.checks.includes('sources');
-    const checked = native || sources;
+    const aiChecked = sources || note.checks.includes('judged');
+    const kind = native ? 'checked' : aiChecked ? 'ai-checked' : 'unchecked';
     let meaning = 'page.noteUnchecked';
     if (native && sources) meaning = 'page.noteNativeAndSources';
     else if (native) meaning = 'page.noteNative';
@@ -318,11 +321,12 @@ export function createWordPage({
     else if (note.checks.includes('judged')) meaning = 'page.noteJudged';
     else if (!note.example) meaning = 'page.noteUncheckedNoSentence';
 
+    const LABELS = { checked: 'page.noteCheckedLabel', 'ai-checked': 'page.noteAiCheckedLabel', unchecked: 'page.noteUncheckedLabel' };
     const [badge, explanation] = trustBadge(
-      checked ? '✓' : t('page.noteBadgeAi'),
-      t(checked ? 'page.noteCheckedLabel' : 'page.noteUncheckedLabel'),
+      native ? '✓' : t('page.noteBadgeAi'),
+      t(LABELS[kind]),
       t(meaning),
-      checked,
+      kind,
     );
     const heading = element('h3', 'note-heading', t('page.learningTips'));
     heading.append(badge);
@@ -633,7 +637,7 @@ export function createWordPage({
       // the same box as a learning note.
       if (tip) {
         const box = element('div', 'character-tip');
-        const [badge, explanation] = trustBadge(t('page.noteBadgeAi'), t('page.noteUncheckedLabel'), t('page.tipUnchecked'), false);
+        const [badge, explanation] = trustBadge(t('page.noteBadgeAi'), t('page.noteUncheckedLabel'), t('page.tipUnchecked'), 'unchecked');
         const heading = element('p', 'character-tip-heading');
         heading.append(element('strong', '', t('page.rememberIt')), badge);
         const text = element('p', 'character-tip-text');
