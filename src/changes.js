@@ -13,6 +13,21 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-10-29-3',
+    items: [
+      'Learning tips for 300 more words on the way to B2.',
+      'The box beside "Learning tips" now has three kinds: ✓ when a native speaker has read the tip, AI in a solid box when a second AI model has checked it, AI in a dashed box when nothing has. Tap it to see what was done.',
+    ],
+    it: [
+      'Consigli di studio per altre 300 parole verso il livello B2.',
+      'Il riquadro accanto a «Consigli di studio» ora è di tre tipi: ✓ se l’ha letto un madrelingua, IA in un riquadro pieno se l’ha verificato un secondo modello di IA, IA in un riquadro tratteggiato se nessuno l’ha verificato. Toccalo per vedere cosa è stato fatto.',
+    ],
+    de: [
+      'Lerntipps für 300 weitere Wörter auf dem Weg zu B2.',
+      'Das Kästchen neben „Lerntipps“ gibt es jetzt in drei Arten: ✓, wenn eine Person mit Chinesisch als Muttersprache den Tipp gelesen hat, KI mit durchgezogenem Rahmen, wenn ein zweites KI-Modell ihn geprüft hat, KI mit gestricheltem Rahmen, wenn niemand ihn geprüft hat. Tippe darauf, um zu sehen, was gemacht wurde.',
+    ],
+  },
+  {
     id: '2026-10-29-2',
     items: [
       'On a tall screen, such as a tablet held upright, the card sits a little higher, with more of the spare room below it than above.',
