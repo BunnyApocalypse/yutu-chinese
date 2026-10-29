@@ -4,7 +4,9 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
-**Handover from the fourth session of 2026-10-29 (notes and tips toward B2, first round; committed on `main`, not pushed, no "What's new" entry).**
+**Released 2026-10-29** to `main` and `stable` with the day's earlier sessions, "What's new" entry `2026-10-29` (How much to remember; learning tips in the script you study; more tips). Still waiting on the owner: the points below.
+
+**Handover from the fourth session of 2026-10-29 (notes and tips toward B2, first round).**
 
 - **Built (data only):** 279 notes (HSK 2.0 levels 2 to 5: 4, 4, 14, 105 in new files `hsk-2.0-2.tsv` to `-5.tsv`; HSK 3.0 level 6: 152) and 69 "How to remember it" tips, from batches 14 to 16 of `local/study-aids/` (300 words, 2 Sonnet writers a batch, one Opus judge for the three, its 61 note points and 12 tip points settled by hand in `settle-14-16.mjs`). Traditional versions by `scripts/convert-notes.js`, its 16 listed lines settled by hand (`local/note-scripts/settle-b2-1.mjs`). About 900,000 tokens. The owner read a sample ("looks okay").
 - **Changed in `local/study-aids/gather.mjs`:** skips words and characters given to any other batch (batches gathered side by side), and offers simplified forms that differ as well as traditional ones. The words left: `local/study-aids/needed-b2.json` (gather skips what is done).
@@ -14,7 +16,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
   - **Non-Taiwan forms in the HSK list's traditional column:** 胷, 賬戶, 結賬, 咨詢, 奇跡, 桔子 (Taiwan: 胸, 帳戶, 結帳, 諮詢, 奇蹟, 橘子). Correcting the list changes what traditional learners see; the examples of these notes use the list's forms until then. Likely more in the list.
   - **Starting batches 17 to 19** (the next 300 of the 527 words left).
 - **For the readers' pages:** the new notes' usage sentences marked `ask` (Taiwan and mainland words), whenever a batch goes out.
-- **Next:** the release still pending from the earlier sessions today (the `src/changes.js` entry first); then the decisions above.
+- **Next:** the decisions above.
 - **Tests:** 295 unit tests pass; browser tests not run (only data and docs changed).
 
 **Handover from the third session of 2026-10-29 (learning notes in the learner's script; Taiwan shapes in tips; committed on `main`, not pushed, no "What's new" entry).**
