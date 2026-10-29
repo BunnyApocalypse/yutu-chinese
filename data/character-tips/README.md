@@ -16,7 +16,7 @@ Checked by script: a tip names no character but the character itself and its own
 
 From 2026-10-28 a tip is written together with the learning note of a word it is in (`data/notes/README.md`), by the same writer from the same sources, for the forms the owner studies (traditional), and read by the same Opus judge; a character gets a tip only where it adds to Make Me a Hanzi's line, with no hint at the sound.
 
-So far: 32 tips from a trial on 50 characters (2026-10-27); 45, 83 and 55 more from the three batches written with notes (2026-10-28; 92, 156 and 100 characters, the others declined): 215 in all.
+So far: 32 tips from a trial on 50 characters (2026-10-27); 45, 83 and 55 more from the three batches written with notes (2026-10-28; 92, 156 and 100 characters, the others declined); then 86 for the characters of words that already had a note (2026-10-29, tips only: HSK 3.0 levels 1 and 2, 240 characters, the judge's 8 points settled by hand): 301 in all.
 
 ## License
 

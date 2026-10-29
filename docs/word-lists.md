@@ -41,6 +41,6 @@ Built on 2026-10-14 at the owner's request; they haven't tried it.
 - **A common radical brings each form that is the radical of at least 3 list characters** (心 and 忄) and its main form if that is a word; side forms that differ by script are one item (糹/纟, 言/讠). 230 items: 96 common, 134 uncommon.
 - **Meanings of non-word radicals** are hand-written in `data/wordlists/radicals/meanings.tsv`; a side form names its full form ("water (side form of 水)"), since prompts show only the meaning. The build stops if one is missing.
 - **Built by `scripts/build-radicals.js`** (run by hand) from Unicode's `CJKRadicals.txt`, Make Me a Hanzi and the word lists; details in the folder's README.
-- **Every non-word radical has a note** (`data/notes/radicals.tsv`, 156).
+- **Every non-word radical has a note** (`data/notes/radicals.tsv`, 164: the deck's 156, and 氺 镸 旡 爫 攴 彑 襾 阜 from the owner's study, 2026-10-29).
 - **From Anki:** a note that is one of these radicals becomes it (`itemFromNote` in `src/ankiImport.js`, `docs/anki.md`; the owner, 2026-10-21), in the Anki deck, not this one.
 - **Not done:** Chinese names of radicals (三點水); a radical's page listing its characters.
