@@ -14,7 +14,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - **Waiting on the owner:**
   - **21 words given only an example sentence** (山峰, 火箭, 蓝天…; `local/study-aids/example-only-14-16.tsv`): the app would show an empty note and the test refuses it. Proposed: the page and the card's tip show only the example when the note is empty (`src/wordPage.js`, `src/cardTip.js`, the test in `tests/wordPage.test.js`); the other way is to make writers always write a line.
   - **Non-Taiwan forms in the HSK list's traditional column:** 胷, 賬戶, 結賬, 咨詢, 奇跡, 桔子 (Taiwan: 胸, 帳戶, 結帳, 諮詢, 奇蹟, 橘子). Correcting the list changes what traditional learners see; the examples of these notes use the list's forms until then. Likely more in the list.
-  - **The card a third of the spare room down, not half** (the owner's choice on 2026-10-26, "a little low on the tablet": 18px higher on the tablet, 10 on a 390×844 phone): left on a branch then, brought onto `main` on 2026-10-29 (not pushed); the owner is trying it on the dev server.
+  - **The card a third of the spare room down, not half** (the owner's choice on 2026-10-26, "a little low on the tablet"): left on a branch then, brought onto `main` on 2026-10-29 (not pushed): 26px higher on the tablet held upright, 23 on a 390×844 phone (pictures `local/card-height/compare-*.png`); the owner is trying it on the dev server.
   - **Starting batches 17 to 19** (the next 300 of the 527 words left).
 - **For the readers' pages:** the new notes' usage sentences marked `ask` (Taiwan and mainland words), whenever a batch goes out.
 - **Next:** the decisions above.
