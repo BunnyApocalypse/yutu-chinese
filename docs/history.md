@@ -4,6 +4,14 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the session of 2026-10-29 (target retention; the TOCFL notes reworded for Taiwan; both committed on `main`, not pushed, no "What's new" entry yet).**
+
+- **Built:** "How much to remember" in Settings › Daily study, 80, 85, 90 (default) or 95% (`targetRetention`, `setTargetRetention` in `src/scheduler.js`, `formatPercent` in `src/text.js`; `docs/cards.md`). Applies from each card's next review; follows the learner.
+- **Notes:** 205 of the 301 TOCFL notes mentioning Taiwan reworded so the word is not set in Taiwan (`data/notes/CLAUDE.md`). The owner's rulings today: keep a Taiwan fact that changes how the word is used, cut trivia; leave `native` notes alone unless really needed (none was). 23 broken apostrophes (`'"'"'`) in `tocfl-4.tsv` fixed. Done by Opus inline, no agents, no reader.
+- **Open:** the mainland words added for the other side are unchecked, least sure 小測, 劫匪, 升艙, 鬧市 (`git show eac1672`), for the mainland reader. Out of scope but noticed: 叔's note says "the 小 inside it can remind you 'younger'", and 烤's that 考 gives the sound "exactly"; worth a look in a sources pass.
+- **Next:** release when the owner says (write the `src/changes.js` entry for the setting first); the 8 declined radicals and variants for `radicals.tsv` (氺 镸 旡 爫 攴 彑 襾 阜); tips for already-noted words (a full batch about 100 words).
+- **Tests:** 387 browser tests and 293 unit tests pass.
+
 **Handover from the session of 2026-10-28 (notes and tips for all the owner's Skritter words, written together; the `judged` tag; released to `main` and `stable` that day, "What's new" entry `2026-10-28`).**
 
 - **Built:** notes written checked carry `judged` in the eighth column and still show the AI box; a tap says how they were checked (`page.noteJudged`; the owner: no ✓ without a person). Tips for 時 (no sound hint) and 子 (no origin repeating Make Me a Hanzi's line) fixed.
