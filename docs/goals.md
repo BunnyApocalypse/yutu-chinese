@@ -9,7 +9,7 @@ Agreed with the owner on 2026-10-13.
 - **Sync without a server:** first combining backups by hand (built, `docs/merging.md`); then syncing through storage the learner already has, Google Drive first (planned for after the first release, the owner, 2026-10-20; the order in the roadmap, `docs/history.md`). Both are the same merge with a different way of moving the file.
 - **Better than Skritter where Anki is:** decks and sub-decks, managing cards, flagging leeches, a choice of scheduling (retention, parameters), and everything portable. Leeches can be exported as a list, and as a prompt for an AI to make mnemonics from.
 - **A word can be in several decks and has one schedule.**
-- **Sentences and audio:** hearing the word and sentence cards are core; listening cards and audio for sentences are nice to have.
+- **Sentences and audio:** hearing the word and sentence cards are core. Listening practice is left out of the app (the owner, 2026-10-30; `docs/history.md`, "Decided against").
 - **The hard constraints are open to change** (vanilla JavaScript, no framework, few dependencies) if a change makes the app easier to grow or contribute to. Nothing planned needs one yet; each change is still asked for first.
 - **What this means for the data model:** a removed word or card must leave a mark, or a merge brings it back; records carry the time they were last changed; a corrected word's old ID is remembered; a card's schedule can be recomputed from its reviews, which also serves changed scheduling, leeches and statistics.
 - **Sharing raises the bar on licensing.** The TOCFL list has no stated license; the owner keeps it knowingly (2026-10-19, `docs/word-lists.md`).

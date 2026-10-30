@@ -38,7 +38,7 @@ The owner agreed the outline on 2026-10-13 (a sentence stored as a word record; 
 - **Writing a sentence skips anything without stroke data**, punctuation included.
 - **Its pop-up panel** has characters, pinyin (as typed), meaning, word to fill in (`edit-cloze`), decks and cards; not the Taiwan reading, tone readings or "Cards in". Changing the characters moves the cards and reviews (`renameWord`, `formerIds`).
 - **Its sound is the device's own voice**; a device without a Chinese voice has none.
-- **Not built:** sentences in a pasted list; ready-made sentences; choosing the cloze word by tapping; more than one cloze word; listening cards.
+- **Not built:** sentences in a pasted list; ready-made sentences; choosing the cloze word by tapping; more than one cloze word. Listening cards are decided against (`docs/history.md`).
 
 ## Hearing a word
 

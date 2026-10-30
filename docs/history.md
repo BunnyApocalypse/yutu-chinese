@@ -305,7 +305,6 @@ Agreed with the owner on 2026-10-18. **The first release** means the first users
   3. **OneDrive or Dropbox** if asked for (both work from a web app, a folder of the app's own).
   4. **Proton Drive** once Proton supports other apps; in October 2026 its SDK is not supported for them and has no signing in (to look at again in 2027).
   - **Not iCloud**: the web route needs Apple's $99 a year; on an iPhone, a backup saved to iCloud Drive by hand.
-- **Listening practice: to think over, nothing to build yet** (the owner, 2026-10-29: how learners could practice listening, and whether the app should do it at all). Questions to settle first: what listening the app can do well, and what is better left to other things (podcasts, graded audio, a tutor). What there is now: hearing a word on its cards and its page (a recording, its syllables back to back, or the device's voice; `docs/word-page.md`, "Sound"). `docs/goals.md` counts listening cards and sentence audio as nice to have. Things to weigh: a listening card (hear the word, then give its meaning or write it) would only use what is there; sentences have only the device's voice, which may be missing, may need the internet, and can't be told a Taiwan reading; anything longer than a sentence means content the app doesn't have and a license for it. To propose to the owner as a short write-up of options, including "not in this app", before any plan. Takes in the "Listening cards" line under "Nice to have".
 - **A mascot**, mainly for the streaks screen (the owner, 2026-10-18; likely November 2026): a bunny, commissioned from an artist, happy or sad with the streak.
 
 **Nice to have:**
@@ -315,13 +314,16 @@ Agreed with the owner on 2026-10-18. **The first release** means the first users
 - A mode for going from 繁體 to 簡體 or back, by character rather than by word (having written 們 → 们 once, the learner isn't asked again in 他們, 你們).
 - Mainland, Hong Kong or Taiwan traditional forms (needs stroke data for the other two); longer shortcuts (more strokes joined, reordered or dropped).
 - Stroke data for the traditional characters animCJK doesn't cover.
-- Ready-made sentences (the last step of "sentences and audio"); eSpeak NG or a small neural voice in the browser (raised, not looked into; part of thinking over listening, under "Near-term").
+- Ready-made sentences (the last step of "sentences and audio").
+- **At most, a pronunciation deck** (the owner, 2026-10-30, when leaving listening practice out): something like the Anki shared deck https://ankiweb.net/shared/info/854183352, for learning Chinese sounds, telling tones apart and telling similar sounds apart. Not looked at yet (its page needs JavaScript to read): what it holds, where its audio comes from and its license are to check before anything is proposed.
 - The TBCL list, and the 79 TOCFL entries left out (`docs/word-lists.md`).
 - Proposing a shorter meaning for single characters, in place of cutting long ones short.
 - **From the Anki import** (the owner, 2026-10-21: long-term; `docs/anki.md`, "Not built"): keeping the page usable during a long import (planning in batches first, a Web Worker if the reading is the slow part; Mei's HSK deck holds a phone's page about 13 s), and a button for each reason a note was left out, opening the right add form.
 - An export to an Anki deck file (needs a library); strokes whose width follows the pen's pressure (the owner's idea).
 
 **Decided against** (so they aren't proposed again):
+
+- **Listening practice** (the owner, 2026-10-30, after a write-up of options): no listening cards, tones by ear, dictation, sentence audio for listening, or longer listening; that is left to podcasts, graded audio and tutors. Hearing a word on its cards and page stays as it is (`docs/word-page.md`, "Sound"). The one exception that may come is a pronunciation deck (under "Nice to have").
 
 - **Anki sync** (the owner, 2026-10-15): syncing through AnkiWeb is against its terms and would need a server; the self-hosted server and AnkiConnect are a poor fit, since Anki has no writing check.
 - **A handwriting-style font (楷体)** for the characters being learned (the owner, 2026-10-17): the gap between printed and handwritten shapes "represents the realities of handwriting vs computer fonts in the sinosphere"; the writing area teaches the written shapes, the rest stays in the device's font.
