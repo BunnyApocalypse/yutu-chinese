@@ -32,7 +32,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 
 - US English spelling everywhere (UI, comments, identifiers, docs).
 - Simple, direct code; a few small, plainly named files over abstractions. Comment anything non-obvious, and explain new concepts (browser APIs, tooling, PWA mechanics) in plain language the first time.
-- **Ask before adding any dependency**; the bar is high. Approved: `hanzi-writer`, `hanzi-writer-data`, `ts-fsrs`, `sql.js` and `fzstd` (reading Anki files, 2026-10-19), `vite` (development).
+- **Ask before adding any dependency**; the bar is high. Approved: `hanzi-writer`, `hanzi-writer-data`, `ts-fsrs`, `sql.js` and `fzstd` (reading Anki files, 2026-10-19), `vite` (development); for the Android app when it is built, Capacitor (`@capacitor/core`, `android`, `cli`, `app`) and `@capacitor-community/text-to-speech` (2026-10-30, `docs/history.md`).
 - **Fetch bulk data once and read it locally** rather than sending many requests to someone's server (2026-10-13). Development downloads go in the git-ignored `local/`, with source and fetch command in `local/README.md`.
 - One milestone at a time: propose a plan before building something new, and don't build ahead.
 
