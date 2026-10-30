@@ -27,6 +27,10 @@
 //               accepted stroke order, as a list of stroke numbers. The
 //               strokes themselves are listed in the order of Taiwan's
 //               Ministry of Education; altOrder is the mainland order.
+//   altShapes:  Taiwan set only, for some characters: strokes the mainland
+//               form writes in another shape in the same place, as
+//               { strokeNum: median } (the dot under 人 in 食, where Taiwan's
+//               stroke is nearly flat). Either shape is accepted.
 // Strokes are numbered from 0, in writing order. Coordinates run from 0 to
 // 1024 across, and from about -124 (bottom) to 900 (top) upwards.
 

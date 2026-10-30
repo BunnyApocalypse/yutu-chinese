@@ -6,7 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-import { findAlternativeOrder } from '../scripts/strokeOrder.js';
+import { findAlternativeOrder, findAlternativeShapes } from '../scripts/strokeOrder.js';
 import {
   fitsStroke,
   distanceFromStroke,
@@ -216,4 +216,75 @@ test('the brush entry at the start of a printed stroke is not asked for', () => 
   assert.equal(withoutEntry(toPoints(turn)), null);
   // Nor is its upright alone taken for it.
   assert.equal(fitsStroke(toPoints([[700, 700], [700, 200]]), turn, LENIENCY), false);
+});
+
+// ---- Strokes in another shape (findAlternativeShapes, otherShapeFor in quiz.js) ----
+
+const fitsAtLeniency = (points, median) => fitsStroke(points, median, LENIENCY);
+
+// Every Taiwan-set character with strokes in a second shape.
+const charsWithOtherShapes = [];
+for (const [char, entry] of taiwanData) {
+  const bigSet = bigSetData(char);
+  const altShapes = bigSet ? findAlternativeShapes(entry, bigSet, fitsAtLeniency) : null;
+  if (altShapes) {
+    charsWithOtherShapes.push({ char, entry, altShapes });
+  }
+}
+
+// The app's rule for "this stroke is the expected one in its other shape":
+// it fits that shape and lies nearer to it than to any stroke after it; one
+// less than twice as far must also be less like it in shape (NEAR_IN_PLACE
+// in quiz.js).
+function takenForOtherShape(drawn, entry, strokeNum, shape) {
+  const toShape = distanceFromStroke(drawn, shape);
+  const likeShape = shapeDifferenceFromStroke(drawn, shape);
+  return (
+    fitsStroke(drawn, shape, LENIENCY) &&
+    entry.medians.slice(strokeNum + 1).every((median) => {
+      const toOther = distanceFromStroke(drawn, median);
+      return toOther > toShape && (toOther > 2 * toShape || shapeDifferenceFromStroke(drawn, median) > likeShape);
+    })
+  );
+}
+
+test('the dot under 人 in 食, the top of 房 and the 𠂉 of 藍 have a second shape', () => {
+  const shapesOf = (char) => findAlternativeShapes(taiwanData.get(char), bigSetData(char), fitsAtLeniency);
+  assert.deepEqual(Object.keys(shapesOf('食')), ['2']);
+  assert.ok(Object.keys(shapesOf('房')).includes('0'));
+  assert.ok(Object.keys(shapesOf('藍')).includes('12'));
+  // Written alike in both sets, or with a different number of strokes.
+  assert.equal(shapesOf('子'), null);
+  assert.equal(shapesOf('為'), null);
+  // 80 when measured (2026-10-30).
+  assert.ok(charsWithOtherShapes.length >= 60, 'expected dozens of characters');
+});
+
+test('a stroke in its second shape is accepted, and no later stroke is taken for it', () => {
+  let tried = 0;
+  let accepted = 0;
+  const misfires = [];
+  for (const { char, entry, altShapes } of charsWithOtherShapes) {
+    const random = makeRandom(char.codePointAt(0));
+    for (const [key, shape] of Object.entries(altShapes)) {
+      const strokeNum = Number(key);
+      for (const variation of VARIATIONS) {
+        tried += 1;
+        if (takenForOtherShape(vary(toPoints(shape), variation, random), entry, strokeNum, shape)) {
+          accepted += 1;
+        }
+        // A later stroke of the character written too early.
+        for (let later = strokeNum + 1; later < entry.medians.length; later++) {
+          const drawn = vary(toPoints(entry.medians[later]), variation, random);
+          if (takenForOtherShape(drawn, entry, strokeNum, shape)) {
+            misfires.push(`${char} ${later + 1} for ${strokeNum + 1}`);
+          }
+        }
+      }
+    }
+  }
+  console.log(`second shapes accepted: ${accepted} of ${tried}; misfires: ${misfires.length}`);
+  // 660 of 686 when measured (2026-10-30); every one drawn exactly passes.
+  assert.ok(accepted / tried > 0.95, `${accepted} of ${tried} accepted`);
+  assert.deepEqual(misfires, []);
 });

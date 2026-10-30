@@ -20,8 +20,9 @@ import {
   loadStrokeData,
 } from './harness.js';
 
-// Characters with two accepted stroke orders (the first ten), and some with one.
-const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢母出長麼這謝子好');
+// Characters with two accepted stroke orders (the first ten), some with one,
+// and some with strokes in a second shape (the last four, also written so).
+const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢母出長麼這謝子好食房藍雨');
 
 // Where and how big the character is written, compared with the centered
 // reference: `scale` times the size, moved `dx` to the right and `dy` up, in
@@ -73,7 +74,8 @@ function makeRandom(name) {
 // is not accepted. Returns:
 //   status:         the status line at the end ("No mistakes" if all went well)
 //   strokesDrawn:   how many strokes were drawn
-async function writeChar(page, char, strokeOrder, position, random) {
+// `shapes`: the second shapes to write strokes in (altShapes), or none.
+async function writeChar(page, char, strokeOrder, position, random, shapes = {}) {
   const data = loadStrokeData(char);
   await startWriting(page, char);
   const area = await writingArea(page);
@@ -87,7 +89,7 @@ async function writeChar(page, char, strokeOrder, position, random) {
       `document.getElementById('writing-area').getAttribute('data-zoom')`,
     );
     const [zoomScale, zoomX, zoomY] = zoom ? zoom.split(' ').map(Number) : [1, 0, 0];
-    const points = data.medians[strokeNum].map(([x, y]) => [
+    const points = (shapes[strokeNum] || data.medians[strokeNum]).map(([x, y]) => [
       zoomScale * (position.scale * x + position.dx) + zoomX + (random() * 2 - 1) * JITTER,
       zoomScale * (position.scale * y + position.dy) + zoomY + (random() * 2 - 1) * JITTER,
     ]);
@@ -135,10 +137,14 @@ describe('writing grid', { concurrency: BROWSER_COUNT }, () => {
     const data = loadStrokeData(char);
     const moeOrder = data.medians.map((median, index) => index);
     const orders = data.altOrder ? { MOE: moeOrder, mainland: data.altOrder } : { MOE: moeOrder };
+    const ways = Object.entries(orders).map(([orderName, strokeOrder]) => ({ label: `${orderName} order`, strokeOrder }));
+    if (data.altShapes) {
+      ways.push({ label: 'MOE order, mainland shapes', strokeOrder: moeOrder, shapes: data.altShapes });
+    }
 
-    for (const [orderName, strokeOrder] of Object.entries(orders)) {
+    for (const { label, strokeOrder, shapes } of ways) {
       for (const [positionName, position] of Object.entries(POSITIONS)) {
-        const name = `${char} in ${orderName} order, ${positionName}`;
+        const name = `${char} in ${label}, ${positionName}`;
 
         if (!canBeWritten(data.medians, position)) {
           tally[positionName].skipped += 1;
@@ -148,7 +154,7 @@ describe('writing grid', { concurrency: BROWSER_COUNT }, () => {
 
         it(name, { timeout: 120000 }, async () => {
           const result = await browsers.use((page) =>
-            writeChar(page, char, strokeOrder, position, makeRandom(name)),
+            writeChar(page, char, strokeOrder, position, makeRandom(name), shapes),
           );
           const passed = result.status === 'No mistakes';
           tally[positionName][passed ? 'passed' : 'failed'] += 1;

@@ -19,7 +19,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { findAlternativeOrder } from './strokeOrder.js';
+import { findAlternativeOrder, findAlternativeShapes } from './strokeOrder.js';
+import { fitsStroke } from '../src/strokeMatch.js';
+
 
 function fileNameFor(char) {
   return `${char.codePointAt(0).toString(16)}.json`;
@@ -69,7 +71,10 @@ fs.mkdirSync(taiwanTarget, { recursive: true });
 
 // Raise this number whenever this script changes what it writes into the
 // Taiwan set's files. Copies made by an older version are then replaced.
-const TAIWAN_SET_VERSION = 2;
+const TAIWAN_SET_VERSION = 3;
+
+// The same leniency the app grades with (LENIENCY in src/quiz.js).
+const LENIENCY = 1.5;
 
 // index.json lists the characters in the set (so the app knows which ones to
 // look for here without asking for files that don't exist) and records which
@@ -93,6 +98,7 @@ if (taiwanSetIsUpToDate()) {
   console.log(`Stroke data already in ${taiwanTarget}, nothing to copy.`);
 } else {
   let withSecondOrder = 0;
+  let withOtherShapes = 0;
   for (const entry of taiwanEntries) {
     const data = { strokes: entry.strokes, medians: entry.medians };
 
@@ -106,6 +112,13 @@ if (taiwanSetIsUpToDate()) {
         data.altOrder = altOrder;
         withSecondOrder += 1;
       }
+      // Strokes the big set writes in another shape, in the same place (the
+      // dot under 人 in 食): those shapes are accepted too.
+      const altShapes = findAlternativeShapes(entry, bigSetEntry, (points, median) => fitsStroke(points, median, LENIENCY));
+      if (altShapes) {
+        data.altShapes = altShapes;
+        withOtherShapes += 1;
+      }
     }
     fs.writeFileSync(path.join(taiwanTarget, fileNameFor(entry.character)), JSON.stringify(data));
   }
@@ -113,6 +126,6 @@ if (taiwanSetIsUpToDate()) {
   fs.writeFileSync(indexFile, JSON.stringify({ version: TAIWAN_SET_VERSION, characters }));
   console.log(
     `Copied stroke data for ${taiwanEntries.length} characters to ${taiwanTarget} ` +
-      `(${withSecondOrder} with a second stroke order).`,
+      `(${withSecondOrder} with a second stroke order, ${withOtherShapes} with strokes in a second shape).`,
   );
 }

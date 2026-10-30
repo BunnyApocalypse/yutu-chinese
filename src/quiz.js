@@ -78,6 +78,12 @@ const referenceRetried = () => themeColor('--reference-retried');
 // about position is multiplied by this, which in effect switches it off.
 const FIRST_STROKE_EXTRA_LENIENCY = 4;
 
+// A stroke written in its other shape (altShapes) is told from a stroke still
+// to come by place; one less than this many times as far away is compared by
+// shape as well. Measured over the Taiwan set (tests/strokeOrder.test.js):
+// no later stroke written too early is taken for the other shape.
+const NEAR_IN_PLACE = 2;
+
 // A stroke Hanzi Writer has accepted is still re-read as the other stroke
 // order if that fits clearly better: the misfit (average distance, in the
 // data's units) must be below this share of the current reading's, and lower
@@ -404,10 +410,12 @@ export function createQuiz(target, size, handlers) {
 
   // Notes an accepted stroke. `position` is how many strokes had been written
   // before it; `baseStrokes` are the stroke numbers of baseData it covers:
-  // one, or two for a joined stroke.
-  function noteAccepted(position, baseStrokes, drawnPoints) {
-    const reference =
-      baseStrokes.length === 1
+  // one, or two for a joined stroke. `shape`, if given, is the stroke's
+  // other shape it was written in (altShapes), unmoved.
+  function noteAccepted(position, baseStrokes, drawnPoints, shape = null) {
+    const reference = shape
+      ? toPoints(shape)
+      : baseStrokes.length === 1
         ? toPoints(baseData.medians[baseStrokes[0]])
         : joinedLine({ medians: baseStrokes.map((strokeNum) => baseData.medians[strokeNum]) }, 0);
     acceptedStrokes.push({
@@ -705,20 +713,25 @@ export function createQuiz(target, size, handlers) {
     return clearlyBetter ? { ...reading, frame: frameFor(otherPairs) } : null;
   }
 
-  // True if the rejected stroke is the first stroke of the character in every
-  // way except where it was written.
-  function isFirstStrokeAnywhere(stroke) {
-    return (
-      stroke.strokeNum === 0 &&
-      acceptedStrokes.length === 0 &&
-      canFollow() &&
-      fitsStroke(
-        stroke.drawnPath.points,
-        baseData.medians[sequence[0]],
-        LENIENCY * FIRST_STROKE_EXTRA_LENIENCY,
-        true,
-      )
-    );
+  // If the rejected stroke is the first stroke of the character in every way
+  // except where it was written, returns { shape }: null, or the stroke's
+  // other shape (altShapes, the dot on top of 房's 戶) if it was written in
+  // that. Otherwise returns null.
+  function firstStrokeAnywhere(stroke) {
+    if (stroke.strokeNum !== 0 || acceptedStrokes.length > 0 || !canFollow()) {
+      return null;
+    }
+    const fits = (median) =>
+      fitsStroke(stroke.drawnPath.points, median, LENIENCY * FIRST_STROKE_EXTRA_LENIENCY, true);
+    const shape = baseData.altShapes?.[sequence[0]];
+    if (fits(baseData.medians[sequence[0]])) {
+      // Both may fit, far from where either is printed: the nearer shape.
+      const nearer =
+        shape && shapeDifferenceFromStroke(stroke.drawnPath.points, shape) <
+          shapeDifferenceFromStroke(stroke.drawnPath.points, baseData.medians[sequence[0]]);
+      return { shape: nearer ? shape : null };
+    }
+    return shape && fits(shape) ? { shape } : null;
   }
 
   // True if the rejected stroke is the expected one after all, written at a
@@ -757,6 +770,41 @@ export function createQuiz(target, size, handlers) {
         leniency,
       ),
     );
+  }
+
+  // ---- Strokes in another shape ----
+  //
+  // Some strokes are written in another shape in the mainland form, in the
+  // same place (baseData.altShapes; the dot under 人 in 食, flat in Taiwan's).
+  // Hanzi Writer knows only the Taiwan shape, so a rejected stroke is checked
+  // against the other one here.
+
+  // The expected stroke's other shape, unmoved, if the rejected stroke was
+  // written in it: it fits that shape, and lies nearer to it than to any
+  // stroke after it; one of those that lies nearly as near (NEAR_IN_PLACE)
+  // must be less like it in shape, or a stroke written too early could pass
+  // for it (房's second for the dot on top). Nearer the Taiwan shape is
+  // fine: that is the same stroke. Otherwise null.
+  function otherShapeFor(stroke) {
+    const shape = baseData.altShapes?.[sequence[stroke.strokeNum]];
+    if (!shape) {
+      return null;
+    }
+    const points = stroke.drawnPath.points;
+    const inFrame = moved(toPoints(shape), frame).map((point) => [point.x, point.y]);
+    // In a small character the strokes lie closer together, so less is
+    // allowed (as in isExpectedStrokeAtAnotherSize).
+    if (!fitsStroke(points, inFrame, LENIENCY * Math.min(1, frame.scale))) {
+      return null;
+    }
+    const toShape = distanceFromStroke(points, inFrame);
+    const likeShape = shapeDifferenceFromStroke(points, inFrame);
+    const toCome = sequence.slice(stroke.strokeNum + 1).map((strokeNum) => framedData.medians[strokeNum]);
+    const nearest = toCome.every((median) => {
+      const toOther = distanceFromStroke(points, median);
+      return toOther > toShape && (toOther > NEAR_IN_PLACE * toShape || shapeDifferenceFromStroke(points, median) > likeShape);
+    });
+    return nearest ? shape : null;
   }
 
   // Carries on in the other stroke order, with the strokes so far read that
@@ -1116,10 +1164,11 @@ export function createQuiz(target, size, handlers) {
         // The first stroke of all, in the right shape but further from the
         // centered reference than Hanzi Writer allows: accept it, and let the
         // frame follow it.
-        if (isFirstStrokeAnywhere(stroke)) {
+        const anywhere = firstStrokeAnywhere(stroke);
+        if (anywhere) {
           record(stroke, 'firstAnywhere', judgedIn);
           keepDrawnStroke(stroke.drawnPath.pathString);
-          noteAccepted(0, [sequence[0]], stroke.drawnPath.points);
+          noteAccepted(0, [sequence[0]], stroke.drawnPath.points, anywhere.shape);
           reportProgress({ strokesDone: 1, totalStrokes, totalMistakes: mistakes });
           writer.skipQuizStroke();
           if (totalStrokes > 1 && refitFrame()) {
@@ -1133,6 +1182,20 @@ export function createQuiz(target, size, handlers) {
           record(stroke, 'atAnotherSize', judgedIn);
           keepDrawnStroke(stroke.drawnPath.pathString);
           noteAccepted(stroke.strokeNum, [sequence[stroke.strokeNum]], stroke.drawnPath.points);
+          const strokesDone = stroke.strokeNum + 1;
+          reportProgress({ strokesDone, totalStrokes, totalMistakes: mistakes });
+          writer.skipQuizStroke();
+          if (strokesDone < totalStrokes && refitFrame()) {
+            resume(strokesDone);
+          }
+          return;
+        }
+        // The expected stroke in its mainland shape (the dot under 人 in 食).
+        const shape = otherShapeFor(stroke);
+        if (shape) {
+          record(stroke, 'otherShape', judgedIn);
+          keepDrawnStroke(stroke.drawnPath.pathString);
+          noteAccepted(stroke.strokeNum, [sequence[stroke.strokeNum]], stroke.drawnPath.points, shape);
           const strokesDone = stroke.strokeNum + 1;
           reportProgress({ strokesDone, totalStrokes, totalMistakes: mistakes });
           writer.skipQuizStroke();
