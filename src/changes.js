@@ -13,6 +13,18 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-10-30-2',
+    items: [
+      'A word list with traditional characters in the first column and simplified in the second is now read the right way round; checking the list says so.',
+    ],
+    it: [
+      'Un elenco di parole con i caratteri tradizionali nella prima colonna e quelli semplificati nella seconda ora viene letto nel verso giusto; il controllo dell’elenco lo segnala.',
+    ],
+    de: [
+      'Eine Wortliste mit traditionellen Zeichen in der ersten Spalte und vereinfachten in der zweiten wird jetzt richtig herum gelesen; die Prüfung der Liste sagt das an.',
+    ],
+  },
+  {
     id: '2026-10-30',
     items: [
       'Rewritten, fuller learning tips for 100 words of HSK level 2, checked by a second AI model.',
