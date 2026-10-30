@@ -19,10 +19,12 @@ import {
   drawStroke,
   loadStrokeData,
 } from './harness.js';
+import { grassTopsOf } from '../../src/shortcuts.js';
 
 // Characters with two accepted stroke orders (the first ten), some with one,
-// and some with strokes in a second shape (the last four, also written so).
-const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢母出長麼這謝子好食房藍雨');
+// some with strokes in a second shape (食房藍雨, also written so), and some
+// with 艹 (草花藍, also written with it in three strokes).
+const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢母出長麼這謝子好食房藍雨草花');
 
 // Where and how big the character is written, compared with the centered
 // reference: `scale` times the size, moved `dx` to the right and `dy` up, in
@@ -75,6 +77,8 @@ function makeRandom(name) {
 //   status:         the status line at the end ("No mistakes" if all went well)
 //   strokesDrawn:   how many strokes were drawn
 // `shapes`: the second shapes to write strokes in (altShapes), or none.
+// An entry of `strokeOrder` may be a pair of stroke numbers, written as one
+// stroke (the level stroke of 艹 in three strokes).
 async function writeChar(page, char, strokeOrder, position, random, shapes = {}) {
   const data = loadStrokeData(char);
   await startWriting(page, char);
@@ -89,7 +93,10 @@ async function writeChar(page, char, strokeOrder, position, random, shapes = {})
       `document.getElementById('writing-area').getAttribute('data-zoom')`,
     );
     const [zoomScale, zoomX, zoomY] = zoom ? zoom.split(' ').map(Number) : [1, 0, 0];
-    const points = (shapes[strokeNum] || data.medians[strokeNum]).map(([x, y]) => [
+    const median = Array.isArray(strokeNum)
+      ? strokeNum.flatMap((part) => data.medians[part])
+      : shapes[strokeNum] || data.medians[strokeNum];
+    const points = median.map(([x, y]) => [
       zoomScale * (position.scale * x + position.dx) + zoomX + (random() * 2 - 1) * JITTER,
       zoomScale * (position.scale * y + position.dy) + zoomY + (random() * 2 - 1) * JITTER,
     ]);
@@ -140,6 +147,14 @@ describe('writing grid', { concurrency: BROWSER_COUNT }, () => {
     const ways = Object.entries(orders).map(([orderName, strokeOrder]) => ({ label: `${orderName} order`, strokeOrder }));
     if (data.altShapes) {
       ways.push({ label: 'MOE order, mainland shapes', strokeOrder: moeOrder, shapes: data.altShapes });
+    }
+    // 艹 in three strokes: the level stroke across, then the two uprights;
+    // or the left upright, the level stroke, the right upright.
+    for (const top of grassTopsOf(data)) {
+      const [before, after] = [moeOrder.slice(0, top), moeOrder.slice(top + 4)];
+      const level = [top + 1, top + 2];
+      ways.push({ label: 'MOE order, 艹 in three strokes', strokeOrder: [...before, level, top, top + 3, ...after] });
+      ways.push({ label: 'MOE order, 艹 in three strokes, upright first', strokeOrder: [...before, top, level, top + 3, ...after] });
     }
 
     for (const { label, strokeOrder, shapes } of ways) {

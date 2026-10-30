@@ -11,8 +11,10 @@
 // joinable when the first ends where the second begins, the second is long
 // enough to matter, and joining them gives a visibly different shape.
 //
-// Only pairs are handled. Three or more strokes in one go, and shortcuts that
-// change the order of strokes or drop some, are not.
+// Only pairs are handled, and one shortcut that changes the order: 艹 in 3
+// strokes (see "艹 in three strokes" at the end). Three or more strokes in one
+// go, and other shortcuts that change the order of strokes or drop some, are
+// not.
 //
 // This file has no connection to the page or to Hanzi Writer, so it can be
 // tested on its own (see tests/shortcuts.test.js).
@@ -193,4 +195,84 @@ export function isShortcutStroke(charData, strokeNum, drawnPoints, leniency, sca
 export function joinedLine(charData, strokeNum) {
   const { first, rest } = describePair(charData, strokeNum);
   return [...first, ...rest];
+}
+
+// ---- 艹 in three strokes ----
+//
+// The Taiwan standard writes 艹 in four strokes, as two 十: 丨 一 一 丨 (left
+// upright, left half of the level stroke, right half, right upright). Most
+// fonts, and the mainland, show it in three: one level stroke across, then the
+// two uprights (the owner, 2026-10-30, writes it so). That is a join of the
+// two halves plus a change of order, so quiz.js handles it apart from the
+// pairs above: a level stroke written where the left upright or the left
+// half is expected, that fits both halves joined, counts for both, and the
+// uprights are expected after it.
+//
+// 艹 is found in the stroke data by its shape: four strokes in a row, an
+// upright crossing a level stroke, then a level stroke going on from it and
+// crossed by an upright, with nothing above them. Found so in 22 of the
+// Taiwan set's characters (花 茶 草 藍 萬 懂 貓…), and nowhere else.
+
+// Directions, in degrees, with y going up (charData.js): level is within
+// this much of straight across; upright between these, going down (the left
+// upright of 艹 leans, at about -65°, the right one at about -97°).
+const LEVEL_WITHIN = 15;
+const UPRIGHT_DIRECTIONS = [-105, -55];
+// The right half may begin this far from where the left half ends (85 to
+// 115 in the Taiwan set).
+const MAX_HALVES_GAP = 150;
+// An upright must reach this far above and below its level stroke.
+const MIN_CROSSING = 30;
+// No other stroke reaches above the level strokes between their ends, less
+// this much at each side (豸 of 貓 comes close on the left).
+const SIDE_MARGIN = 40;
+
+const angleOf = (median) => {
+  const [start, end] = [median[0], median[median.length - 1]];
+  return (Math.atan2(end[1] - start[1], end[0] - start[0]) * 180) / Math.PI;
+};
+const isLevel = (median) => Math.abs(angleOf(median)) < LEVEL_WITHIN;
+const isUpright = (median) => angleOf(median) > UPRIGHT_DIRECTIONS[0] && angleOf(median) < UPRIGHT_DIRECTIONS[1];
+const heightOf = (median) => (median[0][1] + median[median.length - 1][1]) / 2;
+const crosses = (upright, level) => {
+  const middleX = (upright[0][0] + upright[upright.length - 1][0]) / 2;
+  const [left, right] = [level[0][0], level[level.length - 1][0]].sort((a, b) => a - b);
+  return (
+    middleX > left &&
+    middleX < right &&
+    upright[0][1] > heightOf(level) + MIN_CROSSING &&
+    upright[upright.length - 1][1] < heightOf(level) - MIN_CROSSING
+  );
+};
+
+// The stroke numbers at which a four-stroke 艹 begins in `charData` (its
+// left upright), in the data's own order: [] for most characters.
+export function grassTopsOf(charData) {
+  const { medians } = charData;
+  const found = [];
+  for (let at = 0; at + 3 < medians.length; at++) {
+    const [leftUpright, leftHalf, rightHalf, rightUpright] = medians.slice(at, at + 4);
+    if (!isUpright(leftUpright) || !isLevel(leftHalf) || !isLevel(rightHalf) || !isUpright(rightUpright)) {
+      continue;
+    }
+    const endOfLeft = leftHalf[leftHalf.length - 1];
+    const gap = Math.hypot(rightHalf[0][0] - endOfLeft[0], rightHalf[0][1] - endOfLeft[1]);
+    if (gap > MAX_HALVES_GAP || rightHalf[0][0] <= leftHalf[0][0]) {
+      continue;
+    }
+    if (!crosses(leftUpright, leftHalf) || !crosses(rightUpright, rightHalf)) {
+      continue;
+    }
+    const left = leftHalf[0][0] + SIDE_MARGIN;
+    const right = rightHalf[rightHalf.length - 1][0] - SIDE_MARGIN;
+    const level = Math.min(heightOf(leftHalf), heightOf(rightHalf));
+    const onTop = medians.every(
+      (median, strokeNum) =>
+        (strokeNum >= at && strokeNum < at + 4) || median.every(([x, y]) => x < left || x > right || y < level),
+    );
+    if (onTop) {
+      found.push(at);
+    }
+  }
+  return found;
 }

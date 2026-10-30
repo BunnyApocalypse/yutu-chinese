@@ -71,8 +71,8 @@ export function beginCharacter(details) {
 
 // A stroke was drawn and judged. `verdict`: 'accepted', 'shortcut' (two
 // strokes joined), 'otherOrder', 'firstAnywhere' (the first stroke, by its
-// shape alone), 'atAnotherSize', 'otherShape' (in its mainland shape), or
-// 'mistake'. `expected`: the stroke asked
+// shape alone), 'atAnotherSize', 'otherShape' (in its mainland shape),
+// 'grassLevel' (the level stroke of 艹 in three strokes), or 'mistake'. `expected`: the stroke asked
 // for, by its number in the stroke data; `frame`: the frame in use when it
 // was judged.
 export function noteStroke({ points, verdict, expected, frame, hintShown }) {

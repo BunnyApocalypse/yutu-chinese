@@ -8,7 +8,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-import { isJoinable, isShortcutStroke, joinedLine } from '../src/shortcuts.js';
+import { isJoinable, isShortcutStroke, joinedLine, grassTopsOf } from '../src/shortcuts.js';
 import { applyFrame } from '../src/frame.js';
 import { parseWordList } from '../src/wordList.js';
 
@@ -211,4 +211,24 @@ test('a joined stroke is nearly always recognized', () => {
     missed.length <= trials * 0.04,
     `${missed.length} of ${trials} joined strokes were not recognized: ${missed.join(', ')}`,
   );
+});
+
+test('a four-stroke 艹 is found where the Taiwan set has one, and nowhere else', () => {
+  const found = [...taiwanData]
+    .filter(([, entry]) => grassTopsOf(entry).length > 0)
+    .map(([char, entry]) => `${char}${grassTopsOf(entry).join(',')}`);
+  // Measured 2026-10-30: every character of the set with a four-stroke 艹,
+  // at its top or on the right (懂 臟 貓 髒).
+  assert.deepEqual(
+    found.sort(),
+    ['懂3', '臟4', '艹0', '花0', '苦0', '英0', '苹0', '茶0', '草0', '菜0', '華0', '菸0', '萬0', '落0', '蕉0', '藉0', '藍0', '藝0', '藥0', '蘋0', '貓7', '髒10'].sort(),
+  );
+  // Not in a 十 lower down (華, 睡, 郵) or in 女 (她).
+  for (const char of ['她', '睡', '郵', '鄉', '共']) {
+    if (taiwanData.has(char)) {
+      assert.deepEqual(grassTopsOf(taiwanData.get(char)), [], char);
+    }
+  }
+  // The big set writes 艹 in three strokes, or its four in another order.
+  assert.deepEqual(grassTopsOf(bigSetData('花')), []);
 });

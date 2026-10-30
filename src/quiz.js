@@ -14,7 +14,7 @@
 
 import HanziWriter from 'hanzi-writer';
 import { loadCharData } from './charData.js';
-import { isShortcutStroke, joinedLine } from './shortcuts.js';
+import { isShortcutStroke, joinedLine, grassTopsOf } from './shortcuts.js';
 import {
   fitFrame,
   applyFrame,
@@ -139,6 +139,11 @@ export function createQuiz(target, size, handlers) {
   let charData = null;
   // All stroke numbers of baseData, in the order currently expected.
   let sequence = [];
+  // Where baseData has a four-stroke 艹 (its left upright; grassTopsOf in
+  // shortcuts.js), and which of them was written in three strokes, if any:
+  // its level stroke written first moves the uprights after it in `sequence`.
+  let grassTops = [];
+  let grassJoined = [];
   // Where and how big the character is being written (see frame.js), and
   // baseData moved into that frame.
   let frame = NO_FRAME;
@@ -386,6 +391,7 @@ export function createQuiz(target, size, handlers) {
   async function useOriginalData() {
     const changed = !isStandardOrder(sequence) || frame !== NO_FRAME;
     sequence = baseData.strokes.map((stroke, index) => index);
+    grassJoined = [];
     frame = NO_FRAME;
     framedData = baseData;
     acceptedStrokes = [];
@@ -747,29 +753,32 @@ export function createQuiz(target, size, handlers) {
     if (!canFollow() || acceptedStrokes.length === 0 || sizeIsKnown(acceptedStrokes)) {
       return false;
     }
-    const pairs = [
-      ...acceptedStrokes,
-      {
-        reference: toPoints(baseData.medians[sequence[stroke.strokeNum]]),
-        drawn: stroke.drawnPath.points,
-      },
-    ];
+    return sizeThatFits(toPoints(baseData.medians[sequence[stroke.strokeNum]]), stroke.drawnPath.points) !== null;
+  }
+
+  // The frame in which the stroke drawn along `drawn`, taken for `reference`
+  // (a line in baseData's units), and every stroke before it sit on their
+  // references, if those strokes say how big the character is; else null.
+  // Its `misfit` is how far off they are there, on average, in the data's
+  // units: smaller is a better fit.
+  function sizeThatFits(reference, drawn) {
+    const pairs = [...acceptedStrokes, { reference, drawn }];
     if (!sizeIsKnown(pairs)) {
-      return false;
+      return null;
     }
     const withSize = fitFrame(pairs);
     // What fitsStroke allows is measured for a full-size character. In a
     // small one the strokes lie closer together, so less is allowed, or a
     // neighboring stroke of the same shape would pass too.
     const leniency = LENIENCY * Math.min(1, withSize.scale);
-    return pairs.every((pair) =>
-      // fitsStroke takes a middle line as [x, y] pairs.
-      fitsStroke(
-        pair.drawn,
-        moved(pair.reference, withSize).map((point) => [point.x, point.y]),
-        leniency,
-      ),
-    );
+    // fitsStroke takes a middle line as [x, y] pairs.
+    const inFrame = pairs.map((pair) => moved(pair.reference, withSize).map((point) => [point.x, point.y]));
+    const allFit = pairs.every((pair, index) => fitsStroke(pair.drawn, inFrame[index], leniency));
+    if (!allFit) {
+      return null;
+    }
+    const misfit = pairs.reduce((sum, pair, index) => sum + distanceFromStroke(pair.drawn, inFrame[index]), 0) / pairs.length;
+    return { ...withSize, misfit };
   }
 
   // ---- Strokes in another shape ----
@@ -805,6 +814,98 @@ export function createQuiz(target, size, handlers) {
       return toOther > toShape && (toOther > NEAR_IN_PLACE * toShape || shapeDifferenceFromStroke(points, median) > likeShape);
     });
     return nearest ? shape : null;
+  }
+
+  // ---- 艹 in three strokes (see shortcuts.js) ----
+
+  // If the rejected stroke is the level stroke of a three-stroke 艹, written
+  // where its left upright or its left half is expected, returns where that
+  // 艹 begins (its left upright, in baseData's numbers); otherwise null. It
+  // must fit both halves joined, moved into the frame, in place unless it is
+  // the first stroke of all, which may be anywhere (as firstStrokeAnywhere).
+  function grassLevelFor(stroke) {
+    const expected = sequence[stroke.strokeNum];
+    const written = new Set(sequence.slice(0, stroke.strokeNum));
+    const top = grassTops.find(
+      (at) => (expected === at || expected === at + 1) && !written.has(at + 1) && !written.has(at + 2),
+    );
+    if (top === undefined) {
+      return null;
+    }
+    return levelFits(top, stroke.drawnPath.points, false) ? top : null;
+  }
+
+  // True if `points` fit the level stroke of the 艹 beginning at `top`: both
+  // halves joined. The first stroke of all may be anywhere (as in
+  // firstStrokeAnywhere); while the size is not known yet, at any size that
+  // fits the strokes before it too (sizeThatFits), unless it fits better as
+  // the left half alone at some size (written small, the left half is the
+  // whole level stroke at a quarter of the size). With `endsRight`, it must
+  // also end nearer to where the right half ends than to where the left one
+  // does.
+  function levelFits(top, points, endsRight) {
+    const level = joinedLine({ medians: [baseData.medians[top + 1], baseData.medians[top + 2]] }, 0);
+    const [leftEnd, rightEnd] = [top + 1, top + 2].map((strokeNum) => toPoints(baseData.medians[strokeNum]).at(-1));
+    const endsAt = (inFrame) => {
+      const end = points.at(-1);
+      const [left, right] = moved([leftEnd, rightEnd], inFrame);
+      return !endsRight || Math.hypot(end.x - right.x, end.y - right.y) < Math.hypot(end.x - left.x, end.y - left.y);
+    };
+    const asMedian = (inFrame) => moved(level, inFrame).map((point) => [point.x, point.y]);
+    if (acceptedStrokes.length === 0 && canFollow()) {
+      return fitsStroke(points, asMedian(NO_FRAME), LENIENCY * FIRST_STROKE_EXTRA_LENIENCY, true);
+    }
+    if (canFollow() && !sizeIsKnown(acceptedStrokes)) {
+      const withSize = sizeThatFits(level, points);
+      if (withSize) {
+        const asLeftHalf = sizeThatFits(toPoints(baseData.medians[top + 1]), points);
+        return endsAt(withSize) && (!asLeftHalf || withSize.misfit < asLeftHalf.misfit);
+      }
+    }
+    return endsAt(frame) && fitsStroke(points, asMedian(frame), LENIENCY * Math.min(1, frame.scale));
+  }
+
+  // True if the stroke Hanzi Writer accepted as the left half of a 艹 is its
+  // whole level stroke: it fits both halves joined, and ends nearer to where
+  // the right half ends than to where the left one does. (Written after the
+  // left upright, the level stroke is taken for the left half, which it
+  // begins like.)
+  function isGrassLevelAccepted(stroke) {
+    const expected = sequence[stroke.strokeNum];
+    const top = grassTops.find((at) => expected === at + 1 && sequence[stroke.strokeNum + 1] === at + 2);
+    return top !== undefined && levelFits(top, stroke.drawnPath.points, true);
+  }
+
+  // Accepts the level stroke of the 艹 beginning at `top` (grassLevelFor):
+  // both halves count as written, and what is left of the 艹 comes after.
+  function acceptGrassLevel(stroke, top, totalStrokes) {
+    const position = stroke.strokeNum;
+    sequence = [
+      ...sequence.slice(0, position),
+      top + 1,
+      top + 2,
+      ...sequence.slice(position).filter((strokeNum) => strokeNum !== top + 1 && strokeNum !== top + 2),
+    ];
+    grassJoined.push(top);
+    noteAccepted(position, [top + 1, top + 2], stroke.drawnPath.points);
+    refitFrame();
+    const strokesDone = position + 2;
+    reportProgress({ strokesDone, totalStrokes, totalMistakes: mistakes });
+    if (strokesDone < totalStrokes) {
+      resume(strokesDone);
+    }
+  }
+
+  // `sequence` as it would be had each 艹 written in three strokes been
+  // written in four: its left upright back before its left half. For telling
+  // which stroke order the rest was written in.
+  function sequenceWithoutGrassJoins() {
+    let order = sequence;
+    for (const top of grassJoined) {
+      order = order.filter((strokeNum) => strokeNum !== top);
+      order.splice(order.indexOf(top + 1), 0, top);
+    }
+    return order;
   }
 
   // Carries on in the other stroke order, with the strokes so far read that
@@ -1117,10 +1218,12 @@ export function createQuiz(target, size, handlers) {
           switchToOtherOrder(stroke, otherReading, totalStrokes);
           return;
         }
-        record(stroke, isShortcut ? 'shortcut' : 'accepted', judgedIn);
+        // The level stroke of 艹 in three strokes, taken for its left half.
+        const isGrassLevel = !isShortcut && isGrassLevelAccepted(stroke);
+        record(stroke, isShortcut ? 'shortcut' : isGrassLevel ? 'grassLevel' : 'accepted', judgedIn);
         // A shortcut stroke can occasionally also pass as its first half. Then
         // the second half is already on the page, so move past it too.
-        if (isShortcut) {
+        if (isShortcut || isGrassLevel) {
           baseStrokes.push(sequence[stroke.strokeNum + 1]);
           strokesDone += 1;
           writer.skipQuizStroke();
@@ -1159,6 +1262,14 @@ export function createQuiz(target, size, handlers) {
           record(stroke, 'otherOrder', judgedIn);
           keepDrawnStroke(stroke.drawnPath.pathString);
           switchToOtherOrder(stroke, otherReading, totalStrokes);
+          return;
+        }
+        // The level stroke of 艹 written in three strokes.
+        const grassTop = grassLevelFor(stroke);
+        if (grassTop !== null) {
+          record(stroke, 'grassLevel', judgedIn);
+          keepDrawnStroke(stroke.drawnPath.pathString);
+          acceptGrassLevel(stroke, grassTop, totalStrokes);
           return;
         }
         // The first stroke of all, in the right shape but further from the
@@ -1221,7 +1332,7 @@ export function createQuiz(target, size, handlers) {
         completed = true;
         let order = null;
         if (baseData.altOrder) {
-          order = isStandardOrder(sequence) ? 'moe' : 'mainland';
+          order = isStandardOrder(sequenceWithoutGrassJoins()) ? 'moe' : 'mainland';
         }
         showDemo(sequence.length); // nothing left to show
         const passed = handlers.onComplete({ totalMistakes: mistakes, hintShown, order });
@@ -1249,6 +1360,8 @@ export function createQuiz(target, size, handlers) {
       baseData = data;
       charData = data;
       sequence = data.strokes.map((stroke, index) => index);
+      grassTops = grassTopsOf(data);
+      grassJoined = [];
       frame = NO_FRAME;
       framedData = data;
       acceptedStrokes = [];
