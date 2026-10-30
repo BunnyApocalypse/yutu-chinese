@@ -162,6 +162,8 @@ export default {
   'testing.saveRawInput': 'Als Datei speichern',
   'testing.clearRawInput': 'Aufzeichnung löschen',
   'testing.clearRawInputQuestion': 'Die bisher aufgezeichnete Roheingabe löschen?',
+  'testing.shownNow': 'Einstellungen › Zum Testen wird auf diesem Gerät jetzt angezeigt.',
+  'testing.hide': 'Diese Einstellungen ausblenden',
   'testing.pseudoLanguage': 'Testsprache zeigen',
   'testing.pseudoLanguageHint':
     'Jeder Text in ähnlich aussehenden Buchstaben und ein Drittel länger, wie es andere Sprachen oft sind: Text, der noch in schlichtem Englisch steht, wurde nicht für die Übersetzung vorbereitet. Die App startet neu, wenn das geändert wird. Nur auf diesem Gerät.',

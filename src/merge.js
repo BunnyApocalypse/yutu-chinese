@@ -47,6 +47,7 @@ const DEVICE_SETTINGS = [
   'tipsOn',
   'swipeReadout',
   'recordRawInput',
+  'testerSettingsShown',
   'storageMessageShown',
   'storageReminderOff',
   'theme',

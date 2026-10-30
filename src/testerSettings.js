@@ -1,7 +1,11 @@
 // Settings for trying the app out (the owner, 2026-10-20): the group "For
-// testing" in Settings. It is shown only in the test copy (built with a
-// channel, see vite.config.js) and while developing (`npm run dev`), never in
-// the stable copy, where these switches stay off.
+// testing" in Settings. It is shown in the test copy (built with a channel,
+// see vite.config.js) and while developing (`npm run dev`). In the stable
+// copy it is hidden, and these switches stay off, until the version line at
+// the bottom of Settings › Help is tapped five times in a row, as Android
+// shows its developer options (the owner, 2026-10-30, to record raw input on
+// the tablet they study on). That is remembered for the device
+// (`testerSettingsShown`), and "Hide these settings" undoes it.
 //
 // Each switch belongs to the device (DEVICE_SETTINGS in merge.js).
 //
@@ -28,10 +32,38 @@ import { t, language, setLanguage } from './text.js';
 // import.meta.env.DEV is true only under Vite's dev server.
 export const TESTER_SETTINGS_SHOWN = Boolean(__CHANNEL__) || import.meta.env.DEV;
 
+// Five taps on the version line, each within a second of the one before.
+const TAPS_TO_SHOW = 5;
+const TAP_GAP_MS = 1000;
+
 export async function setUpTesterSettings() {
-  if (!TESTER_SETTINGS_SHOWN) {
-    return;
+  if (TESTER_SETTINGS_SHOWN || (await getSetting('testerSettingsShown', false))) {
+    await showTesterSettings();
+  } else {
+    listenForTaps();
   }
+}
+
+function listenForTaps() {
+  const version = document.getElementById('app-version');
+  let taps = 0;
+  let lastTap = 0;
+  const onTap = async () => {
+    const now = Date.now();
+    taps = now - lastTap <= TAP_GAP_MS ? taps + 1 : 1;
+    lastTap = now;
+    if (taps < TAPS_TO_SHOW) {
+      return;
+    }
+    version.removeEventListener('click', onTap);
+    await setSetting('testerSettingsShown', true);
+    version.append(document.createElement('br'), t('testing.shownNow'));
+    await showTesterSettings();
+  };
+  version.addEventListener('click', onTap);
+}
+
+async function showTesterSettings() {
   const navButton = document.querySelector('#settings-nav [data-group="settings-testing"]');
   navButton.hidden = false;
 
@@ -81,6 +113,20 @@ export async function setUpTesterSettings() {
   navButton.addEventListener('click', () => showStorageReadout());
   keepData.listen(() => showStorageReadout());
   await showStorageReadout();
+
+  // Shown by the five taps (not in the test copy, where the group is always
+  // there): hiding it switches everything in it off, and the app starts again.
+  document.getElementById('tester-settings-hide-row').hidden = TESTER_SETTINGS_SHOWN;
+  document.getElementById('tester-settings-hide').addEventListener('click', async () => {
+    await setSetting('swipeReadout', false);
+    await setSetting('recordRawInput', false);
+    await setSetting('testerSettingsShown', false);
+    if (language === 'pseudo') {
+      setLanguage(null); // starts the app again by itself
+    } else {
+      location.reload();
+    }
+  });
 }
 
 // Which browser this is, with Brave named apart: it names itself as Chrome

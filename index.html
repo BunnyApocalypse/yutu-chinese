@@ -1517,7 +1517,7 @@
         <p id="app-version" class="hint"></p>
         </section>
 
-        <!-- Only in the test copy and while developing (testerSettings.js). -->
+        <!-- In the test copy and while developing; in the stable one after five taps on the version line (testerSettings.js). -->
         <section id="settings-testing" class="settings-group" hidden>
           <h3 data-t="settings.testing"></h3>
         <div class="setting">
@@ -1541,6 +1541,10 @@
           <p id="storage-readout" class="hint" role="status"></p>
           <button id="storage-readout-refresh" class="small" type="button" data-t="testing.checkAgain"></button>
           <button id="storage-readout-ask" class="small" type="button" data-t="testing.askNow"></button>
+        </div>
+        <!-- Only where the group was shown by tapping the version line (testerSettings.js). -->
+        <div class="setting" id="tester-settings-hide-row" hidden>
+          <button id="tester-settings-hide" type="button" data-t="testing.hide"></button>
         </div>
         </section>
 

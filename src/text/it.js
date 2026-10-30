@@ -162,6 +162,8 @@ export default {
   'testing.saveRawInput': 'Salva come file',
   'testing.clearRawInput': 'Cancella la registrazione',
   'testing.clearRawInputQuestion': 'Cancellare l\'input grezzo registrato finora?',
+  'testing.shownNow': 'Impostazioni › Per i test ora è visibile su questo dispositivo.',
+  'testing.hide': 'Nascondi queste impostazioni',
   'testing.pseudoLanguage': 'Mostra la lingua di prova',
   'testing.pseudoLanguageHint':
     'Ogni testo con lettere simili e un terzo più lungo, come spesso sono le altre lingue: il testo ancora in inglese semplice non è stato preparato per la traduzione. L\'app riparte quando lo cambi. Solo su questo dispositivo.',

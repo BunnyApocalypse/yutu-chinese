@@ -21,7 +21,9 @@ import {
   textOf,
   waitUntil,
   addTestWords,
- openDeckPage } from './harness.js';
+  openDeckPage,
+  openSettings,
+} from './harness.js';
 
 // One browser, and the steps in order: each builds on the one before.
 describe('offline use', { concurrency: false }, () => {
@@ -57,6 +59,44 @@ describe('offline use', { concurrency: false }, () => {
 
   it('runs from a folder below the top of the site', async () => {
     assert.match(await writeFirstStroke('學'), /^2\/16 /);
+  });
+
+  // Here, since this is the one place the app is built without a channel, as
+  // the stable copy is (the dev server always shows the group).
+  it('shows "For testing" after five taps on the version line, and hides it again', { timeout: 30000 }, async () => {
+    const navHidden = `document.querySelector('#settings-nav [data-group="settings-testing"]').hidden`;
+    await openSettings(page, 'settings-help');
+    assert.equal(await page.evaluate(navHidden), true);
+    const tapVersion = (times) => page.evaluate(`for (let i = 0; i < ${times}; i++) document.getElementById('app-version').click()`);
+    await tapVersion(4);
+    assert.equal(await page.evaluate(navHidden), true);
+    await tapVersion(1);
+    await waitUntil(page, `!${navHidden}`, 'the group For testing');
+    assert.match(await textOf(page, 'app-version'), /now shown on this device/);
+    // Remembered for the device.
+    await reloadApp(page);
+    assert.equal(await page.evaluate(navHidden), false);
+    await openSettings(page, 'settings-testing');
+    await tap(page, 'record-raw-input-checkbox');
+    await waitUntil(page, `document.getElementById('record-raw-input-checkbox').checked`);
+    // "Hide these settings" switches it all off and starts the app again.
+    await page.evaluate('window.loadedBefore = true');
+    await page.evaluate(`setTimeout(() => document.getElementById('tester-settings-hide').click())`);
+    for (let attempt = 0; ; attempt++) {
+      assert.ok(attempt < 100, 'the app did not start again');
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const started = await page.evaluate(`!window.loadedBefore && document.readyState === 'complete' && document.getElementById('app-version').textContent !== ''`).catch(() => false);
+      if (started) break;
+    }
+    assert.equal(await page.evaluate(navHidden), true);
+    await openSettings(page, 'settings-help');
+    await tapVersion(5);
+    await waitUntil(page, `!${navHidden}`, 'the group For testing again');
+    assert.equal(await page.evaluate(`document.getElementById('record-raw-input-checkbox').checked`), false);
+    // Hidden once more for the tests after this one.
+    await page.evaluate(`setTimeout(() => document.getElementById('tester-settings-hide').click())`);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    await reloadApp(page);
   });
 
   it('saves the app, the stroke data and the dictionary on the device', { timeout: 180000 }, async () => {

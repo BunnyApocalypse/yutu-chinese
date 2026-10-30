@@ -167,6 +167,8 @@ export default {
   'testing.saveRawInput': 'Save as a file',
   'testing.clearRawInput': 'Clear the recording',
   'testing.clearRawInputQuestion': 'Clear the raw input recorded so far?',
+  'testing.shownNow': 'Settings › For testing is now shown on this device.',
+  'testing.hide': 'Hide these settings',
   'testing.pseudoLanguage': 'Show the test language',
   'testing.pseudoLanguageHint':
     'Every text in look-alike letters and a third longer, as other languages often are: text still in plain English has not been made ready for translation. The app starts again when this is changed. Only on this device.',
