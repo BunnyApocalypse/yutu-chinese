@@ -14,7 +14,7 @@
 - **New words go to the end of the queue** (`order` one above the highest); "Learn this word next" gives an `order` below every other, so it can be negative.
 - **"Edit word" on Review's answer page** (the owner, 2026-10-13) opens the pop-up panel (`edit(word)` in `src/wordsPanel.js`) while the grades show. A changed meaning alone keeps the answer up, still to grade (`update(word)` in `src/recallCard.js`, `src/toneFlow.js`); any other change shows the card again unanswered; a removed word brings the next card. Not in Free practice or before the answer.
 - **The pop-up panel closes only after the app has read the changed word** (`afterChange` awaits `onChange`; a `<dialog>`'s "close" event comes a moment after it closes, which `edit()` waits for). After any change from the Decks tab, Review and Free practice read the words afresh.
-- **The list on screen shows at most 200 rows** (`MAX_ROWS`); beyond that, search. ("Show more" is on the roadmap.)
+- **The list on screen shows at most 200 rows** (`MAX_ROWS`); beyond that, search. ("Show more" was decided against, the owner, 2026-10-30.)
 
 ## The dictionary and the Words tab's search
 

@@ -2,7 +2,7 @@
 
 How the Italian (`src/text/it.js`) and German (`src/text/de.js`) texts are written, for whoever adds or checks a text: the rules, then the words the app uses for its own ideas. How text works in the code: `docs/interface.md`, "Interface text and translations".
 
-Started on 2026-10-22 (the owner): Italian and German, interface only (no dictionary in either language), first drafts by Claude, to be checked by a native speaker of each (a tester for Italian; German still to find). Released to `stable` as drafts on 2026-10-22 (the owner: no learners outside the testers yet).
+Started on 2026-10-22 (the owner): Italian and German, interface only (no dictionary in either language), first drafts by Claude, to be checked by a native speaker of each (Italian: a tester, who has reported no issues as of 2026-10-30; German: still to find). Released to `stable` as drafts on 2026-10-22 (the owner: no learners outside the testers yet).
 
 ## Rules
 
