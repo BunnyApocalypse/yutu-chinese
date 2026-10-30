@@ -264,6 +264,16 @@ describe('the Decks tab', { concurrency: false }, () => {
     assert.match(await textOf(page, '#word-list li'), /penguin, the bird/);
   });
 
+  it('reads a list with traditional in the first column the other way round', async () => {
+    await useAddForm(page, 'add-list-fold');
+    await type(page, 'list-text', '貓頭鷹\t猫头鹰\tmao1tou2ying1\towl\n須\t须\txu1\tmust\n');
+    await tap(page, 'check-list-button');
+    assert.match(await textOf(page, 'list-report'), /The first column was read as traditional/);
+    // 貓頭鷹 was added above, under its traditional form: only 須 is new.
+    assert.match(await textOf(page, 'list-report'), /^1 new word, 1 you already have/);
+    await type(page, 'list-text', '');
+  });
+
   it('adds a ready-made list by level', { timeout: 60000 }, async () => {
     const before = await wordCount(page);
     await tap(page, 'ready-decks-button');

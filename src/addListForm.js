@@ -75,10 +75,13 @@ export function createListForm(shared, dictionaryLoader) {
         }
       );
     };
-    const { words: readable, problems } = readWordList(
+    // A list with traditional in the first column is read the other way
+    // round (scriptOrder in readWordList), and the report says so.
+    const { words: readable, problems, swapped } = readWordList(
       listText.value,
       (characters, pinyin) => dictionaryLoader.completeForms(settings.script, characters, pinyin),
       fillIn,
+      (first, second) => dictionaryLoader.scriptOrder(first, second),
     );
     const { toAdd, alreadyHave } = newWordRecords(readable, shared.words(), Date.now());
     if (readable.length === 0 && problems.length === 0) {
@@ -101,7 +104,8 @@ export function createListForm(shared, dictionaryLoader) {
               ...(sameCharacters.length > 10 ? ['…'] : []),
             ]),
           })}`
-        : '');
+        : '') +
+      (swapped ? ` ${t('addList.swapped')}` : '');
     const shown = problems.slice(0, MAX_PROBLEMS_SHOWN).map(({ lineNumber, text, problem }) => {
       const item = document.createElement('li');
       item.textContent = t('addList.problem', { line: lineNumber, text: text.slice(0, 30), problem });

@@ -120,6 +120,22 @@ export function createDictionaryLoader(onReady) {
       );
     },
 
+    // In which order a list line's two columns of characters are
+    // (readWordList's scriptOrder): 'simplifiedFirst' if the dictionary has
+    // a word written `first` in simplified and `second` in traditional,
+    // 'traditionalFirst' the other way round, null if neither (or the
+    // dictionary isn't there).
+    scriptOrder(first, second) {
+      const entries = dictionary ? lookUp(dictionary, first) : [];
+      if (entries.some((entry) => entry.simplified === first && entry.traditional === second)) {
+        return 'simplifiedFirst';
+      }
+      if (entries.some((entry) => entry.traditional === first && entry.simplified === second)) {
+        return 'traditionalFirst';
+      }
+      return null;
+    },
+
     // How a word typed in one script is written in both, for someone who is
     // only asked for one (`script` says which): from `tapped`, the dictionary
     // entry that was tapped to fill in the fields (if one was) or, failing

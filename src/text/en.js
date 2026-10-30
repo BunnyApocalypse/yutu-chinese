@@ -830,6 +830,7 @@ export default {
     one: 'Of the new words, {count} has the same characters as a word you already have, with another reading: {words}.',
     other: 'Of the new words, {count} have the same characters as a word you already have, with another reading: {words}.',
   },
+  'addList.swapped': 'The first column was read as traditional and the second as simplified, as the dictionary writes these words so.',
   'addList.problem': 'Line {line} ({text}): {problem}',
   'addList.andMore': '… and {count} more.',
   'addList.addWords': { one: 'Add {count} word', other: 'Add {count} words' },

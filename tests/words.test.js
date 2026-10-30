@@ -294,6 +294,34 @@ test('search matches the start of a syllable or of a word of the meaning', () =>
   }
 });
 
+test('a list with traditional in the first column is read the other way round', () => {
+  // A stand-in for the dictionary: 須/须 and 社會/社会.
+  const known = [['须', '須'], ['社会', '社會']];
+  const scriptOrder = (first, second) =>
+    known.some(([simplified, traditional]) => simplified === first && traditional === second)
+      ? 'simplifiedFirst'
+      : known.some(([simplified, traditional]) => traditional === first && simplified === second)
+      ? 'traditionalFirst'
+      : null;
+  const traditionalFirst = '須\t须\txu1\tmust\n社會\t社会\tshe4hui4\tsociety\n且\t且\tqie3\tand\n';
+  const read = readWordList(traditionalFirst, null, null, scriptOrder);
+  assert.equal(read.swapped, true);
+  assert.deepEqual(read.words.map((word) => [word.simplified, word.traditional]), [['须', '須'], ['社会', '社會'], ['且', '且']]);
+  // The same in CSV.
+  assert.equal(readWordList('須,须,xu1,must\n', null, null, scriptOrder).words[0].traditional, '須');
+  // The usual order is left alone.
+  const usual = readWordList('须\t須\txu1\tmust\n', null, null, scriptOrder);
+  assert.equal(usual.swapped, false);
+  assert.equal(usual.words[0].traditional, '須');
+  // The majority decides: one line the other way round is not swapped.
+  const mixed = readWordList('须\t須\txu1\tmust\n社会\t社會\tshe4hui4\tsociety\n須\t须\txu1\tmust\n', null, null, scriptOrder);
+  assert.equal(mixed.swapped, false);
+  assert.equal(mixed.words[2].traditional, '须');
+  // Without the dictionary, nothing changes.
+  assert.equal(readWordList(traditionalFirst).swapped, false);
+  assert.equal(readWordList(traditionalFirst).words[0].traditional, '须');
+});
+
 test('what a list leaves out is filled in from the dictionary', () => {
   // A stand-in for the dictionary: 你好 nǐhǎo, and 行 read two ways.
   const fillIn = (characters, pinyin) => {

@@ -818,6 +818,7 @@ export default {
     one: 'Tra le parole nuove, {count} ha gli stessi caratteri di una parola che hai già, con un\'altra lettura: {words}.',
     other: 'Tra le parole nuove, {count} hanno gli stessi caratteri di una parola che hai già, con un\'altra lettura: {words}.',
   },
+  'addList.swapped': 'La prima colonna è stata letta come tradizionale e la seconda come semplificata, perché il dizionario scrive così queste parole.',
   'addList.problem': 'Riga {line} ({text}): {problem}',
   'addList.andMore': '… e altre {count}.',
   'addList.addWords': { one: 'Aggiungi {count} parola', other: 'Aggiungi {count} parole' },

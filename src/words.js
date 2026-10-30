@@ -225,10 +225,19 @@ function columnsFromCsv(fields) {
 // null if the dictionary doesn't have the word. A line that gives a meaning
 // keeps it.
 //
+// scriptOrder(first, second), if given, is asked in which order a line's two
+// columns of characters are, where they differ (須, 须): 'simplifiedFirst',
+// 'traditionalFirst', or null if the dictionary can't tell (the owner,
+// 2026-10-30: a TOCFL list had traditional first, and its words came out in
+// simplified). If more lines are traditional first, the two columns of every
+// line are swapped. The whole list is decided at once, since a few
+// characters are another word's simplified form (乾, 干).
+//
 // Returns:
 //   words:    the tidied words
 //   problems: [{ lineNumber, text, problem }] for the lines left out
-export function readWordList(text, completeForms, fillIn) {
+//   swapped:  true if the columns were read traditional first
+export function readWordList(text, completeForms, fillIn, scriptOrder) {
   const words = [];
   const problems = [];
   const isPinyin = (field) => tidyPinyin(field.trim()) !== null;
@@ -237,7 +246,10 @@ export function readWordList(text, completeForms, fillIn) {
   const hasToneMarks = (field) => /^[a-zü\s'’-]*[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ][a-zü\s'’āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ-]*$/i.test(field.trim());
   const hasHan = (field) => /\p{Script=Han}/u.test(field);
   const missing = (field) => field === undefined || field.trim() === '';
+  // First every line is split into its fields; the lines are read after the
+  // order of the two scripts is known (scriptOrder).
   // Windows ends lines with \r\n; the \r is dropped along with other spaces.
+  const lines = [];
   text.split('\n').forEach((rawLine, index) => {
     const line = rawLine.trim();
     if (line === '') {
@@ -254,6 +266,24 @@ export function readWordList(text, completeForms, fillIn) {
         isPinyin(second) || hasToneMarks(second)
           ? [fields[0], ...fields]
           : [fields[0], fields[0], '', ...fields.slice(1)];
+    }
+    lines.push({ index, line, isTsv, fields, oneScript });
+  });
+  let swapped = false;
+  if (scriptOrder) {
+    const votes = { simplifiedFirst: 0, traditionalFirst: 0 };
+    for (const { fields, oneScript } of lines) {
+      const [first, second] = [fields[0].trim(), fields[1].trim()];
+      const order = !oneScript && first !== second ? scriptOrder(first, second) : null;
+      if (order) {
+        votes[order] += 1;
+      }
+    }
+    swapped = votes.traditionalFirst > votes.simplifiedFirst;
+  }
+  lines.forEach(({ index, line, isTsv, fields, oneScript }) => {
+    if (swapped && !oneScript) {
+      fields = [fields[1], fields[0], ...fields.slice(2)];
     }
     let columns;
     if (isTsv || fields.length <= 3) {
@@ -293,7 +323,7 @@ export function readWordList(text, completeForms, fillIn) {
       problems.push({ lineNumber: index + 1, text: line, problem: result.problem });
     }
   });
-  return { words, problems };
+  return { words, problems, swapped };
 }
 
 // ---- Ready-made lists ----

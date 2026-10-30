@@ -819,6 +819,7 @@ export default {
     one: 'Von den neuen Wörtern hat {count} dieselben Zeichen wie ein Wort, das du schon hast, aber eine andere Lesung: {words}.',
     other: 'Von den neuen Wörtern haben {count} dieselben Zeichen wie ein Wort, das du schon hast, aber eine andere Lesung: {words}.',
   },
+  'addList.swapped': 'Die erste Spalte wurde als traditionell gelesen und die zweite als vereinfacht, weil das Wörterbuch diese Wörter so schreibt.',
   'addList.problem': 'Zeile {line} ({text}): {problem}',
   'addList.andMore': '… und {count} weitere.',
   'addList.addWords': { one: '{count} Wort hinzufügen', other: '{count} Wörter hinzufügen' },
