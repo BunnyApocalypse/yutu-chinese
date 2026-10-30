@@ -16,12 +16,15 @@ export const CHANGES = [
     id: '2026-10-30-3',
     items: [
       'In traditional characters, strokes written in their mainland shape are accepted too: the dot under 人 in 食 and 飯, the dot on top of 戶 in 房, the last stroke of the 𠂉 in 藍, the dots of 雨. The app still shows the Taiwan form.',
+      '艹 may be written in three strokes, as most fonts show it: one stroke across, then the two short uprights.',
     ],
     it: [
       'Nei caratteri tradizionali sono accettati anche i tratti scritti nella forma della Cina continentale: il punto sotto 人 in 食 e 飯, il punto sopra 戶 in 房, l’ultimo tratto di 𠂉 in 藍, i punti di 雨. L’app mostra sempre la forma di Taiwan.',
+      '艹 si può scrivere in tre tratti, come lo mostrano quasi tutti i caratteri tipografici: un tratto orizzontale, poi i due brevi tratti verticali.',
     ],
     de: [
       'Bei traditionellen Zeichen werden auch Striche in ihrer Form vom Festland angenommen: der Punkt unter 人 in 食 und 飯, der Punkt oben auf 戶 in 房, der letzte Strich von 𠂉 in 藍, die Punkte von 雨. Die App zeigt weiterhin die Form aus Taiwan.',
+      '艹 darf in drei Strichen geschrieben werden, wie die meisten Schriften es zeigen: ein Querstrich, dann die zwei kurzen senkrechten Striche.',
     ],
   },
   {
