@@ -4,7 +4,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
-**Handover from the session of 2026-10-30 (the old notes reworked, a sample of 100; committed on `main`, not pushed, no "What's new" entry).**
+**Handover from the session of 2026-10-30 (the old notes reworked, a sample of 100; released to `main` and `stable`, "What's new" entry `2026-10-30`).**
 
 - **Built (data only):** the trial's 100 HSK 3.0 level 2 notes reworked through the writers' pipeline (`local/old-notes/rework-1/`, its README section): 2 Sonnet writers given the old note as a draft, one Opus judge (22 points, back to the writers), changes read by hand. In `data/notes/hsk-3.0-2.tsv`, tagged `judged`, traditional versions by `scripts/convert-notes.js` (10 listed lines settled in `local/note-scripts/settle-old-1.mjs`). About 380,000 tokens, 3,800 a note.
 - **Result:** all 100 usable (the trimmed trial: 61, 35 to rewrite), 197 characters on average (trimmed: 97), and every one of the trial's 35 rewrite wishes covered. Side by side: `local/old-notes/rework-1/compare.html`.

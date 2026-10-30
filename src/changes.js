@@ -13,6 +13,18 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-10-30',
+    items: [
+      'Rewritten, fuller learning tips for 100 words of HSK level 2, checked by a second AI model.',
+    ],
+    it: [
+      'Consigli di studio riscritti e più completi per 100 parole del livello 2 dell’HSK, verificati da un secondo modello di IA.',
+    ],
+    de: [
+      'Neu geschriebene, ausführlichere Lerntipps für 100 Wörter der HSK-Stufe 2, von einem zweiten KI-Modell geprüft.',
+    ],
+  },
+  {
     id: '2026-10-29-3',
     items: [
       'Learning tips for 300 more words on the way to B2.',
