@@ -4,6 +4,17 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the third session of 2026-10-30 (lists read traditional first, testing settings on stable, stroke shapes, 艹 in three strokes; all released to `main` and `stable`, "What's new" entries `2026-10-30-2` and `-3`).**
+
+- **Built:**
+  - A word list with traditional in the first column is read the other way round (`scriptOrder` in `readWordList`, `docs/words.md`). The owner's `tocfl-a2-missing-179.tsv` had come in swapped: **78 of its words are still stored with the forms swapped** (wrong IDs, `须|xu1`); the owner is to remove and import them again (a corrected copy is in `~/Downloads/tocfl-a2-missing-179-fixed.tsv`; the original now reads right too).
+  - Settings › For testing in the stable copy after five taps on the version line, with "Hide these settings" (`docs/interface.md`), so the owner can record raw input on their tablet.
+  - Strokes in their mainland shape accepted (食's dot, the top of 戶 in 房, 藍's 𠂉, 雨's dots: 98 strokes in 80 characters, `altShapes`; `docs/writing.md`, "Strokes in a second shape").
+  - 艹 in three strokes accepted, level stroke first or after the left upright (22 characters; `docs/writing.md`, under Shortcuts).
+- **Waiting on the owner:** a raw input recording from the tablet (a normal Review session, and some 子 written with the top and hook joined, which the owner finds hard to get accepted), to tune 子's shortcut and the strictness in general ("a tiny bit too strict"; raising `LENIENCY` blindly lets other strokes pass, see `local/strictness/README.md`). Nothing is to change there before the recording.
+- **Not done:** 戶 written alone (not in the Taiwan set: shown and asked in the mainland form); Taiwan shapes in simplified writing; 艹 as 丨 丨 一.
+- **Tests:** 300 unit tests and all 504 browser tests pass (15 skipped).
+
 **Handover from the second session of 2026-10-30 (the Android app planned; docs only, pushed to `main`).**
 
 - **Planned, not to build yet (the owner):** the Android app, in full in the roadmap ("An Android app through F-Droid", below): an APK from the existing build first, no app repository yet; recordings downloaded after a prompt; a test app beside the stable one; a real signing key from the start. Dependencies approved and added to `CLAUDE.md` (Capacitor's `core`, `android`, `cli`, `app`; `@capacitor-community/text-to-speech`, to check it is maintained when building). The JDK and Android SDK go on the owner's computer when building starts.
