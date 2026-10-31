@@ -4651,6 +4651,23 @@ button.deck-open {
   display: none;
 }
 
+/* In the middle of the screen, a little above it: a big ring, and the
+   words under it (the owner, 2026-10-31: in a corner and tiny, it was easy
+   to miss). The ring is 2.5 times the text, which is a title's size. */
+.progress-panel .progress-loading {
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-large);
+  margin-top: 28vh;
+  font-size: var(--size-title);
+}
+
+.progress-loading .working-sign {
+  width: 2.5em;
+  height: 2.5em;
+  border-width: 4px;
+}
+
 .progress-panel h3 {
   margin: 0 0 var(--space-small);
   font-size: var(--size-body);
