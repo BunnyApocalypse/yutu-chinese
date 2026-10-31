@@ -1004,11 +1004,12 @@ async function startUp() {
     keepData,
     hasWords: () => wordList.length > 0,
     onFinish: async (start) => {
-      // A deck from Anki: the Decks tab, with the import open on top
-      // (ankiImportForm.js; the owner, 2026-10-19).
-      if (start?.anki) {
+      // From Anki or Skritter: the Decks tab, with the import open on top
+      // (ankiImportForm.js, skritterImportForm.js; the owner, 2026-10-19,
+      // and Skritter 2026-10-31).
+      if (start?.from) {
         await setMode('decks');
-        byId('anki-import-button').click();
+        byId(`${start.from}-import-button`).click();
         return;
       }
       if (start) {

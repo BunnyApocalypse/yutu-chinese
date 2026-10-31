@@ -1157,12 +1157,14 @@
           <h2 data-t="welcome.selectYourStartingLevel"></h2>
           <!-- Chosen to suit the script picked before, when this screen is
                reached (welcome.js). The value is a list and a level, or
-               "anki" for importing a deck (ankiImportForm.js). -->
+               "anki" or "skritter" for importing (ankiImportForm.js,
+               skritterImportForm.js). -->
           <fieldset class="setting">
             <legend data-t="welcome.startWith"></legend>
             <label><input type="radio" name="welcome-start" value="hsk-3.0|1" /> <span data-t="welcome.hsk30Level"></span></label>
             <label><input type="radio" name="welcome-start" value="tocfl|Novice 1" /> <span data-t="welcome.tocflNovice1Taiwans"></span></label>
             <label><input type="radio" name="welcome-start" value="anki" /> <span data-t="welcome.aDeckFromAnki"></span></label>
+            <label><input type="radio" name="welcome-start" value="skritter" /> <span data-t="welcome.fromSkritter"></span></label>
             <label><input type="radio" name="welcome-start" value="" /> <span data-t="welcome.noneIllAddMy"></span></label>
           </fieldset>
           <p class="hint" data-t-html="welcome.moreLevelsAndWords"></p>

@@ -115,14 +115,15 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
     choose('welcome-start', hasWords() ? '' : `${listId}|${level}`);
   }
 
-  // The level chosen to start with, { anki: true }, or null.
+  // The level chosen to start with, { from: 'anki' } or { from: 'skritter' }
+  // for importing, or null.
   function startChosen() {
     const value = chosen('welcome-start');
     if (value === '') {
       return null;
     }
-    if (value === 'anki') {
-      return { anki: true };
+    if (value === 'anki' || value === 'skritter') {
+      return { from: value };
     }
     const [listId, level] = value.split('|');
     return { listId, level };
@@ -160,13 +161,15 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
             ? 'welcome.installAndStart'
             : storagePlan.action === 'ask'
               ? 'welcome.keepAndStart'
-              : startChosen()?.anki
+              : startChosen()?.from === 'anki'
                 ? 'welcome.importAnki'
-                : startChosen()
-                  ? 'welcome.startLearning'
-                  : hasWords()
-                    ? 'welcome.done'
-                    : 'welcome.addFirstWords',
+                : startChosen()?.from === 'skritter'
+                  ? 'welcome.importSkritter'
+                  : startChosen()
+                    ? 'welcome.startLearning'
+                    : hasWords()
+                      ? 'welcome.done'
+                      : 'welcome.addFirstWords',
     );
     skipButton.textContent = t(last ? 'welcome.notNow' : 'welcome.skip');
     skipButton.hidden = last && !willAsk;
@@ -255,7 +258,7 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
     nextButton.disabled = true;
     backButton.disabled = true;
     skipButton.disabled = true;
-    nextButton.textContent = startChosen() && !startChosen().anki ? t('welcome.addingWords') : nextButton.textContent;
+    nextButton.textContent = startChosen() && !startChosen().from ? t('welcome.addingWords') : nextButton.textContent;
     try {
       await onFinish(startChosen());
     } finally {

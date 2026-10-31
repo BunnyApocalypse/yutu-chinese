@@ -286,4 +286,19 @@ describe('the introduction', { concurrency: false }, () => {
     assert.equal(await isShown(page, 'anki-choose-step'), true);
     await tap(page, 'anki-cancel-button');
   });
+
+  it('can start with words from Skritter, ending with its import open', async () => {
+    await tap(page, 'settings-button');
+    await tap(page, 'welcome-again-button');
+    for (let screen = 0; screen < 2; screen++) {
+      await tap(page, 'welcome-next');
+    }
+    await click('input[name="welcome-start"][value="skritter"]');
+    await tap(page, 'welcome-next');
+    await tap(page, 'welcome-next');
+    await waitUntil(page, `!${welcomeOpen} && document.getElementById('skritter-dialog').open`, 'the Skritter import');
+    assert.equal(await page.evaluate(`document.getElementById('place-title').textContent`), 'Decks');
+    assert.equal(await isShown(page, 'skritter-choose-step'), true);
+    await tap(page, 'skritter-cancel-button');
+  });
 });
