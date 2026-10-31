@@ -13,6 +13,21 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-10-31-2',
+    items: [
+      'Choosing the deck to study is shorter: the decks inside another are folded away, and each shows only its own name.',
+      'The deck can be changed while a card is up: tap its name at the top of the card (in Learn on a phone, the picture of cards beside ☰).',
+    ],
+    it: [
+      'Scegliere il mazzo da studiare è più semplice: i mazzi dentro un altro sono chiusi, e ognuno mostra solo il proprio nome.',
+      'Il mazzo si può cambiare mentre una carta è aperta: tocca il suo nome in cima alla carta (in Impara sul telefono, l’immagine delle carte accanto a ☰).',
+    ],
+    de: [
+      'Den Stapel zum Lernen zu wählen ist kürzer: Stapel in einem anderen sind eingeklappt, und jeder zeigt nur seinen eigenen Namen.',
+      'Der Stapel lässt sich wechseln, während eine Karte offen ist: Tippe auf seinen Namen oben an der Karte (in Lernen auf dem Handy auf das Bild mit den Karten neben ☰).',
+    ],
+  },
+  {
     id: '2026-10-31',
     items: [
       'Learn goes straight from one word to the next, with no stop in between. Today’s words are shown at the top, and the word you are writing from memory is hidden there.',

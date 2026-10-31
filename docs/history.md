@@ -4,6 +4,14 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the session of 2026-10-31 (the deck chooser; released to `main` and `stable`, "What's new" entry `2026-10-31-2`).**
+
+- **Built** (the owner, from a picture of the phone's drop-down full of Skritter sections): the chooser of the deck studied is a panel of the app's own with the decks in a tree that folds (`src/deckChooser.js`); while a card is up the deck is on the card's top line (`deck-tag`): in Review between the kind of card and Show pinyin, in Learn beside ☰, as a picture of fanned cards where the line is under 480px. Until now the deck could not be changed while a card was up (the line with the chooser is put away). The owner chose each place; a place in the menu was tried and not kept. All in `docs/decks.md` ("Studying a deck") and `docs/pitfalls.md`.
+- **Fixed on the way:** the chooser above Review's start was a few letters wide (its 46% was of its own line, which was only as wide as it).
+- **Checked:** pictures at 360, 390, tablet and tablet held sideways; today's words in Learn don't move, "Show pinyin" stays on one line at 360px.
+- **Not done:** the chooser in the Words tab is still the phone's drop-down with full paths (`words-deck-select`); `deckChooser.js` could serve it if the owner wants.
+- **Tests:** 300 unit tests and all 505 browser tests pass (15 skipped).
+
 **Handover from the session of 2026-10-31 (Learn's words as one sitting; released to `main` and `stable` with the rework below, "What's new" entry `2026-10-31`).**
 
 - **Built** (the owner, from a review of the Learn flow and mockups, option C): no screen between two words; "Next word" goes straight to the next word's first look with a pill ("✓ 大 learned · 1 of 5"); today's words in the top line in place of "New word · step 2 of 5", the current word hidden at the from-memory step, three looks for bigger goals; a summary at the goal with "Review them now" (main) and "Learn 5 more", no "Done for today"; the first look's card at the writing area's height (it jumped 37 to 75px at step 2). All in `docs/cards.md` ("Today's words are one sitting") and `docs/pitfalls.md`. "I know this word" leaves its place in the sitting to the next word, so skipping through a list is never stopped.
