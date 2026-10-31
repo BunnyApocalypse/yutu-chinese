@@ -158,6 +158,10 @@ export default {
   'testing.recordRawInput': 'Meine Roheingabe aufzeichnen',
   'testing.recordRawInputHint':
     'Bewahrt jeden Strich, den du schreibst, und wie die App ihn bewertet hat, um ihn als Datei zu speichern und zum Abstimmen der Bewertung zu schicken. Nur in diesem Browser, die neuesten 500 Zeichen.',
+  'testing.leniency': 'Wie streng Striche bewertet werden',
+  'testing.leniencyHint':
+    'Ein höherer Wert nimmt Striche an, die in Lage, Form und Länge weiter von den gedruckten abweichen; zu hoch, und auch ein falscher Strich geht durch. Gilt ab dem nächsten Zeichen. Nur auf diesem Gerät.',
+  'testing.leniencyUsual': '{value} (üblich)',
   'testing.rawInputCount': { one: '{count} Zeichen aufgezeichnet.', other: '{count} Zeichen aufgezeichnet.' },
   'testing.saveRawInput': 'Als Datei speichern',
   'testing.clearRawInput': 'Aufzeichnung löschen',

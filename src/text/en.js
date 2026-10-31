@@ -163,6 +163,10 @@ export default {
   'testing.recordRawInput': 'Record my raw input',
   'testing.recordRawInputHint':
     'Keeps every stroke you write, and how the app judged it, so it can be saved as a file and sent for tuning the grading. Kept in this browser only, the newest 500 characters.',
+  'testing.leniency': 'How strict the grading of strokes is',
+  'testing.leniencyHint':
+    'Higher accepts strokes further from the printed ones in place, shape and length; too high, and a wrong stroke passes too. Takes effect from the next character. Only on this device.',
+  'testing.leniencyUsual': '{value} (usual)',
   'testing.rawInputCount': { one: '{count} character recorded.', other: '{count} characters recorded.' },
   'testing.saveRawInput': 'Save as a file',
   'testing.clearRawInput': 'Clear the recording',

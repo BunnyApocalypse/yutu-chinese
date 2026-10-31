@@ -12,6 +12,8 @@
 //   swipeReadout: show how each swipe up measured (quiz.js, gestures.js)
 //   recordRawInput: record every stroke written, with how it was judged, to
 //     save as a file for tuning the grading (rawInputLog.js)
+//   strokeLeniency: how forgiving the grading of strokes is (quiz.js), to
+//     find by studying what feels right (the owner, 2026-10-31)
 //   the test language: every text in look-alike letters (src/text.js; kept
 //     in localStorage, not as a setting)
 //
@@ -23,14 +25,17 @@
 /* global __CHANNEL__ */
 import { getAll, getSetting, setSetting } from './db.js';
 import { keepData } from './offline.js';
-import { setSwipeReadout } from './quiz.js';
+import { setSwipeReadout, setLeniency, USUAL_LENIENCY } from './quiz.js';
 import { setRecording, recordedCount, downloadRecording, clearRecording } from './rawInputLog.js';
 import { ask } from './confirm.js';
 import { wordsAtRisk } from './storageAdvice.js';
-import { t, language, setLanguage } from './text.js';
+import { t, language, setLanguage, formatNumber } from './text.js';
 
 // import.meta.env.DEV is true only under Vite's dev server.
 export const TESTER_SETTINGS_SHOWN = Boolean(__CHANNEL__) || import.meta.env.DEV;
+
+// The strictness to choose from: the usual and looser steps.
+const LENIENCY_CHOICES = [1.5, 1.6, 1.7, 1.8, 1.9, 2, 2.2, 2.5];
 
 // Five taps on the version line, each within a second of the one before.
 const TAPS_TO_SHOW = 5;
@@ -97,6 +102,24 @@ async function showTesterSettings() {
   navButton.addEventListener('click', showCount);
   showCount();
 
+  // How forgiving the grading of strokes is (quiz.js).
+  const leniencySelect = document.getElementById('leniency-select');
+  for (const value of LENIENCY_CHOICES) {
+    const option = document.createElement('option');
+    option.value = String(value);
+    option.textContent =
+      value === USUAL_LENIENCY ? t('testing.leniencyUsual', { value: formatNumber(value) }) : formatNumber(value);
+    leniencySelect.append(option);
+  }
+  const leniency = await getSetting('strokeLeniency', USUAL_LENIENCY);
+  leniencySelect.value = String(leniency);
+  setLeniency(leniency);
+  leniencySelect.addEventListener('change', async () => {
+    const value = Number(leniencySelect.value);
+    setLeniency(value);
+    await setSetting('strokeLeniency', value);
+  });
+
   // The test language (src/text.js): kept with the browser rather than in
   // the database, and the app starts again in it.
   const pseudoCheckbox = document.getElementById('pseudo-language-checkbox');
@@ -120,6 +143,7 @@ async function showTesterSettings() {
   document.getElementById('tester-settings-hide').addEventListener('click', async () => {
     await setSetting('swipeReadout', false);
     await setSetting('recordRawInput', false);
+    await setSetting('strokeLeniency', USUAL_LENIENCY);
     await setSetting('testerSettingsShown', false);
     if (language === 'pseudo') {
       setLanguage(null); // starts the app again by itself

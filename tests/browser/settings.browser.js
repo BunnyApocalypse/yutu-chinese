@@ -598,12 +598,50 @@ describe('settings', { concurrency: false }, () => {
     assert.deepEqual(written.strokes.map((stroke) => stroke.verdict), ['mistake', 'accepted', 'accepted', 'accepted']);
     assert.deepEqual(written.strokes.map((stroke) => stroke.expected), [0, 0, 1, 2]);
     assert.equal(written.mistakes, 1);
+    assert.equal(written.leniency, 1.5);
     assert.ok(written.strokes[1].points.length > 2);
     // Cleared, and switched off again.
     await page.evaluate(ANSWER_YES);
     await tap(page, 'raw-input-clear');
     await waitUntil(page, `document.getElementById('raw-input-count').textContent === '0 characters recorded.'`, 'the recording cleared');
     await page.evaluate(`document.getElementById('record-raw-input-checkbox').click()`);
+    await tap(page, 'settings-close');
+  });
+
+  it('sets how strict the grading of strokes is under "For testing", kept on the device', async () => {
+    await openSettings(page, 'settings-testing');
+    const options = await page.evaluate(`[...document.getElementById('leniency-select').options].map((option) => option.textContent)`);
+    assert.deepEqual(options, ['1.5 (usual)', '1.6', '1.7', '1.8', '1.9', '2', '2.2', '2.5']);
+    assert.equal(await page.evaluate(`document.getElementById('leniency-select').value`), '1.5');
+    // The setting as saved in the database (it is saved after the change).
+    const saved = () =>
+      page.evaluate(`new Promise((resolve) => {
+        const opening = indexedDB.open('hanzi-trainer');
+        opening.onsuccess = () => {
+          const reading = opening.result.transaction('settings').objectStore('settings').get('strokeLeniency');
+          reading.onsuccess = () => {
+            opening.result.close();
+            resolve(reading.result?.value ?? null);
+          };
+        };
+      })`);
+    const waitForSaved = async (value) => {
+      for (let attempt = 0; attempt < 50 && (await saved()) !== value; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      assert.equal(await saved(), value);
+    };
+    await choose(page, 'leniency-select', '2');
+    await waitForSaved(2);
+    // Kept after the app starts again.
+    await reloadApp(page);
+    await openSettings(page, 'settings-testing');
+    await waitUntil(page, `document.getElementById('leniency-select').value === '2'`, 'the strictness kept');
+    await choose(page, 'leniency-select', '1.5');
+    await waitForSaved(1.5);
+    await reloadApp(page);
+    await openSettings(page, 'settings-testing');
+    await waitUntil(page, `document.getElementById('leniency-select').value === '1.5'`, 'the usual strictness');
     await tap(page, 'settings-close');
   });
 

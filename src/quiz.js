@@ -44,7 +44,12 @@ const HINT_AFTER_MISSES = 3;
 
 // How forgiving the grading is. 1 is Hanzi Writer's default; higher accepts
 // strokes that are further from the reference in position, shape and length.
-const LENIENCY = 1.5;
+// Every check of a stroke in this file uses it, so all of them loosen
+// together. Settings › For testing can change it on one device, to find by
+// studying what feels right (setLeniency, testerSettings.js; the owner,
+// 2026-10-31); it takes effect from the next character.
+export const USUAL_LENIENCY = 1.5;
+let leniencyNow = USUAL_LENIENCY;
 
 // The Animate button: how fast each stroke is drawn (1 is Hanzi Writer's
 // default speed), and how long it waits between strokes, in milliseconds
@@ -351,7 +356,7 @@ export function createQuiz(target, size, handlers) {
 
   function drewShortcut(stroke) {
     // charData is moved into the frame, so drawn at its scale.
-    return isShortcutStroke(charData, stroke.strokeNum, stroke.drawnPath.points, LENIENCY, frame.scale);
+    return isShortcutStroke(charData, stroke.strokeNum, stroke.drawnPath.points, leniencyNow, frame.scale);
   }
 
   // Hands Hanzi Writer a set of stroke data for the current character. It
@@ -651,7 +656,7 @@ export function createQuiz(target, size, handlers) {
 
     // With nothing written yet, nobody knows where the character will be.
     const nothingWritten = acceptedStrokes.length === 0 && canFollow();
-    const leniency = nothingWritten ? LENIENCY * FIRST_STROKE_EXTRA_LENIENCY : LENIENCY;
+    const leniency = nothingWritten ? leniencyNow * FIRST_STROKE_EXTRA_LENIENCY : leniencyNow;
     if (!fits(points, reference, leniency, nothingWritten)) {
       return null;
     }
@@ -686,7 +691,7 @@ export function createQuiz(target, size, handlers) {
     } else {
       // Each earlier stroke must make sense in the other order too.
       const earlier = reading.accepted.slice(-reading.sinceSync);
-      if (!earlier.every((entry) => fits(entry.drawn, entry.reference, LENIENCY))) {
+      if (!earlier.every((entry) => fits(entry.drawn, entry.reference, leniencyNow))) {
         return null;
       }
     }
@@ -749,7 +754,7 @@ export function createQuiz(target, size, handlers) {
       return null;
     }
     const fits = (median) =>
-      fitsStroke(stroke.drawnPath.points, median, LENIENCY * FIRST_STROKE_EXTRA_LENIENCY, true);
+      fitsStroke(stroke.drawnPath.points, median, leniencyNow * FIRST_STROKE_EXTRA_LENIENCY, true);
     const shape = baseData.altShapes?.[sequence[0]];
     if (fits(baseData.medians[sequence[0]])) {
       // Both may fit, far from where either is printed: the nearer shape.
@@ -791,7 +796,7 @@ export function createQuiz(target, size, handlers) {
     // What fitsStroke allows is measured for a full-size character. In a
     // small one the strokes lie closer together, so less is allowed, or a
     // neighboring stroke of the same shape would pass too.
-    const leniency = LENIENCY * Math.min(1, withSize.scale);
+    const leniency = leniencyNow * Math.min(1, withSize.scale);
     // fitsStroke takes a middle line as [x, y] pairs.
     const inFrame = pairs.map((pair) => moved(pair.reference, withSize).map((point) => [point.x, point.y]));
     const allFit = pairs.every((pair, index) => fitsStroke(pair.drawn, inFrame[index], leniency));
@@ -825,7 +830,7 @@ export function createQuiz(target, size, handlers) {
     const inFrame = moved(toPoints(shape), frame).map((point) => [point.x, point.y]);
     // In a small character the strokes lie closer together, so less is
     // allowed (as in isExpectedStrokeAtAnotherSize).
-    if (!fitsStroke(points, inFrame, LENIENCY * Math.min(1, frame.scale))) {
+    if (!fitsStroke(points, inFrame, leniencyNow * Math.min(1, frame.scale))) {
       return null;
     }
     const toShape = distanceFromStroke(points, inFrame);
@@ -868,11 +873,11 @@ export function createQuiz(target, size, handlers) {
     const moreLikeIt = (formLine, taiwanLine) =>
       shapeDifferenceFromStroke(points, formLine) < shapeDifferenceFromStroke(points, taiwanLine);
     if (stroke.strokeNum === 0 && acceptedStrokes.length === 0 && canFollow()) {
-      const anywhere = (median) => fitsStroke(points, median, LENIENCY * FIRST_STROKE_EXTRA_LENIENCY, true);
+      const anywhere = (median) => fitsStroke(points, median, leniencyNow * FIRST_STROKE_EXTRA_LENIENCY, true);
       return anywhere(expected) && (!anywhere(taiwan) || moreLikeIt(expected, taiwan));
     }
     const inFrame = (median) => moved(toPoints(median), frame).map((point) => [point.x, point.y]);
-    const fits = fitsStroke(points, inFrame(expected), LENIENCY * Math.min(1, frame.scale));
+    const fits = fitsStroke(points, inFrame(expected), leniencyNow * Math.min(1, frame.scale));
     return fits && (!accepted || moreLikeIt(inFrame(expected), inFrame(taiwan)));
   }
 
@@ -929,7 +934,7 @@ export function createQuiz(target, size, handlers) {
     };
     const asMedian = (inFrame) => moved(level, inFrame).map((point) => [point.x, point.y]);
     if (acceptedStrokes.length === 0 && canFollow()) {
-      return fitsStroke(points, asMedian(NO_FRAME), LENIENCY * FIRST_STROKE_EXTRA_LENIENCY, true);
+      return fitsStroke(points, asMedian(NO_FRAME), leniencyNow * FIRST_STROKE_EXTRA_LENIENCY, true);
     }
     if (canFollow() && !sizeIsKnown(acceptedStrokes)) {
       const withSize = sizeThatFits(level, points);
@@ -938,7 +943,7 @@ export function createQuiz(target, size, handlers) {
         return endsAt(withSize) && (!asLeftHalf || withSize.misfit < asLeftHalf.misfit);
       }
     }
-    return endsAt(frame) && fitsStroke(points, asMedian(frame), LENIENCY * Math.min(1, frame.scale));
+    return endsAt(frame) && fitsStroke(points, asMedian(frame), leniencyNow * Math.min(1, frame.scale));
   }
 
   // True if the stroke Hanzi Writer accepted as the left half of a 艹 is its
@@ -1245,7 +1250,15 @@ export function createQuiz(target, size, handlers) {
     strokesDone = 0;
     noteHint(false);
     handlers.onStart({ totalStrokes: loadedData.strokes.length });
-    rawInputLog.beginCharacter({ char, script: charScript, strokeCount: loadedData.strokes.length, size, rawInput, outlineVisible });
+    rawInputLog.beginCharacter({
+      char,
+      script: charScript,
+      strokeCount: loadedData.strokes.length,
+      size,
+      rawInput,
+      outlineVisible,
+      leniency: leniencyNow,
+    });
     setBusy(true);
     try {
       await useOriginalData();
@@ -1272,7 +1285,7 @@ export function createQuiz(target, size, handlers) {
       // must be given every time, not only when resuming partway.
       quizStartStrokeNum: startAt,
       showHintAfterMisses: HINT_AFTER_MISSES,
-      leniency: LENIENCY,
+      leniency: leniencyNow,
       // Hanzi Writer would otherwise flash the printed character when you finish.
       highlightOnComplete: false,
       // Hanzi Writer accepted the stroke as the textbook stroke.
@@ -1607,6 +1620,10 @@ export function createQuiz(target, size, handlers) {
 // speed. Nothing is shown for a touch that hardly rose (`line` is null).
 let swipeReadoutOn = false;
 let swipeReadoutTimer = null;
+
+export function setLeniency(value) {
+  leniencyNow = value;
+}
 
 export function setSwipeReadout(on) {
   swipeReadoutOn = on;

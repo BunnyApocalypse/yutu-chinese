@@ -55,7 +55,7 @@ export function setRecording(on) {
 
 // A character starts, or starts again (Clear, a swipe up). `details`:
 // { char, script, strokeCount, size (the writing area in pixels), rawInput,
-// outlineVisible }.
+// outlineVisible, leniency (quiz.js) }.
 export function beginCharacter(details) {
   if (!recording) {
     return;

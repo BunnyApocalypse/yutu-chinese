@@ -158,6 +158,10 @@ export default {
   'testing.recordRawInput': 'Registra il mio input grezzo',
   'testing.recordRawInputHint':
     'Conserva ogni tratto che scrivi, e come l\'app lo ha giudicato, per salvarlo come file e inviarlo per regolare la valutazione. Solo in questo browser, gli ultimi 500 caratteri.',
+  'testing.leniency': 'Quanto è severa la valutazione dei tratti',
+  'testing.leniencyHint':
+    'Un valore più alto accetta tratti più lontani da quelli stampati per posizione, forma e lunghezza; troppo alto, e passa anche un tratto sbagliato. Vale dal carattere successivo. Solo su questo dispositivo.',
+  'testing.leniencyUsual': '{value} (normale)',
   'testing.rawInputCount': { one: '{count} carattere registrato.', other: '{count} caratteri registrati.' },
   'testing.saveRawInput': 'Salva come file',
   'testing.clearRawInput': 'Cancella la registrazione',
