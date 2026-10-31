@@ -531,6 +531,12 @@
         <!-- What the three parts below show: the last 30 days, 3 months, a
              year, or everything (as in Anki). -->
         <div id="progress-range" class="progress-range" role="group" data-t-aria-label="progress.show"></div>
+        <!-- The parts the range changes, together, so that while they are
+             drawn again they fade under a turning ring (progressPanel.js). -->
+        <div id="progress-ranged" class="progress-ranged">
+        <p id="progress-redrawing" class="note working progress-redrawing" role="status">
+          <span class="working-sign" aria-hidden="true"></span><span data-t="main.loading"></span>
+        </p>
         <section>
           <h3 id="progress-days-title" data-t="progress.streak"></h3>
           <div id="progress-days" class="progress-box"></div>
@@ -554,6 +560,7 @@
           </div>
           <div id="progress-growth" class="progress-box"></div>
         </section>
+        </div>
       </section>
 
       <div id="study-area" class="study-area">

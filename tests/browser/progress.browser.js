@@ -66,6 +66,8 @@ describe('the Progress tab', { concurrency: false }, () => {
   const openProgress = async () => {
     await tap(page, 'progress-tab');
     await waitUntil(page, `document.querySelector('#progress-today b')`, 'the Progress tab');
+    // Opened again, the numbers of last time are there while it loads.
+    await waitUntil(page, `!document.getElementById('progress-panel').classList.contains('loading')`, 'the numbers');
   };
 
   before(async () => {
@@ -163,8 +165,16 @@ describe('the Progress tab', { concurrency: false }, () => {
     await page.evaluate(`document.querySelector('#progress-days .today').click()`);
     assert.match(await page.evaluate(`document.querySelector('#progress-days .progress-readout').textContent`), /: 2 cards, 1 word learned, 3 min\.$/);
     assert.equal(await page.evaluate(`document.querySelector('#progress-days .progress-big-line b').textContent`), '1 day');
-    await page.evaluate(`document.querySelector('#progress-range [data-range="year"]').click()`);
+    // Tapped, the parts fade under "Loading…" until the browser has shown
+    // that, then are drawn again.
+    const atTap = await page.evaluate(`(() => {
+      document.querySelector('#progress-range [data-range="year"]').click();
+      const ranged = document.getElementById('progress-ranged');
+      return [ranged.classList.contains('redrawing'), getComputedStyle(document.getElementById('progress-redrawing')).display !== 'none'];
+    })()`);
+    assert.deepEqual(atTap, [true, true]);
     assert.equal(await page.evaluate(`document.querySelector('#progress-range [aria-pressed="true"]').textContent`), 'Year');
+    await waitUntil(page, `!document.getElementById('progress-ranged').classList.contains('redrawing')`, 'the parts drawn again');
     assert.equal(await page.evaluate(`document.querySelectorAll('#progress-days .progress-calendar.strip i:not(.blank)').length`), 365);
   });
 

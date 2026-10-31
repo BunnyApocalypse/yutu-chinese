@@ -4662,10 +4662,49 @@ button.deck-open {
   font-size: var(--size-title);
 }
 
-.progress-loading .working-sign {
+.progress-loading .working-sign,
+.progress-redrawing .working-sign {
   width: 2.5em;
   height: 2.5em;
   border-width: 4px;
+}
+
+/* The parts the range changes (Streak, Time studied, Words and characters):
+   spaced as the panel's sections. While they are drawn again (the class
+   redrawing, set by drawRanged in progressPanel.js), they fade, still in
+   their place, so the growth chart can be measured, and a turning ring
+   with "Loading…", on the page's color to be read, shows over them near
+   their top (the owner, 2026-10-31:
+   with "All" chosen the page seemed to hang). */
+.progress-ranged {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-huge);
+}
+
+.progress-ranged:not(.redrawing) .progress-redrawing {
+  display: none;
+}
+
+.progress-ranged.redrawing > section {
+  opacity: 0.25;
+}
+
+.progress-ranged .progress-redrawing {
+  position: absolute;
+  top: var(--space-huge);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-medium);
+  padding: var(--space-large) var(--space-huge);
+  border-radius: var(--radius-large);
+  background: var(--bg);
+  font-size: var(--size-title);
+  white-space: nowrap;
 }
 
 .progress-panel h3 {

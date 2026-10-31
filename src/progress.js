@@ -81,20 +81,26 @@ export function cardStages(words, cards, { types, hasCardType, scriptOf }) {
 
 const sum = (numbers) => numbers.reduce((total, number) => total + number, 0);
 
-// When a word was learned: its `learnedAt`, or for a word studied before
-// there was a Learn tab, or brought over from Anki, when its first card was
-// first reviewed. undefined for a word not learned yet.
-export function learnedAtOf(word, cards) {
-  if (word.learnedAt !== undefined) {
-    return word.learnedAt;
-  }
-  const times = [];
+// When each word's first card was first reviewed: word ID → time. Found in
+// one pass over the cards, not a pass for each word (with the owner's
+// Skritter words, none with `learnedAt`, that took most of a range change).
+export function firstReviewByWord(cards) {
+  const first = new Map();
   for (const card of cards.values()) {
-    if (card.wordId === word.id && card.firstReviewedAt !== undefined) {
-      times.push(card.firstReviewedAt);
+    const time = card.firstReviewedAt;
+    if (time !== undefined && !(first.get(card.wordId) <= time)) {
+      first.set(card.wordId, time);
     }
   }
-  return times.length > 0 ? Math.min(...times) : undefined;
+  return first;
+}
+
+// When a word was learned: its `learnedAt`, or for a word studied before
+// there was a Learn tab, or brought over from Anki or Skritter, when its
+// first card was first reviewed (`firstReviews`, from firstReviewByWord).
+// undefined for a word not learned yet.
+export function learnedAtOf(word, firstReviews) {
+  return word.learnedAt !== undefined ? word.learnedAt : firstReviews.get(word.id);
 }
 
 // Time studied each day, in milliseconds: day name → time. A review's
@@ -207,11 +213,12 @@ export function growthByDay(words, cards, { script, apart = false, scriptOf }) {
       firstSeen.set(key, time);
     }
   };
+  const firstReviews = firstReviewByWord(cards);
   for (const word of words) {
     if (isSentence(word) || isRadical(word)) {
       continue;
     }
-    const learnedAt = learnedAtOf(word, cards);
+    const learnedAt = learnedAtOf(word, firstReviews);
     if (learnedAt === undefined) {
       continue;
     }

@@ -9,6 +9,7 @@ import {
   cardStage,
   cardStages,
   learnedAtOf,
+  firstReviewByWord,
   timeByDay,
   todayStats,
   rangeDays,
@@ -68,10 +69,14 @@ test('a word without learnedAt was learned when its first card was first reviewe
   const cards = new Map([
     ['a#meaning', { wordId: 'a', firstReviewedAt: 50 }],
     ['a#pinyin', { wordId: 'a', firstReviewedAt: 20 }],
+    ['a#tone', { wordId: 'a' }],
+    ['c#meaning', { wordId: 'c' }],
   ]);
-  assert.equal(learnedAtOf({ id: 'a', learnedAt: 99 }, cards), 99);
-  assert.equal(learnedAtOf({ id: 'a' }, cards), 20);
-  assert.equal(learnedAtOf({ id: 'b' }, cards), undefined);
+  const firstReviews = firstReviewByWord(cards);
+  assert.equal(learnedAtOf({ id: 'a', learnedAt: 99 }, firstReviews), 99);
+  assert.equal(learnedAtOf({ id: 'a' }, firstReviews), 20);
+  assert.equal(learnedAtOf({ id: 'b' }, firstReviews), undefined);
+  assert.equal(learnedAtOf({ id: 'c' }, firstReviews), undefined);
 });
 
 test('time studied adds reviews and lessons on their study day', () => {

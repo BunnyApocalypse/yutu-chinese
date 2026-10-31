@@ -254,6 +254,8 @@ describe('accessibility', { concurrency: false }, () => {
     await page.evaluate(`document.querySelector('#progress-days .today').click()`);
     await check('the Progress tab, a month');
     await page.evaluate(`document.querySelector('#progress-range [data-range="year"]').click()`);
+    // Faded under "Loading…" until drawn again.
+    await waitUntil(page, `!document.getElementById('progress-ranged').classList.contains('redrawing')`, 'the year drawn');
     await check('the Progress tab, a year');
   });
 

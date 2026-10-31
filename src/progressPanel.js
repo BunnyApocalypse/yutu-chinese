@@ -179,6 +179,7 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
     apart: panel.querySelector('#progress-apart'),
     apartLabel: panel.querySelector('#progress-apart-label'),
     heading: panel.querySelector('.progress-heading h3'),
+    ranged: panel.querySelector('#progress-ranged'),
   };
   let range = 'month';
   // What was read from the database when the tab was opened.
@@ -190,7 +191,7 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
     button.dataset.range = id;
     button.addEventListener('click', () => {
       range = id;
-      drawRanged();
+      redrawRanged();
     });
     parts.range.append(button);
   }
@@ -300,6 +301,34 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
       legend,
       make('p', 'hint', t('progress.stagesExplained')),
     );
+  }
+
+  // A range tapped: the three parts are drawn again, which takes a moment
+  // with a long history ("All": a square for each day since the first).
+  // That work holds up the page, so first the parts fade under a turning
+  // ring, and the work waits until the browser has drawn that: a
+  // requestAnimationFrame callback runs just before the browser draws, so
+  // the second one comes once the ring is on the screen (as in importing,
+  // ankiImportForm.js). The ring turns by a CSS animation, which the
+  // browser runs apart from the page's work. A page out of sight draws no
+  // frames, so the work goes ahead after a tenth of a second regardless.
+  let redrawing = null;
+  async function redrawRanged() {
+    for (const button of parts.range.children) {
+      button.setAttribute('aria-pressed', String(button.dataset.range === range));
+    }
+    if (redrawing) {
+      return; // drawn once the frame comes, with the range tapped last
+    }
+    parts.ranged.classList.add('redrawing');
+    redrawing = new Promise((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(resolve));
+      setTimeout(resolve, 100);
+    });
+    await redrawing;
+    redrawing = null;
+    drawRanged();
+    parts.ranged.classList.remove('redrawing');
   }
 
   // The parts that follow the range.
