@@ -13,6 +13,12 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-10-31-4',
+    items: ['The introduction offers to bring your words over from Skritter too, beside Anki.'],
+    it: ['L’introduzione propone di portare le tue parole anche da Skritter, oltre che da Anki.'],
+    de: ['Die Einführung bietet an, deine Wörter auch aus Skritter mitzubringen, neben Anki.'],
+  },
+  {
     id: '2026-10-31-3',
     items: [
       'Decks are listed in your own order. Tap Edit beside the heading to move, rename or delete them.',
