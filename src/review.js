@@ -546,13 +546,18 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     }
     const shown = current;
     const { word, type, card } = current;
+    // A card looked back at can be managed too (the owner, 2026-10-31: it is
+    // still Review), though graded; it is left for the next card afresh.
+    const past = lookingBack !== null ? graded[lookingBack] : null;
+    const manageable = () => current === shown && Boolean(options || (past && lookingBack !== null));
     // Free practice has no card of its own to manage, and a card already
-    // graded is done with.
-    const thisCard = practicing || !options
+    // graded is done with, unless looked back at.
+    const thisCard = practicing || !manageable()
       ? null
       : {
           wordId: word.id,
-          label: typeElement.textContent,
+          // Without "· 1 back".
+          label: past ? labelFor(word, type) : typeElement.textContent,
           // On a leech, what that is and where leeches are listed.
           facts: isLeech(card, settings.leechLapses)
             ? t('review.leech', { count: lapsesOf(card) })
@@ -561,10 +566,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
               : '',
           // Each returns true once done, and the page then closes.
           async suspend() {
-            if (current !== shown || !options) {
+            if (!manageable()) {
               return false;
             }
             options = null;
+            lookingBack = null;
             await suspend(word, type);
             showNotice(t('review.suspendedCard', { kind: kindName(type), word: word[scriptFor(word, settings)] }));
             showNext();
@@ -579,10 +585,13 @@ export function createReview(elements, flows, settings, editWord, showWord, note
               detail: t('review.startOverDetail'),
               yes: t('review.startOverYes'),
             });
-            if (!confirmed || current !== shown || !options) {
+            if (!confirmed || !manageable()) {
               return false;
             }
             options = null;
+            lookingBack = null;
+            // Its review can't be corrected once the card is gone.
+            graded = graded.filter((entry) => entry !== past);
             await startOver(word, type);
             showNotice(t('review.startedOver', { kind: kindName(type), word: word[scriptFor(word, settings)] }));
             showNext();
@@ -857,6 +866,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         onForward: lookForward,
       },
     );
+    // At the face's bottom left, as on a card just answered.
+    showCardAbout();
     renderPastGrades();
   }
 

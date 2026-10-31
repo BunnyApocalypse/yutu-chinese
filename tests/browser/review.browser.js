@@ -562,6 +562,15 @@ describe('grading in Review', { concurrency: false }, () => {
     const pressed = `document.querySelector('#grade-row .grade[aria-pressed="true"]')?.firstChild.textContent`;
     assert.equal(await page.evaluate(pressed), 'Good');
     assert.ok(await page.evaluate(`document.getElementById('past-back-button').classList.contains('unavailable')`));
+    // "About this word" on it, with the strip for this card (the owner,
+    // 2026-10-31), its label without "1 back".
+    assert.ok(await page.evaluate(`document.querySelector('#card-face #card-about-button:not([hidden])')`));
+    await tap(page, 'card-about-button');
+    await waitUntil(page, `document.querySelector('#word-page .page-this-card')`, 'the strip for this card');
+    assert.match(await page.evaluate(`document.querySelector('#word-page .page-this-card').textContent`), /Writing/);
+    assert.doesNotMatch(await page.evaluate(`document.querySelector('#word-page .page-this-card').textContent`), /back/);
+    await tap(page, 'word-page-close');
+    await waitUntil(page, `!document.getElementById('word-page').open`, 'the page to close');
 
     // Again instead: the same review corrected, no new one, the card due soon.
     await chooseGrade('Again');
