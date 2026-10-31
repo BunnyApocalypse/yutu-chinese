@@ -515,6 +515,11 @@
            streak, the time studied, and words and characters over time.
            Filled in by progressPanel.js (the owner, 2026-10-19). -->
       <section id="progress-panel" class="progress-panel" hidden>
+        <!-- While the tab reads the reviews (progressPanel.js): "Loading…"
+             after a turning ring, in place of the sections. -->
+        <p id="progress-loading" class="note working progress-loading" role="status">
+          <span class="working-sign" aria-hidden="true"></span><span data-t="main.loading"></span>
+        </p>
         <section>
           <h3 data-t="progress.today"></h3>
           <div id="progress-today" class="progress-tiles"></div>

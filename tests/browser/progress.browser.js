@@ -116,6 +116,34 @@ describe('the Progress tab', { concurrency: false }, () => {
     assert.deepEqual(tiles, ['2cards reviewed', '1word learned', '3 minstudied', '50%answers right']);
   });
 
+  it('says "Loading…" in place of the sections while it reads the reviews', async () => {
+    // Opened again: a MutationObserver (told of each change to the panel's
+    // class, before the database answers) notes what is shown then.
+    const seen = await page.evaluate(`new Promise((resolve) => {
+      const panel = document.getElementById('progress-panel');
+      const shown = (element) => getComputedStyle(element).display !== 'none';
+      const observer = new MutationObserver(() => {
+        if (panel.classList.contains('loading')) {
+          observer.disconnect();
+          resolve({
+            note: shown(document.getElementById('progress-loading')),
+            today: shown(document.getElementById('progress-today').parentElement),
+          });
+        }
+      });
+      observer.observe(panel, { attributes: true, attributeFilter: ['class'] });
+      document.getElementById('review-tab').click();
+      document.getElementById('progress-tab').click();
+    })`);
+    assert.deepEqual(seen, { note: true, today: false });
+    await waitUntil(page, `!document.getElementById('progress-panel').classList.contains('loading')`, 'the numbers');
+    const shownNow = await page.evaluate(`[
+      getComputedStyle(document.getElementById('progress-loading')).display !== 'none',
+      getComputedStyle(document.getElementById('progress-today').parentElement).display !== 'none',
+    ]`);
+    assert.deepEqual(shownNow, [false, true]);
+  });
+
   it('counts the cards of the kinds switched on by stage', async () => {
     const rows = await page.evaluate(
       `[...document.querySelectorAll('#progress-stages .stage-row')].map((row) => [row.firstChild.textContent, row.querySelector('.stage-bar').getAttribute('aria-label'), row.lastChild.textContent])`,

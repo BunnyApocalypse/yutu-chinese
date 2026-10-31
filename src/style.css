@@ -4643,6 +4643,14 @@ button.deck-open {
   max-width: 560px;
 }
 
+/* While the tab reads the reviews (show in progressPanel.js): "Loading…"
+   alone, where the first section would be, so last time's numbers aren't
+   shown as today's. */
+.progress-panel.loading > :not(.progress-loading),
+.progress-panel:not(.loading) .progress-loading {
+  display: none;
+}
+
 .progress-panel h3 {
   margin: 0 0 var(--space-small);
   font-size: var(--size-body);

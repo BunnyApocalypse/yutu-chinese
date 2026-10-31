@@ -212,8 +212,14 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
     }, 150);
   });
 
+  // Reading every review takes a few seconds with a long history (the
+  // owner's, with Skritter's), so "Loading…" with a turning ring shows
+  // meanwhile, in place of the sections (the owner, 2026-10-31). The ring
+  // turns by a CSS animation, which the browser runs apart from the page's
+  // own work, so it keeps turning while the numbers are counted.
   async function show() {
     panel.hidden = false;
+    panel.classList.add('loading');
     const [words, cardList, reviews] = await Promise.all([getAll('words'), getAll('cards'), getAll('reviews')]);
     const settings = getSettings();
     const study = studyByDay(reviews, words);
@@ -228,6 +234,8 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
       firstKey: [...study.keys()].sort()[0] ?? null,
     };
     parts.apart.checked = await getSetting('charactersApart', false);
+    // Shown before drawing: the growth chart is as wide as its box.
+    panel.classList.remove('loading');
     drawToday();
     drawStages();
     drawRanged();
