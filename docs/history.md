@@ -4,6 +4,12 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the session of 2026-10-31 (old notes, rework-2; committed on `main`, not pushed, no "What's new" entry).**
+
+- **Built (data only):** the next 100 old notes of HSK 3.0 level 2 (白色 onward, in file order) reworked as in rework-1, tagged `judged`, traditional versions by `scripts/convert-notes.js` (24 listed lines settled in `local/note-scripts/settle-old-2.mjs`). Details and lessons: `local/old-notes/README.md`, "Rework-2". About 445,000 tokens.
+- **Next:** rework-3, the next 100 of `hsk-3.0-2.tsv` (529 untagged left there): `node local/old-notes/gather.mjs hsk-3.0-2.tsv local/old-notes/rework-3 100 2 --in-order`.
+- **Tests:** 300 unit tests pass; browser tests not run (only data changed).
+
 **Handover from the third session of 2026-10-30 (lists read traditional first, testing settings on stable, stroke shapes, 艹 in three strokes; all released to `main` and `stable`, "What's new" entries `2026-10-30-2` and `-3`).**
 
 - **Built:**
