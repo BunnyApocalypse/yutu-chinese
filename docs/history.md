@@ -6,7 +6,9 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Handover from the session of 2026-10-31 (old notes, rework-2 to rework-4; committed on `main`, not pushed, no "What's new" entry).**
 
-- **Built (data only):** the next 300 old notes of HSK 3.0 level 2 (白色 onward, in file order) reworked as in rework-1, tagged `judged`, traditional versions by `scripts/convert-notes.js` (listed lines settled in `local/note-scripts/settle-old-2.mjs` and `-3.mjs`). Details and lessons: `local/old-notes/README.md`, "Rework-2" and "Rework-3". About 445,000 and 400,000 tokens.
+- **Built (data only):** the next 300 old notes of HSK 3.0 level 2 (白色 onward, in file order) reworked as in rework-1, tagged `judged`, traditional versions by `scripts/convert-notes.js` (listed lines settled in `local/note-scripts/settle-old-2.mjs` to `-4.mjs`). Details and lessons: `local/old-notes/README.md`, "Rework-2" to "Rework-4". About 445,000, 400,000 and 380,000 tokens (about 4,000 a note).
+- **Changed (local tools):** `local/old-notes/gather.mjs` takes `--in-order` (the next untagged notes in file order); `local/study-aids/retry-list.mjs` no longer crashes on a judge's sentence number past a note's end.
+- **Lessons (README):** readings that can only be quoted from the word's own entry are dropped (头's light tou, 喂's wéi; the entry above the note shows them); writers are told `ask` is only for a real Taiwan/mainland difference and not to remark on the traditional form, which cut both to near nothing by rework-4; small judge rounds are settled by hand rather than sent back.
 - **Next:** rework-5, the next 100 of `hsk-3.0-2.tsv` (329 untagged left there): `node local/old-notes/gather.mjs hsk-3.0-2.tsv local/old-notes/rework-5 100 2 --in-order`, the writers' prompt as in rework-4 (README).
 - **Tests:** 300 unit tests pass; browser tests not run (only data changed).
 
