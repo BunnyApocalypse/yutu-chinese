@@ -112,11 +112,14 @@
           <button id="leech-tag" class="leech-tag" type="button" hidden data-t="review.leechTag"></button>
           <!-- The deck studied, while a card is up, when the line with the deck
                chooser is put away (review.js, deckChooser.js). In Learn on a
-               narrow screen, the picture (a stack of cards) in place of the name. -->
+               narrow screen, the picture (three cards fanned out, like a hand of
+               cards; the owner, 2026-10-31: two cards one behind the other looked
+               like "copy") in place of the name. -->
           <button id="deck-tag" class="deck-tag" type="button" aria-haspopup="dialog" hidden>
             <svg class="deck-tag-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">
-              <rect x="4" y="8" width="13" height="12" rx="2" />
-              <path d="M8 5h10a2 2 0 0 1 2 2v9" />
+              <rect x="7.5" y="5" width="9" height="14" rx="1.5" transform="rotate(-32 12 21)" />
+              <rect x="7.5" y="5" width="9" height="14" rx="1.5" transform="rotate(32 12 21)" />
+              <rect x="7.5" y="3" width="9" height="14" rx="1.5" />
             </svg>
             <span class="deck-select-name"></span>
           </button>

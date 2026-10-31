@@ -612,6 +612,12 @@ main.focused:not(.learning) .deck-tag:not([hidden]) {
   flex: none;
 }
 
+/* Each card filled with the page's color, so the one in front hides the
+   others' lines behind it. */
+.deck-tag-icon rect {
+  fill: var(--bg);
+}
+
 /* In Learn, today's words are in the middle of the line, so the deck is in
    the column on their left, after the corner's button (the owner,
    2026-10-31). Its name only where the line is wide enough to leave it some
