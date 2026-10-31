@@ -45,7 +45,7 @@ The owner agreed the outline on 2026-10-13 (a sentence stored as a word record; 
 The owner chose the sources on 2026-10-13; the owner has listened and it works (2026-10-20).
 
 - **Three ways, tried in order** (`planSpeech` in `src/speechPlan.js`):
-  1. A recording of the word: about 8,500 words and characters (`data/audio-cmn/words`), named by characters, so used only when the reading asked for is the word's single listed `pinyin`.
+  1. A recording of the word: about 8,200 words and characters (`data/audio-cmn/words`), named by characters, so used only when the reading asked for is the word's single listed `pinyin`. **A single character with more than one reading in the dictionary has none** (`hasOneReading` in `scripts/copy-audio.js`, 366 left out; the owner, 2026-10-31: 倒 dào was heard as dǎo): it is put together from its syllable, which says the card's reading.
   2. Its syllables back to back (the owner's idea; 1,679 toned syllables, `data/audio-cmn/syllables`): exactly the reading asked for, so a Taiwan reading is what is heard. `spokenSyllables` applies the tone changes dictionaries don't write (third before third, 不 before fourth, 一 except as a number). Silence at the ends is cut (`soundSpan` in `src/speech.js`).
   3. The device's own Chinese voice (`speechSynthesis`), if it works offline; it reads characters and can't be told the reading. Left for words with a neutral syllable and no recording (only 19 neutral syllables are recorded).
 - **Coverage:** 80 to 95% of each level up to HSK 3.0 level 5, HSK 2.0 level 6 and TOCFL level 4 has its own recording; nearly all the rest can be put together.

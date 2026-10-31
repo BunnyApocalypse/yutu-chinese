@@ -21,7 +21,7 @@ const SOURCE = 'data/audio-cmn';
 const TARGET = 'public/audio';
 // Raise this when the script changes what it writes, or existing copies
 // will not be made again.
-const AUDIO_VERSION = 2;
+const AUDIO_VERSION = 3;
 
 // The name of a word's file, without ".mp3". The same function is in
 // src/speech.js; the two must agree.
@@ -31,11 +31,31 @@ export const wordFileName = (word) =>
 // "cmn-学习.mp3" → "学习"
 const itemOf = (fileName) => path.basename(fileName, '.mp3').replace(/^cmn-/, '');
 
+// Single characters with more than one reading in the dictionary (倒 dǎo and
+// dào, 为 wéi and wèi): a recording, named only by its characters, says one
+// of them, perhaps not the card's (the owner, 2026-10-31: 倒 dào was heard as
+// dǎo). They are left out, and their syllable's recording is used instead,
+// which says exactly the reading asked for. Readings differing only in a
+// capital (a surname) count as one.
+const readingsOf = new Map();
+for (const line of fs.readFileSync('data/cedict/dictionary.tsv', 'utf8').split('\n')) {
+  const [traditional, simplified, pinyin] = line.split('\t');
+  if (line.startsWith('#') || !pinyin) {
+    continue;
+  }
+  for (const form of new Set([traditional, simplified || traditional])) {
+    if (Array.from(form).length === 1) {
+      readingsOf.set(form, (readingsOf.get(form) || new Set()).add(pinyin.toLowerCase()));
+    }
+  }
+}
+export const hasOneReading = (item) => (readingsOf.get(item)?.size || 0) <= 1;
+
 // The set also has patterns with gaps (从_到_) and a few interjections with
 // names of their own (_hm1); only whole words and plain syllables are used.
 const words = fs
   .readdirSync(`${SOURCE}/words`)
-  .filter((name) => /^\p{Script=Han}+$/u.test(itemOf(name)));
+  .filter((name) => /^\p{Script=Han}+$/u.test(itemOf(name)) && hasOneReading(itemOf(name)));
 const syllables = fs
   .readdirSync(`${SOURCE}/syllables`)
   .filter((name) => /^[a-z]+[1-5]$/.test(itemOf(name)));

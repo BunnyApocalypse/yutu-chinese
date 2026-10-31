@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 import { planSpeech, spokenSyllables, wordFileName } from '../src/speechPlan.js';
-import { wordFileName as copiedFileName } from '../scripts/copy-audio.js';
+import { wordFileName as copiedFileName, hasOneReading } from '../scripts/copy-audio.js';
 import { BASICS_RECORDINGS } from '../src/basicsSounds.js';
 
 const index = {
@@ -21,6 +21,16 @@ test('a recorded word is played from its recording', () => {
   assert.equal(wordFileName('学习'), '5b66-4e60');
   // The script that names the files and the app agree.
   assert.equal(copiedFileName('学习'), wordFileName('学习'));
+});
+
+test('a single character with several readings has no recording of its own', () => {
+  // The recording says one reading, perhaps not the card's (倒 dǎo, dào).
+  assert.equal(hasOneReading('倒'), false);
+  assert.equal(hasOneReading('为'), false);
+  assert.equal(hasOneReading('爲'), false);
+  // One reading, or a surname's capital only.
+  assert.equal(hasOneReading('我'), true);
+  assert.equal(hasOneReading('学习'), true);
 });
 
 test('another reading than the usual one is spoken syllable by syllable', () => {
