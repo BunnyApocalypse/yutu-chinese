@@ -293,6 +293,40 @@ describe('decks', { concurrency: false }, () => {
     await tap(page, 'decks-tab');
   });
 
+  it('keeps the decks in the learner\'s own order, changed with Edit', async () => {
+    await waitUntil(page, `document.getElementById('deck-head').hidden`, 'the front page');
+    const names = () => page.evaluate(`[...document.querySelectorAll('#deck-list .entry-characters')].map((name) => name.textContent)`);
+    // In the order they were made, whatever was studied last.
+    const before = await names();
+    assert.deepEqual(before, ['Chinese 中文', 'Textbook', 'Animals']);
+    await tap(page, 'edit-decks-button');
+    await waitUntil(page, `document.querySelectorAll('#deck-list li.editing').length === 3`, 'the list to edit');
+    assert.equal(await textOf(page, 'edit-decks-button'), 'Done');
+    // The first can't go up, nor the last down.
+    const disabled = (className) =>
+      page.evaluate(`[...document.querySelectorAll('#deck-list .${className}')].map((button) => button.disabled)`);
+    assert.deepEqual(await disabled('deck-move-up'), [true, false, false]);
+    assert.deepEqual(await disabled('deck-move-down'), [false, false, true]);
+    // Animals up, past Textbook.
+    await page.evaluate(`document.querySelectorAll('#deck-list .deck-move-up')[2].click()`);
+    await waitUntil(
+      page,
+      `document.querySelectorAll('#deck-list .entry-characters')[1]?.textContent === 'Animals'`,
+      'Animals moved up',
+    );
+    const orders = Object.fromEntries((await stored(page, 'decks')).map((deck) => [deck.name, deck.order]));
+    assert.ok(orders['Chinese 中文'] < orders.Animals && orders.Animals < orders.Textbook);
+    // ⚙ opens the deck's settings, to rename or delete it from here.
+    await page.evaluate(`document.querySelectorAll('#deck-list .deck-settings')[2].click()`);
+    await waitUntil(page, `document.getElementById('deck-dialog').open`, 'the deck settings');
+    assert.equal(await page.evaluate(`document.getElementById('deck-name').value`), 'Textbook');
+    await tap(page, 'deck-dialog-close');
+    // Done: rows to tap again, in the new order.
+    await tap(page, 'edit-decks-button');
+    await waitUntil(page, `document.querySelectorAll('#deck-list .deck-open').length === 3`, 'the rows to tap');
+    assert.deepEqual(await names(), ['Chinese 中文', 'Animals', 'Textbook']);
+  });
+
   it('deletes a deck and moves the words it leaves without one', async () => {
     await waitUntil(page, `document.getElementById('deck-head').hidden`, 'the front page');
     await openDeck('Animals');
@@ -367,7 +401,8 @@ describe('decks', { concurrency: false }, () => {
     assert.deepEqual(me.decks, ['tocfl/Novice 1/01']);
     await tap(page, 'my-decks-button');
     await waitUntil(page, deckRows(2), 'the two decks');
-    assert.match(await textOf(page, '#deck-list li:first-child .deck-entry'), /^TOCFL Novice 1182 words · 0 learned \(0%\) · 11 decks insideTap to learn$/);
+    // After the decks made before it (the learner's own order).
+    assert.match(await textOf(page, '#deck-list li:last-child .deck-entry'), /^TOCFL Novice 1182 words · 0 learned \(0%\) · 11 decks insideTap to learn$/);
     // The bar for several words offers only the learner's own decks: a
     // ready-made one is as its list has it (the owner, 2026-10-18).
     const offered = (id) => page.evaluate(`[...document.getElementById('${id}').options].map((option) => option.value)`);

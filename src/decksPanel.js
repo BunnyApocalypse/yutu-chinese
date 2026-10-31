@@ -12,7 +12,7 @@ import { putAll, removeDecks, removeWords, randomId } from './db.js';
 import { fillMixed } from './lang.js';
 import { allCardIds } from './session.js';
 import {
-  lastActivity,
+  movedDeckOrder,
   deckTree,
   deckWithInside,
   canBeInside,
@@ -233,65 +233,153 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
     }
 
     // The decks right inside the one that is open; on the front page, those
-    // inside no other.
-    // Most recently active first (the owner, 2026-10-14), then in the
-    // tree's order.
-    const activity = lastActivity(decks, getWords(), getCards());
+    // inside no other. In the learner's own order, as the tree has them
+    // (the owner, 2026-10-31; until then most recently active first).
     const shown = deckTree(decks)
       .filter(({ deck, depth }) => (current ? deck.parentId === current.id : depth === 0))
-      .map((row, index) => ({ ...row, index }))
-      .sort((a, b) => activity.get(b.deck.id) - activity.get(a.deck.id) || a.index - b.index);
-    const rows = shown.map(({ deck }) => {
-      const span = (className, text) => {
-        const element = document.createElement('span');
-        element.className = className;
-        element.textContent = text;
-        return element;
-      };
-      const inside = deckWithInside(decks, deck.id).size - 1;
-      // Each row is a button, so it can be tapped and reached by keyboard.
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'word-entry deck-entry';
-      const counts = countsOf(deck);
-      const bar = span('deck-progress', '');
-      fillBar(bar, counts.percent);
-      const name = span('entry-characters', '');
-      showName(name, deck.name);
-      // A tap starts studying the deck (mainAction); › beside it opens its
-      // page. Until 2026-10-16 a tap opened the page, with Learn and Review
-      // as two buttons beside the row.
-      const action = mainAction(deck);
-      const TAP_SAYS = { learn: 'decks.tapToLearn', review: 'decks.tapToReview', open: 'decks.tapToAdd' };
-      button.append(
-        name,
-        span('entry-definition', counts.text + (inside > 0 ? ` · ${t('decks.inside', { count: inside })}` : '')),
-        bar,
-        span('deck-tap', t(TAP_SAYS[action])),
-      );
-      button.dataset.action = action;
-      button.addEventListener('click', () => (action === 'open' ? open(deck.id) : study(deck.id, action)));
-      const openButton = document.createElement('button');
-      openButton.type = 'button';
-      openButton.className = 'deck-open';
-      // Drawn, as are all the app's arrows (index.html).
-      openButton.innerHTML =
-        '<svg class="back-arrow" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" ' +
-        'stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5 L16 12 L9 19" /></svg>';
-      openButton.setAttribute('aria-label', t('decks.openLabel', { name: deck.name }));
-      openButton.title = t('decks.openTitle');
-      openButton.addEventListener('click', () => open(deck.id));
-      const row = document.createElement('li');
-      row.className = 'deck-row';
-      row.append(button, openButton);
-      return row;
-    });
+      .map(({ deck }) => deck);
+    // Editing ends on another page.
+    if (editing && editingIn !== (current ? current.id : null)) {
+      editing = false;
+    }
+    const editButton = byId('edit-decks-button');
+    editButton.hidden = shown.length === 0;
+    editButton.textContent = t(editing ? 'decks.doneButton' : 'decks.editButton');
+    editButton.setAttribute('aria-pressed', String(editing));
+    const rows = shown.map((deck, index) => (editing ? editRow(deck, index, shown) : studyRow(deck)));
     listElement.replaceChildren(...rows);
     // A tip the first time, beside the first deck's › (tips.js).
-    if (rows.length > 0) {
+    if (rows.length > 0 && !editing) {
       document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'deckRows' }));
     }
     byId('deck-list-title').textContent = t(current ? 'decks.insideThisOne' : 'menu.decks');
+  }
+
+  // A deck's name, its counts, and the bar of how far it is learned, for its
+  // row.
+  function deckSummary(deck) {
+    const span = (className, text) => {
+      const element = document.createElement('span');
+      element.className = className;
+      element.textContent = text;
+      return element;
+    };
+    const inside = deckWithInside(getDecks(), deck.id).size - 1;
+    const counts = countsOf(deck);
+    const bar = span('deck-progress', '');
+    fillBar(bar, counts.percent);
+    const name = span('entry-characters', '');
+    showName(name, deck.name);
+    return [name, span('entry-definition', counts.text + (inside > 0 ? ` · ${t('decks.inside', { count: inside })}` : '')), bar];
+  }
+
+  // A deck's row as usually listed: a tap studies it, › opens its page.
+  function studyRow(deck) {
+    // Each row is a button, so it can be tapped and reached by keyboard.
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'word-entry deck-entry';
+    // A tap starts studying the deck (mainAction); › beside it opens its
+    // page. Until 2026-10-16 a tap opened the page, with Learn and Review
+    // as two buttons beside the row.
+    const action = mainAction(deck);
+    const TAP_SAYS = { learn: 'decks.tapToLearn', review: 'decks.tapToReview', open: 'decks.tapToAdd' };
+    const tapSays = document.createElement('span');
+    tapSays.className = 'deck-tap';
+    tapSays.textContent = t(TAP_SAYS[action]);
+    button.append(...deckSummary(deck), tapSays);
+    button.dataset.action = action;
+    button.addEventListener('click', () => (action === 'open' ? open(deck.id) : study(deck.id, action)));
+    const openButton = document.createElement('button');
+    openButton.type = 'button';
+    openButton.className = 'deck-open';
+    openButton.innerHTML = arrow('M9 5 L16 12 L9 19');
+    openButton.setAttribute('aria-label', t('decks.openLabel', { name: deck.name }));
+    openButton.title = t('decks.openTitle');
+    openButton.addEventListener('click', () => open(deck.id));
+    const row = document.createElement('li');
+    row.className = 'deck-row';
+    row.append(button, openButton);
+    return row;
+  }
+
+  // Drawn, as are all the app's arrows (index.html).
+  const arrow = (path) =>
+    '<svg class="back-arrow" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" ' +
+    `stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="${path}" /></svg>`;
+
+  // ---- Editing the list ----
+  //
+  // "Edit" beside the heading (the owner, 2026-10-31: "there should be an
+  // edit mode") turns each row into the deck's name and counts, with ↑ and ↓
+  // to move it among those beside it and ⚙ for its Deck settings (rename,
+  // move inside another, daily goal, delete). "Done" ends it, as does going
+  // to another page. `editingIn` is the page it began on (a deck's ID, or
+  // null for the front page).
+  let editing = false;
+  let editingIn = null;
+
+  byId('edit-decks-button').addEventListener('click', () => {
+    const current = getOpenDeck();
+    editing = !editing;
+    editingIn = current ? current.id : null;
+    render();
+  });
+
+  // Ends editing, on coming back to the Decks tab (wordsPanel.js).
+  function stopEditing() {
+    editing = false;
+  }
+
+  // A deck's row while editing.
+  //
+  // siblings: the decks listed with it, in order; index: its place there
+  function editRow(deck, index, siblings) {
+    const entry = document.createElement('div');
+    entry.className = 'deck-entry';
+    entry.append(...deckSummary(deck));
+    const iconButton = (className, label, picture, disabled, onClick) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `icon-button ${className}`;
+      button.innerHTML = picture;
+      button.setAttribute('aria-label', label);
+      button.title = label;
+      button.disabled = disabled;
+      button.addEventListener('click', onClick);
+      return button;
+    };
+    const row = document.createElement('li');
+    row.className = 'deck-row editing';
+    row.dataset.deck = deck.id;
+    row.append(
+      entry,
+      iconButton('deck-move-up', t('decks.moveUp', { name: deck.name }), arrow('M5 15 L12 8 L19 15'), index === 0, () =>
+        move(deck, siblings, -1, 'deck-move-up'),
+      ),
+      iconButton(
+        'deck-move-down',
+        t('decks.moveDown', { name: deck.name }),
+        arrow('M5 9 L12 16 L19 9'),
+        index === siblings.length - 1,
+        () => move(deck, siblings, 1, 'deck-move-down'),
+      ),
+      // The same cog as on the deck's page.
+      iconButton('deck-settings', t('decks.settingsOf', { name: deck.name }), byId('deck-settings-button').innerHTML, false, () =>
+        openDialog(deck),
+      ),
+    );
+    return row;
+  }
+
+  // Moves a deck a place up (step -1) or down (1), and keeps the focus on
+  // the button pressed, in its new place (or ⚙, at the top or bottom).
+  async function move(deck, siblings, step, className) {
+    await putAll('decks', movedDeckOrder(siblings, deck.id, step));
+    await afterChange();
+    const row = [...listElement.children].find((each) => each.dataset.deck === deck.id);
+    const button = row?.querySelector(`.${className}`);
+    (button && !button.disabled ? button : row?.querySelector('.deck-settings'))?.focus();
   }
 
   // ---- Adding a deck ----
@@ -476,5 +564,5 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
 
   byId('deck-dialog-close').addEventListener('click', () => dialog.close());
 
-  return { render };
+  return { render, stopEditing };
 }

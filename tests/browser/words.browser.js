@@ -308,7 +308,7 @@ describe('the Decks tab', { concurrency: false }, () => {
     await tap(page, 'my-decks-button');
     await page.evaluate(`document.querySelector('#deck-path button').click()`);
     await waitUntil(page, `document.querySelectorAll('#deck-list li').length === 2`, 'the two decks');
-    assert.match(await textOf(page, '#deck-list li:first-child .deck-entry'), /^HSK 1 \(2\.0\)150 words · 0 learned \(0%\) · 11 decks insideTap to learn$/);
+    assert.match(await textOf(page, '#deck-list li:last-child .deck-entry'), /^HSK 1 \(2\.0\)150 words · 0 learned \(0%\) · 11 decks insideTap to learn$/);
     assert.equal(await wordCount(page), before + adding);
     // The steps after this one count from the start; they count these in too.
     countAtStart += adding;

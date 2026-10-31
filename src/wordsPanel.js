@@ -886,6 +886,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
       // like the section.
       if (newView === 'decks' || openDeckId === undefined) {
         openDeckId = null;
+        decksPanel.stopEditing();
         renderDecks(); // at once, from what was read before; again below
         showView();
       }

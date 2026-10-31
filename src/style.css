@@ -4122,6 +4122,13 @@ button.deck-entry {
   gap: var(--space-medium);
 }
 
+.list-heading-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-small);
+}
+
 .list-heading h2 {
   margin: 0;
 }
@@ -4344,6 +4351,31 @@ button.top-back {
   margin-top: var(--space-small);
   font-size: var(--size-small);
   color: var(--accent);
+}
+
+/* Editing the list of decks: each row is the deck's name and counts, with
+   ↑, ↓ and ⚙ beside it (decksPanel.js). Nothing to tap on the deck itself. */
+.deck-row.editing .deck-entry {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-small) var(--space-medium);
+}
+
+#deck-list li.editing {
+  align-items: center;
+}
+
+.deck-row.editing button.icon-button {
+  width: var(--tap-small);
+  height: var(--tap-small);
+}
+
+/* The first deck can't go up, nor the last down: the place is kept, so
+   the buttons stay in line. */
+.deck-row.editing button.icon-button:disabled {
+  visibility: hidden;
 }
 
 button.deck-open {

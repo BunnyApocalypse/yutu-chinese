@@ -320,11 +320,15 @@
             </div>
           </div>
 
-          <!-- The heading, with the button for a new deck beside it, so that it
-               stays in reach however many decks there are. -->
+          <!-- The heading, with the buttons for a new deck and for editing the
+               list beside it, so that they stay in reach however many decks
+               there are. -->
           <div class="list-heading">
             <h2 id="deck-list-title" data-t="decks.deckListTitle"></h2>
-            <button id="new-deck-button" class="small" type="button" data-t="decks.newDeckButton"></button>
+            <div class="list-heading-buttons">
+              <button id="edit-decks-button" class="small" type="button" aria-pressed="false" data-t="decks.editButton"></button>
+              <button id="new-deck-button" class="small" type="button" data-t="decks.newDeckButton"></button>
+            </div>
           </div>
           <ul id="deck-list" class="word-list"></ul>
           <!-- Naming a new deck, in a panel of its own (decksPanel.js). -->

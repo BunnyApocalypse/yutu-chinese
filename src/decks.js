@@ -11,7 +11,6 @@
 // The page side is the Decks tab (wordsPanel.js and decksPanel.js) and the
 // deck chooser in review.js.
 
-import { lastReviewOf } from './session.js';
 
 // The ready-made lists and their levels, in order. The IDs are the `data-list`
 // of the rows in the Ready-made decks section of index.html, and the levels are those in the first
@@ -206,35 +205,24 @@ export function deckTree(decks) {
   return rows;
 }
 
-// When something last happened in each deck, for listing the most active
-// first (the owner, 2026-10-14): the latest of the deck's own change, a
-// change to a word in it (added, corrected, learned: `changedAt`,
-// `addedAt`, `learnedAt`) and a review of one of those words' cards. A deck
-// counts what happens in the decks inside it.
+// Moves one of the decks side by side a place up (step -1) or down (step 1),
+// for the learner's own order of the Decks tab (the owner, 2026-10-31).
 //
-// Returns a Map from deck ID to a time (0 for a deck where nothing ever
-// happened, or that was never stamped).
-export function lastActivity(decks, words, cards) {
-  const reviewed = new Map(); // word ID → its latest review
-  for (const card of cards) {
-    reviewed.set(card.wordId, Math.max(reviewed.get(card.wordId) || 0, lastReviewOf(card) || 0));
+// siblings: the decks side by side, in the order they are listed
+// Returns the decks whose `order` changed, all of them numbered afresh from
+// 0 in the new order (orders could be equal, or far apart: the ready-made
+// levels start at LEVEL_ORDER_BASE). Nothing if the deck can't go that way.
+export function movedDeckOrder(siblings, deckId, step) {
+  const ids = siblings.map((deck) => deck.id);
+  const from = ids.indexOf(deckId);
+  const to = from + step;
+  if (from === -1 || to < 0 || to >= ids.length) {
+    return [];
   }
-  const times = new Map(decks.map((deck) => [deck.id, deck.changedAt || 0]));
-  const note = (deckId, time) => {
-    // The deck and every deck it is inside (a circle is stopped by `seen`).
-    const seen = new Set();
-    for (let id = deckId; id && times.has(id) && !seen.has(id); id = decks.find((deck) => deck.id === id).parentId) {
-      seen.add(id);
-      times.set(id, Math.max(times.get(id), time));
-    }
-  };
-  for (const word of words) {
-    const time = Math.max(word.changedAt || 0, word.addedAt || 0, word.learnedAt || 0, reviewed.get(word.id) || 0);
-    for (const deckId of word.decks || []) {
-      note(deckId, time);
-    }
-  }
-  return times;
+  [ids[from], ids[to]] = [ids[to], ids[from]];
+  return ids
+    .map((id, order) => ({ ...siblings.find((deck) => deck.id === id), order }))
+    .filter((deck) => siblings.find((before) => before.id === deck.id).order !== deck.order);
 }
 
 // The IDs of a deck and of every deck inside it, as a Set.

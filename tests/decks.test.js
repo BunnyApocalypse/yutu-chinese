@@ -22,7 +22,7 @@ import {
   DEFAULT_DECK,
   homeForEveryWord,
   flattenedReadyMadeDecks,
-  lastActivity,
+  movedDeckOrder,
   isReadyMadeGroup,
 } from '../src/decks.js';
 import { parseReadyList, levelsOfReadyList, listTag } from '../src/words.js';
@@ -232,25 +232,23 @@ test('every word gets a deck, and there is always one deck', () => {
   assert.deepEqual(homeForEveryWord([{ id: 'a' }], [renamed]).decks, []);
 });
 
-test('a deck\'s last activity is the latest change to it, its words and their reviews, inside decks included', () => {
-  const decks = [
-    { id: 'book', name: 'Book', parentId: null, order: 0, changedAt: 10 },
-    { id: 'ch1', name: 'Chapter 1', parentId: 'book', order: 0, changedAt: 20 },
-    { id: 'other', name: 'Other', parentId: null, order: 1 },
+test('a deck moves a place up or down among those beside it, all numbered afresh', () => {
+  const siblings = [
+    { id: 'chinese', name: 'Chinese', order: -1 },
+    { id: 'book', name: 'Book', order: 0 },
+    { id: 'hsk1', name: 'HSK 1', order: 100 },
   ];
-  const words = [
-    { id: 'a', decks: ['ch1'], addedAt: 30, learnedAt: 40 },
-    { id: 'b', decks: ['other'], addedAt: 5, changedAt: 15 },
-  ];
-  const cards = [{ wordId: 'b', lastReviewedAt: 50 }, { wordId: 'a', lastReviewedAt: 35 }];
-  const times = lastActivity(decks, words, cards);
-  // Chapter 1's word was learned at 40, which counts for the book too.
-  assert.equal(times.get('ch1'), 40);
-  assert.equal(times.get('book'), 40);
-  // Other's word was reviewed at 50.
-  assert.equal(times.get('other'), 50);
-  // A deck where nothing happened.
-  assert.equal(lastActivity([{ id: 'x', parentId: null }], [], []).get('x'), 0);
+  const orders = (changed) => changed.map((deck) => [deck.id, deck.order]);
+  assert.deepEqual(orders(movedDeckOrder(siblings, 'hsk1', -1)), [['chinese', 0], ['hsk1', 1], ['book', 2]]);
+  assert.deepEqual(orders(movedDeckOrder(siblings, 'chinese', 1)), [['chinese', 1], ['hsk1', 2]]);
+  // The other fields are kept.
+  assert.equal(movedDeckOrder(siblings, 'book', 1).find((deck) => deck.id === 'book').name, 'Book');
+  // Not past either end.
+  assert.deepEqual(movedDeckOrder(siblings, 'chinese', -1), []);
+  assert.deepEqual(movedDeckOrder(siblings, 'hsk1', 1), []);
+  // Already numbered 0, 1, 2: only the two that change places.
+  const numbered = siblings.map((deck, order) => ({ ...deck, order }));
+  assert.deepEqual(orders(movedDeckOrder(numbered, 'book', 1)), [['hsk1', 1], ['book', 2]]);
 });
 
 test('the groups inside ready-made levels are told apart from other decks', () => {
