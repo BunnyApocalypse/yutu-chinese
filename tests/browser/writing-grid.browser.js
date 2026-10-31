@@ -22,9 +22,9 @@ import {
 import { grassTopsOf } from '../../src/shortcuts.js';
 
 // Characters with two accepted stroke orders (the first ten), some with one,
-// some with strokes in a second shape (食房藍雨, also written so), and some
-// with 艹 (草花藍, also written with it in three strokes).
-const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢母出長麼這謝子好食房藍雨草花');
+// some with strokes in a second shape (食房藍雨聽, also written so), and some
+// with 艹 (草花藍觀, also written with it in three strokes).
+const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢母出長麼這謝子好食房藍雨草花觀聽');
 
 // Where and how big the character is written, compared with the centered
 // reference: `scale` times the size, moved `dx` to the right and `dy` up, in

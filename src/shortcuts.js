@@ -210,8 +210,8 @@ export function joinedLine(charData, strokeNum) {
 //
 // 艹 is found in the stroke data by its shape: four strokes in a row, an
 // upright crossing a level stroke, then a level stroke going on from it and
-// crossed by an upright, with nothing above them. Found so in 22 of the
-// Taiwan set's characters (花 茶 草 藍 萬 懂 貓…), and nowhere else.
+// crossed by an upright, with nothing above them. Found so in 25 of the
+// Taiwan set's characters (花 茶 草 藍 萬 懂 貓 觀…), and nowhere else.
 
 // Directions, in degrees, with y going up (charData.js): level is within
 // this much of straight across; upright between these, going down (the left
@@ -223,6 +223,10 @@ const UPRIGHT_DIRECTIONS = [-105, -55];
 const MAX_HALVES_GAP = 150;
 // An upright must reach this far above and below its level stroke.
 const MIN_CROSSING = 30;
+// An upright may stand this far past its level stroke's end rather than
+// across it: the right upright of 觀, 警 and 護 is just left of the right
+// half (about 40 units).
+const UPRIGHT_PAST_END = 60;
 // No other stroke reaches above the level strokes between their ends, less
 // this much at each side (豸 of 貓 comes close on the left).
 const SIDE_MARGIN = 40;
@@ -238,8 +242,8 @@ const crosses = (upright, level) => {
   const middleX = (upright[0][0] + upright[upright.length - 1][0]) / 2;
   const [left, right] = [level[0][0], level[level.length - 1][0]].sort((a, b) => a - b);
   return (
-    middleX > left &&
-    middleX < right &&
+    middleX > left - UPRIGHT_PAST_END &&
+    middleX < right + UPRIGHT_PAST_END &&
     upright[0][1] > heightOf(level) + MIN_CROSSING &&
     upright[upright.length - 1][1] < heightOf(level) - MIN_CROSSING
   );
