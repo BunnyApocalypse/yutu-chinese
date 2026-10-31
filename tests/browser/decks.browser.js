@@ -215,10 +215,16 @@ describe('decks', { concurrency: false }, () => {
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('狗')`, 'the word of the deck');
     assert.match(await textOf(page, 'review-counts'), /of 7 learned today · 1 waiting/);
     assert.equal(await page.evaluate(`document.getElementById('deck-choice-button').getAttribute('aria-label')`), 'Deck to study: Textbook › Chapter 1');
-    // The button names the deck by its own name. Its panel lists the decks as
-    // a tree that folds, opened along the branch of the deck chosen.
+    // The button names the deck by its own name; while a card is up it is put
+    // away, and in Learn on a phone a picture of a deck beside the corner's
+    // button opens the same panel. The panel lists the decks as a tree that
+    // folds, opened along the branch of the deck chosen.
     assert.equal(await textOf(page, 'deck-choice-button'), 'Chapter 1');
-    await tap(page, 'deck-choice-button');
+    const displayed = (selector) => page.evaluate(`document.querySelector('${selector}').getBoundingClientRect().width > 0`);
+    assert.equal(await displayed('#deck-choice-button'), false);
+    assert.equal(await displayed('#deck-tag .deck-tag-icon'), true);
+    assert.equal(await displayed('#deck-tag .deck-select-name'), false);
+    await tap(page, 'deck-tag');
     const listed = `[...document.querySelectorAll('#deck-choice-list .deck-choice')].map((row) => row.textContent)`;
     const textbookFold = `document.querySelector('#deck-choice-list .deck-fold')`;
     assert.deepEqual(await page.evaluate(listed), ['All words', 'Chinese 中文', 'Textbook', 'Chapter 1', 'Animals']);

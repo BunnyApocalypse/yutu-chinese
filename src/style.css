@@ -579,7 +579,7 @@ dialog.side-menu::backdrop {
    with ▾ (the owner, 2026-10-31: while a card is up the deck chooser above is
    put away, and the deck could not be changed). It is the one to give way
    where the line is short: its name is cut with "…" before anything else
-   moves. Not in Learn, where today's words take the line, nor without a card. */
+   moves. In Learn it is beside the corner's button (below). Not without a card. */
 .deck-tag {
   display: none;
   flex: 0 1000 auto;
@@ -595,13 +595,60 @@ dialog.side-menu::backdrop {
   color: var(--muted);
 }
 
-main.focused:not(.learning) .deck-tag:not([hidden]) {
+main.focused .deck-tag:not([hidden]) {
   display: inline-flex;
+}
+
+main.focused:not(.learning) .deck-tag:not([hidden]) {
   margin-right: auto;
 }
 
 .deck-tag::after {
   content: '▾';
+}
+
+.deck-tag-icon {
+  display: none;
+  flex: none;
+}
+
+/* In Learn, today's words are in the middle of the line, so the deck is in
+   the column on their left, after the corner's button (the owner,
+   2026-10-31). Its name only where the line is wide enough to leave it some
+   room (a tablet); on a phone the gap holds only a picture of a deck. The
+   line is a container, so that the rule below asks how wide it is. */
+.type-row {
+  container-type: inline-size;
+}
+
+:root main.focused.learning .type-row .deck-tag {
+  grid-row: 1;
+  grid-column: 1;
+  justify-self: start;
+  max-width: 100%;
+}
+
+@container (max-width: 479px) {
+  main.focused.learning .deck-tag::after,
+  main.focused.learning .deck-tag .deck-select-name {
+    display: none;
+  }
+
+  main.focused.learning .deck-tag .deck-tag-icon {
+    display: block;
+  }
+}
+
+/* Clear of the corner's button, which lies over the line's left end on a
+   phone and in two columns (as .type-row's padding does in Review). */
+@media (max-width: 599px) {
+  :root main.focused.learning .type-row .deck-tag {
+    margin-left: 30px;
+  }
+}
+
+:root[data-layout='wide'] main.focused.learning .type-row .deck-tag {
+  margin-left: max(0px, calc(46px - var(--wide-side)));
 }
 
 main.focused:not(.learning) .type-row:has(> .deck-tag:not([hidden])) :is(.card-type, .leech-tag) {
@@ -3937,7 +3984,10 @@ button.word-entry.selected {
   max-width: 46%;
 }
 
+/* As wide as the header, or the chooser's 46% (above) is of the line's own
+   width, which is the chooser's: it came out a few letters wide. */
 .counts-row {
+  align-self: stretch;
   display: flex;
   flex-wrap: wrap;
   align-items: center;

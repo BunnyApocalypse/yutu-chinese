@@ -110,9 +110,16 @@
                the grades made the page scroll). A tap opens the word's page
                with this card's strip, and Suspend. -->
           <button id="leech-tag" class="leech-tag" type="button" hidden data-t="review.leechTag"></button>
-          <!-- The deck studied, in Review while a card is up, when the line with
-               the deck chooser is put away (review.js, deckChooser.js). -->
-          <button id="deck-tag" class="deck-tag" type="button" aria-haspopup="dialog" hidden><span class="deck-select-name"></span></button>
+          <!-- The deck studied, while a card is up, when the line with the deck
+               chooser is put away (review.js, deckChooser.js). In Learn on a
+               narrow screen, the picture (a stack of cards) in place of the name. -->
+          <button id="deck-tag" class="deck-tag" type="button" aria-haspopup="dialog" hidden>
+            <svg class="deck-tag-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">
+              <rect x="4" y="8" width="13" height="12" rx="2" />
+              <path d="M8 5h10a2 2 0 0 1 2 2v9" />
+            </svg>
+            <span class="deck-select-name"></span>
+          </button>
           <!-- Speaks the word (review.js, speech.js). The picture is a loudspeaker. -->
           <button id="listen-button" class="icon-button" type="button" data-t-aria-label="review.hearTheWord" data-t-title="review.hearTheWord" hidden>
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
