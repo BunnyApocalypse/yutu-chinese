@@ -4,7 +4,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
-**Handover from the session of 2026-10-31 (the owner's notes from a day of use; committed on `main` by way of the branch `owner-notes-1031`, not pushed, not released, no "What's new" entry yet).**
+**Handover from the session of 2026-10-31 (the owner's notes from a day of use; released to `main` and `stable` after the deck chooser below, "What's new" entry `2026-10-31-3`; the strictness setting has none, as it is not for learners).**
 
 - **Built** (one commit each, details in the area's file):
   - 艹 in three strokes in 觀, 警 and 護 too (`UPRIGHT_PAST_END` in `src/shortcuts.js`; `docs/writing.md`). The owner confirmed 觀 works.
@@ -17,7 +17,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
   - 聽: the top of 王 written low is no longer refused for the level stroke under it. Between two strokes of the same shape the order decides (`TWIN_SHAPE_DIFFERENCE` in `src/quiz.js`; `docs/writing.md`, "Strokes in a second shape"), from the owner's raw input recording.
 - **Built after the notes** (the owner's two more, same day): "Loading…" with a turning ring on the Progress tab while it reads the reviews (`docs/cards.md`); and Settings › For testing › "How strict the grading of strokes is", 1.5 (usual) to 2.5, for the owner to find by studying what feels right (`docs/writing.md`, "Leniency"). **Waiting on the owner:** the value they settle on, to put into `USUAL_LENIENCY` for everyone.
 - **Not changed:** 方. The owner wrote ノ before 𠃌; both standards write 𠃌 first, and the owner agreed their order was wrong.
-- **To release:** ask the owner, write a "What's new" entry, then as in `CLAUDE.md`. The decks' new order shows at once after updating: a level added later is listed after the learner's own decks.
+- **Released.** The decks' new order shows at once after updating: a level added later is listed after the learner's own decks.
 - **Found, not fixed:** in the writing grid, 雪 and 屬 with the mainland shapes at half size in the top left fail (stroke 6 of 11, 7 of 21), before today's change too; neither is in the grid's usual list.
 - **Learned:** the owner's `npm run dev` runs in the main checkout, so work on a branch in a worktree has to be tried from that worktree, or brought into `main` first. A raw input recording replays outside the browser (`local/ting-replay.mjs`), which showed the cause at once.
 - **Tests:** 303 unit tests pass; all 581 browser tests passed before the 聽 change (23 skipped), and the writing grid for 聽 and the other characters with same-shape strokes after it (192, the two above failing).

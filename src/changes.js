@@ -13,6 +13,33 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-10-31-3',
+    items: [
+      'Decks are listed in your own order. Tap Edit beside the heading to move, rename or delete them.',
+      'The pinyin shows 一 and 不 in the tone they are spoken in: búshì, yígè.',
+      'Going back from a card you have begun writing, and coming back to it, finds it as you left it.',
+      'A card you look back at in Review has "About this word", with Suspend and Start over.',
+      'More handwriting is accepted: 艹 in three strokes in 觀, 警 and 護; 充, 流 and 育 with the dot on its own; the top of 王 in 聽 written low.',
+      'The Progress tab says "Loading…" while it counts.',
+    ],
+    it: [
+      'I mazzi sono elencati nel tuo ordine. Tocca Modifica accanto al titolo per spostarli, rinominarli o eliminarli.',
+      'Il pinyin mostra 一 e 不 nel tono in cui si pronunciano: búshì, yígè.',
+      'Tornando indietro da una carta che hai iniziato a scrivere, e poi tornandoci, la ritrovi come l’hai lasciata.',
+      'Una carta che riguardi in Ripasso ha "Info su questa parola", con Sospendi e Ricomincia.',
+      'Si accetta più scrittura a mano: 艹 in tre tratti in 觀, 警 e 護; 充, 流 e 育 con il punto a sé; la parte alta di 王 in 聽 scritta in basso.',
+      'La scheda Progressi dice "Caricamento…" mentre conta.',
+    ],
+    de: [
+      'Stapel stehen in deiner eigenen Reihenfolge. Tippe neben der Überschrift auf Bearbeiten, um sie zu verschieben, umzubenennen oder zu löschen.',
+      'Das Pinyin zeigt 一 und 不 im Ton, in dem sie gesprochen werden: búshì, yígè.',
+      'Gehst du von einer begonnenen Karte zurück und kommst wieder, findest du sie, wie du sie verlassen hast.',
+      'Eine Karte, auf die du in Wiederholen zurückblickst, hat „Über dieses Wort“, mit Aussetzen und Neu beginnen.',
+      'Mehr Handschrift wird angenommen: 艹 in drei Strichen in 觀, 警 und 護; 充, 流 und 育 mit dem Punkt für sich; der obere Teil von 王 in 聽 tief geschrieben.',
+      'Der Tab Fortschritt zeigt „Wird geladen…“, während er zählt.',
+    ],
+  },
+  {
     id: '2026-10-31-2',
     items: [
       'Choosing the deck to study is shorter: the decks inside another are folded away, and each shows only its own name.',
