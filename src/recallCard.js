@@ -28,11 +28,13 @@ function readingParagraph(className, text) {
 
 // cardFace: the element that shows the card (see index.html)
 //
-// Returns { start, stop }.
+// Returns { start, stop, pause, resume }.
 export function createRecallCard(cardFace) {
   // What the card on screen needs; null when this kind of card isn't showing.
   let current = null;
   let revealed = false;
+  // The card set aside by pause() (see toneFlow.js), brought back by resume().
+  let held = null;
   // The tap that showed the answer is not also the tap that moves on
   // (freshTap.js).
   const taps = freshTaps(cardFace);
@@ -92,6 +94,7 @@ export function createRecallCard(cardFace) {
     //                 the answer refills the face, which takes it away.
     start(options) {
       current = options;
+      held = null;
       revealed = false;
       const text = options.word[options.script];
       // A sentence is shown smaller than a word, so that it fits.
@@ -119,6 +122,21 @@ export function createRecallCard(cardFace) {
 
     stop() {
       current = null;
+    },
+
+    // Sets the card on screen aside while its face shows something else
+    // (Review going back to the card before), and brings it back.
+    pause() {
+      held = current;
+      current = null;
+    },
+
+    resume() {
+      if (held) {
+        current = held;
+        held = null;
+        taps.mark();
+      }
     },
   };
 }

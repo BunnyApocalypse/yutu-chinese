@@ -585,13 +585,28 @@ describe('grading in Review', { concurrency: false }, () => {
     assert.ok(saved.due < Date.now() + 60 * 60 * 1000, 'a forgotten card should come back within the hour');
     assert.equal(saved.fsrsState.lapses, 1);
 
-    // The card on screen is the other word, and once a stroke is drawn ‹
-    // stays on it.
+    // The card on screen is the other word. Begun, ‹ still goes back, and
+    // coming forward finds it as it was left (the owner, 2026-10-31): the
+    // stroke drawn is still there, and the rest finishes it.
     await waitForFirstStroke();
     assert.equal(await page.evaluate(`document.getElementById('prompt-meaning').textContent`), other === '大' ? 'big' : 'small');
     const area = await writingArea(page);
-    await drawStroke(page, area, loadStrokeData(other).medians[0]);
-    assert.ok(await page.evaluate(`document.getElementById('back-button').classList.contains('unavailable')`));
+    const { medians } = loadStrokeData(other);
+    await drawStroke(page, area, medians[0]);
+    const drawnStrokes = `document.querySelectorAll('#writing-area .drawn-strokes path').length`;
+    assert.equal(await page.evaluate(drawnStrokes), 1);
+    assert.ok(!(await page.evaluate(`document.getElementById('back-button').classList.contains('unavailable')`)));
+    await tap(page, 'back-button');
+    await waitUntil(page, `document.getElementById('card-type').textContent === 'Writing · 1 back'`, 'the card before');
+    await tap(page, 'past-forward-button');
+    await waitUntil(page, `document.getElementById('card-type').textContent === 'Writing'`, 'the card left');
+    assert.equal(await page.evaluate(drawnStrokes), 1);
+    assert.equal(await page.evaluate(`document.getElementById('prompt-meaning').textContent`), other === '大' ? 'big' : 'small');
+    for (const median of medians.slice(1)) {
+      await drawStroke(page, area, median);
+    }
+    await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
+    assert.equal(await page.evaluate(SUGGESTED), 'Good');
   });
 
   it('changes a character\'s verdict on a card looked back at from the end of Review', async () => {
@@ -760,6 +775,15 @@ describe('grading in Review', { concurrency: false }, () => {
     assert.deepEqual(review.passedPerChar, [true, false]);
     assert.equal(review.grade, 1);
     assert.equal(await page.evaluate(`document.querySelector('#grade-row .grade[aria-pressed="true"]')?.firstChild.textContent`), 'Again');
+
+    // › brings back the tone card left, as it was, still answered by the
+    // tone buttons (toneFlow's pause and resume).
+    await tap(page, 'past-forward-button');
+    await waitUntil(page, `document.getElementById('card-type').textContent === 'Tone'`, 'the card left');
+    assert.equal(await textOf(page, 'status'), 'Which tone?');
+    assert.ok(await page.evaluate(`document.querySelector('#card-face #tone-back-button')`));
+    await page.evaluate(`document.querySelector('#tone-buttons [data-tone="4"]').click()`);
+    await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the tone answered');
   }
 
   it('goes on with a tap after practicing a character gone back to, the word unfinished', async () => {

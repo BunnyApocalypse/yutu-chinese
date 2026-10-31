@@ -186,10 +186,6 @@ export function createWordFlow(elements) {
   //                          hint, so that "✓ 2nd try" can say it was not
   //                          right at first (tester 2, 2026-10-17)
 
-  // True once anything has been drawn on the word (a stroke, right or
-  // wrong), for backToCard.
-  let touched = false;
-
   // Mistakes on the current character so far in this attempt, and mistakes
   // from earlier attempts at it (before Clear or Animate was pressed).
   // Starting over doesn't wipe the slate.
@@ -359,19 +355,12 @@ export function createWordFlow(elements) {
   }
 
   // Back to the card before (Review, options.backToCard; the owner,
-  // 2026-10-21): from the first character, while nothing has been done on
-  // the word, so that coming back to it loses nothing.
+  // 2026-10-21): from the first character, where ‹ has no character to go
+  // back to. Also once begun (the owner, 2026-10-31: "it shouldn't wipe and
+  // it shouldn't ask"): Review sets this card aside as it is and brings it
+  // back on coming forward again.
   function canGoBackACard() {
-    return (
-      Boolean(options.backToCard) &&
-      position === 0 &&
-      !touched &&
-      !charDone &&
-      !finishedPerChar.some(Boolean) &&
-      !peekedPerChar[0] &&
-      !hintPerChar[0] &&
-      !quiz.hintShownNow()
-    );
+    return Boolean(options.backToCard) && backTarget() === -1;
   }
 
   function canGoBack() {
@@ -483,10 +472,6 @@ export function createWordFlow(elements) {
     },
     onProgress({ strokesDone, totalStrokes, totalMistakes }) {
       currentMistakes = totalMistakes;
-      if (!touched && !practicing) {
-        touched = true;
-        showArrows();
-      }
       // While the last stroke's completion is being reported, onComplete takes over.
       showProgress(Math.min(strokesDone + 1, totalStrokes), totalStrokes, strokesDone > 0 || totalMistakes > 0);
     },
@@ -897,9 +882,9 @@ export function createWordFlow(elements) {
     //                  finished
     //   onContinue():  Next was pressed, or the writing area tapped, after the
     //                  word was finished
-    //   backToCard():  the ‹ arrow on the first character, while nothing has
-    //                  been done on the word, goes back to the card before
-    //                  (Review; see canGoBackACard)
+    //   backToCard():  the ‹ arrow on the first character goes back to the
+    //                  card before (Review, which keeps this one as it is;
+    //                  see canGoBackACard)
     async start(text, newOptions) {
       // Array.from splits text into whole characters. (Plain text.split('')
       // would cut some rare characters in half.) Spaces are dropped.
@@ -948,7 +933,6 @@ export function createWordFlow(elements) {
       finishedPerChar = [];
       retriesPerChar = [];
       drawingPerChar = [];
-      touched = false;
       await showCurrentCharacter();
       return true;
     },

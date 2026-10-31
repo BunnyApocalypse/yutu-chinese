@@ -570,10 +570,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
               return false;
             }
             options = null;
-            lookingBack = null;
             await suspend(word, type);
+            leavePast();
             showNotice(t('review.suspendedCard', { kind: kindName(type), word: word[scriptFor(word, settings)] }));
-            showNext();
             return true;
           },
           async startOver() {
@@ -589,16 +588,27 @@ export function createReview(elements, flows, settings, editWord, showWord, note
               return false;
             }
             options = null;
-            lookingBack = null;
             // Its review can't be corrected once the card is gone.
             graded = graded.filter((entry) => entry !== past);
             await startOver(word, type);
+            leavePast();
             showNotice(t('review.startedOver', { kind: kindName(type), word: word[scriptFor(word, settings)] }));
-            showNext();
             return true;
           },
         };
     showWord(word, thisCard);
+  }
+
+  // After Suspend or Start over: the card left when looking back, if any,
+  // otherwise the next card.
+  function leavePast() {
+    if (lookingBack !== null && left) {
+      bringBack(left);
+      return;
+    }
+    lookingBack = null;
+    left = null;
+    showNext();
   }
 
   // "Edit word", shown with the grades: a mistake in a word is usually
@@ -758,8 +768,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   // ---- Looking back at cards already graded ----
   //
-  // The ‹ arrow on a card not yet touched goes back to the cards graded
-  // before it in this sitting of Review, the newest first, up to
+  // The ‹ arrow on a card goes back to the cards graded before it in this
+  // sitting of Review, the newest first, up to
   // LOOK_BACK_LIMIT (the owner, 2026-10-21: "the last 10 or so cards I've
   // studied should be able to be kept and I should be able to go back and
   // change my grading"). One looked back at shows how it was answered
@@ -777,8 +787,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // came back): then its grade stays.
   //
   // ›, a tap on the face, or a grade goes on: to the card after, and from
-  // the newest back to Review, which shows the next card afresh. Kept in
-  // memory only, for as long as the page is open.
+  // the newest back to the card left, as it was left (setAside): a
+  // character half written, tones given, an answer shown and its grades
+  // (the owner, 2026-10-31: "it shouldn't wipe and it shouldn't ask"). From
+  // the end of Review, back to the end. Kept in memory only, for as long as
+  // the page is open.
   const LOOK_BACK_LIMIT = 10;
   // A tap on the face goes on only with a touch begun after the card looked
   // back at came up, not the one that brought it (freshTap.js).
@@ -788,9 +801,14 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   let graded = [];
   // Which of them is on screen, or null.
   let lookingBack = null;
+  // The card ‹ was tapped on, set aside to come back to (setAside), or null.
+  let left = null;
   // At the end of Review, where there is no card to tap ‹ on.
   const lookBackButton = document.getElementById('look-back-button');
-  lookBackButton.addEventListener('click', () => lookBackAt(graded.length - 1));
+  lookBackButton.addEventListener('click', () => {
+    left = null;
+    lookBackAt(graded.length - 1);
+  });
 
   function remember(entry) {
     graded = [...graded, entry].slice(-LOOK_BACK_LIMIT);
@@ -800,8 +818,64 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // where there is none, and not in a lesson, Free practice or Learn.
   function backToCard() {
     return mode === 'review' && !practicing && lesson === null && graded.length > 0
-      ? () => lookBackAt(graded.length - 1)
+      ? () => {
+          left = setAside();
+          lookBackAt(graded.length - 1);
+        }
       : null;
+  }
+
+  // The parts of the study area whose contents looking back replaces, and
+  // those it only shows or hides. The writing area is in writingRow, which
+  // is only hidden, so a character half written stays as it is, Hanzi
+  // Writer and all.
+  const refilledParts = [typeElement, meaningElement, pinyinElement, cardFace, gradeRow, noticeElement, scriptFlag];
+  const hiddenParts = [
+    pinyinButton, wordRow, statusRow, writingRow, writingButtons, toneButtonRow, practiceAgainButton,
+    verdictRow, strokeCountElement, editWordButton, aboutWordButton, leechTag, cardAboutButton, listenButton, studyArea,
+  ];
+
+  // Sets the card on screen aside as it is, for bringBack: what it was
+  // answered and its grades, and its parts of the page themselves (the same
+  // elements, moved out, so that what listens to them still does). The tone
+  // and recall flows keep their card meanwhile, ignoring taps (pause).
+  function setAside() {
+    flows.tone.pause();
+    flows.recall.pause();
+    // Its time stops while away, and goes on when it is back.
+    stopwatch.pause();
+    return {
+      card: { current, options, finishedAt, suggested, answerDetails, gradesAway },
+      practiceAgainText: practiceAgainButton.textContent,
+      contents: refilledParts.map((element) => ({ element, nodes: [...element.childNodes], className: element.className, hidden: element.hidden })),
+      shown: hiddenParts.map((element) => ({ element, className: element.className, hidden: element.hidden })),
+      aboutIn: cardAboutButton.parentNode,
+    };
+  }
+
+  // Puts the card set aside back on screen as it was left.
+  function bringBack(saved) {
+    lookingBack = null;
+    left = null;
+    ({ current, options, finishedAt, suggested, answerDetails, gradesAway } = saved.card);
+    for (const { element, nodes, className, hidden } of saved.contents) {
+      element.replaceChildren(...nodes);
+      element.className = className;
+      element.hidden = hidden;
+    }
+    for (const { element, className, hidden } of saved.shown) {
+      element.className = className;
+      element.hidden = hidden;
+    }
+    practiceAgainButton.textContent = saved.practiceAgainText;
+    // "About this word" lies over the writing area's edge on a writing card;
+    // on the others it was on the face, and came back with it.
+    if (saved.aboutIn && saved.aboutIn !== cardAboutButton.parentNode) {
+      saved.aboutIn.append(cardAboutButton);
+    }
+    flows.tone.resume();
+    flows.recall.resume();
+    stopwatch.resume();
   }
 
   function lookBackAt(index) {
@@ -816,8 +890,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     hideGrades();
     endLesson();
     showNotice('');
-    // The card left is shown afresh on coming back: its time starts again.
-    stopwatch.stop();
+    // A card left (setAside) keeps its time, paused; from the end of Review
+    // there is none.
+    if (!left) {
+      stopwatch.stop();
+    }
     current = { word: entry.word, type: entry.type, card: entry.card };
     const back = graded.length - index;
     // Short: "Sentence · writing · the card before" took two lines on a phone.
@@ -958,6 +1035,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   function lookForward() {
     if (lookingBack !== null && lookingBack < graded.length - 1) {
       lookBackAt(lookingBack + 1);
+      return;
+    }
+    if (left) {
+      bringBack(left);
       return;
     }
     lookingBack = null;
@@ -1383,6 +1464,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // main.js, since it works for any characters, not only words in the list.)
   function practice(word, type) {
     lookingBack = null;
+    left = null;
     stopFlows();
     hideGrades();
     if (type === 'tone' && toneAnswersOf(word) === null) {
@@ -2479,6 +2561,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     showNextCalls += 1;
     clearTimeout(recheckTimer);
     lookingBack = null;
+    left = null;
     if (!active) {
       return;
     }
@@ -2766,6 +2849,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     // Leaves the page ready for Free practice, which uses the writing parts.
     deactivate() {
       lookingBack = null;
+      left = null;
       setFocus(false);
       page.classList.remove('learning');
       countsRow.hidden = false;

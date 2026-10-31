@@ -73,12 +73,15 @@ function exampleMarks() {
 //   onWhatAreTones (called by "What are tones?" on the card: main.js opens
 //   "Basics of Chinese" at its screen on tones)
 //
-// Returns { start, stop }.
+// Returns { start, stop, pause, resume }.
 export function createToneFlow(elements) {
   const { cardFace, wordRow, statusElement, toneButtons, onWhatAreTones } = elements;
 
   // What the card on screen needs; null when no tone card is showing.
   let current = null;
+  // The card set aside by pause(), while Review looks back at cards graded
+  // before it; resume() brings it back as it was.
+  let held = null;
   let chars = [];
   let position = 0;
   // One entry per character answered so far: the tone given, and whether it
@@ -127,9 +130,10 @@ export function createToneFlow(elements) {
   tonesLink.addEventListener('click', () => onWhatAreTones());
 
   // Back to the card before (Review, options.backToCard): from the first
-  // character, before any tone has been given or skipped.
+  // character, also once tones were given (Review keeps this card as it is,
+  // pause()).
   function canGoBackACard() {
-    return Boolean(current?.backToCard) && position === 0 && givenTones.length === 0 && skippedPerChar.length === 0;
+    return Boolean(current?.backToCard) && position === 0;
   }
 
   function showArrows() {
@@ -546,10 +550,11 @@ export function createToneFlow(elements) {
     //   onVerdictChange({ givenTones, passedPerChar, variantPerChar }):
     //            optional; a box was tapped after onDone, overruling a verdict
     //   onContinue(): the card was tapped after that
-    //   backToCard(): optional; the ‹ arrow on the first character, before
-    //            anything is answered, goes back to the card before (Review)
+    //   backToCard(): optional; the ‹ arrow on the first character goes
+    //            back to the card before (Review)
     start(options) {
         current = options;
+      held = null;
       // Lets the style sheet stop the page from scrolling under a drawing finger.
       cardFace.classList.add('drawable');
       chars = Array.from(options.word[options.script]);
@@ -578,6 +583,26 @@ export function createToneFlow(elements) {
       drawing = null;
       cardFace.classList.remove('drawable');
       current = null;
+    },
+
+    // Sets the card on screen aside, with all that was answered on it,
+    // while its face shows something else (Review going back to the card
+    // before it; the owner, 2026-10-31: "it shouldn't wipe"). Taps and keys
+    // are ignored meanwhile, as with no card. Review keeps the face's
+    // contents and puts them back before resume().
+    pause() {
+      held = current;
+      current = null;
+      drawing = null;
+    },
+
+    resume() {
+      if (held) {
+        current = held;
+        held = null;
+        // The tap that brought it back doesn't also move on.
+        taps.mark();
+      }
     },
   };
 }
