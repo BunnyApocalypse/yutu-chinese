@@ -378,6 +378,8 @@ byId('learn-next-button').addEventListener('click', () => {
     setMode('learn');
   }
 });
+// At the end of today's words in Learn: on to Review, where their cards now are.
+byId('review-now-button').addEventListener('click', () => setMode('review'));
 // Review or Learn with no words (or none left to learn): words are added in Decks.
 byId('add-words-button').addEventListener('click', () => setMode('decks'));
 // With no words at all, Review and Learn offer a ready-made level to start
@@ -957,6 +959,9 @@ async function startUp() {
       skipLessonButton: byId('skip-lesson-button'),
       lessonNextButton: byId('lesson-next-button'),
       learnNextButton: byId('learn-next-button'),
+      reviewNowButton: byId('review-now-button'),
+      learnStrip: byId('learn-strip'),
+      learnedPill: byId('learned-pill'),
       addWordsButton: byId('add-words-button'),
       startLevelButton: byId('start-level-button'),
       otherLevelButton: byId('other-level-button'),

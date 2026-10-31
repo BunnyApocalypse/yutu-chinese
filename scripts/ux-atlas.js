@@ -387,19 +387,29 @@ async function walk(page, sizeName, size, shots) {
         await tap(page, 'next-button');
       }
       await waitUntil(page, `!document.getElementById('card-type').textContent.endsWith(${JSON.stringify(match[0])})`, 'the next step');
+      // The next word has come (with its pill): this word's lesson is over.
+      if (await isShownNow('learned-pill')) {
+        break;
+      }
     }
-    await waitUntil(page, `!document.getElementById('learn-next-button').hidden`, 'the screen between two words');
-    await shoot('15-learn-between', 'Learn, between two words (and the message about storage)');
-    await page.evaluate(`document.getElementById('storage-message-close')?.click()`);
+    // No stop between two words: the next one comes at once, with a pill
+    // saying the one before is learned.
+    await waitUntil(page, `!document.getElementById('learned-pill').hidden`, 'the next word, with the pill');
+    await shoot('15-learn-next-word', 'Learn: the next word at once, the word before learned (the pill)');
     // Four more words marked known, so that Review has several words' cards
-    // (the cards of one word hold each other back for a while).
-    await tap(page, 'learn-next-button');
+    // (the cards of one word hold each other back for a while). A word
+    // skipped leaves its place to the next, so opening Learn again, with
+    // today's five learned, brings the summary.
     for (let skipped = 0; skipped < 4; skipped++) {
       await waitUntil(page, `document.getElementById('card-type').textContent.includes('step 1 of')`, 'the next word');
       const before = await page.evaluate(`document.getElementById('card-face').textContent`);
       await tap(page, 'skip-lesson-button');
       await waitUntil(page, `document.getElementById('card-face').textContent !== ${JSON.stringify(before)}`, 'the word skipped');
     }
+    await openLearn(page);
+    await waitUntil(page, `!document.getElementById('review-now-button').hidden`, "the end of today's words");
+    await shoot('15-learn-summary', "Learn, the end of today's words (and the message about storage)");
+    await page.evaluate(`document.getElementById('storage-message-close')?.click()`);
   });
 
   // Review: one card of each kind. Only the cards of that kind are made

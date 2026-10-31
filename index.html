@@ -99,6 +99,11 @@
         <!-- Which kind of card this is: Writing, Tone, Pinyin or Meaning -->
         <div class="type-row">
           <p id="card-type" class="card-type"></p>
+          <!-- In Learn: today's words, learned, the one being learned (with
+               the lesson's steps under it) and those to come (review.js,
+               "Today's words in Learn"). It takes the kind of card's place,
+               which is then kept for screen readers only. -->
+          <div id="learn-strip" class="learn-strip" role="img" hidden></div>
           <!-- Beside the kind of card, on one that keeps being forgotten, once
                it is answered (review.js; the owner, 2026-10-26: a note under
                the grades made the page scroll). A tap opens the word's page
@@ -181,6 +186,9 @@
         <div id="done-message" role="status"></div>
         <!-- In Learn, between two words: on to the next one; in Review, with
              nothing due and words waiting: to Learn (review.js, main.js). -->
+        <!-- At the end of today's words in Learn: Review, where their cards
+             now are (review.js, main.js). -->
+        <button id="review-now-button" class="primary" type="button" hidden data-t="review.reviewNow"></button>
         <button id="learn-next-button" class="primary" type="button" hidden data-t="review.learnNextButton"></button>
         <!-- At the end of Review: today's cards again, as practice; at the
              end of that, all cards; and back to Review (review.js, "Practice
@@ -723,6 +731,12 @@
            it without moving there. -->
       <div class="streak-pill-place" role="status">
         <button id="streak-pill" class="streak-pill" type="button" hidden><span aria-hidden="true">🌕🐇 </span><span id="streak-pill-text"></span><span aria-hidden="true"> ✨</span></button>
+      </div>
+
+      <!-- In Learn, the word just learned, over the next word's first look
+           while it comes up; gone by itself (review.js). -->
+      <div class="learned-pill-place" role="status">
+        <p id="learned-pill" class="learned-pill" hidden></p>
       </div>
 
       <!-- Once each study day that enough was studied for the streak, at a

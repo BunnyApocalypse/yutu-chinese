@@ -28,7 +28,7 @@ import {
 } from './session.js';
 import { toneAnswers, readingsFor, describeReading } from './tones.js';
 import { scriptFor, scriptFlagFor } from './words.js';
-import { fillMixed, fillReading } from './lang.js';
+import { fillMixed, fillReading, langFor } from './lang.js';
 import { readingStyle } from './readingStyle.js';
 import { meaningWithoutChinese } from './dictionary.js';
 
@@ -92,6 +92,7 @@ const RECHECK_MS = 15 * 1000;
 //   gradeRow, verdictRow, practiceAgainButton, editWordButton, leechTag, donePanel, doneMessage, studyArea, scriptFlag,
 //   lessonNote, skipLessonButton, lessonNextButton, learnNextButton, addWordsButton,
 //   startLevelButton, otherLevelButton, lessonBackButton, countsRow,
+//   reviewNowButton, learnStrip, learnedPill,
 //   and the parts of the study area that differ per kind of card:
 //   wordRow, statusRow, strokeCountElement, writingRow, writingButtons, cardFace,
 //   toneButtonRow
@@ -140,6 +141,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     otherLevelButton,
     lessonBackButton,
     countsRow,
+    reviewNowButton,
+    learnStrip,
+    learnedPill,
     wordRow,
     statusRow,
     strokeCountElement,
@@ -302,6 +306,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     verdictRow.hidden = true;
     // A sentence's writing card has its sentence under the meaning (showMeaning).
     meaningElement.classList.remove('with-sentence');
+    // Made invisible at a new word's first look (showLessonStep).
+    meaningElement.classList.remove('ghost');
+    pinyinElement.classList.remove('ghost');
   }
 
   // Above the card: a note if this word is in another script than the rest
@@ -1437,6 +1444,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     // owner, 2026-10-18).
     const kind = t(current.repeating ? 'review.repeatLesson' : isRadical(word) ? 'review.newRadical' : 'review.newWord');
     typeElement.textContent = t('review.lessonStep', { kind, step: lesson.index + 1, steps: lesson.steps.length });
+    // In Learn, today's words take its place (showStrip).
+    showStrip();
+    if (step !== 'meet') {
+      hideLearnedPill();
+    }
     const note = step === 'test' && current.learning ? 'learnTest' : step === 'meet' && current.repeating ? 'meetAgain' : step;
     lessonNote.textContent = t(LESSON_NOTES[note]);
     lessonNote.hidden = false;
@@ -1467,11 +1479,14 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         hideMistakes: !settings.mistakeCount,
         hideOutline: true,
         freshRestart: true,
-        continueLabel: t('review.done'),
+        // "Next word" while today's words go on (no stop between two words),
+        // "Done" before the end of them.
+        continueLabel: t(isLastOfBatch() ? 'review.done' : 'review.nextWord'),
         judgeChar: (facts) => judgeChar({ ...facts, hintCountsAs: settings.hintCountsAs }),
         onCharStart: () => putToolsAway(false),
         onWordDone() {
           showPinyin();
+          learnStrip.querySelector('.current')?.classList.remove('asking');
           putToolsAway(true);
           speakAfterStep();
         },
@@ -1480,11 +1495,17 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     }
 
     if (step === 'meet') {
-      // The word, its reading and its meaning, on the card's face.
-      meaningElement.textContent = '';
-      pinyinElement.hidden = true;
+      // The word, its reading and its meaning, on the card's face. Above it
+      // the meaning and the reading are there too, but invisible ("ghost"),
+      // so that they take the same room as in the next steps and the card
+      // sits exactly where the writing area will (the owner, 2026-10-31:
+      // the card jumped down at step 2, by 75px on a 390×844 phone).
       pinyinButton.hidden = true;
       showPartsFor('meaning');
+      meaningElement.textContent = word.definition;
+      showPinyin();
+      meaningElement.classList.add('ghost');
+      pinyinElement.classList.add('ghost');
       const face = (className, text) => {
         const element = document.createElement('p');
         element.className = className;
@@ -1620,9 +1641,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // "I know this word": the lesson is skipped altogether. Each of the word's
   // cards that is still new is answered "Easy" (markedKnown in
   // cardManager.js), the word counts as learned, and the next one comes. In
-  // the Learn tab the next word starts at once, without the stop that says
-  // how the day stands: someone going through a list they half know would
-  // otherwise be stopped at every word.
+  // the Learn tab the next word starts at once, without the pill, and takes
+  // the known word's place among today's words (the strip): someone going
+  // through a list they half know is not stopped by the summary every few
+  // words. It still counts in "learned today".
   skipLessonButton.addEventListener('click', async () => {
     // (Not offered in a lesson repeated, which saves nothing.)
     if (!lesson || !current || current.repeating) {
@@ -1649,9 +1671,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     endLesson();
     if (learning) {
       justLearned = null;
-      const { learnedToday, waiting } = learnCounts();
-      countsElement.textContent = t('review.learnCounts', { learned: learnedToday, goal: goalForToday(), waiting });
-      startNextWord();
+      showNextToLearn();
     } else {
       showNext();
     }
@@ -1665,8 +1685,216 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // "new words per day" setting is a goal, shown as progress; one can go on
   // past it.
 
-  // The word just learned, for the screen between two words; null otherwise.
+  // The word just learned, for the pill over the next word; null otherwise.
   let justLearned = null;
+
+  // ---- Today's words in Learn ----
+  //
+  // The owner, 2026-10-31, from mockups (option C of the review of the
+  // Learn flow): today's words are one sitting. A word's lesson ends with
+  // "Next word", and the next word's first look comes at once, with a pill
+  // saying the word before is learned; there is no screen between two words.
+  // The top line shows today's words (showStrip). At the day's goal (or
+  // when no word is left) a summary lists them, with "Review them now" and
+  // "Learn 5 more" (showSummary).
+
+  // The sitting: how many words it has (`size`) and the IDs of those
+  // learned so far, in order. Made when Learn opens (firstBatch), again at
+  // "Learn 5 more"; null until then.
+  let batch = null;
+  // How many more "Learn 5 more" offers when the goal is 0.
+  const LEARN_MORE_WITHOUT_GOAL = 5;
+  // How long the pill stays, in milliseconds.
+  const LEARNED_PILL_MS = 3000;
+
+  // The sitting on opening Learn: the words already learned today, then as
+  // many as the goal still asks for (or as are left to learn).
+  function firstBatch(learnedToday, waiting, goal) {
+    const dayStart = startOfStudyDay(Date.now());
+    const today = studyWords()
+      .filter((word) => !isSentence(word) && word.learnedAt >= dayStart)
+      .sort((a, b) => a.learnedAt - b.learnedAt);
+    const left = Math.min(Math.max(0, goal - learnedToday), waiting);
+    return { size: today.length + left, ids: today.map((word) => word.id), first: true };
+  }
+
+  // How many words "Learn 5 more" offers.
+  function moreToLearn(waiting) {
+    return Math.min(goalForToday() || LEARN_MORE_WITHOUT_GOAL, waiting);
+  }
+
+  // True if the word on screen is the last of the sitting: its lesson ends
+  // with "Done" rather than "Next word".
+  function isLastOfBatch() {
+    if (!batch || !current?.learning) {
+      return true;
+    }
+    return batch.ids.length + 1 >= batch.size || learnCounts().waiting <= 1;
+  }
+
+  // The words of the sitting learned so far.
+  function batchWords() {
+    return batch ? batch.ids.map((id) => words.find((word) => word.id === id)).filter(Boolean) : [];
+  }
+
+  // The top line in Learn: today's words in small boxes, learned (green),
+  // the one on screen (edged, with a bar of the lesson's steps under it) and
+  // those to come (empty). It takes the place of "New word · step 2 of 5",
+  // which is kept for screen readers. The current word's characters are
+  // left out while it is written from memory (the owner, 2026-10-31: they
+  // would give the answer away); its box keeps its width. Three looks, the
+  // first that fits the width (data-look, style.css): "words", every word;
+  // "squares", only the current word written, the others small squares (a
+  // goal of 10, or long words); "count", "12/20" beside the current word.
+  // Not in Review, nor in a lesson repeated.
+  function showStrip() {
+    const shown = Boolean(batch && lesson && current?.learning && mode === 'learn');
+    learnStrip.hidden = !shown;
+    typeElement.classList.toggle('for-screen-readers', shown);
+    if (!shown) {
+      return;
+    }
+    const box = (kind, word) => {
+      const element = document.createElement('span');
+      element.className = `learn-chip ${kind}`;
+      if (word) {
+        const script = scriptFor(word, settings);
+        const text = document.createElement('span');
+        text.className = 'chip-word';
+        text.lang = langFor(script);
+        text.textContent = word[script];
+        element.append(text);
+      }
+      return element;
+    };
+    const now = box('current', current.word);
+    now.classList.toggle('asking', lesson.steps[lesson.index] === 'test');
+    const bar = document.createElement('span');
+    bar.className = 'chip-steps';
+    for (let index = 0; index < lesson.steps.length; index++) {
+      const part = document.createElement('span');
+      part.classList.toggle('done', index <= lesson.index);
+      bar.append(part);
+    }
+    now.append(bar);
+    const size = Math.max(batch.size, batch.ids.length + 1);
+    const count = document.createElement('span');
+    count.className = 'chip-count';
+    count.textContent = `${batch.ids.length + 1}/${size}`;
+    learnStrip.replaceChildren(
+      count,
+      ...batchWords().map((word) => box('learned', word)),
+      now,
+      ...Array.from({ length: size - batch.ids.length - 1 }, () => box('to-come')),
+    );
+    learnStrip.setAttribute('aria-label', t('review.todaysWords', { learned: batch.ids.length, size }));
+    // (A pixel allowed for rounding.)
+    for (const look of ['words', 'squares', 'count']) {
+      learnStrip.dataset.look = look;
+      if (learnStrip.scrollWidth <= learnStrip.clientWidth + 1) {
+        break;
+      }
+    }
+  }
+
+  // The pill over the next word's first look: "✓ 我們 learned · 2 of 5". It
+  // floats under the top line, over the meaning and reading kept invisible
+  // there (showLessonStep), so nothing moves; gone after a few seconds or
+  // at the next step.
+  let pillTimer = 0;
+  function showLearnedPill(word) {
+    if (!word || !batch) {
+      hideLearnedPill();
+      return;
+    }
+    clearTimeout(pillTimer);
+    const script = scriptFor(word, settings);
+    const text = document.createElement('span');
+    fillMixed(
+      text,
+      t('review.learnedPill', { word: word[script], learned: batch.ids.length, size: Math.max(batch.size, batch.ids.length) }),
+      script,
+    );
+    const tick = document.createElement('span');
+    tick.className = 'pill-tick';
+    tick.setAttribute('aria-hidden', 'true');
+    tick.textContent = '✓ ';
+    learnedPill.replaceChildren(tick, text);
+    learnedPill.hidden = false;
+    pillTimer = setTimeout(hideLearnedPill, LEARNED_PILL_MS);
+  }
+
+  function hideLearnedPill() {
+    clearTimeout(pillTimer);
+    learnedPill.hidden = true;
+  }
+
+  // The end of today's words: the goal reached, or no word left to learn.
+  // The words of the sitting (a tap opens a word's page), the streak, and
+  // "Review them now" (the main button: their cards are in Review now; the
+  // owner, 2026-10-31) and "Learn 5 more". No "Done for today": the way
+  // back is in the top bar (the owner).
+  function showSummary(learnedToday, waiting, goal) {
+    showLearnMessage('', false, waiting === 0);
+    // The card's empty rows above are put away (style.css), or the summary
+    // starts a third of the way down.
+    page.classList.add('learn-summary');
+    const goalReached = goal > 0 && learnedToday >= goal;
+    const heading = document.createElement('h2');
+    heading.className = 'done-heading';
+    heading.textContent = t(goalReached ? 'review.summaryGoal' : 'review.summaryAllLearned');
+    const parts = [heading];
+    const line = (text, className) => {
+      const element = document.createElement('p');
+      element.textContent = text;
+      if (className) {
+        element.className = className;
+      }
+      return element;
+    };
+    if (goalReached && waiting === 0) {
+      parts.push(line(t('review.noMoreWaiting')));
+    }
+    const list = document.createElement('ul');
+    list.className = 'learned-list';
+    for (const word of batchWords()) {
+      const script = scriptFor(word, settings);
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'learned-word';
+      const characters = document.createElement('span');
+      characters.className = 'learned-characters';
+      characters.lang = langFor(script);
+      characters.textContent = word[script];
+      const reading = document.createElement('span');
+      reading.className = 'learned-reading';
+      fillReading(reading, describeReading(readingOf(word)).main);
+      const meaning = document.createElement('span');
+      meaning.className = 'learned-meaning';
+      fillWithoutChinese(meaning, word);
+      button.append(characters, reading, meaning);
+      button.addEventListener('click', () => showWord(word));
+      const item = document.createElement('li');
+      item.append(button);
+      list.append(item);
+    }
+    parts.push(list);
+    const streak = settings.streaks ? streakLine(streakNow(Date.now()), streakGoal()) : '';
+    if (streak) {
+      parts.push(line(streak, 'done-streak'));
+    }
+    parts.push(line(t('review.summaryCards'), 'done-next'));
+    doneMessage.replaceChildren(...parts);
+    reviewNowButton.hidden = false;
+    const more = moreToLearn(waiting);
+    learnNextButton.textContent = t('review.learnMore', { count: more });
+    learnNextButton.classList.remove('primary');
+    learnNextButton.hidden = waiting === 0;
+    // "Add words" when none is left, beside the main button.
+    addWordsButton.classList.remove('primary');
+    // The moment for the message about long-term storage (storageMessage.js).
+    document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'learned' }));
+  }
 
   // True if the word's writing was taught in the Learn tab, so that its new
   // writing card in Review needs no lesson: the word was learned there
@@ -1692,6 +1920,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     await putAll('words', [learned]);
     words = words.map((word) => (word.id === learned.id ? learned : word));
     justLearned = learned;
+    batch?.ids.push(learned.id);
     showNext();
     noteStreak();
   }
@@ -1734,23 +1963,30 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     current = null;
     setFocus(false);
     offerListen(false);
+    hideLearnedPill();
+    page.classList.remove('learn-summary');
     studyArea.hidden = true;
     typeElement.textContent = '';
+    showStrip();
     doneMessage.textContent = message;
     learnNextButton.textContent = t('review.learnNextButton');
+    learnNextButton.classList.add('primary');
     learnNextButton.hidden = !canGoOn;
+    reviewNowButton.hidden = true;
     offerAdding(canAdd);
     lessonBackButton.hidden = true;
     donePanel.hidden = false;
   }
 
   async function startNextWord() {
+    const learned = justLearned;
     justLearned = null;
     const word = nextToLearn(studyWords(), cards);
     if (!word) {
       showNextToLearn();
       return;
     }
+    showLearnedPill(learned);
     current = { word, type: 'writing', card: null, learning: true };
     stopwatch.start();
     setFocus(true);
@@ -1767,8 +2003,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   }
 
   // In Review the same button opens Learn (main.js does that).
+  // In Learn, "Learn 5 more" at the end of today's words starts another
+  // sitting of that many.
   learnNextButton.addEventListener('click', () => {
     if (mode === 'learn') {
+      batch = { size: moreToLearn(learnCounts().waiting), ids: [] };
       startNextWord();
     } else if (mode === 'lesson') {
       startRepeat();
@@ -1811,35 +2050,21 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     lessonBackButton.hidden = false;
   }
 
-  // What the Learn tab shows: the next word's lesson or, between two words
-  // and when there is nothing to learn, a message.
+  // What the Learn tab shows: the next word's lesson or, at the end of
+  // today's words and when there is nothing to learn, the summary or a
+  // message.
   function showNextToLearn() {
     const { learnedToday, waiting } = learnCounts();
     const goal = goalForToday();
     countsElement.textContent = t('review.learnCounts', { learned: learnedToday, goal, waiting });
-    // The end of today's words: the goal reached, or nothing left to learn.
-    atEnd = waiting === 0 || learnedToday >= goal;
-    const progress =
-      learnedToday >= goal && goal > 0
-        ? t('review.goalReached', { learned: learnedToday, goal })
-        : t('review.learnedOfGoal', { learned: learnedToday, goal });
-
-    if (justLearned) {
-      const name = justLearned[scriptFor(justLearned, settings)];
-      showLearnMessage(
-        // The count is on the line above; only reaching the goal is said here
-        // (the owner, 2026-10-18: "1 of 5 today" twice on one screen).
-        [
-          t('review.isLearned', { word: name }),
-          learnedToday >= goal && goal > 0 ? progress : '',
-          waiting === 0 ? t('review.noMoreWaiting') : '',
-        ]
-          .filter(Boolean)
-          .join(' '),
-        waiting > 0,
-      );
-      // The moment for the message about long-term storage (storageMessage.js).
-      document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'learned' }));
+    if (!batch) {
+      batch = firstBatch(learnedToday, waiting, goal);
+    }
+    const finished = batch.ids.length > 0 && (batch.ids.length >= batch.size || waiting === 0);
+    // The end of today's words: a moment for the streak screen.
+    atEnd = finished || waiting === 0 || batch.size === 0;
+    if (finished) {
+      showSummary(learnedToday, waiting, goal);
     } else if (waiting === 0) {
       showLearnMessage(
         words.length === 0
@@ -1850,8 +2075,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         false,
         words.length === 0 || !studyDeck(),
       );
-    } else if (learnedToday >= goal) {
-      showLearnMessage(progress, true);
+    } else if (batch.size === 0) {
+      // Nothing for today, with no word learned here today to list: a goal
+      // of 0, or one met by writing cards learned again in the other script.
+      showLearnMessage(t('review.goalReached', { learned: learnedToday, goal }), true);
+      learnNextButton.textContent = t('review.learnMore', { count: moreToLearn(waiting) });
     } else {
       startNextWord();
     }
@@ -1893,7 +2121,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   }
 
   // Saving the setting has the next card worked out afresh (see refresh).
-  deckSelect.addEventListener('change', () => settings.change('studyDeck', deckSelect.value));
+  // Today's words are the deck's: another deck starts afresh.
+  deckSelect.addEventListener('change', () => {
+    batch = null;
+    settings.change('studyDeck', deckSelect.value);
+  });
 
   // ---- Choosing the next card ----
 
@@ -2237,6 +2469,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     endLesson();
     hideGrades();
     learnNextButton.hidden = true;
+    learnNextButton.classList.add('primary');
+    reviewNowButton.hidden = true;
+    learnStrip.hidden = true;
+    typeElement.classList.remove('for-screen-readers');
+    page.classList.remove('learn-summary');
     offerAdding(false);
     lessonBackButton.hidden = true;
     lookBackButton.hidden = true;
@@ -2467,6 +2704,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       countsRow.hidden = mode === 'lesson';
       tappedSinceArriving = false;
       justLearned = null;
+      // Opening Learn starts today's words afresh (firstBatch).
+      batch = null;
       // Opening Review asks again how many cards to review.
       if (mode === 'review') {
         sitting = null;
@@ -2523,6 +2762,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       donePanel.hidden = true;
       startPanel.hidden = true;
       learnNextButton.hidden = true;
+      reviewNowButton.hidden = true;
+      learnStrip.hidden = true;
+      typeElement.classList.remove('for-screen-readers');
+      page.classList.remove('learn-summary');
+      hideLearnedPill();
       lookBackButton.hidden = true;
       practiceRoundButton.hidden = true;
       practiceAllButton.hidden = true;
@@ -2543,6 +2787,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
     // Works out the next card afresh, e.g. after a setting changed.
     refresh() {
+      // The goal may have changed: today's first words are worked out again
+      // ("Learn 5 more" stays as many as it said).
+      if (batch?.first) {
+        batch = null;
+      }
       showDeckChoice(); // the deck studied may have been chosen elsewhere
       return showNext();
     },

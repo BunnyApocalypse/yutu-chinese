@@ -4,7 +4,15 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
-**Handover from the session of 2026-10-31 (old notes, rework-2 to rework-4; committed on `main`, not pushed, no "What's new" entry).**
+**Handover from the session of 2026-10-31 (Learn's words as one sitting; released to `main` and `stable` with the rework below, "What's new" entry `2026-10-31`).**
+
+- **Built** (the owner, from a review of the Learn flow and mockups, option C): no screen between two words; "Next word" goes straight to the next word's first look with a pill ("✓ 大 learned · 1 of 5"); today's words in the top line in place of "New word · step 2 of 5", the current word hidden at the from-memory step, three looks for bigger goals; a summary at the goal with "Review them now" (main) and "Learn 5 more", no "Done for today"; the first look's card at the writing area's height (it jumped 37 to 75px at step 2). All in `docs/cards.md` ("Today's words are one sitting") and `docs/pitfalls.md`. "I know this word" leaves its place in the sitting to the next word, so skipping through a list is never stopped.
+- **Checked:** the writing area keeps its size at 360×640, 375×667 and 390×844 and the page doesn't scroll (`areaSize.browser.js`, `local/learn-check/measure.js`); pictures in `local/learn-check/shots/` and the atlas's new `15-learn-next-word` and `15-learn-summary`.
+- **Waiting on the owner:** how it feels in use. Not tried with a screen reader. On a tablet held sideways the pill is centered on the screen, not on the side column.
+- **Learned:** in a worktree, `node_modules` must be a real folder (`cp -al` of the main checkout's), not a link: Vite won't serve files whose real place is outside the project, so sql.js didn't load and the Anki tests failed and hung the run.
+- **Tests:** 300 unit tests and all 504 browser tests pass (15 skipped).
+
+**Handover from the session of 2026-10-31 (old notes, rework-2 to rework-4; released to `main` and `stable` with Learn's change above, in the same "What's new" entry).**
 
 - **Built (data only):** the next 300 old notes of HSK 3.0 level 2 (白色 onward, in file order) reworked as in rework-1, tagged `judged`, traditional versions by `scripts/convert-notes.js` (listed lines settled in `local/note-scripts/settle-old-2.mjs` to `-4.mjs`). Details and lessons: `local/old-notes/README.md`, "Rework-2" to "Rework-4". About 445,000, 400,000 and 380,000 tokens (about 4,000 a note).
 - **Changed (local tools):** `local/old-notes/gather.mjs` takes `--in-order` (the next untagged notes in file order); `local/study-aids/retry-list.mjs` no longer crashes on a judge's sentence number past a note's end.

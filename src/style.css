@@ -788,6 +788,128 @@ main.focused.learning .type-row #listen-button {
   justify-self: end;
 }
 
+/* In Learn, today's words in the kind of card's place (showStrip in
+   review.js; the owner, 2026-10-31). The middle column is never wider than
+   the room beside the corner's buttons, so the strip can tell when its
+   words don't fit and take a smaller look (data-look). Only with the strip:
+   "Repeat lesson · step 1 of 5" keeps the column as wide as it needs. */
+:root main.focused.learning .type-row:has(> .learn-strip:not([hidden])) {
+  grid-template-columns: minmax(48px, 1fr) minmax(0, auto) minmax(48px, 1fr);
+}
+
+.learn-strip {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-tiny);
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* A word: learned, the one on screen, or to come (empty). No taller than
+   the row (36px), so the row keeps its height. */
+.learn-chip {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 var(--space-tiny) 3px;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) / 2);
+  font-size: var(--size-small);
+  line-height: 1;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.learn-chip.learned {
+  border-color: var(--success);
+  background: var(--success-bg);
+}
+
+.learn-chip.current {
+  border: 2px solid var(--accent);
+  background: var(--selected);
+}
+
+.learn-chip.to-come {
+  border-style: dashed;
+}
+
+/* Written from memory: the characters would give the answer away. The box
+   keeps its width. */
+.learn-chip.asking .chip-word {
+  visibility: hidden;
+}
+
+/* The lesson's steps, under the word on screen: those done in the jade. */
+.chip-steps {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  bottom: 2px;
+  display: flex;
+  gap: 2px;
+}
+
+.chip-steps > span {
+  flex: 1;
+  height: 3px;
+  border-radius: 1px;
+  background: var(--border);
+}
+
+.chip-steps > span.done {
+  background: var(--accent);
+}
+
+/* "12/20", in the most compact look only. */
+.chip-count {
+  display: none;
+  margin-right: var(--space-tiny);
+  font-size: var(--size-tiny);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.learn-strip[data-look='squares'] :is(.learned, .to-come) {
+  width: 10px;
+  min-width: 10px;
+  height: 10px;
+  padding: 0;
+  border-radius: 2px;
+}
+
+.learn-strip[data-look='squares'] :is(.learned, .to-come) .chip-word {
+  display: none;
+}
+
+.learn-strip[data-look='count'] :is(.learned, .to-come) {
+  display: none;
+}
+
+.learn-strip[data-look='count'] .chip-count {
+  display: inline;
+}
+
+/* Out of sight but read by screen readers: the kind of card while the
+   strip is in its place. */
+.for-screen-readers {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 main.focused .top-bar {
   position: absolute;
   top: 6px;
@@ -969,6 +1091,61 @@ main.focused #prompt-meaning:not(.with-sentence) {
 
 .done-next {
   color: var(--muted);
+}
+
+/* At the end of today's words in Learn (showSummary in review.js): the
+   words learned, one a row; a tap opens the word's page. */
+.learned-list {
+  max-width: 28rem;
+  margin: 0 auto var(--space-large);
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-large);
+  background: var(--surface);
+  text-align: left;
+}
+
+.learned-list li + li {
+  border-top: 1px solid var(--line);
+}
+
+/* While the summary is up, the card's rows above it (empty) are put away. */
+main.learn-summary #review-header > :not(.counts-row) {
+  display: none;
+}
+
+button.learned-word {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: var(--space-medium);
+  width: 100%;
+  min-height: var(--tap-small);
+  padding: var(--space-tiny) var(--space-medium);
+  border: none;
+  border-radius: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+}
+
+.learned-characters {
+  font-size: var(--size-title);
+}
+
+.learned-reading {
+  font-size: var(--size-body);
+  color: var(--accent);
+}
+
+.learned-meaning {
+  overflow: hidden;
+  font-size: var(--size-body);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Why nothing is shown while cards wait for another card of their word. */
@@ -2265,6 +2442,47 @@ button.slot {
   from {
     opacity: 0;
     transform: translateY(-8px);
+  }
+}
+
+/* In Learn, the word just learned (showLearnedPill in review.js): under the
+   top line, over the meaning and reading kept invisible at the next word's
+   first look, so nothing moves. Like the streak pill, edged in green. */
+.learned-pill-place {
+  position: fixed;
+  top: calc(6px + var(--top-bar) + var(--space-small));
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.learned-pill {
+  display: flex;
+  align-items: center;
+  min-height: calc(var(--top-bar) - 2 * var(--space-tiny));
+  margin: 0;
+  padding: 0 var(--space-medium);
+  border: 1px solid var(--success);
+  border-radius: var(--radius-round);
+  background: var(--raised);
+  color: var(--text);
+  font-size: var(--size-small);
+  white-space: nowrap;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.pill-tick {
+  font-weight: 700;
+  color: var(--success-text);
+  white-space: pre;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .learned-pill:not([hidden]) {
+    animation: streak-pill-in 0.3s ease-out backwards;
   }
 }
 
