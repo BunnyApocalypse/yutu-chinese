@@ -4,6 +4,23 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the session of 2026-10-31 (the owner's notes from a day of use; committed on `main` by way of the branch `owner-notes-1031`, not pushed, not released, no "What's new" entry yet).**
+
+- **Built** (one commit each, details in the area's file):
+  - 艹 in three strokes in 觀, 警 and 護 too (`UPRIGHT_PAST_END` in `src/shortcuts.js`; `docs/writing.md`). The owner confirmed 觀 works.
+  - 倒 was spoken dǎo: no recording of the whole word for a single character with several readings (`hasOneReading`, `AUDIO_VERSION` 3 in `scripts/copy-audio.js`; 366 left out; `docs/word-page.md`).
+  - About this word, with Suspend and Start over, on a card looked back at in Review (`docs/cards.md`).
+  - The written pinyin shows the tone changes of 一 and 不, búshì, yígè (`writtenSyllables` in `src/readingStyle.js`; `docs/words.md`). The owner asked only for these two, not third-tone changes.
+  - ‹ on a card already begun; coming back, it is as it was left, not wiped and not asked (the owner: "it shouldn't wipe and it shouldn't ask"; `setAside`/`bringBack` in `src/review.js`, `docs/cards.md`).
+  - 充, 流 and 育 accepted in the big set's form too, the dot on its own (`altForm`, `TAIWAN_SET_VERSION` 4; `docs/writing.md`, "A second form of the whole character").
+  - Decks in the learner's own order, no longer most recently active first, with Edit beside the heading: ↑ ↓ and ⚙ (Deck settings) on each row (the owner chose both; `movedDeckOrder`, `docs/decks.md`).
+  - 聽: the top of 王 written low is no longer refused for the level stroke under it. Between two strokes of the same shape the order decides (`TWIN_SHAPE_DIFFERENCE` in `src/quiz.js`; `docs/writing.md`, "Strokes in a second shape"), from the owner's raw input recording.
+- **Not changed:** 方. The owner wrote ノ before 𠃌; both standards write 𠃌 first, and the owner agreed their order was wrong.
+- **To release:** ask the owner, write a "What's new" entry, then as in `CLAUDE.md`. The decks' new order shows at once after updating: a level added later is listed after the learner's own decks.
+- **Found, not fixed:** in the writing grid, 雪 and 屬 with the mainland shapes at half size in the top left fail (stroke 6 of 11, 7 of 21), before today's change too; neither is in the grid's usual list.
+- **Learned:** the owner's `npm run dev` runs in the main checkout, so work on a branch in a worktree has to be tried from that worktree, or brought into `main` first. A raw input recording replays outside the browser (`local/ting-replay.mjs`), which showed the cause at once.
+- **Tests:** 303 unit tests pass; all 581 browser tests passed before the 聽 change (23 skipped), and the writing grid for 聽 and the other characters with same-shape strokes after it (192, the two above failing).
+
 **Handover from the session of 2026-10-31 (the deck chooser; released to `main` and `stable`, "What's new" entry `2026-10-31-2`).**
 
 - **Built** (the owner, from a picture of the phone's drop-down full of Skritter sections): the chooser of the deck studied is a panel of the app's own with the decks in a tree that folds (`src/deckChooser.js`); while a card is up the deck is on the card's top line (`deck-tag`): in Review between the kind of card and Show pinyin, in Learn beside ☰, as a picture of fanned cards where the line is under 480px. Until now the deck could not be changed while a card was up (the line with the chooser is put away). The owner chose each place; a place in the menu was tried and not kept. All in `docs/decks.md` ("Studying a deck") and `docs/pitfalls.md`.
