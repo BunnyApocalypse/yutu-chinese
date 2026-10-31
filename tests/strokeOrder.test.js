@@ -236,6 +236,10 @@ for (const [char, entry] of taiwanData) {
 // it fits that shape and lies nearer to it than to any stroke after it; one
 // less than twice as far must also be less like it in shape (NEAR_IN_PLACE
 // in quiz.js).
+// A later stroke of the same shape as the other shape: between the two, the
+// order decides (TWIN_SHAPE_DIFFERENCE in src/quiz.js).
+const isTwin = (median, shape) => shapeDifferenceFromStroke(toPoints(median), shape) < 0.05;
+
 function takenForOtherShape(drawn, entry, strokeNum, shape) {
   const toShape = distanceFromStroke(drawn, shape);
   const likeShape = shapeDifferenceFromStroke(drawn, shape);
@@ -243,6 +247,10 @@ function takenForOtherShape(drawn, entry, strokeNum, shape) {
     fitsStroke(drawn, shape, LENIENCY) &&
     entry.medians.slice(strokeNum + 1).every((median) => {
       const toOther = distanceFromStroke(drawn, median);
+      // A twin of the same shape doesn't count (TWIN_SHAPE_DIFFERENCE).
+      if (isTwin(median, shape)) {
+        return true;
+      }
       return toOther > toShape && (toOther > 2 * toShape || shapeDifferenceFromStroke(drawn, median) > likeShape);
     })
   );
@@ -273,8 +281,12 @@ test('a stroke in its second shape is accepted, and no later stroke is taken for
         if (takenForOtherShape(vary(toPoints(shape), variation, random), entry, strokeNum, shape)) {
           accepted += 1;
         }
-        // A later stroke of the character written too early.
+        // A later stroke of the character written too early. One of the
+        // same shape may pass for it: the order decides between them.
         for (let later = strokeNum + 1; later < entry.medians.length; later++) {
+          if (isTwin(entry.medians[later], shape)) {
+            continue;
+          }
           const drawn = vary(toPoints(entry.medians[later]), variation, random);
           if (takenForOtherShape(drawn, entry, strokeNum, shape)) {
             misfires.push(`${char} ${later + 1} for ${strokeNum + 1}`);
@@ -284,7 +296,7 @@ test('a stroke in its second shape is accepted, and no later stroke is taken for
     }
   }
   console.log(`second shapes accepted: ${accepted} of ${tried}; misfires: ${misfires.length}`);
-  // 660 of 686 when measured (2026-10-30); every one drawn exactly passes.
+  // 670 of 686 when measured (2026-10-31); every one drawn exactly passes.
   assert.ok(accepted / tried > 0.95, `${accepted} of ${tried} accepted`);
   assert.deepEqual(misfires, []);
 });

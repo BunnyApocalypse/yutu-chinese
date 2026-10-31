@@ -84,6 +84,18 @@ const FIRST_STROKE_EXTRA_LENIENCY = 4;
 // no later stroke written too early is taken for the other shape.
 const NEAR_IN_PLACE = 2;
 
+// A later stroke of the same shape as the other shape (a twin: the two level
+// strokes on top of 王 in 聽, of 雨 in 雲) can't be told from it by shape,
+// and they lie close, so not by place either: the order decides, and the
+// first written is the first of them. The owner writes 聽's 王 lower under
+// 耳 than the data has it, as near the second level stroke as the first
+// (their recording, 2026-10-31: refused up to eight times). So a twin written
+// too early passes for the other shape (房's second stroke for the dot on
+// top); the stroke after it is then refused, which shows what was skipped.
+// Below this shape difference (shapeDifferenceFromStroke), a twin; measured
+// over the Taiwan set, twins are below 0.035, other strokes above 0.09.
+const TWIN_SHAPE_DIFFERENCE = 0.05;
+
 // A stroke Hanzi Writer has accepted is still re-read as the other stroke
 // order if that fits clearly better: the misfit (average distance, in the
 // data's units) must be below this share of the current reading's, and lower
@@ -801,8 +813,9 @@ export function createQuiz(target, size, handlers) {
   // written in it: it fits that shape, and lies nearer to it than to any
   // stroke after it; one of those that lies nearly as near (NEAR_IN_PLACE)
   // must be less like it in shape, or a stroke written too early could pass
-  // for it (房's second for the dot on top). Nearer the Taiwan shape is
-  // fine: that is the same stroke. Otherwise null.
+  // for it. A later stroke of the same shape (a twin, TWIN_SHAPE_DIFFERENCE)
+  // doesn't count: the order decides. Nearer the Taiwan shape is fine: that
+  // is the same stroke. Otherwise null.
   function otherShapeFor(stroke) {
     const shape = baseData.altShapes?.[sequence[stroke.strokeNum]];
     if (!shape) {
@@ -820,6 +833,9 @@ export function createQuiz(target, size, handlers) {
     const toCome = sequence.slice(stroke.strokeNum + 1).map((strokeNum) => framedData.medians[strokeNum]);
     const nearest = toCome.every((median) => {
       const toOther = distanceFromStroke(points, median);
+      if (shapeDifferenceFromStroke(toPoints(median), inFrame) < TWIN_SHAPE_DIFFERENCE) {
+        return true;
+      }
       return toOther > toShape && (toOther > NEAR_IN_PLACE * toShape || shapeDifferenceFromStroke(points, median) > likeShape);
     });
     return nearest ? shape : null;
