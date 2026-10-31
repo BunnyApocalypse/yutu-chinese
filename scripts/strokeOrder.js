@@ -136,3 +136,29 @@ export function findAlternativeShapes(taiwanEntry, bigSetEntry, fits) {
   }
   return Object.keys(shapes).length > 0 ? shapes : null;
 }
+
+// ---- A second form of the whole character ----
+//
+// A few characters have a stroke fewer in the Taiwan set than in the big set:
+// 充, 流 and 育 write the dot on top joined to the turn under it, where the
+// big set writes the dot on its own (the owner, 2026-10-31, writes it so:
+// "both forms should be okay"). For these, the big set's strokes are kept as
+// a second form the app accepts too (otherFormFor in src/quiz.js). Only
+// these: elsewhere a different count is a real difference of form (為, 辶).
+export const SECOND_FORM_CHARS = '充流育';
+
+// The big set's form of a character in SECOND_FORM_CHARS, for the Taiwan
+// file: { strokes, medians, from }, `from` being the first stroke where the
+// two differ (the strokes before it are the same strokes in both). Null
+// for any other character, or if the two don't differ.
+export function findSecondForm(taiwanEntry, bigSetEntry) {
+  if (!SECOND_FORM_CHARS.includes(taiwanEntry.character) || bigSetEntry.medians.length === taiwanEntry.medians.length) {
+    return null;
+  }
+  const same = (a, b) => averageDistance(resample(toPoints(a)), resample(toPoints(b))) <= SAME_STROKE_DISTANCE;
+  let from = 0;
+  while (from < taiwanEntry.medians.length && same(taiwanEntry.medians[from], bigSetEntry.medians[from])) {
+    from += 1;
+  }
+  return { strokes: bigSetEntry.strokes, medians: bigSetEntry.medians, from };
+}

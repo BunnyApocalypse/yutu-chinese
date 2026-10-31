@@ -19,7 +19,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { findAlternativeOrder, findAlternativeShapes } from './strokeOrder.js';
+import { findAlternativeOrder, findAlternativeShapes, findSecondForm } from './strokeOrder.js';
 import { fitsStroke } from '../src/strokeMatch.js';
 
 
@@ -71,7 +71,7 @@ fs.mkdirSync(taiwanTarget, { recursive: true });
 
 // Raise this number whenever this script changes what it writes into the
 // Taiwan set's files. Copies made by an older version are then replaced.
-const TAIWAN_SET_VERSION = 3;
+const TAIWAN_SET_VERSION = 4;
 
 // The same leniency the app grades with (LENIENCY in src/quiz.js).
 const LENIENCY = 1.5;
@@ -99,6 +99,7 @@ if (taiwanSetIsUpToDate()) {
 } else {
   let withSecondOrder = 0;
   let withOtherShapes = 0;
+  let withSecondForm = 0;
   for (const entry of taiwanEntries) {
     const data = { strokes: entry.strokes, medians: entry.medians };
 
@@ -119,6 +120,13 @@ if (taiwanSetIsUpToDate()) {
         data.altShapes = altShapes;
         withOtherShapes += 1;
       }
+      // The big set's whole form, for the few written with a stroke more
+      // there (充: the dot on top on its own).
+      const altForm = findSecondForm(entry, bigSetEntry);
+      if (altForm) {
+        data.altForm = altForm;
+        withSecondForm += 1;
+      }
     }
     fs.writeFileSync(path.join(taiwanTarget, fileNameFor(entry.character)), JSON.stringify(data));
   }
@@ -126,6 +134,7 @@ if (taiwanSetIsUpToDate()) {
   fs.writeFileSync(indexFile, JSON.stringify({ version: TAIWAN_SET_VERSION, characters }));
   console.log(
     `Copied stroke data for ${taiwanEntries.length} characters to ${taiwanTarget} ` +
-      `(${withSecondOrder} with a second stroke order, ${withOtherShapes} with strokes in a second shape).`,
+      `(${withSecondOrder} with a second stroke order, ${withOtherShapes} with strokes in a second shape, ` +
+      `${withSecondForm} with a second form).`,
   );
 }

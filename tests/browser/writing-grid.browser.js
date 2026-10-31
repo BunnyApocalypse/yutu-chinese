@@ -23,8 +23,9 @@ import { grassTopsOf } from '../../src/shortcuts.js';
 
 // Characters with two accepted stroke orders (the first ten), some with one,
 // some with strokes in a second shape (食房藍雨聽, also written so), and some
-// with 艹 (草花藍觀, also written with it in three strokes).
-const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢母出長麼這謝子好食房藍雨草花觀聽');
+// with 艹 (草花藍觀, also written with it in three strokes), and some with a
+// second form (充流育, also written in the big set's).
+const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢母出長麼這謝子好食房藍雨草花觀聽充流育');
 
 // Where and how big the character is written, compared with the centered
 // reference: `scale` times the size, moved `dx` to the right and `dy` up, in
@@ -147,6 +148,11 @@ describe('writing grid', { concurrency: BROWSER_COUNT }, () => {
     const ways = Object.entries(orders).map(([orderName, strokeOrder]) => ({ label: `${orderName} order`, strokeOrder }));
     if (data.altShapes) {
       ways.push({ label: 'MOE order, mainland shapes', strokeOrder: moeOrder, shapes: data.altShapes });
+    }
+    // The second form, every stroke its own (src/quiz.js, otherFormFor).
+    if (data.altForm) {
+      const { medians } = data.altForm;
+      ways.push({ label: 'second form', strokeOrder: medians.map((median, index) => index), shapes: { ...medians } });
     }
     // 艹 in three strokes: the level stroke across, then the two uprights;
     // or the left upright, the level stroke, the right upright.

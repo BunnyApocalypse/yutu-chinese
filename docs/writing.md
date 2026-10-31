@@ -57,6 +57,13 @@
 - **Measured** (`tests/strokeOrder.test.js`): the second shapes shaken, shifted and resized as for the stroke orders, 660 of 686 accepted, and no later stroke of the character taken for one. The writing grid writes 食, 房, 藍 and 雨 with the mainland shapes at every position.
 - **Limits:** only characters in the Taiwan set (戶 written alone isn't, so it shows and asks for the big set's form, with a dot); simplified writing doesn't accept the Taiwan shapes; 艹 in 3 strokes is not this (a join and a reorder, see "Out of scope so far" above).
 
+## A second form of the whole character
+
+- **充, 流 and 育 are accepted in the big set's form too** (the owner, 2026-10-31, writes the dot on top on its own: "both forms should be okay"). The Taiwan set has a stroke fewer (充 5, 流 9, 育 7: the dot joined to the turn under it); the big set 6, 10 and 8. Display, hints, the animation and the stroke count stay Taiwan's until the second form is written.
+- **Stored when the data is prepared** (`findSecondForm` in `scripts/strokeOrder.js`, `TAIWAN_SET_VERSION` 4): for the characters in `SECOND_FORM_CHARS` only, the big set's strokes and medians as `altForm`, with `from`, the first stroke where the two differ (0 for 充 and 育, 3 for 流 after 氵). Only these: elsewhere a different count is a real difference of form (為, 辶, 阝), which the owner writes the Taiwan way.
+- **While writing** (`otherFormFor`, `switchToOtherForm` in `src/quiz.js`): at stroke `from`, a stroke Hanzi Writer refuses that fits the second form's stroke there (in the frame; a first stroke anywhere, if more like it than the Taiwan one), or one it accepts that is more like the second form's (流 written small: its dot passed for the level stroke), switches `baseData` to the second form for the rest of the character, and the count becomes "2/6". Clear and Animate go back to the Taiwan form (`loadedData`, `useOriginalData`).
+- **Tested** in the writing grid: 充, 流 and 育 in both forms at every position.
+
 ## The stroke count
 
 - **"3/7" beside the mistakes**, larger and bold (`#stroke-count`, `showProgress` in `src/wordFlow.js`; 2026-10-15, after a tester asked for a stroke counter they hadn't noticed inside a sentence). Emptied once a character is finished or animates. Before anything is drawn the line reads "Write the first stroke" (2026-10-16), unless earlier characters had mistakes.

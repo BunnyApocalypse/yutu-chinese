@@ -6,7 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-import { findAlternativeOrder, findAlternativeShapes } from '../scripts/strokeOrder.js';
+import { findAlternativeOrder, findAlternativeShapes, findSecondForm } from '../scripts/strokeOrder.js';
 import {
   fitsStroke,
   distanceFromStroke,
@@ -287,4 +287,19 @@ test('a stroke in its second shape is accepted, and no later stroke is taken for
   // 660 of 686 when measured (2026-10-30); every one drawn exactly passes.
   assert.ok(accepted / tried > 0.95, `${accepted} of ${tried} accepted`);
   assert.deepEqual(misfires, []);
+});
+
+// ---- A second form of the whole character (findSecondForm) ----
+
+test('充, 流 and 育 have the big set\'s form as a second form, from where the two part', () => {
+  const formOf = (char) => findSecondForm(taiwanData.get(char), bigSetData(char));
+  // The dot on top on its own: a stroke more.
+  assert.deepEqual([formOf('充').medians.length, formOf('充').from], [6, 0]);
+  // 氵 first, the same in both.
+  assert.deepEqual([formOf('流').medians.length, formOf('流').from], [10, 3]);
+  assert.deepEqual([formOf('育').medians.length, formOf('育').from], [8, 0]);
+  // Not for other characters with another count (為, 這), nor one alike.
+  assert.equal(formOf('為'), null);
+  assert.equal(formOf('這'), null);
+  assert.equal(formOf('學'), null);
 });
