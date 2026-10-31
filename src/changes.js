@@ -13,6 +13,24 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-10-31',
+    items: [
+      'Learn goes straight from one word to the next, with no stop in between. Today’s words are shown at the top, and the word you are writing from memory is hidden there.',
+      'At the end of today’s words, Learn lists them, with "Review them now" and "Learn 5 more".',
+      'Rewritten, fuller learning tips for 300 more words of HSK level 2, checked by a second AI model.',
+    ],
+    it: [
+      'Impara passa subito da una parola alla successiva, senza fermarsi in mezzo. Le parole di oggi sono mostrate in alto, e la parola che stai scrivendo a memoria lì è nascosta.',
+      'Alla fine delle parole di oggi, Impara le elenca, con "Ripassale ora" e "Imparane altre 5".',
+      'Consigli di studio riscritti e più completi per altre 300 parole del livello 2 dell’HSK, verificati da un secondo modello di IA.',
+    ],
+    de: [
+      'Lernen geht ohne Halt direkt von einem Wort zum nächsten. Die Wörter von heute stehen oben, und das Wort, das du aus dem Gedächtnis schreibst, ist dort verborgen.',
+      'Am Ende der Wörter von heute listet Lernen sie auf, mit „Jetzt wiederholen“ und „Noch 5 lernen“.',
+      'Neu geschriebene, ausführlichere Lerntipps für 300 weitere Wörter der HSK-Stufe 2, von einem zweiten KI-Modell geprüft.',
+    ],
+  },
+  {
     id: '2026-10-30-3',
     items: [
       'In traditional characters, strokes written in their mainland shape are accepted too: the dot under 人 in 食 and 飯, the dot on top of 戶 in 房, the last stroke of the 𠂉 in 藍, the dots of 雨. The app still shows the Taiwan form.',
