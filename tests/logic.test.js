@@ -34,7 +34,8 @@ import {
   startingTypeFirst,
   practiceCards,
 } from '../src/session.js';
-import { splitSyllables, toneAnswers, readingsFor } from '../src/tones.js';
+import { splitSyllables, toneAnswers, readingsFor, describeReading } from '../src/tones.js';
+import { showReading } from '../src/readingStyle.js';
 
 // The tone table the app uses (see data/cedict/README.md).
 const toneTable = JSON.parse(fs.readFileSync('data/cedict/tones.json', 'utf8'));
@@ -520,17 +521,40 @@ test('the spoken tone of 一 and 不 is right too', () => {
   assert.deepEqual(toneAnswers(['你', '好'], 'ni3hao3', null, null)[0].tones, [3]);
 });
 
+test('一 and 不 are written in the tone they are spoken in, nothing else', () => {
+  const written = (numbered, word) => showReading(numbered, Array.from(word));
+  assert.equal(written('bu4shi4', '不是'), 'búshì');
+  assert.equal(written('bu4hao3', '不好'), 'bùhǎo');
+  assert.equal(written('yi1ge4', '一個'), 'yígè');
+  assert.equal(written('yi1tian1', '一天'), 'yìtiān');
+  // A number read out, and 一 at the end, keep yī.
+  assert.equal(written('di4yi1', '第一'), 'dìyī');
+  assert.equal(written('shi2yi1', '十一'), 'shíyī');
+  // The third tone before a third is not written.
+  assert.equal(written('ni3hao3', '你好'), 'nǐhǎo');
+  assert.equal(written('yi1dian3r5', '一點兒'), 'yìdiǎnr');
+  // Each listed reading on its own; a reading that doesn't line up stays.
+  assert.equal(written('yi1dian3r5', '一點'), 'yīdiǎnr');
+  assert.equal(written('yi1yang4, yi1yang5', '一樣'), 'yíyàng, yīyang');
+  // Without the characters, as stored.
+  assert.equal(showReading('bu4shi4'), 'bùshì');
+  // On a card: from readingsFor, both regions' readings.
+  assert.equal(describeReading(readingsFor({ traditional: '不要', pinyin: 'bu4yao4' }, 'mainland', null)).main, 'búyào');
+});
+
 test('the pronunciation setting decides which reading is expected', () => {
   const week = { traditional: '星期', pinyin: 'xing1qi1', pinyinTaiwan: 'xing1qi2' };
   assert.deepEqual(readingsFor(week, 'mainland', null), {
     primary: 'xing1qi1',
     other: 'xing1qi2',
     otherLabel: 'Taiwan',
+    chars: ['星', '期'],
   });
   assert.deepEqual(readingsFor(week, 'taiwan', null), {
     primary: 'xing1qi2',
     other: 'xing1qi1',
     otherLabel: 'mainland',
+    chars: ['星', '期'],
   });
   // A word with no Taiwan reading listed is the same under both settings.
   const school = { traditional: '學校', pinyin: 'xue2xiao4' };
@@ -541,7 +565,7 @@ test('the pronunciation setting decides which reading is expected', () => {
   assert.equal(readingsFor(garbage, 'taiwan', toneTable).primary, 'le4se4');
   assert.equal(readingsFor(garbage, 'mainland', toneTable).other, 'le4se4');
   // Someone learning mainland pronunciation only is never shown a Taiwan reading.
-  assert.deepEqual(readingsFor(week, 'mainlandOnly', toneTable), { primary: 'xing1qi1', other: null, otherLabel: null });
+  assert.deepEqual(readingsFor(week, 'mainlandOnly', toneTable), { primary: 'xing1qi1', other: null, otherLabel: null, chars: ['星', '期'] });
   assert.equal(readingsFor(garbage, 'mainlandOnly', toneTable).other, null);
 });
 

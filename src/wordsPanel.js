@@ -600,7 +600,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
       button.className = 'word-entry';
       button.append(
         charactersElement(word, getSettings()),
-        mixedSpan('entry-pinyin', showReading(word.pinyin), scriptFor(word, getSettings())),
+        mixedSpan('entry-pinyin', showReading(word.pinyin, Array.from(word.traditional)), scriptFor(word, getSettings())),
         mixedSpan('entry-definition', word.definition, scriptFor(word, getSettings())),
       );
       // A word that is in a deck inside this one is marked with that deck.

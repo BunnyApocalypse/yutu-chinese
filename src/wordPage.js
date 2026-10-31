@@ -716,11 +716,11 @@ export function createWordPage({
       const speakable = first
         ? { word: first, reading: first.pinyin }
         : { word: { simplified: target.text, traditional: target.text, pinyin: '' }, reading: '' };
-      parts.push(showHeading(forms, first ? showReading(first.pinyin) : '', null, speakable));
+      parts.push(showHeading(forms, first ? showReading(first.pinyin, Array.from(first.traditional || '')) : '', null, speakable));
       // Every reading the dictionary has, each with its meanings.
       for (const entry of entries) {
         const meaning = element('p', 'page-meaning');
-        fillMixed(meaning, `${showReading(entry.pinyin)}: ${entry.meanings.join('; ')}`, script);
+        fillMixed(meaning, `${showReading(entry.pinyin, Array.from(entry.traditional || ''))}: ${entry.meanings.join('; ')}`, script);
         parts.push(meaning);
       }
       if (entries.length > 0) {

@@ -1,7 +1,7 @@
 // Tone cards: you see the word and give the tone of each character in turn,
 // either with the five tone buttons or by drawing the tone mark on the card.
 
-import { showReading } from './readingStyle.js';
+import { showReading, writtenSyllables } from './readingStyle.js';
 import { TONE_LABELS, describeReading } from './tones.js';
 import { recognizeToneMark } from './toneMark.js';
 import { fillMixed, fillReading, langFor } from './lang.js';
@@ -347,7 +347,7 @@ export function createToneFlow(elements) {
       // A skipped character is shown with its listed tone.
       current.answers.map((answer, index) => (givenTones[index] === undefined ? answer.syllable : answer.syllable.slice(0, -1) + givenTones[index])).join(''),
     );
-    const listedFirst = showReading(current.answers.map((answer) => answer.syllable).join(''));
+    const listedFirst = showReading(current.answers.map((answer) => answer.syllable).join(''), chars);
     if (wrong > 0) {
       parts.push(readingParagraph('face-note missed', t('tone.youAnswered', { answer: answered })));
     } else if (chars.some((char, index) => !accepted(index))) {
@@ -410,7 +410,8 @@ export function createToneFlow(elements) {
     const shown = passedPerChar[position];
     shownSyllable = readingParagraph(
       shown ? 'face-pinyin passed' : 'face-pinyin missed',
-      showReading(expected.syllable),
+      // 一 and 不 as spoken, as in the word's reading (readingStyle.js).
+      showReading(writtenSyllables(current.answers.map((answer) => answer.syllable), chars)[position]),
     );
     cardFace.replaceChildren(faceWord(chars[position]), shownSyllable);
 

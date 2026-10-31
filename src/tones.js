@@ -45,15 +45,18 @@ const toneOf = (syllable) => Number(syllable.slice(-1));
 //   other:      the other region's reading if it is known and different,
 //               otherwise null
 //   otherLabel: 'Taiwan' or 'mainland', saying which region `other` is
+//   chars:      the word's characters, so that describeReading writes 一 and
+//               不 as spoken
 export function readingsFor(word, pronunciation, table) {
   const taiwan = word.pinyinTaiwan || (table && table.taiwanWords[word.traditional]) || null;
+  const chars = Array.from(word.traditional || word.simplified || '');
   // A radical with no reading (radicals.js) has none in either region.
   if (pronunciation === 'mainlandOnly' || !taiwan || taiwan === word.pinyin || word.pinyin === '') {
-    return { primary: word.pinyin, other: null, otherLabel: null };
+    return { primary: word.pinyin, other: null, otherLabel: null, chars };
   }
   return pronunciation === 'taiwan'
-    ? { primary: taiwan, other: word.pinyin, otherLabel: t('reading.mainland') }
-    : { primary: word.pinyin, other: taiwan, otherLabel: t('reading.taiwan') };
+    ? { primary: taiwan, other: word.pinyin, otherLabel: t('reading.mainland'), chars }
+    : { primary: word.pinyin, other: taiwan, otherLabel: t('reading.taiwan'), chars };
 }
 
 // Turns the result of readingsFor into text for the page:
@@ -65,8 +68,8 @@ export function readingsFor(word, pronunciation, table) {
 // (lang.js).
 export function describeReading(reading) {
   return {
-    main: showReading(reading.primary),
-    other: reading.other ? `${reading.otherLabel}: ${showReading(reading.other)}` : null,
+    main: showReading(reading.primary, reading.chars),
+    other: reading.other ? `${reading.otherLabel}: ${showReading(reading.other, reading.chars)}` : null,
   };
 }
 

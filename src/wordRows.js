@@ -52,7 +52,7 @@ export function entryRow(entry, label, settings, { selected = false, onTap }) {
   button.className = 'word-entry';
   button.append(
     charactersElement(entry, settings),
-    mixedSpan('entry-pinyin', showReading(entry.pinyin), settings.script),
+    mixedSpan('entry-pinyin', showReading(entry.pinyin, Array.from(entry.traditional || '')), settings.script),
     mixedSpan(
       'entry-definition',
       meanings.length > MAX_MEANINGS_LENGTH ? `${meanings.slice(0, MAX_MEANINGS_LENGTH)}…` : meanings,

@@ -102,7 +102,7 @@ export function createWordDialog(shared) {
     dialogResult = { changed: false, word };
     const studied = shared.isLearned(word.id);
     const script = scriptFor(word, shared.getSettings());
-    fillMixed(dialogTitle, `${word[script]} ${showReading(word.pinyin)}`, script);
+    fillMixed(dialogTitle, `${word[script]} ${showReading(word.pinyin, Array.from(word.traditional))}`, script);
     showDialogStatus(word);
     editDefinition.value = word.definition;
     editTraditional.value = word.traditional;
