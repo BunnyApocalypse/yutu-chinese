@@ -361,7 +361,9 @@ export default {
   'common.cancel': 'Cancel',
 
   // The study screen: Review, Learn and Free practice (index.html)
-  'review.deckToStudy': 'Deck to study',
+  'review.deckToStudyIs': 'Deck to study: {deck}',
+  'review.chooseDeckTitle': 'Study which deck?',
+  'review.decksInside': 'Decks inside {deck}',
   'review.hearTheWord': 'Hear the word',
   'review.pinyinButton': 'Show pinyin',
   'review.zhuyinButton': 'Show zhuyin',

@@ -42,12 +42,13 @@ describe('grading in Review', { concurrency: false }, () => {
     page.evaluate(`new Promise((resolve, reject) => {
       const opening = indexedDB.open('hanzi-trainer');
       opening.onsuccess = () => {
-        const tx = opening.result.transaction(['words', 'cards', 'reviews', 'settings'], 'readwrite');
+        const tx = opening.result.transaction(['words', 'cards', 'reviews', 'settings', 'decks'], 'readwrite');
         const stores = {
           words: tx.objectStore('words'),
           cards: tx.objectStore('cards'),
           reviews: tx.objectStore('reviews'),
           settings: tx.objectStore('settings'),
+          decks: tx.objectStore('decks'),
         };
         const result = {};
         ${body}
@@ -873,5 +874,30 @@ describe('grading in Review', { concurrency: false }, () => {
         stores.cards.delete(char + '|x' + (index + 1) + '1#meaning');
       });
     `);
+  });
+
+  it('names the deck studied on the card, and changes it from there', async () => {
+    // A second deck, so there is a choice; the word is not in it.
+    await inDatabase(`stores.decks.put({ id: 'other', name: 'Other', parentId: null, order: 1 });`);
+    await makeDue(['大|da4#writing', '大|da4', 'writing']);
+    await waitForFirstStroke();
+    // While a card is up, the chooser above is put away, and the card's top
+    // line names the deck instead.
+    const displayed = (id) => page.evaluate(`document.getElementById('${id}').offsetParent !== null`);
+    assert.equal(await displayed('deck-choice-button'), false);
+    assert.equal(await displayed('deck-tag'), true);
+    assert.equal(await textOf(page, 'deck-tag'), 'All words');
+    await tap(page, 'deck-tag');
+    await waitUntil(page, `document.getElementById('deck-choice-dialog').open`, 'the deck chooser');
+    // Choosing the other deck: none of its words is due.
+    await page.evaluate(`[...document.querySelectorAll('#deck-choice-list input')].find((radio) => radio.value === 'other').click()`);
+    await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'nothing due in the deck');
+    assert.equal(await textOf(page, 'deck-choice-button'), 'Other');
+    // Back to all words, and the deck removed again.
+    await tap(page, 'deck-choice-button');
+    await page.evaluate(`document.querySelector('#deck-choice-list input[value=""]').click()`);
+    await waitForFirstStroke();
+    await inDatabase(`stores.decks.delete('other');`);
+    await reloadApp(page);
   });
 });

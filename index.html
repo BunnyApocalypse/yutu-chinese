@@ -89,9 +89,10 @@
 
       <!-- Review mode: what is left to do, and the prompt for the current word -->
       <section id="review-header" class="review-header">
-        <!-- Which deck is studied; only there once there are decks (review.js). -->
+        <!-- Which deck is studied; only there once there are decks (review.js).
+             It opens the panel below, the decks in a tree that folds (deckChooser.js). -->
         <div class="counts-row">
-          <select id="deck-select" class="deck-select" data-t-aria-label="review.deckToStudy" hidden></select>
+          <button id="deck-choice-button" class="deck-select deck-choice-button" type="button" aria-haspopup="dialog" hidden><span class="deck-select-name"></span></button>
           <p id="review-counts" class="counts"></p>
         </div>
         <!-- Says so when the card just graded was suspended as a leech (review.js). -->
@@ -109,6 +110,9 @@
                the grades made the page scroll). A tap opens the word's page
                with this card's strip, and Suspend. -->
           <button id="leech-tag" class="leech-tag" type="button" hidden data-t="review.leechTag"></button>
+          <!-- The deck studied, in Review while a card is up, when the line with
+               the deck chooser is put away (review.js, deckChooser.js). -->
+          <button id="deck-tag" class="deck-tag" type="button" aria-haspopup="dialog" hidden><span class="deck-select-name"></span></button>
           <!-- Speaks the word (review.js, speech.js). The picture is a loudspeaker. -->
           <button id="listen-button" class="icon-button" type="button" data-t-aria-label="review.hearTheWord" data-t-title="review.hearTheWord" hidden>
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
@@ -856,6 +860,13 @@
           <button id="confirm-no" class="small" type="button"></button>
         </div>
         <button data-same-as="confirm-no" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
+      </dialog>
+
+      <!-- Choosing the deck studied in Review and Learn (deckChooser.js). -->
+      <dialog id="deck-choice-dialog" class="settings-panel deck-choice-dialog">
+        <h2 data-t="review.chooseDeckTitle"></h2>
+        <ul id="deck-choice-list" class="deck-choice-list"></ul>
+        <button id="deck-choice-close" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 
       <!-- Everything about one word or character, to read: wordPage.js fills it in. -->

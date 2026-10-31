@@ -575,6 +575,45 @@ dialog.side-menu::backdrop {
   margin-right: 0;
 }
 
+/* The deck studied, after the kind of card in Review (review.js), quiet,
+   with ▾ (the owner, 2026-10-31: while a card is up the deck chooser above is
+   put away, and the deck could not be changed). It is the one to give way
+   where the line is short: its name is cut with "…" before anything else
+   moves. Not in Learn, where today's words take the line, nor without a card. */
+.deck-tag {
+  display: none;
+  flex: 0 1000 auto;
+  align-items: center;
+  gap: var(--space-tiny);
+  min-width: 0;
+  min-height: var(--tap-least);
+  overflow: hidden;
+  padding: 0 var(--space-tiny);
+  border: none;
+  background: none;
+  font-size: var(--size-small);
+  color: var(--muted);
+}
+
+main.focused:not(.learning) .deck-tag:not([hidden]) {
+  display: inline-flex;
+  margin-right: auto;
+}
+
+.deck-tag::after {
+  content: '▾';
+}
+
+main.focused:not(.learning) .type-row:has(> .deck-tag:not([hidden])) :is(.card-type, .leech-tag) {
+  margin-right: 0;
+}
+
+/* The rest of the line keeps its width (on a 360px phone "Show pinyin"
+   took two lines), so the deck's name alone is cut. */
+main.focused:not(.learning) .type-row:has(> .deck-tag:not([hidden])) > :not(.deck-tag) {
+  flex-shrink: 0;
+}
+
 /* No taller than the row (36px), so the row keeps its height; 24px is the
    least for a tap. */
 .leech-tag {
@@ -3911,6 +3950,76 @@ button.word-entry.selected {
   min-height: var(--tap-small);
   padding: 2px var(--space-small);
   font-size: var(--size-small);
+}
+
+/* The deck studied in Review and Learn is a button that opens a panel
+   (deckChooser.js), made to look like the drop-down list it replaced: a
+   field's edge, and ▾ after the deck's name, which is cut with "…". */
+.deck-choice-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-small);
+  border-color: var(--field-border);
+}
+
+.deck-select-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.deck-choice-button::after {
+  content: '▾';
+  color: var(--muted);
+}
+
+/* The decks in the panel: each its own name, indented by how deep it is,
+   with › at the end of one that has decks inside, turned down when open. */
+.deck-choice-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.deck-choice-row {
+  display: flex;
+  align-items: center;
+  padding-left: calc(var(--depth, 0) * var(--space-huge));
+  border-bottom: 1px solid var(--line);
+}
+
+.deck-choice {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-medium);
+  min-height: var(--tap-small);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.deck-choice input[type='radio'] {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+
+button.deck-fold {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap-small);
+  min-height: var(--tap-small);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+}
+
+.deck-fold[aria-expanded='true'] svg {
+  transform: rotate(90deg);
 }
 
 /* One deck in the Decks tab: its name, and its counts below. */

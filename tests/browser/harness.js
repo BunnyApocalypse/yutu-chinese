@@ -518,6 +518,26 @@ export const choose = (page, id, value) =>
     list.dispatchEvent(new Event('change', { bubbles: true }));
   })()`);
 
+// Chooses the deck studied in Review and Learn ('' for all words) as a
+// learner would: opens the panel (deckChooser.js), unfolds decks until the
+// one wanted is listed, and taps it. Then waits for the panel to close.
+export async function studyDeck(page, deckId) {
+  await tap(page, 'deck-choice-button');
+  await page.evaluate(`(() => {
+    const list = document.getElementById('deck-choice-list');
+    const wanted = () => [...list.querySelectorAll('input')].find((radio) => radio.value === ${JSON.stringify(deckId)});
+    while (!wanted()) {
+      const folded = list.querySelector('.deck-fold[aria-expanded="false"]');
+      if (!folded) {
+        throw new Error('No deck ' + ${JSON.stringify(deckId)} + ' in the chooser');
+      }
+      folded.click();
+    }
+    wanted().click();
+  })()`);
+  await waitUntil(page, `!document.getElementById('deck-choice-dialog').open`, 'the deck chooser to close');
+}
+
 // The text of the element with this id, or of the first element matching a
 // CSS selector such as '#word-list li'. '' if there is none or it is hidden.
 // Opens Settings on one group of settings, such as 'settings-data'. The

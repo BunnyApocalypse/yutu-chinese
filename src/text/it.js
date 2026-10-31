@@ -353,7 +353,9 @@ export default {
   'common.close': 'Chiudi',
   'common.cancel': 'Annulla',
   // The study screen: Review, Learn and Free practice (index.html)
-  'review.deckToStudy': 'Mazzo da studiare',
+  'review.deckToStudyIs': 'Mazzo da studiare: {deck}',
+  'review.chooseDeckTitle': 'Quale mazzo studiare?',
+  'review.decksInside': 'Mazzi dentro {deck}',
   'review.hearTheWord': 'Ascolta la parola',
   'review.pinyinButton': 'Mostra pinyin',
   'review.zhuyinButton': 'Mostra zhuyin',

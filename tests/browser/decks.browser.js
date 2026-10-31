@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, type, choose, textOf, isShown, waitUntil, openLearn, useAddForm } from './harness.js';
+import { startApp, startBrowsers, tap, type, textOf, isShown, waitUntil, openLearn, useAddForm, studyDeck } from './harness.js';
 
 const rows = (count) => `document.querySelectorAll('#word-list li').length === ${count}`;
 const deckRows = (count) => `document.querySelectorAll('#deck-list li').length === ${count}`;
@@ -113,7 +113,7 @@ describe('decks', { concurrency: false }, () => {
     // With one deck there is nothing to choose in Learn.
     await openLearn(page);
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('貓')`, 'the word in Learn');
-    assert.equal(await page.evaluate(`document.getElementById('deck-select').hidden`), true);
+    assert.equal(await page.evaluate(`document.getElementById('deck-choice-button').hidden`), true);
     // Back to Decks: the front page again, not the deck that was open.
     await tap(page, 'decks-tab');
     await waitUntil(page, `document.getElementById('deck-head').hidden`, 'the front page again');
@@ -214,9 +214,21 @@ describe('decks', { concurrency: false }, () => {
     await waitUntil(page, `document.getElementById('place-title').textContent === 'Learn'`, 'Learn');
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('狗')`, 'the word of the deck');
     assert.match(await textOf(page, 'review-counts'), /of 7 learned today · 1 waiting/);
-    assert.equal(await page.evaluate(`document.getElementById('deck-select').selectedOptions[0].textContent`), 'Textbook › Chapter 1');
+    assert.equal(await page.evaluate(`document.getElementById('deck-choice-button').getAttribute('aria-label')`), 'Deck to study: Textbook › Chapter 1');
+    // The button names the deck by its own name. Its panel lists the decks as
+    // a tree that folds, opened along the branch of the deck chosen.
+    assert.equal(await textOf(page, 'deck-choice-button'), 'Chapter 1');
+    await tap(page, 'deck-choice-button');
+    const listed = `[...document.querySelectorAll('#deck-choice-list .deck-choice')].map((row) => row.textContent)`;
+    const textbookFold = `document.querySelector('#deck-choice-list .deck-fold')`;
+    assert.deepEqual(await page.evaluate(listed), ['All words', 'Chinese 中文', 'Textbook', 'Chapter 1', 'Animals']);
+    assert.equal(await page.evaluate(`document.querySelector('#deck-choice-list input:checked').parentElement.textContent`), 'Chapter 1');
+    assert.equal(await page.evaluate(`${textbookFold}.getAttribute('aria-expanded')`), 'true');
+    await page.evaluate(`${textbookFold}.click()`);
+    assert.deepEqual(await page.evaluate(listed), ['All words', 'Chinese 中文', 'Textbook', 'Animals']);
+    await tap(page, 'deck-choice-close');
     // All words: the first one added comes first, toward the goal in Settings.
-    await choose(page, 'deck-select', '');
+    await studyDeck(page, '');
     await waitUntil(page, `document.getElementById('card-face').textContent.includes('貓')`, 'the first word');
     assert.match(await textOf(page, 'review-counts'), /of 5 learned today · 3 waiting/);
 
@@ -244,7 +256,7 @@ describe('decks', { concurrency: false }, () => {
     await waitUntil(page, `document.getElementById('deck-head').hidden`, 'the front page');
     await page.evaluate(`${deckRow('Textbook')}.click()`);
     await waitUntil(page, `document.getElementById('place-title').textContent === 'Learn'`, 'Learn');
-    assert.equal(await page.evaluate(`document.getElementById('deck-select').selectedOptions[0].textContent`), 'Textbook');
+    assert.equal(await page.evaluate(`document.getElementById('deck-choice-button').getAttribute('aria-label')`), 'Deck to study: Textbook');
     // "‹ Decks" in place of the screen's name goes back to the front page
     // (tester 2, 2026-10-17: there was no way back).
     assert.equal(await isShown(page, 'place-title'), false);
@@ -404,7 +416,7 @@ describe('decks', { concurrency: false }, () => {
     // were in line already); past them, a radical's lesson is a first look
     // and three writing steps, with no tones and nothing to hear.
     await openLearn(page);
-    await choose(page, 'deck-select', 'radicals/Common');
+    await studyDeck(page, 'radicals/Common');
     const typeShown = `document.getElementById('card-type').textContent`;
     await waitUntil(page, `${typeShown}.startsWith('New ')`, 'a lesson');
     for (let skipped = 0; (await page.evaluate(typeShown)).startsWith('New word'); skipped += 1) {
@@ -415,7 +427,7 @@ describe('decks', { concurrency: false }, () => {
     }
     assert.match(await page.evaluate(typeShown), /^New radical · step 1 of 4/);
     assert.equal(await page.evaluate(`document.getElementById('listen-button').hidden`), true);
-    await choose(page, 'deck-select', '');
+    await studyDeck(page, '');
     // The Decks tab was left on Ready-made decks; it comes back on My decks.
     await tap(page, 'decks-tab');
     await waitUntil(page, `!document.getElementById('my-decks-section').hidden`, 'My decks');

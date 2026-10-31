@@ -353,7 +353,9 @@ export default {
   'common.close': 'Schließen',
   'common.cancel': 'Abbrechen',
   // The study screen: Review, Learn and Free practice (index.html)
-  'review.deckToStudy': 'Stapel zum Lernen',
+  'review.deckToStudyIs': 'Stapel zum Lernen: {deck}',
+  'review.chooseDeckTitle': 'Welchen Stapel lernen?',
+  'review.decksInside': 'Stapel in {deck}',
   'review.hearTheWord': 'Wort anhören',
   'review.pinyinButton': 'Pinyin zeigen',
   'review.zhuyinButton': 'Zhuyin zeigen',

@@ -12,7 +12,7 @@
 import { getAll, getAllInParts, putAll, saveReview, saveKnown, startCardsOver, randomId } from './db.js';
 import { gradeOptions, gradeButtons, gradeFor, retrievability, AGAIN, GOOD } from './scheduler.js';
 import { deckWithInside, isInDecks, dailyGoal, startingLevel } from './decks.js';
-import { fillDeckSelect } from './decksPanel.js';
+import { createDeckChooser } from './deckChooser.js';
 import {
   planSession,
   suggestGrade,
@@ -108,13 +108,18 @@ const RECHECK_MS = 15 * 1000;
 // streakScreen: the pop-up for a day that counts for the streak
 //   (streakScreen.js)
 //
-// The deck studied is chosen with `deckSelect`, at the top of Review and
-// Learn (see "Studying one deck").
+// The deck studied is chosen with `deckButton`, at the top of Review and
+// Learn, or `deckTag` on the card's top line in Review, which open
+// `deckDialog` with the decks in `deckList` (see "Studying one deck" and
+// deckChooser.js).
 //
 // Returns { load, activate, deactivate, practice, refresh }.
 export function createReview(elements, flows, settings, editWord, showWord, noteOf, tappableText, streakScreen) {
   const {
-    deckSelect,
+    deckButton,
+    deckTag,
+    deckDialog,
+    deckList,
     countsElement,
     typeElement,
     meaningElement,
@@ -2113,18 +2118,21 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // The list of decks to choose from. With only the deck the app starts
   // with there is nothing to choose, and it is left out.
   function showDeckChoice() {
-    // (The groups inside the ready-made levels are left out, unless one is
-    // the deck studied: see fillDeckSelect.)
-    fillDeckSelect(deckSelect, decks, [{ value: '', label: t('review.allWords') }], { keep: settings.studyDeck });
-    deckSelect.value = studyDeck() ? settings.studyDeck : '';
-    deckSelect.hidden = decks.length < 2;
+    deckChooser.show(decks, studyDeck() ? settings.studyDeck : '', settings.script);
+    deckButton.hidden = decks.length < 2;
+    deckTag.hidden = decks.length < 2;
   }
 
   // Saving the setting has the next card worked out afresh (see refresh).
   // Today's words are the deck's: another deck starts afresh.
-  deckSelect.addEventListener('change', () => {
-    batch = null;
-    settings.change('studyDeck', deckSelect.value);
+  const deckChooser = createDeckChooser({
+    buttons: [deckButton, deckTag],
+    dialog: deckDialog,
+    list: deckList,
+    choose: (deckId) => {
+      batch = null;
+      settings.change('studyDeck', deckId);
+    },
   });
 
   // ---- Choosing the next card ----
