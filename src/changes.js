@@ -13,6 +13,21 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-01',
+    items: [
+      'Every deck is chosen from the same folding list now: in Words, Select words, Deck settings and on a word\'s page.',
+      'The start of Review, asking how many cards, is in the middle of the screen, and so is the screen with nothing left.',
+    ],
+    it: [
+      'Ogni mazzo si sceglie ora dallo stesso elenco pieghevole: in Parole, Seleziona parole, Impostazioni del mazzo e nella pagina di una parola.',
+      'L’inizio del Ripasso, che chiede quante carte, è al centro dello schermo, e così la schermata quando non resta niente.',
+    ],
+    de: [
+      'Jeder Stapel wird jetzt aus derselben aufklappbaren Liste gewählt: in Wörter, Wörter auswählen, den Stapel-Einstellungen und auf der Seite eines Worts.',
+      'Der Anfang von Wiederholen, der fragt, wie viele Karten, steht in der Mitte des Bildschirms, ebenso der Bildschirm, wenn nichts mehr übrig ist.',
+    ],
+  },
+  {
     id: '2026-10-31-4',
     items: ['The introduction offers to bring your words over from Skritter too, beside Anki.'],
     it: ['L’introduzione propone di portare le tue parole anche da Skritter, oltre che da Anki.'],

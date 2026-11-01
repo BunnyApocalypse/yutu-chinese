@@ -4,7 +4,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
-**Handover from the second session of 2026-11-01 (the deck chooser everywhere, Review's start in the middle; committed to `main`, not pushed, no "What's new" entry yet).**
+**Handover from the second session of 2026-11-01 (the deck chooser everywhere, Review's start in the middle; released to `main` and `stable`, "What's new" entry `2026-11-01`).**
 
 - **Built:**
   - Every place a deck is chosen opens the folding tree of decks, no longer the phone's drop-down (the owner): the Words tab, Select words, Deck settings' "Inside", and a word's page (Add to my words, its example sentence). `deckButtonFor` in `src/deckChooser.js` puts a button in place of the drop-down, which stays hidden and holds the choice, so the code around it is unchanged (`docs/decks.md`).
