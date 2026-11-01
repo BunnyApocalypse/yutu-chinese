@@ -13,6 +13,21 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-01-2',
+    items: [
+      'The right part of 極 may be written with its short slanting stroke and the turn after it in one go.',
+      'On the page of a character that is not yet yours, "Add to my words" fits inside the pop-up even with a long deck name.',
+    ],
+    it: [
+      'La parte destra di 極 si può scrivere con il breve tratto obliquo e la piega che lo segue in un solo tratto.',
+      'Nella pagina di un carattere che non è ancora tuo, "Aggiungi alle mie parole" sta dentro la finestra anche con un nome di mazzo lungo.',
+    ],
+    de: [
+      'Der rechte Teil von 極 darf mit dem kurzen schrägen Strich und der Wendung danach in einem Zug geschrieben werden.',
+      'Auf der Seite eines Zeichens, das noch nicht deins ist, passt „Zu meinen Wörtern“ ins Fenster, auch bei einem langen Stapelnamen.',
+    ],
+  },
+  {
     id: '2026-11-01',
     items: [
       'Every deck is chosen from the same folding list now: in Words, Select words, Deck settings and on a word\'s page.',
