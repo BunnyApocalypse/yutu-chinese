@@ -4,7 +4,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
-**Handover from the session of 2026-11-01 (old notes, rework-5 to rework-7; committed, not pushed or released).**
+**Handover from the session of 2026-11-01 (old notes, rework-5 to rework-7; released to `main` and `stable`, no "What's new" entry: the owner, not needed for reworked notes).**
 
 - **Built (data only):** the next 300 old notes of HSK 3.0 level 2 (过去 to 做法, in file order) reworked as in rework-4 and tagged `judged`, three batches at once (`gather.mjs --skip=<k>`); traditional versions by `scripts/convert-notes.js` (19 listed lines settled in `local/note-scripts/settle-old-5.mjs`). Details and lessons: `local/old-notes/README.md`, "Rework-5 to -7". About 1.25 million tokens.
 - **Next:** the last 29 untagged notes of `hsk-3.0-2.tsv`, then level 3 (`node local/old-notes/gather.mjs hsk-3.0-2.tsv <dir> 29 1 --in-order`, or level 3 with `hsk-3.0-3.tsv`).
