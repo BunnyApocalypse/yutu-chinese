@@ -7,6 +7,7 @@ import { putAll, removeWords, startCardsOver, saveKnown, randomId } from './db.j
 import { CARD_TYPES, allCardIds, formatInterval } from './session.js';
 import { cardsOfWord, withStartedOver, markedKnown } from './cardManager.js';
 import { fillDeckSelect } from './decksPanel.js';
+import { deckButtonFor } from './deckChooser.js';
 import { withDeck, withoutDecks, deckWithInside, readyMadeDeck } from './decks.js';
 import { ask } from './confirm.js';
 import { t } from './text.js';
@@ -187,6 +188,7 @@ export function createCardsPanel({
   const countElement = byId('bulk-count');
   const note = byId('bulk-note');
   const deckSelect = byId('bulk-deck');
+  deckButtonFor(deckSelect, { titleKey: 'decks.deckToPutThe', script: () => getSettings().script });
   const moveButton = byId('bulk-move-button');
   let selecting = false;
   // The IDs of the selected words.

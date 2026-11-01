@@ -888,9 +888,10 @@
         <button data-same-as="confirm-no" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 
-      <!-- Choosing the deck studied in Review and Learn (deckChooser.js). -->
+      <!-- Choosing a deck: the one studied in Review and Learn, and every
+           other deck chosen (deckChooser.js, which gives the heading). -->
       <dialog id="deck-choice-dialog" class="settings-panel deck-choice-dialog">
-        <h2 data-t="review.chooseDeckTitle"></h2>
+        <h2 id="deck-choice-title"></h2>
         <ul id="deck-choice-list" class="deck-choice-list"></ul>
         <button id="deck-choice-close" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>

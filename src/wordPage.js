@@ -25,6 +25,7 @@ import { parseCharacters, structureOf, soundClue } from './characters.js';
 import { parseTips } from './characterTips.js';
 import { deckTree, readyMadeDeck, isReadyMadeGroup } from './decks.js';
 import { fillDeckSelect } from './decksPanel.js';
+import { deckButtonFor } from './deckChooser.js';
 import { speak } from './speech.js';
 import { isRadical } from './radicals.js';
 import { isSentence, sentenceId } from './sentences.js';
@@ -387,7 +388,7 @@ export function createWordPage({
       return section;
     }
     const adding = element('div', 'page-add-sentence');
-    const deckSelect = deckChooser(t('page.deckForSentence'), shown.word);
+    const { deckSelect, deckButton } = deckChooser('page.deckForSentence', shown.word);
     // Worded so that it is plain a card is made (the owner, 2026-10-14:
     // "Study this sentence in" did not say so), and that it is the sentence
     // being added, not the word (tester 4, 2026-10-21).
@@ -411,7 +412,7 @@ export function createWordPage({
       }
       said.textContent = result === 'added' ? t('page.sentenceAdded') : '';
     });
-    adding.append(element('span', '', t('page.makeCardsIn')), deckSelect, addButton);
+    adding.append(element('span', '', t('page.makeCardsIn')), deckButton, addButton);
     section.append(adding, said);
     return section;
   }
@@ -459,8 +460,10 @@ export function createWordPage({
     return chips;
   }
 
-  // A drop-down list of decks to add something to, with the deck first
-  // offered (defaultDeckId) chosen. Only the learner's own decks are offered:
+  // A chooser of the deck to add something to, with the deck first offered
+  // (defaultDeckId) chosen: a button opening the panel of decks
+  // (deckButtonFor in deckChooser.js), and the drop-down list, not on the
+  // page, that holds the choice. Returns { deckSelect, deckButton }. Only the learner's own decks are offered:
   // the decks of the ready-made lists are those lists' words. (If there are
   // no others, the ready-made lists and their levels, without the groups
   // inside the levels: see fillDeckSelect.)
@@ -470,9 +473,12 @@ export function createWordPage({
   // ready-made group it is in, else its level, else a deck of the learner's
   // own (the owner, 2026-10-18: the sentence of a level's word belongs in
   // its group, the one way into a ready-made deck besides its own page).
-  function deckChooser(label, word = null) {
-    const deckSelect = element('select', 'deck-select');
-    deckSelect.setAttribute('aria-label', label);
+  function deckChooser(titleKey, word = null) {
+    const deckSelect = element('select');
+    const withButton = () => ({
+      deckSelect,
+      deckButton: deckButtonFor(deckSelect, { titleKey, script: () => getSettings().script }),
+    });
     const own = getDecks().filter((deck) => !readyMadeDeck(deck.id));
     const stored = new Set(getDecks().map((deck) => deck.id));
     const wordDecks = (word?.decks || []).filter((id) => stored.has(id));
@@ -486,18 +492,23 @@ export function createWordPage({
           .map(({ deck, label: name }) => {
             const option = element('option', '', name);
             option.value = deck.id;
+            // As fillDeckSelect gives them, for the panel.
+            option.dataset.name = deck.name;
+            if (deck.parentId) {
+              option.dataset.parent = deck.parentId;
+            }
             return option;
           }),
       );
       deckSelect.value = readyMade.find(isReadyMadeGroup) || readyMade[0];
-      return deckSelect;
+      return withButton();
     }
     fillDeckSelect(deckSelect, own.length > 0 ? own : getDecks(), []);
     const preferred = wordDecks[0] || defaultDeckId();
     if ([...deckSelect.options].some((option) => option.value === preferred)) {
       deckSelect.value = preferred;
     }
-    return deckSelect;
+    return withButton();
   }
 
   // For a word that is not one of yours: a way to add it to a deck (the
@@ -526,7 +537,7 @@ export function createWordPage({
         readingSelect.append(option);
       });
     }
-    const deckSelect = deckChooser(t('page.deckForWord'));
+    const { deckSelect, deckButton } = deckChooser('page.deckForWord');
     const addButton = element('button', 'small primary', t('page.addToMyWords'));
     addButton.type = 'button';
     const said = element('p', 'note');
@@ -548,7 +559,7 @@ export function createWordPage({
         show({ word, addedTo: deckSelect.value });
       }
     });
-    adding.append(addButton, ...(readingSelect ? [readingSelect] : []), deckSelect);
+    adding.append(addButton, ...(readingSelect ? [readingSelect] : []), deckButton);
     return [adding, said];
   }
 

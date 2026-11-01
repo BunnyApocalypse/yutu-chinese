@@ -77,8 +77,14 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     await waitUntil(page, `!document.getElementById('word-dialog').open`, 'the panel to close');
 
     const animals = await page.evaluate(`[...document.getElementById('words-deck-select').options].find((option) => option.textContent === 'Animals').value`);
-    await choose(page, 'words-deck-select', animals);
+    // Chosen in the panel of decks, which the button opens.
+    await tap(page, 'words-deck-select-button');
+    await waitUntil(page, `document.getElementById('deck-choice-dialog').open`, 'the panel of decks');
+    assert.equal(await textOf(page, 'deck-choice-title'), 'Deck whose words are listed');
+    await page.evaluate(`document.querySelector('#deck-choice-list input[value="${animals}"]').click()`);
     await waitUntil(page, rows(1), 'the one word of the deck');
+    assert.equal(await page.evaluate(`document.getElementById('deck-choice-dialog').open`), false);
+    assert.equal(await textOf(page, 'words-deck-select-button'), 'Animals');
     assert.equal(await textOf(page, 'word-list-title'), 'Words in this deck');
     await choose(page, 'words-deck-select', '');
     await waitUntil(page, rows(2), 'all words again');
@@ -91,7 +97,7 @@ describe('the Decks and Words tabs', { concurrency: false }, () => {
     // chooser; the front page has none.
     await waitUntil(page, `document.getElementById('word-list').offsetParent !== null && ${rows(1)}`, 'the deck\'s word under its page');
     assert.equal(await inView(page, 'word-search'), true);
-    assert.equal(await inView(page, 'words-deck-select'), false);
+    assert.equal(await inView(page, 'words-deck-select-button'), false);
     await tap(page, 'my-decks-button');
     await waitUntil(page, `document.getElementById('word-list').offsetParent === null`, 'no words on the front page');
   });

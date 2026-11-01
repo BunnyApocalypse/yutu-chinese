@@ -205,6 +205,12 @@
      their gaps (.side-arrow, .writing-row). chooseSize in wordFlow.js reads
      it, so the area is as wide as what is left. */
   --arrow-room: 64px;
+  /* How far down the screen the room under Review's top rows starts (the
+     top bar and the rows above a card, which keep their height when no
+     card is up; measured on a phone, 2026-11-01). The start of Review and
+     the screen with nothing left are centered on the screen by keeping as
+     much room free under them (.done-panel). */
+  --study-top-room: 171px;
 }
 
 * {
@@ -1159,6 +1165,29 @@ main.focused #prompt-meaning:not(.with-sentence) {
 
 #done-message {
   margin-bottom: var(--space-large);
+}
+
+/* The start of Review and the screen with nothing left (or the end of
+   Review, or of today's words in Learn) are in the middle of the screen
+   (the owner, 2026-11-01), not under the top rows. main is then as tall
+   as the screen; the panel's automatic margins share the room left above
+   and below it, and the room kept free at the bottom (main::after) is as
+   tall as the rows above, so that it is the screen it is centered on.
+   With more than fits, that room shrinks first, and what is still too long
+   runs past main's end and the page scrolls as before. (A height, not a
+   least height: main would otherwise grow to keep the room whole, and the
+   page scrolled at the end of Learn.) */
+main:has(> .done-panel:not([hidden])) {
+  height: 100dvh;
+}
+
+main:has(> .done-panel:not([hidden])) > .done-panel {
+  margin-block: auto;
+}
+
+main:has(> .done-panel:not([hidden]))::after {
+  content: '';
+  flex: 0 1 var(--study-top-room);
 }
 
 /* The start of Review (review.js): Review all, then the numbers side by
@@ -4016,6 +4045,27 @@ button.word-entry.selected {
   align-items: center;
   gap: var(--space-small);
   border-color: var(--field-border);
+}
+
+/* The same button everywhere else a deck is chosen (deckButtonFor in
+   deckChooser.js), in the drop-down list's place and size there. */
+.list-tools .deck-choice-button {
+  max-width: 140px;
+  margin-left: 0;
+}
+
+.page-add-word-row .deck-choice-button,
+.page-add-sentence .deck-choice-button {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.page-add-sentence .deck-choice-button {
+  max-width: 55%;
+}
+
+.settings-panel .deck-choice-button {
+  min-width: 0;
 }
 
 .deck-select-name {

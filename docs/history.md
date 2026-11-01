@@ -4,6 +4,14 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the second session of 2026-11-01 (the deck chooser everywhere, Review's start in the middle; committed to `main`, not pushed, no "What's new" entry yet).**
+
+- **Built:**
+  - Every place a deck is chosen opens the folding tree of decks, no longer the phone's drop-down (the owner): the Words tab, Select words, Deck settings' "Inside", and a word's page (Add to my words, its example sentence). `deckButtonFor` in `src/deckChooser.js` puts a button in place of the drop-down, which stays hidden and holds the choice, so the code around it is unchanged (`docs/decks.md`).
+  - The start of Review (how many cards) is in the middle of the screen, and the screen with nothing left matches it (the owner, from the pictures; `docs/cards.md`). The end of Review and of today's words in Learn are the same panel and move with it; too long for the screen, they scroll as before.
+- **Checked:** pictures at phone, small phone and tablet; a panel taller than the screen still scrolls to its last button.
+- **Tests:** 303 unit tests and all 585 browser tests pass (23 skipped).
+
 **Handover from the session of 2026-11-01 (old notes, rework-5 to rework-7; released to `main` and `stable`, no "What's new" entry: the owner, not needed for reworked notes).**
 
 - **Built (data only):** the next 300 old notes of HSK 3.0 level 2 (过去 to 做法, in file order) reworked as in rework-4 and tagged `judged`, three batches at once (`gather.mjs --skip=<k>`); traditional versions by `scripts/convert-notes.js` (19 listed lines settled in `local/note-scripts/settle-old-5.mjs`). Details and lessons: `local/old-notes/README.md`, "Rework-5 to -7". About 1.25 million tokens.
@@ -33,7 +41,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - **Built** (the owner, from a picture of the phone's drop-down full of Skritter sections): the chooser of the deck studied is a panel of the app's own with the decks in a tree that folds (`src/deckChooser.js`); while a card is up the deck is on the card's top line (`deck-tag`): in Review between the kind of card and Show pinyin, in Learn beside ☰, as a picture of fanned cards where the line is under 480px. Until now the deck could not be changed while a card was up (the line with the chooser is put away). The owner chose each place; a place in the menu was tried and not kept. All in `docs/decks.md` ("Studying a deck") and `docs/pitfalls.md`.
 - **Fixed on the way:** the chooser above Review's start was a few letters wide (its 46% was of its own line, which was only as wide as it).
 - **Checked:** pictures at 360, 390, tablet and tablet held sideways; today's words in Learn don't move, "Show pinyin" stays on one line at 360px.
-- **Not done:** the chooser in the Words tab is still the phone's drop-down with full paths (`words-deck-select`); `deckChooser.js` could serve it if the owner wants.
+- **Not done** (done on 2026-11-01): the chooser in the Words tab was still the phone's drop-down.
 - **Tests:** 300 unit tests and all 505 browser tests pass (15 skipped).
 
 **Handover from the session of 2026-10-31 (Learn's words as one sitting; released to `main` and `stable` with the rework below, "What's new" entry `2026-10-31`).**

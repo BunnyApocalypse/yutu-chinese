@@ -109,17 +109,14 @@ const RECHECK_MS = 15 * 1000;
 //   (streakScreen.js)
 //
 // The deck studied is chosen with `deckButton`, at the top of Review and
-// Learn, or `deckTag` on the card's top line in Review, which open
-// `deckDialog` with the decks in `deckList` (see "Studying one deck" and
-// deckChooser.js).
+// Learn, or `deckTag` on the card's top line in Review, which open the
+// panel of decks (see "Studying one deck" and deckChooser.js).
 //
 // Returns { load, activate, deactivate, practice, refresh }.
 export function createReview(elements, flows, settings, editWord, showWord, noteOf, tappableText, streakScreen) {
   const {
     deckButton,
     deckTag,
-    deckDialog,
-    deckList,
     countsElement,
     typeElement,
     meaningElement,
@@ -2220,8 +2217,6 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // Today's words are the deck's: another deck starts afresh.
   const deckChooser = createDeckChooser({
     buttons: [deckButton, deckTag],
-    dialog: deckDialog,
-    list: deckList,
     choose: (deckId) => {
       batch = null;
       settings.change('studyDeck', deckId);

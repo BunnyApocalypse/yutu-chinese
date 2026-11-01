@@ -30,7 +30,7 @@
 - `src/db.js`: small promise wrapper around IndexedDB. The store layout is documented at the top of the file.
 - `src/decks.js`: the plain calculation behind decks: the tree, which words are in a deck, a deck's daily goal, the decks of the ready-made lists.
 - `src/decksPanel.js`: the decks in the Decks tab: the front page and a deck's page (the line saying where you are, the decks inside, adding one) and Deck settings (rename, move, daily goal, delete). Set up by `src/wordsPanel.js`. Also `fillDeckSelect`, which the other lists of decks to choose from are filled with.
-- `src/deckChooser.js`: choosing the deck studied in Review and Learn: a panel with the decks in a tree that folds, opened from the top of the screen or the card's top line.
+- `src/deckChooser.js`: choosing a deck: a panel with the decks in a tree that folds, opened for the deck studied in Review and Learn (the top of the screen or the card's top line) and, standing in for a drop-down list, wherever else a deck is chosen (`deckButtonFor`).
 - `src/offline.js`, `src/serviceWorker.js`, `scripts/build-offline.js`, `public/manifest.webmanifest`, `.github/workflows/deploy.yml`: offline use and deployment (`docs/offline.md`).
 - `src/welcome.js`, `src/storageAdvice.js`: the introduction shown on first use, and what it says about long-term storage in each browser (`docs/interface.md`).
 - `src/dialogs.js`: pop-up panels that close with a tap beside them.

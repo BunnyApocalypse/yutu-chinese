@@ -419,9 +419,15 @@ describe('decks', { concurrency: false }, () => {
     await type(page, 'word-search', '日本');
     await page.evaluate(`[...document.querySelectorAll('#word-list li button')].find((row) => row.dataset.wordId === '日本|Ri4ben3' || row.querySelector('.entry-pinyin')?.textContent === 'Rìběn').click()`);
     await waitUntil(page, `document.getElementById('word-page').dataset.shown === '日本|Ri4ben3'`, "日本's page");
-    await waitUntil(page, `document.querySelector('#word-page-body .page-add-sentence select') !== null`, 'the way to add its sentence');
-    assert.equal(await page.evaluate(`document.querySelector('#word-page-body .page-add-sentence select').value`), japan.decks[0]);
+    await waitUntil(page, `document.querySelector('#word-page-body .page-add-sentence .deck-choice-button') !== null`, 'the way to add its sentence');
     assert.ok(japan.decks[0].startsWith('tocfl/Novice 1/'));
+    // The panel of decks, the topic chosen, named by its whole path as the
+    // level it is inside is not listed.
+    await page.evaluate(`document.querySelector('#word-page-body .page-add-sentence .deck-choice-button').click()`);
+    await waitUntil(page, `document.getElementById('deck-choice-dialog').open`, 'the panel of decks');
+    assert.equal(await page.evaluate(`document.querySelector('#deck-choice-list input:checked').value`), japan.decks[0]);
+    assert.match(await page.evaluate(`document.querySelector('#deck-choice-list input:checked').parentElement.textContent`), /^TOCFL Novice 1 › /);
+    await tap(page, 'deck-choice-close');
     await tap(page, 'word-page-edit');
     const boxes = await page.evaluate(`[...document.querySelectorAll('#edit-decks input')].map((box) => box.value)`);
     assert.ok(boxes.length > 0);

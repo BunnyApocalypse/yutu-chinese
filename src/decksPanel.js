@@ -9,6 +9,7 @@
 // reads the words and decks and hands them over through the functions below.
 
 import { putAll, removeDecks, removeWords, randomId } from './db.js';
+import { deckButtonFor } from './deckChooser.js';
 import { fillMixed } from './lang.js';
 import { allCardIds } from './session.js';
 import {
@@ -30,7 +31,9 @@ const byId = (id) => document.getElementById(id);
 
 // Fills a <select> with one entry per deck, in tree order, after the entries
 // in `first` ([{ value, label }]). The choice made is kept if it is still
-// among them.
+// among them. Each deck's entry has its whole path, and says the deck's own
+// name and the deck it is inside, for the panel the list is shown as
+// (deckButtonFor in deckChooser.js).
 //
 // The groups inside the levels of the ready-made lists are always left out:
 // one HSK or TOCFL level brings a dozen of them, and a list of every one
@@ -45,17 +48,23 @@ const byId = (id) => document.getElementById(id);
 export function fillDeckSelect(select, decks, first, { skip = () => false, keep = '' } = {}) {
   const chosen = select.value;
   const leaveOut = (deck) => skip(deck) || (isReadyMadeGroup(deck.id) && deck.id !== chosen && deck.id !== keep);
-  const option = (value, label) => {
+  const option = (value, label, deck = null) => {
     const element = document.createElement('option');
     element.value = value;
     element.textContent = label;
+    if (deck) {
+      element.dataset.name = deck.name;
+      if (deck.parentId) {
+        element.dataset.parent = deck.parentId;
+      }
+    }
     return element;
   };
   select.replaceChildren(
     ...first.map(({ value, label }) => option(value, label)),
     ...deckTree(decks)
       .filter(({ deck }) => !leaveOut(deck))
-      .map(({ deck, label }) => option(deck.id, label)),
+      .map(({ deck, label }) => option(deck.id, label, deck)),
   );
   if ([...select.options].some((entry) => entry.value === chosen)) {
     select.value = chosen;
@@ -83,6 +92,7 @@ export function createDecksPanel({ getWords, getDecks, getCards, isLearned, getO
   const dialog = byId('deck-dialog');
   const nameInput = byId('deck-name');
   const parentSelect = byId('deck-parent');
+  deckButtonFor(parentSelect, { titleKey: 'deck.insideWhich', script: () => getSettings().script });
   const goalInput = byId('deck-goal');
   const note = byId('deck-dialog-note');
   const buttons = byId('deck-buttons');

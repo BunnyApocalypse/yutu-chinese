@@ -16,6 +16,7 @@ import {
   DEFAULT_DECK,
 } from './decks.js';
 import { createDecksPanel, fillDeckSelect } from './decksPanel.js';
+import { deckButtonFor } from './deckChooser.js';
 import { createCardsPanel } from './cardsPanel.js';
 import { createWordPage } from './wordPage.js';
 import { createDictionaryLoader } from './dictionaryLoader.js';
@@ -159,6 +160,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
 
   // Shows the parts that belong to the tab that is open.
   const listDeckSelect = byId('words-deck-select');
+  deckButtonFor(listDeckSelect, { titleKey: 'decks.deckWhoseWordsAre', script: () => getSettings().script });
   function showView() {
     const onWords = view === 'words';
     byId('decks-part').classList.toggle('view-hidden', onWords);

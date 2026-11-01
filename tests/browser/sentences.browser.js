@@ -57,7 +57,7 @@ describe('sentences', { concurrency: false }, () => {
     await page.evaluate(`document.querySelector('#word-list li button').click()`);
     await waitUntil(page, `document.getElementById('word-page').dataset.shown === '我們|wo3men5'`, 'the word\'s page');
 
-    await page.evaluate(`document.querySelector('#word-page-body .page-add-sentence button').click()`);
+    await page.evaluate(`document.querySelector('#word-page-body .page-add-sentence button:not(.deck-choice-button)').click()`);
     await waitUntil(page, `[...document.querySelectorAll('#word-page-body .page-section .note')].some((line) => line.textContent.startsWith('Added'))`, 'the sentence added');
     const sentence = (await stored(page, 'words')).find((word) => word.kind === 'sentence');
     assert.equal(sentence.id, '我們是同學。|sentence');
