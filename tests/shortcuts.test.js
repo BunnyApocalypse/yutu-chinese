@@ -133,6 +133,14 @@ test('the top of 辶 may be joined even where 辶 is small', () => {
   }
 });
 
+test('the short ノ of 亟 may be joined to the ㇆ after it', () => {
+  // In the Taiwan 極 they are two strokes, the ノ 149 units long; the big set
+  // has them as one (the owner, 2026-11-01).
+  const ji = charData('極', 'traditional');
+  assert.ok(isJoinable(ji, 5));
+  assert.ok(isShortcutStroke(ji, 5, joinedLine(ji, 5), LENIENCY));
+});
+
 test('strokes that do not meet end to start are not joinable', () => {
   const kou = bigSetData('口');
   for (let strokeNum = 0; strokeNum < kou.medians.length; strokeNum++) {

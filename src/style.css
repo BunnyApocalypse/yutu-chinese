@@ -3492,13 +3492,19 @@ html:has(main.focused) {
 
 /* "Add to my words" at the bottom edge of a dictionary word's page
    (showAdding in wordPage.js): a line of its own above the other buttons,
-   the deck beside it, narrowing before it wraps on a small phone. */
+   the deck beside it, its name shortened, or on a line of its own when
+   long. */
 .page-add-word {
   flex-basis: 100%;
+  /* A flex item is otherwise never narrower than what is inside it, so a
+     long deck name made the line wider than the page, cut off at both
+     ends (the owner, 2026-11-01, on the page of 敫). */
+  min-width: 0;
 }
 
 .page-add-word-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: var(--space-small);
@@ -3508,9 +3514,10 @@ html:has(main.focused) {
   flex-shrink: 0;
 }
 
+/* The reading keeps its width; the deck's name is shortened instead. */
 .page-add-word-row select {
-  flex: 0 1 auto;
-  min-width: 0;
+  flex: 0 0 auto;
+  max-width: 40%;
 }
 
 .page-add-word .note {
@@ -4062,6 +4069,12 @@ button.word-entry.selected {
 
 .page-add-sentence .deck-choice-button {
   max-width: 55%;
+}
+
+/* Shortened down to a few letters of the deck's name, then on a line of its
+   own (a small phone). */
+.page-add-word-row .deck-choice-button {
+  min-width: min(7em, 100%);
 }
 
 .settings-panel .deck-choice-button {

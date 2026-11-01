@@ -46,8 +46,12 @@ const MAX_LEAD_IN = 80;
 // The first stroke, and what is left of the second after the meeting point,
 // must each be at least this long. Joining a stroke to a dot or a tick changes
 // its shape so little that "joined" could not be told apart from "just the
-// longer of the two", and a forgotten dot would pass unnoticed.
-const MIN_PART_LENGTH = 150;
+// longer of the two", and a forgotten dot would pass unnoticed. 145, not
+// 150 (the owner, 2026-11-01): the short ノ of 亟 in the Taiwan 極 is 149,
+// and is written joined to the ㇆ after it, as the big set has it. This
+// made 4 more pairs of the Taiwan set joinable (受 節 顧 besides), 43 of the
+// big set's 1,873, with still no misfires in tests/shortcuts.test.js.
+const MIN_PART_LENGTH = 145;
 // But two parts of much the same length (the shorter at least
 // SIMILAR_PARTS_SHARE of the longer) may each be as short as this: neither is
 // a dot beside a long stroke. For a small component, such as the 辶 of 隨,
