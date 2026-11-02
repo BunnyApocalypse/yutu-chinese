@@ -4,6 +4,12 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the second session of 2026-11-02 (艹 in three strokes in 郵; released to `main` and `stable`, "What's new" entry `2026-11-02-2`).**
+
+- **Built** (the owner: 郵 had to be written with the 十 十 of 垂 in four strokes): `grassTopsOf` in `src/shortcuts.js` also takes a 艹 shape with a 丨 running down between its two halves and strokes above it (`runsDownBetween`). That adds 郵, 睡 and the lower part of 華 in the Taiwan set, and nothing in the big set; dropping the "nothing above" rule outright would have added 興 and 飆 (`docs/writing.md`).
+- **Waiting on the owner:** whether 郵 now feels right in use.
+- **Tests:** 309 unit tests pass; the writing grid for 郵, 華, 睡 and 草 passes (both now in the grid's list). The full browser suite was not run.
+
 **Handover from the second session of 2026-11-01 (the deck chooser everywhere, Review's start in the middle; released to `main` and `stable`, "What's new" entry `2026-11-01`).**
 
 - **Built:**
