@@ -31,8 +31,16 @@
 //               form writes in another shape in the same place, as
 //               { strokeNum: median } (the dot under 人 in 食, where Taiwan's
 //               stroke is nearly flat). Either shape is accepted.
+//   altForm:    Taiwan set only, for 充, 流 and 育: the big set's form, a
+//               stroke more, as { strokes, medians, from }.
+//   altForms:   added when loaded, traditional only: every second form,
+//               altForm's and those of the box at the top of 骨
+//               (innerBox.js), each with `from`, the first stroke where it
+//               differs, and maybe `altShapes` of its own.
 // Strokes are numbered from 0, in writing order. Coordinates run from 0 to
 // 1024 across, and from about -124 (bottom) to 900 (top) upwards.
+
+import { innerBoxForms } from './innerBox.js';
 
 // BASE_URL is the folder the app is served from ("/" during development).
 const BASE = import.meta.env.BASE_URL;
@@ -96,12 +104,18 @@ function loadTaiwanChars() {
 export async function loadCharData(char, script) {
   if (script === 'traditional') {
     const taiwanChars = await loadTaiwanChars();
-    if (taiwanChars.has(char)) {
-      const data = await fetchCharFile('char-data-tw', char);
-      if (data) {
-        return data;
-      }
-    }
+    let data = taiwanChars.has(char) ? await fetchCharFile('char-data-tw', char) : null;
+    data ??= await fetchCharFile('char-data', char);
+    return data && withSecondForms(char, data);
   }
   return fetchCharFile('char-data', char);
+}
+
+// The traditional character's data with all its second forms as `altForms`:
+// the one stored with it (`altForm`, 充) and the other ways to write the box
+// at the top of 骨 (innerBox.js). A copy, as the big set's data is shared
+// with simplified, which has none of these.
+function withSecondForms(char, data) {
+  const altForms = [...(data.altForm ? [data.altForm] : []), ...innerBoxForms(char, data)];
+  return altForms.length > 0 ? { ...data, altForms } : data;
 }

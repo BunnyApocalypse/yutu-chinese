@@ -20,12 +20,16 @@ import {
   loadStrokeData,
 } from './harness.js';
 import { grassTopsOf } from '../../src/shortcuts.js';
+import { innerBoxForms } from '../../src/innerBox.js';
 
 // Characters with two accepted stroke orders (the first ten), some with one,
 // some with strokes in a second shape (食房藍雨聽, also written so), and some
 // with 艹 (草花藍觀, also written with it in three strokes), and some with a
-// second form (充流育, also written in the big set's).
-const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢母出長麼這謝子好食房藍雨草花觀聽充流育');
+// second form (充流育, also written in the big set's), and some with the box
+// of 骨 (骨體滑, also written in its other orders and shapes; not 髒, whose
+// 9th stroke in its mainland shape is refused at half size, bottom right,
+// with or without this).
+const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢母出長麼這謝子好食房藍雨草花觀聽充流育骨體滑');
 
 // Where and how big the character is written, compared with the centered
 // reference: `scale` times the size, moved `dx` to the right and `dy` up, in
@@ -154,6 +158,15 @@ describe('writing grid', { concurrency: BROWSER_COUNT }, () => {
       const { medians } = data.altForm;
       ways.push({ label: 'second form', strokeOrder: medians.map((median, index) => index), shapes: { ...medians } });
     }
+    // The box of 骨 written in another way (src/innerBox.js), and with the
+    // form's own other shapes.
+    innerBoxForms(char, data).forEach(({ medians, altShapes }, index) => {
+      const strokeOrder = medians.map((median, strokeNum) => strokeNum);
+      ways.push({ label: `box of 骨, way ${index + 1}`, strokeOrder, shapes: { ...medians } });
+      if (altShapes) {
+        ways.push({ label: `box of 骨, way ${index + 1}, other shapes`, strokeOrder, shapes: { ...medians, ...altShapes } });
+      }
+    });
     // 艹 in three strokes: the level stroke across, then the two uprights;
     // or the left upright, the level stroke, the right upright.
     for (const top of grassTopsOf(data)) {

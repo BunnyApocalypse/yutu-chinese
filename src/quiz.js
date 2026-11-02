@@ -149,7 +149,7 @@ export function createQuiz(target, size, handlers) {
   let char = null;
   let charScript = null;
   // Its stroke data as loaded, with the strokes in the standard order: the
-  // Taiwan form, or once written so, its second form (altForm, switched to by
+  // Taiwan form, or once written so, a second form (altForms, switched to by
   // switchToOtherForm). loadedData is always the data as loaded.
   let baseData = null;
   let loadedData = null;
@@ -850,46 +850,62 @@ export function createQuiz(target, size, handlers) {
   //
   // 充, 流 and 育 have one stroke fewer in the Taiwan set than in the big
   // set, whose form writes the dot on top on its own (the owner, 2026-10-31,
-  // writes it so: "both forms should be okay"). The big set's strokes are
-  // kept as baseData.altForm (scripts/strokeOrder.js), with `from`, the
-  // first stroke where the two differ. A stroke Hanzi Writer refuses there
-  // that fits the second form's stroke switches to that form for the rest
-  // of the character. Clear and Animate return to the Taiwan form.
+  // writes it so: "both forms should be okay"). The box at the top of 骨 may
+  // be written in either order, or as two strokes where the data has one ㇕
+  // (the owner, 2026-11-02; innerBox.js). Each such form is kept in
+  // baseData.altForms (charData.js), with `from`, the first stroke where it
+  // differs from the data, and maybe shapes of its own (`altShapes`). A
+  // stroke Hanzi Writer refuses there that fits the form's stroke switches
+  // to that form for the rest of the character. Clear and Animate return to
+  // the data as loaded.
 
-  // True if the stroke is where the forms part ways, written as the second
-  // form's stroke there. A first stroke may be anywhere (as
-  // firstStrokeAnywhere), and is taken for the second form only if it is
-  // more like that stroke than the Taiwan one. So is a stroke Hanzi Writer
-  // accepted (`accepted`): leniently, it takes a small dot for the level
-  // stroke of the Taiwan form (流 written small).
+  // If the stroke is where a form parts ways, written as that form's stroke
+  // there, returns { form, shape }: `shape` the stroke's other shape in the
+  // form (its altShapes) if it was written in that, else null. Otherwise
+  // null. A first stroke may be anywhere (as firstStrokeAnywhere), and is
+  // taken for the form only if it is more like that stroke than the data's.
+  // So is a stroke Hanzi Writer accepted (`accepted`): leniently, it takes a
+  // small dot for the level stroke of the Taiwan form (流 written small).
+  // Of several forms that fit, the one whose stroke it is most like.
   function otherFormFor(stroke, accepted = false) {
-    const form = baseData.altForm;
-    if (!form || stroke.strokeNum !== form.from || !isStandardOrder(sequence) || grassJoined.length > 0) {
-      return false;
+    const forms = baseData.altForms;
+    if (!forms || !isStandardOrder(sequence) || grassJoined.length > 0) {
+      return null;
     }
     const points = stroke.drawnPath.points;
-    const expected = form.medians[form.from];
-    const taiwan = baseData.medians[form.from];
-    const moreLikeIt = (formLine, taiwanLine) =>
-      shapeDifferenceFromStroke(points, formLine) < shapeDifferenceFromStroke(points, taiwanLine);
-    if (stroke.strokeNum === 0 && acceptedStrokes.length === 0 && canFollow()) {
-      const anywhere = (median) => fitsStroke(points, median, leniencyNow * FIRST_STROKE_EXTRA_LENIENCY, true);
-      return anywhere(expected) && (!anywhere(taiwan) || moreLikeIt(expected, taiwan));
+    const taiwan = baseData.medians[stroke.strokeNum];
+    const firstOfAll = stroke.strokeNum === 0 && acceptedStrokes.length === 0 && canFollow();
+    const inFrame = (median) =>
+      firstOfAll ? median : moved(toPoints(median), frame).map((point) => [point.x, point.y]);
+    const fits = (median) =>
+      firstOfAll
+        ? fitsStroke(points, median, leniencyNow * FIRST_STROKE_EXTRA_LENIENCY, true)
+        : fitsStroke(points, inFrame(median), leniencyNow * Math.min(1, frame.scale));
+    const unlike = (median) => shapeDifferenceFromStroke(points, inFrame(median));
+    const found = [];
+    for (const form of forms.filter((each) => each.from === stroke.strokeNum)) {
+      const shape = form.altShapes?.[form.from];
+      for (const [median, isShape] of [[form.medians[form.from], false], ...(shape ? [[shape, true]] : [])]) {
+        const moreLikeIt = unlike(median) < unlike(taiwan);
+        if (fits(median) && (firstOfAll ? !fits(taiwan) || moreLikeIt : !accepted || moreLikeIt)) {
+          found.push({ form, shape: isShape ? median : null, unlike: unlike(median) });
+        }
+      }
     }
-    const inFrame = (median) => moved(toPoints(median), frame).map((point) => [point.x, point.y]);
-    const fits = fitsStroke(points, inFrame(expected), leniencyNow * Math.min(1, frame.scale));
-    return fits && (!accepted || moreLikeIt(inFrame(expected), inFrame(taiwan)));
+    found.sort((a, b) => a.unlike - b.unlike);
+    return found[0] ?? null;
   }
 
-  // Carries on in the second form, the rejected stroke taken for its stroke
-  // where the forms part ways. The strokes before it are the same in both.
-  function switchToOtherForm(stroke) {
-    const { strokes, medians } = baseData.altForm;
-    baseData = { strokes, medians };
+  // Carries on in a second form (found by otherFormFor), the stroke taken
+  // for its stroke where it parts ways. The strokes before it are the same
+  // in both.
+  function switchToOtherForm(stroke, { form, shape }) {
+    const { strokes, medians, altShapes } = form;
+    baseData = { strokes, medians, altShapes };
     sequence = strokes.map((each, index) => index);
     grassTops = grassTopsOf(baseData);
     framedData = applyFrame(baseData, frame);
-    noteAccepted(stroke.strokeNum, [stroke.strokeNum], stroke.drawnPath.points);
+    noteAccepted(stroke.strokeNum, [stroke.strokeNum], stroke.drawnPath.points, shape);
     refitFrame();
     const written = stroke.strokeNum + 1;
     reportProgress({ strokesDone: written, totalStrokes: strokes.length, totalMistakes: mistakes });
@@ -1307,10 +1323,11 @@ export function createQuiz(target, size, handlers) {
           switchToOtherOrder(stroke, otherReading, totalStrokes);
           return;
         }
-        // Accepted, but more like the second form's stroke (a dot).
-        if (otherFormFor(stroke, true)) {
+        // Accepted, but more like a second form's stroke (a dot).
+        const acceptedForm = otherFormFor(stroke, true);
+        if (acceptedForm) {
           record(stroke, 'otherForm', judgedIn);
-          switchToOtherForm(stroke);
+          switchToOtherForm(stroke, acceptedForm);
           return;
         }
         // The level stroke of 艹 in three strokes, taken for its left half.
@@ -1367,12 +1384,13 @@ export function createQuiz(target, size, handlers) {
           acceptGrassLevel(stroke, grassTop, totalStrokes);
           return;
         }
-        // Where the Taiwan and the second form part ways, the second form's
-        // stroke (the dot on top of 充 on its own).
-        if (otherFormFor(stroke)) {
+        // Where the data and a second form part ways, that form's stroke
+        // (the dot on top of 充 on its own; the box of 骨 in another order).
+        const otherForm = otherFormFor(stroke);
+        if (otherForm) {
           record(stroke, 'otherForm', judgedIn);
           keepDrawnStroke(stroke.drawnPath.pathString);
-          switchToOtherForm(stroke);
+          switchToOtherForm(stroke, otherForm);
           return;
         }
         // The first stroke of all, in the right shape but further from the
