@@ -13,6 +13,21 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-02',
+    items: [
+      'In 骨 and the characters with it (體, 髒, 滑…), the two short strokes inside the box at the top may be written in either order, the level stroke first or the upright first.',
+      'In 骨 itself and others drawn with one turning stroke in the box, it may also be written as two strokes.',
+    ],
+    it: [
+      'In 骨 e nei caratteri che lo contengono (體, 髒, 滑…), i due brevi tratti dentro il riquadro in alto si possono scrivere in entrambi gli ordini, prima quello orizzontale o prima quello verticale.',
+      'In 骨 stesso e negli altri disegnati con un solo tratto piegato nel riquadro, si può anche scrivere in due tratti.',
+    ],
+    de: [
+      'In 骨 und den Zeichen, die es enthalten (體, 髒, 滑…), dürfen die zwei kurzen Striche im Kästchen oben in beiden Reihenfolgen geschrieben werden, zuerst der waagrechte oder zuerst der senkrechte.',
+      'In 骨 selbst und anderen, die im Kästchen mit einem einzigen abknickenden Strich gezeichnet sind, darf es auch in zwei Strichen geschrieben werden.',
+    ],
+  },
+  {
     id: '2026-11-01-2',
     items: [
       'The right part of 極 may be written with its short slanting stroke and the turn after it in one go.',
