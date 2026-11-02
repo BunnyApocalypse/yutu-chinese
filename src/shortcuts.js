@@ -214,8 +214,9 @@ export function joinedLine(charData, strokeNum) {
 //
 // 艹 is found in the stroke data by its shape: four strokes in a row, an
 // upright crossing a level stroke, then a level stroke going on from it and
-// crossed by an upright, with nothing above them. Found so in 25 of the
-// Taiwan set's characters (花 茶 草 藍 萬 懂 貓 觀…), and nowhere else.
+// crossed by an upright, with nothing above them, or with a 丨 running down
+// between the halves (垂). Found so in 27 of the Taiwan set's characters
+// (花 茶 草 藍 萬 懂 貓 觀 郵 睡…), and nowhere else.
 
 // Directions, in degrees, with y going up (charData.js): level is within
 // this much of straight across; upright between these, going down (the left
@@ -253,6 +254,22 @@ const crosses = (upright, level) => {
   );
 };
 
+// The 十 十 of 垂 (郵, 睡, the lower part of 華) has a long 丨 running down
+// between the two halves, and strokes above it; the owner writes its level
+// stroke in one go too (2026-11-02). So strokes above don't matter where a
+// 丨 crosses the level stroke between the halves, between the uprights.
+const runsDownBetween = (median, leftUpright, rightUpright, level) => {
+  const middleX = (median[0][0] + median[median.length - 1][0]) / 2;
+  const [left, right] = [leftUpright, rightUpright].map((upright) => (upright[0][0] + upright[upright.length - 1][0]) / 2);
+  return (
+    isUpright(median) &&
+    middleX > left &&
+    middleX < right &&
+    median[0][1] > level + MIN_CROSSING &&
+    median[median.length - 1][1] < level - MIN_CROSSING
+  );
+};
+
 // The stroke numbers at which a four-stroke 艹 begins in `charData` (its
 // left upright), in the data's own order: [] for most characters.
 export function grassTopsOf(charData) {
@@ -278,7 +295,11 @@ export function grassTopsOf(charData) {
       (median, strokeNum) =>
         (strokeNum >= at && strokeNum < at + 4) || median.every(([x, y]) => x < left || x > right || y < level),
     );
-    if (onTop) {
+    const cutDownTheMiddle = medians.some(
+      (median, strokeNum) =>
+        (strokeNum < at || strokeNum >= at + 4) && runsDownBetween(median, leftUpright, rightUpright, level),
+    );
+    if (onTop || cutDownTheMiddle) {
       found.push(at);
     }
   }

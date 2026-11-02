@@ -227,13 +227,14 @@ test('a four-stroke 艹 is found where the Taiwan set has one, and nowhere else'
     .map(([char, entry]) => `${char}${grassTopsOf(entry).join(',')}`);
   // Measured 2026-10-30: every character of the set with a four-stroke 艹,
   // at its top or on the right (懂 臟 貓 髒); 觀 警 護 added 2026-10-31, their
-  // right upright standing just left of the right half.
+  // right upright standing just left of the right half; the 十 十 of 垂
+  // (郵 睡, and 華 lower down) added 2026-11-02.
   assert.deepEqual(
     found.sort(),
-    ['懂3', '臟4', '艹0', '花0', '苦0', '英0', '苹0', '茶0', '草0', '菜0', '華0', '菸0', '萬0', '落0', '蕉0', '藉0', '藍0', '藝0', '藥0', '蘋0', '貓7', '髒10', '觀0', '警0', '護7'].sort(),
+    ['懂3', '臟4', '艹0', '花0', '苦0', '英0', '苹0', '茶0', '草0', '菜0', '華0,5', '菸0', '萬0', '落0', '蕉0', '藉0', '藍0', '藝0', '藥0', '蘋0', '貓7', '髒10', '觀0', '警0', '護7', '睡8', '郵3'].sort(),
   );
-  // Not in a 十 lower down (華, 睡, 郵) or in 女 (她).
-  for (const char of ['她', '睡', '郵', '鄉', '共']) {
+  // Not in 女 (她), or where the two 十 aren't side by side (鄉, 共).
+  for (const char of ['她', '鄉', '共']) {
     if (taiwanData.has(char)) {
       assert.deepEqual(grassTopsOf(taiwanData.get(char)), [], char);
     }
