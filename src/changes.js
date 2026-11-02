@@ -13,6 +13,18 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-02-2',
+    items: [
+      'The middle of 垂 in 郵, 睡 and the lower part of 華 may be written like 艹 in three strokes: one stroke across, then the two short uprights.',
+    ],
+    it: [
+      'La parte centrale di 垂 in 郵, 睡 e nella parte bassa di 華 si può scrivere come 艹 in tre tratti: un tratto orizzontale, poi i due brevi tratti verticali.',
+    ],
+    de: [
+      'Die Mitte von 垂 in 郵, 睡 und im unteren Teil von 華 darf wie 艹 in drei Strichen geschrieben werden: ein Querstrich, dann die zwei kurzen senkrechten Striche.',
+    ],
+  },
+  {
     id: '2026-11-02',
     items: [
       'In 骨 and the characters with it (體, 髒, 滑…), the two short strokes inside the box at the top may be written in either order, the level stroke first or the upright first.',
