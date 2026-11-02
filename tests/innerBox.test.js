@@ -8,12 +8,18 @@ import fs from 'node:fs';
 import { BONE_CHARS, findInnerBox, innerBoxForms } from '../src/innerBox.js';
 
 // The data the app writes a traditional character with: the Taiwan set's,
-// else the big set's, as scripts/copy-char-data.js prepares them (the
-// Taiwan set's with its strokes in another shape, altShapes).
+// else the big set's. Read from where scripts/copy-char-data.js takes them,
+// since public/ is filled only by a build or the dev server.
+const taiwanData = new Map();
+for (const line of fs.readFileSync('data/animcjk/graphicsZhHant.txt', 'utf8').split('\n')) {
+  if (line.trim() !== '') {
+    const entry = JSON.parse(line);
+    taiwanData.set(entry.character, entry);
+  }
+}
+
 function traditionalData(char) {
-  const fileName = `${char.codePointAt(0).toString(16)}.json`;
-  const folder = fs.existsSync(`public/char-data-tw/${fileName}`) ? 'public/char-data-tw' : 'public/char-data';
-  return JSON.parse(fs.readFileSync(`${folder}/${fileName}`, 'utf8'));
+  return taiwanData.get(char) ?? JSON.parse(fs.readFileSync(`node_modules/hanzi-writer-data/${char}.json`, 'utf8'));
 }
 
 const start = (median) => median[0];
@@ -42,7 +48,9 @@ test('骨 itself: its ㇕ cut into the level stroke and the 丨, in either order
 
 test('體 and 髒: the two strokes in the other order, the level stroke left to right', () => {
   // 體 has the 丨 first, its level stroke running right to left.
-  const body = traditionalData('體');
+  // With a stroke in another shape (altShapes; the big set's 8th, as
+  // copy-char-data.js finds it), to see that it is kept.
+  const body = { ...traditionalData('體'), altShapes: { 8: traditionalData('體').medians[8] } };
   const bodyForms = innerBoxForms('體', body);
   assert.deepEqual(bodyForms.map((form) => form.from), [2, 3]);
   assert.deepEqual(bodyForms[0].medians[3], body.medians[2]);
