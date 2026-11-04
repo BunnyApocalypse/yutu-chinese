@@ -4,6 +4,14 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the session of 2026-11-04 (old notes, rework-8 to rework-15; released to `main` and `stable`, no "What's new" entry, as for all reworked notes).**
+
+- **Built (data only):** 729 old notes reworked as in rework-5 to -7 and tagged `judged`: the last 29 of HSK 3.0 level 2 (level 2 is now done) and the first 700 of level 3 (教练 to 认出 in the second round), four batches at a time, two Sonnet writers and one Opus judge a batch, the judge's points sent back once, the changes read by hand. Traditional versions by `scripts/convert-notes.js`, the listed lines settled in `local/note-scripts/settle-old-6.mjs` and `-7.mjs`. Details and lessons: `local/old-notes/README.md`, "Rework-8 to -11" and "Rework-12 to -15". About 2.6 million tokens.
+- **Lessons:** the writers' prompt now asks to keep a quote's hedges and add no link of one's own, to leave out obscure readings and character pictures unrelated to the word, to give both sides' words with `ask`, and US spelling. In the traditional notes, a fact true only of the simplified character is left out (卫 before 1956, 爱's 友, 个 as half of 竹), and "表 is a watch", "面 is noodles" are not true of 表 and 面 there (錶, 麵); the converter does not list those, so read such sentences by hand.
+- **Found:** `local/` had lost most of its folders (study-aids, old-notes, note-scripts, wiktionary, strictness with the owner's recordings, and more), gone since 2026-11-02, cause unknown; the owner brought them back from a zip of their desktop's copy. `exports/` (the Skritter export) is still missing on this machine.
+- **Next:** the last 200 untagged notes of `hsk-3.0-3.tsv` (two batches: `node local/old-notes/gather.mjs hsk-3.0-3.tsv local/old-notes/rework-16 100 2 --in-order`, then `--skip=100` for rework-17), then level 4.
+- **Tests:** 309 unit tests pass; browser tests not run (only data changed).
+
 **Handover from the second session of 2026-11-02 (艹 in three strokes in 郵; released to `main` and `stable`, "What's new" entry `2026-11-02-2`).**
 
 - **Built** (the owner: 郵 had to be written with the 十 十 of 垂 in four strokes): `grassTopsOf` in `src/shortcuts.js` also takes a 艹 shape with a 丨 running down between its two halves and strokes above it (`runsDownBetween`). That adds 郵, 睡 and the lower part of 華 in the Taiwan set, and nothing in the big set; dropping the "nothing above" rule outright would have added 興 and 飆 (`docs/writing.md`).
