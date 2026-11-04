@@ -27,6 +27,8 @@
 //               accepted stroke order, as a list of stroke numbers. The
 //               strokes themselves are listed in the order of Taiwan's
 //               Ministry of Education; altOrder is the mainland order.
+//               Also added when loaded to the big set's characters with a
+//               艹 written 丨 一 丨 一 (inTaiwanGrassOrder in shortcuts.js).
 //   altShapes:  Taiwan set only, for some characters: strokes the mainland
 //               form writes in another shape in the same place, as
 //               { strokeNum: median } (the dot under 人 in 食, where Taiwan's
@@ -41,6 +43,7 @@
 // 1024 across, and from about -124 (bottom) to 900 (top) upwards.
 
 import { innerBoxForms } from './innerBox.js';
+import { inTaiwanGrassOrder } from './shortcuts.js';
 
 // BASE_URL is the folder the app is served from ("/" during development).
 const BASE = import.meta.env.BASE_URL;
@@ -105,7 +108,10 @@ export async function loadCharData(char, script) {
   if (script === 'traditional') {
     const taiwanChars = await loadTaiwanChars();
     let data = taiwanChars.has(char) ? await fetchCharFile('char-data-tw', char) : null;
-    data ??= await fetchCharFile('char-data', char);
+    if (!data) {
+      const bigSetData = await fetchCharFile('char-data', char);
+      data = bigSetData && inTaiwanGrassOrder(bigSetData);
+    }
     return data && withSecondForms(char, data);
   }
   return fetchCharFile('char-data', char);

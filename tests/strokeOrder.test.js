@@ -15,6 +15,7 @@ import {
   lastSyncPoint,
   isStandardOrder,
   withoutEntry,
+  steepDotsOf,
 } from '../src/strokeMatch.js';
 import { toPoints } from '../src/lines.js';
 
@@ -297,6 +298,65 @@ test('a stroke in its second shape is accepted, and no later stroke is taken for
   }
   console.log(`second shapes accepted: ${accepted} of ${tried}; misfires: ${misfires.length}`);
   // 670 of 686 when measured (2026-10-31); every one drawn exactly passes.
+  assert.ok(accepted / tried > 0.95, `${accepted} of ${tried} accepted`);
+  assert.deepEqual(misfires, []);
+});
+
+test('a dot of the second shape may be written steeply down', () => {
+  // The dot under 人 in 食 and 飠 (the owner, 2026-11-04: 飽's refused), the
+  // dots of 雨; not 房's ノ.
+  const shapesOf = (char) => findAlternativeShapes(taiwanData.get(char), bigSetData(char), fitsAtLeniency);
+  assert.equal(steepDotsOf(shapesOf('房')[0]).length, 0);
+  // From level to straight down, written in the dot's place, it is taken
+  // for the second shape or one of its steep ones.
+  for (const char of ['食', '飽', '飯', '飲', '餓', '館', '餵']) {
+    const stored = shapesOf(char)[2];
+    const [start, end] = [stored[0], stored.at(-1)];
+    const middle = [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2];
+    for (let degrees = -10; degrees >= -90; degrees -= 5) {
+      const angle = (degrees * Math.PI) / 180;
+      const half = [35 * Math.cos(angle), 35 * Math.sin(angle)];
+      const dot = toPoints([
+        [middle[0] - half[0], middle[1] - half[1]],
+        [middle[0] + half[0], middle[1] + half[1]],
+      ]);
+      const shapes = [stored, ...steepDotsOf(stored)];
+      assert.ok(
+        shapes.some((shape) => takenForOtherShape(dot, taiwanData.get(char), 2, shape)),
+        `${char} ${degrees}°`,
+      );
+    }
+  }
+});
+
+test('a steep dot is accepted, and no later stroke is taken for it', () => {
+  let tried = 0;
+  let accepted = 0;
+  const misfires = [];
+  for (const { char, entry, altShapes } of charsWithOtherShapes) {
+    const random = makeRandom(char.codePointAt(0));
+    for (const [key, shape] of Object.entries(altShapes)) {
+      const strokeNum = Number(key);
+      for (const steep of steepDotsOf(shape)) {
+        for (const variation of VARIATIONS) {
+          tried += 1;
+          if (takenForOtherShape(vary(toPoints(steep), variation, random), entry, strokeNum, steep)) {
+            accepted += 1;
+          }
+          for (let later = strokeNum + 1; later < entry.medians.length; later++) {
+            if (isTwin(entry.medians[later], steep)) {
+              continue;
+            }
+            const drawn = vary(toPoints(entry.medians[later]), variation, random);
+            if (takenForOtherShape(drawn, entry, strokeNum, steep)) {
+              misfires.push(`${char} ${later + 1} for ${strokeNum + 1}`);
+            }
+          }
+        }
+      }
+    }
+  }
+  console.log(`steep dots accepted: ${accepted} of ${tried}; misfires: ${misfires.length}`);
   assert.ok(accepted / tried > 0.95, `${accepted} of ${tried} accepted`);
   assert.deepEqual(misfires, []);
 });

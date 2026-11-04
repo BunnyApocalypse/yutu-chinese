@@ -119,6 +119,40 @@ export function shapeDifferenceFromStroke(drawnPoints, median) {
   return shapeDifferenceFrom(resample(drawnPoints), toPoints(median));
 }
 
+// ---- A dot written steeply down ----
+//
+// The mainland shape of some dots (altShapes in charData.js: the dot under
+// 人 in 食 and 飠, the dots of 雨, of 今) runs only 20° to 50° below level,
+// and a shape more than about 20° off is refused (SHAPE_TOLERANCE). Many
+// write such a dot steeply down (the owner, 2026-11-04: 飽's dot refused).
+// So a dot also has steep shapes: the same length, around the same middle,
+// turned to these directions. Each covers about 20° either side, so the two
+// cover from about 40° to straight down.
+const DOT_MAX_LENGTH = 180; // longer is a stroke, not a dot
+const DOT_DIRECTIONS = [-55, -5]; // a dot going down-right, in degrees
+const STEEP_DOT_DIRECTIONS = [-60, -85];
+
+// The dot `median` ([[x, y], ...]) turned steeply down, as middle lines;
+// [] if it is no dot going down-right.
+export function steepDotsOf(median) {
+  const points = toPoints(median);
+  const [start, end] = [points[0], points[points.length - 1]];
+  const length = lineLength(points);
+  if (length > DOT_MAX_LENGTH || !isBetween(directionOf(start, end), DOT_DIRECTIONS)) {
+    return [];
+  }
+  const middle = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
+  return STEEP_DOT_DIRECTIONS.map((degrees) => {
+    const angle = (degrees * Math.PI) / 180;
+    const [dx, dy] = [(Math.cos(angle) * length) / 2, (Math.sin(angle) * length) / 2];
+    return [
+      [middle.x - dx, middle.y - dy],
+      [middle.x, middle.y],
+      [middle.x + dx, middle.y + dy],
+    ];
+  });
+}
+
 // ---- Keeping track of two stroke orders ----
 //
 // Some characters have two accepted stroke orders (see `altOrder` in

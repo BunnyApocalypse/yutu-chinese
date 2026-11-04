@@ -305,3 +305,59 @@ export function grassTopsOf(charData) {
   }
   return found;
 }
+
+// ---- 艹 as 十 十, each 十 in turn ----
+//
+// The big set writes the four-stroke 艹 of its traditional characters (薦,
+// 夢, 舊, 蓋, 蘭…; 111 not in the Taiwan set) as one 十 after the
+// other: 丨 一 丨 一. Nobody writes it so (the owner, 2026-11-04, could not
+// write 薦's 艹 at all), and in that order the three-stroke 艹 isn't found.
+// So when writing traditional, charData.js puts it in the Taiwan order,
+// 丨 一 一 丨 (inTaiwanGrassOrder), and keeps the data's own order as the
+// second accepted one (altOrder).
+//
+// Found as a 艹 (grassTopsOf) once the last two are swapped, whose left
+// level stroke begins well left of its upright: in 叟 (嫂, 艘) and 臿 (插),
+// the level strokes of the top begin at their uprights.
+
+// The stroke numbers at which such a 艹 begins in `charData`: [] for most.
+export function crossByCrossGrassOf(charData) {
+  const { medians } = charData;
+  const found = [];
+  for (let at = 0; at + 3 < medians.length; at++) {
+    const swapped = [...medians];
+    [swapped[at + 2], swapped[at + 3]] = [medians[at + 3], medians[at + 2]];
+    if (!grassTopsOf({ medians: swapped }).includes(at)) {
+      continue;
+    }
+    const [leftUpright, leftHalf] = [medians[at], medians[at + 1]];
+    const uprightX = (leftUpright[0][0] + leftUpright[leftUpright.length - 1][0]) / 2;
+    if (leftHalf[0][0] < uprightX - MIN_CROSSING) {
+      found.push(at);
+    }
+  }
+  return found;
+}
+
+// A copy of `charData` with each such 艹 in the Taiwan order, 丨 一 一 丨, and
+// the data's own order as `altOrder`; `charData` itself if it has none.
+export function inTaiwanGrassOrder(charData) {
+  const tops = crossByCrossGrassOf(charData);
+  if (tops.length === 0) {
+    return charData;
+  }
+  // order[newNumber] = the data's stroke number. Swapping two strokes is
+  // undone by the same swap, so `order` is also the data's own order in the
+  // new numbers.
+  const order = charData.strokes.map((stroke, index) => index);
+  for (const top of tops) {
+    [order[top + 2], order[top + 3]] = [order[top + 3], order[top + 2]];
+  }
+  return {
+    ...charData,
+    strokes: order.map((strokeNum) => charData.strokes[strokeNum]),
+    medians: order.map((strokeNum) => charData.medians[strokeNum]),
+    ...(charData.radStrokes && { radStrokes: charData.radStrokes.map((strokeNum) => order.indexOf(strokeNum)) }),
+    altOrder: order,
+  };
+}

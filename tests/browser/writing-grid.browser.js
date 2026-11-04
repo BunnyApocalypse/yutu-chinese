@@ -20,16 +20,19 @@ import {
   loadStrokeData,
 } from './harness.js';
 import { grassTopsOf } from '../../src/shortcuts.js';
+import { steepDotsOf } from '../../src/strokeMatch.js';
 import { innerBoxForms } from '../../src/innerBox.js';
 
 // Characters with two accepted stroke orders (the first ten), some with one,
-// some with strokes in a second shape (食房藍雨聽, also written so), and some
-// with 艹 (草花藍觀, and the 十 十 of 垂 in 郵華, also written with it in three strokes), and some with a
+// some with strokes in a second shape (食房藍雨聽飽, also written so, and 食
+// and 飽 with the dot under 人 steeply down), and some with 艹 (草花藍觀, the
+// 十 十 of 垂 in 郵華, and 薦 from the big set, also written with it in three
+// strokes, 薦 also in the big set's 丨 一 丨 一), and some with a
 // second form (充流育, also written in the big set's), and some with the box
 // of 骨 (骨體滑, also written in its other orders and shapes; not 髒, whose
 // 9th stroke in its mainland shape is refused at half size, bottom right,
 // with or without this).
-const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢母出長麼這謝子好食房藍雨草花觀聽充流育骨體滑郵華');
+const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢母出長麼這謝子好食房藍雨草花觀聽充流育骨體滑郵華飽薦');
 
 // Where and how big the character is written, compared with the centered
 // reference: `scale` times the size, moved `dx` to the right and `dy` up, in
@@ -152,6 +155,11 @@ describe('writing grid', { concurrency: BROWSER_COUNT }, () => {
     const ways = Object.entries(orders).map(([orderName, strokeOrder]) => ({ label: `${orderName} order`, strokeOrder }));
     if (data.altShapes) {
       ways.push({ label: 'MOE order, mainland shapes', strokeOrder: moeOrder, shapes: data.altShapes });
+    }
+    // The dot under 人 of 食 and 飠 written straight down (steepDotsOf).
+    if ('食飽'.includes(char)) {
+      const [, straightDown] = steepDotsOf(data.altShapes[2]);
+      ways.push({ label: 'MOE order, dot under 人 straight down', strokeOrder: moeOrder, shapes: { 2: straightDown } });
     }
     // The second form, every stroke its own (src/quiz.js, otherFormFor).
     if (data.altForm) {

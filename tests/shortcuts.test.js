@@ -8,7 +8,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-import { isJoinable, isShortcutStroke, joinedLine, grassTopsOf } from '../src/shortcuts.js';
+import { isJoinable, isShortcutStroke, joinedLine, grassTopsOf, crossByCrossGrassOf } from '../src/shortcuts.js';
 import { applyFrame } from '../src/frame.js';
 import { parseWordList } from '../src/wordList.js';
 
@@ -241,4 +241,25 @@ test('a four-stroke 艹 is found where the Taiwan set has one, and nowhere else'
   }
   // The big set writes 艹 in three strokes, or its four in another order.
   assert.deepEqual(grassTopsOf(bigSetData('花')), []);
+});
+
+test('a 艹 written 丨 一 丨 一 is found in the big set, and not the top of 叟 or 臿', () => {
+  // charData.js puts these in the Taiwan order, 丨 一 一 丨 (the owner,
+  // 2026-11-04: 薦's 艹 couldn't be written).
+  for (const char of ['薦', '夢', '舊', '蓋', '蘭', '驚', '錨']) {
+    const tops = crossByCrossGrassOf(bigSetData(char));
+    assert.equal(tops.length, 1, char);
+    // Swapped into the Taiwan order, it is a 艹 the three-stroke check knows.
+    const medians = [...bigSetData(char).medians];
+    const at = tops[0];
+    [medians[at + 2], medians[at + 3]] = [medians[at + 3], medians[at + 2]];
+    assert.deepEqual(grassTopsOf({ medians }), [at], char);
+  }
+  // Their level strokes begin at the uprights: no 艹.
+  for (const char of ['嫂', '艘', '插', '腴']) {
+    assert.deepEqual(crossByCrossGrassOf(bigSetData(char)), [], char);
+  }
+  // Already in the Taiwan order, or in three strokes.
+  assert.deepEqual(crossByCrossGrassOf(taiwanData.get('花')), []);
+  assert.deepEqual(crossByCrossGrassOf(bigSetData('花')), []);
 });

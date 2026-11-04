@@ -37,6 +37,7 @@ import {
   remainingInOtherOrder,
   lastSyncPoint,
   isStandardOrder,
+  steepDotsOf,
 } from './strokeMatch.js';
 
 // After this many wrong attempts at one stroke, the correct stroke flashes as a hint.
@@ -820,30 +821,36 @@ export function createQuiz(target, size, handlers) {
   // must be less like it in shape, or a stroke written too early could pass
   // for it. A later stroke of the same shape (a twin, TWIN_SHAPE_DIFFERENCE)
   // doesn't count: the order decides. Nearer the Taiwan shape is fine: that
-  // is the same stroke. Otherwise null.
+  // is the same stroke. A dot may also be written steeply down (steepDotsOf in
+  // strokeMatch.js), which is then the shape returned. Otherwise null.
   function otherShapeFor(stroke) {
-    const shape = baseData.altShapes?.[sequence[stroke.strokeNum]];
-    if (!shape) {
+    const stored = baseData.altShapes?.[sequence[stroke.strokeNum]];
+    if (!stored) {
       return null;
     }
     const points = stroke.drawnPath.points;
-    const inFrame = moved(toPoints(shape), frame).map((point) => [point.x, point.y]);
-    // In a small character the strokes lie closer together, so less is
-    // allowed (as in isExpectedStrokeAtAnotherSize).
-    if (!fitsStroke(points, inFrame, leniencyNow * Math.min(1, frame.scale))) {
-      return null;
-    }
-    const toShape = distanceFromStroke(points, inFrame);
-    const likeShape = shapeDifferenceFromStroke(points, inFrame);
-    const toCome = sequence.slice(stroke.strokeNum + 1).map((strokeNum) => framedData.medians[strokeNum]);
-    const nearest = toCome.every((median) => {
-      const toOther = distanceFromStroke(points, median);
-      if (shapeDifferenceFromStroke(toPoints(median), inFrame) < TWIN_SHAPE_DIFFERENCE) {
-        return true;
+    for (const shape of [stored, ...steepDotsOf(stored)]) {
+      const inFrame = moved(toPoints(shape), frame).map((point) => [point.x, point.y]);
+      // In a small character the strokes lie closer together, so less is
+      // allowed (as in isExpectedStrokeAtAnotherSize).
+      if (!fitsStroke(points, inFrame, leniencyNow * Math.min(1, frame.scale))) {
+        continue;
       }
-      return toOther > toShape && (toOther > NEAR_IN_PLACE * toShape || shapeDifferenceFromStroke(points, median) > likeShape);
-    });
-    return nearest ? shape : null;
+      const toShape = distanceFromStroke(points, inFrame);
+      const likeShape = shapeDifferenceFromStroke(points, inFrame);
+      const toCome = sequence.slice(stroke.strokeNum + 1).map((strokeNum) => framedData.medians[strokeNum]);
+      const nearest = toCome.every((median) => {
+        const toOther = distanceFromStroke(points, median);
+        if (shapeDifferenceFromStroke(toPoints(median), inFrame) < TWIN_SHAPE_DIFFERENCE) {
+          return true;
+        }
+        return toOther > toShape && (toOther > NEAR_IN_PLACE * toShape || shapeDifferenceFromStroke(points, median) > likeShape);
+      });
+      if (nearest) {
+        return shape;
+      }
+    }
+    return null;
   }
 
   // ---- A second form of the whole character ----
