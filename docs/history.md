@@ -4,6 +4,14 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the second session of 2026-11-04 (old notes, rework-16 to rework-23; released to `main` and `stable`, no "What's new" entry).**
+
+- **Built (data only):** 800 old notes reworked as before and tagged `judged`: the last 200 of HSK 3.0 level 3 (level 3 is now done) and the first 600 of level 4 (阿姨 to 加班), eight batches at once, two Sonnet writers and one Opus judge a batch, the judge's points sent back once, the changes read by hand. Traditional versions by `scripts/convert-notes.js`, its 32 listed lines settled in `local/note-scripts/settle-old-8.mjs` (準, 幹, 後, 隻, 溼, 夥, 鮮豔; 鬆's note loses the pine sentence), and 臺下 in 台上's saying by hand. Details: `local/old-notes/README.md`, "Rework-16 to -23". About 3 million tokens.
+- **Changed (local tools):** the writers' and judge's prompts are written down in `local/old-notes/prompt-writer.md` and `prompt-judge.md`.
+- **Where it stands:** 2,229 of the 5,849 old notes reworked (38%); left: HSK 3.0 level 1 (441), level 4 (349), level 5 (1,024), radicals (164), TOCFL (1,642).
+- **Next:** the last 349 untagged notes of `hsk-3.0-4.tsv` (`node local/old-notes/gather.mjs hsk-3.0-4.tsv local/old-notes/rework-24 100 2 --in-order`, then `--skip=100`, `200`, and 49 at `300`), then level 5.
+- **Tests:** 309 unit tests pass; browser tests not run (only data changed).
+
 **Handover from the session of 2026-11-04 (old notes, rework-8 to rework-15; released to `main` and `stable`, no "What's new" entry, as for all reworked notes).**
 
 - **Built (data only):** 729 old notes reworked as in rework-5 to -7 and tagged `judged`: the last 29 of HSK 3.0 level 2 (level 2 is now done) and the first 700 of level 3 (教练 to 认出 in the second round), four batches at a time, two Sonnet writers and one Opus judge a batch, the judge's points sent back once, the changes read by hand. Traditional versions by `scripts/convert-notes.js`, the listed lines settled in `local/note-scripts/settle-old-6.mjs` and `-7.mjs`. Details and lessons: `local/old-notes/README.md`, "Rework-8 to -11" and "Rework-12 to -15". About 2.6 million tokens.
