@@ -48,8 +48,9 @@ const HINT_AFTER_MISSES = 3;
 // Every check of a stroke in this file uses it, so all of them loosen
 // together. Settings › For testing can change it on one device, to find by
 // studying what feels right (setLeniency, testerSettings.js; the owner,
-// 2026-10-31); it takes effect from the next character.
-export const USUAL_LENIENCY = 1.5;
+// 2026-10-31); it takes effect from the next character. 1.8 since
+// 2026-11-04, the owner's choice from that (1.5 before; docs/writing.md).
+export const USUAL_LENIENCY = 1.8;
 let leniencyNow = USUAL_LENIENCY;
 
 // The Animate button: how fast each stroke is drawn (1 is Hanzi Writer's

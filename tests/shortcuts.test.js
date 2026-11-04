@@ -13,7 +13,7 @@ import { applyFrame } from '../src/frame.js';
 import { parseWordList } from '../src/wordList.js';
 
 // The same leniency the app uses (LENIENCY in src/quiz.js).
-const LENIENCY = 1.5;
+const LENIENCY = 1.8;
 
 // ---- Loading stroke data the way the app chooses it ----
 

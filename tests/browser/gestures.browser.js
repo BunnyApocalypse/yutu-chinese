@@ -123,8 +123,9 @@ describe('gestures on the writing area', { concurrency: false }, () => {
 
     // Rising by about 0.45 of the writing area (524 of the stroke data's
     // units, which fill 0.88 of it): enough for a swipe elsewhere, not here.
-    // It is graded as a stroke instead, a wrong one.
-    assert.equal(await drawStroke(page, area, [[512, -60], [512, 200], [512, 464]]), '3/14 · 1 mistake');
+    // It is graded as a stroke instead, a wrong one: at the right, far from
+    // the 提 (up the middle, it passed for it at strictness 1.8).
+    assert.equal(await drawStroke(page, area, [[850, -60], [850, 200], [850, 464]]), '3/14 · 1 mistake');
     assert.equal(await page.evaluate(DRAWN_STROKES), 2);
 
     // From the very bottom to the very top: a swipe even here.

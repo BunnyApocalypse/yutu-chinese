@@ -34,7 +34,7 @@ import { t, language, setLanguage, formatNumber } from './text.js';
 // import.meta.env.DEV is true only under Vite's dev server.
 export const TESTER_SETTINGS_SHOWN = Boolean(__CHANNEL__) || import.meta.env.DEV;
 
-// The strictness to choose from: the usual and looser steps.
+// The strictness to choose from: the usual (1.8), and steps either side.
 const LENIENCY_CHOICES = [1.5, 1.6, 1.7, 1.8, 1.9, 2, 2.2, 2.5];
 
 // Five taps on the version line, each within a second of the one before.

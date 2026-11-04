@@ -598,7 +598,7 @@ describe('settings', { concurrency: false }, () => {
     assert.deepEqual(written.strokes.map((stroke) => stroke.verdict), ['mistake', 'accepted', 'accepted', 'accepted']);
     assert.deepEqual(written.strokes.map((stroke) => stroke.expected), [0, 0, 1, 2]);
     assert.equal(written.mistakes, 1);
-    assert.equal(written.leniency, 1.5);
+    assert.equal(written.leniency, 1.8);
     assert.ok(written.strokes[1].points.length > 2);
     // Cleared, and switched off again.
     await page.evaluate(ANSWER_YES);
@@ -611,8 +611,8 @@ describe('settings', { concurrency: false }, () => {
   it('sets how strict the grading of strokes is under "For testing", kept on the device', async () => {
     await openSettings(page, 'settings-testing');
     const options = await page.evaluate(`[...document.getElementById('leniency-select').options].map((option) => option.textContent)`);
-    assert.deepEqual(options, ['1.5 (usual)', '1.6', '1.7', '1.8', '1.9', '2', '2.2', '2.5']);
-    assert.equal(await page.evaluate(`document.getElementById('leniency-select').value`), '1.5');
+    assert.deepEqual(options, ['1.5', '1.6', '1.7', '1.8 (usual)', '1.9', '2', '2.2', '2.5']);
+    assert.equal(await page.evaluate(`document.getElementById('leniency-select').value`), '1.8');
     // The setting as saved in the database (it is saved after the change).
     const saved = () =>
       page.evaluate(`new Promise((resolve) => {
@@ -637,11 +637,11 @@ describe('settings', { concurrency: false }, () => {
     await reloadApp(page);
     await openSettings(page, 'settings-testing');
     await waitUntil(page, `document.getElementById('leniency-select').value === '2'`, 'the strictness kept');
-    await choose(page, 'leniency-select', '1.5');
-    await waitForSaved(1.5);
+    await choose(page, 'leniency-select', '1.8');
+    await waitForSaved(1.8);
     await reloadApp(page);
     await openSettings(page, 'settings-testing');
-    await waitUntil(page, `document.getElementById('leniency-select').value === '1.5'`, 'the usual strictness');
+    await waitUntil(page, `document.getElementById('leniency-select').value === '1.8'`, 'the usual strictness');
     await tap(page, 'settings-close');
   });
 

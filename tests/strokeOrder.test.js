@@ -20,7 +20,7 @@ import {
 import { toPoints } from '../src/lines.js';
 
 // The same leniency the app uses (LENIENCY in src/quiz.js).
-const LENIENCY = 1.5;
+const LENIENCY = 1.8;
 
 const taiwanData = new Map();
 for (const line of fs.readFileSync('data/animcjk/graphicsZhHant.txt', 'utf8').split('\n')) {
