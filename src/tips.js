@@ -277,6 +277,18 @@ export function createTips() {
     get on() {
       return on;
     },
+    // For a suggestion that isn't a tip on the screen but a question of its
+    // own (main.js: turning on the example sentences, 2026-11-04): true the
+    // first time it is asked for, while tips are on; it then counts as seen,
+    // like a tip, and comes again after "Show all tips again".
+    async firstTime(name) {
+      if (!on || seen.has(name)) {
+        return false;
+      }
+      seen.add(name);
+      await setSetting('tipsSeen', [...seen]);
+      return true;
+    },
     // Switches the tips on or off (the checkbox in Settings).
     async setOn(value) {
       on = value;

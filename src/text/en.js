@@ -76,6 +76,12 @@ export default {
   'settings.retentionHint': 'How likely you are to still remember a card when it comes back. Higher means many more reviews: a card you keep getting right comes back after 2, 11, 46 and 163 days at 90%, but after 1, 3, 8 and 19 days at 95%. A change applies from each card\'s next review.',
   'settings.reviewStart': 'Ask how many cards to review',
   'settings.reviewStartHint': 'With many cards to do, Review first asks whether to review all of them or a set number, such as 50, and stops after that many. Turned off, Review starts on all of them at once.',
+  'settings.addExampleSentences': "Add a word's example sentence when I learn it",
+  'settings.addExampleSentencesHint': "When you learn a word in Learn, its example sentence is added to the word's deck, as Add sentence on the word's page would add it, with the word as the gap to write. Its cards come up in Review at once.",
+  'offer.exampleSentences': 'Add example sentences by themselves?',
+  'offer.exampleSentencesDetail': "Each word you learn in Learn can bring its example sentence along, into the word's deck. You can change this in Settings › Daily study.",
+  'offer.turnOn': 'Turn on',
+  'offer.notNow': 'Not now',
   'settings.lessons': 'In Review, teach before testing',
   'settings.lessonsHint':
     'When a word you already know is to be written for the first time (after changing script, say): its tones, then each stroke shown, then the outline, then from memory. Words in the Learn tab are always taught this way.',

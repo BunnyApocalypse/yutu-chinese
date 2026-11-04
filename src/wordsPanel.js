@@ -308,7 +308,14 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     },
     edit: (word) => wordDialog.open(words.find((entry) => entry.id === word.id) || word),
     remove: (word) => wordDialog.remove(words.find((entry) => entry.id === word.id) || word),
-    addSentence: (sentence, deckId) => sentenceForm.addSentence(sentence, deckId),
+    // Added by hand: main.js may then offer to add them by itself.
+    addSentence: async (sentence, deckId) => {
+      const result = await sentenceForm.addSentence(sentence, deckId);
+      if (result === 'added') {
+        document.dispatchEvent(new CustomEvent('example-sentence-added'));
+      }
+      return result;
+    },
     addEntry: (entry, deckId) => addEntry(entry, deckId),
     learnNow: (id, deckId) => learnNow(id, deckId),
     isLearned: (word) => studiedWordIds.has(word.id),
@@ -840,6 +847,9 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
   return {
     addReadyLevels: (listId, levels) => readyDecks.addReadyLevels(listId, levels),
     noteOf: (word) => wordPage.noteOf(word),
+    // Adds a sentence to a deck (addSentenceForm.js), for the setting
+    // addExampleSentences (main.js).
+    addSentence: (sentence, deckId) => sentenceForm.addSentence(sentence, deckId),
     tappableText: (element, text, script) => wordPage.tappableText(element, text, script),
 
     // Opens a word's panel from elsewhere in the app (Review's "Edit word").

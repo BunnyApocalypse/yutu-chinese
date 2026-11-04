@@ -26,6 +26,7 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //   readingStyleSelect,
 //   handwritingSelect, themeRadios (the three choices of look), lessonsCheckbox, strokeCountCheckbox,
 //   mistakeCountCheckbox, fontSelect, languageSelect, reviewStartCheckbox,
+//   exampleSentencesCheckbox,
 //   hintSelect, newWordsInput, gradeButtonsSelect, retentionSelect,
 //   meaningDetailSelect,
 //   typeCheckboxes (a list of the four checkboxes; each has a
@@ -65,6 +66,9 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //   reviewStart:    true (the default) to ask, on opening Review with many
 //                   cards to do, whether to review all or a set number
 //                   (review.js; the owner, 2026-10-22)
+//   addExampleSentences: true to make cards from a word's example sentence
+//                   when the word is learned in Learn, in its deck (main.js;
+//                   the owner, 2026-11-04). Off by default.
 //   lessons:        true to teach a word before it is first written from
 //                   memory (tones, tracing; see review.js)
 //   strokeCountInReview: true to show how many strokes a character has
@@ -124,6 +128,7 @@ export async function createSettings(elements, onChange) {
     fontSelect,
     languageSelect,
     reviewStartCheckbox,
+    exampleSentencesCheckbox,
     hintSelect,
     gradeButtonsSelect,
     retentionSelect,
@@ -154,6 +159,7 @@ export async function createSettings(elements, onChange) {
     font: await getSetting('font', 'system'),
     lessons: await getSetting('lessons', true),
     reviewStart: await getSetting('reviewStart', true),
+    addExampleSentences: await getSetting('addExampleSentences', false),
     strokeCountInReview: await getSetting('strokeCountInReview', false),
     mistakeCount: await getSetting('mistakeCount', true),
     hintCountsAs: await getSetting('hintCountsAs', 'missed'),
@@ -191,6 +197,7 @@ export async function createSettings(elements, onChange) {
     }
     lessonsCheckbox.checked = settings.lessons;
     reviewStartCheckbox.checked = settings.reviewStart;
+    exampleSentencesCheckbox.checked = settings.addExampleSentences;
     strokeCountCheckbox.checked = settings.strokeCountInReview;
     mistakeCountCheckbox.checked = settings.mistakeCount;
     fontSelect.value = settings.font;
@@ -259,6 +266,10 @@ export async function createSettings(elements, onChange) {
   lessonsCheckbox.addEventListener('change', () => change('lessons', lessonsCheckbox.checked));
 
   reviewStartCheckbox.addEventListener('change', () => change('reviewStart', reviewStartCheckbox.checked));
+
+  exampleSentencesCheckbox.addEventListener('change', () =>
+    change('addExampleSentences', exampleSentencesCheckbox.checked),
+  );
 
   strokeCountCheckbox.addEventListener('change', () =>
     change('strokeCountInReview', strokeCountCheckbox.checked),

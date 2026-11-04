@@ -22,6 +22,7 @@ import { createTips } from './tips.js';
 import { buildBackup, checkBackup, describeBackup, restoreBackup } from './backup.js';
 import { mergeBackups, describeMerge } from './merge.js';
 import { ask, tell } from './confirm.js';
+import { isSentence } from './sentences.js';
 import { clampWithPopup } from './clamp.js';
 import { fitMeaning } from './meaningFit.js';
 import { watchForErrors, showVersion } from './errors.js';
@@ -914,6 +915,7 @@ async function startUp() {
       fontSelect: byId('font-select'),
       languageSelect: byId('language-select'),
       reviewStartCheckbox: byId('review-start-checkbox'),
+      exampleSentencesCheckbox: byId('example-sentences-checkbox'),
       hintSelect: byId('hint-select'),
       gradeButtonsSelect: byId('grade-buttons-select'),
       retentionSelect: byId('retention-select'),
@@ -1052,6 +1054,56 @@ async function startUp() {
     await tips.showAgain();
     tipsCheckbox.checked = true;
     byId('settings-panel').close();
+  });
+
+  // ---- Example sentences added by themselves (the owner, 2026-11-04) ----
+  //
+  // With addExampleSentences on (Settings › Daily study, off by default), a
+  // word learned in Learn brings its example sentence along, as the Add
+  // sentence button on its page would add it: into the word's deck
+  // (review.js chooses which), the word as the gap to write. Its cards come
+  // up in Review at once, as any sentence's do.
+  document.addEventListener('word-learned', async ({ detail: { word, deckId } }) => {
+    if (!settings.addExampleSentences || deckId === null) {
+      return;
+    }
+    const example = (await wordsPanel.noteOf(word))?.example;
+    if (!example) {
+      return;
+    }
+    await wordsPanel.addSentence(
+      {
+        traditional: example.traditional,
+        simplified: example.simplified,
+        pinyin: example.pinyin,
+        definition: example.english,
+        cloze: { traditional: word.traditional, simplified: word.simplified },
+      },
+      deckId,
+    );
+  });
+
+  // Someone adding example sentences by hand is asked, once, whether to have
+  // them added by themselves (the owner, 2026-11-04), after the third. Only
+  // while tips are on: it is a tip of a kind (tips.firstTime).
+  const SENTENCES_BEFORE_OFFER = 3;
+  document.addEventListener('example-sentence-added', async () => {
+    if (settings.addExampleSentences) {
+      return;
+    }
+    const sentences = (await getAll('words')).filter(isSentence);
+    if (sentences.length < SENTENCES_BEFORE_OFFER || !(await tips.firstTime('exampleSentences'))) {
+      return;
+    }
+    const yes = await ask({
+      question: t('offer.exampleSentences'),
+      detail: t('offer.exampleSentencesDetail'),
+      yes: t('offer.turnOn'),
+      no: t('offer.notNow'),
+    });
+    if (yes) {
+      await settings.change('addExampleSentences', true);
+    }
   });
   // Free practice starts with an example character in the script being learned.
   if (settings.script === 'simplified' && wordInput.value === '學') {

@@ -71,6 +71,12 @@ export default {
   'settings.retentionHint': 'Quanto è probabile che ricordi ancora una carta quando torna. Più alto significa molti più ripassi: una carta che indovini sempre torna dopo 2, 11, 46 e 163 giorni al 90%, ma dopo 1, 3, 8 e 19 giorni al 95%. Una modifica vale dal prossimo ripasso di ogni carta.',
   'settings.reviewStart': 'Chiedi quante carte ripassare',
   'settings.reviewStartHint': 'Quando ci sono molte carte da fare, il Ripasso chiede prima se ripassarle tutte o un numero stabilito, come 50, e si ferma dopo quel numero. Disattivato, il Ripasso parte subito con tutte.',
+  'settings.addExampleSentences': "Aggiungi la frase d'esempio di una parola quando la imparo",
+  'settings.addExampleSentencesHint': "Quando impari una parola in Impara, la sua frase d'esempio viene aggiunta al mazzo della parola, come farebbe Aggiungi frase sulla pagina della parola, con la parola come spazio da scrivere. Le sue carte arrivano subito nel Ripasso.",
+  'offer.exampleSentences': "Aggiungere le frasi d'esempio da sole?",
+  'offer.exampleSentencesDetail': "Ogni parola che impari in Impara può portare con sé la sua frase d'esempio, nel mazzo della parola. Puoi cambiarlo in Impostazioni › Studio quotidiano.",
+  'offer.turnOn': 'Attiva',
+  'offer.notNow': 'Non ora',
   'settings.lessons': 'Nel Ripasso, insegna prima di verificare',
   'settings.lessonsHint':
     'Quando una parola che conosci già va scritta per la prima volta (dopo aver cambiato scrittura, per esempio): prima i suoi toni, poi ogni tratto mostrato, poi il contorno, poi a memoria. Le parole nella scheda Impara si insegnano sempre così.',

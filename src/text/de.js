@@ -71,6 +71,12 @@ export default {
   'settings.retentionHint': 'Wie wahrscheinlich du eine Karte noch weißt, wenn sie wiederkommt. Höher heißt viel mehr Wiederholungen: Eine Karte, die du immer richtig hast, kommt bei 90 % nach 2, 11, 46 und 163 Tagen wieder, bei 95 % aber nach 1, 3, 8 und 19 Tagen. Eine Änderung gilt ab der nächsten Wiederholung jeder Karte.',
   'settings.reviewStart': 'Fragen, wie viele Karten wiederholt werden',
   'settings.reviewStartHint': 'Sind viele Karten fällig, fragt Wiederholen zuerst, ob alle oder eine bestimmte Anzahl, etwa 50, wiederholt werden sollen, und hört danach auf. Ist das ausgeschaltet, beginnt Wiederholen sofort mit allen.',
+  'settings.addExampleSentences': 'Beispielsatz eines Worts hinzufügen, wenn ich es lerne',
+  'settings.addExampleSentencesHint': 'Lernst du ein Wort unter Lernen, kommt sein Beispielsatz in den Stapel des Worts, so wie Satz hinzufügen auf der Seite des Worts ihn hinzufügen würde, mit dem Wort als Lücke zum Schreiben. Seine Karten kommen sofort beim Wiederholen.',
+  'offer.exampleSentences': 'Beispielsätze von selbst hinzufügen?',
+  'offer.exampleSentencesDetail': 'Jedes Wort, das du unter Lernen lernst, kann seinen Beispielsatz mitbringen, in den Stapel des Worts. Du kannst das unter Einstellungen › Tägliches Lernen ändern.',
+  'offer.turnOn': 'Einschalten',
+  'offer.notNow': 'Nicht jetzt',
   'settings.lessons': 'Beim Wiederholen erst beibringen, dann abfragen',
   'settings.lessonsHint':
     'Wenn ein Wort, das du schon kennst, zum ersten Mal geschrieben werden soll (etwa nach einem Wechsel der Schrift): erst seine Töne, dann jeder Strich gezeigt, dann der Umriss, dann aus dem Gedächtnis. Wörter im Tab „Lernen“ werden immer so beigebracht.',

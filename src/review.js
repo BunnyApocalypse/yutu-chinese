@@ -2018,6 +2018,20 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     batch?.ids.push(learned.id);
     showNext();
     noteStreak();
+    // main.js may add the word's example sentence (the setting
+    // addExampleSentences), to the deck studied if the word is in it.
+    document.dispatchEvent(
+      new CustomEvent('word-learned', { detail: { word: learned, deckId: deckForSentence(learned) } }),
+    );
+  }
+
+  // The deck a sentence for `word` goes into: the first of its decks within
+  // the deck studied, else its first deck; null if it is in none.
+  function deckForSentence(word) {
+    const own = word.decks || [];
+    const deck = studyDeck();
+    const inside = deck ? deckWithInside(decks, deck.id) : new Set();
+    return own.find((deckId) => inside.has(deckId)) ?? own[0] ?? null;
   }
 
   function learnCounts() {
