@@ -13,6 +13,27 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-04',
+    items: [
+      'Strokes are graded a little less strictly.',
+      'The 艹 of 薦, 夢, 舊, 蓋 and other less common characters may be written in three strokes, or in four in the Taiwan order.',
+      'The dot under 人 in 食, 飽, 飯 and others may be written steeply down.',
+      'A new setting in Settings › Daily study adds a word\'s example sentence when you learn the word. It is off unless you turn it on.',
+    ],
+    it: [
+      'I tratti sono valutati in modo un po\' meno severo.',
+      'Il 艹 di 薦, 夢, 舊, 蓋 e di altri caratteri meno comuni si può scrivere in tre tratti, oppure in quattro nell\'ordine di Taiwan.',
+      'Il punto sotto 人 in 食, 飽, 飯 e altri si può scrivere ripido verso il basso.',
+      'Una nuova impostazione in Impostazioni › Studio quotidiano aggiunge la frase d\'esempio di una parola quando impari la parola. È disattivata finché non la attivi.',
+    ],
+    de: [
+      'Striche werden etwas weniger streng bewertet.',
+      'Das 艹 von 薦, 夢, 舊, 蓋 und anderen selteneren Zeichen darf in drei Strichen geschrieben werden oder in vier in der taiwanischen Reihenfolge.',
+      'Der Punkt unter 人 in 食, 飽, 飯 und anderen darf steil nach unten geschrieben werden.',
+      'Eine neue Einstellung unter Einstellungen › Tägliches Lernen fügt den Beispielsatz eines Worts hinzu, wenn du das Wort lernst. Sie ist aus, bis du sie einschaltest.',
+    ],
+  },
+  {
     id: '2026-11-02-2',
     items: [
       'The middle of 垂 in 郵, 睡 and the lower part of 華 may be written like 艹 in three strokes: one stroke across, then the two short uprights.',
