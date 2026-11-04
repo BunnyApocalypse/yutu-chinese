@@ -4,6 +4,16 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the third session of 2026-11-04 (飽's dot, 薦's 艹, example sentences by themselves, strictness 1.8; released to `main` and `stable`, "What's new" entry `2026-11-04`).**
+
+- **Built** (one commit each, details in the area's file):
+  - The dot under 人 in 食 and 飠 written steeply down (the owner: 飽 refused it). The mainland dots of the second shapes run only 20° to 50° below level; each such dot now also has two steep shapes, at 60° and 85° (`steepDotsOf` in `src/strokeMatch.js`; `docs/writing.md`, "A dot may be written steeply down"). The owner asked whether this adapts to bad writing: no, a dot at 45° to 70° is ordinary handwriting; they chose to keep straight down too.
+  - 薦's 艹 (the owner: could not write it at all). The big set writes the traditional 艹 as 丨 一 丨 一; when writing traditional it is now handed over in the Taiwan order with its own as `altOrder`, so three strokes, the Taiwan four and the data's four all pass (`inTaiwanGrassOrder`, `crossByCrossGrassOf` in `src/shortcuts.js`; 111 characters: 夢 舊 蓋 蘭 驚…; `docs/writing.md`).
+  - "Add a word's example sentence when I learn it" (Settings › Daily study, `addExampleSentences`, off by default; the owner: the sentence comes at the same time as the word), and a one-time offer to turn it on after the third sentence added by hand, only while tips are on (`tips.firstTime`; `docs/word-page.md`, "Sentences"). The owner has tried sentences and likes them (CLAUDE.md updated).
+  - `USUAL_LENIENCY` 1.8 for everyone (the owner's choice after studying at it). Measured with `local/strictness/measure.mjs compare` (results in `docs/writing.md`, "Leniency"): about a third fewer right strokes refused; the next stroke passing for the one asked from 4.3% to 6.9% at full size. In the app, a straight stroke up the middle of 滿 passes for 氵's 提 at 1.8 (the gestures test now draws it at the right).
+- **Found, not fixed:** `offline.browser.js`'s "shows 'For testing' after five taps on the version line, and hides it again" fails every time ("Waited in vain for: the group For testing again"), before today's changes too.
+- **Tests:** 312 unit tests pass. The full browser suite, run at 1.8 before it was the usual: 776 passed, 4 failed (the three expected from 1.8, since fixed and passing, and the one above); `exampleSentences.browser.js` (new) passes.
+
 **Handover from the second session of 2026-11-04 (old notes, rework-16 to rework-23; released to `main` and `stable`, no "What's new" entry).**
 
 - **Built (data only):** 800 old notes reworked as before and tagged `judged`: the last 200 of HSK 3.0 level 3 (level 3 is now done) and the first 600 of level 4 (阿姨 to 加班), eight batches at once, two Sonnet writers and one Opus judge a batch, the judge's points sent back once, the changes read by hand. Traditional versions by `scripts/convert-notes.js`, its 32 listed lines settled in `local/note-scripts/settle-old-8.mjs` (準, 幹, 後, 隻, 溼, 夥, 鮮豔; 鬆's note loses the pine sentence), and 臺下 in 台上's saying by hand. Details: `local/old-notes/README.md`, "Rework-16 to -23". About 3 million tokens.
