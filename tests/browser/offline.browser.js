@@ -85,7 +85,9 @@ describe('offline use', { concurrency: false }, () => {
     for (let attempt = 0; ; attempt++) {
       assert.ok(attempt < 100, 'the app did not start again');
       await new Promise((resolve) => setTimeout(resolve, 100));
-      const started = await page.evaluate(`!window.loadedBefore && document.readyState === 'complete' && document.getElementById('app-version').textContent !== ''`).catch(() => false);
+      // Started once startUp() is done (main loses "starting"): the version
+      // line is filled long before the taps on it are listened for.
+      const started = await page.evaluate(`!window.loadedBefore && document.readyState === 'complete' && !document.querySelector('main').classList.contains('starting')`).catch(() => false);
       if (started) break;
     }
     assert.equal(await page.evaluate(navHidden), true);
@@ -217,9 +219,10 @@ describe('offline use', { concurrency: false }, () => {
     const offlineStatus = () => page.evaluate(`document.getElementById('offline-status').textContent`);
     assert.match(await offlineStatus(), /saved too/);
     // The recordings were asked for on this device, so they still are.
-    // (Looking through everything that is saved takes the app a while first.)
+    // (Looking through everything that is saved takes the app a while first,
+    // with "Saving recordings: 92%" on the way.)
     let status = '';
-    for (let attempt = 0; attempt < 240 && !/recordings/i.test(status); attempt++) {
+    for (let attempt = 0; attempt < 240 && !/All recordings are saved too/.test(status); attempt++) {
       await new Promise((resolve) => setTimeout(resolve, 250));
       status = await offlineStatus();
     }

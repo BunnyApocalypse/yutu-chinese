@@ -4,6 +4,12 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the fourth session of 2026-11-04 (two offline tests fixed; tests only, pushed to `main`, not released).**
+
+- **Fixed:** `offline.browser.js`'s five-taps test. After "Hide these settings" restarts the app, it took the version line's text as a sign the app had started, but that line is filled (`showVersion`, early in `src/main.js`) long before `setUpTesterSettings` listens for the taps, so the five taps went unheard. It now waits until `main` loses `starting` (the end of `startUp()`).
+- **Fixed:** the same file's "starts and works with the server gone", the one failing now and then (`tests/browser/CLAUDE.md`). It stopped waiting at the first line that mentioned recordings, which could be "Saving recordings: 92%" while the app looked through what was saved; it now waits for "All recordings are saved too".
+- **Tests:** the file passed 6 runs in a row alone; 312 unit tests and the full browser suite pass (780 passed, 41 skipped, 0 failed, about 8 minutes).
+
 **Handover from the third session of 2026-11-04 (飽's dot, 薦's 艹, example sentences by themselves, strictness 1.8; released to `main` and `stable`, "What's new" entry `2026-11-04`).**
 
 - **Built** (one commit each, details in the area's file):
