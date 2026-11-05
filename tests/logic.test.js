@@ -633,11 +633,12 @@ test('a character is missed after a hint, peeking, or too many mistakes', () => 
   assert.equal(judgeChar({ ...clean, strokes: 2, mistakes: 2 }), false);
 });
 
-test('one missed character fails the word; otherwise mistakes decide', () => {
-  assert.equal(suggestGrade({ passedPerChar: [true, true], mistakes: 0 }), GOOD);
-  assert.equal(suggestGrade({ passedPerChar: [true, true], mistakes: 3 }), HARD);
-  assert.equal(suggestGrade({ passedPerChar: [true, false], mistakes: 0 }), AGAIN);
-  assert.equal(suggestGrade({ passedPerChar: [false, true, true], mistakes: 9 }), AGAIN);
+test('one missed character fails the word; mistakes within the allowance are Good', () => {
+  assert.equal(suggestGrade({ passedPerChar: [true, true], suggestedPerChar: [true, true] }), GOOD);
+  assert.equal(suggestGrade({ passedPerChar: [true, false], suggestedPerChar: [true, false] }), AGAIN);
+  assert.equal(suggestGrade({ passedPerChar: [false, true, true], suggestedPerChar: [false, true, true] }), AGAIN);
+  // Judged missed, counted as passed by the learner: Hard.
+  assert.equal(suggestGrade({ passedPerChar: [true, true], suggestedPerChar: [false, true] }), HARD);
 });
 
 test('a hint counts as missed, or with the setting lets the word be Hard at best', () => {
@@ -646,8 +647,8 @@ test('a hint counts as missed, or with the setting lets the word be Hard at best
   assert.equal(judgeChar({ ...hinted, hintCountsAs: 'hard' }), true);
   // Peeking still counts as missed either way.
   assert.equal(judgeChar({ ...hinted, peeked: true, hintCountsAs: 'hard' }), false);
-  assert.equal(suggestGrade({ passedPerChar: [true, true], mistakes: 0, hintPerChar: [false, true] }), HARD);
-  assert.equal(suggestGrade({ passedPerChar: [true, true], mistakes: 0, hintPerChar: [false, false] }), GOOD);
+  assert.equal(suggestGrade({ passedPerChar: [true, true], hintPerChar: [false, true] }), HARD);
+  assert.equal(suggestGrade({ passedPerChar: [true, true], hintPerChar: [false, false] }), GOOD);
 });
 
 test('intervals are described briefly', () => {

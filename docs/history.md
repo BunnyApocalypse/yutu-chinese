@@ -4,6 +4,15 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the third session of 2026-11-05 (遍's dot, Good after mistakes within the allowance; committed to `main`, not pushed, not released).**
+
+- **Built** (one commit each):
+  - The 丶 on top of 戶 in 遍 (the owner: refused, while 房 took it). Second shapes were only looked for where both sets have as many strokes; 遍's 辶 has a stroke more in Taiwan's. Now, with different counts, strokes are paired by number (`findAlternativeShapes` in `scripts/strokeOrder.js`, `TAIWAN_SET_VERSION` 5; `docs/writing.md`): adds 遍, 腿 (refused at half size, top left, as 髒) and 還. 遍 is in the writing grid.
+  - Mistakes within a character's allowance no longer suggest Hard (`suggestGrade` in `src/session.js`; `docs/cards.md`). Hard only for a hint (with "Hard at best") or a character judged missed and counted as passed. From the owner's backup (`local/backups/`, git-ignored): 209 of 431 characters passed without a hint had a refused stroke; the owner overruled the Hard about half the time, at every number of mistakes and with the same time taken.
+- **Found in the owner's reviews** (1,008 writing reviews in the app): about half the characters judged missed (887 of 1,779), of which the owner counted 338 as passed, 219 of them after a hint (most after three misses at one stroke). Characters with a refused stroke every time they were written: 發 (35 refused strokes in 7 writings), 氣, 樂 (43 in 5), 經, 樣, 從, 期, 路, 溫, 記, 雪, 房, 福. The owner names the strokes: 發's top right (its angle), 氣's dots on either side of 米 (their place), 樂's 幺, 經's 川.
+- **Next:** the owner offers recordings of raw input (Settings › For testing) of 發, 氣, 樂 and 經; with them, find why those strokes are refused, as for 飽 and 薦. In a few weeks, from a new backup: are characters with a refused stroke forgotten more often at the next review (only 72 had a next review yet).
+- **Tests:** 312 unit tests; full browser suite: 231 passed, the grid 388 passed, 21 skipped, 0 failed.
+
 **Handover from the second session of 2026-11-05 (old notes rework-24 to -29; new notes for the 朝代歌, batch-20; the `wikipedia` tag; released to `main` and `stable`, "What's new" entry `2026-11-05`).**
 
 - **Built (data):** 549 old notes reworked and tagged `judged` as before: the last 349 of HSK 3.0 level 4 (level 4 is done) and the first 200 of level 5 (餐馆 to 驾照); eleven Sonnet writers, six Opus judges, the judges' points sent back once, read by hand. Traditional versions settled in `local/note-scripts/settle-old-9.mjs` (30 lines). Details: `local/old-notes/README.md`, "Rework-24 to -29". An earlier attempt at rework-24 to -27 had stopped part way (out of tokens, the owner thinks); its folders were deleted.

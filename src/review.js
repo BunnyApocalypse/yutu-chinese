@@ -1018,11 +1018,14 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     }
     const verdicts = [...entry.review.passedPerChar];
     verdicts[index] = !verdicts[index];
-    const mistakes = (entry.review.mistakesPerChar ?? []).reduce((total, count) => total + count, 0);
     const suggestion =
       entry.type === 'tone'
         ? toneSuggestion(verdicts)
-        : suggestGrade({ passedPerChar: verdicts, mistakes, hintPerChar: entry.review.hintPerChar ?? [] });
+        : suggestGrade({
+            passedPerChar: verdicts,
+            suggestedPerChar: entry.review.suggestedPerChar ?? [],
+            hintPerChar: entry.review.hintPerChar ?? [],
+          });
     // A tone's verdict given by the learner is not a variant accepted.
     const variants = entry.review.variantPerChar?.map((variant, each) => variant && each !== index);
     await correct(entry, gradeFor(suggestion, settings.gradeButtons), verdicts, variants ? { variantPerChar: variants } : {});

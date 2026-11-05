@@ -1,5 +1,6 @@
 // Grading in Review, in a real browser: the grade suggested for a written
-// word (Good, Hard after a mistake or a hint, Again for a missed character),
+// word (Good, Hard after a hint or a missed character counted as passed, Again
+// for a missed character),
 // what is saved once a grade is chosen (how long it took too), a meaning
 // card graded from its tap, the Card types setting leaving a kind of card
 // out, "missed" and "right" between the characters of a word, a tone's
@@ -222,16 +223,16 @@ describe('grading in Review', { concurrency: false }, () => {
     assert.ok(saved.due > Date.now() + DAY, 'the card is due again too soon');
   });
 
-  it('suggests Hard after a mistake, and saves a different grade if one is chosen', async () => {
+  it('suggests Good after a mistake within the allowance, and saves a different grade if one is chosen', async () => {
     await makeDue(['大|da4#writing', '大|da4', 'writing']);
-    // 大 has three strokes: one mistake is forgiven, but the word is Hard.
+    // 大 has three strokes: one mistake is forgiven, and the word is Good.
     await write('大', { wrong: 1 });
-    assert.equal(await page.evaluate(SUGGESTED), 'Hard');
-    await chooseGrade('Good');
+    assert.equal(await page.evaluate(SUGGESTED), 'Good');
+    await chooseGrade('Hard');
     await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the end of Review');
     const review = await lastReview();
-    assert.equal(review.grade, 3);
-    assert.equal(review.suggestedGrade, 2);
+    assert.equal(review.grade, 2);
+    assert.equal(review.suggestedGrade, 3);
     assert.deepEqual(review.mistakesPerChar, [1]);
   });
 
@@ -442,7 +443,7 @@ describe('grading in Review', { concurrency: false }, () => {
     );
     await tap(page, 'settings-close');
 
-    // A mistake: Hard is suggested, so Right is the one highlighted.
+    // A mistake within the allowance: Good is suggested, so Right is highlighted.
     await makeDue(['大|da4#writing', '大|da4', 'writing']);
     await write('大', { wrong: 1 });
     const labels = await page.evaluate(`[...document.querySelectorAll('#grade-row .grade')].map((button) => button.firstChild.textContent)`);
@@ -453,7 +454,7 @@ describe('grading in Review', { concurrency: false }, () => {
     await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the end of Review');
     const review = await lastReview();
     assert.equal(review.grade, 3);
-    assert.equal(review.suggestedGrade, 2);
+    assert.equal(review.suggestedGrade, 3);
 
     await openSettings(page, 'settings-studying');
     await buttonsSetting('four');
@@ -532,7 +533,7 @@ describe('grading in Review', { concurrency: false }, () => {
     }
     await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
     assert.ok(await page.evaluate(`document.getElementById('verdict-row').hidden`));
-    // Mistakes but nothing missed: Hard.
+    // 大 judged missed, counted as passed: Hard.
     assert.equal(await page.evaluate(SUGGESTED), 'Hard');
     await chooseGrade('Hard');
     const review = await lastReview();
@@ -639,7 +640,7 @@ describe('grading in Review', { concurrency: false }, () => {
     await waitUntil(page, `document.getElementById('card-type').textContent === 'Writing · 1 back'`, 'the card before');
     const squares = `[...document.querySelectorAll('#card-face .past-square')]`;
     assert.deepEqual(await page.evaluate(`${squares}.map((square) => square.className)`), ['past-square missed', 'past-square passed']);
-    // 大 right after all: Hard (it had mistakes), saved at once.
+    // 大 right after all: Hard (it was judged missed), saved at once.
     await page.evaluate(`${squares}[0].click()`);
     await waitUntil(page, `document.querySelector('#card-face .past-square').classList.contains('passed')`, 'the verdict changed');
     const review = (await all('reviews')).filter((each) => each.cardId === '大小|da4xiao3#writing').sort((a, b) => a.time - b.time).at(-1);
@@ -853,12 +854,12 @@ describe('grading in Review', { concurrency: false }, () => {
   it('keeps the count of mistakes out of sight with the setting off', async () => {
     await inDatabase(`stores.settings.put({ key: 'mistakeCount', value: false });`);
     await makeDue(['大|da4#writing', '大|da4', 'writing']);
-    await write('大', { wrong: 1 });
+    await write('大', { wrong: 2 });
     assert.doesNotMatch(await textOf(page, 'status'), /mistake/i);
-    // Still graded on them: Hard.
-    assert.equal(await page.evaluate(SUGGESTED), 'Hard');
-    await chooseGrade('Hard');
-    assert.deepEqual((await lastReview()).mistakesPerChar, [1]);
+    // Still judged on them: two are too many for 大's three strokes.
+    assert.equal(await page.evaluate(SUGGESTED), 'Again');
+    await chooseGrade('Again');
+    assert.deepEqual((await lastReview()).mistakesPerChar, [2]);
     await inDatabase(`stores.settings.put({ key: 'mistakeCount', value: true });`);
   });
 

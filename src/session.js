@@ -429,17 +429,22 @@ export function judgeChar({ mistakes, strokes, hintShown, peeked, hintCountsAs =
 
 // Suggests a grade for a word that was just written.
 //
-// passedPerChar: the verdict on each character (true = passed)
-// mistakes:      wrong strokes over the whole word
-// hintPerChar:   true where a hint was shown (see judgeChar)
+// passedPerChar:    the verdict on each character (true = passed)
+// suggestedPerChar: the verdict judgeChar proposed for each (true = passed)
+// hintPerChar:      true where a hint was shown (see judgeChar)
 //
-// One missed character fails the whole word. A hint makes it Hard at best.
+// One missed character fails the whole word. A hint, or a character judged
+// missed that you counted as passed, makes it Hard at best. Mistakes alone
+// don't: a character within its allowance is Good however many strokes were
+// refused (the owner, 2026-11-05: about half their characters known had a
+// refused stroke, and they overruled the Hard that suggested about half the
+// time, whatever the number of mistakes or the time taken).
 // "Easy" is never suggested; that is for you to choose.
-export function suggestGrade({ passedPerChar, mistakes, hintPerChar = [] }) {
+export function suggestGrade({ passedPerChar, suggestedPerChar = [], hintPerChar = [] }) {
   if (passedPerChar.includes(false)) {
     return AGAIN;
   }
-  if (mistakes > 0 || hintPerChar.includes(true)) {
+  if (hintPerChar.includes(true) || suggestedPerChar.includes(false)) {
     return HARD;
   }
   return GOOD;

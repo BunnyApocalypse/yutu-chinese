@@ -481,7 +481,7 @@ describe('learning new words', { concurrency: false }, () => {
     await write('孩');
     await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
     const suggested = `document.querySelector('#grade-row button.primary').firstChild.textContent`;
-    assert.equal(await page.evaluate(suggested), 'Hard');
+    assert.equal(await page.evaluate(suggested), 'Good');
     // Once the word is done, back again: practice, the tools in the grades'
     // place; "Done practicing" brings the grades back unchanged.
     await tap(page, 'back-button');
@@ -493,13 +493,13 @@ describe('learning new words', { concurrency: false }, () => {
     assert.equal(await isShown(page, 'grade-row'), true);
     assert.equal(await isShown(page, 'writing-buttons'), false);
     assert.equal(await textOf(page, 'practice-again-button'), 'Practice again');
-    assert.equal(await page.evaluate(suggested), 'Hard');
+    assert.equal(await page.evaluate(suggested), 'Good');
 
     await page.evaluate(`document.querySelector('#grade-row button.primary').click()`);
     await waitUntil(page, `document.getElementById('grade-row').hidden`, 'the card graded');
     const { reviews } = await inDatabase(`stores.reviews.getAll().onsuccess = (e) => { result.reviews = e.target.result; };`);
     const last = reviews.filter((review) => review.cardId === '小孩|xiao3hai2#writing').sort((a, b) => a.time - b.time).pop();
-    assert.equal(last.suggestedGrade, 2);
+    assert.equal(last.suggestedGrade, 3);
     assert.deepEqual(last.mistakesPerChar, [0, 1]);
     assert.deepEqual(last.passedPerChar, [true, true]);
   });
