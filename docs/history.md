@@ -4,6 +4,12 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the session of 2026-11-05 (the browser suite from 8 minutes to 4; tests only, pushed to `main`, not released).**
+
+- **Found:** the full browser suite took 8 minutes: the writing grid had grown from 165 runs (October) to 590, as characters and ways of writing them were added, each way at all 7 positions; and Node starts test files in order of their names, so the grid began near the end and ran alone for nearly 6 minutes.
+- **Changed:** `tests/browser/run.js` runs the grid as a process of its own beside the other files (its report printed at the end); the grid writes the extra ways (second shapes, 艹 in three strokes, second forms, the box of 骨) only centered and half size, top left (`FEWER_POSITIONS`), the stroke orders still at all 7: 380 runs, 20 skipped.
+- **Tests:** full suite in 240 seconds: 611 passed, 20 skipped, 0 failed.
+
 **Handover from the fourth session of 2026-11-04 (two offline tests fixed; tests only, pushed to `main`, not released).**
 
 - **Fixed:** `offline.browser.js`'s five-taps test. After "Hide these settings" restarts the app, it took the version line's text as a sign the app had started, but that line is filled (`showVersion`, early in `src/main.js`) long before `setUpTesterSettings` listens for the taps, so the five taps went unheard. It now waits until `main` loses `starting` (the end of `startUp()`).

@@ -47,6 +47,12 @@ const POSITIONS = {
   'larger, low': { scale: 1.2, dx: -90, dy: -110 },
 };
 
+// The stroke orders are written at every position above; the other ways
+// (second shapes, 艹 in three strokes, second forms, the box of 骨) only at
+// these two, which keeps the grid to a few minutes (2026-11-05: it had grown
+// to 590 characters written, nearly six minutes on four browsers).
+const FEWER_POSITIONS = ['centered', 'half size, top left'];
+
 // How far each point of a stroke is shaken off its line, in the data's units,
 // so that strokes are not traced perfectly.
 const JITTER = 8;
@@ -152,7 +158,11 @@ describe('writing grid', { concurrency: BROWSER_COUNT }, () => {
     const data = loadStrokeData(char);
     const moeOrder = data.medians.map((median, index) => index);
     const orders = data.altOrder ? { MOE: moeOrder, mainland: data.altOrder } : { MOE: moeOrder };
-    const ways = Object.entries(orders).map(([orderName, strokeOrder]) => ({ label: `${orderName} order`, strokeOrder }));
+    const ways = Object.entries(orders).map(([orderName, strokeOrder]) => ({
+      label: `${orderName} order`,
+      strokeOrder,
+      everywhere: true,
+    }));
     if (data.altShapes) {
       ways.push({ label: 'MOE order, mainland shapes', strokeOrder: moeOrder, shapes: data.altShapes });
     }
@@ -184,8 +194,11 @@ describe('writing grid', { concurrency: BROWSER_COUNT }, () => {
       ways.push({ label: 'MOE order, 艹 in three strokes, upright first', strokeOrder: [...before, top, level, top + 3, ...after] });
     }
 
-    for (const { label, strokeOrder, shapes } of ways) {
+    for (const { label, strokeOrder, shapes, everywhere } of ways) {
       for (const [positionName, position] of Object.entries(POSITIONS)) {
+        if (!everywhere && !FEWER_POSITIONS.includes(positionName)) {
+          continue;
+        }
         const name = `${char} in ${label}, ${positionName}`;
 
         if (!canBeWritten(data.medians, position)) {

@@ -39,12 +39,51 @@ const gridBrowsers = Number(process.env.BROWSERS) || clamp(browsersThatFit - fil
 const folder = 'tests/browser';
 const files = process.argv.length > 2
   ? process.argv.slice(2)
-  : fs.readdirSync(folder).filter((name) => name.endsWith('.browser.js')).sort().map((name) => path.join(folder, name));
+  : fs
+      .readdirSync(folder)
+      .filter((name) => name.endsWith('.browser.js'))
+      .sort()
+      .map((name) => path.join(folder, name));
 
 console.log(`${freeMb} MB free: ${filesAtOnce} files at once, ${gridBrowsers} browsers for the writing grid.`);
 
-const run = spawn(process.execPath, ['--test', `--test-concurrency=${filesAtOnce}`, ...files], {
-  stdio: 'inherit',
-  env: { ...process.env, BROWSERS: String(gridBrowsers) },
-});
-run.on('exit', (code) => process.exit(code ?? 1));
+// The writing grid takes longest. Node starts test files in order of their
+// names, whatever order they are given in, so with the others it would
+// start near the end and run alone (2026-11-05: 6 of a run's 8 minutes).
+// So it runs as a process of its own beside them, taking one of the files'
+// places; its report is held back and printed once everything is done, so
+// the two reports don't mix.
+const env = { ...process.env, BROWSERS: String(gridBrowsers) };
+const isGrid = (file) => path.basename(file) === 'writing-grid.browser.js';
+const grid = files.filter(isGrid);
+const others = files.filter((file) => !isGrid(file));
+
+// Runs Node's test runner on `list`; resolves with its exit code and, when
+// `hold` is set, its report.
+function runTests(list, concurrency, hold) {
+  return new Promise((resolve) => {
+    const run = spawn(process.execPath, ['--test', `--test-concurrency=${concurrency}`, ...list], {
+      stdio: hold ? ['ignore', 'pipe', 'pipe'] : 'inherit',
+      env,
+    });
+    let report = '';
+    if (hold) {
+      run.stdout.on('data', (chunk) => (report += chunk));
+      run.stderr.on('data', (chunk) => (report += chunk));
+    }
+    run.on('exit', (code) => resolve({ code: code ?? 1, report }));
+  });
+}
+
+const runs = [];
+if (grid.length > 0 && others.length > 0) {
+  runs.push(runTests(grid, 1, true));
+  runs.push(runTests(others, Math.max(1, filesAtOnce - 1), false));
+} else {
+  runs.push(runTests(files, filesAtOnce, false));
+}
+const results = await Promise.all(runs);
+for (const { report } of results) {
+  process.stdout.write(report);
+}
+process.exit(Math.max(...results.map(({ code }) => code)));
