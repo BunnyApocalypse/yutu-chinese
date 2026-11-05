@@ -100,11 +100,14 @@ const apartBy = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 // Returns { strokeNum: median } for the Taiwan strokes the big set writes in
 // a shape that would not be accepted for them, with the big set's middle
 // line, or null if there are none.
+//
+// If the two sets have a different number of strokes (遍: 辶 has 4 in the
+// Taiwan set, 3 in the big set), a stroke is only paired with the big set's
+// stroke of the same number, so only strokes before the part that differs
+// are looked at (the owner, 2026-11-05: 戶's dot on top refused in 遍).
 export function findAlternativeShapes(taiwanEntry, bigSetEntry, fits) {
   const count = taiwanEntry.medians.length;
-  if (bigSetEntry.medians.length !== count) {
-    return null;
-  }
+  const sameCount = bigSetEntry.medians.length === count;
   const middles = (entry) => entry.medians.map((median) => middleOf(resample(toPoints(median))));
   const taiwanMiddles = middles(taiwanEntry);
   const bigSetMiddles = middles(bigSetEntry);
@@ -115,7 +118,7 @@ export function findAlternativeShapes(taiwanEntry, bigSetEntry, fits) {
   const shapes = {};
   for (let t = 0; t < count; t++) {
     const b = nearest(taiwanMiddles[t], bigSetMiddles);
-    if (nearest(bigSetMiddles[b], taiwanMiddles) !== t || apartBy(taiwanMiddles[t], bigSetMiddles[b]) > SAME_PLACE_DISTANCE) {
+    if ((!sameCount && b !== t) || nearest(bigSetMiddles[b], taiwanMiddles) !== t || apartBy(taiwanMiddles[t], bigSetMiddles[b]) > SAME_PLACE_DISTANCE) {
       continue;
     }
     const points = toPoints(bigSetEntry.medians[b]);

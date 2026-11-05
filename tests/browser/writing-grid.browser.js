@@ -24,7 +24,7 @@ import { steepDotsOf } from '../../src/strokeMatch.js';
 import { innerBoxForms } from '../../src/innerBox.js';
 
 // Characters with two accepted stroke orders (the first ten), some with one,
-// some with strokes in a second shape (食房藍雨聽飽, also written so, and 食
+// some with strokes in a second shape (食房藍雨聽飽遍, also written so, and 食
 // and 飽 with the dot under 人 steeply down), and some with 艹 (草花藍觀, the
 // 十 十 of 垂 in 郵華, and 薦 from the big set, also written with it in three
 // strokes, 薦 also in the big set's 丨 一 丨 一), and some with a
@@ -32,7 +32,7 @@ import { innerBoxForms } from '../../src/innerBox.js';
 // of 骨 (骨體滑, also written in its other orders and shapes; not 髒, whose
 // 9th stroke in its mainland shape is refused at half size, bottom right,
 // with or without this).
-const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢母出長麼這謝子好食房藍雨草花觀聽充流育骨體滑郵華飽薦');
+const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢母出長麼這謝子好食房藍雨草花觀聽充流育骨體滑郵華飽薦遍');
 
 // Where and how big the character is written, compared with the centered
 // reference: `scale` times the size, moved `dx` to the right and `dy` up, in
