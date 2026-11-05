@@ -4,6 +4,15 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the second session of 2026-11-05 (old notes rework-24 to -29; new notes for the 朝代歌, batch-20; the `wikipedia` tag; released to `main` and `stable`, "What's new" entry `2026-11-05`).**
+
+- **Built (data):** 549 old notes reworked and tagged `judged` as before: the last 349 of HSK 3.0 level 4 (level 4 is done) and the first 200 of level 5 (餐馆 to 驾照); eleven Sonnet writers, six Opus judges, the judges' points sent back once, read by hand. Traditional versions settled in `local/note-scripts/settle-old-9.mjs` (30 lines). Details: `local/old-notes/README.md`, "Rework-24 to -29". An earlier attempt at rework-24 to -27 had stopped part way (out of tokens, the owner thinks); its folders were deleted.
+- **Built (data):** batch-20 (`local/study-aids/README.md`): the owner is learning the 朝代歌, so its 33 words without a note (the 28 dynasty and period names as the dictionary's capitalized entries, 夏|Xia4 apart from 夏|xia4, those it implies included: 周, 汉, 西汉, 东汉, 三国, 西晋, 东晋, 五代十国; and 一统, 并立, 皇朝, 至此, 延), then 67 words of `needed-b2.json`: 100 notes and 10 character tips. The judge checked every history claim in the dynasty notes against English Wikipedia (the owner: for these dynasty facts only), fetched once into `local/wikipedia-dynasties/` (source in `local/README.md`). The owner's import lists for the song: `local/chaodai-ge/朝代歌.tsv` (36 words, in the song's order) and `朝代歌-related.tsv` (the 8 names it implies).
+- **Built (app):** the `wikipedia` check tag, beside `judged`, on the 28 dynasty notes; their box says their history was also checked against Wikipedia (`page.noteJudgedWikipedia`, `noteHeading` in `src/wordPage.js`; `docs/word-page.md`); the credits name Wikipedia for them.
+- **Where it stands:** 2,778 of the 5,849 old notes reworked (47%); left: HSK 3.0 level 5 (824), level 1 (441), radicals (164), TOCFL (1,642). New notes: 181 words of `needed-b2.json` still without one.
+- **Next:** the old notes of `hsk-3.0-5.tsv` (`node local/old-notes/gather.mjs hsk-3.0-5.tsv local/old-notes/rework-30 100 2 --in-order`, `--skip=100` and on), prompts in `local/old-notes/prompt-writer.md` and `prompt-judge.md` (add: a one-character word's example is an everyday sentence, not a classical saying).
+- **Tests:** 312 unit tests pass. Full browser suite: 610 passed, 20 skipped, 1 failed: `offline.browser.js`'s five-taps test ("Waited in vain for: the group For testing"), which then passed 3 runs in a row alone; it still fails now and then in a full run.
+
 **Handover from the session of 2026-11-05 (the browser suite from 8 minutes to 4; tests only, pushed to `main`, not released).**
 
 - **Found:** the full browser suite took 8 minutes: the writing grid had grown from 165 runs (October) to 590, as characters and ways of writing them were added, each way at all 7 positions; and Node starts test files in order of their names, so the grid began near the end and ran alone for nearly 6 minutes.

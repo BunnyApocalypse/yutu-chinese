@@ -48,3 +48,7 @@ Tools for tuning the writing grading (the owner's feedback, task 9, 2026-10-24; 
 ## `source-check/`
 
 The trial of the "From the sources" check on learning notes (`docs/history.md`, roadmap, "How sure a note is"; 2026-10-25). `sources.mjs` gives the three sources as keyed entries (`wikt:`, `mmah:`, `cedict:`); `gather.mjs` picks notes spread over a file and writes their sources for the claim-splitting pass; `verify.mjs` checks every quote word for word in its entry and writes the judge's input (claim and passage only); `tally.mjs` puts the passes together into `results.json` and `report.md`. `trial/` holds the first 50 notes of HSK 3.0 level 1 with every pass's output.
+
+## wikipedia-dynasties/
+
+English Wikipedia's articles on the Chinese dynasties and periods of the 朝代歌 (Xia to Qing, the Three Kingdoms' states, Yinxu, the Grand Canal, "Dynasties of China"), as plain text, fetched once on 2026-11-05 so the Opus judge of `study-aids/batch-20` could check the dynasty notes' history claims (the owner: Wikipedia, for these dynasty facts only). Source: `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&redirects=1&format=json&formatversion=2&titles=<title>`, one request per article, paced for the API's rate limit. CC BY-SA 4.0; used for checking, nothing copied into notes.

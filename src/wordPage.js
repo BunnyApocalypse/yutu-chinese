@@ -305,9 +305,10 @@ export function createWordPage({
   // note (the owner, 2026-10-25; data/notes/README.md): ✓ only when a
   // native speaker has read it; AI in a solid box when an AI model checked
   // it (`judged`: its facts on how characters were built found in the
-  // sources, the rest read by a second AI model; or the older `sources`
-  // check); AI in a dashed box when nothing checked it (the owner,
-  // 2026-10-29). What it means shows while a mouse is over the box, and on
+  // sources, the rest read by a second AI model; with `wikipedia` too, its
+  // history also checked against Wikipedia: the dynasty names, the owner,
+  // 2026-11-05; or the older `sources` check); AI in a dashed box when
+  // nothing checked it (the owner, 2026-10-29). What it means shows while a mouse is over the box, and on
   // a tap until the next one, like the "?" in Settings.
   // Returns the heading and the explanation under it.
   function noteHeading(note) {
@@ -319,7 +320,7 @@ export function createWordPage({
     if (native && sources) meaning = 'page.noteNativeAndSources';
     else if (native) meaning = 'page.noteNative';
     else if (sources) meaning = 'page.noteSources';
-    else if (note.checks.includes('judged')) meaning = 'page.noteJudged';
+    else if (note.checks.includes('judged')) meaning = note.checks.includes('wikipedia') ? 'page.noteJudgedWikipedia' : 'page.noteJudged';
     else if (!note.example) meaning = 'page.noteUncheckedNoSentence';
 
     const LABELS = { checked: 'page.noteCheckedLabel', 'ai-checked': 'page.noteAiCheckedLabel', unchecked: 'page.noteUncheckedLabel' };

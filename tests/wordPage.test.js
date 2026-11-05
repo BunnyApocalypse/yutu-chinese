@@ -76,7 +76,7 @@ test('every note in the notes files is there in both scripts', () => {
 });
 
 test('every check named in the notes files is one the app knows', () => {
-  const known = new Set(['native', 'sources', 'judged']);
+  const known = new Set(['native', 'sources', 'judged', 'wikipedia']);
   for (const file of fs.readdirSync('data/notes').filter((name) => name.endsWith('.tsv'))) {
     for (const note of parseNotes(fs.readFileSync(`data/notes/${file}`, 'utf8')).values()) {
       note.checks.forEach((check) => assert.ok(known.has(check), `${file}: ${check}`));

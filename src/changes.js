@@ -13,6 +13,21 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-05',
+    items: [
+      'The names of Chinese dynasties and periods, from 夏 to 清, have learning tips; what they say about history was checked against Wikipedia.',
+      'Many more words have learning tips, and older tips for HSK levels 4 and 5 were rewritten.',
+    ],
+    it: [
+      'I nomi delle dinastie e dei periodi cinesi, da 夏 a 清, hanno consigli di studio; ciò che dicono sulla storia è stato verificato su Wikipedia.',
+      'Molte altre parole hanno consigli di studio, e i consigli più vecchi dei livelli HSK 4 e 5 sono stati riscritti.',
+    ],
+    de: [
+      'Die Namen chinesischer Dynastien und Epochen, von 夏 bis 清, haben Lerntipps; was sie über Geschichte sagen, wurde mit Wikipedia abgeglichen.',
+      'Viele weitere Wörter haben Lerntipps, und ältere Tipps für die HSK-Stufen 4 und 5 wurden neu geschrieben.',
+    ],
+  },
+  {
     id: '2026-11-04',
     items: [
       'Strokes are graded a little less strictly.',
