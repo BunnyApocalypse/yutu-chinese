@@ -4,7 +4,14 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
-**Handover from the third session of 2026-11-05 (遍's dot, Good after mistakes within the allowance; committed to `main`, not pushed, not released).**
+**Handover from the fourth session of 2026-11-05 (old notes rework-30 and -31; released to `main` and `stable` with the third session's work, "What's new" entry `2026-11-05-2`).**
+
+- **Built (data):** 200 old notes reworked and tagged `judged` as before: the next 200 of HSK 3.0 level 5 (行驶 to 陪); four Sonnet writers, two Opus judges, the judges' points sent back once, read by hand. Traditional versions settled in `local/note-scripts/settle-old-10.mjs` (6 lines). Details: `local/old-notes/README.md`, "Rework-30 and -31"; the writers' prompt (`prompt-writer.md`) gained the rules learned in rework-24 to -29 (an everyday example for a one-character word, no new padding while fixing).
+- **Where it stands:** 2,978 of the 5,849 old notes reworked (51%); left: HSK 3.0 level 5 (624), level 1 (441), radicals (164), TOCFL (1,642). Two new `ask` sentences (滑手机/刷手机, 台风假) wait for a reader's page.
+- **Next:** `node local/old-notes/gather.mjs hsk-3.0-5.tsv local/old-notes/rework-32 100 2 --in-order` (`--skip=100` and on for more batches at once); the third session's "Next" below still stands.
+- **Tests:** 312 unit tests pass; browser tests not run (only data and the "What's new" entry changed since the third session's full run).
+
+**Handover from the third session of 2026-11-05 (遍's dot, Good after mistakes within the allowance; released with the fourth session).**
 
 - **Built** (one commit each):
   - The 丶 on top of 戶 in 遍 (the owner: refused, while 房 took it). Second shapes were only looked for where both sets have as many strokes; 遍's 辶 has a stroke more in Taiwan's. Now, with different counts, strokes are paired by number (`findAlternativeShapes` in `scripts/strokeOrder.js`, `TAIWAN_SET_VERSION` 5; `docs/writing.md`): adds 遍, 腿 (refused at half size, top left, as 髒) and 還. 遍 is in the writing grid.

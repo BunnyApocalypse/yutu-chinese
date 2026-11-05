@@ -13,6 +13,21 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-05-2',
+    items: [
+      '遍, 腿 and 還 also accept the mainland shapes of their strokes, such as the dot on top of 戶 in 遍.',
+      'A character written with a few refused strokes, within what it allows, now suggests Good rather than Hard.',
+    ],
+    it: [
+      '遍, 腿 e 還 accettano anche le forme dei tratti della Cina continentale, come il punto sopra 戶 in 遍.',
+      'Un carattere scritto con qualche tratto rifiutato, entro il margine consentito, ora suggerisce Bene invece di Difficile.',
+    ],
+    de: [
+      '遍, 腿 und 還 akzeptieren auch die Strichformen des Festlands, etwa den Punkt über 戶 in 遍.',
+      'Ein Zeichen mit wenigen abgelehnten Strichen, im erlaubten Rahmen, schlägt jetzt Gut statt Schwer vor.',
+    ],
+  },
+  {
     id: '2026-11-05',
     items: [
       'The names of Chinese dynasties and periods, from 夏 to 清, have learning tips; what they say about history was checked against Wikipedia.',
