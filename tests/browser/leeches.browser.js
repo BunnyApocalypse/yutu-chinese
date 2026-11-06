@@ -6,7 +6,21 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, reloadApp, tap, type, choose, textOf, waitUntil, openDeckPage, isShown } from './harness.js';
+import {
+  startApp,
+  startBrowsers,
+  reloadApp,
+  writingArea,
+  drawStroke,
+  loadStrokeData,
+  tap,
+  type,
+  choose,
+  textOf,
+  waitUntil,
+  openDeckPage,
+  isShown,
+} from './harness.js';
 
 // Everything in one store of the app's database, read through a connection
 // of the test's own.
@@ -23,9 +37,10 @@ const stored = (page, storeName) =>
     };
   })`);
 
-// Puts a card straight into the database: the meaning card of 愛, learned
-// long ago, forgotten seven times and due now.
-const putForgottenCard = (page) =>
+// Puts a card straight into the database, learned long ago, forgotten
+// `lapses` times and due now: by default the meaning card of 愛, forgotten
+// seven times.
+const putForgottenCard = (page, { id = '愛|ai4#meaning', wordId = '愛|ai4', type = 'meaning', lapses = 7 } = {}) =>
   page.evaluate(`new Promise((resolve, reject) => {
     const DAY = 24 * 60 * 60 * 1000;
     const now = Date.now();
@@ -34,9 +49,9 @@ const putForgottenCard = (page) =>
     request.onsuccess = () => {
       const tx = request.result.transaction(['cards'], 'readwrite');
       tx.objectStore('cards').put({
-        id: '愛|ai4#meaning',
-        wordId: '愛|ai4',
-        type: 'meaning',
+        id: '${id}',
+        wordId: '${wordId}',
+        type: '${type}',
         due: now - DAY,
         firstReviewedAt: now - 100 * DAY,
         lastReviewedAt: now - 4 * DAY,
@@ -48,7 +63,7 @@ const putForgottenCard = (page) =>
           scheduled_days: 3,
           learning_steps: 0,
           reps: 20,
-          lapses: 7,
+          lapses: ${lapses},
           state: 2,
           last_review: new Date(now - 4 * DAY).toISOString(),
         },
@@ -158,7 +173,9 @@ describe('leeches', { concurrency: false }, () => {
     // The word's page has its cards; unticking takes effect at once.
     await page.evaluate(`document.querySelector('#word-list li button').click()`);
     await waitUntil(page, `document.getElementById('word-page').dataset.shown === '愛|ai4'`, 'the word\'s page');
-    assert.equal(await textOf(page, 'edit-cards-summary'), 'Cards (1 suspended)');
+    // Waited for: the page reads the word and its cards afresh (loadWord),
+    // so the heading may come a moment after the page.
+    await waitUntil(page, `document.getElementById('edit-cards-summary').textContent === 'Cards (1 suspended)'`, 'the heading with "1 suspended"');
     await page.evaluate(`[...document.querySelectorAll('#edit-cards li')].find((row) => row.textContent.startsWith('Meaning')).querySelector('button:last-child').click()`);
     await waitUntil(page, rows(0), 'no suspended cards');
     // The list and the page's heading of its cards are updated one after the
@@ -172,5 +189,65 @@ describe('leeches', { concurrency: false }, () => {
     await choose(page, 'word-filter', 'leeches');
     await waitUntil(page, rows(1), 'the leech');
     assert.match(await textOf(page, '#word-list li'), /meaning · forgotten 8 times$/);
+  });
+
+  // A card switched back on gets a chance until it is next forgotten, and is
+  // then suspended again at once (becameLeech).
+  it('suspends a card switched back on again the next time it is forgotten', async () => {
+    await putForgottenCard(page, { lapses: 8 });
+    await reloadApp(page);
+    await tap(page, 'review-tab');
+    await waitUntil(page, `document.getElementById('card-type').textContent.toLowerCase().includes('meaning')`, 'the meaning card');
+    await page.evaluate(`['pointerdown', 'pointerup'].forEach((type) => document.getElementById('card-face').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`);
+    await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
+    await page.evaluate(`document.querySelector('#grade-row button').click()`);
+    let love;
+    for (let attempt = 0; attempt < 50 && !love?.suspended; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      love = (await stored(page, 'words')).find((word) => word.id === '愛|ai4');
+    }
+    assert.deepEqual(love.suspended, ['meaning']);
+    await waitUntil(page, `document.getElementById('review-notice').textContent.startsWith('Suspended: the meaning card of 愛, forgotten 9 times.')`, 'the notice');
+  });
+
+  // A writing card is suspended in both scripts: the word's `suspended` says
+  // "writing", whichever script's card became a leech.
+  it('suspends a writing card in both scripts', { timeout: 60000 }, async () => {
+    // Forgotten five times; once more makes six, the setting's number.
+    await putForgottenCard(page, { id: '貓|mao1#writing', wordId: '貓|mao1', type: 'writing', lapses: 5 });
+    await reloadApp(page);
+    await tap(page, 'review-tab');
+    await waitUntil(
+      page,
+      `document.getElementById('card-type').textContent.toLowerCase().includes('writing') && document.getElementById('stroke-count').textContent.startsWith('1/') && !document.getElementById('writing-area').hasAttribute('data-busy')`,
+      'the writing card',
+    );
+    const area = await writingArea(page);
+    for (const median of loadStrokeData('貓').medians) {
+      await drawStroke(page, area, median);
+    }
+    await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
+    await page.evaluate(`[...document.querySelectorAll('#grade-row .grade')].find((button) => button.firstChild.textContent === 'Again').click()`);
+    let cat;
+    for (let attempt = 0; attempt < 50 && !cat?.suspended; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      cat = (await stored(page, 'words')).find((word) => word.id === '貓|mao1');
+    }
+    assert.deepEqual(cat.suspended, ['writing']);
+    await waitUntil(page, `document.getElementById('review-notice').textContent.startsWith('Suspended: the writing card of 貓, forgotten 6 times.')`, 'the notice');
+
+    // Neither writing card comes up though both are due now, in either
+    // script. (Both put back as reviewed days ago: a card just graded would
+    // hold back its word's other cards for a few minutes, SIBLING_GAP_MS.)
+    await putForgottenCard(page, { id: '貓|mao1#writing', wordId: '貓|mao1', type: 'writing', lapses: 6 });
+    await putForgottenCard(page, { id: '貓|mao1#writing#simplified', wordId: '貓|mao1', type: 'writing', lapses: 0 });
+    await reloadApp(page);
+    await tap(page, 'review-tab');
+    await waitUntil(
+      page,
+      `document.getElementById('card-type').textContent !== '' || !document.getElementById('done-panel').hidden || !document.getElementById('review-start').hidden`,
+      'Review',
+    );
+    assert.doesNotMatch(await textOf(page, 'card-type'), /writing/i);
   });
 });

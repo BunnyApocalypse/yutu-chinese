@@ -8,6 +8,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 - **Built** (the owner, 2026-11-06): at the first look of a word with a learning note, Learn's "About" beside "I know this word" is hidden, the note's "About this word" taking its place; back at the next step (`addTip` in `src/review.js`; `docs/cards.md`). This answers the first session's open question.
 - **Tests:** 316 unit tests; `lesson`, `areaSize` and `review` browser files 38 of 38 (the one-line check in `areaSize` now runs at step 2, where About always shows).
+- **Leeches tried by the owner** (2026-11-06): the Leech tag and its Suspend, the lists, the exports all work. Suspending by the setting is left to the tests: `leeches.browser.js` gained a card switched back on suspended again when next forgotten, and a writing card suspended in both scripts (each checked to fail with the app broken on purpose). Its "lists suspended cards…" read "Cards (1 suspended)" at once and now waits for it, likely the failure seen now and then in a full run; 3 runs of the file passed.
 
 **Handover from the fourth session of 2026-11-06 (old notes rework-32 to -37; released to `main` and `stable` with the first to third sessions' work, "What's new" entry `2026-11-06`).**
 
@@ -430,7 +431,7 @@ Agreed with the owner on 2026-10-18. **The first release** means the first users
    - **"Keep my words safe" opening Settings** in Chrome when it hasn't offered to install (item 7).
    - **Sentences:** adding one, the reading card, the gap on the writing card, a whole sentence on a phone.
    - **Combining backups** between two real devices, and whether the `...-before-combining.json` file lands in downloads.
-   - **Leeches:** the two settings, the note in Review, the lists, both exports.
+   - **Leeches:** tried 2026-11-06 (the tag, the lists, the exports); suspending by the setting left to `leeches.browser.js`.
 10. **Done on 2026-10-18:** "What's new" after an update and "Send feedback" in the menu (`docs/interface.md`).
 
 **Near-term:**
