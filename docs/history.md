@@ -8,6 +8,8 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 - **Built** (one commit each): the big set's 忄 accepts the Taiwan 丶 丨 丶 as a second order when writing traditional (the owner: 愉 refused it, 快 took it; `startsWithMainlandHeart`, `inTaiwanOrder` in `src/shortcuts.js`; 157 characters; `docs/writing.md`). In Learn, a tap on a word in the strip opens its page, and "About" sits beside "I know this word" at every step; three notes shortened so the row fits on a 360px phone in all three languages (the owner chose that over the top line; `docs/cards.md`).
 - **Not built:** 皮 with its short upright before the ノ (㇇ 丨 ノ): no standard order has it, and the owner said they'd rather change how they write it.
+- **Waiting on the owner:** at the first look of a word with a learning note there are two links to its page, "About" in the row and the note's "About this word"; offered to hide the row's then. Pictures of the new row: `local/ux-atlas-learn/` (git-ignored; `SIZES=small,phone OUT=local/ux-atlas-learn node scripts/ux-atlas.js`).
+- **Next:** releasing waits on the owner (nothing pushed this session; the 2026-11-05 third session's work is already on `stable`). Then the roadmap's "Near-term": the owner's raw input recordings of 發 氣 樂 經.
 - **Tests:** 314 unit tests; full browser suite: 227 passed, 5 failed (lesson tests expecting the old note, since fixed: 12 of 12 pass); grid 402 passed, 21 skipped.
 
 **Handover from the fourth session of 2026-11-05 (old notes rework-30 and -31; released to `main` and `stable` with the third session's work, "What's new" entry `2026-11-05-2`).**
