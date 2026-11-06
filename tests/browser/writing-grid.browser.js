@@ -23,7 +23,8 @@ import { grassTopsOf } from '../../src/shortcuts.js';
 import { steepDotsOf } from '../../src/strokeMatch.js';
 import { innerBoxForms } from '../../src/innerBox.js';
 
-// Characters with two accepted stroke orders (the first ten), some with one,
+// Characters with two accepted stroke orders (the first eleven; 愉's 忄 the
+// big set has only in the mainland order), some with one,
 // some with strokes in a second shape (食房藍雨聽飽遍, also written so, and 食
 // and 飽 with the dot under 人 steeply down), and some with 艹 (草花藍觀, the
 // 十 十 of 垂 in 郵華, and 薦 from the big set, also written with it in three
@@ -32,7 +33,7 @@ import { innerBoxForms } from '../../src/innerBox.js';
 // of 骨 (骨體滑, also written in its other orders and shapes; not 髒, whose
 // 9th stroke in its mainland shape is refused at half size, bottom right,
 // with or without this).
-const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢母出長麼這謝子好食房藍雨草花觀聽充流育骨體滑郵華飽薦遍');
+const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢愉母出長麼這謝子好食房藍雨草花觀聽充流育骨體滑郵華飽薦遍');
 
 // Where and how big the character is written, compared with the centered
 // reference: `scale` times the size, moved `dx` to the right and `dy` up, in
@@ -157,7 +158,12 @@ describe('writing grid', { concurrency: BROWSER_COUNT }, () => {
   for (const char of CHARS) {
     const data = loadStrokeData(char);
     const moeOrder = data.medians.map((median, index) => index);
-    const orders = data.altOrder ? { MOE: moeOrder, mainland: data.altOrder } : { MOE: moeOrder };
+    // (The big set's 忄 has the Taiwan order second: inTaiwanOrder.)
+    const orders = !data.altOrder
+      ? { MOE: moeOrder }
+      : data.altOrderIsTaiwan
+        ? { MOE: data.altOrder, mainland: moeOrder }
+        : { MOE: moeOrder, mainland: data.altOrder };
     const ways = Object.entries(orders).map(([orderName, strokeOrder]) => ({
       label: `${orderName} order`,
       strokeOrder,

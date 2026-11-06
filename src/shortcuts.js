@@ -12,9 +12,10 @@
 // enough to matter, and joining them gives a visibly different shape.
 //
 // Only pairs are handled, and one shortcut that changes the order: 艹 in 3
-// strokes (see "艹 in three strokes" at the end). Three or more strokes in one
-// go, and other shortcuts that change the order of strokes or drop some, are
-// not.
+// strokes (see "艹 in three strokes" below). At the end, the big set's 艹 and
+// 忄 are put in the Taiwan order for traditional writing. Three or more
+// strokes in one go, and other shortcuts that change the order of strokes
+// or drop some, are not.
 //
 // This file has no connection to the page or to Hanzi Writer, so it can be
 // tested on its own (see tests/shortcuts.test.js).
@@ -313,7 +314,7 @@ export function grassTopsOf(charData) {
 // other: 丨 一 丨 一. Nobody writes it so (the owner, 2026-11-04, could not
 // write 薦's 艹 at all), and in that order the three-stroke 艹 isn't found.
 // So when writing traditional, charData.js puts it in the Taiwan order,
-// 丨 一 一 丨 (inTaiwanGrassOrder), and keeps the data's own order as the
+// 丨 一 一 丨 (inTaiwanOrder), and keeps the data's own order as the
 // second accepted one (altOrder).
 //
 // Found as a 艹 (grassTopsOf) once the last two are swapped, whose left
@@ -339,11 +340,72 @@ export function crossByCrossGrassOf(charData) {
   return found;
 }
 
-// A copy of `charData` with each such 艹 in the Taiwan order, 丨 一 一 丨, and
-// the data's own order as `altOrder`; `charData` itself if it has none.
-export function inTaiwanGrassOrder(charData) {
+// ---- 忄 as 丶 丨 丶 ----
+//
+// Taiwan writes 忄 left dot, upright, right dot; the mainland writes both
+// dots first. The Taiwan set has both orders for its characters (快, 情),
+// but the big set has only the mainland one, so 愉 refused the Taiwan
+// order (the owner, 2026-11-06). When writing traditional, charData.js adds
+// the Taiwan order as altOrder. Unlike 艹, the data's own order stays the
+// first: the strokes are then told apart by the long upright, not by a dot
+// (handed to Hanzi Writer the other way round, a right dot written small was
+// refused in the mainland order now and then, in 憶 and 懶, as fitsStroke
+// judges the shape of a stroke that small more strictly than Hanzi Writer).
+//
+// Found as the first three strokes only: two short strokes going down, one
+// ending left of a tall upright, one starting right of it and going right,
+// both beside it: 167 characters of the big set, 157 of them not in the
+// Taiwan set (愉 悅 惱 懶 憶…). Further in, the same test finds a few shapes
+// that are no 忄 (in 赧 and 椭).
+
+// How short each dot must be, as a share of the upright's height.
+const HEART_DOT_SHARE = 0.3;
+// How tall the upright must be at least.
+const HEART_MIN_UPRIGHT = 400;
+
+// True if `charData` begins with a 忄 written 丶 丶 丨.
+export function startsWithMainlandHeart(charData) {
+  if (charData.medians.length < 3) {
+    return false;
+  }
+  const [left, right, upright] = charData.medians;
+  const first = (median) => ({ x: median[0][0], y: median[0][1] });
+  const last = (median) => ({ x: median[median.length - 1][0], y: median[median.length - 1][1] });
+  const height = first(upright).y - last(upright).y;
+  const uprightX = (first(upright).x + last(upright).x) / 2;
+  const isUpright = height >= HEART_MIN_UPRIGHT && height > 3 * Math.abs(first(upright).x - last(upright).x);
+  // Short, going down, its middle within the upright's height.
+  const isDot = (median) => {
+    const middleY = (first(median).y + last(median).y) / 2;
+    return (
+      distance(first(median), last(median)) < HEART_DOT_SHARE * height &&
+      last(median).y < first(median).y &&
+      middleY < first(upright).y &&
+      middleY > last(upright).y
+    );
+  };
+  return (
+    isUpright &&
+    isDot(left) &&
+    isDot(right) &&
+    last(left).x < uprightX &&
+    first(right).x > uprightX &&
+    last(right).x > first(right).x
+  );
+}
+
+// ---- Handing the big set's characters over in the Taiwan order ----
+
+// A copy of `charData` with each 艹 written 丨 一 丨 一 in the Taiwan order,
+// 丨 一 一 丨, and a second accepted order (`altOrder`): the data's own for
+// the 艹, the Taiwan 丶 丨 丶 for a 忄 written 丶 丶 丨. `charData` itself if
+// it has neither. A 忄 alone is marked `altOrderIsTaiwan`, so a review says
+// which order was used the right way round (in 懞, with both, the second
+// order is a mix of the two).
+export function inTaiwanOrder(charData) {
   const tops = crossByCrossGrassOf(charData);
-  if (tops.length === 0) {
+  const heart = startsWithMainlandHeart(charData);
+  if (tops.length === 0 && !heart) {
     return charData;
   }
   // order[newNumber] = the data's stroke number. Swapping two strokes is
@@ -353,11 +415,16 @@ export function inTaiwanGrassOrder(charData) {
   for (const top of tops) {
     [order[top + 2], order[top + 3]] = [order[top + 3], order[top + 2]];
   }
+  const altOrder = [...order];
+  if (heart) {
+    [altOrder[1], altOrder[2]] = [altOrder[2], altOrder[1]];
+  }
   return {
     ...charData,
     strokes: order.map((strokeNum) => charData.strokes[strokeNum]),
     medians: order.map((strokeNum) => charData.medians[strokeNum]),
     ...(charData.radStrokes && { radStrokes: charData.radStrokes.map((strokeNum) => order.indexOf(strokeNum)) }),
-    altOrder: order,
+    altOrder,
+    ...(heart && tops.length === 0 && { altOrderIsTaiwan: true }),
   };
 }

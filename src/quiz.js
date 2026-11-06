@@ -1461,7 +1461,9 @@ export function createQuiz(target, size, handlers) {
         completed = true;
         let order = null;
         if (baseData.altOrder) {
-          order = isStandardOrder(sequenceWithoutGrassJoins()) ? 'moe' : 'mainland';
+          // (The big set's 忄 has the Taiwan order second: inTaiwanOrder.)
+          const standard = isStandardOrder(sequenceWithoutGrassJoins());
+          order = standard !== Boolean(baseData.altOrderIsTaiwan) ? 'moe' : 'mainland';
         }
         showDemo(sequence.length); // nothing left to show
         const passed = handlers.onComplete({ totalMistakes: mistakes, hintShown, order });

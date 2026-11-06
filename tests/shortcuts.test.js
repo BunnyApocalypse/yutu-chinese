@@ -8,7 +8,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-import { isJoinable, isShortcutStroke, joinedLine, grassTopsOf, crossByCrossGrassOf } from '../src/shortcuts.js';
+import {
+  isJoinable,
+  isShortcutStroke,
+  joinedLine,
+  grassTopsOf,
+  crossByCrossGrassOf,
+  startsWithMainlandHeart,
+  inTaiwanOrder,
+} from '../src/shortcuts.js';
 import { applyFrame } from '../src/frame.js';
 import { parseWordList } from '../src/wordList.js';
 
@@ -262,4 +270,35 @@ test('a 艹 written 丨 一 丨 一 is found in the big set, and not the top of 
   // Already in the Taiwan order, or in three strokes.
   assert.deepEqual(crossByCrossGrassOf(taiwanData.get('花')), []);
   assert.deepEqual(crossByCrossGrassOf(bigSetData('花')), []);
+});
+
+test('a 忄 written 丶 丶 丨 is found at the start of big-set characters', () => {
+  // charData.js puts these in the Taiwan order, 丶 丨 丶 (the owner,
+  // 2026-11-06: 愉 refused it, while 快 from the Taiwan set took it).
+  for (const char of ['愉', '悅', '惱', '懶', '憶', '忄']) {
+    assert.ok(startsWithMainlandHeart(bigSetData(char)), char);
+  }
+  // Other shapes of three strokes: 巾, 火, 小, 心 at the bottom.
+  for (const char of ['帆', '伙', '小', '惫', '恩']) {
+    assert.ok(!startsWithMainlandHeart(bigSetData(char)), char);
+  }
+  // Already in the Taiwan order, with the mainland one as altOrder.
+  assert.ok(!startsWithMainlandHeart(taiwanData.get('快')));
+  // The data's own order first, the Taiwan one second.
+  const yu = inTaiwanOrder(bigSetData('愉'));
+  assert.deepEqual(yu.altOrder.slice(0, 4), [0, 2, 1, 3]);
+  assert.deepEqual(yu.medians, bigSetData('愉').medians);
+  assert.equal(yu.altOrderIsTaiwan, true);
+});
+
+test('懞, with both 忄 and a 艹 written 丨 一 丨 一, gets both swaps', () => {
+  const data = bigSetData('懞');
+  const tops = crossByCrossGrassOf(data);
+  assert.ok(startsWithMainlandHeart(data) && tops.length === 1);
+  // The 艹 in the Taiwan order, its data's own second; the 忄 the other
+  // way round.
+  const { altOrder, altOrderIsTaiwan } = inTaiwanOrder(data);
+  assert.deepEqual(altOrder.slice(0, 3), [0, 2, 1]);
+  assert.deepEqual(altOrder.slice(tops[0], tops[0] + 4), [tops[0], tops[0] + 1, tops[0] + 3, tops[0] + 2]);
+  assert.equal(altOrderIsTaiwan, undefined);
 });
