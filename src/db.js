@@ -53,6 +53,9 @@
 //                          before 2026-10-13 may be the plain id of a card
 //                          since moved to its "#simplified" id (see
 //                          scriptCards.js).
+//                          An index by `wordId` (since version 3) finds one
+//                          word's reviews without reading them all
+//                          (getReviewsOfWord).
 //   settings  key: key     { key, value, changedAt }
 //   removed   key: id      { id, removedAt } and, for a deck, kind: 'deck'.
 //                          One per word or deck that was ever removed, under
@@ -97,7 +100,7 @@ const DATABASE_NAME = CHANNEL ? `hanzi-trainer-${CHANNEL}` : 'hanzi-trainer';
 
 // Raise this number when the stores themselves change (a new store, a new
 // key). The browser then runs the upgrade code below on existing databases.
-const DATABASE_VERSION = 2;
+const DATABASE_VERSION = 3;
 
 export const STORES = ['words', 'cards', 'reviews', 'settings', 'removed', 'decks'];
 
@@ -125,6 +128,12 @@ function openDatabase() {
         if (event.oldVersion < 2) {
           database.createObjectStore('removed', { keyPath: 'id' });
           database.createObjectStore('decks', { keyPath: 'id' });
+        }
+        // An index is a second way into a store, kept up to date by the
+        // browser itself: here, the reviews by the word they are of. Made over
+        // the reviews already stored, once, while the app starts.
+        if (event.oldVersion < 3) {
+          request.transaction.objectStore('reviews').createIndex('wordId', 'wordId');
         }
       };
       request.onsuccess = () => {
@@ -163,6 +172,21 @@ async function transaction(storeNames, mode, work) {
 export async function getAll(storeName) {
   const request = await transaction([storeName], 'readonly', (tx) =>
     tx.objectStore(storeName).getAll(),
+  );
+  return request.result;
+}
+
+// How many records a store has, without reading them.
+export async function countAll(storeName) {
+  const request = await transaction([storeName], 'readonly', (tx) => tx.objectStore(storeName).count());
+  return request.result;
+}
+
+// The reviews of one word (by its ID), through the index: reading all of
+// them took seconds on a tablet with the owner's 185,000 (2026-11-06).
+export async function getReviewsOfWord(wordId) {
+  const request = await transaction(['reviews'], 'readonly', (tx) =>
+    tx.objectStore('reviews').index('wordId').getAll(wordId),
   );
   return request.result;
 }

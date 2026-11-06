@@ -9,7 +9,7 @@
 // What they share lives here: choosing the next card, the grade buttons, and
 // saving.
 
-import { getAll, getAllInParts, putAll, saveReview, saveKnown, startCardsOver, randomId } from './db.js';
+import { getAll, getAllInParts, countAll, putAll, saveReview, saveKnown, startCardsOver, randomId } from './db.js';
 import { gradeOptions, gradeButtons, gradeFor, retrievability, AGAIN, GOOD } from './scheduler.js';
 import { deckWithInside, isInDecks, dailyGoal, startingLevel } from './decks.js';
 import { createDeckChooser } from './deckChooser.js';
@@ -997,6 +997,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     cards.set(card.id, card);
     entry.card = card;
     entry.review = review;
+    // The times held have the new grade too (they are not read again).
+    const held = reviewTimes.findIndex((time) => time.id === review.id);
+    if (held !== -1) {
+      reviewTimes[held] = reviewTime(review);
+    }
   }
 
   // A grade tapped on a card looked back at: saved if it differs, and on.
@@ -1089,6 +1094,27 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       savedWhileReading = null;
       reviewsRead = true;
     })();
+  }
+
+  // Reads the reviews again only if some were saved that are not counted
+  // here: by an import, combining backups or "I know this word" elsewhere.
+  // Reviews are never deleted, so then there are more of them than are held.
+  // load() runs after every change on the Decks tab, and reading the
+  // owner's 185,000 each time made adding a sentence take seconds on a
+  // tablet, more with each one added (2026-11-06).
+  //
+  // One check at a time, each after the reading before it is done: on a
+  // tablet the reading at startup can still be under way when a sentence is
+  // added, and a reading begun beside it doubled the work.
+  let reviewsChecked = Promise.resolve();
+  function readReviewsIfChanged() {
+    reviewsChecked = reviewsChecked.then(async () => {
+      await reviewsReading;
+      if (!reviewsRead || (await countAll('reviews')) !== reviewTimes.length) {
+        readReviews();
+        await reviewsReading;
+      }
+    });
   }
 
   // "What are tones?" on a tone card (toneFlow.js) until this many tone
@@ -2824,7 +2850,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         for (const card of newCards) {
           cards.set(card.id, card);
         }
-        readReviews(); // not waited for
+        readReviewsIfChanged(); // not waited for
       })();
       return loading;
     },

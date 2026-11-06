@@ -6,7 +6,7 @@
 // What is typed is checked by the plain-calculation code in words.js; this
 // file is the page side, and saves the results in the database.
 
-import { getAll, putAll } from './db.js';
+import { getAll, putAll, getReviewsOfWord } from './db.js';
 import { formatPinyin, wordId } from './wordList.js';
 import {
   deckTree,
@@ -254,11 +254,8 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     getCards: () => cards,
     getDecks: () => decks,
     getSettings,
-    // The reviews are only read when wanted, since there can be very many.
-    getReviews: async () => {
-      reviews = reviews || (await getAll('reviews'));
-      return reviews;
-    },
+    // Only the word's own: there can be very many reviews (db.js).
+    getReviewsOf: (word) => getReviewsOfWord(word.id),
     scriptOf: (word) => scriptFor(word, getSettings()),
     getListed: () => listedWords,
     getListDeck: () => listDeck(),

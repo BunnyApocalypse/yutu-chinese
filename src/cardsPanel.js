@@ -29,7 +29,7 @@ const cardIdsOfKind = (word, type) => allCardIds(word).filter((id) => id.startsW
 // Sets up the fold-out and the bar.
 //
 // getWords, getCards, getDecks, getSettings: what the tab has read
-// getReviews():   a promise for all review records (read when first wanted)
+// getReviewsOf(word): a promise for the word's review records
 // scriptOf(word): the script a word is studied in
 // getListed():    the words the list shows at the moment, all of them
 // showList():     shows the list of words again
@@ -48,7 +48,7 @@ export function createCardsPanel({
   getCards,
   getDecks,
   getSettings,
-  getReviews,
+  getReviewsOf,
   scriptOf,
   getListed,
   getListDeck,
@@ -73,7 +73,7 @@ export function createCardsPanel({
 
   async function showCardsOf(word) {
     openWord = word;
-    const reviews = await getReviews();
+    const reviews = await getReviewsOf(word);
     if (openWord !== word) {
       return; // another word was opened meanwhile
     }
