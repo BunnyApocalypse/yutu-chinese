@@ -57,13 +57,28 @@ describe('offline use', { concurrency: false }, () => {
     assert.deepEqual(errors, [], 'the page threw errors');
   });
 
+  // Waits until the stroke data and dictionary are unpacked into the cache
+  // (saveOfflineData). That keeps the page busy for seconds after it starts,
+  // so a tap is answered late: with the computer busy in a full run, five
+  // taps on the version line took longer than waitUntil waits.
+  async function waitForOfflineData() {
+    // Unpacking about 10,600 files takes a while, so this waits longer than waitUntil does.
+    let status = '';
+    for (let attempt = 0; attempt < 600 && !/saved too/.test(status); attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      status = await page.evaluate(`document.getElementById('offline-status').textContent`);
+    }
+    return status;
+  }
+
   it('runs from a folder below the top of the site', async () => {
     assert.match(await writeFirstStroke('學'), /^2\/16 /);
   });
 
   // Here, since this is the one place the app is built without a channel, as
   // the stable copy is (the dev server always shows the group).
-  it('shows "For testing" after five taps on the version line, and hides it again', { timeout: 30000 }, async () => {
+  it('shows "For testing" after five taps on the version line, and hides it again', { timeout: 300000 }, async () => {
+    await waitForOfflineData();
     const navHidden = `document.querySelector('#settings-nav [data-group="settings-testing"]').hidden`;
     await openSettings(page, 'settings-help');
     assert.equal(await page.evaluate(navHidden), true);
@@ -91,6 +106,7 @@ describe('offline use', { concurrency: false }, () => {
       if (started) break;
     }
     assert.equal(await page.evaluate(navHidden), true);
+    await waitForOfflineData();
     await openSettings(page, 'settings-help');
     await tapVersion(5);
     await waitUntil(page, `!${navHidden}`, 'the group For testing again');
@@ -102,12 +118,7 @@ describe('offline use', { concurrency: false }, () => {
   });
 
   it('saves the app, the stroke data and the dictionary on the device', { timeout: 180000 }, async () => {
-    // Unpacking about 10,600 files takes a while, so this waits longer than waitUntil does.
-    let status = '';
-    for (let attempt = 0; attempt < 600 && !/saved too/.test(status); attempt++) {
-      await new Promise((resolve) => setTimeout(resolve, 250));
-      status = await page.evaluate(`document.getElementById('offline-status').textContent`);
-    }
+    const status = await waitForOfflineData();
     assert.match(status, /The app is saved on this device\./);
     assert.match(status, /Stroke data and dictionary are saved too\./);
     // The update button is for a later version, not for the first one.
