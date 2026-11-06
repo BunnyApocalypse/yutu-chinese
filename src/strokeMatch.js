@@ -119,6 +119,36 @@ export function shapeDifferenceFromStroke(drawnPoints, median) {
   return shapeDifferenceFrom(resample(drawnPoints), toPoints(median));
 }
 
+// ---- Strokes of the same shape ----
+//
+// Two strokes of a character are twins if nobody could tell them apart by
+// shape when writing: the three strokes of 巛 in 經, the two ノ at the right
+// of 癶 in 發. Then only the order says which one is meant (twinStrokeFor in
+// quiz.js). Each is compared as printed and without its first point (where
+// the brush presses in: 發's ノ both begin with a short dab), whichever
+// versions are more alike; and their lengths must be alike too, so that a
+// short and a long level stroke (上) are no twins. Measured over the Taiwan
+// set (local/strictness/README.md, 2026-11-06): 發's two ノ differ by 0.069
+// without their dabs, and with these limits 7,099 of 59,630 pairs of strokes are twins.
+const TWIN_SHAPE_LIMIT = 0.09;
+const TWIN_LENGTH_RATIO = 1.7;
+
+// True if the textbook strokes `a` and `b` ([[x, y], ...]) are twins.
+export function areTwins(a, b) {
+  const versionsOf = (median) => {
+    const points = toPoints(median);
+    return points.length >= 3 ? [points, points.slice(1)] : [points];
+  };
+  return versionsOf(a).some((one) =>
+    versionsOf(b).some((other) => {
+      const ratio = lineLength(one) / lineLength(other);
+      return (
+        ratio < TWIN_LENGTH_RATIO && ratio > 1 / TWIN_LENGTH_RATIO && shapeDifference(resample(one), resample(other)) < TWIN_SHAPE_LIMIT
+      );
+    }),
+  );
+}
+
 // ---- A dot written steeply down ----
 //
 // The mainland shape of some dots (altShapes in charData.js: the dot under

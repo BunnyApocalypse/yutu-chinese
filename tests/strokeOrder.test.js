@@ -16,6 +16,7 @@ import {
   isStandardOrder,
   withoutEntry,
   steepDotsOf,
+  areTwins,
 } from '../src/strokeMatch.js';
 import { toPoints } from '../src/lines.js';
 
@@ -358,6 +359,93 @@ test('a steep dot is accepted, and no later stroke is taken for it', () => {
   }
   console.log(`steep dots accepted: ${accepted} of ${tried}; misfires: ${misfires.length}`);
   assert.ok(accepted / tried > 0.95, `${accepted} of ${tried} accepted`);
+  assert.deepEqual(misfires, []);
+});
+
+// ---- Strokes of the same shape (areTwins, twinStrokeFor in quiz.js) ----
+
+test('the strokes of 巛 and the two ノ of 癶 are twins, a short and a long level stroke not', () => {
+  const taiwan = (char) => taiwanData.get(char).medians;
+  // 經 in the big set: 巛 is strokes 8 to 10.
+  const jing = bigSetData('經').medians;
+  assert.ok(areTwins(jing[7], jing[8]) && areTwins(jing[8], jing[9]) && areTwins(jing[7], jing[9]));
+  // 發 in the Taiwan set: strokes 3 and 4, each beginning with a dab.
+  assert.ok(areTwins(taiwan('發')[2], taiwan('發')[3]));
+  // 上: the short level stroke and the long one under it.
+  assert.ok(!areTwins(taiwan('上')[1], taiwan('上')[2]));
+  // 經: the level stroke over 巛 and its first stroke.
+  assert.ok(!areTwins(jing[6], jing[7]));
+});
+
+// The app's rule (twinStrokeFor in quiz.js): it fits the expected stroke, a
+// later twin lies less than twice as far, and every later stroke that is no
+// twin lies further, and if less than twice as far, is less like it.
+function takenForTwin(drawn, entry, strokeNum) {
+  const expected = entry.medians[strokeNum];
+  if (!fitsStroke(drawn, expected, LENIENCY)) {
+    return false;
+  }
+  const toExpected = distanceFromStroke(drawn, expected);
+  const likeExpected = shapeDifferenceFromStroke(drawn, expected);
+  const toCome = entry.medians.slice(strokeNum + 1);
+  return (
+    toCome.some((median) => areTwins(median, expected) && distanceFromStroke(drawn, median) < 2 * toExpected) &&
+    toCome.every((median) => {
+      if (areTwins(median, expected)) {
+        return true;
+      }
+      const toOther = distanceFromStroke(drawn, median);
+      return toOther > toExpected && (toOther > 2 * toExpected || shapeDifferenceFromStroke(drawn, median) > likeExpected);
+    })
+  );
+}
+
+test('a stroke placed toward its twin is accepted, and no later stroke of another shape is', () => {
+  let tried = 0;
+  let accepted = 0;
+  const misfires = [];
+  for (const [char, entry] of taiwanData) {
+    const random = makeRandom(char.codePointAt(0));
+    entry.medians.forEach((median, strokeNum) => {
+      const twins = entry.medians.slice(strokeNum + 1).filter((later) => areTwins(later, median));
+      if (twins.length === 0) {
+        return;
+      }
+      // The expected stroke moved past halfway to a twin close by (their
+      // middles under 250 apart, as in 巛), so it lies nearer the twin: the
+      // owner's 巛 in 經 and 癶 in 發 (2026-11-06).
+      const points = toPoints(median);
+      const middle = (line) => line[Math.floor(line.length / 2)];
+      for (const twin of twins.map(toPoints)) {
+        const [from, to] = [middle(points), middle(twin)];
+        if (Math.hypot(to.x - from.x, to.y - from.y) >= 250) {
+          continue;
+        }
+        const towards = { scale: 1, dx: (to.x - from.x) * 0.6, dy: (to.y - from.y) * 0.6, jitter: 10 };
+        tried += 1;
+        if (takenForTwin(vary(points, towards, random), entry, strokeNum)) {
+          accepted += 1;
+        }
+      }
+      // A later stroke that is no twin, written here too early.
+      for (const variation of VARIATIONS) {
+        for (let later = strokeNum + 1; later < entry.medians.length; later++) {
+          if (areTwins(entry.medians[later], median)) {
+            continue;
+          }
+          const drawn = vary(toPoints(entry.medians[later]), variation, random);
+          if (takenForTwin(drawn, entry, strokeNum)) {
+            misfires.push(`${char} ${later + 1} for ${strokeNum + 1}`);
+          }
+        }
+      }
+    });
+  }
+  console.log(`placed toward a twin, accepted: ${accepted} of ${tried}; misfires: ${misfires.length}`);
+  // 1,730 of 2,204 when measured (2026-11-06). The rest lie as near a later
+  // stroke of another shape (交's dot moved toward its level stroke passes the
+  // ノ between): then the stroke is refused, as it may be that one.
+  assert.ok(accepted / tried > 0.75, `${accepted} of ${tried} accepted`);
   assert.deepEqual(misfires, []);
 });
 

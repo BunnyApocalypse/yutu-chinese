@@ -38,6 +38,7 @@ import {
   lastSyncPoint,
   isStandardOrder,
   steepDotsOf,
+  areTwins,
 } from './strokeMatch.js';
 
 // After this many wrong attempts at one stroke, the correct stroke flashes as a hint.
@@ -854,6 +855,48 @@ export function createQuiz(target, size, handlers) {
     return null;
   }
 
+  // ---- Strokes of the same shape (twins) ----
+  //
+  // When a stroke lies nearer a later stroke that it also fits, Hanzi Writer
+  // takes it for that one written too early and judges it far more strictly
+  // (0.3 to 0.6 of the leniency). Where the later stroke has the same shape
+  // (areTwins in strokeMatch.js), that refuses what is only placed a little
+  // off: the owner writes 經's 巛 and the right of 發's 癶 further right than
+  // the frame, fitted mostly on the left part, puts them, so the first stroke
+  // lay on the second (their recordings, 2026-11-06: refused up to fourteen
+  // times). As for the other shape of a stroke, the order decides between
+  // twins: the first written is the first of them.
+
+  // True if the rejected stroke fits the expected one (moved into the frame,
+  // leniency times the size as in otherShapeFor), a later twin of it lies
+  // nearly as near or nearer (NEAR_IN_PLACE: else it was no twin that made
+  // Hanzi Writer refuse), and every later stroke that is no twin lies further
+  // off and, if within NEAR_IN_PLACE, is less like it in shape.
+  function twinStrokeFor(stroke) {
+    const points = stroke.drawnPath.points;
+    const expected = framedData.medians[sequence[stroke.strokeNum]];
+    if (!fitsStroke(points, expected, leniencyNow * Math.min(1, frame.scale))) {
+      return false;
+    }
+    const toExpected = distanceFromStroke(points, expected);
+    const toCome = sequence.slice(stroke.strokeNum + 1).map((strokeNum) => framedData.medians[strokeNum]);
+    const [twins, others] = [
+      toCome.filter((median) => areTwins(median, expected)),
+      toCome.filter((median) => !areTwins(median, expected)),
+    ];
+    const likeExpected = shapeDifferenceFromStroke(points, expected);
+    return (
+      twins.some((median) => distanceFromStroke(points, median) < NEAR_IN_PLACE * toExpected) &&
+      others.every((median) => {
+        const toOther = distanceFromStroke(points, median);
+        return (
+          toOther > toExpected &&
+          (toOther > NEAR_IN_PLACE * toExpected || shapeDifferenceFromStroke(points, median) > likeExpected)
+        );
+      })
+    );
+  }
+
   // ---- A second form of the whole character ----
   //
   // 充, 流 and 育 have one stroke fewer in the Taiwan set than in the big
@@ -1436,6 +1479,19 @@ export function createQuiz(target, size, handlers) {
           record(stroke, 'otherShape', judgedIn);
           keepDrawnStroke(stroke.drawnPath.pathString);
           noteAccepted(stroke.strokeNum, [sequence[stroke.strokeNum]], stroke.drawnPath.points, shape);
+          const strokesDone = stroke.strokeNum + 1;
+          reportProgress({ strokesDone, totalStrokes, totalMistakes: mistakes });
+          writer.skipQuizStroke();
+          if (strokesDone < totalStrokes && refitFrame()) {
+            resume(strokesDone);
+          }
+          return;
+        }
+        // The expected stroke, lying nearer a later one of the same shape.
+        if (twinStrokeFor(stroke)) {
+          record(stroke, 'twin', judgedIn);
+          keepDrawnStroke(stroke.drawnPath.pathString);
+          noteAccepted(stroke.strokeNum, [sequence[stroke.strokeNum]], stroke.drawnPath.points);
           const strokesDone = stroke.strokeNum + 1;
           reportProgress({ strokesDone, totalStrokes, totalMistakes: mistakes });
           writer.skipQuizStroke();
