@@ -12,6 +12,9 @@ import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { startApp, startBrowsers, reloadApp, writingArea, drawStroke, loadStrokeData, openLearn, tap, waitUntil } from './harness.js';
+import english from '../../src/text/en.js';
+import italian from '../../src/text/it.js';
+import german from '../../src/text/de.js';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -114,5 +117,27 @@ describe('the writing area on a short phone', { concurrency: false }, () => {
     await write('门');
     await waitUntil(page, `!document.getElementById('next-button').hidden`, 'Next step');
     assert.deepEqual(await measure(), { size: 328, scroll: 0 });
+  });
+
+  // Each step's note shares a line with "I know this word" and "About" (the
+  // owner, 2026-11-06); a second line would move the area down.
+  it("keeps a lesson's note, I know this word and About on one line, in every language", { timeout: 60000 }, async () => {
+    await openLearn(page);
+    await waitUntil(page, `!document.getElementById('lesson-about-button').hidden`, 'About in the lesson');
+    const notes = ['lessonMeet', 'lessonTone', 'lessonTrace', 'lessonOutline', 'lessonLearnTest'];
+    for (const [language, text] of Object.entries({ english, italian, german })) {
+      for (const note of notes) {
+        const lines = await page.evaluate(`(() => {
+          document.getElementById('lesson-note').textContent = ${JSON.stringify(text[`review.${note}`])};
+          document.getElementById('skip-lesson-button').textContent = ${JSON.stringify(text['review.skipLessonButton'])};
+          document.getElementById('lesson-about-button').textContent = ${JSON.stringify(text['review.aboutWordButton'])};
+          const tops = new Set([...document.querySelector('.lesson-row').children]
+            .filter((element) => !element.hidden)
+            .map((element) => Math.round(element.getBoundingClientRect().top)));
+          return tops.size;
+        })()`);
+        assert.equal(lines, 1, `${language}: ${note}`);
+      }
+    }
   });
 });

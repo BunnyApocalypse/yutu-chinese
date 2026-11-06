@@ -449,11 +449,11 @@ export default {
     other: 'Problemkarte: Du hast diese Karte {count} Mal vergessen. Unter „Wörter“ im Menü findest du alle deine Problemkarten.',
   },
   // A lesson's steps; each shares a line with "I know this word" on a phone, so short
-  'review.lessonMeet': 'Neues Wort: schau es an.',
+  'review.lessonMeet': 'Neues Wort: ansehen.',
   'review.lessonMeetAgain': 'Schau noch einmal hin.',
   'review.lessonTone': 'Zuerst die Töne.',
   'review.lessonTrace': 'Jeder Strich wie gezeigt.',
-  'review.lessonOutline': 'Noch mal über den Umriss.',
+  'review.lessonOutline': 'Jetzt über den Umriss.',
   'review.lessonTest': 'Auswendig. Das zählt.',
   'review.lessonLearnTest': 'Jetzt auswendig.',
   'review.repeatLesson': 'Lektion wiederholen',

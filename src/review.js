@@ -90,7 +90,7 @@ const RECHECK_MS = 15 * 1000;
 // elements: the page elements review controls:
 //   countsElement, typeElement, meaningElement, pinyinElement, pinyinButton,
 //   gradeRow, verdictRow, practiceAgainButton, editWordButton, leechTag, donePanel, doneMessage, studyArea, scriptFlag,
-//   lessonNote, skipLessonButton, lessonNextButton, learnNextButton, addWordsButton,
+//   lessonNote, skipLessonButton, lessonAboutButton, lessonNextButton, learnNextButton, addWordsButton,
 //   startLevelButton, otherLevelButton, lessonBackButton, countsRow,
 //   reviewNowButton, learnStrip, learnedPill,
 //   and the parts of the study area that differ per kind of card:
@@ -136,6 +136,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     scriptFlag,
     lessonNote,
     skipLessonButton,
+    lessonAboutButton,
     lessonNextButton,
     learnNextButton,
     addWordsButton,
@@ -537,6 +538,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   });
 
   aboutWordButton.addEventListener('click', () => openAbout());
+  lessonAboutButton.addEventListener('click', () => openAbout());
   function openAbout() {
     if (!current) {
       return;
@@ -1503,8 +1505,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   let lesson = null;
 
   const LESSON_NOTES = {
-    // Kept short: each shares a line with "I know this word", and a second
-    // line pushes the writing area down the screen.
+    // Kept short: each shares a line with "I know this word" and, in Learn,
+    // "About", and a second line pushes the writing area down the screen
+    // (tests/browser/areaSize.browser.js measures them in every language).
     meet: 'review.lessonMeet',
     // The same step in a lesson repeated, of a word already learned.
     meetAgain: 'review.lessonMeetAgain',
@@ -1520,6 +1523,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     lesson = null;
     lessonNote.hidden = true;
     skipLessonButton.hidden = true;
+    lessonAboutButton.hidden = true;
     lessonNextButton.hidden = true;
   }
 
@@ -1553,6 +1557,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     // "I know this word" is offered at every step, but not in a lesson
     // repeated, which saves nothing.
     skipLessonButton.hidden = Boolean(current.repeating);
+    // In Learn, "About" beside it, at every step (the owner, 2026-11-06).
+    // Not in Review's lessons, whose last step is graded.
+    // (Nor in a lesson repeated, opened from the page.)
+    lessonAboutButton.hidden = !current.learning || Boolean(current.repeating);
     // A tip beside it, the first time (tips.js).
     document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'lesson' }));
     lessonNextButton.hidden = true;
@@ -1584,7 +1592,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         onCharStart: () => putToolsAway(false),
         onWordDone() {
           showPinyin();
-          learnStrip.querySelector('.current')?.classList.remove('asking');
+          const chip = learnStrip.querySelector('.current');
+          chip?.classList.remove('asking');
+          chip?.removeAttribute('aria-label');
           putToolsAway(true);
           speakAfterStep();
         },
@@ -1844,7 +1854,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // first that fits the width (data-look, style.css): "words", every word;
   // "squares", only the current word written, the others small squares (a
   // goal of 10, or long words); "count", "12/20" beside the current word.
-  // Not in Review, nor in a lesson repeated.
+  // Not in Review, nor in a lesson repeated. A tap on a word opens its page
+  // (the owner, 2026-11-06): the learned ones in the "words" look only,
+  // where they are big enough to tap; the current one always.
   function showStrip() {
     const shown = Boolean(batch && lesson && current?.learning && mode === 'learn');
     learnStrip.hidden = !shown;
@@ -1853,9 +1865,12 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       return;
     }
     const box = (kind, word) => {
-      const element = document.createElement('span');
+      const element = document.createElement(word ? 'button' : 'span');
       element.className = `learn-chip ${kind}`;
       if (word) {
+        element.type = 'button';
+        element.title = t('review.aboutThisWord');
+        element.addEventListener('click', () => (kind === 'current' ? openAbout() : showWord(word)));
         const script = scriptFor(word, settings);
         const text = document.createElement('span');
         text.className = 'chip-word';
@@ -1866,7 +1881,12 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       return element;
     };
     const now = box('current', current.word);
-    now.classList.toggle('asking', lesson.steps[lesson.index] === 'test');
+    const asking = lesson.steps[lesson.index] === 'test';
+    now.classList.toggle('asking', asking);
+    // Its characters hidden, it is named for screen readers by what it does.
+    if (asking) {
+      now.setAttribute('aria-label', t('review.aboutThisWord'));
+    }
     const bar = document.createElement('span');
     bar.className = 'chip-steps';
     for (let index = 0; index < lesson.steps.length; index++) {
@@ -1891,6 +1911,15 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       learnStrip.dataset.look = look;
       if (learnStrip.scrollWidth <= learnStrip.clientWidth + 1) {
         break;
+      }
+    }
+    // As small squares, the learned words are too small to tap: plain boxes.
+    if (learnStrip.dataset.look !== 'words') {
+      for (const chip of learnStrip.querySelectorAll('button.learned')) {
+        const plain = document.createElement('span');
+        plain.className = chip.className;
+        plain.append(...chip.childNodes);
+        chip.replaceWith(plain);
       }
     }
   }

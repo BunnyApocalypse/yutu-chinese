@@ -4,6 +4,12 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the session of 2026-11-06 (忄 in the Taiwan order, About in Learn; committed, not pushed).**
+
+- **Built** (one commit each): the big set's 忄 accepts the Taiwan 丶 丨 丶 as a second order when writing traditional (the owner: 愉 refused it, 快 took it; `startsWithMainlandHeart`, `inTaiwanOrder` in `src/shortcuts.js`; 157 characters; `docs/writing.md`). In Learn, a tap on a word in the strip opens its page, and "About" sits beside "I know this word" at every step; three notes shortened so the row fits on a 360px phone in all three languages (the owner chose that over the top line; `docs/cards.md`).
+- **Not built:** 皮 with its short upright before the ノ (㇇ 丨 ノ): no standard order has it, and the owner said they'd rather change how they write it.
+- **Tests:** 314 unit tests; full browser suite: 227 passed, 5 failed (lesson tests expecting the old note, since fixed: 12 of 12 pass); grid 402 passed, 21 skipped.
+
 **Handover from the fourth session of 2026-11-05 (old notes rework-30 and -31; released to `main` and `stable` with the third session's work, "What's new" entry `2026-11-05-2`).**
 
 - **Built (data):** 200 old notes reworked and tagged `judged` as before: the next 200 of HSK 3.0 level 5 (行驶 to 陪); four Sonnet writers, two Opus judges, the judges' points sent back once, read by hand. Traditional versions settled in `local/note-scripts/settle-old-10.mjs` (6 lines). Details: `local/old-notes/README.md`, "Rework-30 and -31"; the writers' prompt (`prompt-writer.md`) gained the rules learned in rework-24 to -29 (an everyday example for a one-character word, no new padding while fixing).

@@ -452,7 +452,7 @@ export default {
   'review.lessonMeet': 'Parola nuova: guardala.',
   'review.lessonMeetAgain': 'Guardala ancora.',
   'review.lessonTone': 'Prima i toni.',
-  'review.lessonTrace': 'Ogni tratto come mostrato.',
+  'review.lessonTrace': 'Ricalca ogni tratto.',
   'review.lessonOutline': 'Ora sul solo contorno.',
   'review.lessonTest': 'A memoria: questa conta.',
   'review.lessonLearnTest': 'Ora a memoria.',

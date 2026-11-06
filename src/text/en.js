@@ -457,12 +457,12 @@ export default {
     one: 'Leech: you have forgotten this card {count} time. Words, in the menu, lists your leeches.',
     other: 'Leech: you have forgotten this card {count} times. Words, in the menu, lists your leeches.',
   },
-  // A lesson's steps; each shares a line with "I know this word" on a phone, so short
-  'review.lessonMeet': 'A new word: have a look.',
+  // A lesson's steps; each shares a line with "I know this word" and "About" on a phone, so short (areaSize.browser.js measures them)
+  'review.lessonMeet': 'Meet a new word.',
   'review.lessonMeetAgain': 'Have another look.',
   'review.lessonTone': 'First its tones.',
-  'review.lessonTrace': 'Write each stroke as shown.',
-  'review.lessonOutline': 'Again, over the bare outline.',
+  'review.lessonTrace': 'Trace each stroke.',
+  'review.lessonOutline': 'Now over the outline.',
   'review.lessonTest': 'From memory. This counts.',
   'review.lessonLearnTest': 'Now from memory.',
   'review.repeatLesson': 'Repeat lesson',

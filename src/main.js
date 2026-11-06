@@ -960,6 +960,7 @@ async function startUp() {
       scriptFlag: byId('script-flag'),
       lessonNote: byId('lesson-note'),
       skipLessonButton: byId('skip-lesson-button'),
+      lessonAboutButton: byId('lesson-about-button'),
       lessonNextButton: byId('lesson-next-button'),
       learnNextButton: byId('learn-next-button'),
       reviewNowButton: byId('review-now-button'),

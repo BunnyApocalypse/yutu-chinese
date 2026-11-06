@@ -169,7 +169,7 @@ describe('learning new words', { concurrency: false }, () => {
 
   it('then shows each stroke until it is written', { timeout: 60000 }, async () => {
     await waitUntil(page, stepIs('step 3 of 5'), 'step 3');
-    assert.match(await textOf(page, 'lesson-note'), /each stroke as shown/);
+    assert.match(await textOf(page, 'lesson-note'), /Trace each stroke/);
     await waitForFirstStroke();
     assert.equal(await outlineButton(), 'Hide outline');
     const strokes = loadStrokeData('大').medians;
@@ -249,6 +249,14 @@ describe('learning new words', { concurrency: false }, () => {
       ['learned 大', 'current 小', 'to-come '],
     );
     assert.equal(await page.evaluate(`document.getElementById('learn-strip').getAttribute('aria-label')`), "Today's words: 1 of 3 learned");
+    // A tap on a word in the strip opens its page (the owner, 2026-11-06):
+    // the learned one, and the one being learned.
+    await page.evaluate(`document.querySelector('#learn-strip .learned').click()`);
+    await waitUntil(page, `document.getElementById('word-page').dataset.shown === '大|da4'`, "大's page");
+    await tap(page, 'word-page-close');
+    await page.evaluate(`document.querySelector('#learn-strip .current').click()`);
+    await waitUntil(page, `document.getElementById('word-page').dataset.shown === '小|xiao3'`, "小's page");
+    await tap(page, 'word-page-close');
     // The card is where the writing area will be in the next steps: the
     // meaning and reading above it are kept, invisible.
     const top = () => page.evaluate(`Math.round(document.getElementById(document.getElementById('card-face').hidden ? 'writing-area' : 'card-face').getBoundingClientRect().top)`);

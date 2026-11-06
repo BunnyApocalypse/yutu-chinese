@@ -906,7 +906,8 @@ main.focused.learning .type-row #listen-button {
 }
 
 /* A word: learned, the one on screen, or to come (empty). No taller than
-   the row (36px), so the row keeps its height. */
+   the row (36px), so the row keeps its height. The learned ones and the one
+   on screen are buttons, opening the word's page (review.js). */
 .learn-chip {
   position: relative;
   flex: none;
@@ -916,6 +917,8 @@ main.focused.learning .type-row #listen-button {
   box-sizing: border-box;
   min-width: 28px;
   height: 28px;
+  min-height: 0;
+  margin: 0;
   padding: 0 var(--space-tiny) 3px;
   border: 1px solid var(--border);
   border-radius: calc(var(--radius) / 2);
@@ -3719,6 +3722,7 @@ button.note-word {
 button.sentence-word,
 button.note-word,
 #skip-lesson-button,
+#lesson-about-button,
 .review-header .link-button {
   position: relative;
 }
@@ -3726,6 +3730,7 @@ button.note-word,
 button.sentence-word::after,
 button.note-word::after,
 #skip-lesson-button::after,
+#lesson-about-button::after,
 .review-header .link-button::after {
   content: '';
   position: absolute;

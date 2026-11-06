@@ -103,8 +103,9 @@
           <!-- In Learn: today's words, learned, the one being learned (with
                the lesson's steps under it) and those to come (review.js,
                "Today's words in Learn"). It takes the kind of card's place,
-               which is then kept for screen readers only. -->
-          <div id="learn-strip" class="learn-strip" role="img" hidden></div>
+               which is then kept for screen readers only. A tap on a word
+               opens its page. -->
+          <div id="learn-strip" class="learn-strip" role="group" hidden></div>
           <!-- Beside the kind of card, on one that keeps being forgotten, once
                it is answered (review.js; the owner, 2026-10-26: a note under
                the grades made the page scroll). A tap opens the word's page
@@ -145,6 +146,9 @@
           <!-- Skips the lesson: the word is known (review.js). Beside the note,
                so that it takes no room of its own on a phone. -->
           <button id="skip-lesson-button" class="link-button" type="button" data-t-title="review.skipThisWordsLesson" hidden data-t="review.skipLessonButton"></button>
+          <!-- In Learn, the word's page, at every step (review.js; the owner,
+               2026-11-06). -->
+          <button id="lesson-about-button" class="link-button" type="button" data-t-title="review.aboutThisWord" hidden data-t="review.aboutWordButton"></button>
         </div>
       </section>
 
