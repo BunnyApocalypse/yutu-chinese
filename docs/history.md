@@ -4,6 +4,14 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the second session of 2026-11-06 (the word page and adding a sentence faster on the tablet; committed, not pushed).**
+
+- **Found** (the owner: opening About this word and adding a sentence were laggy on the tablet; measured with their backup of 2026-11-05 in `local/backups/`, 2,456 words, 9,110 cards, 184,783 reviews, the processor slowed 6 times; the script in the session's scratchpad, not kept): the word page's card list read every review to count one word's (3 s more after the page, again after any change), and Review read every review again after every change, the readings piling up: three sentences added took 2.5 s, 9.4 s and 13.4 s.
+- **Built** (two commits): reviews indexed by `wordId` (database version 3, `getReviewsOfWord`; `docs/cards.md`, the Cards fold-out); Review reads the reviews again only if there are more than it holds (`readReviewsIfChanged`; `docs/cards.md`, "Streaks"); a sentence from a word's page shows as added once saved, the refresh behind it (`saveSentence`; `docs/word-page.md`); after a change the words, cards and decks are read once and handed to Review and Free practice, one `afterChange` at a time (`docs/words.md`). Now: "Added" within 0.3 s, the refresh behind it 0.8–1.0 s (was about 2 s); a word's page about 0.2 s.
+- **Not built:** not redrawing the deck and word lists and Free practice's suggestions while out of view (offered; perhaps 0.3–0.5 s more off each change). The first word page after starting still takes about 3 s at that speed (the notes and characters files, while the reviews are read at startup).
+- **Next:** releasing waits on the owner (nothing pushed; the owner saw no need to try it on the tablet first: "faster is just faster"). The first session's notes below still stand.
+- **Tests:** 314 unit tests; full browser suite: 231 of 232 passed, the one failure `offline.browser.js`'s five-taps test, which then passed alone (7 of 7); grid 402 passed, 21 skipped.
+
 **Handover from the session of 2026-11-06 (忄 in the Taiwan order, About in Learn; committed, not pushed).**
 
 - **Built** (one commit each): the big set's 忄 accepts the Taiwan 丶 丨 丶 as a second order when writing traditional (the owner: 愉 refused it, 快 took it; `startsWithMainlandHeart`, `inTaiwanOrder` in `src/shortcuts.js`; 157 characters; `docs/writing.md`). In Learn, a tap on a word in the strip opens its page, and "About" sits beside "I know this word" at every step; three notes shortened so the row fits on a 360px phone in all three languages (the owner chose that over the top line; `docs/cards.md`).
