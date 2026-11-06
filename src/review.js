@@ -1480,8 +1480,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         if (note && still()) {
           cardFace.classList.add('with-tip');
           cardFace.append(cardTip(note, script, openAbout, tappableText));
-          // The note's own "About this word" takes the place of the card's.
+          // The note's own "About this word" takes the place of the card's,
+          // and at a lesson's first look of the "About" beside "I know this
+          // word" (the owner, 2026-11-06); the next step shows that again.
           cardAboutButton.hidden = true;
+          lessonAboutButton.hidden = true;
         }
       })
       .catch(() => {});

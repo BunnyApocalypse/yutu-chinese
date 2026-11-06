@@ -4,6 +4,11 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the fifth session of 2026-11-06 (Learn's About hidden beside a learning note; released to `stable` without a "What's new" entry, the owner's choice).**
+
+- **Built** (the owner, 2026-11-06): at the first look of a word with a learning note, Learn's "About" beside "I know this word" is hidden, the note's "About this word" taking its place; back at the next step (`addTip` in `src/review.js`; `docs/cards.md`). This answers the first session's open question.
+- **Tests:** 316 unit tests; `lesson`, `areaSize` and `review` browser files 38 of 38 (the one-line check in `areaSize` now runs at step 2, where About always shows).
+
 **Handover from the fourth session of 2026-11-06 (old notes rework-32 to -37; released to `main` and `stable` with the first to third sessions' work, "What's new" entry `2026-11-06`).**
 
 - **Built (data):** 300 old notes reworked and tagged `judged` as before: the next 300 of HSK 3.0 level 5 (礼 to 跟前, rework-32 to -34); six Sonnet writers, three Opus judges, the judges' points sent back once, read by hand. Traditional versions: `convert-notes.js` listed 6, all right as converted (`local/note-scripts/settle-old-11.mjs`). Details: `local/old-notes/README.md`, "Rework-32 to -34".

@@ -109,6 +109,9 @@ describe('learning new words', { concurrency: false }, () => {
     // The word, its reading and meaning, and once the notes are there, its tip.
     await waitUntil(page, `document.querySelector('#card-face .face-tip')`, 'the tip');
     assert.match(await textOf(page, 'card-face'), /^大dàbig"Big"\./);
+    // The note's link takes the place of "About" beside "I know this word"
+    // (the owner, 2026-11-06), which comes back at the next step.
+    assert.equal(await isShown(page, 'lesson-about-button'), false);
     // "About this word" opens its page, and the lesson stays where it was.
     await page.evaluate(`document.querySelector('#card-face .face-tip-more').click()`);
     await waitUntil(page, `document.getElementById('word-page').dataset.shown === '大|da4'`, 'the word\'s page');
@@ -138,6 +141,7 @@ describe('learning new words', { concurrency: false }, () => {
     await tap(page, 'lesson-next-button');
     await waitUntil(page, stepIs('step 2 of 5'), 'step 2');
     assert.match(await textOf(page, 'lesson-note'), /tones/);
+    assert.equal(await isShown(page, 'lesson-about-button'), true);
     // The tone card asks with the character small, over what to do, large;
     // the row above has the character too, even for a word of one.
     await waitUntil(page, `document.querySelector('#card-face .tone-char')`, 'the tone card');

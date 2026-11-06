@@ -123,6 +123,10 @@ describe('the writing area on a short phone', { concurrency: false }, () => {
   // owner, 2026-11-06); a second line would move the area down.
   it("keeps a lesson's note, I know this word and About on one line, in every language", { timeout: 60000 }, async () => {
     await openLearn(page);
+    // At step 2: at the first look a word's learning note hides "About"
+    // (its own link takes the place), but a word with no note keeps it.
+    await waitUntil(page, `!document.getElementById('lesson-next-button').hidden`, 'Next step');
+    await tap(page, 'lesson-next-button');
     await waitUntil(page, `!document.getElementById('lesson-about-button').hidden`, 'About in the lesson');
     const notes = ['lessonMeet', 'lessonTone', 'lessonTrace', 'lessonOutline', 'lessonLearnTest'];
     for (const [language, text] of Object.entries({ english, italian, german })) {
