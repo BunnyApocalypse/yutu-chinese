@@ -491,8 +491,14 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
       .catch(() => {}) // a refresh that failed doesn't stop the next
       .then(async () => {
         await load();
-        renderDecks();
-        renderList();
+        // The lists only while their screen is shown (a word's page over it
+        // counts): from elsewhere, such as About in Review, they are drawn
+        // when the tab is next opened (show). Drawing them behind another
+        // screen took about a third of a second on a tablet (2026-11-06).
+        if (!byId('words-panel').hidden) {
+          renderDecks();
+          renderList();
+        }
         // The bar's deck chooser, for a deck added or renamed meanwhile.
         cardsPanel.refresh();
         await onChange({ words, cards, decks });

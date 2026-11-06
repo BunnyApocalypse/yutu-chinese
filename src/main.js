@@ -163,13 +163,30 @@ let mode = 'review';
 
 // The words in the database, for Free practice to look up what was typed.
 let wordList = [];
+// Whether the suggestions under its text box are behind wordList.
+let suggestionsStale = true;
 
-// Reads the words from the database, and offers them as suggestions under
-// Free practice's text box. `words`: as the Decks tab has just read them,
-// used instead of reading them again.
+// Reads the words from the database, for Free practice's text box to
+// suggest. `words`: as the Decks tab has just read them, used instead of
+// reading them again.
 async function loadWordList(words = null) {
   wordList = words || (await getAll('words'));
   showBackupStatus();
+  suggestionsStale = true;
+  // (In use already, it gets no new "focus" to fill them.)
+  if (document.activeElement === wordInput) {
+    fillSuggestions();
+  }
+}
+
+// The suggestions under Free practice's text box: every word, made when the
+// box is used, not after each change (2026-11-06: rebuilding them every time
+// took a moment on a tablet, mostly while the box was out of view).
+function fillSuggestions() {
+  if (!suggestionsStale) {
+    return;
+  }
+  suggestionsStale = false;
   byId('word-suggestions').replaceChildren(
     ...wordList.map((word) => {
       const option = document.createElement('option');
@@ -178,6 +195,7 @@ async function loadWordList(words = null) {
     }),
   );
 }
+wordInput.addEventListener('focus', fillSuggestions);
 
 // The Decks tab. After it changes anything, Review and Free practice read
 // the words afresh. Its "Review this deck" and "Learn new words" buttons
