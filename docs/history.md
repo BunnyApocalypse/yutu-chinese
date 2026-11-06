@@ -4,6 +4,15 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the fourth session of 2026-11-06 (old notes rework-32 to -37; committed on the branch `old-notes-rework-32-34`, not pushed or merged).**
+
+- **Built (data):** 300 old notes reworked and tagged `judged` as before: the next 300 of HSK 3.0 level 5 (礼 to 跟前, rework-32 to -34); six Sonnet writers, three Opus judges, the judges' points sent back once, read by hand. Traditional versions: `convert-notes.js` listed 6, all right as converted (`local/note-scripts/settle-old-11.mjs`). Details: `local/old-notes/README.md`, "Rework-32 to -34".
+- **Written, not applied:** rework-35 to -37, the next 300 (靠近 to 军人), waiting on the owner's look at `sample.md` in each folder (`local/old-notes/README.md`, "Rework-35 to -37"). The writers' prompt gained rule 11: the example's pinyin follows the card's own reading (大都 is dàdū), and the traditional example is the same sentence, with no word swapped in it alone.
+- **Worktree:** done in `.claude/worktrees/old-notes-rework` with `local/`'s folders linked in; `local/note-scripts/apply.mjs` must then run with `node --preserve-symlinks-main --preserve-symlinks`, or it writes to the main checkout.
+- **Where it stands:** 3,278 of the 5,849 old notes reworked (56%); left after rework-35 to -37: HSK 3.0 level 5 (24), level 1 (441), radicals (164), TOCFL (1,642).
+- **Next:** apply rework-35 to -37 (`node local/old-notes/apply.mjs local/old-notes/rework-35`, then -36, -37; `node scripts/convert-notes.js`; settle what it lists), then the last 24 of level 5 with level 1.
+- **Tests:** 314 unit tests pass; browser tests not run (only data changed).
+
 **Handover from the third session of 2026-11-06 (strokes of the same shape: 經's 巛, 發's 癶; committed, not pushed).**
 
 - **Roadmap:** the first word page's 3 s at tablet speed moved to "Nice to have" (the owner: a one-time 3 s is not a big deal).
