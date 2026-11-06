@@ -4,6 +4,15 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the third session of 2026-11-06 (strokes of the same shape: 經's 巛, 發's 癶; committed, not pushed).**
+
+- **Roadmap:** the first word page's 3 s at tablet speed moved to "Nice to have" (the owner: a one-time 3 s is not a big deal).
+- **Found** (the owner's raw input recordings of 發, 氣, 經, in `local/strictness/recordings/`; 樂 passes since 1.8): nearly every refused stroke passed all of Hanzi Writer's checks at 1.8 and failed only its rule "a later stroke fits better", which cuts the leniency to 0.3 to 0.6. 經's 巛 and 發's 癶 are written further right than the frame puts them, each first stroke on the second, of the same shape. Pictures and scripts: `local/strictness/` (README, "發, 氣, 經").
+- **Built** (one commit): between strokes of the same shape the order decides (`areTwins` in `src/strokeMatch.js`, `twinStrokeFor` in `src/quiz.js`; `docs/writing.md`, "Strokes of the same shape"). The owner's six writings replayed in the app: each first try accepted, no mistakes (before: 6 to 10 each).
+- **Not built:** 氣's dots in 米 (placement, no twin); a fix found (moving the reference by the last stroke's misfit) changes how every character is followed. The rest of the earlier list (樣, 從, 期, 路, 溫, 記, 雪, 房, 福) has no recordings yet.
+- **Next:** releasing to `stable` waits on the owner ("What's new": About and adding sentences faster, 忄 in the Taiwan order, About in Learn, 經 and 發's strokes). Nothing pushed this session; `main` is two commits ahead of the test copy. The owner's zip of recordings is still in their Downloads, theirs to delete.
+- **Tests:** 317 unit tests; full browser suite 232 of 233, the failure `leeches.browser.js` "lists suspended cards…" (the word page's "Cards" without "(1 suspended)"), which then passed alone (3 of 3): new, to watch, maybe a race with the word page's fresh read (`loadWord`); grid 402 passed, 21 skipped.
+
 **Handover from the second session of 2026-11-06 (the word page, About in Review and adding a sentence faster on the tablet; pushed to `main`, the test copy; not released).**
 
 - **Found** (the owner: opening About this word and adding a sentence were laggy on the tablet; measured with their backup of 2026-11-05 in `local/backups/`, 2,456 words, 9,110 cards, 184,783 reviews, the processor slowed 6 times; the scripts in the session's scratchpad, not kept): the word page's card list read every review to count one word's (3 s more after the page, again after any change); Review read every review again after every change, the readings piling up (three sentences added: 2.5 s, 9.4 s, 13.4 s); every change read the words 4 times and the cards twice, and redrew lists out of view; About in Review read all words, decks and cards first.
