@@ -934,4 +934,35 @@ describe('grading in Review', { concurrency: false }, () => {
     await inDatabase(`stores.decks.delete('other');`);
     await reloadApp(page);
   });
+
+  // About in Review reads only the word and its cards afresh, not
+  // everything (wordsPanel.js, loadWord; 2026-11-06): the page still has the
+  // card as just graded, though the Decks tab read the cards before.
+  it('shows the card as just graded on its word\'s page, from About in Review', async () => {
+    await inDatabase(`
+      stores.cards.getAll().onsuccess = (event) => {
+        for (const each of event.target.result) {
+          stores.cards.put({ ...each, due: ${Date.now() + 30 * DAY} });
+        }
+      };
+    `);
+    await makeDue(['大|da4#writing', '大|da4', 'writing']);
+    // The Decks tab reads the cards, 大's due now.
+    await tap(page, 'words-tab');
+    await waitUntil(page, `document.querySelectorAll('#word-list li').length > 0`, 'the word list');
+    await tap(page, 'review-tab');
+    await write('大');
+    await chooseGrade('Good');
+    await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the end of Review');
+    await waitUntil(page, `!document.getElementById('look-back-button').hidden`, 'the way back');
+    await tap(page, 'look-back-button');
+    await waitUntil(page, `document.getElementById('card-type').textContent === 'Writing · 1 back'`, 'the card before');
+    await tap(page, 'card-about-button');
+    await waitUntil(page, `document.getElementById('word-page').dataset.shown === '大|da4'`, "the word's page");
+    const writingRow = `[...document.querySelectorAll('#edit-cards li')].find((li) => li.textContent.startsWith('Writing'))?.textContent || ''`;
+    await waitUntil(page, `/due in/.test(${writingRow})`, 'the writing card due later', 5000).catch(async (error) => {
+      throw new Error(`${error.message}: ${await page.evaluate(writingRow)}`);
+    });
+    await tap(page, 'word-page-close');
+  });
 });

@@ -176,6 +176,14 @@ export async function getAll(storeName) {
   return request.result;
 }
 
+// The records with these keys, in one go; a key with no record is left out.
+export async function getSome(storeName, keys) {
+  const requests = await transaction([storeName], 'readonly', (tx) =>
+    keys.map((key) => tx.objectStore(storeName).get(key)),
+  );
+  return requests.map((request) => request.result).filter(Boolean);
+}
+
 // How many records a store has, without reading them.
 export async function countAll(storeName) {
   const request = await transaction([storeName], 'readonly', (tx) => tx.objectStore(storeName).count());

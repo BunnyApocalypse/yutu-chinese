@@ -6,7 +6,7 @@
 // What is typed is checked by the plain-calculation code in words.js; this
 // file is the page side, and saves the results in the database.
 
-import { getAll, putAll, getReviewsOfWord } from './db.js';
+import { getAll, getSome, putAll, getReviewsOfWord } from './db.js';
 import { formatPinyin, wordId } from './wordList.js';
 import {
   deckTree,
@@ -48,6 +48,7 @@ import {
   splitIntoWords,
 } from './dictionary.js';
 import { isSentence } from './sentences.js';
+import { allCardIds } from './session.js';
 import { isRadical } from './radicals.js';
 import { t } from './text.js';
 
@@ -132,11 +133,36 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
   const likeliestEntry = dictionaryLoader.likeliestEntry;
   const getDictionary = dictionaryLoader.get;
 
+  // Whether load() has run: before, there is nothing to bring up to date.
+  let loaded = false;
+
+  // Reads one word and its cards afresh, in place of what is held: Review
+  // and Learn change them (a grade, the word learned) without this tab
+  // reading anything. For a word's page opened from there, which used to
+  // read everything first: about 0.4 s of the 0.85 s About took on a tablet
+  // with the owner's 9,000 cards (2026-11-06). The lists are new ones, since
+  // Review holds the ones it was handed (afterChange).
+  async function loadWord(word) {
+    if (!loaded) {
+      await load();
+      return;
+    }
+    const [[stored], fresh] = await Promise.all([getSome('words', [word.id]), getSome('cards', allCardIds(word))]);
+    if (stored) {
+      words = words.map((entry) => (entry.id === stored.id ? stored : entry));
+    }
+    cards = [...cards.filter((card) => card.wordId !== word.id), ...fresh];
+    if (fresh.length > 0 || stored?.learnedAt !== undefined) {
+      studiedWordIds.add(word.id);
+    }
+  }
+
   async function load() {
     const [allWords, allDecks, allCards] = await Promise.all([getAll('words'), getAll('decks'), getAll('cards')]);
     words = allWords.sort((a, b) => a.order - b.order);
     decks = allDecks;
     cards = allCards;
+    loaded = true;
     reviews = null;
     // A word is learned once it has been through the Learn tab, or has a card
     // (see isLearned in session.js).
@@ -320,7 +346,11 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     addEntry: (entry, deckId) => addEntry(entry, deckId),
     learnNow: (id, deckId) => learnNow(id, deckId),
     isLearned: (word) => studiedWordIds.has(word.id),
-    showCards: (word) => wordDialog.showCardsOnPage(word),
+    // Read afresh first: a page can lead on to another of your words.
+    showCards: async (word) => {
+      await loadWord(word);
+      return wordDialog.showCardsOnPage(words.find((entry) => entry.id === word.id) || word);
+    },
     // "Practice" on a word's page: Free practice with that word (main.js).
     practice: (word) => practiceWord(word),
     repeatLesson: (word) => repeatLesson(word),
@@ -882,7 +912,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     // word"); thisCard: the card it was opened from (see wordPage.js).
     async showWord(word, thisCard = null) {
       applySettings();
-      await load();
+      await loadWord(word);
       wordPage.open(words.find((entry) => entry.id === word.id) || word, thisCard);
     },
 
