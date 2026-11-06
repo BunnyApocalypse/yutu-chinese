@@ -13,25 +13,32 @@ const byId = (id) => document.getElementById(id);
 // shared: what the Decks and Words tabs keep (wordsPanel.js): words(),
 // getSettings(), openDeck() (the deck whose page is open), afterChange().
 //
-// Returns { addSentence(sentence, deckId), applySettings(both) }.
+// Returns { addSentence(sentence, deckId), saveSentence(sentence, deckId),
+// applySettings(both) }.
 export function createSentenceForm(shared) {
   // Adds a sentence to a deck (see sentenceRecord in sentences.js for what
   // `sentence` holds). One that is there already is put in the deck as well.
-  // Returns 'added', 'put in deck' or 'already there'.
-  async function addSentence(sentence, deckId) {
+  // Resolves once it is saved, with
+  //   result:    'added', 'put in deck' or 'already there'
+  //   word:      the sentence's record as saved
+  //   refreshed: a promise, resolved once the app has read it afresh
+  //              (afterChange)
+  async function saveSentence(sentence, deckId) {
     const existing = shared.words().find((word) => word.id === sentenceId(sentence.traditional));
-    if (existing) {
-      if ((existing.decks || []).includes(deckId)) {
-        return 'already there';
-      }
-      await putAll('words', [withDeck(existing, deckId)]);
-      await shared.afterChange();
-      return 'put in deck';
+    if (existing && (existing.decks || []).includes(deckId)) {
+      return { result: 'already there', word: existing, refreshed: Promise.resolve() };
     }
     const order = shared.words().reduce((highest, word) => Math.max(highest, word.order), -1) + 1;
-    await putAll('words', [sentenceRecord(sentence, order, deckId, Date.now())]);
-    await shared.afterChange();
-    return 'added';
+    const word = existing ? withDeck(existing, deckId) : sentenceRecord(sentence, order, deckId, Date.now());
+    await putAll('words', [word]);
+    return { result: existing ? 'put in deck' : 'added', word, refreshed: shared.afterChange() };
+  }
+
+  // The same, resolving with the result once the app has read it afresh.
+  async function addSentence(sentence, deckId) {
+    const { result, refreshed } = await saveSentence(sentence, deckId);
+    await refreshed;
+    return result;
   }
 
   // The form on a deck's page. The first box is the sentence in the script
@@ -89,6 +96,7 @@ export function createSentenceForm(shared) {
 
   return {
     addSentence,
+    saveSentence,
     // The box for the other script is only there while both are learned.
     applySettings(both) {
       sentenceFields.other.hidden = !both;

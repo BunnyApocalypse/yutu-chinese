@@ -165,9 +165,10 @@ let mode = 'review';
 let wordList = [];
 
 // Reads the words from the database, and offers them as suggestions under
-// Free practice's text box.
-async function loadWordList() {
-  wordList = await getAll('words');
+// Free practice's text box. `words`: as the Decks tab has just read them,
+// used instead of reading them again.
+async function loadWordList(words = null) {
+  wordList = words || (await getAll('words'));
   showBackupStatus();
   byId('word-suggestions').replaceChildren(
     ...wordList.map((word) => {
@@ -182,9 +183,10 @@ async function loadWordList() {
 // the words afresh. Its "Review this deck" and "Learn new words" buttons
 // choose the deck and open that tab.
 const wordsPanel = createWordsPanel(
-  async () => {
-    await review.load();
-    await loadWordList();
+  // What the Decks tab has just read is handed on, not read again.
+  async (held) => {
+    await review.load(held);
+    await loadWordList(held.words);
   },
   () => settings,
   async (deckId, newMode) => {
@@ -1092,7 +1094,8 @@ async function startUp() {
     if (settings.addExampleSentences) {
       return;
     }
-    const sentences = (await getAll('words')).filter(isSentence);
+    // (The words were read afresh before this was sent.)
+    const sentences = wordList.filter(isSentence);
     if (sentences.length < SENTENCES_BEFORE_OFFER || !(await tips.firstTime('exampleSentences'))) {
       return;
     }

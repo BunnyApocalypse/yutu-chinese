@@ -2823,10 +2823,13 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   }
 
   return {
-    // Reads words and cards from the database. Call once at startup.
     // Reads words and cards from the database: at startup, and again whenever
-    // the Decks tab has changed them.
-    load() {
+    // the Decks tab has changed them. `held`: { words, cards, decks } as the
+    // Decks tab has just read them, used instead of reading them again
+    // (2026-11-06: each part reading everything for itself was half the time
+    // adding a sentence took on a tablet). The records are shared, not
+    // copied: nothing changes them in place.
+    load(held = null) {
       loading = (async () => {
         // Everything is read first and put in place together, so that nothing
         // sees new words beside old cards.
@@ -2834,9 +2837,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         // make the main program bigger. If it can't be loaded, tones are
         // judged against the word list alone.
         const [newWords, newCards, newDecks, table] = await Promise.all([
-          getAll('words'),
-          getAll('cards'),
-          getAll('decks'),
+          held ? held.words : getAll('words'),
+          held ? held.cards : getAll('cards'),
+          held ? held.decks : getAll('decks'),
           import('../data/cedict/tones.json').then(
             (module) => module.default,
             () => null,

@@ -57,8 +57,10 @@ function element(tag, className, text) {
 //                     characters (see lookUp in dictionary.js); [] if none
 // edit(word):         opens the word's pop-up panel, to change it
 // addSentence(sentence, deckId): adds an example sentence to a deck as a
-//                     thing to study (see sentences.js); returns a promise
-//                     for 'added', 'put in deck' or 'already there'
+//                     thing to study (see sentences.js); returns a promise,
+//                     resolved once it is saved (the rest of the app reads
+//                     it afresh after), for { result, word }: 'added', 'put
+//                     in deck' or 'already there', and the sentence's record
 // addEntry(entry, deckId): adds a dictionary entry to a deck as one of your
 //                     words (the Words tab's dictionary, 2026-10-15); returns a
 //                     promise for 'added', 'put in deck' or 'already there'
@@ -397,7 +399,7 @@ export function createWordPage({
     addButton.type = 'button';
     const said = element('p', 'note');
     addButton.addEventListener('click', async () => {
-      const result = await addSentence(
+      const { result, word } = await addSentence(
         {
           traditional: note.example.traditional,
           simplified: note.example.simplified,
@@ -407,10 +409,7 @@ export function createWordPage({
         },
         deckSelect.value,
       );
-      const word = studied();
-      if (word) {
-        adding.replaceWith(sentenceStudiedLine(word));
-      }
+      adding.replaceWith(sentenceStudiedLine(word));
       said.textContent = result === 'added' ? t('page.sentenceAdded') : '';
     });
     adding.append(element('span', '', t('page.makeCardsIn')), deckButton, addButton);

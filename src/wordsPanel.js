@@ -57,8 +57,8 @@ const MAX_ROWS = 200;
 
 const byId = (id) => document.getElementById(id);
 
-// onChange: called after the word list has changed, so the rest of the app
-//           can read it afresh
+// onChange({ words, cards, decks }): called after the word list has
+//           changed, with everything as just read, for the rest of the app
 // getSettings: returns the current settings (see settings.js). A function,
 //           because the settings are only read after this panel is set up.
 //
@@ -133,9 +133,10 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
   const getDictionary = dictionaryLoader.get;
 
   async function load() {
-    words = (await getAll('words')).sort((a, b) => a.order - b.order);
-    decks = await getAll('decks');
-    cards = await getAll('cards');
+    const [allWords, allDecks, allCards] = await Promise.all([getAll('words'), getAll('decks'), getAll('cards')]);
+    words = allWords.sort((a, b) => a.order - b.order);
+    decks = allDecks;
+    cards = allCards;
     reviews = null;
     // A word is learned once it has been through the Learn tab, or has a card
     // (see isLearned in session.js).
@@ -305,13 +306,16 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     },
     edit: (word) => wordDialog.open(words.find((entry) => entry.id === word.id) || word),
     remove: (word) => wordDialog.remove(words.find((entry) => entry.id === word.id) || word),
-    // Added by hand: main.js may then offer to add them by itself.
+    // Shown as added once it is saved, while the rest of the app reads it
+    // afresh behind the page (2026-11-06: waiting for that took seconds on a
+    // tablet). Added by hand: main.js may then offer to add them by itself,
+    // once the words are read.
     addSentence: async (sentence, deckId) => {
-      const result = await sentenceForm.addSentence(sentence, deckId);
+      const { result, word, refreshed } = await sentenceForm.saveSentence(sentence, deckId);
       if (result === 'added') {
-        document.dispatchEvent(new CustomEvent('example-sentence-added'));
+        refreshed.then(() => document.dispatchEvent(new CustomEvent('example-sentence-added')));
       }
-      return result;
+      return { result, word };
     },
     addEntry: (entry, deckId) => addEntry(entry, deckId),
     learnNow: (id, deckId) => learnNow(id, deckId),
@@ -478,14 +482,22 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
   });
   byId('ready-decks-button').addEventListener('click', () => showSection(true));
 
-  // Reads the list afresh, shows it, and tells the rest of the app.
-  async function afterChange() {
-    await load();
-    renderDecks();
-    renderList();
-    // The bar's deck chooser, for a deck added or renamed meanwhile.
-    cardsPanel.refresh();
-    await onChange();
+  // Reads the list afresh, shows it, and tells the rest of the app. One at a
+  // time: a sentence added from a word's page is shown as added before this
+  // is done (addSentence below), so another change can come meanwhile.
+  let changing = Promise.resolve();
+  function afterChange() {
+    changing = changing
+      .catch(() => {}) // a refresh that failed doesn't stop the next
+      .then(async () => {
+        await load();
+        renderDecks();
+        renderList();
+        // The bar's deck chooser, for a deck added or renamed meanwhile.
+        cardsPanel.refresh();
+        await onChange({ words, cards, decks });
+      });
+    return changing;
   }
 
   // The word's characters in the script being learned: "學習" or, with both
