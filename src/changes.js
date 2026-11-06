@@ -13,6 +13,30 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-06',
+    items: [
+      'A word’s page, About in Review and Add sentence open faster, most of all with a long study history.',
+      'In Learn, tap a word in the row of today’s words to open its page; About sits beside I know this word at every step.',
+      'When writing traditional, more characters with 忄, such as 愉, accept it in the Taiwan order (丶 丨 丶).',
+      'Look-alike strokes side by side, such as 巛 in 經 and 癶 in 發, are no longer refused when written a little off their place.',
+      '600 more learning tips for HSK level 5 were checked and rewritten.',
+    ],
+    it: [
+      'La pagina di una parola, Info nel Ripasso e Aggiungi frase si aprono più in fretta, soprattutto con una lunga storia di studio.',
+      'In Impara, tocca una parola nella riga delle parole di oggi per aprire la sua pagina; Info è accanto a La conosco già in ogni passo.',
+      'Scrivendo in tradizionale, altri caratteri con 忄, come 愉, lo accettano nell’ordine di Taiwan (丶 丨 丶).',
+      'Tratti uguali uno accanto all’altro, come 巛 in 經 e 癶 in 發, non vengono più rifiutati se scritti un po’ fuori posto.',
+      'Altri 600 consigli di studio del livello HSK 5 sono stati verificati e riscritti.',
+    ],
+    de: [
+      'Die Seite eines Worts, Info beim Wiederholen und Satz hinzufügen öffnen sich schneller, vor allem bei langer Lerngeschichte.',
+      'Unter Lernen öffnet ein Tippen auf ein Wort in der Reihe der heutigen Wörter seine Seite; Info steht bei jedem Schritt neben Kenne ich schon.',
+      'Beim Schreiben in traditionellen Zeichen akzeptieren weitere Zeichen mit 忄, etwa 愉, es in der Reihenfolge Taiwans (丶 丨 丶).',
+      'Gleich aussehende Striche nebeneinander, etwa 巛 in 經 und 癶 in 發, werden nicht mehr abgelehnt, wenn sie etwas neben ihrem Platz stehen.',
+      'Weitere 600 Lerntipps für HSK-Stufe 5 wurden geprüft und neu geschrieben.',
+    ],
+  },
+  {
     id: '2026-11-05-2',
     items: [
       '遍, 腿 and 還 also accept the mainland shapes of their strokes, such as the dot on top of 戶 in 遍.',
