@@ -7,6 +7,8 @@
 // sync on (how it went, Sync now, Show sync code, Turn off, Delete).
 
 import { makeCode, readCode } from './syncCode.js';
+import { readServerAddress, serverAnswers } from './syncServer.js';
+import { closeOnTapBeside } from './dialogs.js';
 import { showCode as fillCode, copyCode, saveCodeFile, printCode, problemText, codeProblemText } from './syncCodeView.js';
 import { scanForCode } from './syncScan.js';
 import { ask } from './confirm.js';
@@ -31,8 +33,58 @@ export async function createSyncPanel(control) {
   // The code on show.
   let shownCode = null;
 
-  // Nowhere to sync to (a build without a server yet): nothing to offer.
+  // Nowhere to sync to (a build without a server, and none chosen): nothing
+  // to offer.
   setting.hidden = !(await control.server());
+  // The server's name alone, as shown.
+  const hostOf = (address) => new URL(address).host;
+
+  // ---- Which sync server ----
+  //
+  // Folded away under its name: anyone may run one (deploy/README.md), but
+  // few will. Only while sync is off: a learner's files are on the server
+  // their sync began with. A new address is taken only once it answers.
+  const serverInput = byId('sync-server-input');
+  const serverNote = byId('sync-server-note');
+  async function showServer() {
+    const address = await control.server();
+    byId('sync-server-summary').textContent = t('sync.serverSummary', { host: address ? hostOf(address) : '–' });
+    byId('sync-server-usual').hidden = !control.usualServer || address === control.usualServer;
+  }
+  byId('sync-server-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    serverNote.hidden = false;
+    const { address, reason } = readServerAddress(serverInput.value);
+    if (reason) {
+      serverNote.textContent = t(reason === 'notSecure' ? 'sync.serverProblem.notSecure' : 'sync.serverProblem.notAddress');
+      return;
+    }
+    serverNote.textContent = t('sync.serverChecking');
+    if (!(await serverAnswers(address))) {
+      serverNote.textContent = t('sync.serverProblem.noAnswer');
+      return;
+    }
+    await control.chooseServer(address);
+    serverInput.value = '';
+    serverNote.textContent = t('sync.serverChosen', { host: hostOf(address) });
+    setting.hidden = false;
+    await showServer();
+  });
+  byId('sync-server-usual').addEventListener('click', async () => {
+    await control.chooseServer(null);
+    serverNote.hidden = false;
+    serverNote.textContent = t('sync.serverChosen', { host: hostOf(control.usualServer) });
+    await showServer();
+  });
+  await showServer();
+
+  // ---- What syncing does with a learner's data ----
+  const privacy = byId('privacy-dialog');
+  for (const button of document.querySelectorAll('.sync-privacy-button')) {
+    button.addEventListener('click', () => privacy.showModal());
+  }
+  byId('privacy-close').addEventListener('click', () => privacy.close());
+  closeOnTapBeside(privacy);
 
   function showPart(part) {
     off.hidden = part !== off;
@@ -41,21 +93,23 @@ export async function createSyncPanel(control) {
   }
 
   // The line under "Sync between devices" while sync is on.
-  function statusLine(status) {
+  function statusLine(status, address) {
+    const through = address ? t('sync.through', { host: hostOf(address) }) : '';
     if (status.running) {
-      return t('sync.syncing');
+      return `${t('sync.syncing')} ${through}`;
     }
     const when =
       status.lastSyncedAt === null ? t('sync.notYet') : t('sync.lastSynced', { when: formatDateTime(new Date(status.lastSyncedAt)) });
-    return status.problem ? `${when} ${problemText(status.problem)}` : when;
+    return [when, through, status.problem ? problemText(status.problem) : ''].filter(Boolean).join(' ');
   }
 
-  function show(status) {
+  async function show(status) {
     if (!codeStep.hidden) {
       return;
     }
     showPart(status.on ? on : off);
-    byId('sync-status').textContent = statusLine(status);
+    byId('sync-status').textContent = statusLine(status, await control.server());
+    await showServer();
     byId('sync-now-button').disabled = status.running;
     // The data group's first line says where the words are kept.
     byId('settings-data').querySelector('[data-t="settings.dataWhere"]').textContent = t(

@@ -5,7 +5,8 @@
 // backup:
 //   code          the sync code (syncCode.js): the one key to everything
 //                 synced, so it stays out of backups and settings
-//   server        the sync server's address, as when sync was turned on
+//   server        the sync server chosen in Settings, if not the usual one
+//                 (DEFAULT_SERVER); kept when sync is turned off
 //   lastSyncedAt  when the last sync finished
 // and what sync.js keeps there (device, nextNumber, taken…). Turning sync
 // off empties the store and the outbox, so turning it on again starts
@@ -26,6 +27,11 @@ export const DEFAULT_SERVER = typeof __SYNC_SERVER__ === 'undefined' ? '' : __SY
 // onChanged(): called after a sync brought changes in, for the screens to
 //              read the data afresh
 // onStatus(status): called whenever `status` changes (below)
+// The server syncing uses: the one chosen in Settings, else the usual one.
+async function serverAddress() {
+  return (await db.getSyncValue('server', null)) || DEFAULT_SERVER;
+}
+
 export function createSyncControl({ onChanged = async () => {}, onStatus = () => {} } = {}) {
   let sync = null;
   let storage = null;
@@ -40,7 +46,7 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
 
   async function connect(code) {
     const keys = await keysFor(code);
-    const address = await db.getSyncValue('server', DEFAULT_SERVER);
+    const address = await serverAddress();
     storage = serverStorage({ address, account: keys.account, access: keys.access });
     sync = createSync({ local: db, storage, key: keys.encryption });
     db.setOutboxOn(true);
@@ -50,8 +56,13 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
   return {
     status: () => ({ ...status }),
 
-    // The address syncing would use: the one kept, or the default.
-    server: () => db.getSyncValue('server', DEFAULT_SERVER),
+    // The address syncing uses, and choosing another (null: the usual one).
+    // Only while sync is off: its files are on the server it began with.
+    server: serverAddress,
+    usualServer: DEFAULT_SERVER,
+    async chooseServer(address) {
+      await db.setSyncValue('server', address);
+    },
 
     // At start: picks up where sync was left, if it is on.
     async start() {
@@ -69,7 +80,6 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
     // the first sync runs.
     async turnOn(code) {
       await db.setSyncValue('code', code);
-      await db.setSyncValue('server', await db.getSyncValue('server', DEFAULT_SERVER));
       await connect(code);
       await db.sendEverything();
       tell();

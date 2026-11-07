@@ -885,6 +885,23 @@
       </dialog>
 
       <!-- Asks before something that cannot be undone (confirm.js). -->
+      <!-- What syncing does with a learner's data (syncPanel.js; docs/sync.md). -->
+      <dialog id="privacy-dialog" class="settings-panel">
+        <h2 data-t="privacy.title"></h2>
+        <p data-t="privacy.intro"></p>
+        <ul class="privacy-list">
+          <li data-t-html="privacy.encrypted"></li>
+          <li data-t-html="privacy.serverSees"></li>
+          <li data-t-html="privacy.addresses"></li>
+          <li data-t-html="privacy.where"></li>
+          <li data-t-html="privacy.kept"></li>
+          <li data-t-html="privacy.code"></li>
+          <li data-t-html="privacy.otherServer"></li>
+          <li data-t-html="privacy.questions"></li>
+        </ul>
+        <button id="privacy-close" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
+      </dialog>
+
       <!-- Scanning a sync code's QR code with the camera (syncScan.js). -->
       <dialog id="scan-dialog" class="settings-panel">
         <h2 data-t="scan.title"></h2>
@@ -1634,6 +1651,19 @@
               <button id="sync-scan-button" class="small" type="button" data-t="scan.button"></button>
               <p id="sync-join-error" class="hint sync-problem" role="alert" hidden></p>
             </form>
+            <!-- Which sync server, and choosing another (syncPanel.js): folded away, few need it. -->
+            <details id="sync-server-fold" class="welcome-more">
+              <summary id="sync-server-summary"></summary>
+              <form id="sync-server-form" class="sync-join">
+                <label for="sync-server-input" data-t="sync.serverLabel"></label>
+                <input id="sync-server-input" type="text" inputmode="url" autocomplete="off" spellcheck="false" />
+                <button id="sync-server-use" class="small" type="submit" data-t="sync.serverUse"></button>
+                <button id="sync-server-usual" class="small" type="button" data-t="sync.serverUsual"></button>
+                <p id="sync-server-note" class="hint" role="status" hidden></p>
+              </form>
+              <p class="hint" data-t-html="sync.serverHint"></p>
+            </details>
+            <p><button class="link-button sync-privacy-button" type="button" data-t="sync.privacy"></button></p>
           </div>
           <!-- The code: when it is made, before sync is turned on, and on "Show sync code". -->
           <div id="sync-code-step" hidden>
@@ -1665,6 +1695,7 @@
               <button id="sync-off-button" class="small" type="button" data-t="sync.turnOff"></button>
               <button id="sync-delete-button" class="small danger" type="button" data-t="sync.deleteData"></button>
             </div>
+            <p><button class="link-button sync-privacy-button" type="button" data-t="sync.privacy"></button></p>
           </div>
         </div>
 

@@ -166,6 +166,50 @@ export default {
   'sync.scanHint': 'Oppure inquadralo con la fotocamera dell\'altro dispositivo: apre <span lang="zh-Hant-TW">玉兔中文</span> con il codice già inserito.',
   'sync.fromLink':
     'Questo codice viene da un link. Usalo solo se il link viene da un tuo dispositivo: chi ha creato il codice può leggere tutto ciò che viene sincronizzato con esso.',
+  'sync.serverSummary':
+    'Server di sincronizzazione: {host}',
+  'sync.serverLabel':
+    'Indirizzo di un altro server di sincronizzazione',
+  'sync.serverUse':
+    'Usa questo server',
+  'sync.serverUsual':
+    'Torna al server abituale',
+  'sync.serverHint':
+    'Chiunque può gestire un proprio server di sincronizzazione: <a href="https://github.com/BunnyApocalypse/yutu-chinese/blob/main/deploy/README.md" target="_blank" rel="noopener">come configurarne uno</a>.',
+  'sync.serverChecking':
+    'Controllo il server…',
+  'sync.serverChosen':
+    'La sincronizzazione userà {host}.',
+  'sync.serverProblem.notAddress':
+    'Questo non è l’indirizzo di un server. Inizia con https://, senza nulla dopo il nome.',
+  'sync.serverProblem.notSecure':
+    'L’indirizzo di un server di sincronizzazione inizia con https://.',
+  'sync.serverProblem.noAnswer':
+    'Quel server non ha risposto, oppure non accetta questa copia dell’app.',
+  'sync.through':
+    'Sincronizzazione tramite {host}.',
+  'sync.privacy':
+    'Come la sincronizzazione tratta i tuoi dati',
+  'privacy.title':
+    'La sincronizzazione e i tuoi dati',
+  'privacy.intro':
+    'Senza sincronizzazione, nulla lascia questo dispositivo. Con la sincronizzazione attiva, ecco cosa succede:',
+  'privacy.encrypted':
+    '<b>Tutto viene cifrato su questo dispositivo</b> con il tuo codice di sincronizzazione prima di essere inviato. Il server conserva solo questi file cifrati e non può leggerli, né può farlo chi lo gestisce.',
+  'privacy.serverSees':
+    '<b>Il server vede</b> un numero di account ricavato dal tuo codice (non il tuo nome), quanti file hai, le loro dimensioni e quando cambiano. Non ci sono account, password, email né nomi.',
+  'privacy.addresses':
+    '<b>Il tuo indirizzo internet</b> viene usato per un attimo, per limitare quanto spesso uno stesso indirizzo può fare richieste, e non viene annotato. Il server annota ogni richiesta solo per tipo (come «file salvato»), senza account né indirizzo.',
+  'privacy.where':
+    '<b>Dove:</b> una macchina in affitto presso Hetzner in Germania, gestita dal team di <span lang="zh-Hant-TW">玉兔中文</span>, raggiungibile solo tramite HTTPS.',
+  'privacy.kept':
+    '<b>Per quanto tempo:</b> finché lo usi. «Elimina i dati sincronizzati» li elimina in qualsiasi momento. Un account che nessuno dei tuoi dispositivi ha usato per un anno viene eliminato da sé; i tuoi dispositivi conservano le loro parole e le inviano di nuovo se torni.',
+  'privacy.code':
+    '<b>Il tuo codice di sincronizzazione</b> è l’unica chiave e non viene mai inviato da nessuna parte. Se si perdono tutti i dispositivi e il codice, nessuno può aprire i tuoi dati sincronizzati, nemmeno noi.',
+  'privacy.otherServer':
+    '<b>Un altro server di sincronizzazione</b> (scelto in «Server di sincronizzazione») è gestito da chi lo gestisce; questa pagina riguarda il nostro.',
+  'privacy.questions':
+    '<b>Domande o richieste:</b> usa «Invia un commento» nelle Impostazioni.',
   'sync.copy': 'Copia',
   'sync.copied': 'Copiato.',
   'sync.copyFailed': 'Questo browser non ha permesso di copiare. Seleziona il codice e copialo a mano.',

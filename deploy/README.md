@@ -34,7 +34,7 @@ Each ends by checking that `https://<your domain>/v1/health` answers.
 
 ## A watch on the server (optional)
 
-Set `healthcheck_url` in the inventory to a ping URL from [Healthchecks](https://healthchecks.io) (free, and free software you can run yourself). Every 5 minutes the server tells it whether it answers through HTTPS and its disk is under 90% full; Healthchecks emails you when it says no, or when it stops hearing anything (the whole machine down). Then run `setup.yml` again.
+Set `healthcheck_url` to a ping URL from [Healthchecks](https://healthchecks.io) (free, and free software you can run yourself). Every 5 minutes the server tells it whether it answers through HTTPS and its disk is under 90% full; Healthchecks emails you when it says no, or when it stops hearing anything (the whole machine down). Put it in `host_vars/<your host's name in the inventory>/private.yml` (as `healthcheck_url: https://hc-ping.com/…`), which git leaves out: anyone with the URL could send false pings. Then run `setup.yml` again. The check asks Caddy on the server itself, so a moment when its name can't be looked up doesn't count as down.
 
 ## How they were tested
 

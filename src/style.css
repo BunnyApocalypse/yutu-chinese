@@ -2524,6 +2524,10 @@ button.slot {
   background: var(--border);
 }
 
+.privacy-list li {
+  margin-block-end: var(--space-small);
+}
+
 .sync-join {
   display: flex;
   flex-wrap: wrap;

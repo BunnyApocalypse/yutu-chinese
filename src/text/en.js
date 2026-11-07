@@ -171,6 +171,50 @@ export default {
   'sync.scanHint': 'Or scan this with your other device’s camera: it opens <span lang="zh-Hant-TW">玉兔中文</span> with the code filled in.',
   'sync.fromLink':
     'This code came from a link. Use it only if the link is from your own device: whoever made the code can read everything synced with it.',
+  'sync.serverSummary':
+    'Sync server: {host}',
+  'sync.serverLabel':
+    'Address of another sync server',
+  'sync.serverUse':
+    'Use this server',
+  'sync.serverUsual':
+    'Back to the usual server',
+  'sync.serverHint':
+    'Anyone can run a sync server of their own: <a href="https://github.com/BunnyApocalypse/yutu-chinese/blob/main/deploy/README.md" target="_blank" rel="noopener">how to set one up</a>.',
+  'sync.serverChecking':
+    'Checking the server…',
+  'sync.serverChosen':
+    'Syncing will use {host}.',
+  'sync.serverProblem.notAddress':
+    'That isn’t a server’s address. It starts with https://, with nothing after the name.',
+  'sync.serverProblem.notSecure':
+    'A sync server’s address starts with https://.',
+  'sync.serverProblem.noAnswer':
+    'That server didn’t answer, or doesn’t accept this copy of the app.',
+  'sync.through':
+    'Syncing through {host}.',
+  'sync.privacy':
+    'How syncing handles your data',
+  'privacy.title':
+    'Syncing and your data',
+  'privacy.intro':
+    'Without sync, nothing leaves this device. With sync on, this is what happens:',
+  'privacy.encrypted':
+    '<b>Everything is encrypted on this device</b> with your sync code before it is sent. The sync server keeps only these encrypted files and can’t read them, nor can the person who runs it.',
+  'privacy.serverSees':
+    '<b>The server sees</b> an account number made from your code (not your name), how many files you have, their sizes and when they change. There are no accounts, passwords, emails or names.',
+  'privacy.addresses':
+    '<b>Your internet address</b> is used for a moment, to limit how often one address may ask, and is not written down. The server notes each request by its kind only (such as “file saved”), with no account or address.',
+  'privacy.where':
+    '<b>Where:</b> a rented machine at Hetzner in Germany, run by the <span lang="zh-Hant-TW">玉兔中文</span> team, reached only through HTTPS.',
+  'privacy.kept':
+    '<b>How long:</b> while you use it. “Delete synced data” deletes it at any time. An account none of your devices has used for a year is deleted by itself; your devices keep their words and send them again if you come back.',
+  'privacy.code':
+    '<b>Your sync code</b> is the only key, and is never sent anywhere. If every device and the code are lost, nobody can open your synced data, us included.',
+  'privacy.otherServer':
+    '<b>Another sync server</b> (chosen under “Sync server”) is run by whoever runs it; this page is about ours.',
+  'privacy.questions':
+    '<b>Questions or requests:</b> use “Send feedback” in Settings.',
   'sync.copy': 'Copy',
   'sync.copied': 'Copied.',
   'sync.copyFailed': 'This browser didn’t allow copying. Select the code and copy it by hand.',

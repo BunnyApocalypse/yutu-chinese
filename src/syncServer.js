@@ -12,6 +12,39 @@
 //   'origin', 'not-found', 'bad-request', 'server-error'
 //                   as the server says (server.js)
 
+// A sync server's address as typed in Settings (syncPanel.js), checked:
+// https://, or http:// on this computer only (a server being tried out), and
+// nothing after the name but a "/" (taken off). Returns { address } or
+// { reason }: 'notAddress' or 'notSecure'.
+export function readServerAddress(typed) {
+  let url;
+  try {
+    url = new URL(String(typed).trim());
+  } catch {
+    return { reason: 'notAddress' };
+  }
+  const local = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+  if (url.protocol !== 'https:' && !(url.protocol === 'http:' && local)) {
+    return { reason: url.protocol === 'http:' ? 'notSecure' : 'notAddress' };
+  }
+  if ((url.pathname !== '/' && url.pathname !== '') || url.search || url.hash || url.username) {
+    return { reason: 'notAddress' };
+  }
+  return { address: url.origin };
+}
+
+// Whether a sync server answers this page (its health check): false if it
+// can't be reached, or doesn't accept requests from this copy of the app
+// (the browser then hides its answer: CORS, server.js).
+export async function serverAnswers(address, fetch = globalThis.fetch.bind(globalThis)) {
+  try {
+    const response = await fetch(`${address}/v1/health`, { cache: 'no-store' });
+    return response.ok && (await response.text()) === 'ok';
+  } catch {
+    return false;
+  }
+}
+
 // Requests sent with `keepalive` may finish after the page is closed, but
 // browsers allow it only for small ones (64 KB together).
 const KEEPALIVE_BYTES = 60 * 1024;

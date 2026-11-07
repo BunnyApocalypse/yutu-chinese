@@ -541,10 +541,16 @@ export function sendEverything() {
 }
 
 // Forgets everything syncing kept on this device: the sync store and the
-// outbox (syncControl.js, turning sync off).
+// outbox (syncControl.js, turning sync off); all but the sync server chosen
+// in Settings, if one was.
 export function forgetSync() {
   return transaction(['sync', 'outbox'], 'readwrite', (tx) => {
-    tx.objectStore('sync').clear();
+    const sync = tx.objectStore('sync');
+    sync.getAllKeys().onsuccess = (event) => {
+      for (const key of event.target.result.filter((name) => name !== 'server')) {
+        sync.delete(key);
+      }
+    };
     tx.objectStore('outbox').clear();
   });
 }

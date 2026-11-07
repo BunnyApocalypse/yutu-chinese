@@ -17,3 +17,6 @@ exports/
 # Large files fetched for development only, never shipped (see local/README.md)
 local/*
 !local/README.md
+
+# The sync server's settings that stay off GitHub (deploy/README.md)
+deploy/host_vars/*/private.yml

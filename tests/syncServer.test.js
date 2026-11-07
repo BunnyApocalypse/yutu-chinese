@@ -11,7 +11,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { createSyncServer } from '../server/server.js';
-import { serverStorage } from '../src/syncServer.js';
+import { serverStorage, readServerAddress, serverAnswers } from '../src/syncServer.js';
 import { createSync } from '../src/sync.js';
 import { makeCode, keysFor } from '../src/syncCode.js';
 import { twoDevices, memoryDevice, learnersData } from './fixtures/devices.js';
@@ -284,4 +284,20 @@ test('a device whose account was deleted for being unused sends everything again
     const result = await syncA();
     assert.equal(result.startedAfresh, true);
     assert.ok((await storage.list()).some((file) => file.name.startsWith('batch-')));
+  }));
+
+test('a server address typed in Settings is read, or said what is wrong with it', () => {
+  assert.deepEqual(readServerAddress(' https://sync.example.org/ '), { address: 'https://sync.example.org' });
+  assert.deepEqual(readServerAddress('https://sync.example.org:8443'), { address: 'https://sync.example.org:8443' });
+  assert.deepEqual(readServerAddress('http://localhost:8787'), { address: 'http://localhost:8787' });
+  assert.deepEqual(readServerAddress('http://sync.example.org'), { reason: 'notSecure' });
+  assert.deepEqual(readServerAddress('sync.example.org'), { reason: 'notAddress' });
+  assert.deepEqual(readServerAddress('https://sync.example.org/path'), { reason: 'notAddress' });
+  assert.deepEqual(readServerAddress('javascript:alert(1)'), { reason: 'notAddress' });
+});
+
+test('whether a server answers', () =>
+  withServer({}, async ({ address }) => {
+    assert.equal(await serverAnswers(address), true);
+    assert.equal(await serverAnswers('http://127.0.0.1:9'), false);
   }));

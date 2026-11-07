@@ -74,11 +74,14 @@ jobs:
           npm test
           npm run build
 
-      # The test copy. VITE_CHANNEL tells the build which copy it is.
+      # The test copy. VITE_CHANNEL tells the build which copy it is;
+      # VITE_SYNC_SERVER where it syncs (docs/sync.md). Only the test copy
+      # for now: the stable one gets it when syncing is released.
       - name: Build the test copy
         working-directory: test
         env:
           VITE_CHANNEL: test
+          VITE_SYNC_SERVER: https://yutu.bunnyapocalypse.space
         run: |
           npm ci
           npm test

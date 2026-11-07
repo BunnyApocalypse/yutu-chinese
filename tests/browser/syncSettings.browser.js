@@ -185,6 +185,40 @@ describe('sync in Settings', { concurrency: false }, () => {
     await waitUntil(page, shown('sync-off'), 'sync off');
     assert.deepEqual(await fs.readdir(folder), []);
   });
+
+  it('chooses another sync server only once it answers, and goes back to the usual one', async () => {
+    const port = server.address().port;
+    const summary = () => textOf(page, 'sync-server-summary');
+    await page.evaluate(`document.getElementById('sync-server-fold').open = true`);
+    // The test's server, chosen at the start through the database.
+    assert.equal(await summary(), `Sync server: 127.0.0.1:${port}`);
+    const tryAddress = async (address) => {
+      await type(page, 'sync-server-input', address);
+      await page.evaluate(`document.getElementById('sync-server-form').requestSubmit()`);
+      await waitUntil(page, `!document.getElementById('sync-server-note').textContent.startsWith('Checking')`, 'the check');
+      return textOf(page, 'sync-server-note');
+    };
+    assert.match(await tryAddress('sync.example.org'), /isn’t a server’s address/);
+    assert.match(await tryAddress('http://sync.example.org'), /starts with https/);
+    assert.match(await tryAddress('http://127.0.0.1:9'), /didn’t answer/);
+    // Back to the usual one (under npm run dev, the one on this computer).
+    await tap(page, 'sync-server-usual');
+    await waitUntil(page, `document.getElementById('sync-server-summary').textContent.includes('8787')`, 'the usual server');
+    assert.ok(await page.evaluate(`document.getElementById('sync-server-usual').hidden`));
+    // And the test's own again, which answers.
+    assert.match(await tryAddress(`http://127.0.0.1:${port}/`), new RegExp(`will use 127.0.0.1:${port}`));
+    assert.equal(await summary(), `Sync server: 127.0.0.1:${port}`);
+    assert.equal(await page.evaluate(`import('/src/db.js').then((db) => db.getSyncValue('server', null))`), `http://127.0.0.1:${port}`);
+  });
+
+  it('says how syncing handles the learner\'s data', async () => {
+    await page.evaluate(`document.querySelector('#sync-off .sync-privacy-button').click()`);
+    await waitUntil(page, `document.getElementById('privacy-dialog').open`, 'the privacy page');
+    assert.equal(await textOf(page, '#privacy-dialog h2'), 'Syncing and your data');
+    assert.match(await textOf(page, '#privacy-dialog .privacy-list'), /Hetzner in Germany, run by the 玉兔中文 team/);
+    await tap(page, 'privacy-close');
+    await waitUntil(page, `!document.getElementById('privacy-dialog').open`, 'it to close');
+  });
 });
 
 // Syncing in the introduction (welcome.js): one device turns it on on the
