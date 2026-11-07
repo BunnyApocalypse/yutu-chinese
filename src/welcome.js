@@ -405,6 +405,10 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
     pronunciationTouched = false;
     showPronunciation();
     startTouched = false;
+    // Where sync is offered, "nothing sent anywhere" and "only in this
+    // browser" hold until it is turned on, and the lines say so.
+    byId('welcome-promise').textContent = t(sync.available ? 'welcome.learnToReadAndSync' : 'welcome.learnToReadAnd');
+    byId('welcome-stored').textContent = t(sync.available ? 'welcome.yourWordsAreStoredSync' : 'welcome.yourWordsAreStored');
     joinPart.hidden = !sync.available;
     joinForm.hidden = true;
     joinNote.hidden = true;

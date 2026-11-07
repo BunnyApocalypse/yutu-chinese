@@ -1144,7 +1144,8 @@
              Explanations are folded away for whoever wants them. -->
         <section data-step>
           <h2 data-t-html="welcome.welcomeTo"></h2>
-          <p data-t="welcome.learnToReadAnd"></p>
+          <!-- With a sync server, the line says sync is the one way anything is sent (welcome.js). -->
+          <p id="welcome-promise" data-t="welcome.learnToReadAnd"></p>
           <!-- Opens "Basics of Chinese" on top; closing it comes back here
                (main.js; the owner, 2026-10-21). -->
           <p><button id="welcome-basics-button" class="link-button" type="button" data-t="welcome.welcomeBasicsButton"></button></p>
@@ -1243,7 +1244,7 @@
             <!-- Not "Allow it to keep them": in most browsers there is nothing to
                  allow, and the line below says what this one needs (the
                  owner, 2026-10-19). -->
-            <p data-t="welcome.yourWordsAreStored"></p>
+            <p id="welcome-stored" data-t="welcome.yourWordsAreStored"></p>
             <!-- What this particular browser needs, in a line (welcomeStorage in storageAdvice.js). -->
             <p id="welcome-keep-note" class="hint"></p>
           </div>

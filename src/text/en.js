@@ -1552,6 +1552,8 @@ export default {
   'welcome.codeSaved': 'I’ve saved my sync code',
   'welcome.welcomeTo': 'Welcome to <span lang="zh-Hant-TW">玉兔中文</span>',
   'welcome.learnToReadAnd': 'Learn to read and write Chinese. Everything stays on this device: no account, nothing sent anywhere.',
+  // The same where sync is offered (welcome.js)
+  'welcome.learnToReadAndSync': 'Learn to read and write Chinese. No account, nothing sent anywhere unless you turn on sync: your words stay on this device.',
   'welcome.welcomeBasicsButton': 'New to Chinese? Start with the basics',
   'welcome.look': 'Look',
   'welcome.whichCharactersAreYou': 'Which characters are you learning?',
@@ -1583,6 +1585,7 @@ export default {
   'welcome.fromSkritter': 'Your words from Skritter, with their schedules',
   'welcome.noneIllAddMy': "None: I'll add my own words",
   'welcome.yourWordsAreStored': 'Your words are stored only in this browser, on this device.',
+  'welcome.yourWordsAreStoredSync': 'Your words are stored in this browser, on this device.',
   'welcome.addToYourHome': 'Add <span lang="zh-Hant-TW">玉兔中文</span> to your Home Screen',
   'welcome.openFromYourHome': 'Open <span lang="zh-Hant-TW">玉兔中文</span> from your Home Screen and start there.',
   'welcome.addToYourDock': 'Add <span lang="zh-Hant-TW">玉兔中文</span> to your Dock',
