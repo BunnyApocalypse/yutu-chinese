@@ -11,6 +11,7 @@ CLAUDE.md keeps the rules and points here. Each file has what an area does now, 
 | `anki.md` | Importing from Anki: reading the file, the guesses, keeping schedules |
 | `skritter.md` | Importing from Skritter: what its export holds, the words to check, keeping schedules and history |
 | `merging.md` | What is kept for merging, combining backups |
+| `sync.md` | Syncing between devices: the plan (not built), batches of changes, encryption, a server of our own |
 | `word-page.md` | The word page, sentences, hearing a word |
 | `writing.md` | Raw input, shortcuts, following the frame, two stroke orders, the stroke count, gestures |
 | `pitfalls.md` | Things that are easy to get wrong |

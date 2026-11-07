@@ -54,6 +54,7 @@ Each area's file in `docs/` (index `docs/README.md`) has the names in the code, 
 - Importing from Anki (.apkg, .colpkg), imported schedules: `docs/anki.md`
 - Importing from Skritter (the .zip its support sends): `docs/skritter.md`
 - `changedAt`, removal marks, `formerIds`, combining backups: `docs/merging.md`
+- Syncing between devices (a plan, not built): `docs/sync.md`
 - The word page, sentences, sound: `docs/word-page.md`
 - Writing a character (raw input, shortcuts, the frame, stroke orders, gestures): `docs/writing.md`
 - **Before touching the study area, `src/quiz.js`, `src/wordFlow.js`, Hanzi Writer, or anything that changes heights on the review screen: `docs/pitfalls.md`**
