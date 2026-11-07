@@ -13,6 +13,7 @@ import path from 'node:path';
 
 import { startApp, startBrowsers, tap, type, waitUntil, openSettings, textOf, ANSWER_YES } from './harness.js';
 import { createSyncServer } from '../../server/server.js';
+import qrcode from 'qrcode-generator';
 
 // The files the server holds, all accounts together.
 async function filesOnServer(folder) {
@@ -24,6 +25,33 @@ async function filesOnServer(folder) {
 }
 
 const shown = (id) => `!document.getElementById('${id}').hidden`;
+
+// Gives the page a camera that sees a QR code of `text`: a canvas, redrawn
+// ten times a second, in place of getUserMedia (headless Chromium has no
+// camera). The QR code is made here with the library the app uses.
+async function cameraSeeing(page, text) {
+  const code = qrcode(0, 'M');
+  code.addData(text);
+  code.make();
+  const picture = code.createDataURL(6, 4);
+  await page.evaluate(`(async () => {
+    const image = new Image();
+    image.src = '${picture}';
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = image.width + 200;
+    canvas.height = image.height + 200;
+    const context = canvas.getContext('2d');
+    const draw = () => {
+      context.fillStyle = '#808080';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 100, 100);
+    };
+    draw();
+    setInterval(draw, 100);
+    navigator.mediaDevices.getUserMedia = async () => canvas.captureStream(10);
+  })()`);
+}
 
 // Waits until `check()` (run here, in Node) gives something true, asking
 // again every tenth of a second; a check that fails because the page is
@@ -137,6 +165,15 @@ describe('sync in Settings', { concurrency: false }, () => {
     assert.match(await textOf(page, 'sync-join-error'), /wrong/);
     // Typed in small letters without dashes: read all the same.
     await type(page, 'sync-code-input', code.replace(/-/g, '').toLowerCase());
+    assert.equal(await page.evaluate(`document.getElementById('sync-code-input').value`), code.replace(/-/g, '').toLowerCase());
+    // Or scanned from the other device's QR code, the link with the code:
+    // the code goes in the box, and joining is still the learner's tap.
+    await cameraSeeing(page, `${app.url}#sync=${code}`);
+    await tap(page, 'sync-scan-button');
+    await waitUntil(page, `document.getElementById('scan-dialog').open`, 'the scanner');
+    await waitUntil(page, `!document.getElementById('scan-dialog').open`, 'the code found', 15000);
+    assert.equal(await page.evaluate(`document.getElementById('sync-code-input').value`), code);
+    assert.equal(await page.evaluate(`import('/src/db.js').then((db) => db.getSyncValue('code', null))`), null);
     await page.evaluate(`document.getElementById('sync-join-form').requestSubmit()`);
     await waitUntil(page, `document.getElementById('sync-status').textContent.startsWith('Last synced')`, 'the sync');
     assert.equal(await textOf(page, 'sync-status').then((text) => text.includes('didn')), false);

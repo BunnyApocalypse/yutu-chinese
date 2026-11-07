@@ -732,6 +732,7 @@
             <li data-t-html="credits.showingAndCheckingStrokes"></li>
             <li data-t-html="credits.schedulingTheFsrsMethod"></li>
             <li data-t-html="credits.qrCodes"></li>
+            <li data-t-html="credits.qrReading"></li>
             <li data-t-html="credits.readingAnkiFilesSql"></li>
             <li data-t-html="credits.dictionaryAndTonesCc"></li>
             <li data-t-html="credits.recordingsAudioCmnSyllables"></li>
@@ -884,6 +885,18 @@
       </dialog>
 
       <!-- Asks before something that cannot be undone (confirm.js). -->
+      <!-- Scanning a sync code's QR code with the camera (syncScan.js). -->
+      <dialog id="scan-dialog" class="settings-panel">
+        <h2 data-t="scan.title"></h2>
+        <p class="hint" data-t="scan.where"></p>
+        <video id="scan-video" class="scan-video" playsinline muted></video>
+        <p id="scan-note" class="hint" role="status"></p>
+        <div class="buttons">
+          <button id="scan-cancel" class="small" type="button" data-t="common.cancel"></button>
+        </div>
+        <button data-same-as="scan-cancel" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
+      </dialog>
+
       <dialog id="confirm-dialog" class="settings-panel">
         <h2 id="confirm-question"></h2>
         <p id="confirm-detail"></p>
@@ -1145,6 +1158,7 @@
               <label for="welcome-code-input" data-t="sync.codeLabel"></label>
               <input id="welcome-code-input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" />
               <button id="welcome-join-submit" class="small" type="submit" data-t="sync.join"></button>
+              <button id="welcome-scan-button" class="small" type="button" data-t="scan.button"></button>
               <p id="welcome-join-note" class="hint" role="status" hidden></p>
             </form>
           </div>
@@ -1616,6 +1630,7 @@
               <label for="sync-code-input" data-t="sync.codeLabel"></label>
               <input id="sync-code-input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" />
               <button id="sync-join-submit" class="small" type="submit" data-t="sync.join"></button>
+              <button id="sync-scan-button" class="small" type="button" data-t="scan.button"></button>
               <p id="sync-join-error" class="hint sync-problem" role="alert" hidden></p>
             </form>
           </div>

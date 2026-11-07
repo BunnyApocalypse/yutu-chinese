@@ -2514,6 +2514,16 @@ button.slot {
   margin: var(--space-medium) 0;
 }
 
+/* What the camera sees while scanning (syncScan.js). */
+.scan-video {
+  display: block;
+  inline-size: 100%;
+  max-block-size: 50vh;
+  object-fit: cover;
+  border-radius: var(--radius);
+  background: var(--border);
+}
+
 .sync-join {
   display: flex;
   flex-wrap: wrap;

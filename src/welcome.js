@@ -19,6 +19,7 @@ import { welcomeStorage } from './storageAdvice.js';
 import { setTheme } from './theme.js';
 import { t } from './text.js';
 import { makeCode, readCode } from './syncCode.js';
+import { scanForCode } from './syncScan.js';
 import { showCode, copyCode, saveCodeFile, printCode, problemText, codeProblemText } from './syncCodeView.js';
 
 const byId = (id) => document.getElementById(id);
@@ -132,6 +133,16 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
     joinInput.focus();
   }
   byId('welcome-join-button').addEventListener('click', openJoin);
+
+  // A code scanned goes in the box; joining is still a tap on the button.
+  byId('welcome-scan-button').addEventListener('click', async () => {
+    const code = await scanForCode();
+    if (code) {
+      joinInput.value = code;
+      joinNote.hidden = true;
+      byId('welcome-join-submit').focus();
+    }
+  });
 
   joinForm.addEventListener('submit', async (event) => {
     event.preventDefault();

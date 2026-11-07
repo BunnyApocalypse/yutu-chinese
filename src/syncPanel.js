@@ -8,6 +8,7 @@
 
 import { makeCode, readCode } from './syncCode.js';
 import { showCode as fillCode, copyCode, saveCodeFile, printCode, problemText, codeProblemText } from './syncCodeView.js';
+import { scanForCode } from './syncScan.js';
 import { ask } from './confirm.js';
 import { t, formatDateTime } from './text.js';
 
@@ -89,6 +90,16 @@ export async function createSyncPanel(control) {
   }
 
   byId('sync-on-button').addEventListener('click', async () => showCode(await makeCode(), true));
+
+  // A code scanned goes in the box; joining is still a tap on the button.
+  byId('sync-scan-button').addEventListener('click', async () => {
+    const code = await scanForCode();
+    if (code) {
+      codeInput.value = code;
+      joinError.hidden = true;
+      byId('sync-join-submit').focus();
+    }
+  });
   byId('sync-join-button').addEventListener('click', openJoin);
 
   joinForm.addEventListener('submit', async (event) => {

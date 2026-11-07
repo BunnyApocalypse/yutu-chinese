@@ -208,6 +208,17 @@ export default {
     'Your synced words are deleted from the sync server, for all your devices, and sync is turned off here. Each device keeps the words it has.',
   'sync.deleteYes': 'Delete',
 
+  // Scanning a sync code's QR code (index.html, scan-dialog; syncScan.js)
+  'scan.button': 'Scan a QR code',
+  'scan.title': 'Scan the QR code',
+  'scan.where': 'On your other device, open Settings › Your data and backups › Sync between devices › Show sync code, and hold its QR code up to this camera.',
+  'scan.starting': 'Starting the camera…',
+  'scan.pointAt': 'Looking for the QR code…',
+  'scan.notACode': 'That QR code isn’t a sync code.',
+  'scan.denied': 'The camera wasn’t allowed. Allow it in the browser’s settings for this site, or type the code.',
+  'scan.noCamera': 'No camera could be found. Type the code instead.',
+  'scan.failed': 'The camera couldn’t be started. Type the code instead.',
+
   'settings.basics': 'Basics of Chinese',
   'settings.introductionAgain': 'Show the introduction again',
   'settings.whatsNew': "What's new",
@@ -1071,6 +1082,8 @@ export default {
   'credits.schedulingTheFsrsMethod': '<b>Scheduling:</b> the FSRS method, in <a href="https://github.com/open-spaced-repetition/ts-fsrs" target="_blank" rel="noopener">ts-fsrs</a>. MIT License.',
   'credits.qrCodes':
     '<b>QR codes</b> (syncing): <a href="https://github.com/kazuhikoarase/qrcode-generator" target="_blank" rel="noopener">qrcode-generator</a> by Kazuhiko Arase. MIT License. “QR Code” is a registered trademark of DENSO WAVE INCORPORATED.',
+  'credits.qrReading':
+    '<b>Reading QR codes</b> (syncing): <a href="https://github.com/cozmo/jsQR" target="_blank" rel="noopener">jsQR</a>. Apache License 2.0.',
   'credits.readingAnkiFilesSql': '<b>Reading Anki files:</b> <a href="https://github.com/sql-js/sql.js" target="_blank" rel="noopener">sql.js</a> (SQLite in the browser), MIT License; <a href="https://github.com/101arrowz/fzstd" target="_blank" rel="noopener">fzstd</a> by Arjun Barrett, MIT License. SQLite itself is in the public domain.',
   'credits.dictionaryAndTonesCc': '<b>Dictionary and tones:</b> <a href="https://cc-cedict.org" target="_blank" rel="noopener">CC-CEDICT</a>. Creative Commons Attribution-ShareAlike 4.0.',
   'credits.recordingsAudioCmnSyllables': '<b>Recordings:</b> <a href="https://github.com/hugolpz/audio-cmn" target="_blank" rel="noopener">audio-cmn</a>: syllables spoken by Chen Wang, words spoken by Yue Tan (Shtooka project), collected by Hugo Lopez. Creative Commons Attribution-ShareAlike.',

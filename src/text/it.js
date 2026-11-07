@@ -203,6 +203,17 @@ export default {
     'Le tue parole sincronizzate vengono eliminate dal server di sincronizzazione, per tutti i tuoi dispositivi, e la sincronizzazione viene disattivata qui. Ogni dispositivo conserva le parole che ha.',
   'sync.deleteYes': 'Elimina',
 
+  // Inquadrare il codice QR di un codice di sincronizzazione (index.html, scan-dialog; syncScan.js)
+  'scan.button': 'Scansiona un codice QR',
+  'scan.title': 'Scansiona il codice QR',
+  'scan.where': 'Sull\'altro dispositivo, apri Impostazioni › I tuoi dati e i backup › Sincronizza tra dispositivi › Mostra il codice di sincronizzazione, e avvicina il suo codice QR a questa fotocamera.',
+  'scan.starting': 'Avvio la fotocamera…',
+  'scan.pointAt': 'Cerco il codice QR…',
+  'scan.notACode': 'Quel codice QR non è un codice di sincronizzazione.',
+  'scan.denied': 'La fotocamera non è stata consentita. Consentila nelle impostazioni del browser per questo sito, oppure digita il codice.',
+  'scan.noCamera': 'Non è stata trovata nessuna fotocamera. Digita il codice.',
+  'scan.failed': 'Non è stato possibile avviare la fotocamera. Digita il codice.',
+
   'settings.basics': 'Basi del cinese',
   'settings.introductionAgain': 'Mostra di nuovo l\'introduzione',
   'settings.whatsNew': 'Novità',
@@ -1058,6 +1069,8 @@ export default {
   'credits.schedulingTheFsrsMethod': '<b>Pianificazione:</b> il metodo FSRS, in <a href="https://github.com/open-spaced-repetition/ts-fsrs" target="_blank" rel="noopener">ts-fsrs</a>. MIT License.',
   'credits.qrCodes':
     '<b>Codici QR</b> (sincronizzazione): <a href="https://github.com/kazuhikoarase/qrcode-generator" target="_blank" rel="noopener">qrcode-generator</a> di Kazuhiko Arase. MIT License. «QR Code» è un marchio registrato di DENSO WAVE INCORPORATED.',
+  'credits.qrReading':
+    '<b>Lettura dei codici QR</b> (sincronizzazione): <a href="https://github.com/cozmo/jsQR" target="_blank" rel="noopener">jsQR</a>. Apache License 2.0.',
   'credits.readingAnkiFilesSql': '<b>Lettura dei file di Anki:</b> <a href="https://github.com/sql-js/sql.js" target="_blank" rel="noopener">sql.js</a> (SQLite nel browser), MIT License; <a href="https://github.com/101arrowz/fzstd" target="_blank" rel="noopener">fzstd</a> di Arjun Barrett, MIT License. SQLite stesso è di pubblico dominio.',
   'credits.dictionaryAndTonesCc': '<b>Dizionario e toni:</b> <a href="https://cc-cedict.org" target="_blank" rel="noopener">CC-CEDICT</a>. Creative Commons Attribution-ShareAlike 4.0.',
   'credits.recordingsAudioCmnSyllables': '<b>Registrazioni:</b> <a href="https://github.com/hugolpz/audio-cmn" target="_blank" rel="noopener">audio-cmn</a>: sillabe pronunciate da Chen Wang, parole pronunciate da Yue Tan (progetto Shtooka), raccolte da Hugo Lopez. Creative Commons Attribution-ShareAlike.',
