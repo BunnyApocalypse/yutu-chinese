@@ -1,0 +1,20 @@
+# What runs once at the end of a play, if a task asked for it ("notify").
+- name: Restart the sync server
+  ansible.builtin.systemd_service:
+    name: yutu-sync
+    state: restarted
+    daemon_reload: true
+
+- name: Reload Caddy
+  ansible.builtin.systemd_service:
+    name: caddy
+    state: reloaded
+
+- name: Reload sshd
+  ansible.builtin.systemd_service:
+    name: sshd
+    state: reloaded
+
+- name: Reload systemd
+  ansible.builtin.systemd_service:
+    daemon_reload: true

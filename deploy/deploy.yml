@@ -1,0 +1,21 @@
+# Puts the sync server's program from this repository (server/) on the
+# server, with the settings as they are in the inventory and
+# group_vars/all.yml, and restarts it if anything changed.
+#   ansible-playbook deploy.yml
+# To switch syncing off for everyone at once (and on again):
+#   ansible-playbook deploy.yml -e sync_paused=true
+#   ansible-playbook deploy.yml -e sync_paused=false
+
+- name: Deploy the sync server's program
+  hosts: all
+  become: true
+  handlers:
+    - name: Handlers
+      ansible.builtin.import_tasks: tasks/handlers.yml
+
+  tasks:
+    - name: The program, its settings and its service
+      ansible.builtin.import_tasks: tasks/program.yml
+
+    - name: Reached from the world
+      ansible.builtin.import_tasks: tasks/public-check.yml

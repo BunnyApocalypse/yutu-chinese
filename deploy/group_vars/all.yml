@@ -1,0 +1,35 @@
+# Every setting the playbooks use, with what it is when not set in the
+# inventory (inventory.yml). Most need no change.
+
+# The account the playbooks log in as after the first setup: made by
+# setup.yml, which itself logs in as root once (deploy/README.md).
+ansible_user: yutu
+admin_user: yutu
+
+# Where the server's program is kept, and its files.
+sync_code_dir: /opt/yutu-sync
+sync_data_dir: /var/lib/yutu-sync
+# The port the program listens on, on the server itself only; Caddy, in
+# front, answers the world on 443 (HTTPS).
+sync_port: 8787
+
+# The server's limits and switches (server/README.md has them all).
+sync_max_file_mb: 64
+sync_max_account_mb: 256
+sync_max_total_mb: 30720
+sync_new_accounts_per_day: 10
+sync_requests_per_minute: 600
+# An account unused this many days is deleted (0: never). The owner chose a
+# year (2026-11-07).
+sync_expire_days: 365
+# true turns syncing off for everyone at once: run deploy.yml with
+#   -e sync_paused=true
+# (and set it here or in the inventory to keep it so).
+sync_paused: false
+
+# Healthchecks ping URL; empty: no watch on the server.
+healthcheck_url: ""
+
+# When the server restarts by itself if an update needs it: weekly, early
+# on Monday morning (server time, UTC).
+reboot_when: "Mon *-*-* 04:00:00"

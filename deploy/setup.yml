@@ -1,0 +1,292 @@
+# Sets up a sync server for 玉兔中文 (Yutu Chinese) on AlmaLinux 10, from
+# nothing, and brings one already set up back to how it should be: safe to
+# run again at any time. deploy/README.md says how to run it.
+#
+# What it does, in order:
+#   1. an admin account that logs in with the same key as root, and sudo;
+#      then logging in by key only, never as root (tag ssh)
+#   2. every update, then security updates by themselves daily, and a
+#      weekly restart if an update needs one (tag reboot)
+#   3. the firewall: SSH, HTTP and HTTPS only (tag firewall)
+#   4. Node, and Caddy from its official COPR repository
+#   5. the sync server's program as a service (tasks/program.yml)
+#   6. Caddy in front of it, with HTTPS (SELinux allowed to let it pass
+#      requests on: tag selinux)
+#   7. if a Healthchecks URL is set, a ping every 5 minutes
+#
+# The first run logs in as root, which the server came with:
+#   ansible-playbook setup.yml -e ansible_user=root
+# Later runs log in as the admin account (group_vars/all.yml).
+
+- name: Set up the sync server
+  hosts: all
+  become: true
+  handlers:
+    - name: Handlers
+      ansible.builtin.import_tasks: tasks/handlers.yml
+
+  tasks:
+    # ---- 1. Logging in ----
+
+    - name: The admin account, allowed to use sudo
+      ansible.builtin.user:
+        name: "{{ admin_user }}"
+        groups: wheel
+        append: true
+        shell: /bin/bash
+      tags: [ssh]
+
+    - name: The admin account's SSH folder
+      ansible.builtin.file:
+        path: "/home/{{ admin_user }}/.ssh"
+        state: directory
+        owner: "{{ admin_user }}"
+        group: "{{ admin_user }}"
+        mode: "0700"
+      tags: [ssh]
+
+    - name: The admin account logs in with the key root has
+      ansible.builtin.copy:
+        src: /root/.ssh/authorized_keys
+        dest: "/home/{{ admin_user }}/.ssh/authorized_keys"
+        remote_src: true
+        owner: "{{ admin_user }}"
+        group: "{{ admin_user }}"
+        mode: "0600"
+        # Once root may no longer log in, the admin account's keys are the
+        # ones to keep: never overwritten from root's again.
+        force: false
+      tags: [ssh]
+
+    - name: The admin account uses sudo without a password (it has none; its key is the lock)
+      ansible.builtin.copy:
+        dest: /etc/sudoers.d/yutu-admin
+        content: "{{ admin_user }} ALL=(ALL) NOPASSWD: ALL\n"
+        owner: root
+        group: root
+        mode: "0440"
+        validate: visudo -cf %s
+      tags: [ssh]
+
+    - name: Logging in by key only, never as root
+      ansible.builtin.copy:
+        src: templates/sshd-yutu.conf
+        # sshd uses the first value it reads, and reads this folder in order
+        # of names: 10- comes before the system's own 50-.
+        dest: /etc/ssh/sshd_config.d/10-yutu.conf
+        owner: root
+        group: root
+        mode: "0600"
+      notify: Reload sshd
+      tags: [ssh]
+
+    - name: The SSH settings as a whole are valid (else nothing is reloaded)
+      ansible.builtin.command: sshd -t
+      changed_when: false
+      tags: [ssh]
+
+    # ---- 2. Updates ----
+
+    # Updating everything is the point here (the lint tool asks for fixed
+    # versions, for installing).
+    - name: Every update there is # noqa: package-latest
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+        update_cache: true
+      tags: [updates]
+
+    - name: The tools for updating by itself and for knowing when a restart is needed
+      ansible.builtin.dnf:
+        name:
+          - dnf-automatic
+          - dnf-utils
+          - dnf-plugins-core
+        state: present
+
+    - name: Security updates are put in by themselves
+      community.general.ini_file:
+        path: /etc/dnf/automatic.conf
+        section: commands
+        option: "{{ item.option }}"
+        value: "{{ item.value }}"
+        mode: "0644"
+      loop:
+        - { option: upgrade_type, value: security }
+        - { option: apply_updates, value: "yes" }
+
+    - name: Daily
+      ansible.builtin.systemd_service:
+        name: dnf-automatic.timer
+        enabled: true
+        state: started
+
+    - name: A weekly restart if an update needs one
+      ansible.builtin.template:
+        src: "{{ item.src }}"
+        dest: "/etc/systemd/system/{{ item.dest }}"
+        owner: root
+        group: root
+        mode: "0644"
+      loop:
+        - { src: yutu-reboot.service, dest: yutu-reboot.service }
+        - { src: yutu-reboot.timer.j2, dest: yutu-reboot.timer }
+      notify: Reload systemd
+      tags: [reboot]
+
+    - name: Its timer
+      ansible.builtin.systemd_service:
+        name: yutu-reboot.timer
+        enabled: true
+        state: started
+        daemon_reload: true
+      tags: [reboot]
+
+    # ---- 3. The firewall ----
+
+    - name: The firewall (firewalld)
+      ansible.builtin.dnf:
+        name: firewalld
+        state: present
+      tags: [firewall]
+
+    - name: The firewall runs
+      ansible.builtin.systemd_service:
+        name: firewalld
+        enabled: true
+        state: started
+      tags: [firewall]
+
+    - name: SSH, HTTP (for the certificate and the way to HTTPS) and HTTPS open; nothing else
+      ansible.posix.firewalld:
+        service: "{{ item }}"
+        permanent: true
+        immediate: true
+        state: enabled
+      loop:
+        - ssh
+        - http
+        - https
+      tags: [firewall]
+
+    - name: Not Cockpit, AlmaLinux's web page for running the machine, open by default
+      ansible.posix.firewalld:
+        service: cockpit
+        permanent: true
+        immediate: true
+        state: disabled
+      tags: [firewall]
+
+    - name: HTTPS over UDP too (HTTP/3, which Caddy offers)
+      ansible.posix.firewalld:
+        port: 443/udp
+        permanent: true
+        immediate: true
+        state: enabled
+      tags: [firewall]
+
+    # ---- 4. Node and Caddy ----
+
+    - name: Node, from AlmaLinux's own packages (security fixes come with the system's)
+      ansible.builtin.dnf:
+        name: nodejs
+        state: present
+
+    - name: Node's version
+      ansible.builtin.command: node --version
+      register: node_version
+      changed_when: false
+
+    - name: Node 22 or later (the server needs it)
+      ansible.builtin.assert:
+        that: (node_version.stdout | regex_replace('^v', '') is version('22', '>='))
+        fail_msg: "Node {{ node_version.stdout }} is too old: 22 or later is needed."
+
+    - name: Caddy's official COPR repository (approved by the owner, 2026-11-07)
+      community.general.copr:
+        name: "@caddy/caddy"
+        # COPR names its builds for AlmaLinux and Rocky after EPEL, the
+        # extra packages for Enterprise Linux: epel-10-aarch64 on ARM.
+        chroot: "epel-{{ ansible_distribution_major_version }}-{{ ansible_architecture }}"
+        state: enabled
+
+    - name: Caddy
+      ansible.builtin.dnf:
+        name: caddy
+        state: present
+
+    # ---- 5. The program ----
+
+    - name: An account for the program alone, which can't log in
+      ansible.builtin.user:
+        name: yutu-sync
+        system: true
+        shell: /sbin/nologin
+        create_home: false
+
+    - name: The program, its settings and its service
+      ansible.builtin.import_tasks: tasks/program.yml
+
+    # ---- 6. Caddy ----
+
+    - name: SELinux lets Caddy pass requests on to the program
+      ansible.posix.seboolean:
+        name: httpd_can_network_connect
+        state: true
+        persistent: true
+      tags: [selinux]
+
+    - name: Caddy's settings
+      ansible.builtin.template:
+        src: Caddyfile.j2
+        dest: /etc/caddy/Caddyfile
+        owner: root
+        group: caddy
+        mode: "0644"
+        validate: caddy validate --adapter caddyfile --config %s
+      notify: Reload Caddy
+
+    - name: Caddy runs
+      ansible.builtin.systemd_service:
+        name: caddy
+        enabled: true
+        state: started
+
+    # ---- 7. The watch ----
+
+    - name: The check Healthchecks is told about
+      ansible.builtin.template:
+        src: healthcheck.sh.j2
+        dest: /usr/local/bin/yutu-healthcheck
+        owner: root
+        group: root
+        mode: "0755"
+      when: healthcheck_url | length > 0
+
+    - name: Its timer
+      ansible.builtin.copy:
+        src: "templates/{{ item }}"
+        dest: "/etc/systemd/system/{{ item }}"
+        owner: root
+        group: root
+        mode: "0644"
+      loop:
+        - yutu-healthcheck.service
+        - yutu-healthcheck.timer
+      when: healthcheck_url | length > 0
+
+    - name: Every 5 minutes
+      ansible.builtin.systemd_service:
+        name: yutu-healthcheck.timer
+        enabled: true
+        state: started
+        daemon_reload: true
+      when: healthcheck_url | length > 0
+
+    # ---- Done ----
+
+    - name: Restarts and reloads asked for above
+      ansible.builtin.meta: flush_handlers
+
+    - name: Reached from the world
+      ansible.builtin.import_tasks: tasks/public-check.yml

@@ -1,0 +1,11 @@
+# The owner's sync server for 玉兔中文 (Yutu Chinese). Self-hosting? Copy
+# inventory.example.yml instead.
+all:
+  hosts:
+    sync:
+      ansible_host: 2.31.163.171
+      sync_domain: yutu.bunnyapocalypse.space
+      sync_allowed_origins:
+        - https://bunnyapocalypse.github.io
+      # The key made for this server (deploy/README.md).
+      ansible_ssh_private_key_file: ~/.ssh/yutu_sync

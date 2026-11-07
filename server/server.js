@@ -417,8 +417,14 @@ export async function createSyncServer(given = {}) {
       }
     } finally {
       if (settings.log) {
-        // The kind of request only: no account, name or address.
-        const kind = request.url.startsWith('/v1/accounts/') ? (request.url.includes('/files/') ? 'file' : 'account') : request.url;
+        // The kind of request only: no account, file name or address, nor
+        // whatever else was asked for (the internet's scanners try every
+        // address they know: 2026-11-07, within minutes of starting).
+        const kind = request.url === '/v1/health'
+          ? 'health'
+          : request.url.startsWith('/v1/accounts/')
+            ? request.url.includes('/files/') ? 'file' : 'account'
+            : 'other';
         console.log(`${request.method} ${kind} ${response.statusCode}`);
       }
     }

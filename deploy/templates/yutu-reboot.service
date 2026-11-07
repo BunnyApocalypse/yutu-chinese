@@ -1,0 +1,9 @@
+# Restarts the machine if an update needs it (a new kernel, say), as
+# needs-restarting says. Learners' apps don't notice: syncing waits and
+# tries again. Written by Ansible (deploy/setup.yml).
+[Unit]
+Description=Restart the machine if an update needs it
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'needs-restarting -r >/dev/null || systemctl reboot'

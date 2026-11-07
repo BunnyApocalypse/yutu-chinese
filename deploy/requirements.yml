@@ -1,0 +1,11 @@
+# The Ansible collections these playbooks use, besides Ansible's own
+# modules. Fedora's `ansible` package has both already; with only
+# `ansible-core`, install them with:
+#   ansible-galaxy collection install -r requirements.yml
+collections:
+  # firewalld and SELinux switches
+  - name: ansible.posix
+    version: ">=1.5.0"
+  # the Caddy COPR repository and SELinux file labels
+  - name: community.general
+    version: ">=8.0.0"

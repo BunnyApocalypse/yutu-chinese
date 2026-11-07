@@ -1,0 +1,9 @@
+[Unit]
+Description=Restart the machine if an update needs it, once a week
+
+[Timer]
+OnCalendar={{ reboot_when }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target

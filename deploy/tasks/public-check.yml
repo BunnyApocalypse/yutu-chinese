@@ -1,0 +1,22 @@
+# Whether the world reaches the sync server through HTTPS. Not a failure if
+# not (yet): the name may not point at the server, or Caddy may still be
+# getting its certificate. Said plainly instead.
+- name: The server answers at https://{{ sync_domain }}
+  ansible.builtin.uri:
+    url: "https://{{ sync_domain }}/v1/health"
+    return_content: true
+  register: public_health
+  until: public_health.status == 200
+  retries: 6
+  delay: 10
+  failed_when: false
+  tags: [public]
+
+- name: Said if not
+  ansible.builtin.debug:
+    msg: >-
+      https://{{ sync_domain }} doesn't answer yet ({{ public_health.msg | default('') }}).
+      Check that its DNS records point at this server; Caddy gets its
+      certificate by itself once they do. Run status.yml to look again.
+  when: public_health.status | default(0) != 200
+  tags: [public]

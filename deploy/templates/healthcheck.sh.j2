@@ -1,0 +1,14 @@
+#!/bin/sh
+# Every few minutes (yutu-healthcheck.timer): tells Healthchecks whether the
+# sync server answers through HTTPS and the disk has room. Healthchecks
+# emails the owner when a ping says "fail", or when pings stop coming (the
+# whole machine down). Written by Ansible (deploy/setup.yml).
+ok=1
+curl -fsS --max-time 10 https://{{ sync_domain }}/v1/health >/dev/null || ok=0
+used=$(df --output=pcent {{ sync_data_dir }} | tail -1 | tr -dc 0-9)
+[ "$used" -lt 90 ] || ok=0
+if [ "$ok" = 1 ]; then
+  curl -fsS --max-time 10 --retry 3 {{ healthcheck_url }} >/dev/null
+else
+  curl -fsS --max-time 10 --retry 3 {{ healthcheck_url }}/fail >/dev/null
+fi

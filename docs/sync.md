@@ -99,7 +99,7 @@ The sync code is the only key, so it is also how a learner gets everything back 
 
 ## The server
 
-- **What it is** (`server/server.js`, built 2026-11-07): a small program of our own, free software (GPL, `server/`): plain Node with **no npm dependencies**, keeping files on disk (a folder per account), behind **Caddy** (Apache-2.0), which provides HTTPS and renews its certificates by itself. On a small rented machine (a VPS) at an EU host such as Hetzner, running Debian. It understands nothing of the app, all under `/v1`:
+- **What it is** (`server/server.js`, built 2026-11-07): a small program of our own, free software (GPL, `server/`): plain Node with **no npm dependencies**, keeping files on disk (a folder per account), behind **Caddy** (Apache-2.0), which provides HTTPS and renews its certificates by itself. On a small rented machine (a VPS) at Hetzner, running AlmaLinux 10, set up by the playbooks in `deploy/`. It understands nothing of the app, all under `/v1`:
   - `GET /health`: "ok", for a watch on the server;
   - `GET /accounts/<account>`: the files, `[{ name, size }]`; `DELETE /accounts/<account>`: all of them;
   - `GET`, `PUT`, `DELETE /accounts/<account>/files/<name>`: a file; `PUT` refused (409, `exists`) if one of that name is there: written under a name of its own, then linked to its real name, so a file is never seen half written or replaced.
@@ -134,9 +134,9 @@ Estimated 2026-11-07 from the owner's own backup (47 MB as a file, **5.7 MB comp
 
 **Upkeep is kept small by design:** nothing on the server is irreplaceable (no backups), downtime is no emergency (the app is offline-first), there are no accounts, passwords or emails (no resets, no support), and no dependencies (no stream of warnings). What remains:
 
-- **By itself:** Debian's security updates (`unattended-upgrades`), certificates (Caddy), restarts after a crash (`systemd`), an email if the server is down or the disk fills.
+- **By itself:** security updates (`dnf-automatic`, daily) and a weekly restart if one is needed, certificates (Caddy), restarts after a crash (`systemd`), unused accounts deleted, and, once a Healthchecks URL is set, an email if the server is down or the disk fills.
 - **Monthly, 15–30 minutes:** a look at the alerts and the disk; Node's security releases (or automatic).
-- **Every 1–2 years:** the next long-term version of Node (each is supported about two and a half years), an hour or two with Claude; **every 2 years or so:** Debian's next release, half a day.
+- **Monthly:** `ansible-playbook update.yml` (everything else, and a restart if needed) and `status.yml`. **Now and then:** the next Node version when AlmaLinux offers it. **About 2035:** AlmaLinux's next major release (AlmaLinux 10 is supported until then; no upgrade every two years, the owner's reason for it).
 - **Now and then:** blocking someone who uses it as free file storage; a security alert to act on.
 - **The owner holds** the host account, the domain and the SSH key (the key that logs in to the server), all with two-factor sign-in. Whether Claude may log in to do upgrades is the owner's choice.
 
@@ -177,7 +177,10 @@ Step 1, done 2026-11-07, with nothing yet turning it on:
 - **Files lost on the server** (`filesLost`, `startAfresh` in `src/sync.js`): a device that has sent batches but finds none of its own and no snapshot covering them starts afresh: a new device ID (so its batches are numbered from 1 and a device joining later finds none missing), `taken` forgotten, and everything sent again (`startedAfresh` in the result). Each device does so at its next sync; the others take what comes in, changing nothing they had.
 - **Speed in the browser** (measured 2026-11-07 on the owner's backup at 6x CPU slowdown, as on their tablet): taking in a typical batch (20 reviews, 19 words) about 0.4 s in all, the page held up at most 0.2 s; a whole day at once (526 reviews, 299 words) 0.9 s reading, 0.8 s working out, 0.4 s saving, held up at most 1.1 s. Both only when nothing is being written. If that is too much, the working out could move to a worker (a second thread) later.
 - Tested in `tests/browser/syncSettings.browser.js` ("syncing by itself": a setting sent when put away and in effect on the other device when shown; nothing taken in while a stroke is being written) and `tests/sync.test.js` (send-only syncs, files lost).
-- **Not yet:** step 4 (the server for real).
+- **Step 4 so far, 2026-11-07: the server runs** at `https://yutu.bunnyapocalypse.space`: Hetzner, ARM (2 cores, 4 GB, 40 GB), Germany, **AlmaLinux 10** (the owner, over Debian: they use Fedora, and its ten years of support spare a major upgrade every two years), €7.13 a month (€5.99 and 19% VAT). DNS straight to it, **not through Cloudflare's proxy** (tried, and turned off: it would see every secret and every learner's address, and the server would count all learners as Cloudflare's few addresses). Certificate from Let's Encrypt through Caddy; IPv4 and IPv6.
+- **Set up and kept by Ansible playbooks** (`deploy/`, the owner's request: runnable without Claude, and by anyone self-hosting; `deploy/README.md`): `setup.yml` (an admin account `yutu` logging in with the owner's key `~/.ssh/yutu_sync`, root and passwords refused; every update, then security ones daily by `dnf-automatic` and a weekly restart if one is needed, `yutu-reboot.timer`; firewalld with SSH, HTTP, HTTPS only, Cockpit closed; Node 22 from AlmaLinux; Caddy from its COPR repository, `epel-10` build; the program as `yutu-sync.service`, sandboxed by systemd, its files in `/var/lib/yutu-sync`; an optional Healthchecks ping, `healthcheck_url`), `deploy.yml` (the program from `server/`, `-e sync_paused=true` to switch syncing off), `update.yml`, `status.yml`. Tested in an AlmaLinux 10 container (`podman --privileged --systemd=always`: systemd's sandbox needs it), twice for no changes the second time, and on the server. `ansible-lint` passes at "production".
+- **Checked on the server:** root refused, the admin account with sudo, HTTPS with a valid certificate, two test devices syncing through it (three syncs in 0.6 s) and their account deleted after. Internet scanners came within minutes, all answered "not found"; the log now names only the kind of request (`health`, `account`, `file`, `other`).
+- **Not yet:** the app pointed at it (`VITE_SYNC_SERVER` in the deploy workflow, for the test copy first), one real check on the owner's phone and tablet, the privacy page, a Healthchecks account for the alerts.
 
 ## Order of building
 
@@ -190,6 +193,6 @@ One step at a time, each agreed before it starts:
 
 ## Decisions for the owner
 
-- **Host: Hetzner** (the owner, 2026-11-07, over OVHcloud, Infomaniak and Netcup: hourly billing, no contract), the smallest x86 machine in Germany suggested, Debian 13; **domain: `yutu.bunnyapocalypse.space`**. Prices to check on Hetzner's own page when renting (both it and Netcup raised them in 2026).
+- **Host: Hetzner** (the owner, 2026-11-07, over OVHcloud, Infomaniak and Netcup: hourly billing, no contract): ARM, Germany, AlmaLinux 10, €7.13 a month with VAT; **domain: `yutu.bunnyapocalypse.space`**. Running (above).
 - **A reminder of the sync code** now and then, or none.
 - **The numbers:** 30 seconds after the last change, the cap between sends, the snapshot size.

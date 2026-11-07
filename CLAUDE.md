@@ -32,7 +32,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 
 - US English spelling everywhere (UI, comments, identifiers, docs).
 - Simple, direct code; a few small, plainly named files over abstractions. Comment anything non-obvious, and explain new concepts (browser APIs, tooling, PWA mechanics) in plain language the first time.
-- **Ask before adding any dependency**; the bar is high. Approved: `hanzi-writer`, `hanzi-writer-data`, `ts-fsrs`, `sql.js` and `fzstd` (reading Anki files, 2026-10-19), `qrcode-generator` and `jsqr` (the sync code's QR code, made and scanned, 2026-11-07), `vite` (development); for the Android app when it is built, Capacitor (`@capacitor/core`, `android`, `cli`, `app`) and `@capacitor-community/text-to-speech` (2026-10-30, `docs/history.md`).
+- **Ask before adding any dependency**; the bar is high. Approved: `hanzi-writer`, `hanzi-writer-data`, `ts-fsrs`, `sql.js` and `fzstd` (reading Anki files, 2026-10-19), `qrcode-generator` and `jsqr` (the sync code's QR code, made and scanned, 2026-11-07), `vite` (development); Ansible, on the owner's computer only, for the sync server (`deploy/`, 2026-11-07); for the Android app when it is built, Capacitor (`@capacitor/core`, `android`, `cli`, `app`) and `@capacitor-community/text-to-speech` (2026-10-30, `docs/history.md`).
 - **Fetch bulk data once and read it locally** rather than sending many requests to someone's server (2026-10-13). Development downloads go in the git-ignored `local/`, with source and fetch command in `local/README.md`.
 - One milestone at a time: propose a plan before building something new, and don't build ahead.
 
@@ -43,6 +43,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - Both first run `scripts/copy-char-data.js` (`predev`/`prebuild`), which copies stroke data into `public/` if missing.
 - `npm test`: unit tests in `tests/` (Node's test runner) for the plain-calculation code and the sync server; nothing touching the page or IndexedDB.
 - `npm run sync-server`: the sync server on this computer, http://127.0.0.1:8787 (`server/README.md`).
+- The real sync server, `yutu.bunnyapocalypse.space`: Ansible playbooks in `deploy/` (`cd deploy`, then `ansible-playbook status.yml`, `deploy.yml`, `update.yml`; `deploy/README.md`).
 - `npm run test:browser`: the real app in several headless Chromium browsers at once, about four minutes (`tests/browser/CLAUDE.md`). **Don't change files while it runs**: the dev server reloads the pages and tests fail.
 
 ## Read before working on an area

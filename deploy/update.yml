@@ -1,0 +1,40 @@
+# Every update for the machine (security updates go in by themselves daily;
+# this takes the rest too), and a restart now if one is needed, then a look
+# that everything answers. Monthly is plenty.
+#   ansible-playbook update.yml
+
+- name: Update the machine
+  hosts: all
+  become: true
+
+  tasks:
+    # Updating everything is the point here (the lint tool asks for fixed
+    # versions, for installing).
+    - name: Every update there is # noqa: package-latest
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+        update_cache: true
+
+    - name: Whether a restart is needed (a new kernel, say)
+      ansible.builtin.command: needs-restarting -r
+      register: needs_restart
+      changed_when: false
+      failed_when: needs_restart.rc not in [0, 1]
+
+    - name: Restart, and wait for the machine to come back
+      ansible.builtin.reboot:
+        reboot_timeout: 600
+      when: needs_restart.rc == 1
+      tags: [reboot]
+
+    - name: The program answers, on the machine itself
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ sync_port }}/v1/health"
+      register: local_health
+      until: local_health.status == 200
+      retries: 15
+      delay: 2
+
+    - name: Reached from the world
+      ansible.builtin.import_tasks: tasks/public-check.yml

@@ -1,0 +1,13 @@
+# Caddy: HTTPS for the sync server, with a certificate it gets and renews by
+# itself (Let's Encrypt), passing each request on to the program, which
+# listens on this machine only. Written by Ansible (deploy/setup.yml).
+#
+# No access log: Caddy keeps none unless asked, so no learner's address is
+# written down.
+{{ sync_domain }} {
+	request_body {
+		max_size {{ sync_max_file_mb + 1 }}MB
+	}
+	header -Server
+	reverse_proxy 127.0.0.1:{{ sync_port }}
+}

@@ -1,0 +1,19 @@
+# The server(s) to set up: copy this to inventory.yml and fill it in.
+# deploy/group_vars/all.yml has every setting and what it is for; anything
+# set here wins over it.
+all:
+  hosts:
+    sync:
+      # The server's IP address (or a name that leads to it).
+      ansible_host: 203.0.113.10
+      # The address learners' apps will use: a name pointing at the server
+      # (an A record, and AAAA for IPv6), for which Caddy gets a
+      # certificate by itself.
+      sync_domain: sync.example.org
+      # The sites whose pages may call the server: where your copy of the
+      # app is served from, without a path.
+      sync_allowed_origins:
+        - https://example.github.io
+      # Optional: a Healthchecks.io (or self-hosted Healthchecks) ping URL,
+      # which emails you when the server stops answering or its disk fills.
+      # healthcheck_url: https://hc-ping.com/your-uuid

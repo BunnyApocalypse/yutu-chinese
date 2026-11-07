@@ -1,0 +1,60 @@
+# The sync server's program, its settings and its service: used by setup.yml
+# and deploy.yml. The program is copied from this repository's server/
+# folder, so what runs is what is in git where the playbook is run from.
+
+- name: The program's folder, readable by all, changed by root only
+  ansible.builtin.file:
+    path: "{{ sync_code_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: The program, from server/ in this repository
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../server/{{ item }}"
+    dest: "{{ sync_code_dir }}/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - server.js
+    - package.json
+  notify: Restart the sync server
+
+- name: Its settings, readable by the program, not by other accounts
+  ansible.builtin.template:
+    src: yutu-sync.env.j2
+    dest: /etc/yutu-sync.env
+    owner: root
+    group: yutu-sync
+    mode: "0640"
+  notify: Restart the sync server
+
+- name: The service
+  ansible.builtin.template:
+    src: yutu-sync.service.j2
+    dest: /etc/systemd/system/yutu-sync.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart the sync server
+
+- name: The service starts with the machine, and now
+  ansible.builtin.systemd_service:
+    name: yutu-sync
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Restarted now if anything above changed
+  ansible.builtin.meta: flush_handlers
+
+- name: The program answers, on the machine itself
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ sync_port }}/v1/health"
+    return_content: true
+  register: local_health
+  until: local_health.status == 200
+  retries: 15
+  delay: 2

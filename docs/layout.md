@@ -65,6 +65,7 @@
 - `src/syncScan.js`: scanning a sync code's QR code with the camera, with jsQR (`docs/sync.md`).
 - `src/syncPanel.js`: Settings › Sync between devices: the code, turning sync on, its status and buttons.
 - `src/syncServer.js`: the sync server as syncing's storage: list, read, save, remove as requests, failures as a `reason` (`docs/sync.md`).
+- `deploy/`: Ansible playbooks for the sync server (`setup.yml`, `deploy.yml`, `update.yml`, `status.yml`), their templates and settings (`group_vars/all.yml`), the owner's server (`inventory.yml`) and an example for others; `deploy/README.md`.
 - `server/server.js`: the sync server, plain Node with no dependencies; `server/README.md` (running it, its settings), `server/package.json`.
 - `src/syncCode.js`: the sync code (made, typed in, checked) and the keys and encryption it gives, with WebCrypto (`docs/sync.md`).
 - `src/syncBatch.js`: syncing's calculation: a batch of this device's changes, and taking in another device's with `mergeBackups` on a slice (`docs/sync.md`). Plain calculation.
