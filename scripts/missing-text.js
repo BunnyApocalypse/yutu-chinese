@@ -27,7 +27,10 @@ const gapsIn = (value) => {
   return [...new Set(texts.flatMap((text) => text.match(/\{\w+\}/g) ?? []))].sort().join(' ');
 };
 
-const missing = Object.keys(en).filter((key) => !(key in translation));
+// The letters to Skritter's support stay in English in every language
+// (inEnglish in src/text.js), so a translation doesn't lack them.
+const ENGLISH_ONLY = 'skritterLetter.';
+const missing = Object.keys(en).filter((key) => !(key in translation) && !key.startsWith(ENGLISH_ONLY));
 const leftOver = Object.keys(translation).filter((key) => !(key in en));
 const shared = Object.keys(en).filter((key) => key in translation);
 // "other" is enough for a language with one form, such as Chinese; English
@@ -47,4 +50,4 @@ report('Not yet translated', missing);
 report('No longer in the English', leftOver);
 report('Gaps differ from the English', gapsDiffer);
 report('Forms for numbers differ from the English', formsDiffer);
-console.log(`Translated: ${shared.length} of ${Object.keys(en).length}.`);
+console.log(`Translated: ${shared.length} of ${Object.keys(en).filter((key) => !key.startsWith(ENGLISH_ONLY)).length}.`);

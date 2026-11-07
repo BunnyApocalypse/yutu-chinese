@@ -71,6 +71,25 @@ describe('importing from Skritter', { concurrency: false }, () => {
     assert.equal(await page.evaluate(`document.getElementById('skritter-dialog').open`), true);
     assert.equal(await page.evaluate(`document.getElementById('new-deck-dialog').open`), false);
 
+    // "How to get your data from Skritter": the letter, in English, fits
+    // where the learner lives, and Copy copies it (or, where the browser
+    // won't let a page copy, selects it).
+    await page.evaluate(`document.querySelector('#skritter-guide summary').click()`);
+    assert.equal(await page.evaluate(`document.getElementById('skritter-guide').open`), true);
+    const letter = () => page.evaluate(`document.getElementById('skritter-letter').value`);
+    assert.ok(!(await letter()).includes('GDPR'));
+    await page.evaluate(`document.querySelector('input[name="skritter-where"][value="europe"]').click()`);
+    assert.ok((await letter()).includes('Articles 15 and 20 of the GDPR'));
+    await page.evaluate(`document.querySelector('input[name="skritter-where"][value="california"]').click()`);
+    assert.ok((await letter()).includes('California Consumer Privacy Act'));
+    await tap(page, 'skritter-letter-copy');
+    await waitUntil(
+      page,
+      `document.getElementById('skritter-letter-copy').textContent === 'Copied' ||
+        document.getElementById('skritter-letter').selectionEnd === document.getElementById('skritter-letter').value.length`,
+      'the letter copied or selected',
+    );
+
     // The button can't be pressed again while the file is read.
     assert.equal(await chooseFile(page), true);
     await waitUntil(page, `!document.getElementById('skritter-check-step').hidden`, 'the check step');

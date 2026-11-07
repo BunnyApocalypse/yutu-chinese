@@ -1010,6 +1010,8 @@ export default {
   'credits.tocflWordListThe': "<b>Lista di parole TOCFL:</b> la <span lang=\"zh-Hant-TW\">華語八千詞表</span> pubblicata dallo Steering Committee for the Test of Proficiency-Huayu di Taiwan. Il comitato non dichiara alcuna licenza per essa.",
   'credits.radicalsThe214Kangxi': "<b>Radicali:</b> i 214 radicali Kangxi come elencati dall'Unicode Consortium (CJKRadicals.txt, Unicode License), ordinati per frequenza, da Make Me a Hanzi; i loro significati sono stati scritti per questa app. MIT License.",
   'credits.openDyslexic': '<b>Il font OpenDyslexic</b> (una scelta nelle Impostazioni): di Abbie Gonzalez, da <a href="https://github.com/antijingoist/opendyslexic" target="_blank" rel="noopener">antijingoist/opendyslexic</a>, SIL Open Font License 1.1, tenuto in file di font separati.',
+  'credits.skritterTrademark':
+    'Skritter è un marchio di Inkren Inc. <span lang="zh-Hant-TW">玉兔中文</span> può importare i dati che Skritter ti manda, ma non è affiliata a Skritter né approvata da Skritter.',
   'credits.creditsAndLicenses': 'Crediti e licenze',
   'credits.itIsBuiltOn': 'È costruita sul lavoro di altri, ciascuno con la propria licenza:',
 
@@ -1342,7 +1344,29 @@ export default {
     'Porta qui il tuo studio da Skritter: le tue parole, e la programmazione e lo storico dei ripassi di ogni carta, così le carte scadono quando diceva Skritter.',
   'skritter.fileButton': 'Scegli il file .zip',
   'skritter.howToGetIt':
-    'Skritter non ha un pulsante per esportare: chiedi al suo supporto una copia dei tuoi dati. Ti mandano un file .zip; sceglilo così com’è.',
+    'Skritter non ha un pulsante per esportare: il suo supporto ti manda una copia dei tuoi dati se la chiedi. Ti mandano un file .zip; sceglilo così com’è.',
+  'skritter.guideSummary':
+    'Come avere i tuoi dati da Skritter',
+  'skritter.guideContact':
+    'Apri la <a href="https://skritter.com/contact" target="_blank" rel="noopener">pagina dei contatti</a> di Skritter (skritter.com/contact), dove la sua informativa sulla privacy dice di mandare le richieste sui tuoi dati.',
+  'skritter.guideLetter':
+    'Copia lì la lettera qui sotto e completa ciò che è tra [parentesi].',
+  'skritter.guideAnswer':
+    'Il supporto di Skritter risponde per email con un file .zip: uno studente l’ha avuto in dieci giorni. Sceglilo qui così com’è, senza decomprimerlo.',
+  'skritter.whereYouLive':
+    'Dove vivi?',
+  'skritter.whereEurope':
+    'UE, SEE o Regno Unito',
+  'skritter.whereCalifornia':
+    'California',
+  'skritter.whereElsewhere':
+    'Altrove',
+  'skritter.whyWhere':
+    'Dove vivi decide cosa puoi chiedere. Nell’UE, nel SEE e nel Regno Unito la legge (il GDPR) ti dà diritto a una copia dei tuoi dati; l’informativa sulla privacy di Skritter offre questo diritto anche a chi vive in California. Altrove, la lettera chiede gentilmente, senza citare leggi.',
+  'skritter.letter':
+    'La lettera a Skritter',
+  'skritter.letterNote':
+    'La lettera è in inglese, la lingua in cui scrive il supporto di Skritter. È un esempio da adattare, non una consulenza legale.',
   'skritter.becomes':
     'Ogni parola arriva con il pinyin e il significato del dizionario dell’app, perché il file di Skritter non li contiene. I tuoi ripassi su Skritter valgono per tutte e quattro le carte: significato, pinyin, toni e scrittura.',
   'skritter.yourLists': 'Le tue liste di Skritter',

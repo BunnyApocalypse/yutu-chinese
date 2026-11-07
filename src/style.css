@@ -3228,7 +3228,8 @@ button.primary:active {
 .words-panel input[type='search'],
 .words-panel textarea,
 .setting.stacked input,
-.skritter-list input {
+.skritter-list input,
+.skritter-guide textarea {
   width: 100%;
   min-height: var(--tap-small);
   padding: var(--space-small) var(--space-medium);
@@ -4508,6 +4509,26 @@ button.deck-open {
 .skritter-group input[type='checkbox'] {
   flex: none;
   margin-top: 2px;
+}
+
+/* "How to get your data from Skritter": the steps, then the letter to copy. */
+.skritter-guide ol {
+  margin: var(--space-small) 0 var(--space-medium);
+  padding-left: var(--space-large);
+}
+
+/* The link to Skritter's contact page, as links in explanations are. */
+.skritter-guide a {
+  color: var(--accent);
+  padding: var(--space-tiny) 0;
+}
+
+.skritter-guide li + li {
+  margin-top: var(--space-tiny);
+}
+
+.skritter-guide textarea {
+  resize: vertical;
 }
 
 /* min-width: a fieldset is otherwise never narrower than its widest list. */

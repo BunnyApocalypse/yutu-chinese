@@ -742,6 +742,7 @@
             <li data-t-html="credits.radicalsThe214Kangxi"></li>
             <li data-t-html="credits.openDyslexic"></li>
           </ul>
+          <p data-t-html="credits.skritterTrademark"></p>
         </div>
         <button id="credits-close" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
@@ -1054,6 +1055,31 @@
             <input id="skritter-file" type="file" accept=".zip" hidden />
           </div>
           <p class="hint" data-t="skritter.howToGetIt"></p>
+          <!-- How to ask Skritter for the file, with a letter to copy that
+               fits where the learner lives (skritterImportForm.js; the owner,
+               2026-11-07). The link leaves the app, fine under the offline rule. -->
+          <details id="skritter-guide" class="welcome-more skritter-guide">
+            <summary data-t="skritter.guideSummary"></summary>
+            <ol>
+              <li data-t-html="skritter.guideContact"></li>
+              <li data-t="skritter.guideLetter"></li>
+              <li data-t="skritter.guideAnswer"></li>
+            </ol>
+            <fieldset class="setting">
+              <legend data-t="skritter.whereYouLive"></legend>
+              <div class="anki-choices">
+                <label><input type="radio" name="skritter-where" value="europe" /> <span data-t="skritter.whereEurope"></span></label>
+                <label><input type="radio" name="skritter-where" value="california" /> <span data-t="skritter.whereCalifornia"></span></label>
+                <label><input type="radio" name="skritter-where" value="elsewhere" checked /> <span data-t="skritter.whereElsewhere"></span></label>
+              </div>
+            </fieldset>
+            <p class="hint" data-t="skritter.whyWhere"></p>
+            <textarea id="skritter-letter" rows="12" readonly spellcheck="false" data-t-aria-label="skritter.letter"></textarea>
+            <div class="buttons">
+              <button id="skritter-letter-copy" class="small" type="button" data-t="error.copy"></button>
+            </div>
+            <p class="hint" data-t="skritter.letterNote"></p>
+          </details>
         </section>
         <section id="skritter-check-step" hidden>
           <p id="skritter-summary"></p>

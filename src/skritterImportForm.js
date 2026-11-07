@@ -9,7 +9,7 @@ import { readSkritterExport, describeSkritter, planSkritterImport, readyLevels, 
 import { READY_MADE_LISTS } from './decks.js';
 import { showReading } from './readingStyle.js';
 import { fillMixed, langFor } from './lang.js';
-import { t, formatList } from './text.js';
+import { t, formatList, inEnglish } from './text.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -78,6 +78,36 @@ export function createSkritterImport(shared, dictionaryLoader) {
   });
   byId('skritter-cancel-button').addEventListener('click', () => dialog.close());
   byId('skritter-done-button').addEventListener('click', () => dialog.close());
+
+  // "How to get your data from Skritter": the letter to its support, in
+  // English, fits where the learner lives (docs/skritter.md).
+  const LETTERS = {
+    europe: 'skritterLetter.europe',
+    california: 'skritterLetter.california',
+    elsewhere: 'skritterLetter.elsewhere',
+  };
+  const letter = byId('skritter-letter');
+  const copyButton = byId('skritter-letter-copy');
+  function showLetter() {
+    const where = document.querySelector('input[name="skritter-where"]:checked').value;
+    letter.value = inEnglish(LETTERS[where]);
+    copyButton.textContent = t('error.copy');
+  }
+  for (const radio of document.querySelectorAll('input[name="skritter-where"]')) {
+    radio.addEventListener('change', showLetter);
+  }
+  showLetter();
+  copyButton.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(letter.value);
+      copyButton.textContent = t('error.copied');
+    } catch {
+      // Where the browser will not let a page copy (the clipboard needs a
+      // secure address, so not the LAN one), the letter is selected, to be
+      // copied by hand.
+      letter.select();
+    }
+  });
 
   // The real file chooser is a hidden <input type="file">; the button opens it.
   byId('skritter-file-button').addEventListener('click', () => fileInput.click());

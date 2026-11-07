@@ -1023,6 +1023,8 @@ export default {
   'credits.tocflWordListThe': '<b>TOCFL word list:</b> the <span lang="zh-Hant-TW">華語八千詞表</span> published by Taiwan\'s Steering Committee for the Test of Proficiency-Huayu. The committee states no license for it.',
   'credits.radicalsThe214Kangxi': '<b>Radicals:</b> the 214 Kangxi radicals as listed by the Unicode Consortium (CJKRadicals.txt, Unicode License), ranked by how often they occur, from Make Me a Hanzi; their meanings were written for this app. MIT License.',
   'credits.openDyslexic': '<b>The OpenDyslexic font</b> (a choice in Settings): by Abbie Gonzalez, from <a href="https://github.com/antijingoist/opendyslexic" target="_blank" rel="noopener">antijingoist/opendyslexic</a>, SIL Open Font License 1.1, kept as separate font files.',
+  'credits.skritterTrademark':
+    'Skritter is a trademark of Inkren Inc. <span lang="zh-Hant-TW">玉兔中文</span> can import the data Skritter sends you, but is not affiliated with or endorsed by Skritter.',
   'credits.creditsAndLicenses': 'Credits and licenses',
   'credits.itIsBuiltOn': 'It is built on the work of others, each under its own license:',
 
@@ -1357,7 +1359,30 @@ export default {
     'Bring your study over from Skritter: your words, and every card’s schedule and review history, so cards are due when Skritter said.',
   'skritter.fileButton': 'Choose the .zip file',
   'skritter.howToGetIt':
-    'Skritter has no export button: ask its support for a copy of your data. They send a .zip file; choose it as it came.',
+    'Skritter has no export button: its support sends a copy of your data when you ask. They send a .zip file; choose it as it came.',
+  'skritter.guideSummary': 'How to get your data from Skritter',
+  'skritter.guideContact':
+    'Open Skritter’s <a href="https://skritter.com/contact" target="_blank" rel="noopener">contact page</a> (skritter.com/contact), where its privacy policy says to send requests about your data.',
+  'skritter.guideLetter': 'Copy the letter below into it, and fill in what is in [brackets].',
+  'skritter.guideAnswer':
+    'Skritter’s support answers by email with a .zip file: one learner had it in ten days. Choose it here as it came, without unpacking it.',
+  'skritter.whereYouLive': 'Where do you live?',
+  'skritter.whereEurope': 'The EU, EEA or UK',
+  'skritter.whereCalifornia': 'California',
+  'skritter.whereElsewhere': 'Somewhere else',
+  'skritter.whyWhere':
+    'Where you live decides what you can ask for. In the EU, the EEA and the UK the law (the GDPR) gives you a right to a copy of your data; Skritter’s privacy policy offers California residents one too. Elsewhere, the letter asks politely, citing no law.',
+  'skritter.letter': 'The letter to Skritter',
+  'skritter.letterNote':
+    'The letter is in English, the language Skritter’s support writes in. It is a sample to adapt, not legal advice.',
+  // The letters stay in English in every language (inEnglish in text.js):
+  // Skritter's support writes in English. Not in the translations.
+  'skritterLetter.europe':
+    'Hello,\n\nI am a Skritter user living in [your country]. My account’s email address is [your email] and my username is [your username].\n\nUnder Articles 15 and 20 of the GDPR (the UK GDPR in the United Kingdom), I request a copy of the personal data you hold about me, in a structured, commonly used and machine-readable format. The JSON export your support has sent to other users would be ideal, in particular these files: UserItem (my study items with their schedules), ProgressActivity (my full review history), UserVocab (my changes to words) and VocabListInfo (my own lists).\n\nI understand you have one month to respond. Please confirm that you have received this request.\n\nThank you!',
+  'skritterLetter.california':
+    'Hello,\n\nI am a Skritter user living in California. My account’s email address is [your email] and my username is [your username].\n\nUnder the California Consumer Privacy Act, as your privacy policy offers California residents, I request the specific pieces of personal information you have collected about me, in a portable and readily usable format. The JSON export your support has sent to other users would be ideal, in particular these files: UserItem (my study items with their schedules), ProgressActivity (my full review history), UserVocab (my changes to words) and VocabListInfo (my own lists).\n\nI understand you have 45 days to respond. Please confirm that you have received this request.\n\nThank you!',
+  'skritterLetter.elsewhere':
+    'Hello,\n\nI am a Skritter user and would like a copy of my study data. My account’s email address is [your email] and my username is [your username].\n\nCould you send me the JSON export your support has sent to other users? In particular these files: UserItem (my study items with their schedules), ProgressActivity (my full review history), UserVocab (my changes to words) and VocabListInfo (my own lists).\n\nThank you very much!',
   'skritter.becomes':
     'Each word comes over with its pinyin and meaning from the app’s dictionary, since Skritter’s file has neither. Your Skritter reviews count for all four cards: meaning, pinyin, tone and writing.',
   'skritter.yourLists': 'Your Skritter lists',

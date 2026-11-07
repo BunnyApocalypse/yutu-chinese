@@ -121,6 +121,14 @@ export function t(key, values = {}) {
   });
 }
 
+// Text that stays in English whatever the learner's language: the letters
+// asking Skritter's support for one's data (keys 'skritterLetter.…'), since
+// they write in English. The translations don't have these keys
+// (scripts/missing-text.js leaves them out).
+export function inEnglish(key) {
+  return en[key];
+}
+
 // A number as the language writes it (1,234).
 export function formatNumber(number) {
   return numberFormat.format(number);
