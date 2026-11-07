@@ -76,9 +76,10 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
       return this.syncNow();
     },
 
-    // Sends and takes in what changed. Returns sync.js's result, or null if
-    // sync is off or it failed (then `status.problem` says why).
-    async syncNow() {
+    // Sends and takes in what changed; with { sendOnly: true } only sends
+    // (sync.js). Returns sync.js's result, or null if sync is off or it
+    // failed (then `status.problem` says why).
+    async syncNow(options = {}) {
       if (!sync) {
         return null;
       }
@@ -86,11 +87,11 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
       tell();
       let result = null;
       try {
-        result = await sync.syncNow();
+        result = await sync.syncNow(options);
         status.lastSyncedAt = Date.now();
         await db.setSyncValue('lastSyncedAt', status.lastSyncedAt);
         status.problem = result.problems[0]?.reason ?? null;
-        if (result.changed || result.snapshotTakenIn) {
+        if (result.changed) {
           await onChanged();
         }
       } catch (error) {

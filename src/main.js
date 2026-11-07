@@ -1,7 +1,7 @@
 // Entry point: sets up the page, the three tabs (Review, Free practice and
 // Words), settings and backups.
 
-import { getAll, putAll, getSetting, setSetting, removeWord, removeDecks, renameWord, replaceEverything, IMPORT_UNFINISHED } from './db.js';
+import { getAll, putAll, getSetting, setSetting, removeWord, removeDecks, renameWord, replaceEverything, IMPORT_UNFINISHED, onOutboxChange } from './db.js';
 import { allCardIds } from './session.js';
 import { OLD_BUILT_IN_WORD_IDS } from './oldBuiltInWords.js';
 import { createWordFlow } from './wordFlow.js';
@@ -42,6 +42,7 @@ import { setUpTesterSettings } from './testerSettings.js';
 import { createSyncControl } from './syncControl.js';
 import { createSyncPanel } from './syncPanel.js';
 import { takeCodeFromLink } from './syncCodeView.js';
+import { startSyncTiming } from './syncTiming.js';
 import { applyText, t, formatList, formatNumber } from './text.js';
 
 // The page's own text, in the learner's language (src/text.js), before
@@ -101,6 +102,8 @@ let basics = null;
 // Syncing between devices (set up in startUp).
 let syncControl = null;
 let syncPanel = null;
+// How long after the last stroke syncing may take changes in (syncTiming.js).
+const WRITING_REST_MS = 4000;
 
 // Until 2026-10-13 a new database was filled with a list of 109 words for
 // trying the app out. A device that was given them (it has the
@@ -1031,6 +1034,7 @@ async function startUp() {
   // after a change on the Decks tab.
   syncControl = createSyncControl({
     onChanged: async () => {
+      await settings.reload();
       await review.load();
       await loadWordList();
     },
@@ -1038,6 +1042,29 @@ async function startUp() {
   });
   await syncControl.start();
   syncPanel = await createSyncPanel(syncControl);
+  // Syncing by itself (syncTiming.js), never while a character is being
+  // written: from a finger or pen touching the writing area until it has
+  // rested a few seconds.
+  let writingNow = false;
+  let lastStrokeAt = 0;
+  const writingArea = byId('writing-area');
+  // (capture: heard before the writing code, which may keep it to itself)
+  writingArea.addEventListener('pointerdown', () => {
+    writingNow = true;
+  }, { capture: true });
+  for (const name of ['pointerup', 'pointercancel']) {
+    window.addEventListener(name, () => {
+      if (writingNow) {
+        writingNow = false;
+        lastStrokeAt = Date.now();
+      }
+    }, { capture: true });
+  }
+  startSyncTiming({
+    control: syncControl,
+    isBusy: () => writingNow || Date.now() - lastStrokeAt < WRITING_REST_MS,
+    onOutboxChange,
+  });
 
   // A join from the introduction that brought words and settings starts the
   // app again with them (settings are read at start).

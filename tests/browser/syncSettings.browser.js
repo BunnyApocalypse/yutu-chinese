@@ -279,3 +279,92 @@ describe('sync in the introduction', { concurrency: false }, () => {
     assert.equal(await page.evaluate(`import('/src/db.js').then((db) => db.getSyncValue('code', null))`), null);
   });
 });
+
+// Syncing by itself (syncTiming.js), between two devices with sync on.
+describe('syncing by itself', { concurrency: false }, () => {
+  let app;
+  let browsers;
+  let server;
+  let folder;
+  let a;
+  let b;
+
+  // The page put away (another app, the screen locked) or shown again, as
+  // the browser says so.
+  const setVisibility = (page, state) =>
+    page.evaluate(`Object.defineProperty(document, 'visibilityState', { value: '${state}', configurable: true });
+      document.dispatchEvent(new Event('visibilitychange'))`);
+  const newWordsOn = (page) => page.evaluate(`document.getElementById('new-words-input').value`);
+  const setNewWords = (page, value) =>
+    page.evaluate(`(() => {
+      const box = document.getElementById('new-words-input');
+      box.value = '${value}';
+      box.dispatchEvent(new Event('change'));
+    })()`);
+  const batchesOnServer = async () => (await filesOnServer(folder)).filter((name) => name.startsWith('batch-')).length;
+
+  before(async () => {
+    app = await startApp();
+    folder = await fs.mkdtemp(path.join(os.tmpdir(), 'yutu-sync-timing-'));
+    server = await createSyncServer({ dataDir: folder, log: false, allowedOrigins: [new URL(app.url).origin] });
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    browsers = await startBrowsers(app.url, 2);
+    await browsers.use((first) => browsers.use((second) => {
+      a = first;
+      b = second;
+    }));
+    for (const page of [a, b]) {
+      await page.evaluate(`import('/src/db.js').then((db) => db.setSyncValue('server', 'http://127.0.0.1:${server.address().port}'))`);
+    }
+    // A turns sync on, B joins with A's code.
+    await openSettings(a, 'settings-data');
+    await tap(a, 'sync-on-button');
+    await waitUntil(a, shown('sync-code-step'), 'the code');
+    const code = await textOf(a, 'sync-code');
+    await tap(a, 'sync-saved-button');
+    await waitUntil(a, `document.getElementById('sync-status').textContent.startsWith('Last synced')`, 'the first sync');
+    await openSettings(b, 'settings-data');
+    await tap(b, 'sync-join-button');
+    await type(b, 'sync-code-input', code);
+    await b.evaluate(`window.loadedBefore = true; document.getElementById('sync-join-form').requestSubmit()`);
+    // B starts again with A's settings.
+    await waitFor(() => b.evaluate(`!window.loadedBefore && !document.querySelector('main').classList.contains('starting')`), 'B to start again');
+    await openSettings(a, 'settings-studying');
+    await openSettings(b, 'settings-studying');
+  });
+
+  after(async () => {
+    const errors = browsers?.errors() ?? [];
+    browsers?.close();
+    await app?.close();
+    await new Promise((resolve) => server?.close(resolve));
+    await fs.rm(folder, { recursive: true, force: true });
+    assert.deepEqual(errors, [], 'the page threw errors');
+  });
+
+  it('sends a change when the app is put away, and the other device takes it in, at once in effect, when shown', async () => {
+    const before = await batchesOnServer();
+    await setNewWords(a, 17);
+    await setVisibility(a, 'hidden');
+    await waitFor(async () => (await batchesOnServer()) > before, 'A\'s change sent');
+    assert.notEqual(await newWordsOn(b), '17');
+    await setVisibility(b, 'visible');
+    // The Settings panel on B shows it without starting again.
+    await waitFor(async () => (await newWordsOn(b)) === '17', 'B to show it');
+  });
+
+  it('takes nothing in while a character is being written on that device', async () => {
+    const before = await batchesOnServer();
+    await setNewWords(a, 23);
+    await setVisibility(a, 'hidden');
+    await waitFor(async () => (await batchesOnServer()) > before, 'A\'s change sent');
+    // On B a finger is down on the writing area.
+    await b.evaluate(`document.getElementById('writing-area').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, isPrimary: true }))`);
+    await setVisibility(b, 'visible');
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    assert.equal(await newWordsOn(b), '17');
+    // The finger lifts; a few seconds later the change comes.
+    await b.evaluate(`window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, isPrimary: true }))`);
+    await waitFor(async () => (await newWordsOn(b)) === '23', 'B to take it in after the stroke');
+  });
+});

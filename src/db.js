@@ -136,6 +136,14 @@ export function setOutboxOn(on) {
   outboxOn = on;
 }
 
+// Called after a change was noted in the outbox and saved (syncTiming.js
+// sends it a little later).
+let outboxListener = () => {};
+
+export function onOutboxChange(listener) {
+  outboxListener = listener;
+}
+
 let databasePromise = null;
 
 function openDatabase() {
@@ -205,16 +213,22 @@ async function transaction(storeNames, mode, work) {
 // in it while sync is on. `work` gets the transaction and a function
 // note(storeName, id) to call for each record it changes; the entry is then
 // saved in the same transaction as the change.
-function changing(storeNames, work) {
+async function changing(storeNames, work) {
   const names = outboxOn ? [...storeNames, 'outbox'] : storeNames;
-  return transaction(names, 'readwrite', (tx) => {
+  let noted = false;
+  const result = await transaction(names, 'readwrite', (tx) => {
     const note = (storeName, id) => {
       if (outboxOn && SYNCED.includes(storeName)) {
         tx.objectStore('outbox').put({ key: `${storeName}:${id}`, store: storeName, id, token: randomId() });
+        noted = true;
       }
     };
     return work(tx, note);
   });
+  if (noted) {
+    outboxListener();
+  }
+  return result;
 }
 
 // Returns every record in a store, as a list.

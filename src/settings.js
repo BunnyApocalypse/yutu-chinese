@@ -110,8 +110,12 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //   studyDeck:      the ID of the deck studied in Review and Learn, or ''
 //                   for all words. Chosen at the top of those two tabs, not
 //                   in the panel.
-// and one function, for setting them from elsewhere (the introduction):
-//   change(key, value): saves a setting and tells the rest of the app
+// and two functions:
+//   change(key, value): saves a setting and tells the rest of the app (the
+//                       introduction sets them so)
+//   reload():           reads them all again, after syncing brought some
+//                       from another device (syncControl.js), and tells the
+//                       rest of the app if any changed
 export async function createSettings(elements, onChange) {
   const {
     panel,
@@ -436,7 +440,29 @@ export async function createSettings(elements, onChange) {
   // A tap beside the panel closes it too (dialogs.js).
   closeOnTapBeside(panel);
 
+  // A setting not saved here (none from another device either) keeps what
+  // it has: syncing only ever adds or changes settings, never deletes them.
+  async function reload() {
+    let changed = false;
+    for (const key of Object.keys(settings).filter((name) => typeof settings[name] !== 'function')) {
+      const value = await getSetting(key, settings[key]);
+      if (JSON.stringify(value) !== JSON.stringify(settings[key])) {
+        settings[key] = value;
+        changed = true;
+      }
+    }
+    if (changed) {
+      setTheme(settings.theme);
+      setFont(settings.font);
+      setReadingStyle(settings.readingStyle);
+      setTargetRetention(settings.targetRetention);
+      fillPanel();
+      onChange();
+    }
+  }
+
   fillPanel();
   settings.change = change;
+  settings.reload = reload;
   return settings;
 }

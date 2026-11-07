@@ -6,7 +6,7 @@
 //
 //   local    this device's data: in the app, db.js itself (getSyncValue,
 //            setSyncValue, readOutbox, takeOffOutbox, getAll, readSlice,
-//            readEverything, saveTakenIn)
+//            readEverything, saveTakenIn, sendEverything)
 //   storage  where the files are kept, shared by all the devices:
 //              list()             every file, as [{ name, size }]
 //              read(name)         a file's bytes (a Uint8Array)
@@ -307,24 +307,61 @@ async function tidy(local, storage, key, device, files, newest) {
   }
 }
 
+// Whether this device's files are gone from the storage: it has sent
+// batches, none is there, and no snapshot covers them. The server lost them
+// (its disk, a move to another host, a server run afresh: sync.md, "The
+// server holds nothing that can't be replaced").
+function filesLost(files, newest, device, sentUpTo) {
+  return (
+    sentUpTo > 0 &&
+    !(files.batches.get(device) || []).length &&
+    (newest?.covers[device] ?? 0) < sentUpTo
+  );
+}
+
+// Starts this device afresh in the storage: a new device ID, so that its
+// batches are numbered from 1 again (a device joining later would otherwise
+// find the first ones missing), what it had taken in forgotten (those files
+// are gone too), and everything it has in the next batch.
+async function startAfresh(local) {
+  await local.setSyncValue('device', randomId());
+  await local.setSyncValue('nextNumber', 1);
+  await local.setSyncValue('taken', {});
+  await local.setSyncValue('snapshotCovers', null);
+  await local.setSyncValue('checkedSnapshot', null);
+  await local.sendEverything();
+}
+
 // Makes a sync for this device. syncNow() sends what changed here, takes in
 // what changed elsewhere, makes a snapshot when one is due and deletes this
 // device's files no longer needed. It returns
-//   { sent, takenIn, snapshotTakenIn, snapshotMade, changed, problems }
+//   { sent, takenIn, snapshotTakenIn, snapshotMade, startedAfresh, changed,
+//     problems }
 // `sent` is the number of the batch sent, or null; `snapshotMade` whether a
-// snapshot was saved. A sync asked for while one is under way waits for it
-// and then runs once more, since something may have changed meanwhile;
-// several asked for meanwhile share that one run.
+// snapshot was saved; `startedAfresh` whether this device found its files
+// gone and sent everything again.
+//
+// syncNow({ sendOnly: true }) only sends: quick and light, for while the
+// learner studies and when the app is put away (syncTiming.js).
+//
+// A sync asked for while one is under way waits for it and then runs once
+// more, since something may have changed meanwhile; several asked for
+// meanwhile share that one run, a whole one if any of them asked for that.
 //
 // snapshotAfterBytes: SNAPSHOT_AFTER_BYTES, smaller in the tests
 export function createSync({ local, storage, key, snapshotAfterBytes = SNAPSHOT_AFTER_BYTES }) {
   let running = null;
   let waiting = null;
+  let waitingWhole = false;
 
-  async function run() {
-    const device = await deviceId(local);
-    const sent = await send(local, storage, key, device);
-    const files = sortOut(await storage.list());
+  async function run({ sendOnly = false } = {}) {
+    let device = await deviceId(local);
+    let sent = await send(local, storage, key, device);
+    const nothingElse = { takenIn: 0, snapshotTakenIn: false, snapshotMade: false, startedAfresh: false, changed: false };
+    if (sendOnly) {
+      return { sent, ...nothingElse, problems: [] };
+    }
+    let files = sortOut(await storage.list());
     let newest = null;
     const problems = [];
     try {
@@ -335,6 +372,14 @@ export function createSync({ local, storage, key, snapshotAfterBytes = SNAPSHOT_
       }
       problems.push({ reason: 'cannot-open', device: files.snapshots.at(-1).device });
     }
+    let startedAfresh = false;
+    if (filesLost(files, newest, device, (await local.getSyncValue('nextNumber', 1)) - 1)) {
+      await startAfresh(local);
+      device = await deviceId(local);
+      sent = await send(local, storage, key, device);
+      files = sortOut(await storage.list());
+      startedAfresh = true;
+    }
     const fetched = await takeIn(local, storage, key, device, files.batches, newest);
     await local.setSyncValue('joined', true);
     let snapshotMade = false;
@@ -343,22 +388,25 @@ export function createSync({ local, storage, key, snapshotAfterBytes = SNAPSHOT_
       snapshotMade = true;
     }
     await tidy(local, storage, key, device, files, newest);
-    return { sent, ...fetched, snapshotMade, problems: [...problems, ...fetched.problems] };
+    return { sent, ...fetched, snapshotMade, startedAfresh, problems: [...problems, ...fetched.problems] };
   }
 
-  function syncNow() {
+  function syncNow({ sendOnly = false } = {}) {
     if (!running) {
-      running = run().finally(() => {
+      running = run({ sendOnly }).finally(() => {
         running = null;
       });
       return running;
     }
+    waitingWhole ||= !sendOnly;
     if (!waiting) {
       waiting = running
         .catch(() => {})
         .then(() => {
+          const whole = waitingWhole;
           waiting = null;
-          return syncNow();
+          waitingWhole = false;
+          return syncNow({ sendOnly: !whole });
         });
     }
     return waiting;

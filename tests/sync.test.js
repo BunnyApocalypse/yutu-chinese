@@ -101,7 +101,7 @@ test('syncing again with nothing new sends and takes in nothing', async () => {
   await syncB();
   await syncA();
   const files = storage.files.size;
-  const nothing = { sent: null, takenIn: 0, snapshotTakenIn: false, snapshotMade: false, changed: false, problems: [] };
+  const nothing = { sent: null, takenIn: 0, snapshotTakenIn: false, snapshotMade: false, startedAfresh: false, changed: false, problems: [] };
   assert.deepEqual(await syncA(), nothing);
   assert.deepEqual(await syncB(), nothing);
   assert.equal(storage.files.size, files);
@@ -311,4 +311,71 @@ test('a snapshot whose covers file never got saved doesn\'t count, and costs not
   assert.equal(result.snapshotTakenIn, false);
   assert.equal(result.takenIn, 1);
   assert.ok(c.data().words.some((entry) => entry.id === '愛|ai4'));
+});
+
+test('a sync that only sends sends, and touches nothing else', async () => {
+  const { a, storage, syncA, syncB } = setUp();
+  await syncB();
+  let lists = 0;
+  const list = storage.list;
+  storage.list = async () => {
+    lists++;
+    return list();
+  };
+  const result = await syncA({ sendOnly: true });
+  assert.equal(result.sent, 1);
+  assert.equal(result.takenIn, 0);
+  assert.equal(lists, 0);
+  assert.ok(!a.data().words.some((entry) => entry.id === '貓|mao1'));
+  // A whole sync then takes B's in.
+  assert.equal((await syncA()).takenIn, 1);
+});
+
+test('syncs asked for while one runs: one more, a whole one if any asked for that', async () => {
+  const { a, storage } = setUp();
+  let lists = 0;
+  const list = storage.list;
+  storage.list = async () => {
+    lists++;
+    return list();
+  };
+  const { syncNow } = createSync({ local: a, storage, key });
+  await Promise.all([syncNow({ sendOnly: true }), syncNow({ sendOnly: true }), syncNow()]);
+  assert.equal(lists, 1);
+});
+
+test('a device whose files the server lost sends everything again, as a new device, and others catch up', async () => {
+  const { a, b, storage, syncA, syncB, syncOf } = setUp();
+  await syncA();
+  await syncB();
+  await syncA();
+  const before = await a.getSyncValue('device');
+  // The server loses everything.
+  storage.files.clear();
+  const result = await syncA();
+  assert.equal(result.startedAfresh, true);
+  assert.equal(result.sent, 1);
+  assert.notEqual(await a.getSyncValue('device'), before);
+  assert.equal(names(storage, 'batch-').length, 1);
+  // B too, the next time it syncs; and A's new batch, taken in, changes
+  // nothing for B, which had it all.
+  const second = await syncB();
+  assert.equal(second.startedAfresh, true);
+  assert.equal(second.takenIn, 1);
+  // A device joining now gets everything, from batches numbered from 1.
+  const c = memoryDevice();
+  const third = await syncOf(c)();
+  assert.deepEqual(third.problems, []);
+  assert.deepEqual(learnersData(c.data()), learnersData(a.data()));
+});
+
+test('a device whose batches a snapshot covers has not lost them', async () => {
+  const { a, storage, syncA } = setUp({ snapshotAfterBytes: 1 });
+  await syncA();
+  // Its batch went, covered by its snapshot.
+  assert.equal(names(storage, 'batch-').length, 0);
+  const device = await a.getSyncValue('device');
+  const result = await syncA();
+  assert.equal(result.startedAfresh, false);
+  assert.equal(await a.getSyncValue('device'), device);
 });

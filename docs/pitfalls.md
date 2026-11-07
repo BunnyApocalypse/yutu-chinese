@@ -52,3 +52,7 @@
 
 - `crypto.randomUUID()` only exists on HTTPS or localhost, so it fails on the LAN dev address; `randomId()` in `src/db.js` uses `crypto.getRandomValues()`.
 - Service workers and installing only work over HTTPS or on `localhost`, so they can't be tested from a phone on the LAN dev address: use the deployed test copy, or the built app at a `localhost` address on the computer (`docs/offline.md`).
+
+## Syncing and the writing area
+
+- **Taking in another device's changes holds the page up** (up to about 1 s on the owner's tablet for a whole day's reviews; `docs/sync.md`, "Speed in the browser"), so a whole sync never runs while a character is being written: `syncTiming.js` waits while a finger or pen is on the writing area and for `WRITING_REST_MS` after. Anything new that makes a sync run (a new trigger, a "Sync now" somewhere on the review screen) must go through the same wait. Sending alone is light and goes at any time.

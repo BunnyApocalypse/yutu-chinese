@@ -1,0 +1,107 @@
+// When syncing happens by itself (docs/sync.md, "When to sync"): changes
+// should leave this device before the learner picks up another, and arrive
+// before they study on it. Nothing here waits for the server: studying
+// never waits for a sync.
+//
+//   Sending only (light: the outbox, a few kilobytes):
+//     30 seconds after the last change, and at least every 5 minutes while
+//     changes keep coming; at once when the app is put away (the screen
+//     locked, another app or tab), the last moment a phone surely lets a page
+//     run (the request is sent with keepalive, syncServer.js).
+//   A whole sync (sending and taking in, which may write many records):
+//     when the app starts, when it comes back into view, when the
+//     connection comes back, and again after a failure (1, 5, then 30
+//     minutes later). Never while a character is being written: it waits
+//     until `isBusy()` has been false for a moment.
+//
+// The browser's events used: visibilitychange (the page shown or put
+// away) and online (the connection back).
+
+const SEND_AFTER_MS = 30 * 1000;
+const SEND_AT_LEAST_EVERY_MS = 5 * 60 * 1000;
+const RETRY_AFTER_MS = [60 * 1000, 5 * 60 * 1000, 30 * 60 * 1000];
+const BUSY_CHECK_MS = 2000;
+
+// Problems worth trying again for: those that may pass by themselves.
+const PASSING = ['offline', 'too-many', 'paused', 'server-error'];
+
+// control: from createSyncControl (syncControl.js)
+// isBusy(): true while a character is being written (main.js)
+// onOutboxChange(listener): db.js's, to hear of each change noted
+//
+// Returns { stop() }, for the tests.
+export function startSyncTiming({ control, isBusy, onOutboxChange }) {
+  let sendTimer = null;
+  let firstUnsentAt = null;
+  let wholeTimer = null;
+  let retries = 0;
+
+  const on = () => control.status().on;
+
+  function sendSoon() {
+    if (!on()) {
+      return;
+    }
+    const now = Date.now();
+    firstUnsentAt ??= now;
+    clearTimeout(sendTimer);
+    const wait = Math.min(SEND_AFTER_MS, Math.max(0, firstUnsentAt + SEND_AT_LEAST_EVERY_MS - now));
+    sendTimer = setTimeout(sendNow, wait);
+  }
+
+  function sendNow() {
+    clearTimeout(sendTimer);
+    sendTimer = null;
+    firstUnsentAt = null;
+    if (on()) {
+      control.syncNow({ sendOnly: true });
+    }
+  }
+
+  // A whole sync, once nothing is being written; then, if it failed for a
+  // reason that may pass, another later.
+  function syncWhole(after = 0) {
+    clearTimeout(wholeTimer);
+    wholeTimer = setTimeout(async () => {
+      if (!on()) {
+        return;
+      }
+      if (isBusy()) {
+        syncWhole(BUSY_CHECK_MS);
+        return;
+      }
+      await control.syncNow();
+      const { problem } = control.status();
+      if (problem && PASSING.includes(problem) && retries < RETRY_AFTER_MS.length) {
+        syncWhole(RETRY_AFTER_MS[retries]);
+        retries += 1;
+      } else if (!problem) {
+        retries = 0;
+      }
+    }, after);
+  }
+
+  onOutboxChange(sendSoon);
+  const onVisibility = () => {
+    if (document.visibilityState === 'hidden') {
+      sendNow();
+    } else {
+      syncWhole();
+    }
+  };
+  const onOnline = () => syncWhole();
+  document.addEventListener('visibilitychange', onVisibility);
+  window.addEventListener('online', onOnline);
+
+  syncWhole();
+
+  return {
+    stop() {
+      clearTimeout(sendTimer);
+      clearTimeout(wholeTimer);
+      onOutboxChange(() => {});
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('online', onOnline);
+    },
+  };
+}

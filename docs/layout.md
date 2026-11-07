@@ -61,6 +61,7 @@
 - `src/sync.js`: syncing: sends this device's batch of changes and takes in the other devices', through a storage handed in (`docs/sync.md`).
 - `src/syncControl.js`: syncing in the app: turning it on and off, syncing, its status (`docs/sync.md`).
 - `src/syncCodeView.js`: showing and keeping a sync code (its QR code, Copy, Save as file, Print), the link with a code, what to say when syncing goes wrong.
+- `src/syncTiming.js`: when syncing happens by itself: sending soon after changes and when the app is put away, a whole sync on opening, on coming back and after failures, never while writing.
 - `src/syncScan.js`: scanning a sync code's QR code with the camera, with jsQR (`docs/sync.md`).
 - `src/syncPanel.js`: Settings › Sync between devices: the code, turning sync on, its status and buttons.
 - `src/syncServer.js`: the sync server as syncing's storage: list, read, save, remove as requests, failures as a `reason` (`docs/sync.md`).

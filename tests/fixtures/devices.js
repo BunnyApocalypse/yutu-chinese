@@ -206,6 +206,9 @@ export function memoryDevice(initial = {}, { before = false } = {}) {
     async readEverything() {
       return structuredClone(data);
     },
+    async sendEverything() {
+      outbox.set('everything', { key: 'everything', store: null, id: null, token: ++tokens });
+    },
     async saveTakenIn(changes) {
       data = saveChanges(data, changes);
     },
