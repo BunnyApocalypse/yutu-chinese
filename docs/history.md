@@ -4,6 +4,13 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the session of 2026-11-07 (how to get your data from Skritter; committed, not pushed).**
+
+- **Built** (one commit): a fold "How to get your data from Skritter" in the import's first step: Skritter's contact page (skritter.com/contact, where its privacy policy says to send data requests), "Where do you live?" choosing one of three letters in English (EU/EEA/UK citing GDPR Articles 15 and 20; California citing the CCPA, which Skritter's privacy policy offers; elsewhere a polite request citing no law), Copy, and a note that it is a sample, not legal advice. "Credits and licenses" gained a trademark line (Skritter is Inkren Inc.'s; the app is not affiliated or endorsed). Details and the legal reasoning: `docs/skritter.md`; the letters staying English: `docs/translations.md`.
+- **Not checked:** Skritter's terms of service (not read), and its contact form itself (the page needs JavaScript, so the fetch saw nothing); the new credits line not looked at on screen. Pictures of the guide: `local/shots/skritter-guide-*.png`.
+- **Next:** releasing to `stable` still waits on the owner; "What's new" would now also have the Skritter guide. Nothing pushed this session; `main` is three commits ahead of the test copy.
+- **Tests:** 317 unit tests; `skritter.browser.js`, `text.browser.js` and `accessibility.browser.js` pass (18 of 18, the Skritter test now opening the guide and copying a letter); full suite not run.
+
 **Handover from the fifth session of 2026-11-06 (Learn's About hidden beside a learning note; released to `stable` without a "What's new" entry, the owner's choice).**
 
 - **Built** (the owner, 2026-11-06): at the first look of a word with a learning note, Learn's "About" beside "I know this word" is hidden, the note's "About this word" taking its place; back at the next step (`addTip` in `src/review.js`; `docs/cards.md`). This answers the first session's open question.
