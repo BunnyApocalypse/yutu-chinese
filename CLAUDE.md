@@ -5,7 +5,7 @@ A local-first Chinese character writing trainer: a PWA built as an alternative t
 ## Hard constraints
 
 - **Vanilla JavaScript.** Vite is the only build tool. No frameworks and no TypeScript.
-- **No backend.** Static files only; nothing is sent to a server. **All user data lives in IndexedDB** on the device.
+- **No backend**, with one exception: opt-in syncing through our own small server, which only ever receives files encrypted on the device (`docs/sync.md`, the owner, 2026-11-07). Otherwise static files only. **All user data lives in IndexedDB** on the device.
 - **Must work offline.** Nothing is fetched from the internet at runtime; stroke data is served from the app's own address (`public/char-data/`, `public/char-data-tw/`), never from Hanzi Writer's CDN loader.
 - **Hanzi Writer** does stroke display and grading; don't replace it with a custom recognizer. The one agreed exception is the joined-stroke check in `src/shortcuts.js` (Hanzi Writer can't grade one drawn stroke against two textbook strokes).
 - **Traditional and simplified are both first-class.** Never assume one script. **Traditional means Taiwan-standard forms** (為 with 9 strokes, 辶 and 艹 with 4).
@@ -54,7 +54,7 @@ Each area's file in `docs/` (index `docs/README.md`) has the names in the code, 
 - Importing from Anki (.apkg, .colpkg), imported schedules: `docs/anki.md`
 - Importing from Skritter (the .zip its support sends): `docs/skritter.md`
 - `changedAt`, removal marks, `formerIds`, combining backups: `docs/merging.md`
-- Syncing between devices (a plan, not built): `docs/sync.md`
+- Syncing between devices (being built), the sync server: `docs/sync.md`
 - The word page, sentences, sound: `docs/word-page.md`
 - Writing a character (raw input, shortcuts, the frame, stroke orders, gestures): `docs/writing.md`
 - **Before touching the study area, `src/quiz.js`, `src/wordFlow.js`, Hanzi Writer, or anything that changes heights on the review screen: `docs/pitfalls.md`**
