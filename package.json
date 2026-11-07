@@ -21,6 +21,7 @@
     "fzstd": "^0.1.1",
     "hanzi-writer": "^3.7.3",
     "hanzi-writer-data": "^2.0.1",
+    "qrcode-generator": "^2.0.4",
     "sql.js": "^1.15.0",
     "ts-fsrs": "^5.4.2"
   },

@@ -18,6 +18,10 @@
   color-scheme: light;
   --bg: #f1e9d4; /* the page: the moon's paper */
   --surface: #fbf6e8; /* buttons, boxes, cards, the writing area: paper, not white */
+  /* A QR code (syncCodeView.js): dark on light in both looks, as readers
+     need, and so not redefined for dark. */
+  --qr-dark: #000000;
+  --qr-light: #ffffff;
   --raised: #fdf9ef; /* tips and popups, over the page */
   --pressed: #e5dabd; /* a button being pressed */
   --selected: #d9e9de; /* behind the tab or place chosen: a tint of the jade */
@@ -198,6 +202,10 @@
      minimum (checked by accessibility.browser.js): a deck's box on a word's
      page. */
   --tap-least: 24px;
+
+  /* How wide a QR code is shown (syncCodeView.js): big enough for another
+     device's camera from a hand's length away. */
+  --qr-size: 220px;
   /* The top bar's height, the same on every screen. */
   --top-bar: 36px;
 
@@ -2489,6 +2497,21 @@ button.slot {
   overflow-wrap: anywhere;
   user-select: all;
   margin: var(--space-small) 0;
+}
+
+.sync-qr {
+  display: block;
+  inline-size: min(var(--qr-size), 100%);
+  block-size: auto;
+  margin: var(--space-small) 0;
+}
+
+/* A row of the sync section's buttons, apart from the text above and below. */
+.sync-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-small);
+  margin: var(--space-medium) 0;
 }
 
 .sync-join {

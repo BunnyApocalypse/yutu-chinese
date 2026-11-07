@@ -6,36 +6,17 @@
 // turn it on), the code (made, before anything is sent; or shown again),
 // sync on (how it went, Sync now, Show sync code, Turn off, Delete).
 
-import { makeCode, formatCode, readCode } from './syncCode.js';
+import { makeCode, readCode } from './syncCode.js';
+import { showCode as fillCode, copyCode, saveCodeFile, printCode, problemText, codeProblemText } from './syncCodeView.js';
 import { ask } from './confirm.js';
 import { t, formatDateTime } from './text.js';
 
 const byId = (id) => document.getElementById(id);
 
-// What to say for each `reason` syncing gives (sync.js, syncServer.js).
-const PROBLEMS = {
-  offline: 'sync.problem.offline',
-  refused: 'sync.problem.refused',
-  'cannot-open': 'sync.problem.cannotOpen',
-  'bad-batch': 'sync.problem.cannotOpen',
-  'missing-batch': 'sync.problem.missing',
-  'too-large': 'sync.problem.full',
-  'account-full': 'sync.problem.full',
-  'server-full': 'sync.problem.full',
-  'too-many': 'sync.problem.busy',
-  paused: 'sync.problem.paused',
-};
-
-const problemText = (reason) => (PROBLEMS[reason] ? t(PROBLEMS[reason]) : t('sync.problem.other', { reason }));
-
-// What to say when a typed code can't be read (readCode in syncCode.js).
-const CODE_PROBLEMS = {
-  length: 'sync.codeProblem.length',
-  letters: 'sync.codeProblem.letters',
-  mistyped: 'sync.codeProblem.mistyped',
-};
-
 // control: from createSyncControl (syncControl.js)
+//
+// Returns { show(status), offerJoin(text) }: offerJoin fills the code box
+// with a code from a link, for the learner to confirm.
 export async function createSyncPanel(control) {
   const setting = byId('sync-setting');
   const off = byId('sync-off');
@@ -85,7 +66,7 @@ export async function createSyncPanel(control) {
   // is turned on only by "I've saved it" (or not, by Cancel).
   function showCode(code, isNew) {
     shownCode = code;
-    byId('sync-code').textContent = formatCode(code);
+    fillCode({ codeElement: byId('sync-code'), qrElement: byId('sync-qr') }, code);
     codeNote.textContent = '';
     byId('sync-saved-button').hidden = !isNew;
     byId('sync-code-cancel').hidden = !isNew;
@@ -97,77 +78,46 @@ export async function createSyncPanel(control) {
   function hideCode() {
     shownCode = null;
     byId('sync-code').textContent = '';
+    byId('sync-qr').replaceChildren();
     showPart(null);
     show(control.status());
   }
 
-  // The text kept with the code, in a file or on paper.
-  function keepingText(code) {
-    return t('sync.keepingText', {
-      code: formatCode(code),
-      date: formatDateTime(new Date()),
-      address: window.location.href.split('#')[0].split('?')[0],
-    });
+  function openJoin() {
+    joinForm.hidden = false;
+    codeInput.focus();
   }
 
   byId('sync-on-button').addEventListener('click', async () => showCode(await makeCode(), true));
-
-  byId('sync-join-button').addEventListener('click', () => {
-    joinForm.hidden = false;
-    codeInput.focus();
-  });
+  byId('sync-join-button').addEventListener('click', openJoin);
 
   joinForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const { code, reason } = await readCode(codeInput.value);
     joinError.hidden = !reason;
     if (reason) {
-      joinError.textContent = t(CODE_PROBLEMS[reason]);
+      joinError.textContent = codeProblemText(reason);
       return;
     }
     codeInput.value = '';
     joinForm.hidden = true;
+    byId('sync-from-link').hidden = true;
     showPart(on);
-    await control.turnOn(code);
-  });
-
-  byId('sync-copy-button').addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(formatCode(shownCode));
-      codeNote.textContent = t('sync.copied');
-    } catch {
-      // Some browsers allow copying only on a secure address, or not at all.
-      codeNote.textContent = t('sync.copyFailed');
+    const result = await control.turnOn(code);
+    // The other devices' words and settings came: the app starts again with
+    // them, as after importing a backup (settings are read at start).
+    if (result?.changed) {
+      window.location.reload();
     }
   });
 
-  // Saved as a small text file, as Export backup saves its file.
+  byId('sync-copy-button').addEventListener('click', async () => {
+    codeNote.textContent = await copyCode(shownCode);
+  });
   byId('sync-file-button').addEventListener('click', () => {
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(new Blob([keepingText(shownCode)], { type: 'text/plain' }));
-    link.download = 'yutu-chinese-sync-code.txt';
-    link.click();
-    URL.revokeObjectURL(link.href);
-    codeNote.textContent = t('sync.fileSaved', { file: link.download });
+    codeNote.textContent = saveCodeFile(shownCode);
   });
-
-  // Printed from a page of its own, made in a hidden frame, so that only the
-  // code and how to use it go on paper, not the screen behind.
-  byId('sync-print-button').addEventListener('click', () => {
-    const frame = document.createElement('iframe');
-    frame.hidden = true;
-    document.body.append(frame);
-    const page = frame.contentDocument;
-    page.documentElement.lang = document.documentElement.lang;
-    const text = page.createElement('pre');
-    text.style.cssText = 'font: 14pt/1.5 sans-serif; white-space: pre-wrap;';
-    text.textContent = keepingText(shownCode);
-    page.body.append(text);
-    frame.contentWindow.print();
-    // Printing waits for the print dialog in most browsers; the frame goes
-    // after it.
-    setTimeout(() => frame.remove(), 1000);
-  });
+  byId('sync-print-button').addEventListener('click', () => printCode(shownCode));
 
   byId('sync-saved-button').addEventListener('click', async () => {
     const code = shownCode;
@@ -220,5 +170,16 @@ export async function createSyncPanel(control) {
   });
 
   show(control.status());
-  return { show };
+
+  return {
+    show,
+    // A code from a link (takeCodeFromLink in syncCodeView.js): put in the
+    // box with a warning, never joined by itself.
+    offerJoin(text) {
+      showPart(off);
+      codeInput.value = text;
+      byId('sync-from-link').hidden = false;
+      openJoin();
+    },
+  };
 }

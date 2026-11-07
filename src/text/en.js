@@ -167,6 +167,10 @@ export default {
   'sync.codeProblem.mistyped': 'One of the letters is wrong. Check the code and try again.',
   'sync.codeExplain':
     'This code is the only key to your synced words. You need it to add another device, and to get everything back if you lose this one. Nobody can recover it for you, not even us.',
+  'sync.qrLabel': 'QR code of the link with your sync code',
+  'sync.scanHint': 'Or scan this with your other device’s camera: it opens <span lang="zh-Hant-TW">玉兔中文</span> with the code filled in.',
+  'sync.fromLink':
+    'This code came from a link. Use it only if the link is from your own device: whoever made the code can read everything synced with it.',
   'sync.copy': 'Copy',
   'sync.copied': 'Copied.',
   'sync.copyFailed': 'This browser didn’t allow copying. Select the code and copy it by hand.',
@@ -177,7 +181,7 @@ export default {
   'sync.saved': 'I’ve saved it',
   'sync.hideCode': 'Hide the code',
   'sync.keepingText':
-    '玉兔中文 (Yutu Chinese) sync code\n\n{code}\n\nMade on {date}.\n\nTo sync another device, or to get your words back on a new one: open {address}, go to Settings › Your data and backups › Sync between devices, choose “I have a sync code” and type this code.\n\nAnyone with this code can read your synced words. Keep it safe.',
+    '玉兔中文 (Yutu Chinese) sync code\n\n{code}\n\nMade on {date}.\n\nTo sync another device, or to get your words back on a new one: open {address}, go to Settings › Your data and backups › Sync between devices, choose “I have a sync code” and type this code. Or open this link on that device:\n{link}\n\nAnyone with this code can read your synced words. Keep it safe.',
   'sync.syncing': 'Syncing…',
   'sync.notYet': 'Not synced yet.',
   'sync.lastSynced': 'Last synced {when}.',
@@ -1065,6 +1069,8 @@ export default {
   'credits.strokeDataMakeMe': '<b>Stroke data:</b> <a href="https://github.com/skishore/makemeahanzi" target="_blank" rel="noopener">Make Me a Hanzi</a> (by way of hanzi-writer-data) and <a href="https://github.com/parsimonhi/animCJK" target="_blank" rel="noopener">AnimCJK</a> for Taiwan\'s forms, both derived from fonts by Arphic Technology. Arphic Public License.',
   'credits.showingAndCheckingStrokes': '<b>Showing and checking strokes:</b> <a href="https://hanziwriter.org" target="_blank" rel="noopener">Hanzi Writer</a> by David Chanin. MIT License.',
   'credits.schedulingTheFsrsMethod': '<b>Scheduling:</b> the FSRS method, in <a href="https://github.com/open-spaced-repetition/ts-fsrs" target="_blank" rel="noopener">ts-fsrs</a>. MIT License.',
+  'credits.qrCodes':
+    '<b>QR codes</b> (syncing): <a href="https://github.com/kazuhikoarase/qrcode-generator" target="_blank" rel="noopener">qrcode-generator</a> by Kazuhiko Arase. MIT License. “QR Code” is a registered trademark of DENSO WAVE INCORPORATED.',
   'credits.readingAnkiFilesSql': '<b>Reading Anki files:</b> <a href="https://github.com/sql-js/sql.js" target="_blank" rel="noopener">sql.js</a> (SQLite in the browser), MIT License; <a href="https://github.com/101arrowz/fzstd" target="_blank" rel="noopener">fzstd</a> by Arjun Barrett, MIT License. SQLite itself is in the public domain.',
   'credits.dictionaryAndTonesCc': '<b>Dictionary and tones:</b> <a href="https://cc-cedict.org" target="_blank" rel="noopener">CC-CEDICT</a>. Creative Commons Attribution-ShareAlike 4.0.',
   'credits.recordingsAudioCmnSyllables': '<b>Recordings:</b> <a href="https://github.com/hugolpz/audio-cmn" target="_blank" rel="noopener">audio-cmn</a>: syllables spoken by Chen Wang, words spoken by Yue Tan (Shtooka project), collected by Hugo Lopez. Creative Commons Attribution-ShareAlike.',
@@ -1527,6 +1533,10 @@ export default {
   'basics.hearMMa': 'Hear māma',
 
   // The introduction (index.html)
+  'welcome.alreadyUsing': 'Already using <span lang="zh-Hant-TW">玉兔中文</span> on another device?',
+  'welcome.joining': 'Bringing your words over…',
+  'welcome.syncNotNow': 'Just this device for now (you can turn it on later in Settings)',
+  'welcome.codeSaved': 'I’ve saved my sync code',
   'welcome.welcomeTo': 'Welcome to <span lang="zh-Hant-TW">玉兔中文</span>',
   'welcome.learnToReadAnd': 'Learn to read and write Chinese. Everything stays on this device: no account, nothing sent anywhere.',
   'welcome.welcomeBasicsButton': 'New to Chinese? Start with the basics',

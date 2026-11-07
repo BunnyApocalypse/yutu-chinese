@@ -162,6 +162,10 @@ export default {
   'sync.codeProblem.mistyped': 'Una delle lettere è sbagliata. Controlla il codice e riprova.',
   'sync.codeExplain':
     'Questo codice è l\'unica chiave delle tue parole sincronizzate. Ti serve per aggiungere un altro dispositivo e per recuperare tutto se perdi questo. Nessuno può recuperarlo per te, nemmeno noi.',
+  'sync.qrLabel': 'Codice QR del link con il tuo codice di sincronizzazione',
+  'sync.scanHint': 'Oppure inquadralo con la fotocamera dell\'altro dispositivo: apre <span lang="zh-Hant-TW">玉兔中文</span> con il codice già inserito.',
+  'sync.fromLink':
+    'Questo codice viene da un link. Usalo solo se il link viene da un tuo dispositivo: chi ha creato il codice può leggere tutto ciò che viene sincronizzato con esso.',
   'sync.copy': 'Copia',
   'sync.copied': 'Copiato.',
   'sync.copyFailed': 'Questo browser non ha permesso di copiare. Seleziona il codice e copialo a mano.',
@@ -172,7 +176,7 @@ export default {
   'sync.saved': 'L\'ho salvato',
   'sync.hideCode': 'Nascondi il codice',
   'sync.keepingText':
-    'Codice di sincronizzazione di 玉兔中文 (Yutu Chinese)\n\n{code}\n\nCreato il {date}.\n\nPer sincronizzare un altro dispositivo, o per recuperare le tue parole su uno nuovo: apri {address}, vai in Impostazioni › I tuoi dati e i backup › Sincronizza tra dispositivi, scegli «Ho un codice di sincronizzazione» e digita questo codice.\n\nChiunque abbia questo codice può leggere le tue parole sincronizzate. Conservalo al sicuro.',
+    'Codice di sincronizzazione di 玉兔中文 (Yutu Chinese)\n\n{code}\n\nCreato il {date}.\n\nPer sincronizzare un altro dispositivo, o per recuperare le tue parole su uno nuovo: apri {address}, vai in Impostazioni › I tuoi dati e i backup › Sincronizza tra dispositivi, scegli «Ho un codice di sincronizzazione» e digita questo codice. Oppure apri questo link su quel dispositivo:\n{link}\n\nChiunque abbia questo codice può leggere le tue parole sincronizzate. Conservalo al sicuro.',
   'sync.syncing': 'Sincronizzazione…',
   'sync.notYet': 'Non ancora sincronizzato.',
   'sync.lastSynced': 'Ultima sincronizzazione: {when}.',
@@ -1052,6 +1056,8 @@ export default {
   'credits.strokeDataMakeMe': '<b>Dati dei tratti:</b> <a href="https://github.com/skishore/makemeahanzi" target="_blank" rel="noopener">Make Me a Hanzi</a> (tramite hanzi-writer-data) e <a href="https://github.com/parsimonhi/animCJK" target="_blank" rel="noopener">AnimCJK</a> per le forme di Taiwan, entrambi derivati da font di Arphic Technology. Arphic Public License.',
   'credits.showingAndCheckingStrokes': '<b>Mostrare e controllare i tratti:</b> <a href="https://hanziwriter.org" target="_blank" rel="noopener">Hanzi Writer</a> di David Chanin. MIT License.',
   'credits.schedulingTheFsrsMethod': '<b>Pianificazione:</b> il metodo FSRS, in <a href="https://github.com/open-spaced-repetition/ts-fsrs" target="_blank" rel="noopener">ts-fsrs</a>. MIT License.',
+  'credits.qrCodes':
+    '<b>Codici QR</b> (sincronizzazione): <a href="https://github.com/kazuhikoarase/qrcode-generator" target="_blank" rel="noopener">qrcode-generator</a> di Kazuhiko Arase. MIT License. «QR Code» è un marchio registrato di DENSO WAVE INCORPORATED.',
   'credits.readingAnkiFilesSql': '<b>Lettura dei file di Anki:</b> <a href="https://github.com/sql-js/sql.js" target="_blank" rel="noopener">sql.js</a> (SQLite nel browser), MIT License; <a href="https://github.com/101arrowz/fzstd" target="_blank" rel="noopener">fzstd</a> di Arjun Barrett, MIT License. SQLite stesso è di pubblico dominio.',
   'credits.dictionaryAndTonesCc': '<b>Dizionario e toni:</b> <a href="https://cc-cedict.org" target="_blank" rel="noopener">CC-CEDICT</a>. Creative Commons Attribution-ShareAlike 4.0.',
   'credits.recordingsAudioCmnSyllables': '<b>Registrazioni:</b> <a href="https://github.com/hugolpz/audio-cmn" target="_blank" rel="noopener">audio-cmn</a>: sillabe pronunciate da Chen Wang, parole pronunciate da Yue Tan (progetto Shtooka), raccolte da Hugo Lopez. Creative Commons Attribution-ShareAlike.',
@@ -1511,6 +1517,10 @@ export default {
   'basics.hearMMa': 'Ascolta māma',
 
   // The introduction (index.html)
+  'welcome.alreadyUsing': 'Usi già <span lang="zh-Hant-TW">玉兔中文</span> su un altro dispositivo?',
+  'welcome.joining': 'Sto portando qui le tue parole…',
+  'welcome.syncNotNow': 'Solo questo dispositivo per ora (puoi attivarla più tardi nelle Impostazioni)',
+  'welcome.codeSaved': 'Ho salvato il mio codice di sincronizzazione',
   'welcome.welcomeTo': 'Benvenuto in <span lang="zh-Hant-TW">玉兔中文</span>',
   'welcome.learnToReadAnd': 'Impara a leggere e scrivere il cinese. Tutto resta su questo dispositivo: nessun account, nulla viene inviato altrove.',
   'welcome.welcomeBasicsButton': 'Nuovo al cinese? Parti dalle basi',

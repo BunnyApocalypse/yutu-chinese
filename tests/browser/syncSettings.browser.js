@@ -24,6 +24,27 @@ async function filesOnServer(folder) {
 }
 
 const shown = (id) => `!document.getElementById('${id}').hidden`;
+
+// Waits until `check()` (run here, in Node) gives something true, asking
+// again every tenth of a second; a check that fails because the page is
+// loading again counts as not yet. For what the harness's waitUntil can't
+// wait for: a promise in the page, or the page starting again.
+async function waitFor(check, description, limit = 15000) {
+  const start = Date.now();
+  for (;;) {
+    try {
+      if (await check()) {
+        return;
+      }
+    } catch {
+      // The page is between two loads.
+    }
+    if (Date.now() - start > limit) {
+      throw new Error(`Waited in vain for: ${description}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+}
 const CODE_SHOWN = /^([0-9A-Z]{4}-){7}[0-9A-Z]{4}$/;
 
 // One browser, and the steps in order: each builds on the one before.
@@ -126,5 +147,98 @@ describe('sync in Settings', { concurrency: false }, () => {
     await tap(page, 'sync-delete-button');
     await waitUntil(page, shown('sync-off'), 'sync off');
     assert.deepEqual(await fs.readdir(folder), []);
+  });
+});
+
+// Syncing in the introduction (welcome.js): one device turns it on on the
+// last screen, another joins from the first, a third is opened from the
+// link in the QR code.
+describe('sync in the introduction', { concurrency: false }, () => {
+  let app;
+  let browsers;
+  let server;
+  let folder;
+  const pages = [];
+  let code;
+
+  const click = (page, selector) => page.evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);
+  const syncServerIs = (page) =>
+    page.evaluate(`import('/src/db.js').then((db) => db.setSyncValue('server', 'http://127.0.0.1:${server.address().port}'))`);
+
+  before(async () => {
+    app = await startApp();
+    folder = await fs.mkdtemp(path.join(os.tmpdir(), 'yutu-sync-welcome-'));
+    server = await createSyncServer({ dataDir: folder, log: false, allowedOrigins: [new URL(app.url).origin] });
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    browsers = await startBrowsers(app.url, 3, { keepWelcome: true });
+    // All three pages, kept for the steps below (nothing else uses them).
+    await browsers.use((a) => browsers.use((b) => browsers.use((c) => pages.push(a, b, c))));
+    for (const page of pages) {
+      await syncServerIs(page);
+    }
+  });
+
+  after(async () => {
+    const errors = browsers?.errors() ?? [];
+    browsers?.close();
+    await app?.close();
+    await new Promise((resolve) => server?.close(resolve));
+    await fs.rm(folder, { recursive: true, force: true });
+    assert.deepEqual(errors, [], 'the page threw errors');
+  });
+
+  it('turns sync on at the end, once the code is ticked as saved', async () => {
+    const [page] = pages;
+    await tap(page, 'welcome-next');
+    await click(page, 'input[name="welcome-script"][value="traditional"]');
+    await tap(page, 'welcome-next');
+    await click(page, 'input[name="welcome-start"][value=""]');
+    await tap(page, 'welcome-next');
+    assert.ok(await page.evaluate(shown('welcome-sync')));
+    // "Not now" is chosen at first; the screen finishes as before.
+    assert.equal(await page.evaluate(`document.getElementById('welcome-next').disabled`), false);
+    await click(page, 'input[name="welcome-sync"][value="on"]');
+    await waitUntil(page, shown('welcome-sync-code'), 'the code');
+    code = await textOf(page, 'welcome-code');
+    assert.match(code, CODE_SHOWN);
+    assert.equal(await page.evaluate(`document.querySelectorAll('#welcome-qr svg path').length`), 1);
+    assert.equal(await page.evaluate(`document.getElementById('welcome-next').disabled`), true);
+    await click(page, '#welcome-code-saved');
+    assert.equal(await page.evaluate(`document.getElementById('welcome-next').disabled`), false);
+    await tap(page, 'welcome-next');
+    await waitUntil(page, `!document.getElementById('welcome').open`, 'the introduction to close');
+    await waitFor(() => page.evaluate(`import('/src/db.js').then((db) => db.getSyncValue('lastSyncedAt', null))`), 'the first sync');
+    assert.equal((await filesOnServer(folder)).filter((name) => name.startsWith('batch-')).length, 1);
+  });
+
+  it('joins from the first screen, skipping the rest and taking the other device\'s settings', async () => {
+    const page = pages[1];
+    await tap(page, 'welcome-join-button');
+    await type(page, 'welcome-code-input', code);
+    await page.evaluate(`window.loadedBefore = true; document.getElementById('welcome-join-form').requestSubmit()`);
+    // The app starts again with what came (the introduction not again).
+    await waitFor(
+      () => page.evaluate(`!window.loadedBefore && !document.querySelector('main').classList.contains('starting')`),
+      'the app to start again',
+    );
+    assert.equal(await page.evaluate(`document.getElementById('welcome').open`), false);
+    const script = await page.evaluate(`import('/src/db.js').then((db) => db.getSetting('script', null))`);
+    assert.equal(script, 'traditional');
+  });
+
+  it('opened from the link in the QR code, puts the code in the box to confirm, and out of the address', async () => {
+    const page = pages[2];
+    // (With "?link", a page of its own: a "#…" alone would only move within
+    // the page already open.)
+    await page.send('Page.navigate', { url: `${app.url}?link#sync=${code}` });
+    await waitFor(
+      () => page.evaluate(`document.getElementById('welcome')?.open && !document.getElementById('welcome-join-form').hidden`),
+      'the code box',
+    );
+    assert.equal(await page.evaluate(`document.getElementById('welcome-code-input').value`), code);
+    assert.ok(await page.evaluate(shown('welcome-from-link')));
+    assert.equal(await page.evaluate('window.location.hash'), '');
+    // Nothing joined by itself.
+    assert.equal(await page.evaluate(`import('/src/db.js').then((db) => db.getSyncValue('code', null))`), null);
   });
 });

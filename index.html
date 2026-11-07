@@ -731,6 +731,7 @@
             <li data-t-html="credits.strokeDataMakeMe"></li>
             <li data-t-html="credits.showingAndCheckingStrokes"></li>
             <li data-t-html="credits.schedulingTheFsrsMethod"></li>
+            <li data-t-html="credits.qrCodes"></li>
             <li data-t-html="credits.readingAnkiFilesSql"></li>
             <li data-t-html="credits.dictionaryAndTonesCc"></li>
             <li data-t-html="credits.recordingsAudioCmnSyllables"></li>
@@ -1134,6 +1135,19 @@
           <!-- Opens "Basics of Chinese" on top; closing it comes back here
                (main.js; the owner, 2026-10-21). -->
           <p><button id="welcome-basics-button" class="link-button" type="button" data-t="welcome.welcomeBasicsButton"></button></p>
+          <!-- Syncing with another device (welcome.js; the owner, 2026-11-07):
+               the words and settings come from there, so the rest of the
+               introduction is skipped. Only where there is a sync server. -->
+          <div id="welcome-join" hidden>
+            <p><button id="welcome-join-button" class="link-button" type="button" data-t-html="welcome.alreadyUsing"></button></p>
+            <form id="welcome-join-form" class="sync-join" hidden>
+              <p id="welcome-from-link" class="hint sync-problem" hidden data-t="sync.fromLink"></p>
+              <label for="welcome-code-input" data-t="sync.codeLabel"></label>
+              <input id="welcome-code-input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" />
+              <button id="welcome-join-submit" class="small" type="submit" data-t="sync.join"></button>
+              <p id="welcome-join-note" class="hint" role="status" hidden></p>
+            </form>
+          </div>
           <!-- Shown at once as it is chosen; saved with the rest at the end
                (welcome.js). Each choice is a small sample of the look: the
                app's icon (its paper and 兔, icons/swatch.png), in the dark one turned dark, and for "Follow device
@@ -1264,6 +1278,29 @@
               <li data-t-html="welcome.openFromItsNew"></li>
             </ol>
           </div>
+          <!-- Syncing (welcome.js; the owner, 2026-11-07): two choices, not two
+               more buttons (at most three on a screen, 2026-10-16). Choosing
+               it shows the code at once; the screen's button waits until it
+               is ticked as saved. Only where there is a sync server. -->
+          <fieldset id="welcome-sync" class="setting" hidden>
+            <legend data-t="sync.heading"></legend>
+            <p class="hint" data-t="sync.about"></p>
+            <label><input type="radio" name="welcome-sync" value="on" /> <span data-t="sync.turnOn"></span></label>
+            <label><input type="radio" name="welcome-sync" value="" /> <span data-t="welcome.syncNotNow"></span></label>
+            <div id="welcome-sync-code" hidden>
+              <p id="welcome-code" class="sync-code"></p>
+              <p class="hint" data-t="sync.codeExplain"></p>
+              <p class="sync-buttons">
+                <button id="welcome-copy-button" class="link-button" type="button" data-t="sync.copy"></button>
+                <button id="welcome-file-button" class="link-button" type="button" data-t="sync.saveFile"></button>
+                <button id="welcome-print-button" class="link-button" type="button" data-t="sync.print"></button>
+              </p>
+              <p id="welcome-code-note" class="hint" role="status"></p>
+              <label><input id="welcome-code-saved" type="checkbox" /> <span data-t="welcome.codeSaved"></span></label>
+              <div id="welcome-qr"></div>
+              <p class="hint" data-t-html="sync.scanHint"></p>
+            </div>
+          </fieldset>
         </section>
 
         <!-- Back and Next, held at the panel's bottom edge while a screen
@@ -1569,9 +1606,13 @@
           <!-- Sync off: what it is, and the two ways to turn it on. -->
           <div id="sync-off">
             <p class="hint" data-t="sync.about"></p>
-            <button id="sync-on-button" class="small" type="button" data-t="sync.turnOn"></button>
-            <button id="sync-join-button" class="small" type="button" data-t="sync.haveCode"></button>
+            <div class="sync-buttons">
+              <button id="sync-on-button" class="small" type="button" data-t="sync.turnOn"></button>
+              <button id="sync-join-button" class="small" type="button" data-t="sync.haveCode"></button>
+            </div>
             <form id="sync-join-form" class="sync-join" hidden>
+              <!-- A code that came in a link: said before it is used (syncCodeView.js). -->
+              <p id="sync-from-link" class="hint sync-problem" hidden data-t="sync.fromLink"></p>
               <label for="sync-code-input" data-t="sync.codeLabel"></label>
               <input id="sync-code-input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" />
               <button id="sync-join-submit" class="small" type="submit" data-t="sync.join"></button>
@@ -1580,24 +1621,34 @@
           </div>
           <!-- The code: when it is made, before sync is turned on, and on "Show sync code". -->
           <div id="sync-code-step" hidden>
+            <!-- Keeping it first, then the QR code for another device, then going on. -->
             <p id="sync-code" class="sync-code"></p>
             <p class="hint" data-t="sync.codeExplain"></p>
-            <button id="sync-copy-button" class="small" type="button" data-t="sync.copy"></button>
-            <button id="sync-file-button" class="small" type="button" data-t="sync.saveFile"></button>
-            <button id="sync-print-button" class="small" type="button" data-t="sync.print"></button>
-            <p class="hint" data-t="sync.passwordManager"></p>
+            <div class="sync-buttons">
+              <button id="sync-copy-button" class="small" type="button" data-t="sync.copy"></button>
+              <button id="sync-file-button" class="small" type="button" data-t="sync.saveFile"></button>
+              <button id="sync-print-button" class="small" type="button" data-t="sync.print"></button>
+            </div>
             <p id="sync-code-note" class="hint" role="status"></p>
-            <button id="sync-saved-button" class="small primary" type="button" data-t="sync.saved"></button>
-            <button id="sync-code-cancel" class="small" type="button" data-t="common.cancel"></button>
-            <button id="sync-code-hide" class="small" type="button" data-t="sync.hideCode"></button>
+            <p class="hint" data-t="sync.passwordManager"></p>
+            <!-- The QR code of the link with the code (syncCodeView.js). -->
+            <div id="sync-qr"></div>
+            <p class="hint" data-t-html="sync.scanHint"></p>
+            <div class="sync-buttons">
+              <button id="sync-saved-button" class="small primary" type="button" data-t="sync.saved"></button>
+              <button id="sync-code-cancel" class="small" type="button" data-t="common.cancel"></button>
+              <button id="sync-code-hide" class="small" type="button" data-t="sync.hideCode"></button>
+            </div>
           </div>
           <!-- Sync on: how it went, and what can be done. -->
           <div id="sync-on" hidden>
             <p id="sync-status" class="hint" role="status"></p>
-            <button id="sync-now-button" class="small" type="button" data-t="sync.now"></button>
-            <button id="sync-show-code-button" class="small" type="button" data-t="sync.showCode"></button>
-            <button id="sync-off-button" class="small" type="button" data-t="sync.turnOff"></button>
-            <button id="sync-delete-button" class="small danger" type="button" data-t="sync.deleteData"></button>
+            <div class="sync-buttons">
+              <button id="sync-now-button" class="small" type="button" data-t="sync.now"></button>
+              <button id="sync-show-code-button" class="small" type="button" data-t="sync.showCode"></button>
+              <button id="sync-off-button" class="small" type="button" data-t="sync.turnOff"></button>
+              <button id="sync-delete-button" class="small danger" type="button" data-t="sync.deleteData"></button>
+            </div>
           </div>
         </div>
 

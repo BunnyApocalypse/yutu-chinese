@@ -5,12 +5,21 @@
 // Shortened on 2026-10-16 (the owner, after a tester found it far too
 // wordy): the kinds of card are no longer chosen here (all four stay on;
 // Settings has them), and the pronunciation follows the script.
+//
+// Syncing (the owner, 2026-11-07; docs/sync.md), where there is a sync
+// server: on the first screen, "Already using 玉兔中文 on another device?"
+// joins with a code and skips the rest, since the words and settings come
+// from the other device (choices made here would be newer and win); on the
+// last, "Turn on sync" shows a new code, and the screen's button waits until
+// it is ticked as saved.
 
 import { getSetting, setSetting } from './db.js';
 import { startingLevel } from './decks.js';
 import { welcomeStorage } from './storageAdvice.js';
 import { setTheme } from './theme.js';
 import { t } from './text.js';
+import { makeCode, readCode } from './syncCode.js';
+import { showCode, copyCode, saveCodeFile, printCode, problemText, codeProblemText } from './syncCodeView.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -21,9 +30,15 @@ const byId = (id) => document.getElementById(id);
 //           waited for before the introduction closes. `start` is the
 //           ready-made level chosen to begin with, { listId, level },
 //           { anki: true } for a deck to import from Anki, or null for none.
+// sync:     { available, join(code), joined(), turnOn(code) } (syncControl.js,
+//           through main.js): whether there is a sync server; joining with
+//           a code, giving the status after the first sync; what to do once
+//           the introduction has closed after joining (main.js starts the
+//           app again with what came); turning sync on with a new code, once
+//           the introduction is finished
 //
-// Returns { open(), openIfFirstTime() }.
-export function createWelcome({ settings, keepData, hasWords, onFinish }) {
+// Returns { open(), openIfFirstTime(), offerJoin(text) }.
+export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) {
   const dialog = byId('welcome');
   const steps = [...dialog.querySelectorAll('[data-step]')];
   const progress = byId('welcome-progress');
@@ -94,6 +109,78 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
 
   // Which screen is showing, counting from 0.
   let step = 0;
+  // While finishing: the buttons are off, and nothing redraws the screen.
+  let finishing = false;
+
+  // ---- Syncing ----
+
+  const joinPart = byId('welcome-join');
+  const joinForm = byId('welcome-join-form');
+  const joinInput = byId('welcome-code-input');
+  const joinNote = byId('welcome-join-note');
+  const syncPart = byId('welcome-sync');
+  const codePart = byId('welcome-sync-code');
+  const codeNote = byId('welcome-code-note');
+  const savedBox = byId('welcome-code-saved');
+  // The new code shown on the last screen, made when "Turn on sync" is
+  // first chosen.
+  let newCode = null;
+  const syncChosen = () => chosen('welcome-sync') === 'on';
+
+  function openJoin() {
+    joinForm.hidden = false;
+    joinInput.focus();
+  }
+  byId('welcome-join-button').addEventListener('click', openJoin);
+
+  joinForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const { code, reason } = await readCode(joinInput.value);
+    joinNote.hidden = false;
+    if (reason) {
+      joinNote.textContent = codeProblemText(reason);
+      return;
+    }
+    joinNote.textContent = t('welcome.joining');
+    const controls = [...joinForm.elements, nextButton, skipButton];
+    controls.forEach((control) => {
+      control.disabled = true;
+    });
+    const status = await sync.join(code);
+    controls.forEach((control) => {
+      control.disabled = false;
+    });
+    if (status.problem) {
+      // Sync is on all the same and tries again later; the introduction
+      // stays, to be skipped or tried again.
+      joinNote.textContent = problemText(status.problem);
+      return;
+    }
+    // Saved before anything else, so that the introduction doesn't come back
+    // when the app starts again.
+    await setSetting('welcomeDone', true);
+    dialog.close();
+    await sync.joined();
+  });
+
+  for (const radio of dialog.querySelectorAll('input[name="welcome-sync"]')) {
+    radio.addEventListener('change', async () => {
+      if (syncChosen() && !newCode) {
+        newCode = await makeCode();
+        showCode({ codeElement: byId('welcome-code'), qrElement: byId('welcome-qr') }, newCode);
+      }
+      codePart.hidden = !syncChosen();
+      showStep();
+    });
+  }
+  savedBox.addEventListener('change', () => showStep());
+  byId('welcome-copy-button').addEventListener('click', async () => {
+    codeNote.textContent = await copyCode(newCode);
+  });
+  byId('welcome-file-button').addEventListener('click', () => {
+    codeNote.textContent = saveCodeFile(newCode);
+  });
+  byId('welcome-print-button').addEventListener('click', () => printCode(newCode));
 
   // The radio button that is chosen in a group, and choosing one.
   const chosen = (name) => dialog.querySelector(`input[name="${name}"]:checked`).value;
@@ -173,6 +260,10 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
     );
     skipButton.textContent = t(last ? 'welcome.notNow' : 'welcome.skip');
     skipButton.hidden = last && !willAsk;
+    // With sync chosen, finishing waits until the code is ticked as saved.
+    const waiting = last && syncChosen() && !savedBox.checked;
+    nextButton.disabled = waiting;
+    skipButton.disabled = waiting;
     // Each screen starts at its top, whatever was scrolled before.
     dialog.scrollTop = 0;
     showCovering();
@@ -203,7 +294,7 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
     }
     // (Not while finishing: asking tells the listeners too, and the button
     // says "Adding words…" meanwhile.)
-    if (!nextButton.disabled) {
+    if (!finishing) {
       showStep();
     }
   }
@@ -255,17 +346,25 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
     await setSetting('welcomeDone', true);
     // Adding a level takes a few seconds (the dictionary is read for the
     // meanings); the introduction stays up meanwhile.
+    finishing = true;
     nextButton.disabled = true;
     backButton.disabled = true;
     skipButton.disabled = true;
     nextButton.textContent = startChosen() && !startChosen().from ? t('welcome.addingWords') : nextButton.textContent;
+    const syncCode = syncChosen() ? newCode : null;
     try {
       await onFinish(startChosen());
     } finally {
+      finishing = false;
       nextButton.disabled = false;
       backButton.disabled = false;
       skipButton.disabled = false;
       dialog.close();
+    }
+    // After the level is added, so that the first sync sends it too (it
+    // sends everything there is either way). Not waited for.
+    if (syncCode) {
+      sync.turnOn(syncCode);
     }
   }
 
@@ -295,6 +394,16 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
     pronunciationTouched = false;
     showPronunciation();
     startTouched = false;
+    joinPart.hidden = !sync.available;
+    joinForm.hidden = true;
+    joinNote.hidden = true;
+    byId('welcome-from-link').hidden = true;
+    syncPart.hidden = !sync.available;
+    choose('welcome-sync', '');
+    newCode = null;
+    codePart.hidden = true;
+    savedBox.checked = false;
+    codeNote.textContent = '';
     showKeepState();
     step = 0;
     showStep();
@@ -310,6 +419,16 @@ export function createWelcome({ settings, keepData, hasWords, onFinish }) {
       if (!(await getSetting('welcomeDone', false))) {
         open();
       }
+    },
+    // A code from a link (takeCodeFromLink in syncCodeView.js): on the first
+    // screen, in the box with a warning, never joined by itself.
+    offerJoin(text) {
+      if (!dialog.open) {
+        open();
+      }
+      joinInput.value = text;
+      byId('welcome-from-link').hidden = false;
+      openJoin();
     },
   };
 }

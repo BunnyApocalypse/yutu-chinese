@@ -41,6 +41,7 @@ import { createProgressPanel } from './progressPanel.js';
 import { setUpTesterSettings } from './testerSettings.js';
 import { createSyncControl } from './syncControl.js';
 import { createSyncPanel } from './syncPanel.js';
+import { takeCodeFromLink } from './syncCodeView.js';
 import { applyText, t, formatList, formatNumber } from './text.js';
 
 // The page's own text, in the learner's language (src/text.js), before
@@ -1025,10 +1026,40 @@ async function startUp() {
   // At the end of Review and in Learn while the words may be lost (storageMessage.js).
   createStorageMessage(keepData);
 
+  // Syncing between devices (syncControl.js, syncPanel.js; docs/sync.md).
+  // After a sync brought changes in, the screens read the data afresh, as
+  // after a change on the Decks tab.
+  syncControl = createSyncControl({
+    onChanged: async () => {
+      await review.load();
+      await loadWordList();
+    },
+    onStatus: (status) => syncPanel?.show(status),
+  });
+  await syncControl.start();
+  syncPanel = await createSyncPanel(syncControl);
+
+  // A join from the introduction that brought words and settings starts the
+  // app again with them (settings are read at start).
+  let joinChanged = false;
   const welcome = createWelcome({
     settings,
     keepData,
     hasWords: () => wordList.length > 0,
+    sync: {
+      available: Boolean(await syncControl.server()),
+      join: async (code) => {
+        const result = await syncControl.turnOn(code);
+        joinChanged = Boolean(result?.changed);
+        return syncControl.status();
+      },
+      joined: async () => {
+        if (joinChanged) {
+          window.location.reload();
+        }
+      },
+      turnOn: (code) => syncControl.turnOn(code),
+    },
     onFinish: async (start) => {
       // From Anki or Skritter: the Decks tab, with the import open on top
       // (ankiImportForm.js, skritterImportForm.js; the owner, 2026-10-19,
@@ -1071,18 +1102,6 @@ async function startUp() {
   // Settings › For testing, in the test copy only (testerSettings.js).
   await setUpTesterSettings();
 
-  // Syncing between devices (syncControl.js, syncPanel.js; docs/sync.md).
-  // After a sync brought changes in, the screens read the data afresh, as
-  // after a change on the Decks tab.
-  syncControl = createSyncControl({
-    onChanged: async () => {
-      await review.load();
-      await loadWordList();
-    },
-    onStatus: (status) => syncPanel?.show(status),
-  });
-  await syncControl.start();
-  syncPanel = await createSyncPanel(syncControl);
 
   const tips = createTips();
   await tips.load();
@@ -1151,6 +1170,19 @@ async function startUp() {
   }
   const firstUse = !(await getSetting('welcomeDone', false));
   await welcome.openIfFirstTime();
+  // Opened from a link with a sync code (a QR code scanned): the code is put
+  // in the box to join with, in the introduction or Settings, for the
+  // learner to confirm (syncCodeView.js says why never by itself).
+  const linkCode = takeCodeFromLink();
+  if (linkCode && !syncControl.status().on && (await syncControl.server())) {
+    if (firstUse) {
+      welcome.offerJoin(linkCode);
+    } else {
+      byId('settings-button').click();
+      document.querySelector('#settings-nav [data-group="settings-data"]').click();
+      syncPanel.offerJoin(linkCode);
+    }
+  }
   // What changed since the app was last opened here. Before the screen is
   // shown, so that its tip waits for this to be closed (tips.js).
   whatsNew.openIfNew(firstUse);
