@@ -34,7 +34,7 @@ Every file is encrypted on the device before it leaves (below), so the storage, 
 ## Snapshots
 
 - **Taken in** on a device's first sync (`joined` in the sync store), quicker than every batch since the beginning, and where a device's next batch is gone but the newest snapshot covers it (deleted, or the device was away long). Taking one in is `applyBatch` with all of this device's data as the slice (`readEverything` in `src/db.js`) and the snapshot's data, cards and all, as the batch; then `taken` goes up to what it covers. Only the newest snapshot ever counts.
-- **Made** by any device whose sync finds the batches the newest snapshot doesn't cover add up to more than `SNAPSHOT_AFTER_BYTES` (2 MB, to settle by trying; `src/sync.js`). The owner's whole snapshot would be about 5.7 MB.
+- **Made** by any device whose sync finds the batches the newest snapshot doesn't cover add up to more than `SNAPSHOT_AFTER_BYTES` (2 MB, to settle by trying) or number more than `SNAPSHOT_AFTER_BATCHES` (200; `src/sync.js`), so that a list of files stays short. The owner's whole snapshot would be about 5.7 MB.
 - **Tidying** (`tidy`): each device deletes only its own files: its batches the newest snapshot covers, and its older snapshots (covers file first). Only once it has opened that snapshot itself (made it, or read it through once: `checkedSnapshot`), so a snapshot that can't be opened never costs the batches it would replace.
 - **A batch missing** that no snapshot covers means something went wrong: the device reports `missing-batch` and takes nothing more of that device's, rather than carrying on with a hole.
 - **The server holds nothing that can't be replaced:** every device has everything. A device that finds its files gone (a server's disk lost, a move to another host, a server run afresh) sends everything again (to build in step 3: noticing it). So the server needs **no backups**, and moving it moves no data.
@@ -105,6 +105,7 @@ The sync code is the only key, so it is also how a learner gets everything back 
   - `GET`, `PUT`, `DELETE /accounts/<account>/files/<name>`: a file; `PUT` refused (409, `exists`) if one of that name is there: written under a name of its own, then linked to its real name, so a file is never seen half written or replaced.
 - **The access secret** (from the code, `keysFor`) goes with every request (`Authorization: Bearer …`). The first file saved makes the account and fixes it: the server keeps only its SHA-256 hash (`.access` in the account's folder) and compares in constant time. So an account ID seen in a log is not enough to read or delete anything.
 - **Names** are small letters, digits and dashes (no dots or slashes), accounts 32 hex letters: nothing can reach outside its folder or name `.access`.
+- **Unused accounts are deleted** after 365 days (the owner, 2026-11-07; `EXPIRE_DAYS`, 0 for never): "used" is any request with the account's secret, kept as the `.access` file's modification time, renewed at most once a day; the server looks a minute after it starts and then daily (`expireUnused`). A device coming back later finds its files gone and sends everything again (`startAfresh`): nothing a device has is lost. The privacy page is to say so. Files a lost or reset device left in an account still used stay (at most its last snapshot and 2 MB of batches).
 - **Limits** (`server/README.md`): 64 MB a file, 256 MB an account, 30 GB the whole server, 10 new accounts a day and 600 requests a minute from one address; only pages from the allowed sites (CORS, the browser's rule for which sites may call a server; a request from another refused); `SYNC_PAUSED=1` switches it off for everyone. Every answer is `no-store`. An error is `{ reason }` (listed at the top of `server.js`).
 - **The log** has one line a request (method, account or file, status): never an account, a file's name or an address.
 - **In the app** (`src/syncServer.js`): `serverStorage({ address, account, access })` gives the storage `sync.js` uses, plus `removeAll`; no answer at all is `reason: 'offline'`; a save under 60 KB is sent with `keepalive` (it may finish after the page is closed).
@@ -117,15 +118,19 @@ The sync code is the only key, so it is also how a learner gets everything back 
 
 ## Cost and upkeep
 
-Estimated 2026-11-07 from the owner's own backup: 47 MB as a file, **5.7 MB compressed**; 6,406 reviews in 30 days (about 210 a day), **0.4 MB compressed a month**. With two snapshots and the batches since, about 13 MB on the server for the heaviest learner; about 3 MB a learner on average is generous.
+Estimated 2026-11-07 from the owner's own backup (47 MB as a file, **5.7 MB compressed**; 6,406 reviews in 30 days, **0.4 MB compressed a month**), and **again once the code was written** (same day):
 
-| Learners | Space | Requests | Machine | About |
+- **Space a learner:** the newest snapshot, the batches since (up to 2 MB or 200), and for a while an older snapshot until its device tidies it. The owner about 8 MB, 14 MB at most; a typical learner (a year at 50 reviews a day) 1–3 MB. Turning sync on sends everything twice, once: a batch of all of it, then the snapshot it brings on (about 12 MB for the owner).
+- **Requests an active learner a day:** a send at most every 5 minutes of study, a whole sync on each opening or return (10–20 a day), and, since each request carries the access secret in a header, the browser's question before most of them (CORS: remembered per address, and each batch has a new one): **100–200**.
+- **Found while recalculating, and fixed:** a snapshot after 2 MB alone would have left a lighter learner with thousands of small batches, their list read at every whole sync (about 100 KB each, 2 MB a day on a phone): now also after 200 (`SNAPSHOT_AFTER_BATCHES`). And nothing deleted accounts nobody uses: now after 365 days (`EXPIRE_DAYS`, the server).
+
+| Learners | Space (with old accounts) | Requests | Traffic | About |
 |---|---|---|---|---|
-| 10 to 1,000 | up to 3 GB | under 1 a second | the smallest VPS (2 cores, 4 GB, 40 GB disk, 20 TB traffic) | €5–6 a month |
-| 10,000 | 30 GB | about 6 a second | the same, maybe one size up | €6–12 a month |
-| 100,000 | 300 GB | about 60 a second | larger, with a disk added | €30–50 a month |
+| 10 to 1,000 | up to 3 GB | about 2 a second | about 10 GB a month | €4–6 a month: the smallest VPS (2 cores, 4 GB, 40 GB disk, 20 TB traffic) |
+| 10,000 | 30 GB | about 20 a second | about 100 GB a month | €5–10 a month |
+| 100,000 | 300 GB | about 200 a second | about 1 TB a month | €30–50 a month: larger, with a disk added |
 
-Plus a domain, about €10–15 a year, so the address doesn't depend on the host. Prices as known in mid-2026; to check before renting. Traffic never matters (a day's batch is kilobytes).
+**The domain costs nothing more:** `yutu.bunnyapocalypse.space`, a subdomain of the owner's own (the owner, 2026-11-07). Prices as known in mid-2026; to check before renting. Traffic stays far inside what is included.
 
 **Upkeep is kept small by design:** nothing on the server is irreplaceable (no backups), downtime is no emergency (the app is offline-first), there are no accounts, passwords or emails (no resets, no support), and no dependencies (no stream of warnings). What remains:
 
@@ -185,6 +190,6 @@ One step at a time, each agreed before it starts:
 
 ## Decisions for the owner
 
-- **The host and the domain name** (step 4).
+- **Host: Hetzner** (the owner, 2026-11-07, over OVHcloud, Infomaniak and Netcup: hourly billing, no contract), the smallest x86 machine in Germany suggested, Debian 13; **domain: `yutu.bunnyapocalypse.space`**. Prices to check on Hetzner's own page when renting (both it and Netcup raised them in 2026).
 - **A reminder of the sync code** now and then, or none.
 - **The numbers:** 30 seconds after the last change, the cap between sends, the snapshot size.

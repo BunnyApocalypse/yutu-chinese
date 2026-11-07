@@ -26,6 +26,7 @@ From the environment:
 | `NEW_ACCOUNTS_PER_DAY` | new learners a day from one address | 10 |
 | `REQUESTS_PER_MINUTE` | requests a minute from one address | 600 |
 | `TRUST_PROXY` | `1` behind Caddy, so the learner's address is read from it | off |
+| `EXPIRE_DAYS` | an account not used for this many days is deleted (`0`: never) | 365 |
 | `SYNC_PAUSED` | `1` turns syncing off for everyone (it answers only `/v1/health`) | off |
 | `LOG` | `0` for no log; the log never has an account, a file's name or an address | on |
 

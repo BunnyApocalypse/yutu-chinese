@@ -379,3 +379,16 @@ test('a device whose batches a snapshot covers has not lost them', async () => {
   assert.equal(result.startedAfresh, false);
   assert.equal(await a.getSyncValue('device'), device);
 });
+
+test('a snapshot is made after enough batches, however small they are', async () => {
+  const { a, storage, syncOf } = setUp({ snapshotAfterBatches: 3 });
+  const syncA = syncOf(a);
+  for (let day = 20; day < 24; day++) {
+    a.save('words', [word('茶', 'cha2', { day })]);
+    const result = await syncA();
+    // The fourth batch makes four uncovered, more than three.
+    assert.equal(result.snapshotMade, day === 23, `day ${day}`);
+  }
+  assert.equal(names(storage, 'snapshot-').length, 1);
+  assert.equal(names(storage, 'batch-').length, 0);
+});

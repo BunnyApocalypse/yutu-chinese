@@ -241,3 +241,47 @@ test('two devices sync through the server, and it holds nothing readable', () =>
       }
     }
   }));
+
+test('deletes accounts unused for a year, and a request counts as use', () =>
+  withServer({}, async ({ address, folder }) => {
+    const old = await account(address);
+    const used = await account(address);
+    await old.storage.save('one', new Uint8Array(100));
+    await used.storage.save('one', new Uint8Array(100));
+    // Both last used two years ago, as their secrets' files say.
+    const longAgo = new Date(Date.now() - 2 * 365 * 24 * 60 * 60 * 1000);
+    for (const { keys } of [old, used]) {
+      await fs.utimes(path.join(folder, keys.account, '.access'), longAgo, longAgo);
+    }
+    // One is used now. (Through a second server on the same folder: the
+    // first has marked both today already, when they were made, and marks
+    // an account at most once a day.)
+    const second = await createSyncServer({ dataDir: folder, log: false });
+    await new Promise((resolve) => second.listen(0, '127.0.0.1', resolve));
+    try {
+      const secondAddress = `http://127.0.0.1:${second.address().port}`;
+      await serverStorage({ address: secondAddress, account: used.keys.account, access: used.keys.access }).list();
+      assert.equal(await second.expireUnused(), 1);
+      assert.deepEqual(await fs.readdir(folder), [used.keys.account]);
+      // With 0 days, never.
+      const keeping = await createSyncServer({ dataDir: folder, log: false, expireDays: 0 });
+      await fs.utimes(path.join(folder, used.keys.account, '.access'), longAgo, longAgo);
+      assert.equal(await keeping.expireUnused(), 0);
+    } finally {
+      await new Promise((resolve) => second.close(resolve));
+    }
+  }));
+
+test('a device whose account was deleted for being unused sends everything again', () =>
+  withServer({}, async ({ address, folder }) => {
+    const { mine } = twoDevices();
+    const { keys, storage } = await account(address);
+    const a = memoryDevice(mine, { before: true });
+    const syncA = createSync({ local: a, storage, key: keys.encryption }).syncNow;
+    await syncA();
+    // A year and more later, the account is gone.
+    await fs.rm(path.join(folder, keys.account), { recursive: true });
+    const result = await syncA();
+    assert.equal(result.startedAfresh, true);
+    assert.ok((await storage.list()).some((file) => file.name.startsWith('batch-')));
+  }));

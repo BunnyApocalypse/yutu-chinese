@@ -25,6 +25,14 @@
 // refuses any other. So knowing an account ID is not enough to read or
 // delete anything.
 //
+// An account not used for EXPIRE_DAYS (365 unless set: the owner,
+// 2026-11-07) is deleted, so the server keeps nothing nobody uses. "Used"
+// is any request with the account's secret, from any of its devices; the
+// time is kept as the `.access` file's modification time, renewed at most
+// once a day. Once a day the server looks through the accounts. A device
+// coming back after that finds its files gone and sends everything again
+// (sync.js, startAfresh): nothing a device has is lost.
+//
 // An error is answered with its status and { reason }, a word the app acts
 // on: 'bad-request', 'refused', 'not-found', 'exists', 'too-large',
 // 'account-full', 'server-full', 'too-many', 'paused', 'origin'.
@@ -62,6 +70,8 @@ export const DEFAULTS = {
   trustProxy: false,
   // Syncing switched off for everyone at once (docs/sync.md, "a switch").
   paused: false,
+  // An account unused this many days is deleted (0: never).
+  expireDays: 365,
   // One line per request (method, what, status), never an account, an
   // address or anything in a file.
   log: true,
@@ -82,6 +92,7 @@ export function settingsFromEnvironment(env = process.env) {
     requestsPerAddressPerMinute: number('REQUESTS_PER_MINUTE', DEFAULTS.requestsPerAddressPerMinute),
     trustProxy: env.TRUST_PROXY === '1',
     paused: env.SYNC_PAUSED === '1',
+    expireDays: number('EXPIRE_DAYS', DEFAULTS.expireDays),
     log: env.LOG !== '0',
   };
 }
@@ -94,6 +105,8 @@ const ACCESS = /^[0-9a-f]{64}$/;
 const NAME = /^[a-z0-9][a-z0-9-]{0,99}$/;
 
 const sha256 = (text) => crypto.createHash('sha256').update(text).digest();
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 // An error answered as { reason } with its status.
 class Refusal extends Error {
@@ -170,7 +183,55 @@ export async function createSyncServer(given = {}) {
     if (!crypto.timingSafeEqual(stored, sha256(match[1]))) {
       throw new Refusal(403, 'refused');
     }
+    await markUsed(folder);
     return true;
+  }
+
+  // Notes that an account was used, at most once a day (see the top).
+  const markedAt = new Map();
+  async function markUsed(folder) {
+    const now = Date.now();
+    if (now - (markedAt.get(folder) ?? 0) < DAY_MS) {
+      return;
+    }
+    markedAt.set(folder, now);
+    const time = new Date(now);
+    await fs.utimes(path.join(folder, '.access'), time, time);
+  }
+
+  // Deletes the accounts not used for settings.expireDays. Returns how many.
+  async function expireUnused() {
+    if (!settings.expireDays) {
+      return 0;
+    }
+    const before = Date.now() - settings.expireDays * DAY_MS;
+    let deleted = 0;
+    for (const account of await fs.readdir(dataDir)) {
+      const folder = path.join(dataDir, account);
+      let usedAt;
+      try {
+        usedAt = (await fs.stat(path.join(folder, '.access'))).mtimeMs;
+      } catch (error) {
+        if (error.code !== 'ENOENT') {
+          throw error;
+        }
+        // A folder without a secret: an account whose first save failed
+        // halfway, or not an account at all. Its folder's own time counts.
+        // (Gone meanwhile, deleted by its learner: nothing to do.)
+        const found = await fs.stat(folder).catch(() => null);
+        if (!found) {
+          continue;
+        }
+        usedAt = found.mtimeMs;
+      }
+      if (usedAt < before) {
+        totalBytes -= await accountBytes(folder);
+        await fs.rm(folder, { recursive: true, force: true });
+        markedAt.delete(folder);
+        deleted += 1;
+      }
+    }
+    return deleted;
   }
 
   // Makes a new account with this access secret. Two first saves at once:
@@ -362,6 +423,27 @@ export async function createSyncServer(given = {}) {
       }
     }
   });
+
+  // Unused accounts: looked for a minute after the start, then once a day.
+  // (unref: these timers alone don't keep the program running.)
+  const sweep = () =>
+    expireUnused()
+      .then((deleted) => {
+        if (deleted > 0 && settings.log) {
+          console.log(`Deleted ${deleted} accounts unused for ${settings.expireDays} days`);
+        }
+      })
+      .catch((error) => console.error(error));
+  const sweeper = setInterval(sweep, DAY_MS);
+  const firstSweep = setTimeout(sweep, 60 * 1000);
+  sweeper.unref();
+  firstSweep.unref();
+  server.on('close', () => {
+    clearInterval(sweeper);
+    clearTimeout(firstSweep);
+  });
+  // For the tests, and for running it by hand.
+  server.expireUnused = expireUnused;
   return server;
 }
 

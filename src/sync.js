@@ -38,8 +38,12 @@ export const SNAPSHOT_FORMAT = 1;
 
 // A snapshot is made when the batches since the newest add up to this much
 // (sync.md: the owner's month of study is about 0.4 MB, their whole
-// snapshot 5.7 MB).
+// snapshot 5.7 MB), or are this many: a batch goes every few minutes of
+// study and holds a few kilobytes, so a lighter learner would otherwise
+// gather thousands of small files before reaching the size, and every whole
+// sync reads their list (2026-11-07).
 export const SNAPSHOT_AFTER_BYTES = 2 * 1024 * 1024;
+export const SNAPSHOT_AFTER_BATCHES = 200;
 
 // Numbers and times in names have a fixed width, so that names sort in their
 // order.
@@ -247,17 +251,19 @@ async function takeIn(local, storage, key, device, batches, newest) {
   return { takenIn, snapshotTakenIn, changed, problems };
 }
 
-// How many bytes of batches the newest snapshot doesn't cover.
-function bytesSince(newest, batches) {
+// The batches the newest snapshot doesn't cover: { count, bytes }.
+function uncovered(newest, batches) {
+  let count = 0;
   let bytes = 0;
   for (const [other, files] of batches) {
     for (const file of files) {
       if (file.number > (newest?.covers[other] ?? 0)) {
+        count += 1;
         bytes += file.size;
       }
     }
   }
-  return bytes;
+  return { count, bytes };
 }
 
 // Saves a snapshot of everything here, then its covers file. Returns it as
@@ -348,8 +354,15 @@ async function startAfresh(local) {
 // more, since something may have changed meanwhile; several asked for
 // meanwhile share that one run, a whole one if any of them asked for that.
 //
-// snapshotAfterBytes: SNAPSHOT_AFTER_BYTES, smaller in the tests
-export function createSync({ local, storage, key, snapshotAfterBytes = SNAPSHOT_AFTER_BYTES }) {
+// snapshotAfterBytes, snapshotAfterBatches: SNAPSHOT_AFTER_BYTES and
+// SNAPSHOT_AFTER_BATCHES, smaller in the tests
+export function createSync({
+  local,
+  storage,
+  key,
+  snapshotAfterBytes = SNAPSHOT_AFTER_BYTES,
+  snapshotAfterBatches = SNAPSHOT_AFTER_BATCHES,
+}) {
   let running = null;
   let waiting = null;
   let waitingWhole = false;
@@ -383,7 +396,8 @@ export function createSync({ local, storage, key, snapshotAfterBytes = SNAPSHOT_
     const fetched = await takeIn(local, storage, key, device, files.batches, newest);
     await local.setSyncValue('joined', true);
     let snapshotMade = false;
-    if (bytesSince(newest, files.batches) > snapshotAfterBytes) {
+    const since = uncovered(newest, files.batches);
+    if (since.bytes > snapshotAfterBytes || since.count > snapshotAfterBatches) {
       newest = await saveSnapshot(local, storage, key, device);
       snapshotMade = true;
     }
