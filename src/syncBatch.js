@@ -7,6 +7,9 @@
 //   { format: 1, device, number, madeAt,
 //     words: [...], decks: [...], settings: [...], removed: [...], reviews: [...] }
 //
+// and, in a batch of everything a device has (sendEverything in db.js),
+// `cards` too.
+//
 // `device` is the random ID of the device that made it, and `number` counts
 // that device's batches, 1, 2, 3…, so another device can tell which it has
 // already taken in and whether one is missing.
@@ -32,6 +35,9 @@ export function buildBatch({ device, number, madeAt, records }) {
   const batch = { format: BATCH_FORMAT, device, number, madeAt };
   for (const storeName of Object.keys(KEYS)) {
     batch[storeName] = records[storeName] || [];
+  }
+  if (records.cards) {
+    batch.cards = records.cards;
   }
   // A setting that belongs to this device (the theme, the volume…) stays
   // here, as it does when combining backups.
@@ -86,7 +92,9 @@ export function wordsTouched(batch, myWords) {
 //
 // slice: this device's records, as readSlice(wordsTouched(batch, words))
 //        gives them
-// batch: the other device's batch
+// batch: the other device's batch; or a snapshot's data (sync.js), with
+//        `slice` all of this device's: it has cards too, which are then
+//        kept as stored where that side has every review of them
 //
 // Returns { put, remove }:
 //   put:     { storeName: [records to save] }
@@ -97,6 +105,7 @@ export function applyBatch(slice, batch) {
   for (const storeName of Object.keys(KEYS)) {
     theirs[storeName] = batch[storeName] || [];
   }
+  theirs.cards = batch.cards || [];
   const { data } = mergeBackups(slice, theirs, { summarize: false });
 
   const put = {};

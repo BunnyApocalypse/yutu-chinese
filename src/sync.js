@@ -1,42 +1,66 @@
 // Syncing between devices: sending this device's batch of changes and taking
-// in the other devices' (sync.md has the whole plan; syncBatch.js the
-// calculation).
+// in the other devices', with a whole snapshot now and then (sync.md has the
+// whole plan; syncBatch.js the calculation; syncCode.js the encryption).
 //
-// Two things are handed in, so that the tests can use stand-ins for both:
+// Three things are handed in, so that the tests can use stand-ins:
 //
 //   local    this device's data: in the app, db.js itself (getSyncValue,
 //            setSyncValue, readOutbox, takeOffOutbox, getAll, readSlice,
-//            saveTakenIn)
+//            readEverything, saveTakenIn)
 //   storage  where the files are kept, shared by all the devices:
-//              list()           the names of every file
-//              read(name)       a file's bytes (a Uint8Array)
+//              list()             every file, as [{ name, size }]
+//              read(name)         a file's bytes (a Uint8Array)
 //              save(name, bytes)  refused, with error.reason 'exists', if a
-//                               file of that name is there already: a
-//                               device's log is only ever added to
+//                                 file of that name is there already: a
+//                                 file is never changed, only added
 //              remove(name)
+//   key      the encryption key from the sync code (keysFor in syncCode.js)
 //
-// Each device writes only files of its own, "batch-<device>-<number>", so
-// two devices syncing at once never get in each other's way.
+// The files, all encrypted:
+//
+//   batch-<device>-<number>      a device's changes, numbered 1, 2, 3…
+//   snapshot-<time>-<device>     everything a device had at that time
+//   covers-<time>-<device>       which batches that snapshot includes, by
+//                                device: { device: number }; small, so a
+//                                device can tell whether it needs the
+//                                snapshot without reading it. Saved after
+//                                the snapshot: one without it isn't there yet.
+//
+// Each device saves and deletes only files of its own, so two devices
+// syncing at once never get in each other's way.
 
 import { buildBatch, isEmptyBatch, applyBatch, wordsTouched, BATCH_FORMAT } from './syncBatch.js';
+import { DEVICE_SETTINGS } from './merge.js';
+import { encrypt, decrypt } from './syncCode.js';
 import { randomId } from './db.js';
 
-// The batch number in a file name has a fixed width, so that names sort in
-// the order of their numbers.
-const batchName = (device, number) => `batch-${device}-${String(number).padStart(10, '0')}`;
-const BATCH_NAME = /^batch-([0-9a-f]+)-(\d{10})$/;
+export const SNAPSHOT_FORMAT = 1;
 
-// A file's contents: the batch as JSON text, compressed with gzip (built into
-// the browser as CompressionStream). The owner's month of study, about 6,400
-// reviews, is 0.4 MB compressed (sync.md). Encryption comes in here too
-// (step 2 of sync.md).
-export async function encodeFile(object) {
+// A snapshot is made when the batches since the newest add up to this much
+// (sync.md: the owner's month of study is about 0.4 MB, their whole
+// snapshot 5.7 MB).
+export const SNAPSHOT_AFTER_BYTES = 2 * 1024 * 1024;
+
+// Numbers and times in names have a fixed width, so that names sort in their
+// order.
+const batchName = (device, number) => `batch-${device}-${String(number).padStart(10, '0')}`;
+const snapshotName = (time, device) => `snapshot-${String(time).padStart(13, '0')}-${device}`;
+const coversName = (snapshot) => snapshot.replace(/^snapshot-/, 'covers-');
+const BATCH_NAME = /^batch-([0-9a-f]+)-(\d{10})$/;
+const SNAPSHOT_NAME = /^snapshot-(\d{13})-([0-9a-f]+)$/;
+
+// A file's contents: JSON text, compressed with gzip (built into the
+// browser as CompressionStream), then encrypted under its name.
+export async function encodeFile(object, key, name) {
   const stream = new Blob([JSON.stringify(object)]).stream().pipeThrough(new CompressionStream('gzip'));
-  return new Uint8Array(await new Response(stream).arrayBuffer());
+  return encrypt(key, name, new Uint8Array(await new Response(stream).arrayBuffer()));
 }
 
-export async function decodeFile(bytes) {
-  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+// Opens what encodeFile made. Throws with error.reason 'cannot-open' for a
+// file made with another sync code, or changed.
+export async function decodeFile(bytes, key, name) {
+  const compressed = await decrypt(key, name, bytes);
+  const stream = new Blob([compressed]).stream().pipeThrough(new DecompressionStream('gzip'));
   return JSON.parse(await new Response(stream).text());
 }
 
@@ -50,9 +74,36 @@ async function deviceId(local) {
   return device;
 }
 
+// The files in a listing, sorted out:
+//   batches:   by device, [{ name, number, size }] in order
+//   snapshots: [{ name, device }], oldest first, only those with their
+//              covers file
+function sortOut(listing) {
+  const names = new Set(listing.map((file) => file.name));
+  const batches = new Map();
+  const snapshots = [];
+  for (const { name, size } of listing) {
+    const batch = BATCH_NAME.exec(name);
+    if (batch) {
+      const list = batches.get(batch[1]) || [];
+      list.push({ name, number: Number(batch[2]), size });
+      batches.set(batch[1], list);
+    }
+    const snapshot = SNAPSHOT_NAME.exec(name);
+    if (snapshot && names.has(coversName(name))) {
+      snapshots.push({ name, device: snapshot[2] });
+    }
+  }
+  for (const list of batches.values()) {
+    list.sort((a, b) => a.number - b.number);
+  }
+  snapshots.sort((a, b) => (a.name < b.name ? -1 : 1));
+  return { batches, snapshots };
+}
+
 // Sends the outbox as this device's next batch, if it holds anything.
 // Returns the batch's number, or null if there was nothing to send.
-async function send(local, storage, device) {
+async function send(local, storage, key, device) {
   const { entries, records } = await local.readOutbox();
   if (entries.length === 0) {
     return null;
@@ -66,7 +117,8 @@ async function send(local, storage, device) {
     // number is used.
     for (;;) {
       try {
-        await storage.save(batchName(device, number), await encodeFile({ ...batch, number }));
+        const name = batchName(device, number);
+        await storage.save(name, await encodeFile({ ...batch, number }, key, name));
         break;
       } catch (error) {
         if (error.reason !== 'exists') {
@@ -83,37 +135,100 @@ async function send(local, storage, device) {
   return isEmptyBatch(batch) ? null : number;
 }
 
-// Takes in the other devices' batches not yet taken in, each device's in
-// order. Returns { takenIn, changed, problems }: how many batches were taken
-// in, whether anything here changed, and what went wrong, as
-// [{ reason, device }]:
-//   'missing-batch'  a device's batch is missing before one that is there:
-//                    its later ones wait (a snapshot will settle it, sync.md)
-//   'bad-batch'      a file isn't the batch its name says
-export async function fetchBatches(local, storage, device) {
-  const names = await storage.list();
-  const byDevice = new Map();
-  for (const name of names) {
-    const match = BATCH_NAME.exec(name);
-    if (match && match[1] !== device) {
-      const list = byDevice.get(match[1]) || [];
-      list.push({ name, number: Number(match[2]) });
-      byDevice.set(match[1], list);
+// The newest snapshot and what it covers: { name, device, covers }, or null
+// if there is none. Its covers file is read once and kept on this device.
+async function newestSnapshot(local, storage, key, snapshots) {
+  const newest = snapshots.at(-1);
+  if (!newest) {
+    return null;
+  }
+  const known = await local.getSyncValue('snapshotCovers', null);
+  if (known && known.name === newest.name) {
+    return { ...newest, covers: known.covers };
+  }
+  const name = coversName(newest.name);
+  const { covers } = await decodeFile(await storage.read(name), key, name);
+  await local.setSyncValue('snapshotCovers', { name: newest.name, covers });
+  return { ...newest, covers };
+}
+
+// Takes in a snapshot: as a batch of everything, against everything here.
+// Returns whether anything here changed.
+async function takeInSnapshot(local, storage, key, device, snapshot, taken) {
+  const contents = await decodeFile(await storage.read(snapshot.name), key, snapshot.name);
+  const changes = applyBatch(await local.readEverything(), contents.data);
+  await local.saveTakenIn(changes);
+  for (const [other, number] of Object.entries(contents.covers)) {
+    if (other !== device) {
+      taken[other] = Math.max(taken[other] ?? 0, number);
     }
   }
+  await local.setSyncValue('taken', { ...taken });
+  await local.setSyncValue('checkedSnapshot', snapshot.name);
+  return Object.keys(changes.put).length > 0 || Object.keys(changes.remove).length > 0;
+}
+
+// Takes in the other devices' batches not yet taken in, each device's in
+// order, and a snapshot first where it is needed. Every change is in some
+// device's batches (a device's data from before sync was turned on too:
+// sendEverything in db.js), so a snapshot is only ever a shortcut. Returns
+// { takenIn, snapshotTakenIn, changed, problems }; a problem is
+// { reason, device }:
+//   'missing-batch'  a device's batch is missing and no snapshot covers it:
+//                    its later ones wait
+//   'bad-batch'      a file isn't the batch its name says
+//   'cannot-open'    a file can't be opened with this sync code
+async function takeIn(local, storage, key, device, batches, newest) {
   // The last batch taken in from each device: { device: number }.
   const taken = { ...(await local.getSyncValue('taken', {})) };
-  let takenIn = 0;
   let changed = false;
+  let snapshotTakenIn = false;
   const problems = [];
-  for (const [other, files] of byDevice) {
-    files.sort((a, b) => a.number - b.number);
+
+  // A snapshot is taken in on the first sync (quicker than every batch since
+  // the beginning) or where a device's next batch is gone but the snapshot
+  // covers it (deleted as covered, or this device was away long).
+  if (newest && newest.device !== device) {
+    const first = !(await local.getSyncValue('joined', false));
+    const gap = Object.entries(newest.covers).some(
+      ([other, number]) =>
+        other !== device &&
+        number > (taken[other] ?? 0) &&
+        !(batches.get(other) || []).some((file) => file.number === (taken[other] ?? 0) + 1),
+    );
+    if (first || gap) {
+      try {
+        changed = await takeInSnapshot(local, storage, key, device, newest, taken);
+        snapshotTakenIn = true;
+      } catch (error) {
+        if (error.reason !== 'cannot-open') {
+          throw error;
+        }
+        problems.push({ reason: 'cannot-open', device: newest.device });
+      }
+    }
+  }
+
+  let takenIn = 0;
+  for (const [other, files] of batches) {
+    if (other === device) {
+      continue;
+    }
     for (const { name, number } of files.filter((file) => file.number > (taken[other] ?? 0))) {
       if (number !== (taken[other] ?? 0) + 1) {
         problems.push({ reason: 'missing-batch', device: other });
         break;
       }
-      const batch = await decodeFile(await storage.read(name));
+      let batch;
+      try {
+        batch = await decodeFile(await storage.read(name), key, name);
+      } catch (error) {
+        if (error.reason !== 'cannot-open') {
+          throw error;
+        }
+        problems.push({ reason: 'cannot-open', device: other });
+        break;
+      }
       if (batch.format !== BATCH_FORMAT || batch.device !== other || batch.number !== number) {
         problems.push({ reason: 'bad-batch', device: other });
         break;
@@ -129,24 +244,106 @@ export async function fetchBatches(local, storage, device) {
       takenIn++;
     }
   }
-  return { takenIn, changed, problems };
+  return { takenIn, snapshotTakenIn, changed, problems };
 }
 
-// Makes a sync for this device. syncNow() sends what changed here and takes
-// in what changed elsewhere, and returns
-//   { sent, takenIn, changed, problems }
-// `sent` is the number of the batch sent, or null. A sync asked for while
-// one is under way waits for it and then runs once more, since something may
-// have changed meanwhile; several asked for meanwhile share that one run.
-export function createSync({ local, storage }) {
+// How many bytes of batches the newest snapshot doesn't cover.
+function bytesSince(newest, batches) {
+  let bytes = 0;
+  for (const [other, files] of batches) {
+    for (const file of files) {
+      if (file.number > (newest?.covers[other] ?? 0)) {
+        bytes += file.size;
+      }
+    }
+  }
+  return bytes;
+}
+
+// Saves a snapshot of everything here, then its covers file. Returns it as
+// newestSnapshot does.
+async function saveSnapshot(local, storage, key, device) {
+  const data = await local.readEverything();
+  data.settings = data.settings.filter((setting) => !DEVICE_SETTINGS.includes(setting.key));
+  const taken = await local.getSyncValue('taken', {});
+  const covers = { ...taken, [device]: (await local.getSyncValue('nextNumber', 1)) - 1 };
+  const madeAt = Date.now();
+  const name = snapshotName(madeAt, device);
+  await storage.save(name, await encodeFile({ format: SNAPSHOT_FORMAT, device, madeAt, covers, data }, key, name));
+  const covering = coversName(name);
+  await storage.save(covering, await encodeFile({ format: SNAPSHOT_FORMAT, device, madeAt, covers }, key, covering));
+  await local.setSyncValue('snapshotCovers', { name, covers });
+  await local.setSyncValue('checkedSnapshot', name);
+  return { name, device, covers };
+}
+
+// Deletes this device's files that the newest snapshot makes unneeded: its
+// batches the snapshot covers, and its older snapshots. Only once this
+// device has opened that snapshot (made it, or read it through), so that a
+// snapshot that can't be opened never costs the batches it would replace.
+async function tidy(local, storage, key, device, files, newest) {
+  if (!newest) {
+    return;
+  }
+  const covered = (files.batches.get(device) || []).filter((file) => file.number <= (newest.covers[device] ?? 0));
+  const older = files.snapshots.filter((snapshot) => snapshot.device === device && snapshot.name < newest.name);
+  if (covered.length === 0 && older.length === 0) {
+    return;
+  }
+  if ((await local.getSyncValue('checkedSnapshot', null)) !== newest.name) {
+    const contents = await decodeFile(await storage.read(newest.name), key, newest.name);
+    if (contents.format !== SNAPSHOT_FORMAT || !contents.data) {
+      return;
+    }
+    await local.setSyncValue('checkedSnapshot', newest.name);
+  }
+  for (const file of covered) {
+    await storage.remove(file.name);
+  }
+  for (const snapshot of older) {
+    // The covers file first: without it, the snapshot no longer counts.
+    await storage.remove(coversName(snapshot.name));
+    await storage.remove(snapshot.name);
+  }
+}
+
+// Makes a sync for this device. syncNow() sends what changed here, takes in
+// what changed elsewhere, makes a snapshot when one is due and deletes this
+// device's files no longer needed. It returns
+//   { sent, takenIn, snapshotTakenIn, snapshotMade, changed, problems }
+// `sent` is the number of the batch sent, or null; `snapshotMade` whether a
+// snapshot was saved. A sync asked for while one is under way waits for it
+// and then runs once more, since something may have changed meanwhile;
+// several asked for meanwhile share that one run.
+//
+// snapshotAfterBytes: SNAPSHOT_AFTER_BYTES, smaller in the tests
+export function createSync({ local, storage, key, snapshotAfterBytes = SNAPSHOT_AFTER_BYTES }) {
   let running = null;
   let waiting = null;
 
   async function run() {
     const device = await deviceId(local);
-    const sent = await send(local, storage, device);
-    const fetched = await fetchBatches(local, storage, device);
-    return { sent, ...fetched };
+    const sent = await send(local, storage, key, device);
+    const files = sortOut(await storage.list());
+    let newest = null;
+    const problems = [];
+    try {
+      newest = await newestSnapshot(local, storage, key, files.snapshots);
+    } catch (error) {
+      if (error.reason !== 'cannot-open') {
+        throw error;
+      }
+      problems.push({ reason: 'cannot-open', device: files.snapshots.at(-1).device });
+    }
+    const fetched = await takeIn(local, storage, key, device, files.batches, newest);
+    await local.setSyncValue('joined', true);
+    let snapshotMade = false;
+    if (bytesSince(newest, files.batches) > snapshotAfterBytes) {
+      newest = await saveSnapshot(local, storage, key, device);
+      snapshotMade = true;
+    }
+    await tidy(local, storage, key, device, files, newest);
+    return { sent, ...fetched, snapshotMade, problems: [...problems, ...fetched.problems] };
   }
 
   function syncNow() {

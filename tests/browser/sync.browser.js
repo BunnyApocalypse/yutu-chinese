@@ -121,17 +121,61 @@ describe('syncing in the database', { concurrency: false }, () => {
     assert.deepEqual(await outboxKeys(), ['words:愛|ai4']);
   });
 
-  it('asks for a whole snapshot after a backup replaces everything', async () => {
-    const needed = await inApp(`
-      const data = {};
-      for (const storeName of db.STORES) {
-        data[storeName] = await db.getAll(storeName);
-      }
-      await db.replaceEverything(data);
-      const needed = await db.getSyncValue('snapshotNeeded', false);
+  it('syncs with another device through a storage, encrypted, with the real database', async () => {
+    const result = await inApp(`
+      const { createSync, encodeFile, decodeFile } = await import('/src/sync.js');
+      const { makeCode, keysFor } = await import('/src/syncCode.js');
+      const files = new Map();
+      const storage = {
+        list: async () => [...files].map(([name, bytes]) => ({ name, size: bytes.length })),
+        read: async (name) => files.get(name),
+        save: async (name, bytes) => {
+          if (files.has(name)) throw Object.assign(new Error('exists'), { reason: 'exists' });
+          files.set(name, bytes);
+        },
+        remove: async (name) => files.delete(name),
+      };
+      const key = (await keysFor(await makeCode())).encryption;
+      db.setOutboxOn(true);
+      // Another device's batch, as it would have saved it.
+      const theirName = 'batch-0b0b-0000000001';
+      files.set(theirName, await encodeFile(sync.buildBatch({ device: '0b0b', number: 1, madeAt: 0, records: {
+        words: [{ id: '茶|cha2', traditional: '茶', simplified: '茶', pinyin: 'cha2', definition: 'tea', order: 2, changedAt: ${NOW} }],
+      } }), key, theirName));
+      const outcome = await createSync({ local: db, storage, key }).syncNow();
       db.setOutboxOn(false);
-      return needed;
+      const mine = [...files.keys()].find((name) => name !== theirName);
+      const sent = await decodeFile(files.get(mine), key, mine);
+      return {
+        outcome,
+        sentWords: sent.words.map((word) => word.id),
+        tea: (await db.getSome('words', ['茶|cha2'])).length,
+        outbox: (await db.getAll('outbox')).length,
+        readable: new TextDecoder('latin1').decode(files.get(mine)).includes('ai4'),
+      };
     `);
-    assert.equal(needed, true);
+    assert.equal(result.outcome.sent, 1);
+    assert.equal(result.outcome.takenIn, 1);
+    assert.deepEqual(result.outcome.problems, []);
+    assert.deepEqual(result.sentWords, ['愛|ai4']);
+    assert.equal(result.tea, 1);
+    assert.equal(result.outbox, 0);
+    assert.equal(result.readable, false);
+    // Back to sync on, for the next step.
+    await inApp(`db.setOutboxOn(true);`);
+  });
+
+  it('sends everything after a backup replaces everything', async () => {
+    const batch = await inApp(`
+      const data = await db.readEverything();
+      await db.replaceEverything(data);
+      const { records } = await db.readOutbox();
+      db.setOutboxOn(false);
+      return sync.buildBatch({ device: 'A', number: 2, madeAt: 0, records });
+    `);
+    assert.deepEqual(await outboxKeys(), ['everything']);
+    assert.deepEqual(batch.words.map((word) => word.id).sort(), ['愛|ai4', '茶|cha2', '貓|mao1']);
+    assert.deepEqual(batch.reviews.map((review) => review.id).sort(), ['review-1', 'review-2']);
+    assert.equal(batch.cards.length, 1);
   });
 });

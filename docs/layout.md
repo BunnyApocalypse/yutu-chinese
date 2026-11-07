@@ -59,6 +59,7 @@
 - `src/leeches.js`: which cards are leeches, suspended cards, and the two leech exports (`docs/cards.md`). Plain calculation.
 - `src/merge.js`: combines what is on the device with a backup from another device (`docs/merging.md`). Plain calculation.
 - `src/sync.js`: syncing: sends this device's batch of changes and takes in the other devices', through a storage handed in (`docs/sync.md`).
+- `src/syncCode.js`: the sync code (made, typed in, checked) and the keys and encryption it gives, with WebCrypto (`docs/sync.md`).
 - `src/syncBatch.js`: syncing's calculation: a batch of this device's changes, and taking in another device's with `mergeBackups` on a slice (`docs/sync.md`). Plain calculation.
 - `src/readingFixes.js`, `data/wordlists/reading-fixes.tsv`: readings put right in the ready-made lists, and carrying them over to words a device has already (`docs/word-lists.md`). Plain calculation; tested in `tests/readingFixes.test.js` and `tests/browser/database.browser.js`.
 - `src/radicals.js`, `scripts/build-radicals.js`, `data/wordlists/radicals/`: the ready-made deck of radicals (`docs/word-lists.md`). Tested in `tests/radicals.test.js` and the last test of `tests/browser/decks.browser.js`.

@@ -85,7 +85,8 @@
 //   outbox    key: key     { key, store, id, token }, key "<store>:<id>".
 //                          A record changed here since the last batch was
 //                          sent; one entry per record, however often it
-//                          changed. Written only while sync is on
+//                          changed. The entry "everything" (sendEverything)
+//                          sends all of this device's data. Written only while sync is on
 //                          (setOutboxOn). `token` is new each time, so that
 //                          an entry changed again while a batch was being
 //                          sent stays (takeOffOutbox).
@@ -498,10 +499,9 @@ export async function replaceEverything(data, onProgress = () => {}) {
     }
   }
   await transaction(['settings'], 'readwrite', (tx) => tx.objectStore('settings').delete(IMPORT_UNFINISHED));
-  // Everything changed at once: too much for the outbox, so the next sync
-  // sends a whole snapshot instead (sync.md).
+  // Everything changed at once: the next batch sends it all (sync.md).
   if (outboxOn) {
-    await setSyncValue('snapshotNeeded', true);
+    await sendEverything();
   }
 }
 
@@ -517,11 +517,25 @@ export function setSyncValue(key, value) {
   return transaction(['sync'], 'readwrite', (tx) => tx.objectStore('sync').put({ key, value }));
 }
 
+// Puts all of this device's data in the next batch: when sync is turned on
+// (what was here before must reach the other devices too) and after a
+// backup replaced everything. One entry, not one per record.
+export function sendEverything() {
+  return transaction(['outbox'], 'readwrite', (tx) =>
+    tx.objectStore('outbox').put({ key: 'everything', store: null, id: null, token: randomId() }),
+  );
+}
+
 // The outbox's entries and the records they name, as they are now:
 // { entries, records: { words: [...], ... } }. A record since deleted is
-// left out (a word's removal is sent as its mark in `removed`).
+// left out (a word's removal is sent as its mark in `removed`). With the
+// entry "everything", the records are all there are, cards too, which
+// spare the other devices working them out.
 export async function readOutbox() {
   const entries = await getAll('outbox');
+  if (entries.some((entry) => entry.key === 'everything')) {
+    return { entries, records: await readEverything() };
+  }
   const requests = await transaction(SYNCED, 'readonly', (tx) =>
     entries.map((entry) => ({ store: entry.store, request: tx.objectStore(entry.store).get(entry.id) })),
   );
@@ -570,27 +584,50 @@ export async function readSlice(wordIds) {
   return slice;
 }
 
-// Saves what taking in a batch gives (applyBatch in syncBatch.js), all
-// together: records as they came, not stamped again and not put in the
+// Everything in the stores a backup holds, as { storeName: [records] }: what
+// a snapshot is made of, and taken in against (sync.js). The reviews are
+// read a part at a time (getAllInParts), as Review does.
+export async function readEverything() {
+  const data = {};
+  for (const storeName of STORES.filter((name) => name !== 'reviews')) {
+    data[storeName] = await getAll(storeName);
+  }
+  data.reviews = [];
+  await getAllInParts('reviews', (part) => data.reviews.push(...part));
+  return data;
+}
+
+// Saves what taking in a batch or a snapshot gives (applyBatch in
+// syncBatch.js): records as they came, not stamped again and not put in the
 // outbox (or two devices would send each other's changes back and forth
 // forever). changes: { put: { words: [...], ... }, remove: { words: [ids], ... } }
-export function saveTakenIn({ put, remove }) {
-  const storeNames = [...new Set([...Object.keys(put), ...Object.keys(remove)])];
-  if (storeNames.length === 0) {
-    return Promise.resolve();
+//
+// The deletions go first, then the records RECORDS_AT_A_TIME a transaction:
+// a snapshot taken in on a new device is all of a learner's history, too
+// much for one (see replaceEverything). Stopped halfway, the batch is taken
+// in again at the next sync (sync.js notes it as taken in only after), and
+// taking it in twice changes nothing.
+export async function saveTakenIn({ put, remove }) {
+  const removing = Object.keys(remove);
+  if (removing.length > 0) {
+    await transaction(removing, 'readwrite', (tx) => {
+      for (const [storeName, keys] of Object.entries(remove)) {
+        for (const key of keys) {
+          tx.objectStore(storeName).delete(key);
+        }
+      }
+    });
   }
-  return transaction(storeNames, 'readwrite', (tx) => {
-    for (const [storeName, keys] of Object.entries(remove)) {
-      for (const key of keys) {
-        tx.objectStore(storeName).delete(key);
-      }
+  for (const [storeName, records] of Object.entries(put)) {
+    for (let start = 0; start < records.length; start += RECORDS_AT_A_TIME) {
+      const part = records.slice(start, start + RECORDS_AT_A_TIME);
+      await transaction([storeName], 'readwrite', (tx) => {
+        for (const record of part) {
+          tx.objectStore(storeName).put(record);
+        }
+      });
     }
-    for (const [storeName, records] of Object.entries(put)) {
-      for (const record of records) {
-        tx.objectStore(storeName).put(record);
-      }
-    }
-  });
+  }
 }
 
 // A random ID for records that have no natural one (reviews). Random rather
