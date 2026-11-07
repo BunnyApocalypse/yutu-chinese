@@ -59,6 +59,38 @@ Changes should leave a device before the learner picks up the next one, and arri
 - **The code is kept out of backups:** a backup file holding it would hold the key to everything synced. It goes in a place of its own on the device, not in `settings` (and named apart for the test copy, `__CHANNEL__`).
 - **What the storage still learns:** an account ID, how many files, their sizes and times, and (for a server) the IP addresses that ask. Not a word of the learner's study.
 
+## Getting the data back: recovery
+
+The sync code is the only key, so it is also how a learner gets everything back (the owner, 2026-11-07: something the learner can save when pairing). One code, for joining and for recovery: two codes would be more to explain and to lose, and protect nothing more, since either would have to open the data.
+
+- **One device lost, another left:** nothing to do; the one left has everything. Pair the new device with it.
+- **Every device lost:** on the new device, "Restore from sync" (the same as joining) and the code. It reads the newest snapshot and the batches after it; cards come back from the reviews, schedules and all.
+- **Every device and the code lost:** the synced data can't be opened, by anyone, us included. Said plainly when the code is shown.
+- **Saving the code when sync is turned on**, before anything is sent, a step of its own:
+  - the code, large, in groups, with Copy;
+  - "Save as file": a small text file with the code, the date, the site's address and how to restore (saved as the app saves backups);
+  - "Print": a page to keep with one's papers (the browser's print, nothing added);
+  - a line suggesting a password manager;
+  - "I've saved it" to go on: a confirmation, not a test.
+- **"Show sync code"** in Settings, on any paired device, behind a tap saying that anyone with the code can read and delete the synced data. So a lost copy of the code doesn't matter while one device is left.
+- **A reminder now and then** ("Do you still have your sync code?") only if wanted, with an off switch like every nudge.
+- **A code that got out:** "Change sync code" in Settings deletes the files under the old code, sends a snapshot under a new one (shown and saved as above), and the other devices pair again. The old code then opens nothing.
+- **Not covered by the code:** the storage itself going (our server stopped, the Drive files deleted, the Google account lost). Export backup stays in Settings as the copy that depends on nobody, and the privacy page says so.
+
+## Over Google Drive
+
+The same files, kept in the learner's Drive instead of on a server of ours (the roadmap's first step, `docs/history.md`). Nobody's data is then held by us.
+
+- **Where:** Drive's **app folder** (the `drive.appdata` permission): a hidden folder only this app can see, counted in the learner's Drive space. The learner can't browse it, but can see how much it holds and delete it, in Drive's settings under "Manage apps". The app sees nothing else in their Drive.
+- **Talking to Google directly** with `fetch`, as the roadmap says: no script of Google's, no dependency. Drive's API accepts calls from a web page (CORS). The service worker must leave these calls alone.
+- **Signing in:** a web app with no server gets an **access token** (a pass Google gives after signing in) that lasts about an hour, and no long-lived one (Google gives those only to apps with a server). When it runs out, the app needs Google again: quietly, by visiting Google and coming straight back when the learner is still signed in there and has agreed before, but that is a page load, or else a tap ("Sync paused: tap to reconnect"). Which of these fits syncing on opening and on hiding is **to try early**, on the owner's devices, before building the rest of this step.
+- **The account:** Google keeps each learner's app folder apart, so the account ID isn't needed to find the files; they are still put under it, so files left by an older code are recognized and deleted.
+- **Names:** Drive allows two files with the same name. A device writes only its own names, so a twin can only come from a retry, with the same contents; one is kept, the other deleted.
+- **Encrypted or not** (the owner's decision, below). Encrypted, it is the design above: a sync code besides signing in to Google, and Google can't read the data. Not encrypted: joining and recovering are only signing in with the same Google account, no code to keep, but Google holds readable study data. **Claude recommends encrypting**: one design and one way to recover whichever storage, and moving between Drive and a server of ours stays a copy of files.
+- **Recovery over Drive:** sign in with the same Google account, then the code (if encrypted).
+- **Registering with Google** (the owner does it, with Claude's help): a Google Cloud project, the consent screen ("玉兔中文 wants to see its own files in your Drive"), a client ID (public, fine in the repository), the stable and test addresses as the places allowed to sign in, and `localhost` for development. Google doesn't allow a LAN address, so a phone on the dev server tests against the stand-in only. Until Google has checked the app, at most 100 named test users; checking a non-sensitive permission asks for the privacy page, a home page and proof of owning the domain. **To find out before starting:** whether Google accepts `bunnyapocalypse.github.io` for that, or whether a domain of our own is needed.
+- **In the Android app later:** Google refuses sign-in inside an app's built-in browser, so the Capacitor app signs in through the phone's own browser or a plugin (a dependency to approve then).
+
 ## If we run the server ourselves
 
 - **What it is:** a few dozen lines of plain JavaScript on Cloudflare Workers, files kept in Cloudflare R2 (both have free tiers likely to cover a small group). It understands nothing of the app:
@@ -87,12 +119,13 @@ One step at a time, each agreed before it starts:
 
 1. **The batches without a network:** the outbox, batches, taking them in, snapshots, against a stand-in storage in memory; the test against `mergeBackups`. A database version raised for the outbox and the sync store, existing data carried over.
 2. **Encryption and the sync code**, with their tests.
-3. **The first real storage** (the owner's choice, below), then the timing and the Settings section. Browser tests against a stand-in; one real check on the owner's devices.
+3. **The first real storage** (the owner's choice, below; for Drive, signing in tried first on the owner's devices), then the timing and the Settings section. Browser tests against a stand-in; one real check on the owner's devices.
 4. **The other storage**, if wanted.
 
 ## Decisions for the owner
 
 - **Google Drive first, or a server of our own first** (the roadmap says Drive; the design fits both).
-- **Encrypt on Google Drive too?** It keeps Google from reading the data, but needs the sync code there as well, besides signing in to Google.
+- **Encrypt on Google Drive too?** It keeps Google from reading the data, but needs the sync code there as well, besides signing in to Google ("Over Google Drive"; Claude recommends it).
 - **A QR code for pairing:** making one needs a library (a dependency to approve) or a few hundred lines of our own; reading one with the camera doesn't work in Firefox. Typing the code or opening a link may be enough.
+- **A reminder of the sync code** now and then, or none.
 - **The numbers:** 30 seconds after the last change, the cap between sends, the snapshot size.
