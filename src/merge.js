@@ -4,8 +4,13 @@
 //
 // The rules, per store:
 //
-//   reviews   Every review of both sides is kept. They have random IDs and
-//             are never changed, so the same ID is the same review.
+//   reviews   Every review of both sides is kept. They have random IDs, so
+//             the same ID is the same review. A review is changed only when
+//             its grade is corrected while looking back (review.js), which
+//             gives it a `correctedAt`: of two copies, the one corrected
+//             later is kept. (Combining backups by hand could not meet the
+//             first copy elsewhere; syncing, which sends reviews within
+//             minutes, can: sync.md.)
 //   words     Where both sides have a word, the one saved later (`changedAt`)
 //             is kept, whole. A word whose ID was corrected on one side is
 //             matched to the other side's record under the old ID through
@@ -20,7 +25,8 @@
 //   whichever record is kept.
 //   cards     Not combined, but worked out afresh from the combined reviews
 //             (replay in scheduler.js), unless one side already has every
-//             review of the card: then its card is kept as stored.
+//             review of the card, each as kept: then its card is kept as
+//             stored.
 //
 // "Later" goes by each device's own clock. A record without `changedAt` was
 // saved before 2026-10-13 and counts as older than any that has one. Where
@@ -32,7 +38,8 @@ import { countedFrom } from './cardManager.js';
 import { t } from './text.js';
 
 // Settings that say something about the device, not about the learner.
-const DEVICE_SETTINGS = [
+// Syncing leaves them out too (syncBatch.js).
+export const DEVICE_SETTINGS = [
   'welcomeDone',
   'keepDataWanted',
   'cardsFiledByScript',
@@ -56,6 +63,9 @@ const DEVICE_SETTINGS = [
 ];
 
 const changedAt = (record) => (record && record.changedAt) || 0;
+
+// When a review's grade was last corrected; 0 if never.
+const corrected = (review) => review.correctedAt || 0;
 
 // Of two versions of a record, the one saved later; `mine` if neither is.
 const later = (mine, theirs) => (changedAt(theirs) > changedAt(mine) ? theirs : mine);
@@ -184,8 +194,9 @@ function addTo(map, key, item) {
 //
 // words:     the combined words, by ID
 // reviews:   the combined reviews, under their words' current IDs
-// sides:     for each side, { cards, reviewIds }: its cards (under current
-//            IDs) and the IDs of the reviews it has
+// sides:     for each side, { cards, reviewCopies }: its cards (under
+//            current IDs), and the reviews it has, as a Map from each
+//            review's ID to when it was corrected (corrected())
 // removedAt: when each removed word was last removed, by ID
 function mergeCards(words, reviews, sides, removedAt) {
   // A word's cards of one kind are looked at together: its writing cards in
@@ -216,10 +227,13 @@ function mergeCards(words, reviews, sides, removedAt) {
     const counted = all.filter((review) => review.time > removed);
 
     // A side that has made or already taken in every one of these reviews
-    // has the cards as they should be. They are kept as stored, so that
-    // combining never changes a schedule without a reason.
+    // (and the same copy of each: see correctedAt above) has the cards as
+    // they should be. They are kept as stored, so that combining never
+    // changes a schedule without a reason.
     const complete = sides.find(
-      (side) => storedCards(side, group).length > 0 && all.every((review) => side.reviewIds.has(review.id)),
+      (side) =>
+        storedCards(side, group).length > 0 &&
+        all.every((review) => side.reviewCopies.get(review.id) === corrected(review)),
     );
     if (complete && counted.length === all.length) {
       cards.push(...storedCards(complete, group));
@@ -297,14 +311,15 @@ export function mergeBackups(mine, theirs) {
 
   const reviews = new Map();
   for (const review of [...of(mine, 'reviews'), ...of(theirs, 'reviews')]) {
-    if (!reviews.has(review.id)) {
+    const known = reviews.get(review.id);
+    if (!known || corrected(review) > corrected(known)) {
       reviews.set(review.id, underCurrentId(review, currentId));
     }
   }
 
   const sides = [mine, theirs].map((side) => ({
     cards: of(side, 'cards').map((card) => underCurrentId(card, currentId)),
-    reviewIds: new Set(of(side, 'reviews').map((review) => review.id)),
+    reviewCopies: new Map(of(side, 'reviews').map((review) => [review.id, corrected(review)])),
   }));
   const cards = mergeCards(words, [...reviews.values()], sides, removedAt);
 

@@ -12,6 +12,7 @@ Built on 2026-10-13, so that two devices' data can be combined.
 - **Decks:** a `decks` store (`{ id, name, parentId, order }`) and a `decks` list on each word; ready-made decks have fixed IDs (`readyMadeDeck`). `READY_MADE_LISTS` in `src/decks.js` repeats the lists' levels; a test checks it against the files.
 - **A tab running an older version blocks an upgrade.** The app closes its connection when a newer version asks (`onversionchange`), and a newer one kept waiting says to close the other tab (`onblocked`).
 - **Backup format 2** adds `removed` and `decks`; version 1 files are still read.
+- **The database is at version 4** (2026-11-07): the stores `outbox` and `sync`, which belong to the device and are never in a backup (`docs/sync.md`). The backup format doesn't change.
 
 ## Combining backups
 
@@ -22,7 +23,7 @@ Built on 2026-10-13 to a plan the owner agreed to; the same calculation a later 
 - **Saving the backup, combined or replacing, goes in parts** (`replaceEverything` in `src/db.js`, 2026-10-23): the stores are emptied and the settings saved together, then the rest 2,000 records a transaction (`RECORDS_AT_A_TIME`). In one transaction, a 45 MB backup (181,000 reviews from Skritter) froze the owner's tablet in Firefox on Android and never finished. The panel turns its buttons off and Esc does nothing while it saves, and `import-note` counts the records ("Saving: 45,000 of 192,680 records").
 - **An import cut off halfway is not all-or-nothing any more:** the setting `importUnfinished` (`IMPORT_UNFINISHED`, a device setting) is saved first and removed last. While it is there, the app says when it starts that the last import did not finish and to import again. Until then the device holds only part of the backup (its settings are all there, being saved first).
 - **`mergeBackups(mine, theirs)` in `src/merge.js`** gives the combined contents and a summary; the page writes them with `replaceEverything` and reloads. The rules (at the top of the file):
-  - Reviews: all of both sides.
+  - Reviews: all of both sides; of two copies of one review (a grade corrected while looking back, `correctedAt`), the one corrected later.
   - Words, decks, settings: the record saved later (`changedAt`), whole; this device's if neither is later. A word's earliest `learnedAt` is kept whichever wins, with that side's `learnDuration`; `startedOverAt` keeps the later time.
   - A removal counts unless the record was saved after it. All marks are kept.
   - A word corrected on one device (`formerIds`) replaces the record under the old ID on the other, whose cards and reviews move to the new ID. If the correcting device also has a word under the old ID, that is a word of its own.

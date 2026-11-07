@@ -40,6 +40,9 @@
 //                          `duration` is how long the answer took in
 //                          milliseconds (timing.js; reviews from 2026-10-19
 //                          and those from Anki).
+//                          `correctedAt` is when its grade was last
+//                          corrected while looking back (review.js); the
+//                          one change ever made to a review.
 //                          A review brought over from Anki has an ID made
 //                          from Anki's ("anki-<Anki's ID>-<type>"),
 //                          `fromAnki: true`, and Anki's `duration`. With
@@ -76,6 +79,19 @@
 //                          same on every device; any other has a random one
 //                          (see decks.js).
 //
+// Two more stores belong to this device alone and are never in a backup
+// (syncing, sync.md):
+//
+//   outbox    key: key     { key, store, id, token }, key "<store>:<id>".
+//                          A record changed here since the last batch was
+//                          sent; one entry per record, however often it
+//                          changed. Written only while sync is on
+//                          (setOutboxOn). `token` is new each time, so that
+//                          an entry changed again while a batch was being
+//                          sent stays (takeOffOutbox).
+//   sync      key: key     { key, value }: what syncing keeps on this device,
+//                          such as its device ID and the batches taken in.
+//
 // `changedAt` is when a record was last saved (a number, like Date.now()).
 // It is filled in here, by putAll, so that when two devices' data are
 // combined the newer version of a record can be kept. Records saved before
@@ -100,12 +116,24 @@ const DATABASE_NAME = CHANNEL ? `hanzi-trainer-${CHANNEL}` : 'hanzi-trainer';
 
 // Raise this number when the stores themselves change (a new store, a new
 // key). The browser then runs the upgrade code below on existing databases.
-const DATABASE_VERSION = 3;
+const DATABASE_VERSION = 4;
 
+// The stores a backup holds.
 export const STORES = ['words', 'cards', 'reviews', 'settings', 'removed', 'decks'];
 
 // The stores whose records are given a `changedAt` when saved.
 const STAMPED = ['words', 'settings', 'decks'];
+
+// The stores whose changes syncing sends to other devices. Cards are not
+// among them: they are worked out from the reviews.
+export const SYNCED = ['words', 'settings', 'decks', 'reviews', 'removed'];
+
+// Whether changes are noted in the outbox: only while sync is on.
+let outboxOn = false;
+
+export function setOutboxOn(on) {
+  outboxOn = on;
+}
 
 let databasePromise = null;
 
@@ -134,6 +162,10 @@ function openDatabase() {
         // the reviews already stored, once, while the app starts.
         if (event.oldVersion < 3) {
           request.transaction.objectStore('reviews').createIndex('wordId', 'wordId');
+        }
+        if (event.oldVersion < 4) {
+          database.createObjectStore('outbox', { keyPath: 'key' });
+          database.createObjectStore('sync', { keyPath: 'key' });
         }
       };
       request.onsuccess = () => {
@@ -165,6 +197,22 @@ async function transaction(storeNames, mode, work) {
     tx.onerror = () => reject(tx.error);
     tx.onabort = () => reject(tx.error);
     result = work(tx);
+  });
+}
+
+// A transaction that changes records of the synced stores, with the outbox
+// in it while sync is on. `work` gets the transaction and a function
+// note(storeName, id) to call for each record it changes; the entry is then
+// saved in the same transaction as the change.
+function changing(storeNames, work) {
+  const names = outboxOn ? [...storeNames, 'outbox'] : storeNames;
+  return transaction(names, 'readwrite', (tx) => {
+    const note = (storeName, id) => {
+      if (outboxOn && SYNCED.includes(storeName)) {
+        tx.objectStore('outbox').put({ key: `${storeName}:${id}`, store: storeName, id, token: randomId() });
+      }
+    };
+    return work(tx, note);
   });
 }
 
@@ -230,12 +278,17 @@ export async function getAllInParts(storeName, onPart, partSize = 5000) {
 // stamp: false leaves `changedAt` as it is, for a change the app makes by
 //        itself to bring old records up to date. Such a change must not make
 //        a record look newer than one the owner changed on another device.
+//        It is not sent to other devices either: each makes it for itself.
 export function putAll(storeName, records, { stamp = true } = {}) {
   const changedAt = Date.now();
   const stamped = stamp && STAMPED.includes(storeName);
-  return transaction([storeName], 'readwrite', (tx) => {
+  const keyName = storeName === 'settings' ? 'key' : 'id';
+  return changing([storeName], (tx, note) => {
     for (const record of records) {
       tx.objectStore(storeName).put(stamped ? { ...record, changedAt } : record);
+      if (stamp) {
+        note(storeName, record[keyName]);
+      }
     }
   });
 }
@@ -250,13 +303,14 @@ export function removeWord(wordId, cardIds) {
 // The same for several words at once. entries: [{ wordId, cardIds }].
 export function removeWords(entries) {
   const removedAt = Date.now();
-  return transaction(['words', 'cards', 'removed'], 'readwrite', (tx) => {
+  return changing(['words', 'cards', 'removed'], (tx, note) => {
     for (const { wordId, cardIds } of entries) {
       tx.objectStore('words').delete(wordId);
       for (const id of cardIds) {
         tx.objectStore('cards').delete(id);
       }
       tx.objectStore('removed').put({ id: wordId, removedAt });
+      note('removed', wordId);
     }
   });
 }
@@ -265,10 +319,11 @@ export function removeWords(entries) {
 // here: taking the decks off their words is the caller's business.
 export function removeDecks(deckIds) {
   const removedAt = Date.now();
-  return transaction(['decks', 'removed'], 'readwrite', (tx) => {
+  return changing(['decks', 'removed'], (tx, note) => {
     for (const id of deckIds) {
       tx.objectStore('decks').delete(id);
       tx.objectStore('removed').put({ id, kind: 'deck', removedAt });
+      note('removed', id);
     }
   });
 }
@@ -277,12 +332,15 @@ export function removeDecks(deckIds) {
 // files its cards and reviews under it, all together. `word` is the complete
 // new record, with the old ID among its `formerIds` (see withFormerId in
 // words.js). Card IDs begin with the word's ID, so they change with it.
+// Only the word goes to other devices: its `formerIds` tell them to move
+// their cards and reviews the same way (merge.js).
 export function renameWord(oldId, word) {
   const renamed = (id) => word.id + id.slice(oldId.length);
-  return transaction(['words', 'cards', 'reviews'], 'readwrite', (tx) => {
+  return changing(['words', 'cards', 'reviews'], (tx, note) => {
     const words = tx.objectStore('words');
     words.delete(oldId);
     words.put({ ...word, changedAt: Date.now() });
+    note('words', word.id);
     // getAll() answers later, through onsuccess; the transaction stays open
     // until the work started there is done.
     const cards = tx.objectStore('cards');
@@ -304,8 +362,9 @@ export function renameWord(oldId, word) {
 // Starts cards over: removes them and saves their word, which carries the
 // time (see withStartedOver in cardManager.js), together. Their reviews stay.
 export function startCardsOver(word, cardIds) {
-  return transaction(['words', 'cards'], 'readwrite', (tx) => {
+  return changing(['words', 'cards'], (tx, note) => {
     tx.objectStore('words').put({ ...word, changedAt: Date.now() });
+    note('words', word.id);
     for (const id of cardIds) {
       tx.objectStore('cards').delete(id);
     }
@@ -317,14 +376,16 @@ export function startCardsOver(word, cardIds) {
 // entries: [{ word, cards, reviews }]
 export function saveKnown(entries) {
   const changedAt = Date.now();
-  return transaction(['words', 'cards', 'reviews'], 'readwrite', (tx) => {
+  return changing(['words', 'cards', 'reviews'], (tx, note) => {
     for (const { word, cards, reviews } of entries) {
       tx.objectStore('words').put({ ...word, changedAt });
+      note('words', word.id);
       for (const card of cards) {
         tx.objectStore('cards').put(card);
       }
       for (const review of reviews) {
         tx.objectStore('reviews').put(review);
+        note('reviews', review.id);
       }
     }
   });
@@ -335,18 +396,21 @@ export function saveKnown(entries) {
 // Words and decks are marked with the time.
 export function saveImport({ words, decks, cards, reviews }) {
   const changedAt = Date.now();
-  return transaction(['words', 'decks', 'cards', 'reviews'], 'readwrite', (tx) => {
+  return changing(['words', 'decks', 'cards', 'reviews'], (tx, note) => {
     for (const deck of decks) {
       tx.objectStore('decks').put({ ...deck, changedAt });
+      note('decks', deck.id);
     }
     for (const word of words) {
       tx.objectStore('words').put({ ...word, changedAt });
+      note('words', word.id);
     }
     for (const card of cards) {
       tx.objectStore('cards').put(card);
     }
     for (const review of reviews) {
       tx.objectStore('reviews').put(review);
+      note('reviews', review.id);
     }
   });
 }
@@ -369,9 +433,10 @@ export function moveCards(moves) {
 // Saves a card and the review that changed it together, so the two can never
 // get out of step.
 export function saveReview(card, review) {
-  return transaction(['cards', 'reviews'], 'readwrite', (tx) => {
+  return changing(['cards', 'reviews'], (tx, note) => {
     tx.objectStore('cards').put(card);
     tx.objectStore('reviews').put(review);
+    note('reviews', review.id);
   });
 }
 
@@ -433,6 +498,99 @@ export async function replaceEverything(data, onProgress = () => {}) {
     }
   }
   await transaction(['settings'], 'readwrite', (tx) => tx.objectStore('settings').delete(IMPORT_UNFINISHED));
+  // Everything changed at once: too much for the outbox, so the next sync
+  // sends a whole snapshot instead (sync.md).
+  if (outboxOn) {
+    await setSyncValue('snapshotNeeded', true);
+  }
+}
+
+// Syncing (sync.md, syncBatch.js).
+
+// What syncing keeps under `key` on this device, or `fallback`.
+export async function getSyncValue(key, fallback) {
+  const request = await transaction(['sync'], 'readonly', (tx) => tx.objectStore('sync').get(key));
+  return request.result ? request.result.value : fallback;
+}
+
+export function setSyncValue(key, value) {
+  return transaction(['sync'], 'readwrite', (tx) => tx.objectStore('sync').put({ key, value }));
+}
+
+// The outbox's entries and the records they name, as they are now:
+// { entries, records: { words: [...], ... } }. A record since deleted is
+// left out (a word's removal is sent as its mark in `removed`).
+export async function readOutbox() {
+  const entries = await getAll('outbox');
+  const requests = await transaction(SYNCED, 'readonly', (tx) =>
+    entries.map((entry) => ({ store: entry.store, request: tx.objectStore(entry.store).get(entry.id) })),
+  );
+  const records = Object.fromEntries(SYNCED.map((storeName) => [storeName, []]));
+  for (const { store, request } of requests) {
+    if (request.result) {
+      records[store].push(request.result);
+    }
+  }
+  return { entries, records };
+}
+
+// Takes these entries off the outbox once their batch is safely stored, but
+// not one whose record changed again meanwhile (its token is new): that
+// change still has to be sent.
+export function takeOffOutbox(entries) {
+  return transaction(['outbox'], 'readwrite', (tx) => {
+    const outbox = tx.objectStore('outbox');
+    for (const entry of entries) {
+      outbox.get(entry.key).onsuccess = (event) => {
+        if (event.target.result && event.target.result.token === entry.token) {
+          outbox.delete(entry.key);
+        }
+      };
+    }
+  });
+}
+
+// The part of this device's data that taking in a batch about these words
+// needs (see applyBatch in syncBatch.js): every word, deck, setting and
+// removal mark (a few thousand small records), and the reviews and cards of
+// these words only. Card IDs begin with "<word ID>#".
+export async function readSlice(wordIds) {
+  const slice = {};
+  for (const storeName of ['words', 'decks', 'settings', 'removed']) {
+    slice[storeName] = await getAll(storeName);
+  }
+  const requests = await transaction(['reviews', 'cards'], 'readonly', (tx) =>
+    [...wordIds].map((wordId) => ({
+      reviews: tx.objectStore('reviews').index('wordId').getAll(wordId),
+      cards: tx.objectStore('cards').getAll(IDBKeyRange.bound(`${wordId}#`, `${wordId}#\uffff`)),
+    })),
+  );
+  slice.reviews = requests.flatMap((request) => request.reviews.result);
+  slice.cards = requests.flatMap((request) => request.cards.result);
+  return slice;
+}
+
+// Saves what taking in a batch gives (applyBatch in syncBatch.js), all
+// together: records as they came, not stamped again and not put in the
+// outbox (or two devices would send each other's changes back and forth
+// forever). changes: { put: { words: [...], ... }, remove: { words: [ids], ... } }
+export function saveTakenIn({ put, remove }) {
+  const storeNames = [...new Set([...Object.keys(put), ...Object.keys(remove)])];
+  if (storeNames.length === 0) {
+    return Promise.resolve();
+  }
+  return transaction(storeNames, 'readwrite', (tx) => {
+    for (const [storeName, keys] of Object.entries(remove)) {
+      for (const key of keys) {
+        tx.objectStore(storeName).delete(key);
+      }
+    }
+    for (const [storeName, records] of Object.entries(put)) {
+      for (const record of records) {
+        tx.objectStore(storeName).put(record);
+      }
+    }
+  });
 }
 
 // A random ID for records that have no natural one (reviews). Random rather

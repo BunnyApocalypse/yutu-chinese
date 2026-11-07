@@ -136,6 +136,16 @@ The owner isn't a developer, so the safety has to come from the design and from 
 - **Reviews:** `/security-review` and `/code-review` on the branch; a fresh session asked to break it; GitHub's free checks (Dependabot, secret scanning, CodeQL); before real testers use it, an hour of an experienced person's time on the server and the encryption code.
 - **Running it:** two-factor sign-in at the host, GitHub and the domain; the SSH key and any other secret never in the repository; logging in by key only, no passwords; a switch to turn syncing off for everyone at once.
 
+## What is built
+
+Step 1, 2026-11-07, with nothing yet turning it on:
+
+- **The database at version 4** (`src/db.js`): the stores `outbox` and `sync` (`getSyncValue`, `setSyncValue`), never in a backup. Every function that saves words, decks, settings, reviews or removal marks notes them through `changing` while `setOutboxOn(true)`; `readOutbox`, `takeOffOutbox`, `readSlice`, `saveTakenIn`. `replaceEverything` sets `snapshotNeeded` while sync is on.
+- **`src/syncBatch.js`:** `buildBatch`, `isEmptyBatch`, `wordsTouched`, `applyBatch`.
+- **Corrected reviews** carry `correctedAt` (`correct` in `src/review.js`), and `mergeBackups` keeps the later-corrected copy.
+- **Tests:** `tests/syncBatch.test.js` (against `mergeBackups`, any order, twice, removals, corrections both ways, a corrected review), a case in `tests/merge.test.js`, and `tests/browser/sync.browser.js` (the outbox, taking a batch in, in a real browser).
+- **Not yet:** the stand-in storage and sending and fetching (the next part of step 1), snapshots, encryption, the server, the timing, Settings.
+
 ## Order of building
 
 One step at a time, each agreed before it starts:

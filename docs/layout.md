@@ -58,6 +58,7 @@
 - `src/cardManager.js`, `src/cardsPanel.js`: managing cards by hand (`docs/cards.md`): the plain calculation, and its page side in the Decks tab.
 - `src/leeches.js`: which cards are leeches, suspended cards, and the two leech exports (`docs/cards.md`). Plain calculation.
 - `src/merge.js`: combines what is on the device with a backup from another device (`docs/merging.md`). Plain calculation.
+- `src/syncBatch.js`: syncing's calculation: a batch of this device's changes, and taking in another device's with `mergeBackups` on a slice (`docs/sync.md`). Plain calculation.
 - `src/readingFixes.js`, `data/wordlists/reading-fixes.tsv`: readings put right in the ready-made lists, and carrying them over to words a device has already (`docs/word-lists.md`). Plain calculation; tested in `tests/readingFixes.test.js` and `tests/browser/database.browser.js`.
 - `src/radicals.js`, `scripts/build-radicals.js`, `data/wordlists/radicals/`: the ready-made deck of radicals (`docs/word-lists.md`). Tested in `tests/radicals.test.js` and the last test of `tests/browser/decks.browser.js`.
 - `src/wordList.js`: parses the four-column TSV word list format (same as Skritter's export) and converts numbered pinyin to tone marks.

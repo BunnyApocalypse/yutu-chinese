@@ -992,7 +992,16 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     // A word of one character: the grade is its verdict (as in grade()).
     const verdicts = entry.type === 'writing' && passedPerChar?.length === 1 ? [value !== AGAIN] : passedPerChar;
     const card = { ...entry.card, due: chosen.due, fsrsState: chosen.fsrsState };
-    const review = { ...entry.review, grade: value, log: chosen.log, ...(verdicts && { passedPerChar: verdicts }), ...extra };
+    // `correctedAt` tells this copy from the first, which syncing may already
+    // have sent to another device (merge.js).
+    const review = {
+      ...entry.review,
+      grade: value,
+      log: chosen.log,
+      ...(verdicts && { passedPerChar: verdicts }),
+      ...extra,
+      correctedAt: Date.now(),
+    };
     await saveReview(card, review);
     cards.set(card.id, card);
     entry.card = card;

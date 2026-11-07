@@ -344,3 +344,16 @@ test('a deck deleted on one device stays deleted, unless it was changed after th
   assert.deepEqual(ids(data.decks), ['chinese', 'food']);
   assert.equal(summary.decksRemoved, 1);
 });
+
+test('of two copies of a review, the one corrected later is kept, from either side', () => {
+  const love = word('愛', 'ai4', { day: 1 });
+  const first = device({ words: [love], studied: [{ word: love, grades: [[1, GOOD], [3, GOOD]] }] });
+  const second = first.reviews[1];
+  const corrected = { ...second, grade: AGAIN, correctedAt: START + 3 * DAY + 60000 };
+  const fixed = { ...first, reviews: [first.reviews[0], corrected], cards: [] };
+  for (const [mine, theirs] of [[first, fixed], [fixed, first]]) {
+    const { data } = mergeBackups(mine, theirs);
+    assert.equal(data.reviews.find((review) => review.id === second.id).grade, AGAIN);
+    assert.deepEqual(data.cards[0].fsrsState, replay([first.reviews[0], corrected]).fsrsState);
+  }
+});
