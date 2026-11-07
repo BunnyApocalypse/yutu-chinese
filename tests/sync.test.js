@@ -11,10 +11,7 @@ import assert from 'node:assert/strict';
 import { createSync, encodeFile, decodeFile } from '../src/sync.js';
 import { mergeBackups, DEVICE_SETTINGS } from '../src/merge.js';
 import { makeCode, keysFor } from '../src/syncCode.js';
-import { word, sliceOf, saveChanges, sorted, twoDevices } from './fixtures/devices.js';
-
-const KEYS = { words: 'id', cards: 'id', reviews: 'id', settings: 'key', removed: 'id', decks: 'id' };
-const SYNCED = ['words', 'settings', 'decks', 'reviews', 'removed'];
+import { word, sorted, twoDevices, memoryDevice, learnersData } from './fixtures/devices.js';
 
 // A storage held in memory, shared by the devices of a test. `failing`
 // makes every call fail, as with no connection.
@@ -51,80 +48,6 @@ function memoryStorage() {
   return storage;
 }
 
-// A device's database held in memory, with what db.js offers syncing.
-// Everything in `initial` was saved while sync was on, so it is all in the
-// outbox, except cards, which are never sent; or, with `before`, it was
-// there before sync was turned on, and the outbox says "everything".
-function memoryDevice(initial = {}, { before = false } = {}) {
-  let data = Object.fromEntries(Object.keys(KEYS).map((storeName) => [storeName, [...(initial[storeName] || [])]]));
-  const outbox = new Map();
-  const values = new Map();
-  let tokens = 0;
-  const note = (storeName, key) => {
-    const entryKey = `${storeName}:${key}`;
-    outbox.set(entryKey, { key: entryKey, store: storeName, id: key, token: ++tokens });
-  };
-  if (before) {
-    outbox.set('everything', { key: 'everything', store: null, id: null, token: ++tokens });
-  } else {
-    for (const storeName of SYNCED) {
-      for (const record of data[storeName]) {
-        note(storeName, record[KEYS[storeName]]);
-      }
-    }
-  }
-  return {
-    data: () => data,
-    outbox,
-    // What the app does when the learner saves records, with sync on.
-    save(storeName, records) {
-      data = saveChanges(data, { put: { [storeName]: records }, remove: {} });
-      for (const record of records) {
-        note(storeName, record[KEYS[storeName]]);
-      }
-    },
-    async getSyncValue(key, fallback) {
-      return values.has(key) ? structuredClone(values.get(key)) : fallback;
-    },
-    async setSyncValue(key, value) {
-      values.set(key, structuredClone(value));
-    },
-    async readOutbox() {
-      const entries = [...outbox.values()].map((entry) => ({ ...entry }));
-      if (outbox.has('everything')) {
-        return { entries, records: structuredClone(data) };
-      }
-      const records = Object.fromEntries(SYNCED.map((storeName) => [storeName, []]));
-      for (const entry of entries) {
-        const record = data[entry.store].find((found) => found[KEYS[entry.store]] === entry.id);
-        if (record) {
-          records[entry.store].push(record);
-        }
-      }
-      return { entries, records };
-    },
-    async takeOffOutbox(entries) {
-      for (const entry of entries) {
-        if (outbox.get(entry.key)?.token === entry.token) {
-          outbox.delete(entry.key);
-        }
-      }
-    },
-    async getAll(storeName) {
-      return data[storeName];
-    },
-    async readSlice(wordIds) {
-      return sliceOf(data, wordIds);
-    },
-    async readEverything() {
-      return structuredClone(data);
-    },
-    async saveTakenIn(changes) {
-      data = saveChanges(data, changes);
-    },
-  };
-}
-
 // The keys of one sync code, made once: working them out takes a moment.
 const keys = keysFor(await makeCode());
 const key = (await keys).encryption;
@@ -143,11 +66,6 @@ function setUp(options = {}) {
 // A file in the storage, opened.
 const opened = (storage, name) => decodeFile(storage.files.get(name), key, name);
 const names = (storage, prefix) => [...storage.files.keys()].filter((name) => name.startsWith(prefix)).sort();
-
-// A device's data without the settings that belong to it, which differ
-// between devices by design.
-const learnersData = (data) =>
-  sorted({ ...data, settings: data.settings.filter((setting) => !DEVICE_SETTINGS.includes(setting.key)) });
 
 test('a file is the batch compressed and encrypted, and opens again as it was', async () => {
   const batch = { format: 1, device: 'a', number: 1, words: [word('愛', 'ai4')], text: '愛'.repeat(1000) };

@@ -41,7 +41,8 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - `npm run dev`: dev server at http://localhost:5173; on a phone on the same Wi-Fi, the "Network" address Vite prints.
 - `npm run build`: bundle into `dist/`, then (`postbuild`) pack the stroke data and write the service worker. `npm run preview` serves `dist/`.
 - Both first run `scripts/copy-char-data.js` (`predev`/`prebuild`), which copies stroke data into `public/` if missing.
-- `npm test`: unit tests in `tests/` (Node's test runner) for the plain-calculation code; nothing touching the page or IndexedDB.
+- `npm test`: unit tests in `tests/` (Node's test runner) for the plain-calculation code and the sync server; nothing touching the page or IndexedDB.
+- `npm run sync-server`: the sync server on this computer, http://127.0.0.1:8787 (`server/README.md`).
 - `npm run test:browser`: the real app in several headless Chromium browsers at once, about four minutes (`tests/browser/CLAUDE.md`). **Don't change files while it runs**: the dev server reloads the pages and tests fail.
 
 ## Read before working on an area

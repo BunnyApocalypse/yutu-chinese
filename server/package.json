@@ -1,0 +1,8 @@
+{
+  "name": "yutu-chinese-sync-server",
+  "description": "The sync server of Yutu Chinese: a box of files encrypted on the learner's devices",
+  "license": "GPL-3.0-only",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" }
+}
