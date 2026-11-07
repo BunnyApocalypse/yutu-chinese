@@ -13,6 +13,18 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-07',
+    items: [
+      'Importing from Skritter now explains how to get your data: a letter to send Skritter’s support, ready to copy, that fits where you live.',
+    ],
+    it: [
+      'L’importazione da Skritter ora spiega come avere i tuoi dati: una lettera da mandare al supporto di Skritter, pronta da copiare, adatta a dove vivi.',
+    ],
+    de: [
+      'Der Import aus Skritter erklärt jetzt, wie du an deine Daten kommst: ein Brief an den Support von Skritter, fertig zum Kopieren, passend dazu, wo du wohnst.',
+    ],
+  },
+  {
     id: '2026-11-06',
     items: [
       'A word’s page, About in Review and Add sentence open faster, most of all with a long study history.',
