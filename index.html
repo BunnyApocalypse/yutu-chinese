@@ -1563,6 +1563,44 @@
           <p id="export-done" class="hint" role="status" hidden></p>
         </div>
 
+        <!-- Syncing between devices (syncPanel.js, docs/sync.md). Shown only where there is a sync server to use. -->
+        <div id="sync-setting" class="setting" hidden>
+          <span data-t="sync.heading"></span>
+          <!-- Sync off: what it is, and the two ways to turn it on. -->
+          <div id="sync-off">
+            <p class="hint" data-t="sync.about"></p>
+            <button id="sync-on-button" class="small" type="button" data-t="sync.turnOn"></button>
+            <button id="sync-join-button" class="small" type="button" data-t="sync.haveCode"></button>
+            <form id="sync-join-form" class="sync-join" hidden>
+              <label for="sync-code-input" data-t="sync.codeLabel"></label>
+              <input id="sync-code-input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" />
+              <button id="sync-join-submit" class="small" type="submit" data-t="sync.join"></button>
+              <p id="sync-join-error" class="hint sync-problem" role="alert" hidden></p>
+            </form>
+          </div>
+          <!-- The code: when it is made, before sync is turned on, and on "Show sync code". -->
+          <div id="sync-code-step" hidden>
+            <p id="sync-code" class="sync-code"></p>
+            <p class="hint" data-t="sync.codeExplain"></p>
+            <button id="sync-copy-button" class="small" type="button" data-t="sync.copy"></button>
+            <button id="sync-file-button" class="small" type="button" data-t="sync.saveFile"></button>
+            <button id="sync-print-button" class="small" type="button" data-t="sync.print"></button>
+            <p class="hint" data-t="sync.passwordManager"></p>
+            <p id="sync-code-note" class="hint" role="status"></p>
+            <button id="sync-saved-button" class="small primary" type="button" data-t="sync.saved"></button>
+            <button id="sync-code-cancel" class="small" type="button" data-t="common.cancel"></button>
+            <button id="sync-code-hide" class="small" type="button" data-t="sync.hideCode"></button>
+          </div>
+          <!-- Sync on: how it went, and what can be done. -->
+          <div id="sync-on" hidden>
+            <p id="sync-status" class="hint" role="status"></p>
+            <button id="sync-now-button" class="small" type="button" data-t="sync.now"></button>
+            <button id="sync-show-code-button" class="small" type="button" data-t="sync.showCode"></button>
+            <button id="sync-off-button" class="small" type="button" data-t="sync.turnOff"></button>
+            <button id="sync-delete-button" class="small danger" type="button" data-t="sync.deleteData"></button>
+          </div>
+        </div>
+
         <div class="setting">
           <span data-t="settings.keepingWords"></span>
           <!-- Whether the browser has agreed to keep the app's data, and what to do if not (offline.js). -->

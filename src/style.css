@@ -2479,6 +2479,37 @@ button.slot {
   min-inline-size: 0;
 }
 
+/* The sync code (syncPanel.js): large, in groups of four, easy to copy
+   letter by letter; it wraps between groups on a narrow phone. */
+.sync-code {
+  font-family: monospace;
+  font-size: var(--size-big);
+  letter-spacing: 0.05em;
+  word-spacing: 0.2em;
+  overflow-wrap: anywhere;
+  user-select: all;
+  margin: var(--space-small) 0;
+}
+
+.sync-join {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-small);
+  margin-top: var(--space-small);
+}
+
+.sync-join input {
+  flex: 1 1 16em;
+  min-block-size: var(--tap-small);
+  font-family: monospace;
+}
+
+.sync-problem {
+  color: var(--danger);
+  inline-size: 100%;
+}
+
 .settings-panel .setting .setting {
   max-width: 100%;
 }

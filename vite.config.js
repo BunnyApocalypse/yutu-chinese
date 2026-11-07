@@ -27,6 +27,11 @@ export default defineConfig(({ command }) => ({
     // stable one, 'test' for the one that gets every change first (see
     // .github/workflows/deploy.yml). The test copy keeps its own database.
     __CHANNEL__: JSON.stringify(process.env.VITE_CHANNEL || ''),
+    // The sync server's address (docs/sync.md): VITE_SYNC_SERVER if given;
+    // otherwise, under `npm run dev`, the one `npm run sync-server` starts on
+    // this computer, and in a build none yet (step 4), so Settings doesn't
+    // offer syncing.
+    __SYNC_SERVER__: JSON.stringify(process.env.VITE_SYNC_SERVER ?? (command === 'build' ? '' : 'http://127.0.0.1:8787')),
   },
   server: {
     // By default the dev server only answers requests from this computer.

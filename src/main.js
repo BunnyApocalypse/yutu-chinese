@@ -39,6 +39,8 @@ import { createWhatsNew } from './whatsNew.js';
 import { createStreakScreen } from './streakScreen.js';
 import { createProgressPanel } from './progressPanel.js';
 import { setUpTesterSettings } from './testerSettings.js';
+import { createSyncControl } from './syncControl.js';
+import { createSyncPanel } from './syncPanel.js';
 import { applyText, t, formatList, formatNumber } from './text.js';
 
 // The page's own text, in the learner's language (src/text.js), before
@@ -95,6 +97,9 @@ let settings = null;
 let review = null;
 // "Basics of Chinese" (basics.js), set up with the settings.
 let basics = null;
+// Syncing between devices (set up in startUp).
+let syncControl = null;
+let syncPanel = null;
 
 // Until 2026-10-13 a new database was filled with a list of 109 words for
 // trying the app out. A device that was given them (it has the
@@ -1065,6 +1070,19 @@ async function startUp() {
   // in Settings (Help).
   // Settings › For testing, in the test copy only (testerSettings.js).
   await setUpTesterSettings();
+
+  // Syncing between devices (syncControl.js, syncPanel.js; docs/sync.md).
+  // After a sync brought changes in, the screens read the data afresh, as
+  // after a change on the Decks tab.
+  syncControl = createSyncControl({
+    onChanged: async () => {
+      await review.load();
+      await loadWordList();
+    },
+    onStatus: (status) => syncPanel?.show(status),
+  });
+  await syncControl.start();
+  syncPanel = await createSyncPanel(syncControl);
 
   const tips = createTips();
   await tips.load();

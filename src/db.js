@@ -526,6 +526,15 @@ export function sendEverything() {
   );
 }
 
+// Forgets everything syncing kept on this device: the sync store and the
+// outbox (syncControl.js, turning sync off).
+export function forgetSync() {
+  return transaction(['sync', 'outbox'], 'readwrite', (tx) => {
+    tx.objectStore('sync').clear();
+    tx.objectStore('outbox').clear();
+  });
+}
+
 // The outbox's entries and the records they name, as they are now:
 // { entries, records: { words: [...], ... } }. A record since deleted is
 // left out (a word's removal is sent as its mark in `removed`). With the

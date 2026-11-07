@@ -59,6 +59,8 @@
 - `src/leeches.js`: which cards are leeches, suspended cards, and the two leech exports (`docs/cards.md`). Plain calculation.
 - `src/merge.js`: combines what is on the device with a backup from another device (`docs/merging.md`). Plain calculation.
 - `src/sync.js`: syncing: sends this device's batch of changes and takes in the other devices', through a storage handed in (`docs/sync.md`).
+- `src/syncControl.js`: syncing in the app: turning it on and off, syncing, its status (`docs/sync.md`).
+- `src/syncPanel.js`: Settings › Sync between devices: the code, turning sync on, its status and buttons.
 - `src/syncServer.js`: the sync server as syncing's storage: list, read, save, remove as requests, failures as a `reason` (`docs/sync.md`).
 - `server/server.js`: the sync server, plain Node with no dependencies; `server/README.md` (running it, its settings), `server/package.json`.
 - `src/syncCode.js`: the sync code (made, typed in, checked) and the keys and encryption it gives, with WebCrypto (`docs/sync.md`).
