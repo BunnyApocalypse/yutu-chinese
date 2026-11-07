@@ -88,21 +88,22 @@ export function wordsTouched(batch, myWords) {
 //        gives them
 // batch: the other device's batch
 //
-// Returns { put, remove, summary }:
+// Returns { put, remove }:
 //   put:     { storeName: [records to save] }
 //   remove:  { storeName: [keys of records to delete] }
-//   summary: what mergeBackups counts (describeMerge in merge.js)
-// Stores with nothing to do are left out of `put` and `remove`.
+// Stores with nothing to do are left out of both.
 export function applyBatch(slice, batch) {
   const theirs = { words: [], cards: [], reviews: [], settings: [], removed: [], decks: [] };
   for (const storeName of Object.keys(KEYS)) {
     theirs[storeName] = batch[storeName] || [];
   }
-  const { data, summary } = mergeBackups(slice, theirs);
+  const { data } = mergeBackups(slice, theirs, { summarize: false });
 
   const put = {};
   const remove = {};
-  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  // The same object is unchanged (see mergeBackups); others are compared
+  // as text, which is slow, but few are left by then.
+  const same = (a, b) => a === b || JSON.stringify(a) === JSON.stringify(b);
   const compare = (storeName, keyName, { removing = true } = {}) => {
     const before = new Map((slice[storeName] || []).map((record) => [record[keyName], record]));
     const after = new Map(data[storeName].map((record) => [record[keyName], record]));
@@ -126,5 +127,5 @@ export function applyBatch(slice, batch) {
   // that its cards were filed by script when the other side's settings lack
   // it, as a batch's always do: a whole backup would bring the other's.)
   compare('settings', 'key', { removing: false });
-  return { put, remove, summary };
+  return { put, remove };
 }

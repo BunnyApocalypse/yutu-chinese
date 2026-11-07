@@ -29,6 +29,7 @@ Built on 2026-10-13 to a plan the owner agreed to; the same calculation a later 
   - A word corrected on one device (`formerIds`) replaces the record under the old ID on the other, whose cards and reviews move to the new ID. If the correcting device also has a word under the old ID, that is a word of its own.
   - Device settings are never taken from the backup (`DEVICE_SETTINGS`; the list in `src/merge.js` is the one to trust).
 - **Cards are worked out from the reviews** (`replay`), except where one side already has every review of a word's cards of one kind: its cards are kept as stored. So combining never changes a schedule only one device contributed to.
+- **A card goes on from a side's stored card** where that side has its reviews up to the card's `lastReviewedAt` (and none that no longer count) and all the others are later: only those are replayed (`startingPoint`, 2026-11-07, for syncing; the same result, much quicker).
 - **A review's card** is found by its word, kind and `script`, not its `cardId` (old reviews may carry a plain ID of a card since moved).
 - **A word removed and added again starts from scratch**: reviews before the removal mark don't count, on either side.
 - **Limits, accepted with the owner:** the later save wins whole (a meaning changed on one device and a deck on the other: one is lost); "later" trusts each device's clock; making two devices equal takes two rounds.

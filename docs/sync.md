@@ -1,6 +1,6 @@
 # Syncing between devices
 
-**Being built, step 1 of 4** (below). Planned 2026-11-07 with the owner, who decided that day: **a server of our own, free software, first**; Google Drive set aside (it adds friction, and the owner prefers FOSS wherever possible). Syncing is opt-in; the app still works fully offline, and this is the one agreed exception to "no backend" (CLAUDE.md). The files are encrypted on the device, so the server holds nothing anyone can read.
+**Being built: step 1 of 4 done** (below). Planned 2026-11-07 with the owner, who decided that day: **a server of our own, free software, first**; Google Drive set aside (it adds friction, and the owner prefers FOSS wherever possible). Syncing is opt-in; the app still works fully offline, and this is the one agreed exception to "no backend" (CLAUDE.md). The files are encrypted on the device, so the server holds nothing anyone can read.
 
 ## Why not a whole backup each time
 
@@ -27,7 +27,8 @@ Every file is encrypted on the device before it leaves (below), so the storage, 
 - **Sending:** the outbox is bundled into one batch (`buildBatch` in `src/syncBatch.js`: the records as they are now), compressed (`CompressionStream`, built into the browser), encrypted and saved under the next number. Only once the storage says it's saved are those entries taken off the outbox, and only if not changed again meanwhile (`token`). A batch sent twice by a retry is harmless: taking it in twice changes nothing.
 - **A big import** (Anki, Skritter, a backup combined or replaced) would make a huge batch; it sends a snapshot instead.
 - **Taking in** (`applyBatch` in `src/syncBatch.js`): **it is `mergeBackups` itself**, run on a slice of this device: all its words, decks, settings and removal marks (a few thousand small records), and only the reviews and cards of the words the batch touches (by the reviews' `wordId` index and the cards' IDs). It gives what to save and what to delete; records are saved as they came (`changedAt` not stamped again). So the rules live in one place. **What it takes in doesn't go into its own outbox**, or devices would echo each other's changes forever.
-- **Cards:** only the cards of the words touched are worked out again (`replay`), and a card stays as stored when this device already has every review of it, as in combining. Anki's imported schedules are records among the reviews, so they replay too.
+- **Cards:** only the cards of the words touched are worked out again (`replay`), going on from the stored card when the new reviews are all later (`startingPoint` in `src/merge.js`), and a card stays as stored when this device already has every review of it, as in combining. Anki's imported schedules are records among the reviews, so they replay too.
+- **Speed** (measured 2026-11-07 on the owner's backup, in Node on the computer): taking in a day of another device's reviews (526, touching 299 words and their 26,000 reviews) takes about 150 ms, a month at once (7,324) about 1.5 s; about six times that on the owner's tablet. Most was comparing records as text: `mergeBackups` skips its summary for syncing (`{ summarize: false }`), and a record it leaves unchanged is the same object, compared at a glance. Batches are usually minutes of study; to measure in the browser when syncing is switched on (step 3).
 - **The test that holds it together** (`tests/syncBatch.test.js`): taking another device's batches in one by one gives what `mergeBackups` gives on the whole backups, in whatever order they come, and taking one in twice changes nothing.
 
 ## Snapshots
@@ -138,19 +139,20 @@ The owner isn't a developer, so the safety has to come from the design and from 
 
 ## What is built
 
-Step 1, 2026-11-07, with nothing yet turning it on:
+Step 1, done 2026-11-07, with nothing yet turning it on:
 
 - **The database at version 4** (`src/db.js`): the stores `outbox` and `sync` (`getSyncValue`, `setSyncValue`), never in a backup. Every function that saves words, decks, settings, reviews or removal marks notes them through `changing` while `setOutboxOn(true)`; `readOutbox`, `takeOffOutbox`, `readSlice`, `saveTakenIn`. `replaceEverything` sets `snapshotNeeded` while sync is on.
 - **`src/syncBatch.js`:** `buildBatch`, `isEmptyBatch`, `wordsTouched`, `applyBatch`.
+- **`src/sync.js`:** `createSync({ local, storage })` gives `syncNow()`: the device's ID (`device` in the sync store, made the first time), sending the outbox as `batch-<device>-<number>` (ten digits, so names sort by number; `nextNumber`; a number found taken moves on to the next), then taking in the other devices' batches in order (`taken`, by device, noted after each). It returns `{ sent, takenIn, changed, problems }`; a problem is `missing-batch` (later batches of that device wait) or `bad-batch` (a file isn't the batch its name says). A sync asked for while one runs waits, then one more runs for all that asked. Files are gzip-compressed JSON (`encodeFile`, `decodeFile`; encryption goes there in step 2). `local` is `db.js` in the app; the storage is handed in (`list`, `read`, `save` refusing an existing name with `reason: 'exists'`, `remove`).
 - **Corrected reviews** carry `correctedAt` (`correct` in `src/review.js`), and `mergeBackups` keeps the later-corrected copy.
-- **Tests:** `tests/syncBatch.test.js` (against `mergeBackups`, any order, twice, removals, corrections both ways, a corrected review), a case in `tests/merge.test.js`, and `tests/browser/sync.browser.js` (the outbox, taking a batch in, in a real browser).
-- **Not yet:** the stand-in storage and sending and fetching (the next part of step 1), snapshots, encryption, the server, the timing, Settings.
+- **Tests:** `tests/syncBatch.test.js` (against `mergeBackups`, any order, twice, removals, corrections both ways, a corrected review), a case in `tests/merge.test.js`, `tests/sync.test.js` (two devices through a storage in memory: the same data as combining backups, nothing sent back, no connection, a number taken, a record changed while sending, a missing or wrong batch, syncs asked for at once), with the made-up devices in `tests/fixtures/devices.js`; and `tests/browser/sync.browser.js` (the outbox, taking a batch in, in a real browser).
+- **Not yet:** snapshots, encryption, the server, the timing, Settings.
 
 ## Order of building
 
 One step at a time, each agreed before it starts:
 
-1. **The batches without a network** (started 2026-11-07): the outbox, batches, taking them in, against a stand-in storage in memory; the test against `mergeBackups`. Database version 4 for the outbox and the sync store; nothing in backups changes.
+1. **The batches without a network** (done 2026-11-07): the outbox, batches, taking them in, against a stand-in storage in memory; the test against `mergeBackups`. Database version 4 for the outbox and the sync store; nothing in backups changes.
 2. **Encryption and the sync code**, with their tests; snapshots.
 3. **The server** (`server/`, with its tests), run locally; then the timing, the Settings section and recovery. Browser tests against the local server.
 4. **Running it:** renting the machine and the domain with the owner, setting it up, one real check on the owner's devices, the privacy page.

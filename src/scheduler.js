@@ -126,8 +126,12 @@ export function retrievability(fsrsState, now) {
 // out all four), and the card is turned into plain data once, at the end.
 // It gives exactly what gradeOptions would, review after review. Every
 // review is replayed at today's target, whatever it was when it was made.
-export function replay(reviews) {
-  let card = null;
+//
+// from: a card's saved FSRS state to go on from, with `reviews` only those
+//       made after it (merge.js: much quicker than replaying a card's whole
+//       history); null to start from the beginning
+export function replay(reviews, from = null) {
+  let card = from;
   for (const review of [...reviews].sort((a, b) => a.time - b.time)) {
     if (review.importedSchedule) {
       card = review.importedSchedule.fsrsState;

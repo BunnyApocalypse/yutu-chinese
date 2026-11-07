@@ -190,6 +190,45 @@ function addTo(map, key, item) {
   }
 }
 
+// Where a card's schedule can be worked out from without replaying its whole
+// history: a side's stored card, when that side has the card's reviews up to
+// the card's last review, each as kept, and every review it lacks is later;
+// and none of the reviews that no longer count (made before the word was
+// removed or the card started over), which its stored card was made from.
+// Replaying only those later ones from the stored card gives what replaying
+// them all would (scheduler.js), and much more quickly: taking in a day of
+// another device's reviews against the owner's 185,000 replayed 26,000 of
+// them, half a second on a computer and seconds on a tablet (2026-11-07).
+//
+// id:          the card's ID
+// cardReviews: the combined reviews counted for it
+// uncounted:   the reviews of its word and kind that no longer count
+// sides:       [[side, its stored cards of this word and kind]]
+//
+// Returns { card, after }, the stored card and the reviews to replay from
+// it, the fewest of either side; or null to replay them all.
+function startingPoint(id, cardReviews, uncounted, sides) {
+  let best = null;
+  for (const [side, stored] of sides) {
+    const card = stored.find((entry) => entry.id === id);
+    const has = (review) => side.reviewCopies.get(review.id) === corrected(review);
+    if (!card || card.lastReviewedAt === undefined || !card.fsrsState || uncounted.some(has)) {
+      continue;
+    }
+    const before = cardReviews.filter((review) => review.time <= card.lastReviewedAt);
+    const after = cardReviews.filter((review) => review.time > card.lastReviewedAt);
+    const fits =
+      before.length > 0 &&
+      before.every(has) &&
+      !after.some(has) &&
+      Math.max(...before.map((review) => review.time)) === card.lastReviewedAt;
+    if (fits && (!best || after.length < best.after.length)) {
+      best = { card, after };
+    }
+  }
+  return best;
+}
+
 // The cards of the combined words.
 //
 // words:     the combined words, by ID
@@ -225,6 +264,7 @@ function mergeCards(words, reviews, sides, removedAt) {
     // was started over (cardManager.js).
     const removed = Math.max(removedAt.get(word.id) ?? -1, countedFrom(word, all[0].type));
     const counted = all.filter((review) => review.time > removed);
+    const uncounted = all.filter((review) => review.time <= removed);
 
     // A side that has made or already taken in every one of these reviews
     // (and the same copy of each: see correctedAt above) has the cards as
@@ -251,11 +291,12 @@ function mergeCards(words, reviews, sides, removedAt) {
     }
     for (const [id, cardReviews] of reviewsOfCard) {
       const times = cardReviews.map((review) => review.time);
+      const start = startingPoint(id, cardReviews, uncounted, sides.map((side) => [side, storedCards(side, group)]));
       cards.push({
         id,
         wordId: word.id,
         type: cardReviews[0].type,
-        ...replay(cardReviews),
+        ...(start ? replay(start.after, start.card.fsrsState) : replay(cardReviews)),
         firstReviewedAt: Math.min(...times),
         lastReviewedAt: Math.max(...times),
       });
@@ -284,8 +325,13 @@ function mergeCards(words, reviews, sides, removedAt) {
 //
 // Returns { data, summary }:
 //   data:    the combined contents, one list of records per store
-//   summary: counts of what combining changes on this device (see below)
-export function mergeBackups(mine, theirs) {
+//   summary: counts of what combining changes on this device (see below);
+//            left out with { summarize: false } (syncing, which doesn't show
+//            it: comparing every review took most of the time)
+//
+// A record that combining leaves as it was is the same object in `data` as
+// in `mine` or `theirs`, so a caller can tell it at a glance (syncBatch.js).
+export function mergeBackups(mine, theirs, { summarize: wanted = true } = {}) {
   // An older backup does not have every store.
   const of = (side, storeName) => side[storeName] || [];
 
@@ -347,7 +393,7 @@ export function mergeBackups(mine, theirs) {
     removed: [...marks.values()],
     decks: [...decks.values()],
   };
-  return { data, summary: summarize(mine, data) };
+  return { data, summary: wanted ? summarize(mine, data) : null };
 }
 
 // Counts what combining changes on this device.
