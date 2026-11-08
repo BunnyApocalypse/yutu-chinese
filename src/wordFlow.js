@@ -163,6 +163,8 @@ export function createWordFlow(elements) {
   // The word being written, as a list of characters, and where we are in it.
   let chars = [];
   let position = 0;
+  // How many times start has been called: only the latest word is written.
+  let wordsAsked = 0;
   // True once the current character has been completed.
   let charDone = false;
 
@@ -832,7 +834,8 @@ export function createWordFlow(elements) {
 
   return {
     // Begins writing `text`. Returns false if none of its characters have
-    // stroke data, in which case nothing changes.
+    // stroke data, in which case nothing changes, and null if start was
+    // called again while its data loaded (the later word is written).
     //
     // newOptions:
     //   script:        'traditional' or 'simplified'; decides which printed
@@ -891,6 +894,7 @@ export function createWordFlow(elements) {
       const typed = Array.from(text).filter((char) => char.trim() !== '');
       // Nothing of the word before shows while this one loads.
       quiz.blank();
+      const asked = ++wordsAsked;
 
       // The outline is set now, before the stroke data has loaded: a tap on
       // "Hide outline" while it loads (a slow tablet) would otherwise be
@@ -903,6 +907,11 @@ export function createWordFlow(elements) {
 
       // Find out which characters have stroke data, loading it at the same time.
       const data = await Promise.all(typed.map((char) => loadCharData(char, newOptions.script)));
+      // Another word was asked for meanwhile (two cards came up close
+      // together): that one is shown, and this one leaves everything alone.
+      if (asked !== wordsAsked) {
+        return null;
+      }
       const usable = typed.filter((char, index) => data[index] !== null);
       // Punctuation (，。？) is never written: left out without a word.
       const skipped = typed.filter((char, index) => data[index] === null && !/\p{P}/u.test(char));

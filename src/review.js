@@ -1312,7 +1312,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   // ---- The four kinds of card ----
 
-  // Returns false if the word can't be written (no stroke data).
+  // Returns false if the word can't be written (no stroke data), null if
+  // another word was asked for while its data loaded (wordFlow.start).
   async function showWritingCard() {
     const { word } = current;
     const script = scriptFor(word, settings);
@@ -1750,7 +1751,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       return;
     }
     lesson.index = toIndex;
-    if (!(await showLessonStep()) && current === shown) {
+    if ((await showLessonStep()) === false && current === shown) {
       unwritable.add(current.word.id);
       showNext();
     }
@@ -2174,7 +2175,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     studyArea.hidden = false;
     showScriptFlag(word);
     const shown = current;
-    if (!(await showLessonStep()) && current === shown) {
+    if ((await showLessonStep()) === false && current === shown) {
       // No stroke data after all: the lesson starts again without writing.
       unwritable.add(word.id);
       startNextWord();
@@ -2216,7 +2217,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     studyArea.hidden = false;
     showScriptFlag(word);
     const shown = current;
-    if (!(await showLessonStep()) && current === shown) {
+    if ((await showLessonStep()) === false && current === shown) {
       // No stroke data after all: the lesson starts again without writing.
       unwritable.add(word.id);
       startRepeat();
@@ -2298,11 +2299,18 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   }
 
   // Saving the setting has the next card worked out afresh (see refresh).
-  // Today's words are the deck's: another deck starts afresh.
+  // Today's words are the deck's: another deck starts afresh. So does Review,
+  // as on opening it: it asks again how many cards to review, and practice
+  // of the deck before ends (the owner, 2026-11-08: a card of the deck
+  // came straight up instead).
   const deckChooser = createDeckChooser({
     buttons: [deckButton, deckTag],
     choose: (deckId) => {
       batch = null;
+      if (mode === 'review') {
+        sitting = null;
+        round = null;
+      }
       settings.change('studyDeck', deckId);
     },
   });
@@ -2576,7 +2584,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     offerListen(current.type === 'writing' || current.type === 'meaning');
     showRoundLabel();
     if (current.type === 'writing') {
-      if (!(await showWritingCard())) {
+      if ((await showWritingCard()) === false) {
         unwritable.add(current.word.id);
         round.done += 1;
         showNext();
@@ -2822,8 +2830,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       if (settings.lessons && !current.card && !isSentence(current.word) && !taughtInLearn(current.word)) {
         lesson = { steps: stepsFor(current.word, false), index: 0 };
       }
+      const shown = current;
       const started = lesson ? await showLessonStep() : await showWritingCard();
-      if (!started) {
+      // (null, or `current` changed: another card came up while this one's
+      // stroke data loaded, and it is shown instead.)
+      if (started === false && current === shown) {
         unwritable.add(current.word.id);
         showNext();
       }

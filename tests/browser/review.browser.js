@@ -935,6 +935,84 @@ describe('grading in Review', { concurrency: false }, () => {
     await reloadApp(page);
   });
 
+  // The owner, 2026-11-08: choosing another deck in Review put a card of it
+  // straight up, and now and then another card showed for a moment first.
+  // Two cards coming up close together (two decks chosen quickly, here)
+  // could leave the card asking for one word while the writing area quizzed
+  // the other's character, whichever's stroke data came last.
+  it('asks again how many cards on choosing another deck, and writes the word asked after two quick choices', async () => {
+    const chars = [...'一二三四五六七八九十上下人口手日月山水火木土田目耳'];
+    const chooseDeck = async (deckId) => {
+      await tap(page, 'deck-tag');
+      await waitUntil(page, `document.getElementById('deck-choice-dialog').open`, 'the deck chooser');
+      await page.evaluate(`[...document.querySelectorAll('#deck-choice-list input')].find((radio) => radio.value === '${deckId}').click()`);
+    };
+    // Deck "many": 25 words with a meaning card each, so Review asks how
+    // many. Decks "me" and "sky": one written word each, 我 and 天, whose
+    // stroke data no test before has loaded. Review starts in "sky", so 我's
+    // data is first loaded during the two quick choices.
+    await inDatabase(`
+      stores.decks.put({ id: 'many', name: 'Many', parentId: null, order: 1 });
+      stores.decks.put({ id: 'me', name: 'Me', parentId: null, order: 2 });
+      stores.decks.put({ id: 'sky', name: 'Sky', parentId: null, order: 3 });
+      ${JSON.stringify(chars)}.forEach((char, index) => {
+        stores.words.put({ id: char + '|x' + (index + 1) + '1', traditional: char, simplified: char, pinyin: 'x' + (index + 1) + '1', definition: 'number ' + index, order: 0, addedAt: 1, learnedAt: 1, decks: ['many'] });
+      });
+      stores.words.put({ id: '我|wo3', traditional: '我', simplified: '我', pinyin: 'wo3', definition: 'I; me', order: 0, addedAt: 1, learnedAt: 1, decks: ['me'] });
+      stores.words.put({ id: '天|tian1', traditional: '天', simplified: '天', pinyin: 'tian1', definition: 'sky', order: 0, addedAt: 1, learnedAt: 1, decks: ['sky'] });
+      stores.settings.put({ key: 'reviewStart', value: true });
+      stores.settings.put({ key: 'studyDeck', value: 'sky' });
+    `);
+    await makeDue(
+      ['我|wo3#writing', '我|wo3', 'writing'],
+      ['天|tian1#writing', '天|tian1', 'writing'],
+      ...chars.map((char, index) => [`${char}|x${index + 1}1#meaning`, `${char}|x${index + 1}1`, 'meaning']),
+    );
+    await waitForFirstStroke();
+    assert.equal(await textOf(page, 'prompt-meaning'), 'sky');
+
+    // Another deck, with many cards: Review asks first, as on opening it.
+    await chooseDeck('many');
+    await waitUntil(page, `!document.getElementById('review-start').hidden`, 'the start of Review');
+    assert.equal(await textOf(page, 'review-start-count'), '50 cards to review');
+    await tap(page, 'review-all-button');
+    await waitUntil(page, `!document.getElementById('card-face').hidden`, 'a card of the deck');
+
+    // Two decks chosen quickly, 我's stroke data slower than 天's: the
+    // card asks for 天, and 天 is what is written.
+    await page.evaluate(`(() => {
+      const fetchNow = window.fetch;
+      window.fetch = (url, ...rest) => {
+        // Stroke data files are named by the character's number: 我 is 25105.
+        const wait = String(url).includes('/25105.json') ? 900 : String(url).includes('char-data') ? 100 : 0;
+        return new Promise((resolve) => setTimeout(() => resolve(fetchNow(url, ...rest)), wait));
+      };
+    })()`);
+    await chooseDeck('me');
+    await chooseDeck('sky');
+    await waitUntil(page, `document.getElementById('prompt-meaning').textContent === 'sky'`, 'the card of the deck chosen last');
+    // Past the time 我's data comes in.
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    assert.equal(await textOf(page, 'prompt-meaning'), 'sky');
+    await write('天');
+    await chooseGrade(await page.evaluate(SUGGESTED));
+
+    await inDatabase(`
+      ['many', 'me', 'sky'].forEach((id) => stores.decks.delete(id));
+      ${JSON.stringify(chars)}.forEach((char, index) => {
+        stores.words.delete(char + '|x' + (index + 1) + '1');
+        stores.cards.delete(char + '|x' + (index + 1) + '1#meaning');
+      });
+      ['我|wo3', '天|tian1'].forEach((id) => {
+        stores.words.delete(id);
+        stores.cards.delete(id + '#writing');
+      });
+      stores.settings.put({ key: 'studyDeck', value: '' });
+      stores.settings.put({ key: 'reviewStart', value: false });
+    `);
+    await reloadApp(page);
+  });
+
   // About in Review reads only the word and its cards afresh, not
   // everything (wordsPanel.js, loadWord; 2026-11-06): the page still has the
   // card as just graded, though the Decks tab read the cards before.

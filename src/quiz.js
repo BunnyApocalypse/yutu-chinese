@@ -1300,6 +1300,8 @@ export function createQuiz(target, size, handlers) {
   // stroke data loads, or it flashed up as the next card came (the owner,
   // 2026-10-24). start() puts back what the new character needs.
   let blanked = false;
+  // How many times showCharacter has been called: only the latest is shown.
+  let charsAsked = 0;
   function blank() {
     blanked = true;
     clearTimeout(afterAnimationTimer);
@@ -1543,10 +1545,18 @@ export function createQuiz(target, size, handlers) {
     // 'traditional' or 'simplified' and decides which form is drawn.
     // `useRawInput` chooses between keeping your own strokes on screen
     // (true) and snapping to the printed strokes (false). Returns false if
-    // there is no stroke data for the character.
+    // there is no stroke data for the character, and null if another
+    // character was asked for while its data loaded (that one is shown).
     async showCharacter(newChar, script, useRawInput) {
       blank();
+      const asked = ++charsAsked;
       const data = await loadCharData(newChar, script);
+      // Two asked for close together (a deck chosen as the next card came
+      // up): whichever data arrived last used to win, so the card could ask
+      // for one word while the area quizzed another's character.
+      if (asked !== charsAsked) {
+        return null;
+      }
       if (!data) {
         return false;
       }
