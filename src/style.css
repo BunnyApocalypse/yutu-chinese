@@ -1286,6 +1286,20 @@ button.learned-word {
   font-size: var(--size-small);
 }
 
+/* While syncing: "Synced 2 minutes ago. Sync now" at the foot of the start
+   and end of Review and the end of Learn (syncNote.js), quiet and small,
+   the button in the line. */
+.done-panel p.sync-note {
+  margin: var(--space-large) 0 0;
+  color: var(--muted);
+  font-size: var(--size-small);
+}
+
+.sync-note .link-button {
+  display: inline-block;
+  margin: 0;
+}
+
 /* The same column layout as the page, for the part that is hidden when
    there is nothing to review. */
 .study-area {

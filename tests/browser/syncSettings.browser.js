@@ -587,8 +587,44 @@ describe('syncing by itself', { concurrency: false }, () => {
     }
   });
 
+  it('takes changes in when the window is chosen again, at most once a minute', async () => {
+    const before = await batchesOnServer();
+    await setNewWords(a, 25);
+    await setVisibility(a, 'hidden');
+    await waitFor(async () => (await batchesOnServer()) > before, 'A\'s change sent');
+    // B synced on being shown a moment ago: a focus now is too soon.
+    await b.evaluate(`window.dispatchEvent(new Event('focus'))`);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    assert.notEqual(await newWordsOn(b), '25');
+    // Two minutes later (B's clock moved on), a desktop window clicked again.
+    await b.evaluate(`window.realNow = Date.now; Date.now = () => window.realNow() + 2 * 60 * 1000;
+      window.dispatchEvent(new Event('focus'))`);
+    try {
+      await waitFor(async () => (await newWordsOn(b)) === '25', 'B to take it in on focus');
+    } finally {
+      await b.evaluate(`Date.now = window.realNow`);
+    }
+  });
+
+  it('says on the end of Review when it last synced, and Sync now takes changes in', async () => {
+    const before = await batchesOnServer();
+    await setNewWords(a, 27);
+    await setVisibility(a, 'hidden');
+    await waitFor(async () => (await batchesOnServer()) > before, 'A\'s change sent');
+    await tap(b, 'review-tab');
+    await waitUntil(b, `!document.getElementById('done-panel').hidden`, 'the end of Review');
+    await waitUntil(b, `/^Synced/.test(document.querySelector('#done-panel .sync-note-text').textContent)`, 'the line on syncing');
+    await b.evaluate(`document.querySelector('#done-panel .sync-note button').click()`);
+    // Said at once, and for a moment at least, so the tap is seen to work.
+    assert.equal(await b.evaluate(`document.querySelector('#done-panel .sync-note-text').textContent`), 'Syncing…');
+    await waitFor(async () => (await newWordsOn(b)) === '27', 'B to take it in with Sync now');
+    await waitUntil(b, `document.querySelector('#done-panel .sync-note-text').textContent === 'Synced just now.'`, 'Synced just now');
+    await openSettings(b, 'settings-studying');
+  });
+
   it('takes nothing in while a character is being written on that device', async () => {
     const before = await batchesOnServer();
+    const was = await newWordsOn(b);
     await setNewWords(a, 23);
     await setVisibility(a, 'hidden');
     await waitFor(async () => (await batchesOnServer()) > before, 'A\'s change sent');
@@ -596,7 +632,7 @@ describe('syncing by itself', { concurrency: false }, () => {
     await b.evaluate(`document.getElementById('writing-area').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, isPrimary: true }))`);
     await setVisibility(b, 'visible');
     await new Promise((resolve) => setTimeout(resolve, 2500));
-    assert.equal(await newWordsOn(b), '17');
+    assert.equal(await newWordsOn(b), was);
     // The finger lifts; a few seconds later the change comes.
     await b.evaluate(`window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, isPrimary: true }))`);
     await waitFor(async () => (await newWordsOn(b)) === '23', 'B to take it in after the stroke');

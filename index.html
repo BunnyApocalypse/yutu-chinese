@@ -199,6 +199,9 @@
           <button type="submit" data-t="review.otherStart"></button>
         </form>
         <p class="hint" data-t="review.startHint"></p>
+        <!-- While sync is on: how recent this device's words from the others
+             are, and Sync now (syncNote.js). -->
+        <p class="sync-note" hidden><span class="sync-note-text"></span> <button class="link-button" type="button" data-t="sync.now"></button></p>
       </div>
       <div id="done-panel" class="done-panel" hidden>
         <!-- A line of text, or at the end of Review a short summary of the day
@@ -241,6 +244,9 @@
             <button id="storage-message-close" class="small" type="button" data-t="storageMessage.notNow"></button>
           </div>
         </div>
+        <!-- While sync is on: how recent this device's words from the others
+             are, and Sync now (syncNote.js). -->
+        <p class="sync-note" hidden><span class="sync-note-text"></span> <button class="link-button" type="button" data-t="sync.now"></button></p>
       </div>
 
       <!-- The Decks tab: the decks, the words in them, and the ready-made

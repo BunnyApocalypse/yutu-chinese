@@ -150,6 +150,22 @@ export function formatDateTime(date, options) {
   return new Date(date).toLocaleString(locale, options);
 }
 
+// How long ago `date` was, as the language says it: "2 minutes ago", "3
+// hours ago", "yesterday" ("vor 2 Minuten", "2 minuti fa"), in whole
+// minutes, hours or days. Under a minute is "0 minutes ago" ("this minute"
+// in English): callers say "just now" in their own words instead.
+export function formatAgo(date, now = Date.now()) {
+  const minutes = Math.max(0, Math.floor((now - new Date(date)) / 60000));
+  const relative = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+  if (minutes < 60) {
+    return relative.format(-minutes, 'minute');
+  }
+  if (minutes < 24 * 60) {
+    return relative.format(-Math.floor(minutes / 60), 'hour');
+  }
+  return relative.format(-Math.floor(minutes / (24 * 60)), 'day');
+}
+
 // Items in a plain series, "a, b, c" (in Chinese it would be "a、b、c").
 export function formatList(items) {
   return items.join(t('list.separator'));

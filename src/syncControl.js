@@ -99,10 +99,14 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
   //   lastWorkedAt: when one last worked without a problem, or sync was
   //                 turned on; null before (a device that synced before
   //                 this was kept counts from its next sync)
+  //   lastFetchedAt: when a whole sync (not only sending) last worked
+  //                 without a problem since the app was opened, or null:
+  //                 what this device has from the others is that recent
+  //                 (the note at the end of Review, syncNote.js)
   //   problem:      the `reason` of what went wrong last time, or null
   //   progress:     while a long step runs, how it goes (sync.js,
   //                 onProgress), else null
-  const status = { on: false, running: false, lastSyncedAt: null, lastWorkedAt: null, problem: null, progress: null };
+  const status = { on: false, running: false, lastSyncedAt: null, lastWorkedAt: null, lastFetchedAt: null, problem: null, progress: null };
 
   const tell = () => onStatus({ ...status });
 
@@ -182,6 +186,9 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
         if (!status.problem) {
           status.lastWorkedAt = status.lastSyncedAt;
           await db.setSyncValue('lastWorkedAt', status.lastWorkedAt);
+          if (!options.sendOnly) {
+            status.lastFetchedAt = status.lastSyncedAt;
+          }
         }
         if (result.changed) {
           await onChanged();
@@ -212,7 +219,7 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
       worker?.stop();
       worker = null;
       storage = null;
-      Object.assign(status, { on: false, running: false, lastSyncedAt: null, lastWorkedAt: null, problem: null, progress: null });
+      Object.assign(status, { on: false, running: false, lastSyncedAt: null, lastWorkedAt: null, lastFetchedAt: null, problem: null, progress: null });
       tell();
     },
 

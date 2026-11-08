@@ -10,7 +10,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import en from '../src/text/en.js';
 import it from '../src/text/it.js';
 import de from '../src/text/de.js';
-import { t, formatNumber } from '../src/text.js';
+import { t, formatNumber, formatAgo } from '../src/text.js';
 import { pseudoText } from '../src/text/pseudo.js';
 
 const root = new URL('../', import.meta.url);
@@ -104,4 +104,16 @@ test('the test language keeps gaps, markup and Chinese, and is longer', () => {
   const text = pseudoText('Like <b>{word}</b> and 學, at&nbsp;once');
   assert.match(text, /^\[Ļîķé <b>\{word\}<\/b> áñð 學, áţ&nbsp;öñçé ·+\]$/);
   assert.equal(pseudoText('3/7'), '3/7');
+});
+
+test('formatAgo says how long ago in whole minutes, hours or days', () => {
+  const now = Date.UTC(2026, 10, 8, 12);
+  const minute = 60 * 1000;
+  assert.equal(formatAgo(now - 3 * minute, now), '3 minutes ago');
+  assert.equal(formatAgo(now - 59 * minute, now), '59 minutes ago');
+  assert.equal(formatAgo(now - 61 * minute, now), '1 hour ago');
+  assert.equal(formatAgo(now - 30 * 60 * minute, now), 'yesterday');
+  assert.equal(formatAgo(now - 3 * 24 * 60 * minute, now), '3 days ago');
+  // A clock set back on another device: never in the future.
+  assert.equal(formatAgo(now + 5 * minute, now), 'this minute');
 });

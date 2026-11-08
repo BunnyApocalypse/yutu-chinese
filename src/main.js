@@ -41,6 +41,7 @@ import { createProgressPanel } from './progressPanel.js';
 import { setUpTesterSettings } from './testerSettings.js';
 import { createSyncControl } from './syncControl.js';
 import { createSyncPanel } from './syncPanel.js';
+import { createSyncNote } from './syncNote.js';
 import { takeCodeFromLink } from './syncCodeView.js';
 import { startSyncTiming, syncIsLate } from './syncTiming.js';
 import { createSyncLateMessage } from './syncLateMessage.js';
@@ -103,6 +104,7 @@ let basics = null;
 // Syncing between devices (set up in startUp).
 let syncControl = null;
 let syncPanel = null;
+let syncNote = null;
 // The pop-up when syncing fails too long, made once the app has started.
 let syncLate = null;
 // The introduction (welcome.js), which shows a join's progress.
@@ -1127,6 +1129,7 @@ async function startUp() {
     },
     onStatus: (status) => {
       syncPanel?.show(status);
+      syncNote?.show(status);
       welcome?.showSyncStatus(status);
       // No advice to export backups while syncing, and the dot for syncing
       // failing too long (showBackupStatus).
@@ -1139,6 +1142,8 @@ async function startUp() {
   });
   await syncControl.start();
   syncPanel = await createSyncPanel(syncControl);
+  // The quiet line on the start and end of Review and the end of Learn.
+  syncNote = createSyncNote(syncControl);
   // Syncing by itself (syncTiming.js), never while a character is being
   // written: from a finger or pen touching the writing area until it has
   // rested a few seconds.

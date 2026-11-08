@@ -12,18 +12,24 @@
 //     after today's words), when the learner may well pick up another device.
 //   A whole sync (sending and taking in, which may write many records):
 //     when the app starts, when it comes back into view, when the
-//     connection comes back, and again after a failure (1, 5, then 30
-//     minutes later). Never while a character is being written: it waits
+//     connection comes back, when the window is chosen again (a desktop
+//     window clicked or switched back to, which stays "in view" all along
+//     behind others; at most once a minute), and again after a failure (1,
+//     5, then 30 minutes later). Never while a character is being written: it waits
 //     until `isBusy()` has been false for a moment.
 //
 // The browser's events used: visibilitychange (the page shown or put
-// away) and online (the connection back); and the app's own screen-shown,
+// away), focus (the window chosen again) and online (the connection back); and the app's own screen-shown,
 // which review.js sends with 'reviewDone' and 'learned' at those ends.
 
 const SEND_AFTER_MS = 30 * 1000;
 const SEND_AT_LEAST_EVERY_MS = 5 * 60 * 1000;
 const RETRY_AFTER_MS = [60 * 1000, 5 * 60 * 1000, 30 * 60 * 1000];
 const BUSY_CHECK_MS = 2000;
+// A window chosen again syncs at most this often: on a phone, coming back
+// into view does it already, and switching windows to and fro should not
+// pile up syncs.
+const FOCUS_AT_MOST_EVERY_MS = 60 * 1000;
 
 // The end of a session, as review.js announces it with 'screen-shown': the
 // end of Review, and the summary after today's words in Learn.
@@ -59,6 +65,7 @@ export function startSyncTiming({ control, isBusy, onOutboxChange }) {
   let sendTimer = null;
   let firstUnsentAt = null;
   let wholeTimer = null;
+  let lastWholeAt = 0;
   let retries = 0;
 
   const on = () => control.status().on;
@@ -95,6 +102,7 @@ export function startSyncTiming({ control, isBusy, onOutboxChange }) {
         syncWhole(BUSY_CHECK_MS);
         return;
       }
+      lastWholeAt = Date.now();
       await control.syncNow();
       const { problem } = control.status();
       if (problem && PASSING.includes(problem) && retries < RETRY_AFTER_MS.length) {
@@ -115,6 +123,11 @@ export function startSyncTiming({ control, isBusy, onOutboxChange }) {
     }
   };
   const onOnline = () => syncWhole();
+  const onFocus = () => {
+    if (Date.now() - lastWholeAt >= FOCUS_AT_MOST_EVERY_MS) {
+      syncWhole();
+    }
+  };
   const onScreen = (event) => {
     if (SESSION_ENDS.includes(event.detail)) {
       sendNow();
@@ -122,6 +135,7 @@ export function startSyncTiming({ control, isBusy, onOutboxChange }) {
   };
   document.addEventListener('visibilitychange', onVisibility);
   window.addEventListener('online', onOnline);
+  window.addEventListener('focus', onFocus);
   document.addEventListener('screen-shown', onScreen);
 
   syncWhole();
@@ -133,6 +147,7 @@ export function startSyncTiming({ control, isBusy, onOutboxChange }) {
       onOutboxChange(() => {});
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('online', onOnline);
+      window.removeEventListener('focus', onFocus);
       document.removeEventListener('screen-shown', onScreen);
     },
   };

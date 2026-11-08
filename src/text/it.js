@@ -233,6 +233,10 @@ export default {
   'sync.syncing': 'Sincronizzazione…',
   'sync.notYet': 'Non ancora sincronizzato.',
   'sync.lastSynced': 'Ultima sincronizzazione: {when}.',
+  'syncNote.justNow': 'Sincronizzato poco fa.',
+  'syncNote.synced': 'Sincronizzato {when}.',
+  'syncNote.failed': 'Sincronizzazione non riuscita.',
+  'syncNote.failedSince': 'Sincronizzazione non riuscita. Ultima sincronizzazione: {when}.',
   'sync.late': 'La sincronizzazione non funziona dal {when}: quello che hai fatto qui da allora è solo su questo dispositivo.',
   // The pop-up when syncing has been failing too long (syncLateMessage.js)
   'syncLate.title': 'La sincronizzazione non funziona',

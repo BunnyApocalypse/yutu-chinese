@@ -238,6 +238,12 @@ export default {
   'sync.syncing': 'Syncing…',
   'sync.notYet': 'Not synced yet.',
   'sync.lastSynced': 'Last synced {when}.',
+  // The quiet line at the end of Review and Learn, and at the start of
+  // Review (syncNote.js); {when} is "2 minutes ago", "yesterday"
+  'syncNote.justNow': 'Synced just now.',
+  'syncNote.synced': 'Synced {when}.',
+  'syncNote.failed': 'Couldn’t sync just now.',
+  'syncNote.failedSince': 'Couldn’t sync just now. Last synced {when}.',
   'sync.late': 'Syncing hasn’t worked since {when}: what you’ve done here since then is only on this device.',
   // The pop-up when syncing has been failing too long (syncLateMessage.js)
   'syncLate.title': 'Syncing isn’t working',
