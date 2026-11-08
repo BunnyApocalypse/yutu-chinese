@@ -40,8 +40,9 @@ import { t } from './text.js';
 // Settings that say something about the device, not about the learner.
 // Syncing leaves them out too (syncBatch.js). The learner's own choices in
 // Settings (the look, the volume, tips on or off, the deck studied) travel
-// with the rest (the owner, 2026-11-08); the switches under For testing stay
-// with the device they are tried on.
+// with the rest, and so do the tips already seen, so that a tip isn't shown
+// again on each device (the owner, 2026-11-08); the switches under For
+// testing stay with the device they are tried on.
 export const DEVICE_SETTINGS = [
   'welcomeDone',
   'keepDataWanted',
@@ -50,7 +51,6 @@ export const DEVICE_SETTINGS = [
   'builtInListVersion',
   'audioOffline',
   'lastBackupAt',
-  'tipsSeen',
   'backupReminderOff',
   'swipeReadout',
   'recordRawInput',

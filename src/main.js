@@ -36,7 +36,7 @@ import dictionaryUrl from '../data/cedict/dictionary.tsv?url';
 import { closeOnTapBeside } from './dialogs.js';
 import { createFeedback } from './feedback.js';
 import { createWhatsNew } from './whatsNew.js';
-import { createStreakScreen } from './streakScreen.js';
+import { createStreakScreen, loadStreakShown } from './streakScreen.js';
 import { createProgressPanel } from './progressPanel.js';
 import { setUpTesterSettings } from './testerSettings.js';
 import { createSyncControl } from './syncControl.js';
@@ -1046,6 +1046,8 @@ async function startUp() {
   );
   sizeForFont();
 
+  // The day the streak screen was last shown, synced (streakScreen.js).
+  await loadStreakShown();
   review = createReview(
     {
       deckButton: byId('deck-choice-button'),
@@ -1119,6 +1121,7 @@ async function startUp() {
         await tips.load();
         byId('tips-checkbox').checked = tips.on;
       }
+      await loadStreakShown();
       await review.load();
       await loadWordList();
     },

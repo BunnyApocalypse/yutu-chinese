@@ -112,9 +112,13 @@ describe('streaks', { concurrency: false }, () => {
     assert.deepEqual(errors, [], 'the page threw errors');
   });
 
-  // As if the streak screen was last shown on another day, or never.
+  // As if the streak screen was last shown on another day, or never (a
+  // setting, read again as after a sync).
   const setShown = (day) =>
-    page.evaluate(day === null ? `localStorage.removeItem('streak-shown')` : `localStorage.setItem('streak-shown', '${day}')`);
+    page.evaluate(`import('/src/db.js')
+      .then((db) => db.setSetting('streakShown', ${JSON.stringify(day)}))
+      .then(() => import('/src/streakScreen.js'))
+      .then((screen) => screen.loadStreakShown())`);
 
   it('explains streaks the first time the day counts', async () => {
     await page.evaluate(`document.getElementById('review-tab').click()`);
@@ -147,8 +151,10 @@ describe('streaks', { concurrency: false }, () => {
     assert.equal(await isShown(page, 'streak-off'), false);
     await tap(page, 'streak-continue');
     // The pill's day is kept on the device, so a reload doesn't bring it
-    // back the same day (the owner saw it twice, 2026-10-24).
-    const [pillDay, screenDay] = await page.evaluate(`[localStorage.getItem('streak-pill-shown'), localStorage.getItem('streak-shown')]`);
+    // back the same day (the owner saw it twice, 2026-10-24); the screen's
+    // is a setting, synced.
+    const pillDay = await page.evaluate(`localStorage.getItem('streak-pill-shown')`);
+    const screenDay = await page.evaluate(`import('/src/db.js').then((db) => db.getSetting('streakShown', null))`);
     assert.equal(pillDay, screenDay);
   });
 

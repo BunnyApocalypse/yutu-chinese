@@ -127,7 +127,7 @@ test('a grade corrected on the other device replaces the first copy here, and th
 test('a batch leaves out the settings that belong to the device', () => {
   const batch = batchOf({
     settings: [
-      { key: 'tipsSeen', value: ['review'], changedAt: START },
+      { key: 'lastBackupAt', value: START, changedAt: START },
       { key: 'theme', value: 'dark', changedAt: START },
       { key: 'newWordsPerDay', value: 10, changedAt: START },
     ],
@@ -159,7 +159,7 @@ test('a whole history taken in on an empty device as it is gives what combining 
   const { wholeAsChanges } = await import('../src/syncBatch.js');
   const { theirs } = twoDevices();
   const mySettings = [
-    { key: 'tipsSeen', value: ['review'], changedAt: START },
+    { key: 'lastBackupAt', value: START, changedAt: START },
     { key: 'theme', value: 'auto', changedAt: START + 99 * DAY },
     { key: 'newWordsPerDay', value: 3, changedAt: START + 99 * DAY },
   ];

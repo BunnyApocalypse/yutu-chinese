@@ -290,11 +290,16 @@ describe('sync in the introduction', { concurrency: false }, () => {
   });
 
   it('joins on a screen of its own, says what came, takes the other device\'s settings and still asks to keep the words', async () => {
-    // The first device chooses the dark look, and sends it when put away.
+    // The first device chooses the dark look, has seen a tip and the streak
+    // screen, and sends it all when put away.
     const [first, page] = pages;
     const batches = async () => (await filesOnServer(folder)).filter((name) => name.startsWith('batch-')).length;
     const before = await batches();
-    await first.evaluate(`import('/src/db.js').then((db) => db.setSetting('theme', 'dark'))`);
+    await first.evaluate(`import('/src/db.js').then(async (db) => {
+      await db.setSetting('theme', 'dark');
+      await db.setSetting('tipsSeen', ['review']);
+      await db.setSetting('streakShown', '2026-11-08');
+    })`);
     await first.evaluate(`Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
       document.dispatchEvent(new Event('visibilitychange'))`);
     await waitFor(async () => (await batches()) > before, 'the look sent');
@@ -322,6 +327,8 @@ describe('sync in the introduction', { concurrency: false }, () => {
     const script = await page.evaluate(`import('/src/db.js').then((db) => db.getSetting('script', null))`);
     assert.equal(script, 'traditional');
     assert.equal(await page.evaluate('document.documentElement.dataset.theme'), 'dark');
+    const seen = await page.evaluate(`import('/src/db.js').then(async (db) => [await db.getSetting('tipsSeen', []), await db.getSetting('streakShown', null)])`);
+    assert.deepEqual(seen, [['review'], '2026-11-08']);
     await tap(page, 'welcome-next');
     await waitUntil(page, `!document.getElementById('welcome').open`, 'the introduction to close');
     // Closing kept the look that came, not the one of the screens.

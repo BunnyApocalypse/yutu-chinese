@@ -294,7 +294,7 @@ test('settings that belong to the device stay as they are on it', () => {
   const mine = device({
     settings: [
       { key: 'welcomeDone', value: true, changedAt: START },
-      { key: 'tipsSeen', value: ['review'], changedAt: START },
+      { key: 'lastBackupAt', value: START, changedAt: START },
       { key: 'cardsFiledByScript', value: true, changedAt: START },
       { key: 'script', value: 'traditional', changedAt: START + 2 * DAY },
       { key: 'rawInput', value: true },
@@ -302,7 +302,7 @@ test('settings that belong to the device stay as they are on it', () => {
   });
   const theirs = device({
     settings: [
-      { key: 'tipsSeen', value: ['learn'], changedAt: START + 5 * DAY },
+      { key: 'lastBackupAt', value: START + 5 * DAY, changedAt: START + 5 * DAY },
       { key: 'theme', value: 'dark', changedAt: START + 5 * DAY },
       { key: 'keepDataWanted', value: true, changedAt: START + 5 * DAY },
       { key: 'cardsFiledByScript', value: true, changedAt: START + 5 * DAY },
@@ -315,7 +315,7 @@ test('settings that belong to the device stay as they are on it', () => {
   const value = Object.fromEntries(data.settings.map((setting) => [setting.key, setting.value]));
   assert.deepEqual(value, {
     welcomeDone: true,
-    tipsSeen: ['review'],
+    lastBackupAt: START,
     cardsFiledByScript: true,
     script: 'traditional',
     rawInput: false,
