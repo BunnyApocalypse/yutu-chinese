@@ -762,12 +762,14 @@
         <button id="whats-new-close" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 
-      <!-- While studying, the moment the day counts for the streak: a small
-           pill over the top bar, gone by itself; a tap opens the streak
-           screen (streakScreen.js). In a status box, so screen readers say
-           it without moving there. -->
-      <div class="streak-pill-place" role="status">
-        <button id="streak-pill" class="streak-pill" type="button" hidden><span aria-hidden="true">🌕🐇 </span><span id="streak-pill-text"></span><span aria-hidden="true"> ✨</span></button>
+      <!-- Small pills over the top bar, on any screen. In a status box, so
+           screen readers say them without moving there. While studying,
+           the moment the day counts for the streak: gone by itself; a tap
+           opens the streak screen (streakScreen.js). While Import backup
+           reads a file: "Reading the backup…" (main.js). -->
+      <div class="top-pill-place" role="status">
+        <button id="streak-pill" class="top-pill" type="button" hidden><span aria-hidden="true">🌕🐇 </span><span id="streak-pill-text"></span><span aria-hidden="true"> ✨</span></button>
+        <p id="import-pill" class="top-pill" hidden></p>
       </div>
 
       <!-- In Learn, the word just learned, over the next word's first look

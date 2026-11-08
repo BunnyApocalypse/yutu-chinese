@@ -143,7 +143,10 @@ describe('importing a backup', { concurrency: false }, () => {
     await waitUntil(page, `document.getElementById('word-count').textContent === '1'`, 'the word');
 
     await chooseBackup(page, backup);
+    // Said at once, under the buttons and on any screen (a pill over the top bar).
+    assert.equal(await textOf(page, 'import-pill'), 'Reading the backup…');
     await waitUntil(page, `document.getElementById('import-dialog').open`, 'the import panel');
+    assert.equal(await page.evaluate(`document.getElementById('import-pill').hidden`), true);
     assert.match(await textOf(page, 'import-backup-text'), /^In the backup: 1 word, 1 card studied, 1 review/);
     assert.match(await textOf(page, 'import-device-text'), /^On this device now: 1 word, 0 cards studied, 0 reviews, no reviews/);
     assert.equal(

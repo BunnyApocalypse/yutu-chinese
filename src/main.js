@@ -766,10 +766,15 @@ importFile.addEventListener('change', async () => {
   }
 
   // A big backup takes a while to read: said at once, under the buttons (the
-  // line Export backup uses too), and Import put away until it is read.
+  // line Export backup uses too), and Import put away until it is read. The
+  // page can be used meanwhile, so it is said on every screen too, by a pill
+  // over the top bar (the owner, 2026-11-08), which Settings covers.
   const reading = byId('export-done');
+  const readingPill = byId('import-pill');
   reading.textContent = t('import.reading');
+  readingPill.textContent = t('import.reading');
   reading.hidden = false;
+  readingPill.hidden = false;
   importButton.disabled = true;
   stopImportWorker();
   importWorker = new Worker(new URL('./importWorker.js', import.meta.url), { type: 'module' });
@@ -782,6 +787,7 @@ importFile.addEventListener('change', async () => {
     problem = error.textKey ? t(error.textKey, error.values) : error.message;
   }
   reading.hidden = true;
+  readingPill.hidden = true;
   importButton.disabled = false;
   if (problem) {
     await tell(t('backup.couldNotUse'), t('backup.nothingChanged', { reason: problem }));
