@@ -246,10 +246,13 @@ test('a snapshot is made when enough is sent, and the batches it covers are dele
   const second = await syncB();
   assert.equal(second.snapshotTakenIn, true);
   assert.equal(second.takenIn, 0);
-  // B made a snapshot of its own (B's batch was more than 1 byte), which
-  // covers everything, so B's batch and A's old snapshot are going: A's when
-  // A next syncs.
-  assert.equal(second.snapshotMade, true);
+  // B's own snapshot waits for its next sync: it has just taken a whole
+  // history in (a device joining shouldn't wait for one more).
+  assert.equal(second.snapshotMade, false);
+  // Then it makes one (B's batch was more than 1 byte), which covers
+  // everything, so B's batch and A's old snapshot are going: A's when A
+  // next syncs.
+  assert.equal((await syncB()).snapshotMade, true);
   assert.equal(names(storage, 'batch-').length, 0);
   assert.equal(names(storage, 'snapshot-').length, 2);
   await syncA();
@@ -391,4 +394,27 @@ test('a snapshot is made after enough batches, however small they are', async ()
   }
   assert.equal(names(storage, 'snapshot-').length, 1);
   assert.equal(names(storage, 'batch-').length, 0);
+});
+
+test('a whole history: progress told, packed once, and taken in on an empty device without combining', async () => {
+  const { mine } = twoDevices();
+  const storage = memoryStorage();
+  const a = memoryDevice(mine, { before: true });
+  const phases = [];
+  const syncA = createSync({ local: a, storage, key, snapshotAfterBytes: 1, onProgress: ({ phase }) => phases.push(phase) }).syncNow;
+  // Sync turned on: everything packed and sent, the snapshot left for later.
+  const first = await syncA();
+  assert.equal(first.snapshotMade, false);
+  assert.deepEqual(phases, ['pack', 'upload']);
+  phases.length = 0;
+  assert.equal((await syncA()).snapshotMade, true);
+  assert.deepEqual(phases, ['pack', 'upload']);
+  // A new device joins from the snapshot: opened and saved, never combined.
+  const c = memoryDevice();
+  const told = [];
+  const joined = await createSync({ local: c, storage, key, onProgress: (progress) => told.push(progress) }).syncNow();
+  assert.equal(joined.snapshotTakenIn, true);
+  assert.deepEqual([...new Set(told.map((progress) => progress.phase))], ['open', 'save']);
+  assert.equal(told.at(-1).done, told.at(-1).total);
+  assert.deepEqual(learnersData(c.data()), learnersData(a.data()));
 });

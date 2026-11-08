@@ -36,8 +36,11 @@ export function buildBatch({ device, number, madeAt, records }) {
   for (const storeName of Object.keys(KEYS)) {
     batch[storeName] = records[storeName] || [];
   }
+  // A batch of everything this device has (sendEverything in db.js): a
+  // whole history, cards and all, which a device joining can take as it is.
   if (records.cards) {
     batch.cards = records.cards;
+    batch.everything = true;
   }
   // A setting that belongs to this device (the theme, the volume…) stays
   // here, as it does when combining backups.
@@ -137,4 +140,31 @@ export function applyBatch(slice, batch) {
   // it, as a batch's always do: a whole backup would bring the other's.)
   compare('settings', 'key', { removing: false });
   return { put, remove };
+}
+
+// A whole history (a snapshot's data, or a batch of everything) as changes
+// for a device with no words or reviews yet: everything as it is, since it
+// is one device's data, combined already, and so what mergeBackups would
+// give, without combining 190,000 records with nothing (sync.js,
+// takeInWhole). Settings as mergeBackups takes them: this device's own stay,
+// and of the others, those saved later than this device's.
+//
+// mySettings: this device's settings
+export function wholeAsChanges(data, mySettings) {
+  const put = {};
+  for (const storeName of ['words', 'decks', 'removed', 'reviews', 'cards']) {
+    if ((data[storeName] || []).length > 0) {
+      put[storeName] = data[storeName];
+    }
+  }
+  const mine = new Map(mySettings.map((setting) => [setting.key, setting]));
+  const settings = (data.settings || []).filter(
+    (setting) =>
+      !DEVICE_SETTINGS.includes(setting.key) &&
+      (!mine.has(setting.key) || (setting.changedAt || 0) > (mine.get(setting.key).changedAt || 0)),
+  );
+  if (settings.length > 0) {
+    put.settings = settings;
+  }
+  return { put, remove: {} };
 }

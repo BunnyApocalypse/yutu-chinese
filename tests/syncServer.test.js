@@ -230,9 +230,11 @@ test('two devices sync through the server, and it holds nothing readable', () =>
     const syncA = createSync({ local: a, storage, key: keys.encryption }).syncNow;
     const syncB = createSync({ local: b, storage, key: keys.encryption, snapshotAfterBytes: 1 }).syncNow;
     await syncA();
-    const second = await syncB();
-    assert.equal(second.snapshotMade, true);
+    // B sent everything just now: its snapshot waits for its next sync,
+    // so as not to pack it all twice at once.
+    assert.equal((await syncB()).snapshotMade, false);
     await syncA();
+    assert.equal((await syncB()).snapshotMade, true);
     assert.deepEqual(learnersData(a.data()), learnersData(b.data()));
     for (const name of await fs.readdir(path.join(folder, keys.account))) {
       const seen = (await fs.readFile(path.join(folder, keys.account, name))).toString('latin1');

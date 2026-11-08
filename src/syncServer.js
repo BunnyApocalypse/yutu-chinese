@@ -86,8 +86,33 @@ export function serverStorage({ address, account, access, fetch = globalThis.fet
     async list() {
       return (await request('')).json();
     },
-    async read(name) {
-      return new Uint8Array(await (await request(`/files/${name}`)).arrayBuffer());
+    // onBytes(done, total): as the file arrives, piece by piece (total from
+    // its Content-Length, which the server sends).
+    async read(name, onBytes) {
+      const response = await request(`/files/${name}`);
+      if (!onBytes || !response.body) {
+        return new Uint8Array(await response.arrayBuffer());
+      }
+      const total = Number(response.headers.get('content-length')) || 0;
+      const reader = response.body.getReader();
+      const parts = [];
+      let done = 0;
+      for (;;) {
+        const { done: finished, value } = await reader.read();
+        if (finished) {
+          break;
+        }
+        parts.push(value);
+        done += value.length;
+        onBytes(done, total);
+      }
+      const bytes = new Uint8Array(done);
+      let at = 0;
+      for (const part of parts) {
+        bytes.set(part, at);
+        at += part.length;
+      }
+      return bytes;
     },
     async save(name, bytes) {
       await request(`/files/${name}`, { method: 'PUT', body: bytes, keepalive: bytes.length < KEEPALIVE_BYTES });

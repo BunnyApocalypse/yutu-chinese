@@ -226,7 +226,7 @@ export async function createSyncServer(given = {}) {
       }
       if (usedAt < before) {
         totalBytes -= await accountBytes(folder);
-        await fs.rm(folder, { recursive: true, force: true });
+        await removeFolder(folder);
         markedAt.delete(folder);
         deleted += 1;
       }
@@ -311,7 +311,7 @@ export async function createSyncServer(given = {}) {
       if (request.method === 'DELETE') {
         if (exists) {
           totalBytes -= await accountBytes(folder);
-          await fs.rm(folder, { recursive: true, force: true });
+          await removeFolder(folder);
         }
         return send(response, 204);
       }
@@ -451,6 +451,22 @@ export async function createSyncServer(given = {}) {
   // For the tests, and for running it by hand.
   server.expireUnused = expireUnused;
   return server;
+}
+
+// Deletes an account's folder. A file being saved into it at that moment can
+// keep the folder from going (ENOTEMPTY): then again, a few times.
+async function removeFolder(folder) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await fs.rm(folder, { recursive: true, force: true });
+      return;
+    } catch (error) {
+      if (error.code !== 'ENOTEMPTY' || attempt === 5) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+  }
 }
 
 // How many bytes an account's folder holds.

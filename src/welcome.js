@@ -20,7 +20,7 @@ import { setTheme } from './theme.js';
 import { t } from './text.js';
 import { makeCode, readCode } from './syncCode.js';
 import { scanForCode } from './syncScan.js';
-import { showCode, copyCode, saveCodeFile, printCode, problemText, codeProblemText } from './syncCodeView.js';
+import { showCode, copyCode, saveCodeFile, printCode, problemText, codeProblemText, progressText } from './syncCodeView.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -128,6 +128,9 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
   let newCode = null;
   const syncChosen = () => chosen('welcome-sync') === 'on';
 
+  // Whether a join is under way, with its progress shown (showSyncStatus).
+  let joining = false;
+
   function openJoin() {
     joinForm.hidden = false;
     joinInput.focus();
@@ -153,11 +156,13 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
       return;
     }
     joinNote.textContent = t('welcome.joining');
+    joining = true;
     const controls = [...joinForm.elements, nextButton, skipButton];
     controls.forEach((control) => {
       control.disabled = true;
     });
     const status = await sync.join(code);
+    joining = false;
     controls.forEach((control) => {
       control.disabled = false;
     });
@@ -433,6 +438,13 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
     async openIfFirstTime() {
       if (!(await getSetting('welcomeDone', false))) {
         open();
+      }
+    },
+    // What syncing is doing (syncControl.js's status): while joining, its
+    // progress under the code box.
+    showSyncStatus(status) {
+      if (joining && status.progress) {
+        joinNote.textContent = progressText(status.progress);
       }
     },
     // A code from a link (takeCodeFromLink in syncCodeView.js): on the first

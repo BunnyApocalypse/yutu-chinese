@@ -153,3 +153,19 @@ test('a card is worked out from its stored schedule and the later reviews alone,
   const { data: mixed } = takeIn(mine, batchOf({ reviews: [between] }));
   assert.deepEqual(mixed.cards[0].fsrsState, replay([...mine.reviews, between]).fsrsState);
 });
+
+test('a whole history taken in on an empty device as it is gives what combining would', async () => {
+  const { wholeAsChanges } = await import('../src/syncBatch.js');
+  const { theirs } = twoDevices();
+  const mySettings = [
+    { key: 'theme', value: 'dark', changedAt: START },
+    { key: 'newWordsPerDay', value: 3, changedAt: START + 99 * DAY },
+  ];
+  const empty = { words: [], cards: [], reviews: [], settings: mySettings, removed: [], decks: [] };
+  const changes = wholeAsChanges(theirs, mySettings);
+  assert.deepEqual(changes.remove, {});
+  assert.deepEqual(sorted(saveChanges(empty, changes)), sorted(mergeBackups(empty, theirs).data));
+  // Neither of the other's settings is taken: the theme belongs to each
+  // device, and this device's new-words setting was saved later.
+  assert.equal(changes.put.settings, undefined);
+});

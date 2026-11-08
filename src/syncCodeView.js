@@ -11,7 +11,7 @@
 
 import qrcode from 'qrcode-generator';
 import { formatCode } from './syncCode.js';
-import { t, formatDateTime } from './text.js';
+import { t, formatDateTime, formatNumber } from './text.js';
 
 // The app's own address, without anything after "?" or "#".
 const appAddress = () => window.location.href.split('#')[0].split('?')[0];
@@ -130,6 +130,28 @@ export function printCode(code) {
   // after it.
   setTimeout(() => frame.remove(), 1000);
   return '';
+}
+
+// A long step of syncing as a line (sync.js, onProgress): what is being
+// done, with how far, as Import backup says it.
+const megabytes = (bytes) => formatNumber(Math.round((bytes / (1024 * 1024)) * 10) / 10);
+export function progressText({ phase, done = 0, total = 0 }) {
+  switch (phase) {
+    case 'pack':
+      return t('sync.progress.pack');
+    case 'upload':
+      return t('sync.progress.upload', { total: megabytes(total) });
+    case 'download':
+      return t('sync.progress.download', { done: megabytes(done), total: megabytes(total) });
+    case 'open':
+      return t('sync.progress.open');
+    case 'merge':
+      return t('sync.progress.merge');
+    case 'save':
+      return t('sync.progress.save', { done: formatNumber(done), total: formatNumber(total) });
+    default:
+      return t('sync.syncing');
+  }
 }
 
 // What to say for each `reason` syncing gives (sync.js, syncServer.js).

@@ -119,7 +119,10 @@ process.on('exit', () => {
 });
 
 // Starts one headless browser with a single page, and returns the page:
-//   send(method, params)   a DevTools protocol command; returns its result
+//   send(method, params, sessionId)   a DevTools protocol command; returns its
+//                          result. With a sessionId, to another target the
+//                          page has, such as a worker (Target.setAutoAttach).
+//   on(method, handler)    hears the protocol's events of that name
 //   evaluate(expression)   runs JavaScript in the page and returns its value
 //                          (waiting for it, if it is a promise)
 //   errors                 the uncaught errors the page has thrown
@@ -199,8 +202,12 @@ async function launchBrowser() {
   let nextId = 1;
   const waiting = new Map();
   const errors = [];
+  const listeners = new Map();
   socket.onmessage = (event) => {
     const message = JSON.parse(event.data);
+    for (const handler of listeners.get(message.method) || []) {
+      handler(message.params, message.sessionId);
+    }
     if (message.method === 'Runtime.exceptionThrown') {
       const details = message.params.exceptionDetails;
       errors.push(details.exception?.description || details.text);
@@ -211,11 +218,11 @@ async function launchBrowser() {
     }
   };
 
-  async function send(method, params = {}) {
+  async function send(method, params = {}, sessionId = undefined) {
     const id = nextId++;
     const answer = await new Promise((resolve) => {
       waiting.set(id, resolve);
-      socket.send(JSON.stringify({ id, method, params }));
+      socket.send(JSON.stringify({ id, method, params, ...(sessionId && { sessionId }) }));
     });
     if (answer.error) {
       throw new Error(`${method}: ${answer.error.message}`);
@@ -240,6 +247,9 @@ async function launchBrowser() {
   return {
     send,
     evaluate,
+    on(method, handler) {
+      listeners.set(method, [...(listeners.get(method) || []), handler]);
+    },
     errors,
     close() {
       socket.close();

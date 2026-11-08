@@ -11,9 +11,12 @@
 // and what sync.js keeps there (device, nextNumber, taken…). Turning sync
 // off empties the store and the outbox, so turning it on again starts
 // afresh.
+//
+// The syncing itself runs on a second thread (syncWorker.js), so that
+// taking in or sending a whole history doesn't hold up the page; its
+// progress comes back as `status.progress`.
 
 import * as db from './db.js';
-import { createSync } from './sync.js';
 import { keysFor } from './syncCode.js';
 import { serverStorage } from './syncServer.js';
 
@@ -24,31 +27,90 @@ import { serverStorage } from './syncServer.js';
 /* global __SYNC_SERVER__ */
 export const DEFAULT_SERVER = typeof __SYNC_SERVER__ === 'undefined' ? '' : __SYNC_SERVER__;
 
-// onChanged(): called after a sync brought changes in, for the screens to
-//              read the data afresh
-// onStatus(status): called whenever `status` changes (below)
 // The server syncing uses: the one chosen in Settings, else the usual one.
 async function serverAddress() {
   return (await db.getSyncValue('server', null)) || DEFAULT_SERVER;
 }
 
+// Starts the second thread, and gives a way to ask it things: ask(message)
+// resolves to its answer, or rejects with the error it reports (with its
+// `reason`). onProgress(progress) hears its progress.
+function startWorker(onProgress) {
+  const worker = new Worker(new URL('./syncWorker.js', import.meta.url), { type: 'module' });
+  const waiting = new Map();
+  let lastId = 0;
+  worker.addEventListener('message', ({ data }) => {
+    if (data.type === 'progress') {
+      onProgress(data.progress);
+      return;
+    }
+    const asker = waiting.get(data.id);
+    waiting.delete(data.id);
+    if (data.type === 'failed') {
+      asker.reject(Object.assign(new Error(data.message), { reason: data.reason }));
+    } else {
+      asker.resolve(data.result);
+    }
+  });
+  // The thread itself failing (its code not loading, say): every question
+  // waiting fails with it.
+  worker.addEventListener('error', (event) => {
+    for (const asker of waiting.values()) {
+      asker.reject(new Error(event.message || 'The sync worker failed.'));
+    }
+    waiting.clear();
+  });
+  return {
+    ask(message) {
+      return new Promise((resolve, reject) => {
+        lastId += 1;
+        waiting.set(lastId, { resolve, reject });
+        worker.postMessage({ ...message, id: lastId });
+      });
+    },
+    // Stopped (sync turned off): whatever waits fails, as 'stopped'.
+    stop() {
+      worker.terminate();
+      for (const asker of waiting.values()) {
+        asker.reject(Object.assign(new Error('Syncing was turned off.'), { reason: 'stopped' }));
+      }
+      waiting.clear();
+    },
+  };
+}
+
+// onChanged(): called after a sync brought changes in, for the screens to
+//              read the data afresh
+// onStatus(status): called whenever `status` changes (below)
 export function createSyncControl({ onChanged = async () => {}, onStatus = () => {} } = {}) {
-  let sync = null;
+  let worker = null;
   let storage = null;
+  // The sync under way on the worker, if any, and whether new ones are
+  // refused for now (while deleting everything).
+  let current = null;
+  let refusing = false;
   // What Settings shows:
   //   on:           whether sync is on on this device
   //   running:      whether a sync is under way
   //   lastSyncedAt: when the last one finished, or null
   //   problem:      the `reason` of what went wrong last time, or null
-  const status = { on: false, running: false, lastSyncedAt: null, problem: null };
+  //   progress:     while a long step runs, how it goes (sync.js,
+  //                 onProgress), else null
+  const status = { on: false, running: false, lastSyncedAt: null, problem: null, progress: null };
 
   const tell = () => onStatus({ ...status });
 
   async function connect(code) {
     const keys = await keysFor(code);
     const address = await serverAddress();
+    // On the page too, for deleting everything (Settings).
     storage = serverStorage({ address, account: keys.account, access: keys.access });
-    sync = createSync({ local: db, storage, key: keys.encryption });
+    worker?.stop();
+    worker = startWorker((progress) => {
+      status.progress = progress;
+      tell();
+    });
+    await worker.ask({ type: 'connect', code, address });
     db.setOutboxOn(true);
     status.on = true;
   }
@@ -90,14 +152,15 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
     // (sync.js). Returns sync.js's result, or null if sync is off or it
     // failed (then `status.problem` says why).
     async syncNow(options = {}) {
-      if (!sync) {
+      if (!worker || refusing) {
         return null;
       }
       status.running = true;
       tell();
       let result = null;
       try {
-        result = await sync.syncNow(options);
+        current = worker.ask({ type: 'sync', options });
+        result = await current;
         status.lastSyncedAt = Date.now();
         await db.setSyncValue('lastSyncedAt', status.lastSyncedAt);
         status.problem = result.problems[0]?.reason ?? null;
@@ -111,7 +174,9 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
           console.error(error);
         }
       } finally {
+        current = null;
         status.running = false;
+        status.progress = null;
         tell();
       }
       return result;
@@ -125,17 +190,33 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
     async turnOff() {
       db.setOutboxOn(false);
       await db.forgetSync();
-      sync = null;
+      worker?.stop();
+      worker = null;
       storage = null;
-      Object.assign(status, { on: false, running: false, lastSyncedAt: null, problem: null });
+      Object.assign(status, { on: false, running: false, lastSyncedAt: null, problem: null, progress: null });
       tell();
     },
 
     // Deletes every synced file on the server, for all the learner's
     // devices, and turns sync off here. Each device keeps its words.
+    //
+    // Syncing here stops first, a sync under way allowed to finish: one
+    // could otherwise save a file just after the deleting, and the account
+    // would be back (2026-11-07, found by the browser test once syncing ran
+    // on its own thread; stopping the thread instead cut a request off
+    // halfway, not before the server had it). If the deleting fails (no
+    // connection), syncing goes on as before, and the error is passed on.
     async deleteSyncedData() {
-      await storage.removeAll();
-      await this.turnOff();
+      refusing = true;
+      try {
+        await current?.catch(() => {});
+        await storage.removeAll();
+        // Still refusing, until sync is off: a sync starting now would
+        // bring the account back too.
+        await this.turnOff();
+      } finally {
+        refusing = false;
+      }
     },
   };
 }

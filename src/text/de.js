@@ -210,6 +210,12 @@ export default {
     '<b>Ein anderer Synchronisierungsserver</b> (gewählt unter „Synchronisierungsserver“) wird von dem betrieben, der ihn betreibt; diese Seite betrifft unseren.',
   'privacy.questions':
     '<b>Fragen oder Anliegen:</b> nutze „Feedback senden“ in den Einstellungen.',
+  'sync.progress.pack': 'Deine Wörter werden zum Senden verpackt…',
+  'sync.progress.upload': 'Deine Wörter werden gesendet ({total} MB)…',
+  'sync.progress.download': 'Deine Wörter werden geladen: {done} von {total} MB',
+  'sync.progress.open': 'Deine Wörter werden geöffnet…',
+  'sync.progress.merge': 'Sie werden mit den Wörtern dieses Geräts zusammengeführt…',
+  'sync.progress.save': 'Speichern: {done} von {total} Einträgen. Lass die App offen, bis es fertig ist.',
   'sync.copy': 'Kopieren',
   'sync.copied': 'Kopiert.',
   'sync.copyFailed': 'Dieser Browser hat das Kopieren nicht erlaubt. Markiere den Code und kopiere ihn von Hand.',

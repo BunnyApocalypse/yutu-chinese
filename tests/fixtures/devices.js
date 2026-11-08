@@ -200,6 +200,9 @@ export function memoryDevice(initial = {}, { before = false } = {}) {
     async getAll(storeName) {
       return data[storeName];
     },
+    async countAll(storeName) {
+      return data[storeName].length;
+    },
     async readSlice(wordIds) {
       return sliceOf(data, wordIds);
     },
@@ -209,8 +212,10 @@ export function memoryDevice(initial = {}, { before = false } = {}) {
     async sendEverything() {
       outbox.set('everything', { key: 'everything', store: null, id: null, token: ++tokens });
     },
-    async saveTakenIn(changes) {
+    async saveTakenIn(changes, onProgress = () => {}) {
       data = saveChanges(data, changes);
+      const total = Object.values(changes.put).reduce((sum, records) => sum + records.length, 0);
+      onProgress(total, total);
     },
   };
 }

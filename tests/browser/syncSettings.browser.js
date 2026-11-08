@@ -174,7 +174,14 @@ describe('sync in Settings', { concurrency: false }, () => {
     await waitUntil(page, `!document.getElementById('scan-dialog').open`, 'the code found', 15000);
     assert.equal(await page.evaluate(`document.getElementById('sync-code-input').value`), code);
     assert.equal(await page.evaluate(`import('/src/db.js').then((db) => db.getSyncValue('code', null))`), null);
-    await page.evaluate(`document.getElementById('sync-join-form').requestSubmit()`);
+    // Joining brings what the server has, so the app starts again with it.
+    await page.evaluate(`window.loadedBefore = true; document.getElementById('sync-join-form').requestSubmit()`);
+    await waitFor(
+      () => page.evaluate(`!window.loadedBefore && !document.querySelector('main').classList.contains('starting')`),
+      'the app to start again',
+    );
+    await page.evaluate(ANSWER_YES);
+    await openSettings(page, 'settings-data');
     await waitUntil(page, `document.getElementById('sync-status').textContent.startsWith('Last synced')`, 'the sync');
     assert.equal(await textOf(page, 'sync-status').then((text) => text.includes('didn')), false);
   });

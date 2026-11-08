@@ -630,13 +630,16 @@ export async function readEverything() {
 // syncBatch.js): records as they came, not stamped again and not put in the
 // outbox (or two devices would send each other's changes back and forth
 // forever). changes: { put: { words: [...], ... }, remove: { words: [ids], ... } }
+// onProgress(saved, total): after each part, counting records put
 //
 // The deletions go first, then the records RECORDS_AT_A_TIME a transaction:
 // a snapshot taken in on a new device is all of a learner's history, too
 // much for one (see replaceEverything). Stopped halfway, the batch is taken
 // in again at the next sync (sync.js notes it as taken in only after), and
 // taking it in twice changes nothing.
-export async function saveTakenIn({ put, remove }) {
+export async function saveTakenIn({ put, remove }, onProgress = () => {}) {
+  const total = Object.values(put).reduce((sum, records) => sum + records.length, 0);
+  let saved = 0;
   const removing = Object.keys(remove);
   if (removing.length > 0) {
     await transaction(removing, 'readwrite', (tx) => {
@@ -655,6 +658,8 @@ export async function saveTakenIn({ put, remove }) {
           tx.objectStore(storeName).put(record);
         }
       });
+      saved += part.length;
+      onProgress(saved, total);
     }
   }
 }

@@ -9,7 +9,7 @@
 import { makeCode, readCode } from './syncCode.js';
 import { readServerAddress, serverAnswers } from './syncServer.js';
 import { closeOnTapBeside } from './dialogs.js';
-import { showCode as fillCode, copyCode, saveCodeFile, printCode, problemText, codeProblemText } from './syncCodeView.js';
+import { showCode as fillCode, copyCode, saveCodeFile, printCode, problemText, codeProblemText, progressText } from './syncCodeView.js';
 import { scanForCode } from './syncScan.js';
 import { ask } from './confirm.js';
 import { t, formatDateTime } from './text.js';
@@ -96,7 +96,7 @@ export async function createSyncPanel(control) {
   function statusLine(status, address) {
     const through = address ? t('sync.through', { host: hostOf(address) }) : '';
     if (status.running) {
-      return `${t('sync.syncing')} ${through}`;
+      return status.progress ? progressText(status.progress) : `${t('sync.syncing')} ${through}`;
     }
     const when =
       status.lastSyncedAt === null ? t('sync.notYet') : t('sync.lastSynced', { when: formatDateTime(new Date(status.lastSyncedAt)) });

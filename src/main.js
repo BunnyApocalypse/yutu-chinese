@@ -102,6 +102,8 @@ let basics = null;
 // Syncing between devices (set up in startUp).
 let syncControl = null;
 let syncPanel = null;
+// The introduction (welcome.js), which shows a join's progress.
+let welcome = null;
 // How long after the last stroke syncing may take changes in (syncTiming.js).
 const WRITING_REST_MS = 4000;
 
@@ -1038,7 +1040,10 @@ async function startUp() {
       await review.load();
       await loadWordList();
     },
-    onStatus: (status) => syncPanel?.show(status),
+    onStatus: (status) => {
+      syncPanel?.show(status);
+      welcome?.showSyncStatus(status);
+    },
   });
   await syncControl.start();
   syncPanel = await createSyncPanel(syncControl);
@@ -1069,7 +1074,7 @@ async function startUp() {
   // A join from the introduction that brought words and settings starts the
   // app again with them (settings are read at start).
   let joinChanged = false;
-  const welcome = createWelcome({
+  welcome = createWelcome({
     settings,
     keepData,
     hasWords: () => wordList.length > 0,

@@ -215,6 +215,12 @@ export default {
     '<b>Another sync server</b> (chosen under “Sync server”) is run by whoever runs it; this page is about ours.',
   'privacy.questions':
     '<b>Questions or requests:</b> use “Send feedback” in Settings.',
+  'sync.progress.pack': 'Packing your words to send…',
+  'sync.progress.upload': 'Sending your words ({total} MB)…',
+  'sync.progress.download': 'Downloading your words: {done} of {total} MB',
+  'sync.progress.open': 'Opening your words…',
+  'sync.progress.merge': 'Combining them with this device’s words…',
+  'sync.progress.save': 'Saving: {done} of {total} records. Keep the app open until it is done.',
   'sync.copy': 'Copy',
   'sync.copied': 'Copied.',
   'sync.copyFailed': 'This browser didn’t allow copying. Select the code and copy it by hand.',

@@ -210,6 +210,12 @@ export default {
     '<b>Un altro server di sincronizzazione</b> (scelto in «Server di sincronizzazione») è gestito da chi lo gestisce; questa pagina riguarda il nostro.',
   'privacy.questions':
     '<b>Domande o richieste:</b> usa «Invia un commento» nelle Impostazioni.',
+  'sync.progress.pack': 'Preparo le tue parole da inviare…',
+  'sync.progress.upload': 'Invio le tue parole ({total} MB)…',
+  'sync.progress.download': 'Scarico le tue parole: {done} di {total} MB',
+  'sync.progress.open': 'Apro le tue parole…',
+  'sync.progress.merge': 'Le unisco alle parole di questo dispositivo…',
+  'sync.progress.save': 'Salvataggio: {done} di {total} elementi. Tieni l\'app aperta finché non ha finito.',
   'sync.copy': 'Copia',
   'sync.copied': 'Copiato.',
   'sync.copyFailed': 'Questo browser non ha permesso di copiare. Seleziona il codice e copialo a mano.',
