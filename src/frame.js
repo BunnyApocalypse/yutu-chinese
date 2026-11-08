@@ -34,7 +34,12 @@ const MIN_STROKES_FOR_SCALE = 2;
 
 // The frame never goes beyond these. A character written smaller, bigger or
 // further off than this is no longer followed.
-const MIN_SCALE = 0.4;
+// The smallest size (the owner, 2026-11-08): a wrong stroke, written for
+// another character, was taken for the right one in a tiny character. The
+// owner writes at 0.6 to 1.1 of the box (their recordings), so 0.55 leaves
+// room for the fit to come out a little small. quiz.js refuses a stroke
+// whose size would have to be smaller still (sizeThatFits).
+export const MIN_SCALE = 0.55;
 const MAX_SCALE = 1.5;
 const MAX_SHIFT = 320; // how far the middle of the character may move
 

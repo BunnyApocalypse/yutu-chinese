@@ -25,6 +25,7 @@ import {
   strokeLeavesRoom,
   combineFrames,
   NO_FRAME,
+  MIN_SCALE,
 } from './frame.js';
 import { toPoints, resample, averageDistance } from './lines.js';
 import { themeColor } from './theme.js';
@@ -796,6 +797,14 @@ export function createQuiz(target, size, handlers) {
       return null;
     }
     const withSize = fitFrame(pairs);
+    // At the smallest size, the fit wanted smaller still (fitFrame stops
+    // there): the stroke is not taken for one in a character that tiny. A
+    // wrong stroke was so (the owner, 2026-11-08); judging it at the
+    // smallest size instead would let more pass, not fewer, since less is
+    // allowed the smaller the character.
+    if (withSize.scale <= MIN_SCALE) {
+      return null;
+    }
     // What fitsStroke allows is measured for a full-size character. In a
     // small one the strokes lie closer together, so less is allowed, or a
     // neighboring stroke of the same shape would pass too.
