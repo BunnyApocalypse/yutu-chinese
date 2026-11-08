@@ -166,6 +166,8 @@ describe('importing a backup', { concurrency: false }, () => {
       [JSON.stringify({ ...backup, version: 99 }), 'format version 99'],
     ]) {
       await chooseFile(page, text);
+      // Chosen just after Cancel closed the panel above: the panel's late
+      // "close" event once stopped this file's worker, and nothing came.
       await waitUntil(page, `document.getElementById('confirm-dialog').open`, 'the message');
       assert.equal(await textOf(page, 'confirm-question'), 'That file could not be used');
       assert.match(await textOf(page, 'confirm-detail'), new RegExp(`${why}.* Nothing was changed\\.$`));
@@ -193,6 +195,8 @@ describe('importing a backup', { concurrency: false }, () => {
       window.loadedBefore = true;
     })()`);
     await tap(page, 'import-combine-button');
+    // While saving, nothing in the panel can be tapped: the ✕ is put away.
+    assert.equal(await page.evaluate(`document.querySelector('#import-dialog .dialog-close').hidden`), true);
     await waitForRestart(page);
     const savedFile = JSON.parse(await page.evaluate(`sessionStorage.getItem('savedFile')`));
     assert.match(savedFile.name, /^yutu-chinese-backup-.*-before-combining\.json$/);

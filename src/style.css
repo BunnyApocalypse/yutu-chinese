@@ -2456,6 +2456,10 @@ button.slot {
   background: transparent;
   color: var(--text);
 }
+/* Put away while what it stands for is turned off (Import backup saving). */
+.dialog-close[hidden] {
+  display: none;
+}
 
 .dialog-close:active {
   background: var(--pressed);

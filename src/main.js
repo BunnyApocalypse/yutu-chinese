@@ -721,6 +721,10 @@ importButton.addEventListener('click', () => importFile.click());
 // reload, which stops it too).
 const importDialog = byId('import-dialog');
 let importWorker = null;
+// The worker the panel was opened with. Its "close" event comes a moment
+// after it closes (docs/pitfalls.md); by then another file may have been
+// chosen, whose worker must not be stopped.
+let panelWorker = null;
 
 // Sends the worker a message and resolves to its answer, or rejects with the
 // error it reports (with `textKey` and `values` for a file that can't be
@@ -804,11 +808,17 @@ importFile.addEventListener('change', async () => {
       : t('backup.combineNothing');
   byId('import-combine-button').disabled = changes.length === 0;
   byId('import-note').textContent = '';
+  panelWorker = importWorker;
   importDialog.showModal();
 });
 
 byId('import-cancel-button').addEventListener('click', () => importDialog.close());
-importDialog.addEventListener('close', stopImportWorker);
+importDialog.addEventListener('close', () => {
+  if (panelWorker === importWorker) {
+    stopImportWorker();
+  }
+  panelWorker = null;
+});
 
 // While the backup is being saved, the panel stays open with its buttons off,
 // and says how far it has got: a big backup takes a while on a slow device.
@@ -819,6 +829,10 @@ function startSaving() {
   for (const id of IMPORT_BUTTONS) {
     byId(id).disabled = true;
   }
+  // The ✕ in the corner stands for Cancel (data-same-as), now turned off:
+  // put away, rather than left looking as if it could be tapped (the owner,
+  // 2026-11-08: it pressed and did nothing).
+  importDialog.querySelector('.dialog-close').hidden = true;
   byId('import-note').textContent = t('import.preparing');
 }
 function showSaving(saved, total) {
