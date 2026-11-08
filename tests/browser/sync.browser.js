@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers } from './harness.js';
+import { startApp, startBrowsers, tap, waitUntil, ANSWER_YES } from './harness.js';
 
 const NOW = Date.now();
 
@@ -178,4 +178,36 @@ describe('syncing in the database', { concurrency: false }, () => {
     assert.deepEqual(batch.reviews.map((review) => review.id).sort(), ['review-1', 'review-2']);
     assert.equal(batch.cards.length, 1);
   });
+
+  // The same through Import backup's panel, whose saving runs on a second
+  // thread (importWorker.js) with its own copy of db.js: the page tells it
+  // whether sync is on. Without that, an import would quietly stop reaching
+  // the other devices.
+  for (const syncOn of [true, false]) {
+    it(`sends everything after Import backup replaces everything${syncOn ? '' : ', only while sync is on'}`, async () => {
+      await inApp(`await db.forgetSync(); db.setOutboxOn(${syncOn});`);
+      assert.deepEqual(await outboxKeys(), []);
+      await page.evaluate(`(async () => {
+        const backup = await (await import('/src/backup.js')).buildBackup();
+        const files = new DataTransfer();
+        files.items.add(new File([JSON.stringify(backup)], 'backup.json', { type: 'application/json' }));
+        const input = document.getElementById('import-file');
+        input.files = files.files;
+        input.dispatchEvent(new Event('change'));
+      })()`);
+      await waitUntil(page, `document.getElementById('import-dialog').open`, 'the import panel', 20000);
+      await page.evaluate(`${ANSWER_YES}; window.loadedBefore = true`);
+      await tap(page, 'import-replace-button');
+      // Saved, then the app loads again by itself.
+      for (let attempt = 0; ; attempt++) {
+        assert.ok(attempt < 200, 'the app did not load again');
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        const loaded = await page.evaluate(`!window.loadedBefore && document.readyState === 'complete'`).catch(() => false);
+        if (loaded) {
+          break;
+        }
+      }
+      assert.deepEqual(await outboxKeys(), syncOn ? ['everything'] : []);
+    });
+  }
 });
