@@ -19,6 +19,7 @@ import {
   isShown,
   waitUntil,
   openLearn,
+  ANSWER_YES,
 } from './harness.js';
 
 const stepIs = (step) => `document.getElementById('card-type').textContent.endsWith('${step}')`;
@@ -633,5 +634,32 @@ describe('learning new words', { concurrency: false }, () => {
       await waitUntil(page, `document.getElementById('status').textContent === 'Tone of 小 (1 of 2)'`, 'the tone card');
       assert.equal(await page.evaluate(linkShown), shown, `after ${reviews} tone reviews`);
     }
+  });
+
+  it('goes on to the next word when the word being learned is removed from its page', { timeout: 60000 }, async () => {
+    // Two new words waiting, and room in today's goal for both.
+    await inDatabase(`
+      [['中', 'zhong1', 'middle'], ['人', 'ren2', 'person']].forEach(([char, pinyin, definition], order) => {
+        stores.words.put({ id: char + '|' + pinyin, traditional: char, simplified: char, pinyin, definition, order: order - 10, addedAt: 1 });
+      });
+      stores.settings.put({ key: 'enabledTypes', value: ['tone', 'writing'] });
+      stores.settings.put({ key: 'newWordsPerDay', value: 20 });
+    `);
+    await reloadApp(page);
+    await openLearn(page);
+    await waitUntil(page, `${stepIs('step 1 of 5')} && document.getElementById('card-face').textContent.startsWith('中')`, 'the first word');
+    const waiting = async () => Number((await textOf(page, 'review-counts')).match(/(\d+) waiting$/)[1]);
+    const waitingBefore = await waiting();
+    // About, then Edit on its page, then Remove in the panel.
+    await page.evaluate(ANSWER_YES);
+    await page.evaluate(`document.getElementById('lesson-about-button').click()`);
+    await waitUntil(page, `document.getElementById('word-page').dataset.shown === '中|zhong1'`, "the word's page");
+    await tap(page, 'word-page-edit');
+    await waitUntil(page, `document.getElementById('word-dialog').open`, "the word's panel");
+    await tap(page, 'remove-word-button');
+    await waitUntil(page, `${stepIs('step 1 of 5')} && document.getElementById('card-face').textContent.startsWith('人')`, 'the next word');
+    assert.equal(await waiting(), waitingBefore - 1);
+    const stored = await inDatabase(`stores.words.get('中|zhong1').onsuccess = (event) => { result.word = event.target.result ?? null; };`);
+    assert.equal(stored.word, null);
   });
 });

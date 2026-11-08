@@ -645,6 +645,36 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     }
   });
 
+  // After the words are read afresh (load): a word removed or renamed while
+  // Review or Learn was open, from a word's page (About, then Edit, then
+  // Remove), is forgotten here too. Its card on screen is left for the next
+  // one, as after "Edit word" above; it leaves today's words in Learn, the
+  // cards to look back at, and a practice round. Without this, Learn went on
+  // teaching a word just removed. While looking back, the gone word's
+  // card being one of those graded or the one set aside, Review goes on to
+  // the next card too, rather than keep track of where it was.
+  function forgetGoneWords() {
+    const present = new Set(words.map((word) => word.id));
+    const pastGone = graded.some((entry) => !present.has(entry.word.id)) || (left && !present.has(left.card.current.word.id));
+    graded = graded.filter((entry) => present.has(entry.word.id));
+    if (round) {
+      const rest = round.cards.slice(round.done).filter((entry) => present.has(entry.word.id));
+      round.cards = [...round.cards.slice(0, round.done), ...rest];
+    }
+    const learnedBefore = batch?.ids.length;
+    if (batch) {
+      batch.ids = batch.ids.filter((id) => present.has(id));
+    }
+    if (!active || !current || current.repeating) {
+      return;
+    }
+    if (!present.has(current.word.id) || (lookingBack !== null && pastGone)) {
+      showNext();
+    } else if (batch && batch.ids.length !== learnedBefore) {
+      showStrip();
+    }
+  }
+
   // A line above the card for something that just happened; '' takes it away.
   function showNotice(text) {
     noticeElement.textContent = text;
@@ -2842,6 +2872,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     // adding a sentence took on a tablet). The records are shared, not
     // copied: nothing changes them in place.
     load(held = null) {
+      // Opening Review or Learn meanwhile shows a card of its own.
+      const activated = activations;
       loading = (async () => {
         // Everything is read first and put in place together, so that nothing
         // sees new words beside old cards.
@@ -2866,6 +2898,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
           cards.set(card.id, card);
         }
         readReviewsIfChanged(); // not waited for
+        if (activated === activations) {
+          forgetGoneWords();
+        }
       })();
       return loading;
     },
