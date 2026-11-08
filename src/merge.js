@@ -38,27 +38,26 @@ import { countedFrom } from './cardManager.js';
 import { t } from './text.js';
 
 // Settings that say something about the device, not about the learner.
-// Syncing leaves them out too (syncBatch.js).
+// Syncing leaves them out too (syncBatch.js). The learner's own choices in
+// Settings (the look, the volume, tips on or off, the deck studied) travel
+// with the rest (the owner, 2026-11-08); the switches under For testing stay
+// with the device they are tried on.
 export const DEVICE_SETTINGS = [
   'welcomeDone',
   'keepDataWanted',
   'cardsFiledByScript',
   'oldBuiltInWordsRemoved',
   'builtInListVersion',
-  'studyDeck',
   'audioOffline',
-  'volume',
   'lastBackupAt',
   'tipsSeen',
   'backupReminderOff',
-  'tipsOn',
   'swipeReadout',
   'recordRawInput',
   'strokeLeniency',
   'testerSettingsShown',
   'storageMessageShown',
   'storageReminderOff',
-  'theme',
   'importUnfinished',
 ];
 

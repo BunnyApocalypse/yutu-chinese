@@ -107,6 +107,8 @@ let syncPanel = null;
 let syncLate = null;
 // The introduction (welcome.js), which shows a join's progress.
 let welcome = null;
+// The tips (tips.js), read again when syncing brings their setting.
+let tips = null;
 // How long after the last stroke syncing may take changes in (syncTiming.js).
 const WRITING_REST_MS = 4000;
 
@@ -1113,6 +1115,10 @@ async function startUp() {
   syncControl = createSyncControl({
     onChanged: async () => {
       await settings.reload();
+      if (tips) {
+        await tips.load();
+        byId('tips-checkbox').checked = tips.on;
+      }
       await review.load();
       await loadWordList();
     },
@@ -1165,9 +1171,6 @@ async function startUp() {
     },
   });
 
-  // A join from the introduction that brought words and settings starts the
-  // app again with them (settings are read at start).
-  let joinChanged = false;
   welcome = createWelcome({
     settings,
     keepData,
@@ -1175,15 +1178,10 @@ async function startUp() {
     sync: {
       available: Boolean(await syncControl.server()),
       control: syncControl,
+      // What came is in effect once the first sync is done (onChanged).
       join: async (code) => {
-        const result = await syncControl.turnOn(code);
-        joinChanged = Boolean(result?.changed);
+        await syncControl.turnOn(code);
         return syncControl.status();
-      },
-      joined: async () => {
-        if (joinChanged) {
-          window.location.reload();
-        }
       },
       turnOn: (code) => syncControl.turnOn(code),
     },
@@ -1230,7 +1228,7 @@ async function startUp() {
   await setUpTesterSettings();
 
 
-  const tips = createTips();
+  tips = createTips();
   await tips.load();
   const tipsCheckbox = byId('tips-checkbox');
   tipsCheckbox.checked = tips.on;

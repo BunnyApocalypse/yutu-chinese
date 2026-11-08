@@ -127,11 +127,12 @@ test('a grade corrected on the other device replaces the first copy here, and th
 test('a batch leaves out the settings that belong to the device', () => {
   const batch = batchOf({
     settings: [
+      { key: 'tipsSeen', value: ['review'], changedAt: START },
       { key: 'theme', value: 'dark', changedAt: START },
       { key: 'newWordsPerDay', value: 10, changedAt: START },
     ],
   });
-  assert.deepEqual(batch.settings.map((setting) => setting.key), ['newWordsPerDay']);
+  assert.deepEqual(batch.settings.map((setting) => setting.key), ['theme', 'newWordsPerDay']);
   assert.equal(batch.device, 'B');
   assert.equal(batch.number, 1);
   assert.ok(!isEmptyBatch(batch));
@@ -158,14 +159,15 @@ test('a whole history taken in on an empty device as it is gives what combining 
   const { wholeAsChanges } = await import('../src/syncBatch.js');
   const { theirs } = twoDevices();
   const mySettings = [
-    { key: 'theme', value: 'dark', changedAt: START },
+    { key: 'tipsSeen', value: ['review'], changedAt: START },
+    { key: 'theme', value: 'auto', changedAt: START + 99 * DAY },
     { key: 'newWordsPerDay', value: 3, changedAt: START + 99 * DAY },
   ];
   const empty = { words: [], cards: [], reviews: [], settings: mySettings, removed: [], decks: [] };
   const changes = wholeAsChanges(theirs, mySettings);
   assert.deepEqual(changes.remove, {});
   assert.deepEqual(sorted(saveChanges(empty, changes)), sorted(mergeBackups(empty, theirs).data));
-  // Neither of the other's settings is taken: the theme belongs to each
-  // device, and this device's new-words setting was saved later.
+  // Neither of the other's settings is taken: this device's look and
+  // new-words setting were saved later.
   assert.equal(changes.put.settings, undefined);
 });

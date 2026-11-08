@@ -294,7 +294,7 @@ test('settings that belong to the device stay as they are on it', () => {
   const mine = device({
     settings: [
       { key: 'welcomeDone', value: true, changedAt: START },
-      { key: 'studyDeck', value: 'chinese', changedAt: START },
+      { key: 'tipsSeen', value: ['review'], changedAt: START },
       { key: 'cardsFiledByScript', value: true, changedAt: START },
       { key: 'script', value: 'traditional', changedAt: START + 2 * DAY },
       { key: 'rawInput', value: true },
@@ -302,7 +302,8 @@ test('settings that belong to the device stay as they are on it', () => {
   });
   const theirs = device({
     settings: [
-      { key: 'studyDeck', value: 'hsk-3.0', changedAt: START + 5 * DAY },
+      { key: 'tipsSeen', value: ['learn'], changedAt: START + 5 * DAY },
+      { key: 'theme', value: 'dark', changedAt: START + 5 * DAY },
       { key: 'keepDataWanted', value: true, changedAt: START + 5 * DAY },
       { key: 'cardsFiledByScript', value: true, changedAt: START + 5 * DAY },
       { key: 'script', value: 'simplified', changedAt: START + DAY },
@@ -314,13 +315,15 @@ test('settings that belong to the device stay as they are on it', () => {
   const value = Object.fromEntries(data.settings.map((setting) => [setting.key, setting.value]));
   assert.deepEqual(value, {
     welcomeDone: true,
-    studyDeck: 'chinese',
+    tipsSeen: ['review'],
     cardsFiledByScript: true,
     script: 'traditional',
     rawInput: false,
     lessons: false,
+    // The learner's own choice of look travels (the owner, 2026-11-08).
+    theme: 'dark',
   });
-  assert.equal(summary.settingsChanged, 2);
+  assert.equal(summary.settingsChanged, 3);
 
   // A backup from before writing cards were filed by script: the note that
   // it was done here is left out, so the app files the cards again.

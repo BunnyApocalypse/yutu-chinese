@@ -289,19 +289,44 @@ describe('sync in the introduction', { concurrency: false }, () => {
     assert.equal((await filesOnServer(folder)).filter((name) => name.startsWith('batch-')).length, 1);
   });
 
-  it('joins from the first screen, skipping the rest and taking the other device\'s settings', async () => {
-    const page = pages[1];
+  it('joins on a screen of its own, says what came, takes the other device\'s settings and still asks to keep the words', async () => {
+    // The first device chooses the dark look, and sends it when put away.
+    const [first, page] = pages;
+    const batches = async () => (await filesOnServer(folder)).filter((name) => name.startsWith('batch-')).length;
+    const before = await batches();
+    await first.evaluate(`import('/src/db.js').then((db) => db.setSetting('theme', 'dark'))`);
+    await first.evaluate(`Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+      document.dispatchEvent(new Event('visibilitychange'))`);
+    await waitFor(async () => (await batches()) > before, 'the look sent');
+
     await tap(page, 'welcome-join-button');
+    // The join screen: no steps, no Next or Skip; Back goes back.
+    assert.ok(await page.evaluate(shown('welcome-join-screen')));
+    assert.equal(await page.evaluate(shown('welcome-next')), false);
+    assert.equal(await page.evaluate(shown('welcome-skip')), false);
+    assert.equal(await page.evaluate(shown('welcome-progress')), false);
+    await tap(page, 'welcome-back');
+    assert.equal(await page.evaluate(shown('welcome-join-screen')), false);
+    assert.ok(await page.evaluate(shown('welcome-next')));
+    await tap(page, 'welcome-join-button');
+
     await type(page, 'welcome-code-input', code);
-    await page.evaluate(`window.loadedBefore = true; document.getElementById('welcome-join-form').requestSubmit()`);
-    // The app starts again with what came (the introduction not again).
-    await waitFor(
-      () => page.evaluate(`!window.loadedBefore && !document.querySelector('main').classList.contains('starting')`),
-      'the app to start again',
-    );
-    assert.equal(await page.evaluate(`document.getElementById('welcome').open`), false);
+    await page.evaluate(`document.getElementById('welcome-join-form').requestSubmit()`);
+    await waitUntil(page, shown('welcome-joined'), 'what came', 20000);
+    assert.match(await textOf(page, 'welcome-joined-details'), /0 words came from your other device\..*settings came along too.*Syncing through 127\.0\.0\.1/s);
+    // The last screen's lines on keeping the words, as synced; no sync choice.
+    assert.equal(await textOf(page, 'welcome-keep-heading'), 'Keep your words on this device');
+    assert.equal(await page.evaluate(shown('welcome-sync')), false);
+    assert.equal(await page.evaluate(shown('welcome-back')), false);
+    // The other device's settings, in effect already: the script and the look.
     const script = await page.evaluate(`import('/src/db.js').then((db) => db.getSetting('script', null))`);
     assert.equal(script, 'traditional');
+    assert.equal(await page.evaluate('document.documentElement.dataset.theme'), 'dark');
+    await tap(page, 'welcome-next');
+    await waitUntil(page, `!document.getElementById('welcome').open`, 'the introduction to close');
+    // Closing kept the look that came, not the one of the screens.
+    assert.equal(await page.evaluate('document.documentElement.dataset.theme'), 'dark');
+    assert.equal(await page.evaluate(`import('/src/db.js').then((db) => db.getSetting('welcomeDone', false))`), true);
   });
 
   it('opened from the link in the QR code, puts the code in the box to confirm, and out of the address', async () => {
@@ -310,8 +335,8 @@ describe('sync in the introduction', { concurrency: false }, () => {
     // the page already open.)
     await page.send('Page.navigate', { url: `${app.url}?link#sync=${code}` });
     await waitFor(
-      () => page.evaluate(`document.getElementById('welcome')?.open && !document.getElementById('welcome-join-form').hidden`),
-      'the code box',
+      () => page.evaluate(`document.getElementById('welcome')?.open && !document.getElementById('welcome-join-screen').hidden`),
+      'the join screen',
     );
     assert.equal(await page.evaluate(`document.getElementById('welcome-code-input').value`), code);
     assert.ok(await page.evaluate(shown('welcome-from-link')));

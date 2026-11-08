@@ -1221,33 +1221,10 @@
                (main.js; the owner, 2026-10-21). -->
           <p><button id="welcome-basics-button" class="link-button" type="button" data-t="welcome.welcomeBasicsButton"></button></p>
           <!-- Syncing with another device (welcome.js; the owner, 2026-11-07):
-               the words and settings come from there, so the rest of the
-               introduction is skipped. Only where there is a sync server. -->
+               opens the join screen below, as the words and settings come
+               from there. Only where there is a sync server. -->
           <div id="welcome-join" hidden>
             <p><button id="welcome-join-button" class="link-button" type="button" data-t-html="welcome.alreadyUsing"></button></p>
-            <form id="welcome-join-form" class="sync-join" hidden>
-              <p id="welcome-from-link" class="hint sync-problem" hidden data-t="sync.fromLink"></p>
-              <label for="welcome-code-input" data-t="sync.codeLabel"></label>
-              <input id="welcome-code-input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" />
-              <button id="welcome-join-submit" class="small" type="submit" data-t="sync.join"></button>
-              <button id="welcome-scan-button" class="small" type="button" data-t="scan.button"></button>
-              <p id="welcome-join-note" class="hint" role="status" hidden></p>
-            </form>
-            <!-- "Self-hosting?": another sync server, before joining
-                 (syncServerChoice.js; the owner, 2026-11-08). Shown with the
-                 code box; a form of its own, as forms can't be inside one
-                 another. -->
-            <details hidden id="welcome-join-server-fold" class="welcome-more">
-              <summary id="welcome-join-server-summary" data-t="sync.selfHosting"></summary>
-              <form id="welcome-join-server-form" class="sync-join">
-                <label for="welcome-join-server-input" data-t="sync.serverLabel"></label>
-                <input id="welcome-join-server-input" type="text" inputmode="url" autocomplete="off" spellcheck="false" />
-                <button id="welcome-join-server-use" class="small" type="submit" data-t="sync.serverUse"></button>
-                <button id="welcome-join-server-usual" class="small" type="button" data-t="sync.serverUsual"></button>
-                <p id="welcome-join-server-note" class="hint" role="status" hidden></p>
-              </form>
-              <p class="hint" data-t-html="sync.serverHint"></p>
-            </details>
           </div>
           <!-- Shown at once as it is chosen; saved with the rest at the end
                (welcome.js). Each choice is a small sample of the look: the
@@ -1325,8 +1302,15 @@
         </section>
 
         <section data-step hidden>
+          <!-- After joining (welcome.js): what came from the other device,
+               above the usual lines on keeping the words. -->
+          <div id="welcome-joined" hidden>
+            <h2 data-t="welcome.joinedHeading"></h2>
+            <ul id="welcome-joined-details"></ul>
+          </div>
           <div id="welcome-keep-general">
-            <h2 data-t="welcome.keepYourWordsSafe"></h2>
+            <!-- The heading and the line below it say so when syncing (welcome.js). -->
+            <h2 id="welcome-keep-heading" data-t="welcome.keepYourWordsSafe"></h2>
             <!-- Not "Allow it to keep them": in most browsers there is nothing to
                  allow, and the line below says what this one needs (the
                  owner, 2026-10-19). -->
@@ -1345,7 +1329,8 @@
             <ol class="welcome-steps">
               <li data-t="welcome.tapShareIfYou"></li>
               <li data-t="welcome.tapAddToHome"></li>
-              <li data-t-html="welcome.openFromYourHome"></li>
+              <!-- With sync, the app there is synced again (welcome.js). -->
+              <li id="welcome-open-home" data-t-html="welcome.openFromYourHome"></li>
             </ol>
           </div>
           <div id="welcome-keep-dock" hidden>
@@ -1354,7 +1339,7 @@
             <ol class="welcome-steps">
               <li data-t="welcome.inTheMenuBar"></li>
               <li data-t="welcome.clickAdd"></li>
-              <li data-t-html="welcome.openFromTheDock"></li>
+              <li id="welcome-open-dock" data-t-html="welcome.openFromTheDock"></li>
             </ol>
           </div>
           <!-- The same for a Chromium browser that hasn't offered its own
@@ -1415,6 +1400,37 @@
               <p class="hint" data-t-html="sync.scanHint"></p>
             </div>
           </fieldset>
+        </section>
+
+        <!-- Joining from another device, a screen of its own, not one of the
+             steps (welcome.js; the owner, 2026-11-08): the words and
+             settings come from there, so nothing else is chosen; once joined,
+             the last screen follows, for keeping the words. -->
+        <section id="welcome-join-screen" hidden>
+          <h2 data-t="welcome.joinHeading"></h2>
+          <p data-t="welcome.joinAbout"></p>
+          <form id="welcome-join-form" class="sync-join">
+            <p id="welcome-from-link" class="hint sync-problem" hidden data-t="sync.fromLink"></p>
+            <label for="welcome-code-input" data-t="sync.codeLabel"></label>
+            <input id="welcome-code-input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" />
+            <button id="welcome-join-submit" class="small" type="submit" data-t="sync.join"></button>
+            <button id="welcome-scan-button" class="small" type="button" data-t="scan.button"></button>
+            <p id="welcome-join-note" class="hint" role="status" hidden></p>
+          </form>
+          <!-- "Self-hosting?": another sync server, before joining
+               (syncServerChoice.js; the owner, 2026-11-08). A form of its
+               own, as forms can't be inside one another. -->
+          <details id="welcome-join-server-fold" class="welcome-more">
+            <summary id="welcome-join-server-summary" data-t="sync.selfHosting"></summary>
+            <form id="welcome-join-server-form" class="sync-join">
+              <label for="welcome-join-server-input" data-t="sync.serverLabel"></label>
+              <input id="welcome-join-server-input" type="text" inputmode="url" autocomplete="off" spellcheck="false" />
+              <button id="welcome-join-server-use" class="small" type="submit" data-t="sync.serverUse"></button>
+              <button id="welcome-join-server-usual" class="small" type="button" data-t="sync.serverUsual"></button>
+              <p id="welcome-join-server-note" class="hint" role="status" hidden></p>
+            </form>
+            <p class="hint" data-t-html="sync.serverHint"></p>
+          </details>
         </section>
 
         <!-- Back and Next, held at the panel's bottom edge while a screen

@@ -17,7 +17,9 @@ describe('the introduction', { concurrency: false }, () => {
   let page;
 
   // The heading of the screen that is showing.
-  const heading = () => page.evaluate(`document.querySelector('#welcome [data-step]:not([hidden]) h2').textContent`);
+  // (The first heading shown: the last screen has one above it while joined.)
+  const heading = () =>
+    page.evaluate(`[...document.querySelectorAll('#welcome [data-step]:not([hidden]) h2')].find((h2) => h2.offsetParent).textContent`);
   const click = (selector) => page.evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);
 
   before(async () => {

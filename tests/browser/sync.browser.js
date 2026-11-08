@@ -68,13 +68,13 @@ describe('syncing in the database', { concurrency: false }, () => {
       await db.putAll('words', [${JSON.stringify(love)}]);
       await db.putAll('words', [{ ...${JSON.stringify(love)}, definition: 'to love' }]);
       await db.saveReview(${JSON.stringify(loveCard)}, ${JSON.stringify(loveReview)});
-      await db.setSetting('theme', 'dark');
+      await db.setSetting('tipsSeen', ['review']);
       await db.putAll('words', [${JSON.stringify(cat)}], { stamp: false });
       await db.removeDecks(['old-deck']);
     `);
-    // The word tidied with { stamp: false } is not sent; the theme is noted,
-    // and left out when the batch is made.
-    assert.deepEqual(await outboxKeys(), ['removed:old-deck', 'reviews:review-1', 'settings:theme', 'words:愛|ai4']);
+    // The word tidied with { stamp: false } is not sent; the tips seen (a
+    // device setting) are noted, and left out when the batch is made.
+    assert.deepEqual(await outboxKeys(), ['removed:old-deck', 'reviews:review-1', 'settings:tipsSeen', 'words:愛|ai4']);
     const batch = await inApp(`
       const { records } = await db.readOutbox();
       return sync.buildBatch({ device: 'A', number: 1, madeAt: 0, records });

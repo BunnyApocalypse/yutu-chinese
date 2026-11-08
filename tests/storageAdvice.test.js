@@ -108,10 +108,14 @@ test('while syncing, Settings and the introduction no longer say to export backu
   for (const changes of [{ canAsk: false }, { asked: true }]) {
     const synced = storageAdvice('firefox', state(changes), false, true, true);
     assert.doesNotMatch(synced, /Export backup/, JSON.stringify(changes));
+    assert.match(synced, /syncing brings them back/, JSON.stringify(changes));
     assert.equal(synced, synced.trim());
     assert.match(storageAdvice('firefox', state(changes), false, true), /Export backup/);
   }
-  assert.equal(welcomeStorage('other', state({ canAsk: false }), false, true).line, '');
+  assert.match(welcomeStorage('other', state({ canAsk: false }), false, true).line, /syncing keeps a copy/);
+  // Safari's app on the Home Screen starts empty: synced again, not a backup.
+  assert.match(storageAdvice('safari', state(), true, true, true), /sync it with your sync code/);
+  assert.match(storageAdvice('safari', state(), true, true), /Export backup/);
   assert.match(welcomeStorage('other', state({ canAsk: false })).line, /Export backup/);
 });
 

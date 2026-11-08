@@ -8,13 +8,15 @@
 //
 // Syncing (the owner, 2026-11-07; docs/sync.md), where there is a sync
 // server: on the first screen, "Already using 玉兔中文 on another device?"
-// joins with a code and skips the rest, since the words and settings come
-// from the other device (choices made here would be newer and win); on the
-// last, "Turn on sync" shows a new code, and the screen's button waits until
+// opens a screen of its own for joining with a code, which skips the
+// choices, since the words and settings come from the other device (choices
+// made here would be newer and win); once joined, it says what came and
+// goes on to the last screen's lines on keeping the words, without the
+// choice to turn sync on (the owner, 2026-11-08). On the last screen, "Turn on sync" shows a new code, and the screen's button waits until
 // it is ticked as saved. Both have "Self-hosting?" folded away, for choosing
 // another sync server (syncServerChoice.js; the owner, 2026-11-08).
 
-import { getSetting, setSetting } from './db.js';
+import { getSetting, setSetting, countAll } from './db.js';
 import { startingLevel } from './decks.js';
 import { welcomeStorage } from './storageAdvice.js';
 import { setTheme } from './theme.js';
@@ -22,7 +24,7 @@ import { t } from './text.js';
 import { makeCode, readCode } from './syncCode.js';
 import { scanForCode } from './syncScan.js';
 import { showCode, copyCode, saveCodeFile, printCode, problemText, codeProblemText, progressText } from './syncCodeView.js';
-import { createServerChoice } from './syncServerChoice.js';
+import { createServerChoice, hostOf } from './syncServerChoice.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -33,13 +35,12 @@ const byId = (id) => document.getElementById(id);
 //           waited for before the introduction closes. `start` is the
 //           ready-made level chosen to begin with, { listId, level },
 //           { anki: true } for a deck to import from Anki, or null for none.
-// sync:     { available, control, join(code), joined(), turnOn(code) }
+// sync:     { available, control, join(code), turnOn(code) }
 //           (syncControl.js, through main.js): whether there is a sync
 //           server; the sync control, for choosing a server; joining with
-//           a code, giving the status after the first sync; what to do once
-//           the introduction has closed after joining (main.js starts the
-//           app again with what came); turning sync on with a new code, once
-//           the introduction is finished
+//           a code, giving the status after the first sync (whose changes,
+//           settings too, are in effect by then); turning sync on with a
+//           new code, once the introduction is finished
 //
 // Returns { open(), openIfFirstTime(), offerJoin(text) }.
 export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) {
@@ -113,12 +114,17 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
 
   // Which screen is showing, counting from 0.
   let step = 0;
+  // 'steps': the screens one at a time; 'join': the screen for joining
+  // another device; 'joined': after joining, the last screen with what came.
+  let mode = 'steps';
   // While finishing: the buttons are off, and nothing redraws the screen.
   let finishing = false;
 
   // ---- Syncing ----
 
   const joinPart = byId('welcome-join');
+  const joinScreen = byId('welcome-join-screen');
+  const joinedPart = byId('welcome-joined');
   const joinForm = byId('welcome-join-form');
   const joinInput = byId('welcome-code-input');
   const joinNote = byId('welcome-join-note');
@@ -152,8 +158,8 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
   let joining = false;
 
   function openJoin() {
-    joinForm.hidden = false;
-    byId('welcome-join-server-fold').hidden = false;
+    mode = 'join';
+    showStep();
     joinInput.focus();
   }
   byId('welcome-join-button').addEventListener('click', openJoin);
@@ -181,7 +187,7 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
     }
     joinNote.textContent = t('welcome.joining');
     joining = true;
-    const controls = [...joinForm.elements, nextButton, skipButton];
+    const controls = [...joinForm.elements, backButton];
     controls.forEach((control) => {
       control.disabled = true;
     });
@@ -196,12 +202,31 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
       joinNote.textContent = problemText(status.problem);
       return;
     }
-    // Saved before anything else, so that the introduction doesn't come back
-    // when the app starts again.
+    // Joined: the words and settings are here and in effect. Saved now, so
+    // that the introduction doesn't come back if the app is closed before
+    // the last screen's button.
     await setSetting('welcomeDone', true);
-    dialog.close();
-    await sync.joined();
+    await showJoined();
   });
+
+  // After joining: what came from the other device, then the last screen's
+  // lines on keeping the words.
+  async function showJoined() {
+    const address = await sync.control.server();
+    const lines = [
+      t('welcome.joinedWords', { count: await countAll('words') }),
+      t('welcome.joinedSettings'),
+      address ? t('sync.through', { host: hostOf(address) }) : '',
+    ].filter(Boolean);
+    byId('welcome-joined-details').replaceChildren(...lines.map((line) => {
+      const item = document.createElement('li');
+      item.textContent = line;
+      return item;
+    }));
+    mode = 'joined';
+    step = steps.length - 1;
+    await showKeepState();
+  }
 
   for (const radio of dialog.querySelectorAll('input[name="welcome-sync"]')) {
     radio.addEventListener('change', async () => {
@@ -260,14 +285,28 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
 
   function showStep() {
     steps.forEach((section, index) => {
-      section.hidden = index !== step;
+      section.hidden = mode === 'join' || index !== step;
     });
+    joinScreen.hidden = mode !== 'join';
+    joinedPart.hidden = mode !== 'joined';
+    syncPart.hidden = !sync.available || mode === 'joined';
+    progress.hidden = mode !== 'steps';
+    nextButton.hidden = mode === 'join';
+    // Joining: the form's own button joins, and Back goes back to the first
+    // screen; nothing is skipped from here.
+    if (mode === 'join') {
+      backButton.hidden = false;
+      skipButton.hidden = true;
+      dialog.scrollTop = 0;
+      showCovering();
+      return;
+    }
     if (steps[step].contains(startRadios[0])) {
       suggestStart();
     }
     const last = step === steps.length - 1;
     progress.textContent = t('welcome.stepOf', { step: step + 1, steps: steps.length });
-    backButton.hidden = step === 0;
+    backButton.hidden = step === 0 || mode === 'joined';
     // On the last screen one button does what this browser needs to keep the
     // words (installing, or asking) and finishes, and "Not now" in place of
     // "Skip" finishes without it: at most three buttons on a screen (a
@@ -290,20 +329,22 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
             ? 'welcome.installAndStart'
             : storagePlan.action === 'ask'
               ? 'welcome.keepAndStart'
-              : startChosen()?.from === 'anki'
-                ? 'welcome.importAnki'
-                : startChosen()?.from === 'skritter'
-                  ? 'welcome.importSkritter'
-                  : startChosen()
-                    ? 'welcome.startLearning'
-                    : hasWords()
-                      ? 'welcome.done'
-                      : 'welcome.addFirstWords',
+              : mode === 'joined'
+                ? 'welcome.startLearning'
+                : startChosen()?.from === 'anki'
+                  ? 'welcome.importAnki'
+                  : startChosen()?.from === 'skritter'
+                    ? 'welcome.importSkritter'
+                    : startChosen()
+                      ? 'welcome.startLearning'
+                      : hasWords()
+                        ? 'welcome.done'
+                        : 'welcome.addFirstWords',
     );
     skipButton.textContent = t(last ? 'welcome.notNow' : 'welcome.skip');
     skipButton.hidden = last && !willAsk;
     // With sync chosen, finishing waits until the code is ticked as saved.
-    const waiting = last && syncChosen() && !savedBox.checked;
+    const waiting = last && mode === 'steps' && syncChosen() && !savedBox.checked;
     nextButton.disabled = waiting;
     skipButton.disabled = waiting;
     // Each screen starts at its top, whatever was scrolled before.
@@ -328,7 +369,16 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
   // welcomeStorage() works it out, and a line about it.
   let storagePlan = { action: 'none', line: '' };
   async function showKeepState() {
-    storagePlan = welcomeStorage(keepData.kind, await keepData.state(), keepData.mobile, syncChosen());
+    const synced = syncChosen() || mode === 'joined';
+    storagePlan = welcomeStorage(keepData.kind, await keepData.state(), keepData.mobile, synced);
+    // With sync, the words are kept on the sync server too, and Safari's app
+    // on the Home Screen or in the Dock, which starts empty, is synced again.
+    byId('welcome-keep-heading').textContent = t(synced ? 'welcome.keepOnThisDevice' : 'welcome.keepYourWordsSafe');
+    byId('welcome-stored').textContent = t(
+      synced ? 'welcome.yourWordsAreSynced' : sync.available ? 'welcome.yourWordsAreStoredSync' : 'welcome.yourWordsAreStored',
+    );
+    byId('welcome-open-home').innerHTML = t(synced ? 'welcome.openFromYourHomeSynced' : 'welcome.openFromYourHome');
+    byId('welcome-open-dock').innerHTML = t(synced ? 'welcome.openFromTheDockSynced' : 'welcome.openFromTheDock');
     keepNote.textContent = storagePlan.line;
     keepNote.hidden = storagePlan.line === '';
     for (const [name, element] of Object.entries(keepTexts)) {
@@ -352,7 +402,11 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
   }
 
   backButton.addEventListener('click', () => {
-    step -= 1;
+    if (mode === 'join') {
+      mode = 'steps';
+    } else {
+      step -= 1;
+    }
     showStep();
   });
 
@@ -383,6 +437,11 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
     }
     if (storageAction !== 'none') {
       keepData.ask().catch(() => {});
+    }
+    // After joining, everything else came from the other device.
+    if (mode === 'joined') {
+      dialog.close();
+      return;
     }
     await applyChoices();
     await setSetting('welcomeDone', true);
@@ -439,15 +498,13 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
     // Where sync is offered, "nothing sent anywhere" and "only in this
     // browser" hold until it is turned on, and the lines say so.
     byId('welcome-promise').textContent = t(sync.available ? 'welcome.learnToReadAndSync' : 'welcome.learnToReadAnd');
-    byId('welcome-stored').textContent = t(sync.available ? 'welcome.yourWordsAreStoredSync' : 'welcome.yourWordsAreStored');
     joinPart.hidden = !sync.available;
-    joinForm.hidden = true;
-    byId('welcome-join-server-fold').hidden = true;
+    mode = 'steps';
+    joinInput.value = '';
     byId('welcome-join-server-fold').open = false;
     byId('welcome-sync-server-fold').open = false;
     joinNote.hidden = true;
     byId('welcome-from-link').hidden = true;
-    syncPart.hidden = !sync.available;
     choose('welcome-sync', '');
     newCode = null;
     codePart.hidden = true;
