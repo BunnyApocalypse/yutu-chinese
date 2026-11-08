@@ -90,4 +90,9 @@ Before merging one:
 
 ## GitHub's own checks
 
-The repository's settings (the owner's; seen 2026-11-08): Dependabot alerts and security updates **on**, secret scanning and push protection **on**, **CodeQL not set up**. CodeQL reads the code for common security mistakes (in the app's JavaScript and the deploy workflow) and shows what it finds under the repository's Security tab; for a public repository it is free. To switch it on: Settings › Code security › Code scanning › CodeQL analysis › Set up › Default.
+The repository's settings (the owner's): Dependabot alerts and security updates, secret scanning and push protection, and **CodeQL** (switched on 2026-11-08, "Default" setup: JavaScript, the workflow, the Python script), which reads the code for common security mistakes on every push to `main` and shows them under the repository's Security tab.
+
+**CodeQL's first findings** (2026-11-08), none a hole:
+
+- **In the tests** (9): the browser tests build a line of JavaScript for the test browser from their own fixed values, quoted with `JSON.stringify`; `tests/text.test.js` searches `index.html` with regular expressions. Nothing from outside reaches either.
+- **In the app** (1): `cleanField` in `src/ankiImport.js` turns an Anki field into text that may contain `<` (from `&lt;`). Safe because of a rule: **text from outside (imported decks and backups, synced data, anything typed) is only ever shown with `textContent` or `fillMixed`, never with `innerHTML`.** The app's `innerHTML` takes only fixed pictures and its own interface texts (`data-t-html`, without values put in). A new finding in `src/` is read before anything else.
