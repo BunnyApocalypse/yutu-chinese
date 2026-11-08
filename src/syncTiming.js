@@ -7,7 +7,9 @@
 //     30 seconds after the last change, and at least every 5 minutes while
 //     changes keep coming; at once when the app is put away (the screen
 //     locked, another app or tab), the last moment a phone surely lets a page
-//     run (the request is sent with keepalive, syncServer.js).
+//     run (the request is sent with keepalive, syncServer.js); and at the
+//     end of a Review or Learn session (the screen after the last card, or
+//     after today's words), when the learner may well pick up another device.
 //   A whole sync (sending and taking in, which may write many records):
 //     when the app starts, when it comes back into view, when the
 //     connection comes back, and again after a failure (1, 5, then 30
@@ -15,12 +17,17 @@
 //     until `isBusy()` has been false for a moment.
 //
 // The browser's events used: visibilitychange (the page shown or put
-// away) and online (the connection back).
+// away) and online (the connection back); and the app's own screen-shown,
+// which review.js sends with 'reviewDone' and 'learned' at those ends.
 
 const SEND_AFTER_MS = 30 * 1000;
 const SEND_AT_LEAST_EVERY_MS = 5 * 60 * 1000;
 const RETRY_AFTER_MS = [60 * 1000, 5 * 60 * 1000, 30 * 60 * 1000];
 const BUSY_CHECK_MS = 2000;
+
+// The end of a session, as review.js announces it with 'screen-shown': the
+// end of Review, and the summary after today's words in Learn.
+const SESSION_ENDS = ['reviewDone', 'learned'];
 
 // Problems worth trying again for: those that may pass by themselves.
 const PASSING = ['offline', 'too-many', 'paused', 'server-error'];
@@ -108,8 +115,14 @@ export function startSyncTiming({ control, isBusy, onOutboxChange }) {
     }
   };
   const onOnline = () => syncWhole();
+  const onScreen = (event) => {
+    if (SESSION_ENDS.includes(event.detail)) {
+      sendNow();
+    }
+  };
   document.addEventListener('visibilitychange', onVisibility);
   window.addEventListener('online', onOnline);
+  document.addEventListener('screen-shown', onScreen);
 
   syncWhole();
 
@@ -120,6 +133,7 @@ export function startSyncTiming({ control, isBusy, onOutboxChange }) {
       onOutboxChange(() => {});
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('online', onOnline);
+      document.removeEventListener('screen-shown', onScreen);
     },
   };
 }

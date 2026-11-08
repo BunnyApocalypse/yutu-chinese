@@ -571,6 +571,22 @@ describe('syncing by itself', { concurrency: false }, () => {
     await waitFor(async () => (await newWordsOn(b)) === '17', 'B to show it');
   });
 
+  it('sends a change at the end of a Review or Learn session, without waiting', async () => {
+    for (const end of ['reviewDone', 'learned']) {
+      const before = await batchesOnServer();
+      await setNewWords(a, end === 'reviewDone' ? 19 : 21);
+      // The setting is saved, and noted in the outbox, a moment later.
+      await waitFor(
+        () => a.evaluate(`import('/src/db.js').then(async (db) => (await db.readOutbox()).entries.length > 0)`),
+        'the change in the outbox',
+      );
+      // As review.js announces the end of Review and of today's words in Learn.
+      await a.evaluate(`document.dispatchEvent(new CustomEvent('screen-shown', { detail: '${end}' }))`);
+      // Well before the 30 seconds after a change.
+      await waitFor(async () => (await batchesOnServer()) > before, `A's change sent at '${end}'`, 10000);
+    }
+  });
+
   it('takes nothing in while a character is being written on that device', async () => {
     const before = await batchesOnServer();
     await setNewWords(a, 23);
