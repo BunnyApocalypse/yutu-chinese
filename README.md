@@ -32,6 +32,49 @@ Everything is stored in your browser on your device (IndexedDB). There is no acc
 
 Use **Export backup** to save everything as one file, and **Import backup** to load such a file on another device. Importing replaces what is on that device.
 
+Syncing between devices is being tested in the test copy (https://bunnyapocalypse.github.io/yutu-chinese/test/). It is optional, and everything is encrypted on the device before it is sent, so the sync server can't read it. You can run your own sync server: see "Running your own sync server" below.
+
+## Running your own sync server
+
+Syncing goes through our server by default, but anyone can run one: for themselves, a household, a club or a school. It is a small program of our own (`server/server.js`): plain Node.js with no dependencies, keeping each learner's encrypted files in a folder of their own. How syncing works, and why the server is built this way: `docs/sync.md`.
+
+### What you need
+
+- **A Linux machine reachable from the internet**, such as a small rented server (a VPS). Two cores and 4 GB of memory are plenty for thousands of learners; ours is an ARM server at Hetzner in Germany, about €7 a month.
+- **A domain name** with A (IPv4) and AAAA (IPv6) records pointing straight at the machine, **not through a proxy** such as Cloudflare's orange cloud: the proxy would see every request's secret, and the server must see learners' own addresses for its limits.
+- An **HTTPS** front: the app only talks to a sync server over HTTPS (except one on the same computer).
+
+### The easy way: our Ansible playbooks (AlmaLinux 10 or Rocky Linux 10)
+
+The playbooks in `deploy/` set up a fresh machine from your own computer over SSH, the same way as ours: key-only SSH logins, a firewall, security updates by themselves, the program as a locked-down service, Caddy for HTTPS with certificates it renews by itself, the log kept at most 14 days, and an optional watch that emails you. In short:
+
+1. Install Ansible on your computer (on Fedora: `sudo dnf install ansible`).
+2. `cd deploy`, then `cp inventory.example.yml inventory.yml`, and fill in the machine's address, your domain name, and the site the app is opened from (`https://bunnyapocalypse.github.io` for ours).
+3. The first run, as root: `ansible-playbook setup.yml -e ansible_user=root`. From then on the playbooks log in as an admin account of their own.
+4. Later: `deploy.yml` after changing the program or a setting, `update.yml` monthly, `status.yml` to see how it is doing.
+
+The full steps, every setting, and the watch: `deploy/README.md`.
+
+### By hand, on any Linux
+
+1. Install **Node.js 22** or newer, and copy `server/server.js` and `server/package.json` to the machine.
+2. Run it as an account of its own with your system's service manager. Ours, for systemd, with the settings that keep the program from touching anything but its own folder, is `deploy/templates/yutu-sync.service.j2`.
+3. Give it its settings in the environment (every one: `server/README.md`). At least `DATA_DIR` (where the files go), `ALLOWED_ORIGINS` (the site the app is opened from, `https://bunnyapocalypse.github.io` for ours) and `TRUST_PROXY=1`. It listens on `127.0.0.1:8787` only.
+4. Put an HTTPS server in front of it, passing requests on to `127.0.0.1:8787` and **replacing** any `X-Forwarded-For` header the learner sent with their real address (Caddy does both by itself; ours is `deploy/templates/Caddyfile.j2`, four lines). Let it accept request bodies of 65 MB.
+5. Check: `https://<your domain>/v1/health` answers `ok`.
+
+### Pointing the app at it
+
+On each device, before turning sync on or joining: Settings › Your data and backups › Sync between devices, unfold "Sync server", enter `https://<your domain>` and choose "Use this server". In the introduction it is under "Self-hosting?". A sync code's link and QR code made on such a device carry the server along, so the other devices join it by themselves.
+
+### What running one means
+
+- **You hold other people's data**, even though it is encrypted. The app's privacy page ("How syncing handles your data") describes our server, not yours: tell your learners who runs yours, where, and how long you keep things. In the EU, the GDPR applies to you as for us.
+- **The log names an address only when it goes over a limit** (lines starting `LIMIT`). Keep the log short (ours: 14 days) and say so.
+- **Keep it updated.** The playbooks do so by themselves; by hand, turn on your system's automatic security updates.
+- **No backups needed:** every device keeps everything and sends it all again if the server loses it. Stopping the server loses nobody's words; syncing just stops.
+- **Limits** keep one person from filling the server or using it as free storage. For a school whose class turns sync on together, give its address more room: `GENEROUS_ADDRESSES` (`server/README.md`).
+
 ## Running it
 
 You need [Node.js](https://nodejs.org/) 20.19 or newer.

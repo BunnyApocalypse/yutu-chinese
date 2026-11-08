@@ -36,13 +36,20 @@ Each ends by checking that `https://<your domain>/v1/health` answers.
 
 Set `healthcheck_url` to a ping URL from [Healthchecks](https://healthchecks.io) (free, and free software you can run yourself). Every 5 minutes the server tells it whether it answers through HTTPS and its disk is under 90% full; Healthchecks emails you when it says no, or when it stops hearing anything (the whole machine down). Put it in `host_vars/<your host's name in the inventory>/private.yml` (as `healthcheck_url: https://hc-ping.com/…`), which git leaves out: anyone with the URL could send false pings. Then run `setup.yml` again. The check asks Caddy on the server itself, so a moment when its name can't be looked up doesn't count as down.
 
-**The limits, on a check of their own:** make a second check in Healthchecks ("Yutu limits", period 5 minutes) and put its ping URL in the same file, as `healthcheck_limits_url: https://hc-ping.com/…`. It goes red, and Healthchecks emails you once, when the server refused something for a limit since the last look, or holds 70% of the most it may (`sync_warn_percent`); green again when a look finds nothing new. Its event log in Healthchecks shows which limits and how often, without addresses.
+**Period and grace time** (Healthchecks waits the period, then the grace time, before saying a check that stopped pinging is down; a ping saying "fail" counts at once, whatever the grace time):
+
+| Check | Period | Grace time | Why |
+|---|---|---|---|
+| The server (`healthcheck_url`) | 5 minutes | 10 minutes | The weekly restart for updates leaves up to about 8 minutes without a ping (the last one before it, the restart, 2 minutes after starting): longer than that, something is wrong. |
+| The limits (`healthcheck_limits_url`) | 5 minutes | 1 hour | Its pings stop when the whole server is down, which the first check already says: the long grace time spares a second email for the same thing. |
+
+**The limits, on a check of their own:** make a second check in Healthchecks ("Yutu limits", as in the table) and put its ping URL in the same file, as `healthcheck_limits_url: https://hc-ping.com/…`. It goes red, and Healthchecks emails you once, when the server refused something for a limit since the last look, or holds 70% of the most it may (`sync_warn_percent`); green again when a look finds nothing new. Its event log in Healthchecks shows which limits and how often, without addresses.
 
 **Looking into a limit hit:** on the server (`ssh -i ~/.ssh/yutu_sync yutu@<server>`):
 
     sudo journalctl -u yutu-sync --grep '^LIMIT ' --since today
 
-Each line says which limit, how many refusals in that minute and, for the limits one address went over, which address (an IPv6 one as its /64 block). The log is kept at most 14 days, as the privacy page promises. A school's address that keeps hitting the limits for new accounts can be given ten times as many: `sync_generous_addresses` in the inventory, then `deploy.yml`.
+Each line says which limit, how many refusals in that minute and, for the limits one address went over, which address (an IPv6 one as its /64 block). The log is kept at most 14 days, as the privacy page promises; on ours it is kept in memory only, so a restart (such as the weekly one after updates) empties it sooner: look before then. A school's address that keeps hitting the limits for new accounts can be given ten times as many: `sync_generous_addresses` in the inventory, then `deploy.yml`.
 
 ## How they were tested
 

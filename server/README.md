@@ -41,4 +41,4 @@ A limit hit is written to the log once a minute, as `LIMIT <limit> refused <coun
 
 ## Running it for others
 
-To be written with the owner when the server is set up (`docs/sync.md`, step 4): a small rented machine with Debian, Caddy in front for HTTPS, `systemd` to keep it running, security updates by themselves.
+"Running your own sync server" in the README at the top of the repository: what you need, our Ansible playbooks (`deploy/`) or setting it up by hand, pointing the app at it, and what running one means.

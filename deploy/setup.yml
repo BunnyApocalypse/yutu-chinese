@@ -216,6 +216,8 @@
       ansible.builtin.command: node --version
       register: node_version
       changed_when: false
+      # Only reads: run in a dry run (--check) too, for the check after it.
+      check_mode: false
 
     - name: Node 22 or later (the server needs it)
       ansible.builtin.assert:
