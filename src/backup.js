@@ -38,39 +38,60 @@ export async function buildBackup() {
   return backup;
 }
 
+// The whole backup as a file's contents (a Blob, a file held in memory).
+export function backupFile(backup) {
+  return new Blob([JSON.stringify(backup)], { type: 'application/json' });
+}
+
+// An Error saying why a file can't be used: its message, and the key and
+// values of that text (`textKey`, `values`), so that the page can say it in
+// the learner's language when the check ran on a second thread
+// (importWorker.js), which doesn't know the language chosen in Settings.
+function unusable(textKey, values = {}) {
+  return Object.assign(new Error(t(textKey, values)), { textKey, values });
+}
+
 // Checks that `data` (already parsed from the file) is a backup this version
-// of the app can read. Throws an Error with a readable message if not.
+// of the app can read. Throws an Error with a readable message if not (see
+// unusable above).
 export function checkBackup(data) {
   if (!data || typeof data !== 'object' || data.format !== FORMAT_NAME) {
-    throw new Error(t('backup.notABackup'));
+    throw unusable('backup.notABackup');
   }
   if (!STORES_IN_VERSION[data.version]) {
-    throw new Error(
-      t('backup.tooNew', { version: data.version, newest: FORMAT_VERSION }),
-    );
+    throw unusable('backup.tooNew', { version: data.version, newest: FORMAT_VERSION });
   }
   for (const storeName of STORES_IN_VERSION[data.version]) {
     const records = data[storeName];
     if (!Array.isArray(records)) {
-      throw new Error(t('backup.storeMissing', { store: storeName }));
+      throw unusable('backup.storeMissing', { store: storeName });
     }
     // Every record needs its key, or the database would refuse it halfway.
     const keyName = storeName === 'settings' ? 'key' : 'id';
     if (records.some((record) => !record || typeof record[keyName] !== 'string')) {
-      throw new Error(t('backup.recordWithoutKey', { store: storeName, key: keyName }));
+      throw unusable('backup.recordWithoutKey', { store: storeName, key: keyName });
     }
   }
 }
 
-// A one-line description of what a backup (or the current database, in the
-// same shape) contains.
-export function describeBackup(data) {
-  const lastReview = data.reviews.reduce((latest, review) => Math.max(latest, review.time), 0);
+// What a backup (or the current database, in the same shape) contains, in
+// counts: { words, cards, reviews, lastReview } (a time, or 0 for none).
+export function backupContents(data) {
+  return {
+    words: data.words.length,
+    cards: data.cards.length,
+    reviews: data.reviews.length,
+    lastReview: data.reviews.reduce((latest, review) => Math.max(latest, review.time), 0),
+  };
+}
+
+// A one-line description of what backupContents gave.
+export function describeBackup({ words, cards, reviews, lastReview }) {
   const when = lastReview ? t('backup.lastReview', { when: formatDateTime(lastReview) }) : t('backup.noReviews');
   return t('backup.contents', {
-    words: t('backup.words', { count: data.words.length }),
-    cards: t('backup.cards', { count: data.cards.length }),
-    reviews: t('backup.reviews', { count: data.reviews.length }),
+    words: t('backup.words', { count: words }),
+    cards: t('backup.cards', { count: cards }),
+    reviews: t('backup.reviews', { count: reviews }),
     when,
   });
 }

@@ -1,7 +1,7 @@
 // Entry point: sets up the page, the three tabs (Review, Free practice and
 // Words), settings and backups.
 
-import { getAll, putAll, getSetting, setSetting, removeWord, removeDecks, renameWord, replaceEverything, IMPORT_UNFINISHED, onOutboxChange } from './db.js';
+import { getAll, putAll, getSetting, setSetting, removeWord, removeDecks, renameWord, isOutboxOn, IMPORT_UNFINISHED, onOutboxChange } from './db.js';
 import { allCardIds } from './session.js';
 import { OLD_BUILT_IN_WORD_IDS } from './oldBuiltInWords.js';
 import { createWordFlow } from './wordFlow.js';
@@ -19,8 +19,8 @@ import { createStorageMessage } from './storageMessage.js';
 import { createWelcome } from './welcome.js';
 import { createBasics } from './basics.js';
 import { createTips } from './tips.js';
-import { buildBackup, checkBackup, describeBackup, restoreBackup } from './backup.js';
-import { mergeBackups, describeMerge } from './merge.js';
+import { backupFile, buildBackup, describeBackup } from './backup.js';
+import { describeMerge } from './merge.js';
 import { ask, tell } from './confirm.js';
 import { isSentence } from './sentences.js';
 import { clampWithPopup } from './clamp.js';
@@ -586,16 +586,15 @@ function onSettingsChange() {
 
 // Saves a backup as a file in the device's Downloads folder.
 //
-// backup: as buildBackup() gives it
+// file: the backup as a Blob (backupFile in backup.js)
 // label:  added to the file's name, to tell one kind of backup from another
 //
 // Returns the file's name.
-function downloadBackup(backup, label = '') {
+function downloadBackup(file, label = '') {
   // A Blob is a file held in memory. Pointing a link at it and "clicking" the
   // link is how a web page saves a file to the device's Downloads folder.
-  const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
   const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
+  link.href = URL.createObjectURL(file);
   // Named with the local date and time, e.g. yutu-chinese-backup-2026-10-12-1704.json
   const now = new Date();
   const twoDigits = (number) => String(number).padStart(2, '0');
@@ -621,7 +620,7 @@ exportButton.addEventListener('click', async () => {
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   let name;
   try {
-    name = downloadBackup(await buildBackup());
+    name = downloadBackup(backupFile(await buildBackup()));
   } finally {
     exportButton.disabled = false;
   }
@@ -716,11 +715,47 @@ byId('backup-reminder-button').addEventListener('click', async () => {
 // The real file chooser is a hidden <input type="file">; the visible button opens it.
 importButton.addEventListener('click', () => importFile.click());
 
-// The backup that was chosen and what is on the device, while the panel that
-// asks what to do with them is open.
+// The import's work is done on a second thread (importWorker.js), which
+// keeps the chosen backup while the panel asks what to do with it. Started
+// when a file is chosen, stopped when the panel closes (saving ends with a
+// reload, which stops it too).
 const importDialog = byId('import-dialog');
-let chosenBackup = null;
-let onDevice = null;
+let importWorker = null;
+
+// Sends the worker a message and resolves to its answer, or rejects with the
+// error it reports (with `textKey` and `values` for a file that can't be
+// used). onProgress(saved, total) hears the progress of saving.
+let lastImportId = 0;
+function askImportWorker(message, onProgress = () => {}) {
+  lastImportId += 1;
+  const id = lastImportId;
+  return new Promise((resolve, reject) => {
+    function hear({ data }) {
+      if (data.type === 'progress') {
+        onProgress(data.saved, data.total);
+        return;
+      }
+      if (data.id !== id) {
+        return;
+      }
+      importWorker.removeEventListener('message', hear);
+      if (data.type === 'failed') {
+        reject(Object.assign(new Error(data.message), { textKey: data.textKey, values: data.values }));
+      } else {
+        resolve(data.result);
+      }
+    }
+    importWorker.addEventListener('message', hear);
+    // The thread itself failing (its code not loading, say).
+    importWorker.addEventListener('error', (event) => reject(new Error(event.message || 'The import worker failed.')), { once: true });
+    importWorker.postMessage({ ...message, id });
+  });
+}
+
+function stopImportWorker() {
+  importWorker?.terminate();
+  importWorker = null;
+}
 
 importFile.addEventListener('change', async () => {
   const file = importFile.files[0];
@@ -730,21 +765,33 @@ importFile.addEventListener('change', async () => {
     return;
   }
 
+  // A big backup takes a while to read: said at once, under the buttons (the
+  // line Export backup uses too), and Import put away until it is read.
+  const reading = byId('export-done');
+  reading.textContent = t('import.reading');
+  reading.hidden = false;
+  importButton.disabled = true;
+  stopImportWorker();
+  importWorker = new Worker(new URL('./importWorker.js', import.meta.url), { type: 'module' });
+  let found = null;
+  let problem = null;
   try {
-    chosenBackup = JSON.parse(await file.text());
-    checkBackup(chosenBackup);
+    found = await askImportWorker({ type: 'open', file });
   } catch (error) {
-    // JSON.parse fails with a technical message; checkBackup with a readable one.
-    const reason = error instanceof SyntaxError ? t('backup.notABackup') : error.message;
-    await tell(t('backup.couldNotUse'), t('backup.nothingChanged', { reason }));
+    stopImportWorker();
+    problem = error.textKey ? t(error.textKey, error.values) : error.message;
+  }
+  reading.hidden = true;
+  importButton.disabled = false;
+  if (problem) {
+    await tell(t('backup.couldNotUse'), t('backup.nothingChanged', { reason: problem }));
     return;
   }
 
-  onDevice = await buildBackup();
-  byId('import-backup-text').textContent = t('backup.inBackup', { contents: describeBackup(chosenBackup) });
-  byId('import-device-text').textContent = t('backup.onDevice', { contents: describeBackup(onDevice) });
+  byId('import-backup-text').textContent = t('backup.inBackup', { contents: describeBackup(found.backup) });
+  byId('import-device-text').textContent = t('backup.onDevice', { contents: describeBackup(found.device) });
   // What combining would do, worked out now so it can be said before choosing.
-  const changes = describeMerge(mergeBackups(onDevice, chosenBackup).summary);
+  const changes = describeMerge(found.summary);
   byId('import-combine-text').textContent =
     changes.length > 0
       ? t('backup.combineWouldBring', { changes: formatList(changes) })
@@ -755,6 +802,7 @@ importFile.addEventListener('change', async () => {
 });
 
 byId('import-cancel-button').addEventListener('click', () => importDialog.close());
+importDialog.addEventListener('close', stopImportWorker);
 
 // While the backup is being saved, the panel stays open with its buttons off,
 // and says how far it has got: a big backup takes a while on a slow device.
@@ -780,11 +828,8 @@ importDialog.addEventListener('cancel', (event) => {
 byId('import-combine-button').addEventListener('click', async () => {
   startSaving();
   // What is on the device is saved as a file first: combining cannot be undone.
-  downloadBackup(onDevice, '-before-combining');
-  // Worked out again from the database as it is now, in case something was
-  // studied in another tab since the panel opened.
-  const { data } = mergeBackups(await buildBackup(), chosenBackup);
-  await replaceEverything(data, showSaving);
+  downloadBackup(await askImportWorker({ type: 'safetyCopy' }), '-before-combining');
+  await askImportWorker({ type: 'combine', outboxOn: isOutboxOn() }, showSaving);
   // Start afresh from the combined data.
   window.location.reload();
 });
@@ -799,7 +844,7 @@ byId('import-replace-button').addEventListener('click', async () => {
     return;
   }
   startSaving();
-  await restoreBackup(chosenBackup, showSaving);
+  await askImportWorker({ type: 'replace', outboxOn: isOutboxOn() }, showSaving);
   // Start afresh from the restored data.
   window.location.reload();
 });

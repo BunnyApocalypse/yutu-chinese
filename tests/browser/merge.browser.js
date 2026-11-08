@@ -23,15 +23,16 @@ const stored = (page, storeName) =>
     };
   })`);
 
-// Hands the app a backup as if its file had been chosen with "Import backup".
-const chooseBackup = (page, backup) =>
+// Hands the app a file with this text as if chosen with "Import backup".
+const chooseFile = (page, text) =>
   page.evaluate(`(() => {
     const files = new DataTransfer();
-    files.items.add(new File([${JSON.stringify(JSON.stringify(backup))}], 'backup.json', { type: 'application/json' }));
+    files.items.add(new File([${JSON.stringify(text)}], 'backup.json', { type: 'application/json' }));
     const input = document.getElementById('import-file');
     input.files = files.files;
     input.dispatchEvent(new Event('change'));
   })()`);
+const chooseBackup = (page, backup) => chooseFile(page, JSON.stringify(backup));
 
 // Waits until the app has loaded again by itself and started.
 async function waitForRestart(page) {
@@ -155,12 +156,44 @@ describe('importing a backup', { concurrency: false }, () => {
     assert.equal((await stored(page, 'words')).length, 1);
   });
 
+  it('says why a file cannot be used, and changes nothing', async () => {
+    // Read and checked on a second thread (importWorker.js); said by the page.
+    for (const [text, why] of [
+      ['{ not json', 'This file is not a backup from this app.'],
+      [JSON.stringify({ ...backup, version: 99 }), 'format version 99'],
+    ]) {
+      await chooseFile(page, text);
+      await waitUntil(page, `document.getElementById('confirm-dialog').open`, 'the message');
+      assert.equal(await textOf(page, 'confirm-question'), 'That file could not be used');
+      assert.match(await textOf(page, 'confirm-detail'), new RegExp(`${why}.* Nothing was changed\\.$`));
+      await tap(page, 'confirm-yes');
+      await waitUntil(page, `!document.getElementById('confirm-dialog').open`, 'the message to close');
+    }
+    assert.equal(await page.evaluate(`document.getElementById('import-dialog').open`), false);
+    assert.equal(await page.evaluate(`document.getElementById('import-button').disabled`), false);
+    assert.equal((await stored(page, 'words')).length, 1);
+  });
+
   it('combines the backup with what is on the device', async () => {
     await chooseBackup(page, backup);
     await waitUntil(page, `document.getElementById('import-dialog').open`, 'the import panel');
-    await page.evaluate('window.loadedBefore = true');
+    // The copy of the device saved first: its name and contents, kept where
+    // the reload doesn't wipe them.
+    await page.evaluate(`(() => {
+      HTMLAnchorElement.prototype.click = function () {
+        const link = this;
+        fetch(link.href).then((answer) => answer.json()).then((saved) => {
+          sessionStorage.setItem('savedFile', JSON.stringify({ name: link.download, words: saved.words.map((word) => word.id) }));
+        });
+      };
+      URL.revokeObjectURL = () => {};
+      window.loadedBefore = true;
+    })()`);
     await tap(page, 'import-combine-button');
     await waitForRestart(page);
+    const savedFile = JSON.parse(await page.evaluate(`sessionStorage.getItem('savedFile')`));
+    assert.match(savedFile.name, /^yutu-chinese-backup-.*-before-combining\.json$/);
+    assert.deepEqual(savedFile.words, ['愛|ai4']);
 
     assert.deepEqual((await stored(page, 'words')).map((word) => word.id).sort(), ['愛|ai4', '貓|mao1']);
     assert.deepEqual((await stored(page, 'cards')).map((card) => card.id), ['貓|mao1#meaning']);

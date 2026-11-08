@@ -472,6 +472,7 @@ export default {
   'import.replace': 'Alles auf diesem Gerät ersetzen',
   'import.explained':
     '<b>Zusammenführen</b> behält, was auf diesem Gerät ist, und fügt hinzu, was die Sicherung hat: zum Lernen auf zwei Geräten. Zuvor wird eine Sicherung dieses Geräts in deinen Downloads gespeichert, falls du zurückwillst.<br /><b>Ersetzen</b> wirft weg, was auf diesem Gerät ist, und setzt die Sicherung an seine Stelle.',
+  'import.reading': 'Sicherung wird gelesen …',
   'import.preparing': 'Sicherung wird vorbereitet …',
   'import.saving': 'Speichern: {saved} von {total} Einträgen. Lass die App offen, bis es fertig ist.',
   'import.unfinishedQuestion': 'Der letzte Import wurde nicht fertig',

@@ -136,6 +136,12 @@ export function setOutboxOn(on) {
   outboxOn = on;
 }
 
+// Whether it is on here (the page tells importWorker.js, whose own copy of
+// this file starts with it off).
+export function isOutboxOn() {
+  return outboxOn;
+}
+
 // Called after a change was noted in the outbox and saved (syncTiming.js
 // sends it a little later).
 let outboxListener = () => {};
