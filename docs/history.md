@@ -4,6 +4,14 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the fifth session of 2026-11-08 (a smallest size for writing; pushed to `main` and the test copy, not `stable`, no "What's new" entry).**
+
+- **Why** (the owner, 2026-11-08): writing a stroke of another character, thinking the character was a different one, the app took it for the right stroke of the asked character written very small.
+- **Built** (`docs/writing.md`, "Following where a character is written"): nothing is taken for a character smaller than 0.55 of the box (`MIN_SCALE` in `src/frame.js`, was 0.4), and a fit that stops at that size is refused, not judged there (`sizeThatFits` in `src/quiz.js`: judging at the clamped size let more wrong strokes through). The first stroke's shortest length 0.35 → 0.45 (`src/strokeMatch.js`). The owner's recordings show them writing at 0.61 to 1.08 of the box; the docs' "about half" was out of date.
+- **Measured** (the model hand, both stroke data sets, leniency 1.8): a wrong stroke 2 after a right first stroke passed in 7,077 pairs of common characters before, 4,925 after; honest writing unchanged from 0.75 of the box up, 9.1% → 10.7% of characters with a right stroke refused at 0.6–0.75. Most wrong strokes that still pass fit at a normal size: a different fix, if it matters.
+- **Tests:** 386 unit tests; browser: the writing grid (354 passed, 21 skipped; its half-size positions became one at 0.65, bottom right; new: "a wrong stroke is not taken for the right one written tiny", 中 asked, 和's level stroke) and practice, review, lesson, gestures, 40 of 40, run before rebasing onto the sync work. A full run was spoiled by other sessions' tests filling the computer and not repeated.
+- **Next:** the owner studies on the test copy: is a small honest character ever refused (a raw input recording if so)? Releasing waits with the sync release.
+
 **Handover from the fourth session of 2026-11-08 (the supply-chain review; committed on `server-hardening`, not pushed).**
 
 - **Built** (the owner, 2026-11-08; `docs/supply-chain.md`): an **SBOM** written with every build and shipped with each copy (`scripts/sbom.js`, `dist/sbom.cdx.json`: the 7 shipped packages from `npm sbom` and the 9 data sources); the deploy's **actions named by commit** and **`npm ci --ignore-scripts`**; **Dependabot** weekly with a 7-day cooldown (`.github/dependabot.yml`); **checksums** for the TOCFL zip and Unicode's radicals file; the Ansible collections at **exact versions**; `status.yml` prints the server's Node, Caddy and AlmaLinux versions. The review itself (who keeps each package, the rule for updates, what to do when one is compromised or abandoned) is in the doc.
