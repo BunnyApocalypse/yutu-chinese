@@ -152,7 +152,7 @@ The owner isn't a developer, so the safety has to come from the design and from 
 
 - **Mistakes cost little by design:** with the files encrypted and no passwords, a bug in the server or storage exposes only scrambled bytes; the server is tiny and has no dependencies.
 - **A test for each claim**, which Claude shows rather than asserts: another account's files are refused; a wrong code can't open a file; a changed file is caught; a too-big file is refused; a request from another site is refused; the stored bytes hold no readable Chinese or pinyin; the sync code is in no backup.
-- **Reviews:** `/security-review` and `/code-review` on the branch; a fresh session asked to break it; GitHub's free checks (Dependabot, secret scanning, CodeQL); before real testers use it, an hour of an experienced person's time on the server and the encryption code.
+- **Reviews:** `/security-review` and `/code-review` on the branch; a fresh session asked to break it; GitHub's free checks (Dependabot, secret scanning, CodeQL; `docs/supply-chain.md`); before real testers use it, an hour of an experienced person's time on the server and the encryption code.
 - **Running it:** two-factor sign-in at the host, GitHub and the domain; the SSH key and any other secret never in the repository; logging in by key only, no passwords; a switch to turn syncing off for everyone at once.
 
 ## What is built

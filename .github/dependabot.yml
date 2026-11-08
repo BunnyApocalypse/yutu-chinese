@@ -1,0 +1,41 @@
+# Dependabot: GitHub's helper that proposes updates as pull requests.
+# Once a week it looks for newer versions of the npm packages
+# (package.json) and of the actions the deploy uses
+# (.github/workflows/deploy.yml), and opens a pull request for them.
+# Nothing is taken without someone merging it; how to check one first is
+# in docs/supply-chain.md. Merging into main publishes the test copy.
+#
+# "cooldown" holds back any release younger than 7 days: a package taken
+# over by an attacker is usually found out and withdrawn within days.
+# Security fixes are proposed separately and right away.
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    # One pull request for all the small updates, so the week's changes are
+    # read and tried together. A new major version gets a pull request of
+    # its own: it may need changes in the app.
+    groups:
+      minor-and-patch:
+        patterns: ['*']
+        update-types: [minor, patch]
+    ignore:
+      # ts-fsrs 6 changes how cards are scheduled: its own to-do on the
+      # roadmap (docs/history.md, "Near-term"), not an update to merge.
+      - dependency-name: ts-fsrs
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ['*']

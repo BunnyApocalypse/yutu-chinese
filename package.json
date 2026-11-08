@@ -10,7 +10,7 @@
     "dev": "vite",
     "prebuild": "node scripts/copy-char-data.js && node scripts/copy-audio.js",
     "build": "vite build",
-    "postbuild": "node scripts/build-offline.js",
+    "postbuild": "node scripts/build-offline.js && node scripts/sbom.js",
     "preview": "vite preview",
     "test": "node --test",
     "pretest:browser": "node scripts/copy-char-data.js && node scripts/copy-audio.js",

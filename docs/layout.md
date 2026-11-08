@@ -70,6 +70,7 @@
 - `src/syncServerChoice.js`: choosing another sync server, folded away in Settings and under "Self-hosting?" in the introduction (`docs/sync.md`).
 - `src/syncLateMessage.js`: the pop-up when syncing has been failing too long, put away for a day by "Not now" (`docs/sync.md`).
 - `src/syncNote.js`: "Synced 2 minutes ago. Sync now" at the foot of the start and end of Review and the end of Learn, while sync is on.
+- `scripts/sbom.js`, `.github/dependabot.yml`: the bill of materials written with every build (`dist/sbom.cdx.json`), and Dependabot's weekly updates (`docs/supply-chain.md`).
 - `deploy/`: Ansible playbooks for the sync server (`setup.yml`, `deploy.yml`, `update.yml`, `status.yml`), their templates and settings (`group_vars/all.yml`), the owner's server (`inventory.yml`) and an example for others; `deploy/README.md`.
 - `server/server.js`: the sync server, plain Node with no dependencies; `server/README.md` (running it, its settings), `server/package.json`.
 - `src/syncCode.js`: the sync code (made, typed in, checked) and the keys and encryption it gives, with WebCrypto (`docs/sync.md`).

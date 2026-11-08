@@ -2,10 +2,13 @@
 # modules. Fedora's `ansible` package has both already; with only
 # `ansible-core`, install them with:
 #   ansible-galaxy collection install -r requirements.yml
+# The versions are exact: the ones the playbooks were tested with (Fedora's
+# packages, 2026-11-08), so a new release isn't taken unread
+# (docs/supply-chain.md).
 collections:
   # firewalld and SELinux switches
   - name: ansible.posix
-    version: ">=1.5.0"
+    version: "2.2.2"
   # the Caddy COPR repository and SELinux file labels
   - name: community.general
-    version: ">=8.0.0"
+    version: "13.4.0"

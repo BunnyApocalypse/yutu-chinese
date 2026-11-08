@@ -57,6 +57,7 @@ Each area's file in `docs/` (index `docs/README.md`) has the names in the code, 
 - Importing from Skritter (the .zip its support sends): `docs/skritter.md`
 - `changedAt`, removal marks, `formerIds`, combining backups: `docs/merging.md`
 - Syncing between devices (being built), the sync server: `docs/sync.md`
+- Dependencies, updates, Dependabot, the SBOM, the deploy's actions: `docs/supply-chain.md`
 - The word page, sentences, sound: `docs/word-page.md`
 - Writing a character (raw input, shortcuts, the frame, stroke orders, gestures): `docs/writing.md`
 - **Before touching the study area, `src/quiz.js`, `src/wordFlow.js`, Hanzi Writer, or anything that changes heights on the review screen: `docs/pitfalls.md`**

@@ -29,6 +29,7 @@
 
 import fs from 'node:fs';
 import zlib from 'node:zlib';
+import crypto from 'node:crypto';
 
 import { tidyPinyin, splitCsvLine } from '../src/words.js';
 import { readDictionary, lookUp } from '../src/dictionary.js';
@@ -47,6 +48,12 @@ const FOLDER = 'data/wordlists/hsk';
 // TOCFL (2023): the word list of Taiwan's Test of Chinese as a Foreign
 // Language, as published by the test's steering committee.
 const TOCFL_SOURCE = 'https://tocfl.edu.tw/assets/files/vocabulary/8000zhuyin_202307.zip';
+// The file's SHA-256 checksum, downloaded 2026-11-04. The address carries no
+// version that could not be swapped, so the file is checked against this: a
+// different file stops the script (docs/supply-chain.md). If the committee
+// publishes a corrected file on purpose, look at what changed, then put the
+// new checksum here.
+const TOCFL_SHA256 = '58230c93b9f0193411548365e19260c3245c15cf5779198528f4a7eefb6595b9';
 const TOCFL_FOLDER = 'data/wordlists/tocfl';
 
 // The file at `address`, from local/word-list-sources/ if it was fetched
@@ -517,6 +524,9 @@ const TOCFL_LEVELS = ['Novice 1', 'Novice 2', 'Level 1', 'Level 2', 'Level 3', '
 // The committee's server is slow (the 10 MB file can take minutes), which
 // is why the file is kept after the first run (see downloadBytes).
 const tocflZip = await downloadBytes(TOCFL_SOURCE);
+if (crypto.createHash('sha256').update(tocflZip).digest('hex') !== TOCFL_SHA256) {
+  throw new Error(`${TOCFL_SOURCE} is not the file it was (its checksum differs): see TOCFL_SHA256.`);
+}
 const tocflSheets = sheetsOf(filesInZip(tocflZip).find((file) => file.name.endsWith('.xlsx')).read());
 const tocfl = [];
 const tocflLeftOut = [];

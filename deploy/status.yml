@@ -1,4 +1,5 @@
-# How the server is doing, changing nothing: the program, Caddy, the disk,
+# How the server is doing, changing nothing: the program, Caddy and their
+# versions (what the server is made of: docs/supply-chain.md), the disk,
 # how many accounts there are and what they hold, updates waiting, the
 # limits hit today, and the program's last log lines (which name no
 # account, file or address: the addresses in LIMIT lines are left out).
@@ -13,6 +14,7 @@
       ansible.builtin.shell: |
         set -o pipefail
         echo "Program: $(systemctl is-active yutu-sync)   Caddy: $(systemctl is-active caddy)"
+        echo "Versions: Node $(node --version), Caddy $(caddy version | cut -d' ' -f1), $(rpm -q --qf '%{NAME} %{VERSION}' almalinux-release)"
         echo "Disk: $(df -h --output=used,size,pcent {{ sync_data_dir }} | tail -1)"
         echo "Accounts: $(find {{ sync_data_dir }} -mindepth 1 -maxdepth 1 -type d | wc -l), holding $(du -sh {{ sync_data_dir }} | cut -f1)"
         echo "Updates waiting: $(dnf -q check-update | grep -c '^[a-zA-Z0-9]' || true)"

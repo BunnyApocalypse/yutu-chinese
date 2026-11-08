@@ -34,8 +34,12 @@
 //     if that is a word (手 besides 扌). An uncommon one brings its main form.
 
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 
 const UNICODE_SOURCE = 'https://www.unicode.org/Public/16.0.0/ucd/CJKRadicals.txt';
+// The file's SHA-256 checksum (2026-11-08): a different file stops the
+// script (docs/supply-chain.md).
+const UNICODE_SHA256 = '4a96507f4644bbbb11b423edb436e05cee84dadd57413e7571b5af67321474f1';
 const SOURCES = 'local/word-list-sources';
 const FOLDER = 'data/wordlists/radicals';
 const COMMON_MIN = 10;
@@ -77,8 +81,12 @@ async function unicodeRadicals() {
   // "120'; 2EB0; 7E9F" (a primed number: the simplified form).
   const main = new Map();
   const simplified = new Map();
+  const text = fs.readFileSync(kept, 'utf8');
+  if (crypto.createHash('sha256').update(text).digest('hex') !== UNICODE_SHA256) {
+    throw new Error(`${kept} is not the file it was (its checksum differs): see UNICODE_SHA256.`);
+  }
   const numberOf = new Map(Object.entries(VARIANTS));
-  for (const line of fs.readFileSync(kept, 'utf8').split('\n')) {
+  for (const line of text.split('\n')) {
     const found = line.match(/^(\d+)('*); [0-9A-F]*; ([0-9A-F]+)/);
     if (!found) {
       continue;
