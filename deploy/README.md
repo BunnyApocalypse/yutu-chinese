@@ -30,7 +30,7 @@ Each ends by checking that `https://<your domain>/v1/health` answers.
 2. **A name for it:** A and AAAA records pointing at those addresses. **Not through a proxy** such as Cloudflare's orange cloud ("DNS only"): Caddy gets its own certificate, the server must see learners' addresses for its limits, and a proxy would see every request's secret.
 3. **Your inventory:** `cp inventory.example.yml inventory.yml` and fill it in: the address, the name, and the site your copy of the app is served from (`sync_allowed_origins`). Every other setting is in `group_vars/all.yml`, with what it does; set any of them in your inventory to change it.
 4. **The first run, as root:** `ansible-playbook setup.yml -e ansible_user=root`. From then on root can't log in; the playbooks log in as the admin account (`yutu`, with the same key) by themselves.
-5. **Your app** needs to know the address: build it with `VITE_SYNC_SERVER=https://<your domain>` (`vite.config.js`).
+5. **Your app:** in 玉兔中文, Settings › Your data and backups › Sync between devices, unfold "Sync server" and enter `https://<your domain>` (on each device, before turning sync on or joining). The app checks that your server answers it first; for that, `sync_allowed_origins` must name the site your app is opened from. Or, for a copy of the app of your own, build it with `VITE_SYNC_SERVER=https://<your domain>` (`vite.config.js`) to make it the usual server.
 
 ## A watch on the server (optional)
 
