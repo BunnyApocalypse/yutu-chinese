@@ -1409,28 +1409,53 @@
         <section id="welcome-join-screen" hidden>
           <h2 data-t="welcome.joinHeading"></h2>
           <p data-t="welcome.joinAbout"></p>
-          <form id="welcome-join-form" class="sync-join">
-            <p id="welcome-from-link" class="hint sync-problem" hidden data-t="sync.fromLink"></p>
-            <label for="welcome-code-input" data-t="sync.codeLabel"></label>
-            <input id="welcome-code-input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" />
-            <button id="welcome-join-submit" class="small" type="submit" data-t="sync.join"></button>
-            <button id="welcome-scan-button" class="small" type="button" data-t="scan.button"></button>
-            <p id="welcome-join-note" class="hint" role="status" hidden></p>
-          </form>
-          <!-- "Self-hosting?": another sync server, before joining
-               (syncServerChoice.js; the owner, 2026-11-08). A form of its
-               own, as forms can't be inside one another. -->
-          <details id="welcome-join-server-fold" class="welcome-more">
-            <summary id="welcome-join-server-summary" data-t="sync.selfHosting"></summary>
-            <form id="welcome-join-server-form" class="sync-join">
-              <label for="welcome-join-server-input" data-t="sync.serverLabel"></label>
-              <input id="welcome-join-server-input" type="text" inputmode="url" autocomplete="off" spellcheck="false" />
-              <button id="welcome-join-server-use" class="small" type="submit" data-t="sync.serverUse"></button>
-              <button id="welcome-join-server-usual" class="small" type="button" data-t="sync.serverUsual"></button>
-              <p id="welcome-join-server-note" class="hint" role="status" hidden></p>
+          <!-- In Safari outside the Home Screen or the Dock (the owner,
+               2026-11-08): the app put there keeps its words apart from
+               Safari's, so it is added first and synced there; joining in
+               Safari itself only behind "Sync in Safari anyway" (welcome.js). -->
+          <div id="welcome-join-safari" hidden>
+            <div id="welcome-join-home-screen">
+              <p data-t-html="welcome.joinSafariPhone"></p>
+              <ol class="welcome-steps">
+                <li data-t="welcome.tapShareIfYou"></li>
+                <li data-t="welcome.tapAddToHome"></li>
+                <li data-t-html="welcome.joinOpenFromHome"></li>
+              </ol>
+            </div>
+            <div id="welcome-join-dock">
+              <p data-t-html="welcome.joinSafariMac"></p>
+              <ol class="welcome-steps">
+                <li data-t="welcome.inTheMenuBar"></li>
+                <li data-t="welcome.clickAdd"></li>
+                <li data-t-html="welcome.joinOpenFromDock"></li>
+              </ol>
+            </div>
+            <p><button id="welcome-join-anyway" class="link-button" type="button" data-t="welcome.joinInSafariAnyway"></button></p>
+          </div>
+          <div id="welcome-join-parts">
+            <form id="welcome-join-form" class="sync-join">
+              <p id="welcome-from-link" class="hint sync-problem" hidden data-t="sync.fromLink"></p>
+              <label for="welcome-code-input" data-t="sync.codeLabel"></label>
+              <input id="welcome-code-input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" />
+              <button id="welcome-join-submit" class="small" type="submit" data-t="sync.join"></button>
+              <button id="welcome-scan-button" class="small" type="button" data-t="scan.button"></button>
+              <p id="welcome-join-note" class="hint" role="status" hidden></p>
             </form>
-            <p class="hint" data-t-html="sync.serverHint"></p>
-          </details>
+            <!-- "Self-hosting?": another sync server, before joining
+                 (syncServerChoice.js; the owner, 2026-11-08). A form of its
+                 own, as forms can't be inside one another. -->
+            <details id="welcome-join-server-fold" class="welcome-more">
+              <summary id="welcome-join-server-summary" data-t="sync.selfHosting"></summary>
+              <form id="welcome-join-server-form" class="sync-join">
+                <label for="welcome-join-server-input" data-t="sync.serverLabel"></label>
+                <input id="welcome-join-server-input" type="text" inputmode="url" autocomplete="off" spellcheck="false" />
+                <button id="welcome-join-server-use" class="small" type="submit" data-t="sync.serverUse"></button>
+                <button id="welcome-join-server-usual" class="small" type="button" data-t="sync.serverUsual"></button>
+                <p id="welcome-join-server-note" class="hint" role="status" hidden></p>
+              </form>
+              <p class="hint" data-t-html="sync.serverHint"></p>
+            </details>
+          </div>
         </section>
 
         <!-- Back and Next, held at the panel's bottom edge while a screen

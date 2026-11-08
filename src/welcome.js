@@ -157,12 +157,31 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
   // Whether a join is under way, with its progress shown (showSyncStatus).
   let joining = false;
 
-  function openJoin() {
+  // In Safari outside the Home Screen or the Dock (storagePlan.addTo), the
+  // app put there keeps its words apart from Safari's, so the screen says to
+  // add it and sync there, and the code box waits behind "Sync in Safari
+  // anyway" (the owner, 2026-11-08). A code from a link shows it at once.
+  function openJoin({ fromLink = false } = {}) {
     mode = 'join';
+    const inSafari = storagePlan.addTo === 'homeScreen' || storagePlan.addTo === 'dock';
+    byId('welcome-join-safari').hidden = !inSafari;
+    byId('welcome-join-home-screen').hidden = storagePlan.addTo !== 'homeScreen';
+    byId('welcome-join-dock').hidden = storagePlan.addTo !== 'dock';
+    showJoinParts(!inSafari || fromLink);
     showStep();
-    joinInput.focus();
+    if (!inSafari || fromLink) {
+      joinInput.focus();
+    }
   }
-  byId('welcome-join-button').addEventListener('click', openJoin);
+  function showJoinParts(shown) {
+    byId('welcome-join-parts').hidden = !shown;
+    byId('welcome-join-anyway').hidden = shown;
+  }
+  byId('welcome-join-button').addEventListener('click', () => openJoin());
+  byId('welcome-join-anyway').addEventListener('click', () => {
+    showJoinParts(true);
+    joinInput.focus();
+  });
 
   // A code scanned goes in the box; joining is still a tap on the button.
   byId('welcome-scan-button').addEventListener('click', async () => {
@@ -545,7 +564,7 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
       if (server) {
         joinServer.useFromLink(server);
       }
-      openJoin();
+      openJoin({ fromLink: true });
     },
   };
 }

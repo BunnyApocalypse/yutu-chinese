@@ -363,6 +363,30 @@ describe('sync in the introduction', { concurrency: false }, () => {
     assert.match(await textOf(page, 'welcome-join-server-note'), /will use 127\.0\.0\.1/);
     assert.equal(await page.evaluate(`import('/src/db.js').then((db) => db.getSyncValue('code', null))`), null);
   });
+
+  it('in an iPhone\'s Safari, says to add the app to the Home Screen and sync there, the code box behind "anyway"', async () => {
+    const page = pages[2];
+    await page.send('Emulation.setUserAgentOverride', {
+      userAgent:
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+    });
+    await page.send('Page.reload', {});
+    // The introduction again, with this browser's plan for keeping the words.
+    await waitFor(
+      () => page.evaluate(`document.getElementById('welcome')?.open && !document.getElementById('welcome-keep-home-screen').hidden`),
+      'the introduction in Safari',
+    );
+    await tap(page, 'welcome-join-button');
+    assert.ok(await page.evaluate(shown('welcome-join-safari')));
+    assert.ok(await page.evaluate(shown('welcome-join-home-screen')));
+    assert.equal(await page.evaluate(shown('welcome-join-dock')), false);
+    assert.match(await textOf(page, 'welcome-join-safari'), /add it to your Home Screen first, and sync there/);
+    assert.equal(await page.evaluate(shown('welcome-join-parts')), false);
+    await tap(page, 'welcome-join-anyway');
+    assert.ok(await page.evaluate(shown('welcome-join-parts')));
+    assert.equal(await page.evaluate(shown('welcome-join-anyway')), false);
+    await page.send('Emulation.setUserAgentOverride', { userAgent: '' });
+  });
 });
 
 // While syncing: no reminder to export a backup, and a red dot instead
