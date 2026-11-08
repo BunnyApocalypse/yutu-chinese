@@ -274,6 +274,18 @@ describe('the Decks tab', { concurrency: false }, () => {
     await type(page, 'list-text', '');
   });
 
+  it('points out a new word written like one already there, read differently', async () => {
+    await useAddForm(page, 'add-list-fold');
+    // 企鵝 was added above as qi4e2; 孔雀 is not there under any reading.
+    await type(page, 'list-text', '企鹅\t企鵝\tqi3e2\tpenguin\n孔雀\t孔雀\tkong3que4\tpeacock\n');
+    await tap(page, 'check-list-button');
+    assert.match(
+      await textOf(page, 'list-report'),
+      /Of the new words, 1 has the same characters as a word you already have, with another reading: 企鵝\./,
+    );
+    await type(page, 'list-text', '');
+  });
+
   it('adds a ready-made list by level', { timeout: 60000 }, async () => {
     const before = await wordCount(page);
     await tap(page, 'ready-decks-button');

@@ -5,7 +5,7 @@
 import { putAll } from './db.js';
 import { wordId } from './wordList.js';
 import { withDeck } from './decks.js';
-import { readWordList, newWordRecords, wordsWithSameCharacters, scriptFor } from './words.js';
+import { readWordList, newWordRecords, scriptFor } from './words.js';
 import { proposeMeaning } from './dictionary.js';
 import { t, formatList } from './text.js';
 
@@ -88,8 +88,15 @@ export function createListForm(shared, dictionaryLoader) {
       listReport.textContent = t('addList.nothingYet');
       return;
     }
-    // New words written like a word already in the list, but read differently.
-    const sameCharacters = toAdd.filter((word) => wordsWithSameCharacters(word, shared.words()).length > 0);
+    // New words written like a word already in the list, but read differently
+    // (as wordsWithSameCharacters in words.js says it). Looked up in two sets
+    // made once: going through every word for each new one took 7 s of a
+    // tablet's time for a list of 10,000 (2026-11-08).
+    const traditionalForms = new Set(shared.words().map((word) => word.traditional));
+    const simplifiedForms = new Set(shared.words().map((word) => word.simplified));
+    const sameCharacters = toAdd.filter(
+      (word) => traditionalForms.has(word.traditional) || simplifiedForms.has(word.simplified),
+    );
     listReport.textContent =
       t('addList.checked', {
         new: t('addList.newWords', { count: toAdd.length }),
