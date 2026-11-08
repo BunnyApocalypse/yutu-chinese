@@ -4,6 +4,13 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the sixth session of 2026-11-08 (choosing a deck in Review; pushed to `main` and the test copy, not `stable`, no "What's new" entry).**
+
+- **Why** (the owner, 2026-11-08): choosing another deck during Review put a card of it straight up, and now and then another card showed for a moment before the real one.
+- **Built:** choosing a deck in Review starts it afresh as opening Review does: "How many cards" when there are more than 20 and that screen is on, and practice of the deck before ends (`choose` in the deck chooser, `src/review.js`; `docs/cards.md`). **The flash was a real bug:** two cards coming up close together each loaded their stroke data, and whichever came last won, so the card could ask for one word while the writing area quizzed another's character (reproduced with the data held back). `wordFlow.start` and `quiz.showCharacter` now let the latest call win (`docs/pitfalls.md`, Hanzi Writer). What set off the second card on the owner's devices is not known for sure; a sync arriving meanwhile is likely, now that the deck studied travels with sync and `settings.reload` refreshes the card.
+- **Tests:** 386 unit tests; new in `review.browser.js`: "asks again how many cards on choosing another deck, and writes the word asked after two quick choices" (fails without the fix). A full run before rebasing: all passed but `syncSettings`'s "after Not now…" (passed alone, 21 of 21; other sessions' tests were running). After rebasing onto the sync and stroke-size work: review, practice, lesson, decks, repeat lesson, sync, startup, 65 of 65.
+- **Next:** the owner switches decks on the tablet: no more card flashing first?
+
 **Handover from the fifth session of 2026-11-08 (a smallest size for writing; pushed to `main` and the test copy, not `stable`, no "What's new" entry).**
 
 - **Why** (the owner, 2026-11-08): writing a stroke of another character, thinking the character was a different one, the app took it for the right stroke of the asked character written very small.
