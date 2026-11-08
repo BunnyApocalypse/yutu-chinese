@@ -429,8 +429,11 @@ describe('reminders while syncing', { concurrency: false }, () => {
     await waitUntil(page, `document.getElementById('sync-late-dialog').open`, 'the pop-up', 15000);
     await tap(page, 'sync-late-later');
     await waitUntil(page, `!document.getElementById('sync-late-dialog').open`, 'it to close');
-    const until = await page.evaluate(`import('/src/db.js').then((db) => db.getSyncValue('lateSnoozedUntil', 0))`);
-    assert.ok(until > Date.now() + 23 * 60 * 60 * 1000);
+    // (Saved just after it closes.)
+    await waitFor(
+      () => page.evaluate(`import('/src/db.js').then((db) => db.getSyncValue('lateSnoozedUntil', 0)).then((until) => until > Date.now() + 23 * 60 * 60 * 1000)`),
+      'put away until tomorrow',
+    );
     await reloadApp(page);
     await page.evaluate(ANSWER_YES);
     await waitUntil(page, dot, 'the dot', 15000);
