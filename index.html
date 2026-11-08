@@ -967,6 +967,17 @@
         <button data-same-as="confirm-no" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 
+      <!-- Syncing failing too long (syncLateMessage.js): since when and why. -->
+      <dialog id="sync-late-dialog" class="settings-panel">
+        <h2 data-t="syncLate.title"></h2>
+        <p id="sync-late-detail"></p>
+        <div class="buttons">
+          <button id="sync-late-open" class="small primary" type="button" data-t="syncLate.open"></button>
+          <button id="sync-late-later" class="small" type="button" data-t="syncLate.notNow"></button>
+        </div>
+        <button data-same-as="sync-late-later" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
+      </dialog>
+
       <!-- Choosing a deck: the one studied in Review and Learn, and every
            other deck chosen (deckChooser.js, which gives the heading). -->
       <dialog id="deck-choice-dialog" class="settings-panel deck-choice-dialog">

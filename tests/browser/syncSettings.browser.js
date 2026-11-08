@@ -413,8 +413,29 @@ describe('reminders while syncing', { concurrency: false }, () => {
     assert.equal(await page.evaluate(`document.getElementById('sync-late-line').hidden`), false);
     assert.equal(await page.evaluate(`document.getElementById('backup-due-line').hidden`), true);
     assert.match(await page.evaluate(`document.getElementById('menu-button').title`), /syncing isn’t working/);
-    await openSettings(page, 'settings-data');
+    // And a pop-up, saying since when and why; "Open sync settings" goes there.
+    await waitUntil(page, `document.getElementById('sync-late-dialog').open`, 'the pop-up');
+    assert.match(await textOf(page, 'sync-late-detail'), /^Nothing has synced since .*paused on the server/);
+    await tap(page, 'sync-late-open');
+    await waitUntil(page, shown('sync-setting'), 'the sync settings');
+    assert.equal(await page.evaluate(`document.getElementById('sync-late-dialog').open`), false);
     assert.match(await textOf(page, 'sync-status'), /^Syncing hasn’t worked since/);
+  });
+
+  it('after "Not now", the pop-up waits until the next day; the dot stays', async () => {
+    await page.evaluate(`import('/src/db.js').then((db) => db.setSyncValue('lateSnoozedUntil', 0))`);
+    await reloadApp(page);
+    await page.evaluate(ANSWER_YES);
+    await waitUntil(page, `document.getElementById('sync-late-dialog').open`, 'the pop-up', 15000);
+    await tap(page, 'sync-late-later');
+    await waitUntil(page, `!document.getElementById('sync-late-dialog').open`, 'it to close');
+    const until = await page.evaluate(`import('/src/db.js').then((db) => db.getSyncValue('lateSnoozedUntil', 0))`);
+    assert.ok(until > Date.now() + 23 * 60 * 60 * 1000);
+    await reloadApp(page);
+    await page.evaluate(ANSWER_YES);
+    await waitUntil(page, dot, 'the dot', 15000);
+    await waitUntil(page, `document.getElementById('sync-status').textContent.includes('paused')`, 'the failed sync', 15000);
+    assert.equal(await page.evaluate(`document.getElementById('sync-late-dialog').open`), false);
   });
 });
 

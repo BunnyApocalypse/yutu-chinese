@@ -238,7 +238,12 @@ export default {
   'sync.syncing': 'Syncing…',
   'sync.notYet': 'Not synced yet.',
   'sync.lastSynced': 'Last synced {when}.',
-  'sync.late': 'Syncing hasn’t worked since {when}: what you’ve done here since then is only on this device for now.',
+  'sync.late': 'Syncing hasn’t worked since {when}: what you’ve done here since then is only on this device.',
+  // The pop-up when syncing has been failing too long (syncLateMessage.js)
+  'syncLate.title': 'Syncing isn’t working',
+  'syncLate.detail': 'Nothing has synced since {when}, so what you’ve done here since then is only on this device.',
+  'syncLate.open': 'Open sync settings',
+  'syncLate.notNow': 'Not now',
   'sync.problem.offline': 'The sync server couldn’t be reached. Your changes are kept and go with the next sync.',
   'sync.problem.refused': 'The sync server didn’t accept this device. Turn sync off and on again with your code.',
   'sync.problem.cannotOpen': 'Some synced changes couldn’t be opened with this code, and were left out.',
@@ -424,7 +429,7 @@ export default {
   'menu.feedback': 'Send feedback',
   'menu.settings': 'Settings',
   'menu.backupDue': 'Time to save a backup of your words, in Settings.',
-  'menu.syncLate': 'Syncing hasn’t worked for a few days. See Settings.',
+  'menu.syncLate': 'Syncing isn’t working. See Settings.',
   // The screen's name in the top bar, beside the menu's own names
   'place.lesson': 'Repeating a lesson',
   'place.practice': 'Free practice',

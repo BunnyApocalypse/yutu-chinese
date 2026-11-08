@@ -234,6 +234,11 @@ export default {
   'sync.notYet': 'Noch nicht synchronisiert.',
   'sync.lastSynced': 'Zuletzt synchronisiert: {when}.',
   'sync.late': 'Die Synchronisierung klappt seit {when} nicht: Was du seitdem hier gemacht hast, ist vorerst nur auf diesem Gerät.',
+  // The pop-up when syncing has been failing too long (syncLateMessage.js)
+  'syncLate.title': 'Die Synchronisierung klappt nicht',
+  'syncLate.detail': 'Seit {when} wurde nichts synchronisiert, daher ist, was du seitdem hier gemacht hast, nur auf diesem Gerät.',
+  'syncLate.open': 'Synchronisierung öffnen',
+  'syncLate.notNow': 'Nicht jetzt',
   'sync.problem.offline': 'Der Synchronisierungsserver war nicht erreichbar. Deine Änderungen bleiben erhalten und gehen mit der nächsten Synchronisierung mit.',
   'sync.problem.refused': 'Der Synchronisierungsserver hat dieses Gerät nicht angenommen. Schalte die Synchronisierung mit deinem Code aus und wieder ein.',
   'sync.problem.cannotOpen': 'Einige synchronisierte Änderungen ließen sich mit diesem Code nicht öffnen und wurden ausgelassen.',
@@ -419,7 +424,7 @@ export default {
   'menu.feedback': 'Feedback senden',
   'menu.settings': 'Einstellungen',
   'menu.backupDue': 'Zeit, eine Sicherung deiner Wörter zu speichern, in den Einstellungen.',
-  'menu.syncLate': 'Die Synchronisierung klappt seit ein paar Tagen nicht. Siehe Einstellungen.',
+  'menu.syncLate': 'Die Synchronisierung klappt nicht. Siehe Einstellungen.',
   // The screen's name in the top bar, beside the menu's own names
   'place.lesson': 'Lektion wiederholen',
   'place.practice': 'Freies Üben',

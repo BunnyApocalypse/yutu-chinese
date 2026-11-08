@@ -233,7 +233,12 @@ export default {
   'sync.syncing': 'Sincronizzazione…',
   'sync.notYet': 'Non ancora sincronizzato.',
   'sync.lastSynced': 'Ultima sincronizzazione: {when}.',
-  'sync.late': 'La sincronizzazione non funziona dal {when}: quello che hai fatto qui da allora per ora è solo su questo dispositivo.',
+  'sync.late': 'La sincronizzazione non funziona dal {when}: quello che hai fatto qui da allora è solo su questo dispositivo.',
+  // The pop-up when syncing has been failing too long (syncLateMessage.js)
+  'syncLate.title': 'La sincronizzazione non funziona',
+  'syncLate.detail': 'Niente è stato sincronizzato dal {when}, quindi quello che hai fatto qui da allora è solo su questo dispositivo.',
+  'syncLate.open': 'Apri le impostazioni di sincronizzazione',
+  'syncLate.notNow': 'Non ora',
   'sync.problem.offline': 'Non è stato possibile raggiungere il server di sincronizzazione. Le tue modifiche sono conservate e partono con la prossima sincronizzazione.',
   'sync.problem.refused': 'Il server di sincronizzazione non ha accettato questo dispositivo. Disattiva e riattiva la sincronizzazione con il tuo codice.',
   'sync.problem.cannotOpen': 'Alcune modifiche sincronizzate non si sono potute aprire con questo codice e sono state tralasciate.',
@@ -419,7 +424,7 @@ export default {
   'menu.feedback': 'Invia un commento',
   'menu.settings': 'Impostazioni',
   'menu.backupDue': 'È ora di salvare un backup delle tue parole, nelle Impostazioni.',
-  'menu.syncLate': 'La sincronizzazione non funziona da qualche giorno. Vedi le Impostazioni.',
+  'menu.syncLate': 'La sincronizzazione non funziona. Vedi le Impostazioni.',
   // The screen's name in the top bar, beside the menu's own names
   'place.lesson': 'Ripetizione di una lezione',
   'place.practice': 'Esercizio libero',

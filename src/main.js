@@ -43,6 +43,7 @@ import { createSyncControl } from './syncControl.js';
 import { createSyncPanel } from './syncPanel.js';
 import { takeCodeFromLink } from './syncCodeView.js';
 import { startSyncTiming, syncIsLate } from './syncTiming.js';
+import { createSyncLateMessage } from './syncLateMessage.js';
 import { applyText, t, formatList, formatNumber } from './text.js';
 
 // The page's own text, in the learner's language (src/text.js), before
@@ -102,6 +103,8 @@ let basics = null;
 // Syncing between devices (set up in startUp).
 let syncControl = null;
 let syncPanel = null;
+// The pop-up when syncing fails too long, made once the app has started.
+let syncLate = null;
 // The introduction (welcome.js), which shows a join's progress.
 let welcome = null;
 // How long after the last stroke syncing may take changes in (syncTiming.js).
@@ -1121,6 +1124,7 @@ async function startUp() {
       keepData.setSynced(status.on);
       if (!status.running) {
         showBackupStatus();
+        syncLate?.check(status);
       }
     },
   });
@@ -1144,10 +1148,21 @@ async function startUp() {
       }
     }, { capture: true });
   }
+  const isWriting = () => writingNow || Date.now() - lastStrokeAt < WRITING_REST_MS;
   startSyncTiming({
     control: syncControl,
-    isBusy: () => writingNow || Date.now() - lastStrokeAt < WRITING_REST_MS,
+    isBusy: isWriting,
     onOutboxChange,
+  });
+  // The pop-up when syncing has been failing too long (syncLateMessage.js),
+  // looked at with each sync status once the app has started (below).
+  const syncLateMessage = createSyncLateMessage({
+    isBusy: isWriting,
+    openSyncSettings: () => {
+      byId('settings-button').click();
+      document.querySelector('#settings-nav [data-group="settings-data"]').click();
+      byId('sync-setting').scrollIntoView({ block: 'start' });
+    },
   });
 
   // A join from the introduction that brought words and settings starts the
@@ -1298,6 +1313,10 @@ async function startUp() {
   // What changed since the app was last opened here. Before the screen is
   // shown, so that its tip waits for this to be closed (tips.js).
   whatsNew.openIfNew(firstUse);
+  // Syncing failing too long: from now on, after What's new, which it
+  // doesn't go over.
+  syncLate = syncLateMessage;
+  syncLate.check(syncControl.status());
 
   // Review, unless another tab was tapped in the meantime.
   await setMode(mode);
