@@ -4,6 +4,14 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the second session of 2026-11-08 (a word removed while it is being learned; committed on the branch `fix-learn-remove`, not merged into `main`, not pushed, no "What's new" entry).**
+
+- **The owner found** that removing a word during its lesson in Learn (About, then Edit on its page, then Remove) left the lesson going on with it. Review had the same gap by that path (only its "Edit word" button moved on), and a grade there could have saved a card for a word that no longer exists.
+- **Fixed:** `forgetGoneWords` at the end of `load()` in `src/review.js` moves on from a card whose word is gone (removed, renamed, or removed by a sync) and drops the word from today's words, the cards to look back at and a practice round (`docs/cards.md`, under "From a card in Review").
+- **Tests:** a new step at the end of `lesson.browser.js` (fails without the fix, still on the removed word). 374 unit tests and all 260 browser tests pass. The writing grid failed twice in the full run, 薦 in MOE order at small and half size, top left; 薦 alone passed 20 of 20 both with and without the fix, so a flake under load: watch for it.
+- **Not done:** Learn's summary of today's words still lists a word removed from it until it is shown again.
+- **Next:** the owner tries it; merge `fix-learn-remove` into `main` when they say so (it branches from `7486aa7`). It goes to `stable` with the rest of `main` (see the handover below).
+
 **Handover from the session of 2026-11-08 (Import backup on a second thread, "A list of words" redesigned; pushed to `main` and the test copy, not `stable`, no "What's new" entry).**
 
 - **Measured first** (the owner's backup, the whole browser at about a sixth of this computer's speed): Import backup held the page up for up to 8 s choosing the file on an empty device, 14 s on one with data, and 11 s in Combine. Saving in larger parts than 2,000 a transaction was measured too and gains nothing worth having (`docs/sync.md`, "Speed").
