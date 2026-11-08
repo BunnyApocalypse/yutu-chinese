@@ -2991,5 +2991,16 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       showDeckChoice(); // the deck studied may have been chosen elsewhere
       return showNext();
     },
+
+    // After a sync brought changes in and load() has read them (main.js):
+    // the counts and "How many cards?" are worked out again, if no card is
+    // up. A card on screen stays, as the learner may be writing it
+    // (docs/sync.md, "Never in the way"); the counts are put away behind it,
+    // and the next card is chosen from the synced cards anyway.
+    showSynced() {
+      if (active && mode === 'review' && !round && current === null && lookingBack === null) {
+        return showNext();
+      }
+    },
   };
 }

@@ -1125,6 +1125,7 @@ async function startUp() {
       }
       await loadStreakShown();
       await review.load();
+      await review.showSynced();
       await loadWordList();
     },
     onStatus: (status) => {

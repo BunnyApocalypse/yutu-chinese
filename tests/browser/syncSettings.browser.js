@@ -8,6 +8,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -636,5 +637,140 @@ describe('syncing by itself', { concurrency: false }, () => {
     // The finger lifts; a few seconds later the change comes.
     await b.evaluate(`window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, isPrimary: true }))`);
     await waitFor(async () => (await newWordsOn(b)) === '23', 'B to take it in after the stroke');
+  });
+});
+
+// Review on screen while a sync brings cards due (the owner, 2026-11-08: the
+// phone said "2443 cards to review" after Sync now on that screen, and the
+// right number only after a reload). review.showSynced() works the counts
+// out again when no card is up.
+describe('Review after a sync', { concurrency: false }, () => {
+  let app;
+  let browsers;
+  let server;
+  let folder;
+  let a;
+  let b;
+
+  const DAY = 24 * 60 * 60 * 1000;
+  // 35 of the test words, learned long ago, with a meaning card each: A has
+  // 30 from the start, and the other 5 come later.
+  const words = readFileSync('tests/words.tsv', 'utf8')
+    .split('\n')
+    .filter((line) => line.trim() !== '')
+    .slice(0, 35)
+    .map((line, order) => {
+      const [simplified, traditional, pinyin, definition] = line.split('\t');
+      return { id: `${traditional}|${pinyin}`, traditional, simplified, pinyin, definition, order };
+    });
+  const card = (word, dueIn) => {
+    const now = Date.now();
+    return {
+      id: `${word.id}#meaning`,
+      wordId: word.id,
+      type: 'meaning',
+      due: now + dueIn,
+      firstReviewedAt: now - 100 * DAY,
+      lastReviewedAt: now - 10 * DAY,
+      fsrsState: {
+        due: new Date(now + dueIn).toISOString(),
+        stability: 10,
+        difficulty: 5,
+        elapsed_days: 10,
+        scheduled_days: 10,
+        learning_steps: 0,
+        reps: 5,
+        lapses: 0,
+        state: 2,
+        last_review: new Date(now - 10 * DAY).toISOString(),
+      },
+    };
+  };
+  // Puts these words on A, each with its card due a day ago and the review
+  // that made it (cards are worked out from the reviews when they are taken
+  // in on another device: docs/merging.md).
+  const learnOnA = (some) =>
+    a.evaluate(`import('/src/db.js').then(async (db) => {
+      await db.putAll('words', ${JSON.stringify(some)});
+      await db.putAll('cards', ${JSON.stringify(some.map((word) => card(word, -DAY)))});
+      await db.putAll('reviews', ${JSON.stringify(
+        some.map((word, index) => ({
+          id: `review-${index}-${word.order}`,
+          cardId: `${word.id}#meaning`,
+          wordId: word.id,
+          type: 'meaning',
+          time: Date.now() - 10 * DAY,
+          grade: 3,
+          script: 'traditional',
+        })),
+      )});
+    })`);
+  const startCount = () => b.evaluate(`Number(document.getElementById('review-start-count').textContent.match(/\\d+/)?.[0] ?? 0)`);
+
+  before(async () => {
+    app = await startApp();
+    folder = await fs.mkdtemp(path.join(os.tmpdir(), 'yutu-sync-review-'));
+    server = await createSyncServer({ dataDir: folder, log: false, allowedOrigins: [new URL(app.url).origin] });
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    browsers = await startBrowsers(app.url, 2);
+    await browsers.use((first) => browsers.use((second) => {
+      a = first;
+      b = second;
+    }));
+    for (const page of [a, b]) {
+      await page.evaluate(`import('/src/db.js').then((db) => db.setSyncValue('server', 'http://127.0.0.1:${server.address().port}'))`);
+    }
+    await learnOnA(words.slice(0, 30));
+    await reloadApp(a);
+    // A turns sync on, B joins with A's code.
+    await openSettings(a, 'settings-data');
+    await tap(a, 'sync-on-button');
+    await waitUntil(a, shown('sync-code-step'), 'the code');
+    const code = await textOf(a, 'sync-code');
+    await tap(a, 'sync-saved-button');
+    await waitUntil(a, `document.getElementById('sync-status').textContent.startsWith('Last synced')`, 'the first sync');
+    await openSettings(b, 'settings-data');
+    await tap(b, 'sync-join-button');
+    await type(b, 'sync-code-input', code);
+    await b.evaluate(`window.loadedBefore = true; document.getElementById('sync-join-form').requestSubmit()`);
+    await waitFor(() => b.evaluate(`!window.loadedBefore && !document.querySelector('main').classList.contains('starting')`), 'B to start again');
+  });
+
+  after(async () => {
+    const errors = browsers?.errors() ?? [];
+    browsers?.close();
+    await app?.close();
+    await new Promise((resolve) => server?.close(resolve));
+    await fs.rm(folder, { recursive: true, force: true });
+    assert.deepEqual(errors, [], 'the page threw errors');
+  });
+
+  it('counts the cards again on the start of Review after Sync now there', async () => {
+    // Review asks how many cards first (the harness turns that off).
+    await b.evaluate(`(() => {
+      const box = document.getElementById('review-start-checkbox');
+      box.checked = true;
+      box.dispatchEvent(new Event('change', { bubbles: true }));
+    })()`);
+    await waitFor(
+      () => b.evaluate(`import('/src/db.js').then(async (db) => (await db.getAll('settings')).some((s) => s.key === 'reviewStart' && s.value === true))`),
+      'the setting saved',
+    );
+    await reloadApp(b);
+    await b.evaluate(ANSWER_YES);
+    // The due cards, and the words' other kinds of card, new.
+    await waitUntil(b, `!document.getElementById('review-start').hidden`, 'B asking how many', 15000);
+    const asked = await startCount();
+    assert.ok(asked >= 30, `${asked} cards`);
+    // A learns five more words, and syncs.
+    await learnOnA(words.slice(30));
+    await tap(a, 'sync-now-button');
+    await waitFor(() => a.evaluate(`import('/src/db.js').then(async (db) => (await db.getAll('outbox')).length === 0)`), 'A to send them');
+    // B taps Sync now under the question, and stays on it: the question
+    // counts them.
+    await waitUntil(b, `!document.querySelector('#review-start .sync-note button').disabled`, 'B\'s Sync now');
+    await b.evaluate(`document.querySelector('#review-start .sync-note button').click()`);
+    await waitFor(async () => (await startCount()) > asked, 'B to count the five words', 15000);
+    assert.ok(await b.evaluate(`!document.getElementById('review-start').hidden`));
   });
 });
