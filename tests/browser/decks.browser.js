@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, type, textOf, isShown, waitUntil, openLearn, useAddForm, studyDeck } from './harness.js';
+import { startApp, startBrowsers, tap, type, textOf, isShown, waitUntil, openLearn, useAddForm, studyDeck, pasteList } from './harness.js';
 
 const rows = (count) => `document.querySelectorAll('#word-list li').length === ${count}`;
 const deckRows = (count) => `document.querySelectorAll('#deck-list li').length === ${count}`;
@@ -189,13 +189,11 @@ describe('decks', { concurrency: false }, () => {
     assert.equal(await page.evaluate(`document.getElementById('deck-path-row').hidden`), true);
     await addDeck('Animals');
     await openDeck('Animals');
-    await useAddForm(page, 'add-list-fold');
-    await type(page, 'list-text', '鸟\t鳥\tniao3\tbird\n狗\t狗\tgou3\tdog\n');
-    await tap(page, 'check-list-button');
-    await waitUntil(page, `!document.getElementById('add-list-button').hidden`, 'the list to be checked');
+    await pasteList(page, '鸟\t鳥\tniao3\tbird\n狗\t狗\tgou3\tdog\n');
     await tap(page, 'add-list-button');
     await waitUntil(page, rows(2));
-    assert.match(await textOf(page, 'list-report'), /Added 1 word\..*1 word you already had went into this deck/);
+    assert.equal(await textOf(page, 'list-done-text'), '1 word added to Animals. They wait in Learn.');
+    assert.equal(await textOf(page, 'list-done-detail'), '1 word you already had went into this deck.');
     assert.deepEqual(await decksOf('狗'), [await idOf('Chapter 1'), await idOf('Animals')]);
   });
 

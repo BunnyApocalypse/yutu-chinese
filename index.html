@@ -399,18 +399,57 @@
             </form>
             </section>
 
+            <!-- A list of words (addListForm.js): a file chosen, or a list
+                 pasted, is read at once; what was found is shown with the
+                 first words, then added with one button (the owner,
+                 2026-11-08, from mockups: "Check list" wasn't seen as the
+                 next step, and a file had no business in a text box). -->
             <section id="add-list-fold" class="add-form" hidden>
-              <!-- Which columns a list has; worded by wordsPanel.js to suit the settings. -->
-              <p id="list-hint" class="hint"></p>
-              <textarea id="list-text" rows="6" data-t-aria-label="decks.wordList" spellcheck="false"></textarea>
-              <div class="buttons">
-                <button id="list-file-button" class="small" type="button" data-t="decks.listFileButton"></button>
-                <input id="list-file" type="file" accept=".tsv,.csv,.txt,text/plain,text/csv,text/tab-separated-values" hidden />
-                <button id="check-list-button" class="small" type="button" data-t="decks.checkListButton"></button>
-                <button id="add-list-button" class="small primary" type="button" hidden data-t="decks.addListButton"></button>
+              <div id="list-start">
+                <p class="hint" data-t="addList.lead"></p>
+                <div class="buttons">
+                  <button id="list-file-button" class="primary" type="button" data-t="decks.listFileButton"></button>
+                </div>
+                <p class="list-or"><button id="list-paste-button" class="link-button" type="button" data-t="addList.orPaste"></button></p>
               </div>
-              <p id="list-report" role="status" class="note"></p>
-              <ul id="list-problems" class="list-problems"></ul>
+              <input id="list-file" type="file" accept=".tsv,.csv,.txt,text/plain,text/csv,text/tab-separated-values" hidden />
+              <div id="list-paste" hidden>
+                <p class="hint" data-t="addList.lead"></p>
+                <textarea id="list-text" rows="6" data-t-placeholder="addList.pasteHere" data-t-aria-label="decks.wordList" spellcheck="false"></textarea>
+                <p class="hint" data-t="addList.readWhenStopped"></p>
+                <p class="list-or"><button id="list-file-instead" class="link-button" type="button" data-t="addList.fileInstead"></button></p>
+              </div>
+              <p id="list-file-line" class="list-file-line" hidden>
+                <span aria-hidden="true">📄</span><b id="list-file-name"></b>
+                <button id="list-another-file" class="link-button" type="button" data-t="addList.anotherFile"></button>
+              </p>
+              <div id="list-found" hidden>
+                <p id="list-report" role="status" class="list-summary"></p>
+                <p id="list-notes" class="hint" hidden></p>
+                <details id="list-problems-fold" class="list-problems-fold" hidden>
+                  <summary id="list-problems-title"></summary>
+                  <ul id="list-problems" class="list-problems"></ul>
+                </details>
+                <ul id="list-preview" class="list-preview"></ul>
+                <p id="list-more" class="hint" hidden></p>
+                <div class="buttons">
+                  <button id="add-list-button" class="primary" type="button" hidden></button>
+                </div>
+              </div>
+              <div id="list-done" hidden>
+                <p id="list-done-text" role="status" class="list-summary"></p>
+                <p id="list-done-detail" class="hint" hidden></p>
+                <div class="buttons">
+                  <button id="list-again-button" type="button" data-t="addList.another"></button>
+                </div>
+              </div>
+              <details id="list-format" class="list-format">
+                <summary data-t="addList.formatTitle"></summary>
+                <p class="hint" data-t="addList.formatFiles"></p>
+                <pre id="list-examples" class="list-examples"></pre>
+                <!-- Which columns a list has; worded by addListForm.js to suit the settings. -->
+                <p id="list-hint" class="hint"></p>
+              </details>
             </section>
 
             <!-- A sentence to study (sentences.js). Which boxes show follows the Script setting (wordsPanel.js). -->

@@ -501,14 +501,21 @@ export async function addTestWords(page) {
   const list = fs.readFileSync('tests/words.tsv', 'utf8');
   const count = list.split('\n').filter((line) => line.trim() !== '').length;
   await openDeckPage(page);
-  await useAddForm(page, 'add-list-fold');
-  await type(page, 'list-text', list);
-  await tap(page, 'check-list-button');
-  await waitUntil(page, `!document.getElementById('add-list-button').hidden`, 'the list to be checked');
+  await pasteList(page, list);
   await tap(page, 'add-list-button');
   await waitUntil(page, `document.getElementById('word-count').textContent === '${count}'`, 'the test words');
   await tap(page, 'practice-button');
   await waitInPage(page, `(${STATUS}).startsWith('1/') && ${NOT_BUSY}`, 5000);
+}
+
+// Pastes `text` into "A list of words" (opening its box with "Or paste a
+// list") and waits until the app has read it: once typing pauses, the list
+// is read by itself (addListForm.js).
+export async function pasteList(page, text) {
+  await useAddForm(page, 'add-list-fold');
+  await tap(page, 'list-paste-button');
+  await type(page, 'list-text', text);
+  await waitUntil(page, `document.getElementById('list-found').dataset.state === 'read'`, 'the list to be read', 30000);
 }
 
 // For page.evaluate: from then on, the app's question before something that

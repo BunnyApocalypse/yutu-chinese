@@ -13,6 +13,7 @@ import {
   startApp,
   startBrowsers,
   startWriting,
+  pasteList,
   writingArea,
   drawStroke,
   loadStrokeData,
@@ -187,13 +188,10 @@ describe('settings', { concurrency: false }, () => {
     await page.evaluate(`document.getElementById('add-word-form').requestSubmit()`);
     await waitUntil(page, `document.getElementById('add-word-note').textContent.startsWith('Added 头发.')`);
 
-    await useAddForm(page, 'add-list-fold');
-    await type(page, 'list-text', '企鹅\tqi4e2\tpenguin\n孔雀,kong3que4,peacock\n');
-    await tap(page, 'check-list-button');
-    await waitUntil(page, `document.getElementById('list-report').textContent !== ''`, 'the list report');
-    assert.equal(await textOf(page, 'list-report'), "2 new words, 0 you already have, 0 lines that can't be read.");
+    await pasteList(page, '企鹅\tqi4e2\tpenguin\n孔雀,kong3que4,peacock\n');
+    assert.equal(await textOf(page, 'list-report'), '2 words: 2 new, 0 already yours.');
     await tap(page, 'add-list-button');
-    await waitUntil(page, `document.getElementById('list-report').textContent === 'Added 2 words. They wait in Learn.'`);
+    await waitUntil(page, `document.getElementById('list-done-text').textContent === '2 words added to Chinese 中文. They wait in Learn.'`);
 
     // With both scripts learned, both are shown: the traditional forms were stored.
     await choose(page, 'script-select', 'both-traditional');
@@ -205,18 +203,17 @@ describe('settings', { concurrency: false }, () => {
     assert.equal(await isShown(page, 'add-traditional'), true);
     assert.equal(await page.evaluate(`document.getElementById('add-traditional').placeholder`), 'Traditional 繁體, pinyin or English');
     await useAddForm(page, 'add-list-fold');
+    // The format help is at the start, after the list added above.
+    await tap(page, 'list-again-button');
     assert.match(await textOf(page, 'list-hint'), /simplified, traditional, pinyin/);
   });
 
   it('fills in what a list leaves out from the dictionary', async () => {
     // Characters alone; characters and a meaning; characters and pinyin with tone marks.
-    await useAddForm(page, 'add-list-fold');
-    await type(page, 'list-text', '  熊貓  \n大象, a big elephant\n老虎\tlǎohǔ\n');
-    await tap(page, 'check-list-button');
-    await waitUntil(page, `document.getElementById('list-report').textContent !== ''`, 'the list report');
-    assert.equal(await textOf(page, 'list-report'), "3 new words, 0 you already have, 0 lines that can't be read.");
+    await pasteList(page, '  熊貓  \n大象, a big elephant\n老虎\tlǎohǔ\n');
+    assert.equal(await textOf(page, 'list-report'), '3 words: 3 new, 0 already yours.');
     await tap(page, 'add-list-button');
-    await waitUntil(page, `document.getElementById('list-report').textContent === 'Added 3 words. They wait in Learn.'`);
+    await waitUntil(page, `document.getElementById('list-done-text').textContent === '3 words added to Chinese 中文. They wait in Learn.'`);
     const stored = await page.evaluate(`new Promise((resolve) => {
       indexedDB.open('hanzi-trainer').onsuccess = (event) => {
         event.target.result.transaction('words').objectStore('words').getAll().onsuccess = (got) =>

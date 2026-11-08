@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, reloadApp, tap, type, choose, textOf, waitUntil, addTestWords, openDeckPage, openLearn, ANSWER_YES, openSettings, useAddForm } from './harness.js';
+import { startApp, startBrowsers, reloadApp, tap, type, choose, textOf, waitUntil, addTestWords, openDeckPage, openLearn, ANSWER_YES, openSettings, useAddForm, pasteList, isShown } from './harness.js';
 
 // Text for "the Decks tab's list has this many rows".
 const rows = (count) => `document.querySelectorAll('#word-list li').length === ${count}`;
@@ -248,39 +248,71 @@ describe('the Decks tab', { concurrency: false }, () => {
   });
 
   it('adds a list, pasted as CSV', async () => {
-    await useAddForm(page, 'add-list-fold');
-    await type(
+    await pasteList(
       page,
-      'list-text',
       '猫头鹰,貓頭鷹,mao1tou2ying1,owl\n企鹅,企鵝,qi4e2,"penguin, the bird"\n孔雀,孔雀,kong3que4,peacock\nnot a word\n',
     );
-    await tap(page, 'check-list-button');
-    assert.equal(await textOf(page, 'list-report'), "2 new words, 1 you already have, 1 line that can't be read.");
+    assert.equal(await textOf(page, 'list-report'), '3 words: 2 new, 1 already yours.');
+    // The line that couldn't be read, under its count, open while few.
+    assert.equal(await textOf(page, 'list-problems-title'), "1 line couldn't be read");
+    assert.equal(await page.evaluate(`document.getElementById('list-problems-fold').open`), true);
     assert.match(await textOf(page, 'list-problems'), /^Line 4/);
+    assert.equal(await textOf(page, 'add-list-button'), 'Add 2 words to Chinese 中文');
     await tap(page, 'add-list-button');
     await waitUntil(page, `document.getElementById('word-count').textContent === '${countAtStart + 4}'`);
+    assert.equal(await textOf(page, 'list-done-text'), '2 words added to Chinese 中文. They wait in Learn.');
+    // Back to the beginning for another list.
+    await tap(page, 'list-again-button');
+    assert.equal(await isShown(page, 'list-start'), true);
+    assert.equal(await page.evaluate(`document.getElementById('list-text').value`), '');
     await type(page, 'word-search', 'penguin');
     await waitUntil(page, rows(1));
     assert.match(await textOf(page, '#word-list li'), /penguin, the bird/);
+    await type(page, 'word-search', '');
+  });
+
+  it('reads a chosen file at once and shows its first words', async () => {
+    await useAddForm(page, 'add-list-fold');
+    const lines = ['熊猫\t熊貓\txiong2mao1\tpanda', '老虎\t老虎\tlao3hu3\ttiger', '大象\t大象\tda4xiang4\telephant',
+      '狮子\t獅子\tshi1zi5\tlion', '猴子\t猴子\thou2zi5\tmonkey', '长颈鹿\t長頸鹿\tchang2jing3lu4\tgiraffe'];
+    await page.evaluate(`(() => {
+      const files = new DataTransfer();
+      files.items.add(new File([${JSON.stringify(lines.join('\n'))}], 'zoo.tsv', { type: 'text/tab-separated-values' }));
+      const input = document.getElementById('list-file');
+      input.files = files.files;
+      input.dispatchEvent(new Event('change'));
+    })()`);
+    await waitUntil(page, `document.getElementById('list-found').dataset.state === 'read'`, 'the file to be read', 30000);
+    // The file's name in place of the box; not poured into it.
+    assert.equal(await textOf(page, 'list-file-name'), 'zoo.tsv');
+    assert.equal(await isShown(page, 'list-paste'), false);
+    assert.equal(await isShown(page, 'list-format'), false);
+    assert.equal(await textOf(page, 'list-report'), '6 words: 6 new, 0 already yours.');
+    // The first five, as they will be added, then how many more.
+    const rowsShown = await page.evaluate(`[...document.querySelectorAll('#list-preview li')].map((row) => row.textContent)`);
+    assert.equal(rowsShown.length, 5);
+    assert.match(rowsShown[0], /熊貓.*xióngmāo.*panda/);
+    assert.equal(await textOf(page, 'list-more'), 'and 1 more');
+    assert.equal(await isShown(page, 'list-problems-fold'), false);
+    // Not added: another deck's page, or "Add another list", starts afresh.
+    await tap(page, 'list-paste-button');
+    assert.equal(await isShown(page, 'list-found'), false);
   });
 
   it('reads a list with traditional in the first column the other way round', async () => {
-    await useAddForm(page, 'add-list-fold');
-    await type(page, 'list-text', '貓頭鷹\t猫头鹰\tmao1tou2ying1\towl\n須\t须\txu1\tmust\n');
-    await tap(page, 'check-list-button');
-    assert.match(await textOf(page, 'list-report'), /The first column was read as traditional/);
+    await pasteList(page, '貓頭鷹\t猫头鹰\tmao1tou2ying1\towl\n須\t须\txu1\tmust\n');
+    assert.match(await textOf(page, 'list-notes'), /The first column was read as traditional/);
     // 貓頭鷹 was added above, under its traditional form: only 須 is new.
-    assert.match(await textOf(page, 'list-report'), /^1 new word, 1 you already have/);
+    assert.equal(await textOf(page, 'list-report'), '2 words: 1 new, 1 already yours.');
     await type(page, 'list-text', '');
+    assert.equal(await isShown(page, 'list-found'), false);
   });
 
   it('points out a new word written like one already there, read differently', async () => {
-    await useAddForm(page, 'add-list-fold');
     // 企鵝 was added above as qi4e2; 孔雀 is not there under any reading.
-    await type(page, 'list-text', '企鹅\t企鵝\tqi3e2\tpenguin\n孔雀\t孔雀\tkong3que4\tpeacock\n');
-    await tap(page, 'check-list-button');
+    await pasteList(page, '企鹅\t企鵝\tqi3e2\tpenguin\n孔雀\t孔雀\tkong3que4\tpeacock\n');
     assert.match(
-      await textOf(page, 'list-report'),
+      await textOf(page, 'list-notes'),
       /Of the new words, 1 has the same characters as a word you already have, with another reading: 企鵝\./,
     );
     await type(page, 'list-text', '');
