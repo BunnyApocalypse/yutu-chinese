@@ -40,7 +40,8 @@ const cardIdsOfKind = (word, type) => allCardIds(word).filter((id) => id.startsW
 // Returns:
 //   showCardsOf(word): fills the fold-out for the word being opened, with
 //                      Start over and Suspend or Resume on each card
-//   selecting():       true while words are being selected
+//   clear():           empties it until then
+//   selecting():      true while words are being selected
 //   isSelected(word), toggle(word): for the list's rows
 //   refresh():         call when the list has been shown again
 export function createCardsPanel({
@@ -177,6 +178,9 @@ export function createCardsPanel({
   }
 
   knowButton.addEventListener('click', async () => {
+    if (!openWord) {
+      return; // the word is still being read (clear)
+    }
     await saveKnown(knownEntries([openWord]));
     await afterWordChange();
   });
@@ -364,6 +368,17 @@ export function createCardsPanel({
 
   return {
     showCardsOf,
+    // Empties the cards part while a word's page waits for the word to be
+    // read afresh (wordsPanel.js): until showCardsOf, nothing on it may act
+    // on the word opened before, or on none ("I know this word" tapped in
+    // that moment marked the word before as known; 2026-11-08, found by
+    // cards.browser.js now and then).
+    clear() {
+      openWord = null;
+      cardList.replaceChildren();
+      knowButton.hidden = true;
+      byId('edit-cards-row').open = false;
+    },
     selecting: () => selecting,
     isSelected: (word) => selected.has(word.id),
     toggle(word) {

@@ -348,6 +348,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     isLearned: (word) => studiedWordIds.has(word.id),
     // Read afresh first: a page can lead on to another of your words.
     showCards: async (word) => {
+      cardsPanel.clear();
       await loadWord(word);
       return wordDialog.showCardsOnPage(words.find((entry) => entry.id === word.id) || word);
     },
