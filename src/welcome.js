@@ -11,7 +11,8 @@
 // joins with a code and skips the rest, since the words and settings come
 // from the other device (choices made here would be newer and win); on the
 // last, "Turn on sync" shows a new code, and the screen's button waits until
-// it is ticked as saved.
+// it is ticked as saved. Both have "Self-hosting?" folded away, for choosing
+// another sync server (syncServerChoice.js; the owner, 2026-11-08).
 
 import { getSetting, setSetting } from './db.js';
 import { startingLevel } from './decks.js';
@@ -21,6 +22,7 @@ import { t } from './text.js';
 import { makeCode, readCode } from './syncCode.js';
 import { scanForCode } from './syncScan.js';
 import { showCode, copyCode, saveCodeFile, printCode, problemText, codeProblemText, progressText } from './syncCodeView.js';
+import { createServerChoice } from './syncServerChoice.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -31,8 +33,9 @@ const byId = (id) => document.getElementById(id);
 //           waited for before the introduction closes. `start` is the
 //           ready-made level chosen to begin with, { listId, level },
 //           { anki: true } for a deck to import from Anki, or null for none.
-// sync:     { available, join(code), joined(), turnOn(code) } (syncControl.js,
-//           through main.js): whether there is a sync server; joining with
+// sync:     { available, control, join(code), joined(), turnOn(code) }
+//           (syncControl.js, through main.js): whether there is a sync
+//           server; the sync control, for choosing a server; joining with
 //           a code, giving the status after the first sync; what to do once
 //           the introduction has closed after joining (main.js starts the
 //           app again with what came); turning sync on with a new code, once
@@ -124,24 +127,45 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
   const codeNote = byId('welcome-code-note');
   const savedBox = byId('welcome-code-saved');
   // The new code shown on the last screen, made when "Turn on sync" is
-  // first chosen.
+  // first chosen, and the server in its link (linkServer in syncControl.js).
   let newCode = null;
-  const syncChosen = () => chosen('welcome-sync') === 'on';
+  let newServer = '';
+  async function showNewCode() {
+    newServer = await sync.control.linkServer();
+    showCode({ codeElement: byId('welcome-code'), qrElement: byId('welcome-qr') }, newCode, newServer);
+  }
+
+  // "Self-hosting?": the same server for both, chosen in either. A server
+  // chosen after the code was shown goes into its QR code.
+  const joinServer = createServerChoice('welcome-join', sync.control);
+  createServerChoice('welcome-sync', sync.control, {
+    onChosen: async () => {
+      if (newCode) {
+        await showNewCode();
+      }
+    },
+  });
+  // (None is chosen until the introduction is first opened.)
+  const syncChosen = () => dialog.querySelector('input[name="welcome-sync"]:checked')?.value === 'on';
 
   // Whether a join is under way, with its progress shown (showSyncStatus).
   let joining = false;
 
   function openJoin() {
     joinForm.hidden = false;
+    byId('welcome-join-server-fold').hidden = false;
     joinInput.focus();
   }
   byId('welcome-join-button').addEventListener('click', openJoin);
 
   // A code scanned goes in the box; joining is still a tap on the button.
   byId('welcome-scan-button').addEventListener('click', async () => {
-    const code = await scanForCode();
-    if (code) {
-      joinInput.value = code;
+    const found = await scanForCode();
+    if (found) {
+      joinInput.value = found.code;
+      if (found.server) {
+        joinServer.useFromLink(found.server);
+      }
       joinNote.hidden = true;
       byId('welcome-join-submit').focus();
     }
@@ -183,10 +207,12 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
     radio.addEventListener('change', async () => {
       if (syncChosen() && !newCode) {
         newCode = await makeCode();
-        showCode({ codeElement: byId('welcome-code'), qrElement: byId('welcome-qr') }, newCode);
+        await showNewCode();
       }
       codePart.hidden = !syncChosen();
-      showStep();
+      // With sync on, the line about this browser keeping the words no
+      // longer says to export backups (welcomeStorage).
+      showKeepState();
     });
   }
   savedBox.addEventListener('change', () => showStep());
@@ -194,9 +220,9 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
     codeNote.textContent = await copyCode(newCode);
   });
   byId('welcome-file-button').addEventListener('click', () => {
-    codeNote.textContent = saveCodeFile(newCode);
+    codeNote.textContent = saveCodeFile(newCode, newServer);
   });
-  byId('welcome-print-button').addEventListener('click', () => printCode(newCode));
+  byId('welcome-print-button').addEventListener('click', () => printCode(newCode, newServer));
 
   // The radio button that is chosen in a group, and choosing one.
   const chosen = (name) => dialog.querySelector(`input[name="${name}"]:checked`).value;
@@ -302,7 +328,7 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
   // welcomeStorage() works it out, and a line about it.
   let storagePlan = { action: 'none', line: '' };
   async function showKeepState() {
-    storagePlan = welcomeStorage(keepData.kind, await keepData.state(), keepData.mobile);
+    storagePlan = welcomeStorage(keepData.kind, await keepData.state(), keepData.mobile, syncChosen());
     keepNote.textContent = storagePlan.line;
     keepNote.hidden = storagePlan.line === '';
     for (const [name, element] of Object.entries(keepTexts)) {
@@ -416,6 +442,9 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
     byId('welcome-stored').textContent = t(sync.available ? 'welcome.yourWordsAreStoredSync' : 'welcome.yourWordsAreStored');
     joinPart.hidden = !sync.available;
     joinForm.hidden = true;
+    byId('welcome-join-server-fold').hidden = true;
+    byId('welcome-join-server-fold').open = false;
+    byId('welcome-sync-server-fold').open = false;
     joinNote.hidden = true;
     byId('welcome-from-link').hidden = true;
     syncPart.hidden = !sync.available;
@@ -448,13 +477,17 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
       }
     },
     // A code from a link (takeCodeFromLink in syncCodeView.js): on the first
-    // screen, in the box with a warning, never joined by itself.
-    offerJoin(text) {
+    // screen, in the box with a warning, never joined by itself; the link's
+    // server, if any, tried and chosen.
+    offerJoin({ text, server }) {
       if (!dialog.open) {
         open();
       }
       joinInput.value = text;
       byId('welcome-from-link').hidden = false;
+      if (server) {
+        joinServer.useFromLink(server);
+      }
       openJoin();
     },
   };

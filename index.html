@@ -84,6 +84,8 @@
           </button>
           <!-- Says what the red dot is about (main.js, showBackupStatus). -->
           <p id="backup-due-line" class="backup-due-line" hidden data-t="menu.backupDue"></p>
+          <!-- Or that syncing has been failing too long (main.js, syncIsLate). -->
+          <p id="sync-late-line" class="backup-due-line" hidden data-t="menu.syncLate"></p>
         </div>
       </dialog>
 
@@ -1220,6 +1222,21 @@
               <button id="welcome-scan-button" class="small" type="button" data-t="scan.button"></button>
               <p id="welcome-join-note" class="hint" role="status" hidden></p>
             </form>
+            <!-- "Self-hosting?": another sync server, before joining
+                 (syncServerChoice.js; the owner, 2026-11-08). Shown with the
+                 code box; a form of its own, as forms can't be inside one
+                 another. -->
+            <details hidden id="welcome-join-server-fold" class="welcome-more">
+              <summary id="welcome-join-server-summary" data-t="sync.selfHosting"></summary>
+              <form id="welcome-join-server-form" class="sync-join">
+                <label for="welcome-join-server-input" data-t="sync.serverLabel"></label>
+                <input id="welcome-join-server-input" type="text" inputmode="url" autocomplete="off" spellcheck="false" />
+                <button id="welcome-join-server-use" class="small" type="submit" data-t="sync.serverUse"></button>
+                <button id="welcome-join-server-usual" class="small" type="button" data-t="sync.serverUsual"></button>
+                <p id="welcome-join-server-note" class="hint" role="status" hidden></p>
+              </form>
+              <p class="hint" data-t-html="sync.serverHint"></p>
+            </details>
           </div>
           <!-- Shown at once as it is chosen; saved with the rest at the end
                (welcome.js). Each choice is a small sample of the look: the
@@ -1361,6 +1378,19 @@
             <label><input type="radio" name="welcome-sync" value="on" /> <span data-t="sync.turnOn"></span></label>
             <label><input type="radio" name="welcome-sync" value="" /> <span data-t="welcome.syncNotNow"></span></label>
             <div id="welcome-sync-code" hidden>
+              <!-- "Self-hosting?": another sync server, whose address then
+                   goes into the QR code (syncServerChoice.js). -->
+              <details id="welcome-sync-server-fold" class="welcome-more">
+              <summary id="welcome-sync-server-summary" data-t="sync.selfHosting"></summary>
+              <form id="welcome-sync-server-form" class="sync-join">
+                <label for="welcome-sync-server-input" data-t="sync.serverLabel"></label>
+                <input id="welcome-sync-server-input" type="text" inputmode="url" autocomplete="off" spellcheck="false" />
+                <button id="welcome-sync-server-use" class="small" type="submit" data-t="sync.serverUse"></button>
+                <button id="welcome-sync-server-usual" class="small" type="button" data-t="sync.serverUsual"></button>
+                <p id="welcome-sync-server-note" class="hint" role="status" hidden></p>
+              </form>
+              <p class="hint" data-t-html="sync.serverHint"></p>
+            </details>
               <p id="welcome-code" class="sync-code"></p>
               <p class="hint" data-t="sync.codeExplain"></p>
               <p class="sync-buttons">
@@ -1692,7 +1722,7 @@
               <button id="sync-scan-button" class="small" type="button" data-t="scan.button"></button>
               <p id="sync-join-error" class="hint sync-problem" role="alert" hidden></p>
             </form>
-            <!-- Which sync server, and choosing another (syncPanel.js): folded away, few need it. -->
+            <!-- Which sync server, and choosing another (syncServerChoice.js): folded away, few need it. -->
             <details id="sync-server-fold" class="welcome-more">
               <summary id="sync-server-summary"></summary>
               <form id="sync-server-form" class="sync-join">

@@ -104,6 +104,17 @@ test('a browser that cannot be asked is told to keep backups', () => {
   }
 });
 
+test('while syncing, Settings and the introduction no longer say to export backups', () => {
+  for (const changes of [{ canAsk: false }, { asked: true }]) {
+    const synced = storageAdvice('firefox', state(changes), false, true, true);
+    assert.doesNotMatch(synced, /Export backup/, JSON.stringify(changes));
+    assert.equal(synced, synced.trim());
+    assert.match(storageAdvice('firefox', state(changes), false, true), /Export backup/);
+  }
+  assert.equal(welcomeStorage('other', state({ canAsk: false }), false, true).line, '');
+  assert.match(welcomeStorage('other', state({ canAsk: false })).line, /Export backup/);
+});
+
 test('the introduction: one button that does what the browser needs', () => {
   // Chromium keeps only an installed app's data: install, by its own question if it offers one.
   assert.deepEqual(welcomeStorage('chromium', state({ canInstall: true })), {

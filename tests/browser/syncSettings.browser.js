@@ -11,7 +11,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { startApp, startBrowsers, tap, type, waitUntil, openSettings, textOf, ANSWER_YES } from './harness.js';
+import { startApp, startBrowsers, tap, type, waitUntil, openSettings, textOf, reloadApp, addTestWords, ANSWER_YES } from './harness.js';
 import { createSyncServer } from '../../server/server.js';
 import qrcode from 'qrcode-generator';
 
@@ -318,6 +318,103 @@ describe('sync in the introduction', { concurrency: false }, () => {
     assert.equal(await page.evaluate('window.location.hash'), '');
     // Nothing joined by itself.
     assert.equal(await page.evaluate(`import('/src/db.js').then((db) => db.getSyncValue('code', null))`), null);
+    // "Self-hosting?" is under the code box, folded away.
+    assert.ok(await page.evaluate(shown('welcome-join-server-fold')));
+    assert.equal(await textOf(page, 'welcome-join-server-summary'), 'Self-hosting?');
+    assert.equal(await page.evaluate(`document.getElementById('welcome-join-server-fold').open`), false);
+  });
+
+  it('opened from a link that names a sync server of one\'s own, chooses it once it answers', async () => {
+    const page = pages[2];
+    const address = `http://127.0.0.1:${server.address().port}`;
+    await page.evaluate(`import('/src/db.js').then((db) => db.setSyncValue('server', null))`);
+    await page.send('Page.navigate', { url: `${app.url}?link2#sync=${code}&server=${encodeURIComponent(address)}` });
+    await waitFor(
+      () => page.evaluate(`import('/src/db.js').then((db) => db.getSyncValue('server', null)).then((chosen) => chosen === '${address}')`),
+      'the server chosen',
+    );
+    assert.equal(await page.evaluate(`document.getElementById('welcome-code-input').value`), code);
+    assert.equal(await page.evaluate(`document.getElementById('welcome-join-server-fold').open`), true);
+    assert.match(await textOf(page, 'welcome-join-server-note'), /will use 127\.0\.0\.1/);
+    assert.equal(await page.evaluate(`import('/src/db.js').then((db) => db.getSyncValue('code', null))`), null);
+  });
+});
+
+// While syncing: no reminder to export a backup, and a red dot instead
+// when syncing has been failing for days (main.js, syncIsLate).
+describe('reminders while syncing', { concurrency: false }, () => {
+  let app;
+  let browsers;
+  let page;
+  let server;
+  let pausedServer;
+  let folder;
+
+  const dot = `document.getElementById('menu-button').classList.contains('reminder')`;
+  const day = 24 * 60 * 60 * 1000;
+
+  before(async () => {
+    app = await startApp();
+    folder = await fs.mkdtemp(path.join(os.tmpdir(), 'yutu-sync-reminders-'));
+    const origins = [new URL(app.url).origin];
+    server = await createSyncServer({ dataDir: path.join(folder, 'running'), log: false, allowedOrigins: origins });
+    pausedServer = await createSyncServer({ dataDir: path.join(folder, 'paused'), log: false, allowedOrigins: origins, paused: true });
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    await new Promise((resolve) => pausedServer.listen(0, '127.0.0.1', resolve));
+    browsers = await startBrowsers(app.url, 1);
+    await browsers.use(async (thePage) => {
+      page = thePage;
+    });
+    await page.evaluate(`import('/src/db.js').then((db) => db.setSyncValue('server', 'http://127.0.0.1:${server.address().port}'))`);
+    await page.evaluate(ANSWER_YES);
+  });
+
+  after(async () => {
+    const errors = browsers?.errors() ?? [];
+    browsers?.close();
+    await app?.close();
+    await new Promise((resolve) => server?.close(resolve));
+    await new Promise((resolve) => pausedServer?.close(resolve));
+    await fs.rm(folder, { recursive: true, force: true });
+    assert.deepEqual(errors, [], 'the page threw errors');
+  });
+
+  it('no longer reminds of a backup once sync is on', async () => {
+    // Words, and a card first studied two days ago with no backup: the
+    // reminder (as in tabs.browser.js).
+    await addTestWords(page);
+    await page.evaluate(`import('/src/db.js').then((db) => db.putAll('cards', [${JSON.stringify({
+      id: 'test|card#meaning', wordId: 'test|card', type: 'meaning', due: Date.now(), firstReviewedAt: Date.now() - 2 * day, fsrsState: null,
+    })}]))`);
+    await reloadApp(page);
+    await page.evaluate(ANSWER_YES);
+    await waitUntil(page, dot, 'the backup reminder');
+    await openSettings(page, 'settings-data');
+    assert.ok(await page.evaluate(shown('backup-reminder-button')));
+    await tap(page, 'sync-on-button');
+    await waitUntil(page, shown('sync-saved-button'), 'the code');
+    await tap(page, 'sync-saved-button');
+    await waitUntil(page, `document.getElementById('sync-status').textContent.startsWith('Last synced')`, 'the first sync');
+    await waitUntil(page, `!${dot}`, 'the dot gone');
+    assert.equal(await page.evaluate(`document.getElementById('backup-reminder-button').hidden`), true);
+    assert.equal(await page.evaluate(`document.getElementById('backup-due-line').hidden`), true);
+    assert.doesNotMatch(await textOf(page, 'backup-status'), /Time to export/);
+  });
+
+  it('says so with a dot when syncing has been failing for days', async () => {
+    // The server paused, and the last sync that worked four days ago.
+    await page.evaluate(`import('/src/db.js').then(async (db) => {
+      await db.setSyncValue('server', 'http://127.0.0.1:${pausedServer.address().port}');
+      await db.setSyncValue('lastWorkedAt', Date.now() - 4 * ${day});
+    })`);
+    await reloadApp(page);
+    await page.evaluate(ANSWER_YES);
+    await waitUntil(page, dot, 'the dot', 15000);
+    assert.equal(await page.evaluate(`document.getElementById('sync-late-line').hidden`), false);
+    assert.equal(await page.evaluate(`document.getElementById('backup-due-line').hidden`), true);
+    assert.match(await page.evaluate(`document.getElementById('menu-button').title`), /syncing isn’t working/);
+    await openSettings(page, 'settings-data');
+    assert.match(await textOf(page, 'sync-status'), /^Syncing hasn’t worked since/);
   });
 });
 

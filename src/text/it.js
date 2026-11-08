@@ -166,6 +166,7 @@ export default {
   'sync.scanHint': 'Oppure inquadralo con la fotocamera dell\'altro dispositivo: apre <span lang="zh-Hant-TW">玉兔中文</span> con il codice già inserito.',
   'sync.fromLink':
     'Questo codice viene da un link. Usalo solo se il link viene da un tuo dispositivo: chi ha creato il codice può leggere tutto ciò che viene sincronizzato con esso.',
+  'sync.selfHosting': 'Server tuo?',
   'sync.serverSummary':
     'Server di sincronizzazione: {host}',
   'sync.serverLabel':
@@ -225,11 +226,14 @@ export default {
   'sync.passwordManager': 'Anche un gestore di password è un buon posto dove tenerlo.',
   'sync.saved': 'L\'ho salvato',
   'sync.hideCode': 'Nascondi il codice',
+  'sync.keepingServer':
+    'Questo codice si sincronizza tramite {server}, non il server solito. Dove digiti il codice, scegli prima quel server (“Server tuo?” nell’introduzione, o “Server di sincronizzazione” nelle Impostazioni).',
   'sync.keepingText':
     'Codice di sincronizzazione di 玉兔中文 (Yutu Chinese)\n\n{code}\n\nCreato il {date}.\n\nPer sincronizzare un altro dispositivo, o per recuperare le tue parole su uno nuovo: apri {address}, vai in Impostazioni › I tuoi dati e i backup › Sincronizza tra dispositivi, scegli «Ho un codice di sincronizzazione» e digita questo codice. Oppure apri questo link su quel dispositivo:\n{link}\n\nChiunque abbia questo codice può leggere le tue parole sincronizzate. Conservalo al sicuro.',
   'sync.syncing': 'Sincronizzazione…',
   'sync.notYet': 'Non ancora sincronizzato.',
   'sync.lastSynced': 'Ultima sincronizzazione: {when}.',
+  'sync.late': 'La sincronizzazione non funziona dal {when}: quello che hai fatto qui da allora per ora è solo su questo dispositivo.',
   'sync.problem.offline': 'Non è stato possibile raggiungere il server di sincronizzazione. Le tue modifiche sono conservate e partono con la prossima sincronizzazione.',
   'sync.problem.refused': 'Il server di sincronizzazione non ha accettato questo dispositivo. Disattiva e riattiva la sincronizzazione con il tuo codice.',
   'sync.problem.cannotOpen': 'Alcune modifiche sincronizzate non si sono potute aprire con questo codice e sono state tralasciate.',
@@ -403,6 +407,8 @@ export default {
   'menu.menu': 'Menu',
   'menu.menuBackupDue': 'Menu (è ora di fare un backup, nelle Impostazioni)',
   'menu.settingsBackupDue': 'Impostazioni (è ora di fare un backup)',
+  'menu.menuSyncLate': 'Menu (la sincronizzazione non funziona, vedi Impostazioni)',
+  'menu.settingsSyncLate': 'Impostazioni (la sincronizzazione non funziona)',
   'menu.review': 'Ripasso',
   'menu.learn': 'Impara',
   'menu.waiting': '{count} in attesa',
@@ -413,6 +419,7 @@ export default {
   'menu.feedback': 'Invia un commento',
   'menu.settings': 'Impostazioni',
   'menu.backupDue': 'È ora di salvare un backup delle tue parole, nelle Impostazioni.',
+  'menu.syncLate': 'La sincronizzazione non funziona da qualche giorno. Vedi le Impostazioni.',
   // The screen's name in the top bar, beside the menu's own names
   'place.lesson': 'Ripetizione di una lezione',
   'place.practice': 'Esercizio libero',

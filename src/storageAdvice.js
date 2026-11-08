@@ -60,7 +60,10 @@ const BACKUP_KEYS = {
   Use: ['storage.backupUseSettings', 'storage.backupUseAbove'],
   Still: ['storage.backupStillSettings', 'storage.backupStillAbove'],
 };
-const backup = (inSettings, start = 'Until') => t(BACKUP_KEYS[start][inSettings ? 1 : 0]);
+// With sync on, none: syncing keeps a copy, so exporting now and then is no
+// longer asked for (the owner, 2026-11-08). The message about words at risk
+// (storageMessage.js) still says it.
+const backup = (inSettings, start = 'Until', synced = false) => (synced ? '' : t(BACKUP_KEYS[start][inSettings ? 1 : 0]));
 
 // The advice to show.
 //
@@ -73,15 +76,18 @@ const backup = (inSettings, start = 'Until') => t(BACKUP_KEYS[start][inSettings 
 //   canInstall: true if the app can offer its own "Install the app" button
 // mobile: true on a phone or tablet (isMobile)
 // inSettings: true when shown in Settings, beside Export backup
+// synced: true while sync is on: then without the advice to export backups
 //
-// Returns a sentence or two.
-export function storageAdvice(kind, { canAsk, kept, asked, installed, canInstall }, mobile = false, inSettings = false) {
-  const BACKUP = backup(inSettings);
+// Returns a sentence or two (without the space before a backup advice left
+// out).
+export const storageAdvice = (...args) => adviceText(...args).trim();
+function adviceText(kind, { canAsk, kept, asked, installed, canInstall }, mobile = false, inSettings = false, synced = false) {
+  const BACKUP = backup(inSettings, 'Until', synced);
   if (kept) {
     return t('storage.kept');
   }
   if (!canAsk) {
-    return t('storage.cannotAsk', { backup: backup(inSettings, 'Use') });
+    return t('storage.cannotAsk', { backup: backup(inSettings, 'Use', synced) });
   }
   const install = t(canInstall ? 'storage.installBelow' : 'storage.installHow');
 
@@ -97,7 +103,7 @@ export function storageAdvice(kind, { canAsk, kept, asked, installed, canInstall
   if (kind === 'safari') {
     if (installed) {
       return asked
-        ? t('storage.safariInstalledUnconfirmed', { backup: backup(inSettings, 'Still') })
+        ? t('storage.safariInstalledUnconfirmed', { backup: backup(inSettings, 'Still', synced) })
         : t('storage.safariInstalled');
     }
     // Safari's app on the Home Screen or in the Dock starts with nothing.
@@ -114,6 +120,8 @@ export function storageAdvice(kind, { canAsk, kept, asked, installed, canInstall
 //
 // kind, state: as for storageAdvice
 // mobile:      true on a phone or tablet (Android, iPhone, iPad)
+// synced:      true when "Turn on sync" is chosen: no advice to export
+//              backups
 //
 // Returns { action, line }:
 //   action: 'install' to show the browser's own "install this app?"
@@ -129,12 +137,12 @@ export function storageAdvice(kind, { canAsk, kept, asked, installed, canInstall
 //           2026-10-19: not in quiet small print): in Safari 'homeScreen'
 //           or 'dock'; in Chromium without its install question
 //           'installPhone' or 'installComputer'; else absent
-export function welcomeStorage(kind, { canAsk, kept, installed, canInstall }, mobile = false) {
+export function welcomeStorage(kind, { canAsk, kept, installed, canInstall }, mobile = false, synced = false) {
   if (kept) {
     return { action: 'none', line: t('storage.welcomeKept') };
   }
   if (!canAsk) {
-    return { action: 'none', line: t('storage.welcomeCannotAsk') };
+    return { action: 'none', line: synced ? '' : t('storage.welcomeCannotAsk') };
   }
   if (kind === 'chromium' && !installed) {
     return canInstall

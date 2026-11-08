@@ -10,6 +10,7 @@
 // in the build (import()), not part of the app's main program.
 
 import { readCode } from './syncCode.js';
+import { readServerAddress } from './syncServer.js';
 import { t } from './text.js';
 
 const byId = (id) => document.getElementById(id);
@@ -27,8 +28,21 @@ export function codeIn(text) {
   return decodeURIComponent(match ? match[1] : text).trim();
 }
 
-// Opens the scanner. Resolves to the code found (as codeIn gives it, and
-// readable by readCode), or null if the scanner was closed first.
+// The sync server in a link, "&server=…" after the code: there only when
+// the code's device syncs through a server other than the usual one
+// (someone running their own). The address as readServerAddress gives it,
+// or null if there is none or it isn't a server's address.
+export function serverIn(text) {
+  const match = /#sync=[^\s&]+&server=([^\s&]+)/.exec(text);
+  if (!match) {
+    return null;
+  }
+  return readServerAddress(decodeURIComponent(match[1])).address ?? null;
+}
+
+// Opens the scanner. Resolves to { code, server } (as codeIn and serverIn
+// give them, the code readable by readCode), or null if the scanner was
+// closed first.
 export function scanForCode() {
   const dialog = byId('scan-dialog');
   const video = byId('scan-video');
@@ -39,7 +53,7 @@ export function scanForCode() {
 
   return new Promise((resolve) => {
     // Stops the camera (its light goes off) and closes, once.
-    function finish(code) {
+    function finish(found) {
       if (stopped) {
         return;
       }
@@ -50,7 +64,7 @@ export function scanForCode() {
       if (dialog.open) {
         dialog.close();
       }
-      resolve(code);
+      resolve(found);
     }
 
     // Closed with Cancel, the ✕ or Esc.
@@ -102,7 +116,7 @@ export function scanForCode() {
           if (found) {
             const code = codeIn(found.data);
             if (!(await readCode(code)).reason) {
-              finish(code);
+              finish({ code, server: serverIn(found.data) });
               return;
             }
             note.textContent = t('scan.notACode');

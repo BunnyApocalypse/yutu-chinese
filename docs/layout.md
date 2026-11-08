@@ -63,10 +63,11 @@
 - `src/syncControl.js`: syncing in the app: turning it on and off, syncing, its status (`docs/sync.md`).
 - `src/syncCodeView.js`: showing and keeping a sync code (its QR code, Copy, Save as file, Print), the link with a code, what to say when syncing goes wrong.
 - `src/syncWorker.js`: syncing on a second thread (a Web Worker), asked by `syncControl.js`, telling its progress.
-- `src/syncTiming.js`: when syncing happens by itself: sending soon after changes and when the app is put away, a whole sync on opening, on coming back and after failures, never while writing.
+- `src/syncTiming.js`: when syncing happens by itself: sending soon after changes and when the app is put away, a whole sync on opening, on coming back and after failures, never while writing; and when syncing has been failing too long (`syncIsLate`).
 - `src/syncScan.js`: scanning a sync code's QR code with the camera, with jsQR (`docs/sync.md`).
 - `src/syncPanel.js`: Settings › Sync between devices: the code, turning sync on, its status and buttons.
 - `src/syncServer.js`: the sync server as syncing's storage: list, read, save, remove as requests, failures as a `reason` (`docs/sync.md`).
+- `src/syncServerChoice.js`: choosing another sync server, folded away in Settings and under "Self-hosting?" in the introduction (`docs/sync.md`).
 - `deploy/`: Ansible playbooks for the sync server (`setup.yml`, `deploy.yml`, `update.yml`, `status.yml`), their templates and settings (`group_vars/all.yml`), the owner's server (`inventory.yml`) and an example for others; `deploy/README.md`.
 - `server/server.js`: the sync server, plain Node with no dependencies; `server/README.md` (running it, its settings), `server/package.json`.
 - `src/syncCode.js`: the sync code (made, typed in, checked) and the keys and encryption it gives, with WebCrypto (`docs/sync.md`).

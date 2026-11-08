@@ -171,6 +171,7 @@ export default {
   'sync.scanHint': 'Or scan this with your other device’s camera: it opens <span lang="zh-Hant-TW">玉兔中文</span> with the code filled in.',
   'sync.fromLink':
     'This code came from a link. Use it only if the link is from your own device: whoever made the code can read everything synced with it.',
+  'sync.selfHosting': 'Self-hosting?',
   'sync.serverSummary':
     'Sync server: {host}',
   'sync.serverLabel':
@@ -230,11 +231,14 @@ export default {
   'sync.passwordManager': 'A password manager is a good place for it too.',
   'sync.saved': 'I’ve saved it',
   'sync.hideCode': 'Hide the code',
+  'sync.keepingServer':
+    'This code syncs through {server}, not the usual server. Where you type the code, choose that server first (“Self-hosting?” in the introduction, or “Sync server” in Settings).',
   'sync.keepingText':
     '玉兔中文 (Yutu Chinese) sync code\n\n{code}\n\nMade on {date}.\n\nTo sync another device, or to get your words back on a new one: open {address}, go to Settings › Your data and backups › Sync between devices, choose “I have a sync code” and type this code. Or open this link on that device:\n{link}\n\nAnyone with this code can read your synced words. Keep it safe.',
   'sync.syncing': 'Syncing…',
   'sync.notYet': 'Not synced yet.',
   'sync.lastSynced': 'Last synced {when}.',
+  'sync.late': 'Syncing hasn’t worked since {when}: what you’ve done here since then is only on this device for now.',
   'sync.problem.offline': 'The sync server couldn’t be reached. Your changes are kept and go with the next sync.',
   'sync.problem.refused': 'The sync server didn’t accept this device. Turn sync off and on again with your code.',
   'sync.problem.cannotOpen': 'Some synced changes couldn’t be opened with this code, and were left out.',
@@ -408,6 +412,8 @@ export default {
   'menu.menu': 'Menu',
   'menu.menuBackupDue': 'Menu (time to make a backup, in Settings)',
   'menu.settingsBackupDue': 'Settings (time to make a backup)',
+  'menu.menuSyncLate': 'Menu (syncing isn’t working, see Settings)',
+  'menu.settingsSyncLate': 'Settings (syncing isn’t working)',
   'menu.review': 'Review',
   'menu.learn': 'Learn',
   'menu.waiting': '{count} waiting',
@@ -418,6 +424,7 @@ export default {
   'menu.feedback': 'Send feedback',
   'menu.settings': 'Settings',
   'menu.backupDue': 'Time to save a backup of your words, in Settings.',
+  'menu.syncLate': 'Syncing hasn’t worked for a few days. See Settings.',
   // The screen's name in the top bar, beside the menu's own names
   'place.lesson': 'Repeating a lesson',
   'place.practice': 'Free practice',

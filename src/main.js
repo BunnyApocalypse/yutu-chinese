@@ -42,7 +42,7 @@ import { setUpTesterSettings } from './testerSettings.js';
 import { createSyncControl } from './syncControl.js';
 import { createSyncPanel } from './syncPanel.js';
 import { takeCodeFromLink } from './syncCodeView.js';
-import { startSyncTiming } from './syncTiming.js';
+import { startSyncTiming, syncIsLate } from './syncTiming.js';
 import { applyText, t, formatList, formatNumber } from './text.js';
 
 // The page's own text, in the learner's language (src/text.js), before
@@ -646,14 +646,21 @@ exportButton.addEventListener('click', async () => {
 // promised to keep the data (offline.js, "Keeping your data"): if it has, a
 // week; if not, a day, since Safari clears a site that was not opened for
 // 7 days, and a pause that long early on must not find no backup made.
+// While sync is on there is no reminder, nor the button to stop it: syncing
+// keeps a copy (the owner, 2026-11-08). The dot is then for syncing that
+// has been failing too long (syncIsLate in syncTiming.js), which says so in
+// Settings' sync section.
 const BACKUP_DUE_AFTER_MS = 14 * 24 * 60 * 60 * 1000;
 const FIRST_BACKUP_AFTER_MS = { kept: 7 * 24 * 60 * 60 * 1000, notKept: 24 * 60 * 60 * 1000 };
 async function showBackupStatus() {
   const last = await getSetting('lastBackupAt', null);
   const off = await getSetting('backupReminderOff', false);
   const days = last === null ? null : Math.floor((Date.now() - last) / (24 * 60 * 60 * 1000));
+  const syncStatus = syncControl?.status() ?? { on: false };
+  const syncing = syncStatus.on;
+  const late = syncIsLate(syncStatus, Date.now());
   let due = false;
-  if (!off && wordList.length > 0) {
+  if (!off && !syncing && wordList.length > 0) {
     if (last !== null) {
       due = Date.now() - last > BACKUP_DUE_AFTER_MS;
     } else {
@@ -666,7 +673,7 @@ async function showBackupStatus() {
     }
   }
   byId('backup-reminder-button').textContent = t(off ? 'backup.remindAgain' : 'settings.stopBackupReminders');
-  byId('backup-reminder-button').hidden = !off && !due;
+  byId('backup-reminder-button').hidden = syncing || (!off && !due);
   byId('backup-status').textContent = [
     last === null
       ? t('backup.noneYet')
@@ -676,7 +683,7 @@ async function showBackupStatus() {
           ? t('backup.lastYesterday')
           : t('backup.lastDaysAgo', { count: days }),
     due ? t('backup.due') : '',
-    off ? t('backup.remindersOff') : '',
+    off && !syncing ? t('backup.remindersOff') : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -684,16 +691,17 @@ async function showBackupStatus() {
   // button or uses a screen reader, and in Settings the same dot is on the
   // group it is about, in the list of groups.
   const menuButton = byId('menu-button');
-  menuButton.classList.toggle('reminder', due);
-  menuButton.title = t(due ? 'menu.menuBackupDue' : 'menu.menu');
+  menuButton.classList.toggle('reminder', due || late);
+  menuButton.title = t(late ? 'menu.menuSyncLate' : due ? 'menu.menuBackupDue' : 'menu.menu');
   menuButton.setAttribute('aria-label', menuButton.title);
   const settingsButton = byId('settings-button');
-  settingsButton.classList.toggle('reminder', due);
-  settingsButton.title = due ? t('menu.settingsBackupDue') : '';
+  settingsButton.classList.toggle('reminder', due || late);
+  settingsButton.title = late ? t('menu.settingsSyncLate') : due ? t('menu.settingsBackupDue') : '';
   // On a phone there is no resting the mouse on a button, so the menu says
   // in words what the dot is about, under Settings.
   byId('backup-due-line').hidden = !due;
-  document.querySelector('#settings-nav [data-group="settings-data"]').classList.toggle('reminder', due);
+  byId('sync-late-line').hidden = !late;
+  document.querySelector('#settings-nav [data-group="settings-data"]').classList.toggle('reminder', due || late);
 }
 
 byId('backup-reminder-button').addEventListener('click', async () => {
@@ -1108,6 +1116,12 @@ async function startUp() {
     onStatus: (status) => {
       syncPanel?.show(status);
       welcome?.showSyncStatus(status);
+      // No advice to export backups while syncing, and the dot for syncing
+      // failing too long (showBackupStatus).
+      keepData.setSynced(status.on);
+      if (!status.running) {
+        showBackupStatus();
+      }
     },
   });
   await syncControl.start();
@@ -1145,6 +1159,7 @@ async function startUp() {
     hasWords: () => wordList.length > 0,
     sync: {
       available: Boolean(await syncControl.server()),
+      control: syncControl,
       join: async (code) => {
         const result = await syncControl.turnOn(code);
         joinChanged = Boolean(result?.changed);

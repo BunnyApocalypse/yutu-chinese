@@ -8,6 +8,9 @@
 //   server        the sync server chosen in Settings, if not the usual one
 //                 (DEFAULT_SERVER); kept when sync is turned off
 //   lastSyncedAt  when the last sync finished
+//   lastWorkedAt  when a sync last worked without a problem, or sync was
+//                 turned on: for saying when syncing has been failing too
+//                 long (syncIsLate in syncTiming.js)
 // and what sync.js keeps there (device, nextNumber, taken…). Turning sync
 // off empties the store and the outbox, so turning it on again starts
 // afresh.
@@ -93,10 +96,13 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
   //   on:           whether sync is on on this device
   //   running:      whether a sync is under way
   //   lastSyncedAt: when the last one finished, or null
+  //   lastWorkedAt: when one last worked without a problem, or sync was
+  //                 turned on; null before (a device that synced before
+  //                 this was kept counts from its next sync)
   //   problem:      the `reason` of what went wrong last time, or null
   //   progress:     while a long step runs, how it goes (sync.js,
   //                 onProgress), else null
-  const status = { on: false, running: false, lastSyncedAt: null, problem: null, progress: null };
+  const status = { on: false, running: false, lastSyncedAt: null, lastWorkedAt: null, problem: null, progress: null };
 
   const tell = () => onStatus({ ...status });
 
@@ -125,6 +131,12 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
     async chooseServer(address) {
       await db.setSyncValue('server', address);
     },
+    // The server to put in a link with the code (syncLink in
+    // syncCodeView.js): only one other than the usual, else ''.
+    async linkServer() {
+      const address = await serverAddress();
+      return address === DEFAULT_SERVER ? '' : address;
+    },
 
     // At start: picks up where sync was left, if it is on.
     async start() {
@@ -132,6 +144,7 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
       if (code) {
         await connect(code);
         status.lastSyncedAt = await db.getSyncValue('lastSyncedAt', null);
+        status.lastWorkedAt = await db.getSyncValue('lastWorkedAt', null);
       }
       tell();
     },
@@ -142,6 +155,8 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
     // the first sync runs.
     async turnOn(code) {
       await db.setSyncValue('code', code);
+      status.lastWorkedAt = Date.now();
+      await db.setSyncValue('lastWorkedAt', status.lastWorkedAt);
       await connect(code);
       await db.sendEverything();
       tell();
@@ -164,6 +179,10 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
         status.lastSyncedAt = Date.now();
         await db.setSyncValue('lastSyncedAt', status.lastSyncedAt);
         status.problem = result.problems[0]?.reason ?? null;
+        if (!status.problem) {
+          status.lastWorkedAt = status.lastSyncedAt;
+          await db.setSyncValue('lastWorkedAt', status.lastWorkedAt);
+        }
         if (result.changed) {
           await onChanged();
         }
@@ -193,7 +212,7 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
       worker?.stop();
       worker = null;
       storage = null;
-      Object.assign(status, { on: false, running: false, lastSyncedAt: null, problem: null, progress: null });
+      Object.assign(status, { on: false, running: false, lastSyncedAt: null, lastWorkedAt: null, problem: null, progress: null });
       tell();
     },
 

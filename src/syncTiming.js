@@ -25,6 +25,21 @@ const BUSY_CHECK_MS = 2000;
 // Problems worth trying again for: those that may pass by themselves.
 const PASSING = ['offline', 'too-many', 'paused', 'server-error'];
 
+// How long syncing may go on failing before the app says so with a red dot
+// on the menu (main.js): longer than a server restarting for an update or
+// a day or two without a connection, which sort themselves out (the owner,
+// 2026-11-08). Apart from the reminder to export a backup, which syncing
+// replaces.
+export const SYNC_LATE_AFTER_MS = 3 * 24 * 60 * 60 * 1000;
+
+// Whether syncing has been failing too long: sync is on, the last try went
+// wrong, and none has worked since longer ago than SYNC_LATE_AFTER_MS.
+// `status` is syncControl.js's (`lastWorkedAt`: when a sync last worked
+// without a problem, or sync was turned on).
+export function syncIsLate({ on, problem, lastWorkedAt }, now) {
+  return Boolean(on && problem && lastWorkedAt !== null && now - lastWorkedAt > SYNC_LATE_AFTER_MS);
+}
+
 // control: from createSyncControl (syncControl.js)
 // isBusy(): true while a character is being written (main.js)
 // onOutboxChange(listener): db.js's, to hear of each change noted
