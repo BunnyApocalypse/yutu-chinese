@@ -4,7 +4,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
-**Handover from the session of 2026-11-08 (Import backup on a second thread; pushed to `main` and the test copy, not `stable`, no "What's new" entry).**
+**Handover from the session of 2026-11-08 (Import backup on a second thread, "A list of words" redesigned; pushed to `main` and the test copy, not `stable`, no "What's new" entry).**
 
 - **Measured first** (the owner's backup, the whole browser at about a sixth of this computer's speed): Import backup held the page up for up to 8 s choosing the file on an empty device, 14 s on one with data, and 11 s in Combine. Saving in larger parts than 2,000 a transaction was measured too and gains nothing worth having (`docs/sync.md`, "Speed").
 - **Built** (the owner, 2026-11-08): the import's reading, checking, combining, safety copy and saving in `src/importWorker.js`; the page shows "Reading the backup…", the panel and the count (`docs/merging.md`). After: at most 0.2 s held up anywhere; the total time is as before (the database writing). `checkBackup`'s errors carry `textKey` and `values`; `isOutboxOn` in `db.js`.
@@ -12,7 +12,10 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - **Also:** "Add a list"'s check for words written like one already there went through every word for each line: 7 s held up at tablet speed for 10,000 lines, now about 1 s (two sets, `src/addListForm.js`; `docs/words.md`). No second thread needed; tested in `words.browser.js` (checked to fail with the check broken).
 - **"Reading the backup…" on any screen** (the owner, 2026-11-08, reusing the streak pill): a pill over the top bar while the file is read, since the page can be used meanwhile and the panel then opens over whatever is up (`import-pill`, shared `.top-pill`; `docs/interface.md`). Centered while a card is up, at the bar's right end otherwise. Pictures: `local/import-pictures/`.
 - **"A list of words" redesigned** (the owner, 2026-11-08, from mockups): choose a file (main button) or paste; read at once, no Check button; what was found with the first 5 words and the unreadable lines in a red fold; one button naming the deck; then "Add another list" (`docs/decks.md`). Found while building: switching to pasting kept a file's results. The import's ✕ is put away while saving, and a late `close` no longer stops the next file's worker (the owner's test). Full browser run after: 257 of 257, the grid 402 (21 skipped).
-- **Next:** the owner trying an import on the tablet (test copy); then the release with sync. Export backup still builds its file on the page (a shorter freeze): could move to the same worker later.
+- **Tried by the owner on the test copy** (2026-11-08): Import backup (choosing, Replace, Combine, a wrong file) and the new list page with the test lists in `local/test-lists/`: all fine, after the ✕ fix.
+- **Import backup and sync:** with sync on, an import puts `everything` in the outbox and the reload's sync sends it; now tested through the panel (`sync.browser.js`, sync on and off, checked to fail with the flag broken).
+- **Releasing:** everything on `main` goes to `stable` together, once the owner has finished testing sync (the owner, 2026-11-08). Today's work can't go alone: it builds on sync's database code, and `stable` is always an earlier `main`. When released, the stable build gets `VITE_SYNC_SERVER` in `.github/workflows/deploy.yml` (or is built without it to release with sync hidden), and a "What's new" entry covering sync, the import and the list page.
+- **Next:** the owner's test of sync between phone and tablet; then the release above.; then the release with sync. Export backup still builds its file on the page (a shorter freeze): could move to the same worker later.
 
 **Handover from the session of 2026-11-07 and 08 (syncing between devices: planned, built, and the server running; on `main` and the test copy, not on `stable`, no "What's new" entry yet).**
 
