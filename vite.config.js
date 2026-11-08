@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, searchForWorkspaceRoot } from 'vite';
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 
@@ -44,6 +44,14 @@ export default defineConfig(({ command }) => ({
       // uses up what the system allows ("ENOSPC: System limit for number of
       // file watchers reached").
       ignored: ['**/data/audio-cmn/**', '**/public/audio/**', '**/public/char-data/**', '**/public/char-data-tw/**', '**/local/**', '**/dist/**'],
+    },
+    // The dev server serves only files inside the project. In a git worktree
+    // (.claude/worktrees/…), node_modules is a link to the main copy's, which
+    // lies outside it, so files loaded by their address (sql.js's .wasm, for
+    // reading Anki files) were refused and the Anki tests failed there. Its
+    // real folder is allowed too; elsewhere it is inside the project anyway.
+    fs: {
+      allow: [searchForWorkspaceRoot(process.cwd()), fs.realpathSync('node_modules')],
     },
   },
 }));

@@ -174,6 +174,13 @@ describe('importing from Anki', { concurrency: false }, () => {
           request.result.close();
           resolve();
         };
+        // Without the word (an import before failed), the put has no key and
+        // the transaction ends here: a failure, not a wait forever, which
+        // held up the whole run.
+        transaction.onabort = () => {
+          request.result.close();
+          reject(transaction.error);
+        };
       };
     })`);
     await reloadApp(page);
