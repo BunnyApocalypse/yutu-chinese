@@ -4,6 +4,20 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the second session of 2026-11-08 (sync instead of backup reminders, a pop-up when syncing fails, "Self-hosting?" in the introduction, the server in the sync link; pushed to `main` and the test copy, not `stable`, no "What's new" entry).**
+
+- **Why:** the owner lost three days of studying on the tablet: Firefox's "clear data for this site", used on the test copy, empties the stable copy too, as both live at `bunnyapocalypse.github.io` (one site to the browser, whatever the app names its databases). Nothing could be recovered. Sync, once on, is the answer; the sync code must be kept somewhere else too, or a lone wiped device can't open its synced files.
+- **Built** (the owner, 2026-11-08; details in `docs/sync.md`, "What is built"):
+  - **No reminder to export a backup while sync is on:** no red dot, no "Time to export one", no "Stop backup reminders"; "use Export backup now and then" left out in Settings and on the introduction's last screen while "Turn on sync" is chosen. **The words-at-risk message in Review and Learn stays as it was** (the owner's choice).
+  - **Syncing failing too long** (`syncIsLate` in `src/syncTiming.js`): after 3 days if the server can't be reached (most likely no connection; a server that is down looks the same), after 1 day for anything else. Then the red dot, a line in the menu, "Syncing hasn't worked since …" in Settings, and a pop-up (`src/syncLateMessage.js`): "Open sync settings" or "Not now", which puts it away for a day; never over another pop-up or while writing. No off switch (a warning about losing data, not a nudge).
+  - **"Self-hosting?"** under the introduction's code box and above its new code: Settings' server chooser, now one piece of code for all three places (`src/syncServerChoice.js`).
+  - **The server in the link:** a device on a server other than the usual one makes `#sync=<code>&server=<address>` links and QR codes, and the saved code names the server; joining from such a link or scan chooses that server first.
+- **Pictures:** `local/sync-reminder-pictures/` (`node local/sync-reminder-pictures/shoot.js` from a checkout with this folder).
+- **Tests:** 378 unit tests (new: `tests/syncTiming.test.js`, server links in `syncScan.test.js`, storage advice while syncing). Browser, each file alone after rebasing onto the first session's work: `syncSettings` 17 of 17 (new: "reminders while syncing", with a second test server started paused; a link naming a server), `sync` 8, `settings` 20, `tabs` 10, `accessibility` 12, `welcome` 11. **Full suite and grid not run.** Running five files at once in a fresh worktree hung for an hour (Vite rescanning a test browser's profile left in `local/test-browsers/`); alone they all passed.
+- **Not tried by the owner yet:** any of it on a real device. The pop-up can be seen by pausing the server (`ansible-playbook deploy.yml -e sync_paused=true`) for a day, or in the pictures.
+- **Not built:** a link naming a server, opened on a build with no usual server (the stable copy today), is not offered: the introduction hides sync there. A prompt to keep the sync code somewhere safe now and then is still open (`docs/sync.md`, "Decisions for the owner").
+- **Next:** as the first session's handover below: the owner's test of sync between phone and tablet, then the release with a "What's new" entry covering this too.
+
 **Handover from the session of 2026-11-08 (Import backup on a second thread, "A list of words" redesigned; pushed to `main` and the test copy, not `stable`, no "What's new" entry).**
 
 - **Measured first** (the owner's backup, the whole browser at about a sixth of this computer's speed): Import backup held the page up for up to 8 s choosing the file on an empty device, 14 s on one with data, and 11 s in Combine. Saving in larger parts than 2,000 a transaction was measured too and gains nothing worth having (`docs/sync.md`, "Speed").
