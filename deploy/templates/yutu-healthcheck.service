@@ -4,3 +4,5 @@ Description=Tell Healthchecks how the sync server is doing
 [Service]
 Type=oneshot
 ExecStart=/usr/local/bin/yutu-healthcheck
+# /var/lib/yutu-healthcheck: where it keeps its place in the log.
+StateDirectory=yutu-healthcheck

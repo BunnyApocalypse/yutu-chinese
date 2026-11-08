@@ -205,7 +205,7 @@ export default {
   'privacy.serverSees':
     '<b>The server sees</b> an account number made from your code (not your name), how many files you have, their sizes and when they change. There are no accounts, passwords, emails or names.',
   'privacy.addresses':
-    '<b>Your internet address</b> is used for a moment, to limit how often one address may ask, and is not written down. The server notes each request by its kind only (such as “file saved”), with no account or address.',
+    '<b>Your internet address</b> is used for a moment, to limit how often one address may ask, and is normally not written down. Only if an address goes over those limits (as when someone tries to overload the server) is it recorded, with the limit it went over and when, and deleted after at most 14 days; it is used only to look into what happened. The server notes each request by its kind only (such as “file saved”), with no account or address.',
   'privacy.where':
     '<b>Where:</b> a rented machine at Hetzner in Germany, run by the <span lang="zh-Hant-TW">玉兔中文</span> team, reached only through HTTPS.',
   'privacy.kept':

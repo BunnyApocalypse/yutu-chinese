@@ -1,0 +1,10 @@
+[Unit]
+Description=Update Caddy, once a week
+
+[Timer]
+# Sunday night, before the Monday morning restart if one is needed.
+OnCalendar=Sun *-*-* 03:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -7,10 +7,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 
-import { createSyncServer } from '../server/server.js';
+import { createSyncServer, addressKey } from '../server/server.js';
 import { serverStorage, readServerAddress, serverAnswers } from '../src/syncServer.js';
 import { createSync } from '../src/sync.js';
 import { makeCode, keysFor } from '../src/syncCode.js';
@@ -19,14 +20,15 @@ import { twoDevices, memoryDevice, learnersData } from './fixtures/devices.js';
 const ORIGIN = 'https://bunnyapocalypse.github.io';
 
 // Starts a server; `settings` as in server.js. Returns { address, folder,
-// close }.
+// server, close }.
 async function startServer(settings = {}) {
   const folder = await fs.mkdtemp(path.join(os.tmpdir(), 'yutu-sync-'));
-  const server = await createSyncServer({ dataDir: folder, log: false, ...settings });
+  const server = await createSyncServer({ dataDir: folder, log: false, print: () => {}, ...settings });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   return {
     address: `http://127.0.0.1:${server.address().port}`,
     folder,
+    server,
     async close() {
       await new Promise((resolve) => server.close(resolve));
       await fs.rm(folder, { recursive: true, force: true });
@@ -190,20 +192,141 @@ test('answers pages of the allowed sites only', () =>
     }
   }));
 
-test('limits requests and new accounts from one address', async () => {
-  await withServer({ requestsPerAddressPerMinute: 5 }, async ({ address }) => {
-    const { storage } = await account(address);
+// Saves a file as a learner at `from` would, through Caddy, which says who
+// is asking (X-Forwarded-For; the server trusts it with trustProxy).
+// Returns the status.
+async function saveFrom(address, from, keys, name = 'one') {
+  const response = await fetch(`${address}/v1/accounts/${keys.account}/files/${name}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${keys.access}`, 'X-Forwarded-For': from },
+    body: bytes('1'),
+  });
+  return response.status;
+}
+
+test('an IPv6 address counts by its /64 block', () => {
+  assert.equal(addressKey('192.0.2.7'), '192.0.2.7');
+  assert.equal(addressKey('::ffff:192.0.2.7'), '192.0.2.7');
+  assert.equal(addressKey('2001:db8:1:2:3:4:5:6'), '2001:db8:1:2::/64');
+  assert.equal(addressKey('2001:0db8:0001:0002::'), '2001:db8:1:2::/64');
+  assert.equal(addressKey('2001:db8::1'), '2001:db8:0:0::/64');
+  assert.equal(addressKey('fe80::1%eth0'), 'fe80:0:0:0::/64');
+  assert.equal(addressKey('::1'), '0:0:0:0::/64');
+  assert.equal(addressKey('64:ff9b::192.0.2.7'), '64:ff9b:0:0::/64');
+});
+
+test('requests count by account, so learners sharing an address don\'t limit each other', () =>
+  withServer({ requestsPerAccountPerMinute: 5, requestsPerAddressPerMinute: 3 }, async ({ address }) => {
+    // Each save makes its account: before it exists, counted by address.
+    const one = await account(address);
+    const two = await account(address);
+    await one.storage.save('one', bytes('1'));
+    await two.storage.save('one', bytes('1'));
     for (let count = 0; count < 5; count++) {
-      await storage.list();
+      await one.storage.list();
     }
-    await assert.rejects(storage.list(), { reason: 'too-many' });
+    await assert.rejects(one.storage.list(), { reason: 'too-many' });
+    // The other learner, at the same address, is not held up.
+    await two.storage.list();
+  }));
+
+test('refused requests count by address, without holding up its learners', () =>
+  withServer({ requestsPerAddressPerMinute: 3 }, async ({ address }) => {
+    const learner = await account(address);
+    await learner.storage.save('one', bytes('1'));
+    const stranger = serverStorage({ address, account: learner.keys.account, access: (await account(address)).keys.access });
+    // The save above was one, before its account existed.
+    await assert.rejects(stranger.list(), { reason: 'refused' });
+    await assert.rejects(stranger.list(), { reason: 'refused' });
+    await assert.rejects(stranger.list(), { reason: 'too-many' });
+    assert.equal((await fetch(`${address}/v1/health`)).status, 429);
+    await learner.storage.list();
+  }));
+
+test('limits new accounts by address (an IPv6 block as one) and in all', async () => {
+  await withServer({ newAccountsPerAddressPerDay: 2, trustProxy: true }, async ({ address }) => {
+    assert.equal(await saveFrom(address, '2001:db8:1:2::1', (await account(address)).keys), 201);
+    assert.equal(await saveFrom(address, '2001:db8:1:2::2', (await account(address)).keys), 201);
+    assert.equal(await saveFrom(address, '2001:db8:1:2:ffff::3', (await account(address)).keys), 429);
+    // Another block, another household.
+    assert.equal(await saveFrom(address, '2001:db8:1:3::1', (await account(address)).keys), 201);
   });
-  await withServer({ newAccountsPerAddressPerDay: 2 }, async ({ address }) => {
-    for (let count = 0; count < 2; count++) {
-      await (await account(address)).storage.save('one', bytes('1'));
+  await withServer({ newAccountsPerDay: 2, trustProxy: true }, async ({ address }) => {
+    assert.equal(await saveFrom(address, '192.0.2.1', (await account(address)).keys), 201);
+    assert.equal(await saveFrom(address, '192.0.2.2', (await account(address)).keys), 201);
+    assert.equal(await saveFrom(address, '192.0.2.3', (await account(address)).keys), 429);
+  });
+  // A generous address (a university's) may make ten times as many.
+  await withServer({ newAccountsPerAddressPerDay: 1, generousAddresses: ['192.0.2.0/24'], trustProxy: true }, async ({ address }) => {
+    for (let count = 0; count < 10; count++) {
+      assert.equal(await saveFrom(address, '192.0.2.9', (await account(address)).keys), 201);
     }
-    await assert.rejects((await account(address)).storage.save('one', bytes('1')), { reason: 'too-many' });
+    assert.equal(await saveFrom(address, '192.0.2.9', (await account(address)).keys), 429);
+    assert.equal(await saveFrom(address, '198.51.100.1', (await account(address)).keys), 201);
+    assert.equal(await saveFrom(address, '198.51.100.1', (await account(address)).keys), 429);
   });
+});
+
+test('keeps the last of the room for accounts already there', () =>
+  withServer({ maxTotalBytes: 1000, newAccountsUntilPercent: 50 }, async ({ address }) => {
+    const { storage } = await account(address);
+    await storage.save('one', new Uint8Array(500));
+    // The server holds 532 of 1000: no new account, but this one goes on.
+    await assert.rejects((await account(address)).storage.save('one', bytes('1')), { reason: 'server-full' });
+    await storage.save('two', new Uint8Array(100));
+  }));
+
+test('limits files being saved at once by one account', () =>
+  withServer({ uploadsAtOncePerAccount: 1 }, async ({ address }) => {
+    const { keys, storage } = await account(address);
+    await storage.save('one', bytes('1'));
+    // A save that has begun and not ended (a slow connection).
+    const url = new URL(`${address}/v1/accounts/${keys.account}/files/slow`);
+    let answered;
+    const slow = http.request(url, { method: 'PUT', headers: { Authorization: `Bearer ${keys.access}` } }, (response) => {
+      answered = response.statusCode;
+      response.resume();
+    });
+    const ended = new Promise((resolve) => slow.on('close', resolve));
+    slow.write('part');
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    await assert.rejects(storage.save('two', bytes('2')), { reason: 'too-many' });
+    slow.end('end');
+    await ended;
+    assert.equal(answered, 201);
+    // Sent in parts, without saying its size up front: kept whole.
+    assert.equal(new TextDecoder().decode(await storage.read('slow')), 'partend');
+    await storage.save('two', bytes('2'));
+  }));
+
+test('limits what one account takes in an hour', () =>
+  withServer({ downloadBytesPerAccountPerHour: 250 }, async ({ address }) => {
+    const { storage } = await account(address);
+    await storage.save('one', new Uint8Array(100));
+    await storage.read('one');
+    await storage.read('one');
+    await assert.rejects(storage.read('one'), { reason: 'too-many' });
+  }));
+
+test('writes the limits hit to the log, with the address only for those of one address', async () => {
+  const lines = [];
+  await withServer(
+    { print: (line) => lines.push(line), requestsPerAddressPerMinute: 1, maxAccountBytes: 100 },
+    async ({ address, server }) => {
+      const { storage } = await account(address);
+      await storage.save('one', new Uint8Array(50));
+      await assert.rejects(storage.save('two', new Uint8Array(50)), { reason: 'account-full' });
+      // The first save was the address's one request (its account was not
+      // made yet): these are over.
+      await fetch(`${address}/v1/health`);
+      await fetch(`${address}/v1/health`);
+      server.writeLimits();
+      assert.deepEqual(lines.sort(), ['LIMIT account-full refused 1', 'LIMIT requests-per-address refused 2 from 127.0.0.1']);
+      // Written once: nothing new, no line.
+      server.writeLimits();
+      assert.equal(lines.length, 2);
+    },
+  );
 });
 
 test('paused, it answers only whether it is up', () =>

@@ -17,3 +17,5 @@ all:
       # Optional: a Healthchecks.io (or self-hosted Healthchecks) ping URL,
       # which emails you when the server stops answering or its disk fills.
       # healthcheck_url: https://hc-ping.com/your-uuid
+      # Optional: a second ping URL, red when a limit was hit (README.md).
+      # healthcheck_limits_url: https://hc-ping.com/another-uuid

@@ -200,7 +200,7 @@ export default {
   'privacy.serverSees':
     '<b>Der Server sieht</b> eine aus deinem Code abgeleitete Kontonummer (nicht deinen Namen), wie viele Dateien du hast, ihre Größe und wann sie sich ändern. Es gibt keine Konten, Passwörter, E-Mail-Adressen oder Namen.',
   'privacy.addresses':
-    '<b>Deine Internetadresse</b> wird kurz verwendet, um zu begrenzen, wie oft eine Adresse anfragen darf, und wird nicht aufgeschrieben. Der Server vermerkt jede Anfrage nur nach ihrer Art (etwa „Datei gespeichert“), ohne Konto oder Adresse.',
+    '<b>Deine Internetadresse</b> wird kurz verwendet, um zu begrenzen, wie oft eine Adresse anfragen darf, und wird normalerweise nicht aufgeschrieben. Nur wenn eine Adresse diese Grenzen überschreitet (etwa wenn jemand versucht, den Server zu überlasten), wird sie aufgeschrieben, mit der überschrittenen Grenze und der Zeit, und nach höchstens 14 Tagen gelöscht; sie dient nur dazu, nachzusehen, was passiert ist. Der Server vermerkt jede Anfrage nur nach ihrer Art (etwa „Datei gespeichert“), ohne Konto oder Adresse.',
   'privacy.where':
     '<b>Wo:</b> eine gemietete Maschine bei Hetzner in Deutschland, betrieben vom <span lang="zh-Hant-TW">玉兔中文</span>-Team, nur über HTTPS erreichbar.',
   'privacy.kept':

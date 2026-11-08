@@ -200,7 +200,7 @@ export default {
   'privacy.serverSees':
     '<b>Il server vede</b> un numero di account ricavato dal tuo codice (non il tuo nome), quanti file hai, le loro dimensioni e quando cambiano. Non ci sono account, password, email né nomi.',
   'privacy.addresses':
-    '<b>Il tuo indirizzo internet</b> viene usato per un attimo, per limitare quanto spesso uno stesso indirizzo può fare richieste, e non viene annotato. Il server annota ogni richiesta solo per tipo (come «file salvato»), senza account né indirizzo.',
+    '<b>Il tuo indirizzo internet</b> viene usato per un attimo, per limitare quanto spesso uno stesso indirizzo può fare richieste, e di norma non viene annotato. Solo se un indirizzo supera quei limiti (come quando qualcuno prova a sovraccaricare il server) viene annotato, con il limite superato e quando, e cancellato dopo al massimo 14 giorni; serve solo a capire cosa è successo. Il server annota ogni richiesta solo per tipo (come «file salvato»), senza account né indirizzo.',
   'privacy.where':
     '<b>Dove:</b> una macchina in affitto presso Hetzner in Germania, gestita dal team di <span lang="zh-Hant-TW">玉兔中文</span>, raggiungibile solo tramite HTTPS.',
   'privacy.kept':

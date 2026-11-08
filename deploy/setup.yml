@@ -7,8 +7,9 @@
 #      then logging in by key only, never as root (tag ssh)
 #   2. every update, then security updates by themselves daily, and a
 #      weekly restart if an update needs one (tag reboot)
-#   3. the firewall: SSH, HTTP and HTTPS only (tag firewall)
-#   4. Node, and Caddy from its official COPR repository
+#   3. the firewall: SSH, HTTP and HTTPS only (tag firewall); the log kept
+#      at most 14 days (tag journal)
+#   4. Node, and Caddy from its official COPR repository, updated weekly
 #   5. the sync server's program as a service (tasks/program.yml)
 #   6. Caddy in front of it, with HTTPS (SELinux allowed to let it pass
 #      requests on: tag selinux)
@@ -185,6 +186,25 @@
         state: enabled
       tags: [firewall]
 
+    - name: The log's folder of settings
+      ansible.builtin.file:
+        path: /etc/systemd/journald.conf.d
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      tags: [journal]
+
+    - name: The log kept at most 14 days (the privacy page promises it for the addresses in LIMIT lines)
+      ansible.builtin.template:
+        src: journald-yutu.conf.j2
+        dest: /etc/systemd/journald.conf.d/10-yutu.conf
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart journald
+      tags: [journal]
+
     # ---- 4. Node and Caddy ----
 
     - name: Node, from AlmaLinux's own packages (security fixes come with the system's)
@@ -214,6 +234,25 @@
       ansible.builtin.dnf:
         name: caddy
         state: present
+
+    - name: Caddy's updates, weekly (the daily security updates leave out COPR's)
+      ansible.builtin.copy:
+        src: "templates/{{ item }}"
+        dest: "/etc/systemd/system/{{ item }}"
+        owner: root
+        group: root
+        mode: "0644"
+      loop:
+        - yutu-caddy-update.service
+        - yutu-caddy-update.timer
+      notify: Reload systemd
+
+    - name: Their timer
+      ansible.builtin.systemd_service:
+        name: yutu-caddy-update.timer
+        enabled: true
+        state: started
+        daemon_reload: true
 
     # ---- 5. The program ----
 
