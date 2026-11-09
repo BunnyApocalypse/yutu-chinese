@@ -5452,3 +5452,112 @@ button.deck-open {
   stroke: var(--muted);
   stroke-dasharray: 2 2;
 }
+
+/* ---- Learning forms in the other script (review.js, formsFlow.js) ---- */
+
+/* In the deck chooser: how many there are to learn, after the entry's
+   name; and the heading of the decks under it ("New words from"). */
+.deck-choice-note {
+  margin-left: auto;
+  padding-left: var(--space-small);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.deck-choice-heading {
+  padding-top: var(--space-medium);
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: var(--size-small);
+}
+
+/* While the forms are learned, the corner's picture of a deck is the other
+   script's 简 or 繁, as big, in a box like a card. */
+.deck-tag-han {
+  display: none;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1.8px solid currentColor;
+  border-radius: 4px;
+  font-size: var(--size-small);
+  line-height: 1;
+}
+
+@container (max-width: 479px) {
+  main.focused.learning .deck-tag.forms .deck-tag-icon {
+    display: none;
+  }
+
+  main.focused.learning .deck-tag.forms .deck-tag-han {
+    display: inline-flex;
+  }
+}
+
+/* A change, "爭 → 争", larger and in the accent color. */
+.card-face .forms-change {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--accent);
+}
+
+.forms-arrow {
+  margin: 0 var(--space-tiny);
+  font-size: var(--size-small);
+  color: var(--muted);
+}
+
+/* Step 2: where else it changes, from the top of the card, left-aligned. */
+.card-face.forms-list {
+  justify-content: flex-start;
+  align-items: stretch;
+  text-align: left;
+  overflow-y: auto;
+}
+
+.card-face.forms-list .forms-change {
+  text-align: center;
+}
+
+.card-face .forms-label {
+  margin: var(--space-small) 0 0;
+  font-size: var(--size-small);
+  color: var(--muted);
+}
+
+.forms-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-tiny);
+}
+
+.forms-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-medium);
+  align-items: baseline;
+}
+
+.forms-han {
+  font-size: var(--size-large);
+  white-space: nowrap;
+}
+
+.forms-gloss {
+  min-width: 0;
+  font-size: var(--size-small);
+  color: var(--muted);
+}
+
+.card-face .forms-more {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-tiny) var(--space-medium);
+  font-size: var(--size-large);
+}
+
+.forms-pair {
+  white-space: nowrap;
+}

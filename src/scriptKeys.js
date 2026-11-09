@@ -194,3 +194,37 @@ export function changesOfPairs(pairs, characters) {
   }
   return changes;
 }
+
+// The same for characters met as they come (the app's words, and the
+// ready-made lists' characters for "also in"): add(pairs) takes them in,
+// changesOf(traditional, simplified) gives a pair's changes, each worked
+// out once. A character which is a part changed in any pair taken in so far
+// has that one change, as in changesOfPairs, so take everything in first.
+export function createChangeTable(characters) {
+  const known = new Map();
+  const partKeys = new Set();
+  const own = (traditional, simplified) => {
+    const pair = traditional + simplified;
+    if (!known.has(pair)) {
+      known.set(pair, partChanges(traditional, simplified, characters));
+    }
+    return known.get(pair);
+  };
+  return {
+    add(pairs) {
+      for (const [traditional, simplified] of pairs) {
+        for (const change of own(traditional, simplified)) {
+          if (change.kind === 'part') {
+            partKeys.add(keyOf(change));
+          }
+        }
+      }
+    },
+    changesOf(traditional, simplified) {
+      if (partKeys.has(`${traditional}→${simplified}`)) {
+        return [{ from: traditional, to: simplified, kind: 'part' }];
+      }
+      return own(traditional, simplified);
+    },
+  };
+}

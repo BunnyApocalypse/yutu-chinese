@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 import { parseCharacters } from '../src/characters.js';
-import { partChanges, keyOf, changesOfPairs, needsLearning } from '../src/scriptKeys.js';
+import { partChanges, keyOf, changesOfPairs, needsLearning, createChangeTable } from '../src/scriptKeys.js';
 
 const characters = parseCharacters(fs.readFileSync('data/makemeahanzi/dictionary.txt', 'utf8'));
 const changes = (traditional, simplified) => partChanges(traditional, simplified, characters);
@@ -83,4 +83,15 @@ test('every key chosen to learn is still found a stroke apart', () => {
     const found = changes(traditional, simplified);
     assert.ok(found.some((change) => change.kind === 'small' && needsLearning(change)), traditional);
   }
+});
+
+test('a table of changes gives the same as changesOfPairs, each pair worked out once', () => {
+  const pairs = [['讀', '读'], ['賣', '卖'], ['說', '说']];
+  const table = createChangeTable(characters);
+  table.add(pairs);
+  const all = changesOfPairs(pairs, characters);
+  for (const [t, s] of pairs) {
+    assert.deepEqual(table.changesOf(t, s), all.get(t + s));
+  }
+  assert.equal(table.changesOf('讀', '读'), table.changesOf('讀', '读'));
 });

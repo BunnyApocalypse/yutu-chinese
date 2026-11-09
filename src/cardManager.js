@@ -96,17 +96,21 @@ export function cardsOfWord(word, cards, reviews, script) {
 // script:   the script the word is studied in
 // now:      the time, as from Date.now()
 // randomId: gives an ID for a review (db.js)
+// options:  idOf(word, type, script), the card IDs (cardIdFor; for the
+//           word's cards in the other script, otherScriptCardId), and
+//           `mark`, the field of the word that says it is learned
+//           ('learnedAt'; 'formsLearnedAt' for its forms, otherScript.js)
 //
 // Returns { word, cards, reviews }: the word as it is to be saved (learned),
 // and the new cards with the reviews that made them. Cards that have been
 // studied are left as they are.
-export function markedKnown(word, cards, types, script, now, randomId) {
+export function markedKnown(word, cards, types, script, now, randomId, { idOf = cardIdFor, mark = 'learnedAt' } = {}) {
   const studied = new Set(cards.filter((card) => card.wordId === word.id).map((card) => card.id));
   const newCards = [];
   const reviews = [];
   const kinds = kindsOf(word);
   for (const type of kinds.filter((kind) => types.includes(kind))) {
-    const id = cardIdFor(word, type, script);
+    const id = idOf(word, type, script);
     if (studied.has(id)) {
       continue;
     }
@@ -135,7 +139,7 @@ export function markedKnown(word, cards, types, script, now, randomId) {
     });
   }
   return {
-    word: word.learnedAt === undefined ? { ...word, learnedAt: now } : word,
+    word: word[mark] === undefined ? { ...word, [mark]: now } : word,
     cards: newCards,
     reviews,
   };

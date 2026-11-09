@@ -124,6 +124,9 @@
               <rect x="7.5" y="5" width="9" height="14" rx="1.5" transform="rotate(32 12 21)" />
               <rect x="7.5" y="3" width="9" height="14" rx="1.5" />
             </svg>
+            <!-- While Learn shows the forms in the other script, in place of
+                 the picture: 简 or 繁 (review.js, showDeckChoice). -->
+            <span class="deck-tag-han" aria-hidden="true"></span>
             <span class="deck-select-name"></span>
           </button>
           <!-- Speaks the word (review.js, speech.js). The picture is a loudspeaker. -->
@@ -213,6 +216,10 @@
              now are (review.js, main.js). -->
         <button id="review-now-button" class="primary" type="button" hidden data-t="review.reviewNow"></button>
         <button id="learn-next-button" class="primary" type="button" hidden data-t="review.learnNextButton"></button>
+        <!-- In Review with nothing due, while words wait to have their forms
+             in the other script learned: "Learn 简体字 forms · 12" (review.js,
+             offerForms; main.js opens Learn on them). -->
+        <button id="learn-forms-button" type="button" hidden></button>
         <!-- At the end of Review: today's cards again, as practice; at the
              end of that, all cards; and back to Review (review.js, "Practice
              at the end of Review"). -->

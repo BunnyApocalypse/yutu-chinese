@@ -298,6 +298,10 @@ function startFreePractice() {
 practiceType.addEventListener('change', startFreePractice);
 
 // keepPlace: back to Decks or Words as they were left (practiceWord).
+// True while Learn is being opened on the forms in the other script
+// (Review's "Learn 简体字 forms"), for setMode to pass on.
+let learnFormsNext = false;
+
 function setMode(newMode, { keepPlace = false } = {}) {
   mode = newMode;
   // Review, Learn and a lesson repeated share the top of the page and the
@@ -349,7 +353,9 @@ function setMode(newMode, { keepPlace = false } = {}) {
     if (mode !== 'lesson') {
       document.dispatchEvent(new CustomEvent('screen-shown', { detail: mode }));
     }
-    return review.activate(mode, { word: repeatedWord });
+    const forms = learnFormsNext;
+    learnFormsNext = false;
+    return review.activate(mode, { word: repeatedWord, forms });
   }
   // Stops any card being shown and brings the study area back for writing.
   review.deactivate();
@@ -380,8 +386,14 @@ function setMode(newMode, { keepPlace = false } = {}) {
 const sideMenu = byId('side-menu');
 function openMenu() {
   const waiting = review ? review.waitingToLearn() : 0;
-  byId('learn-tab').hidden = waiting === 0 && mode !== 'learn';
-  byId('learn-waiting').textContent = waiting > 0 ? t('menu.waiting', { count: waiting }) : '';
+  // Words waiting to have their forms in the other script learned are
+  // learned in Learn too (docs/cards.md, "Reading the other script").
+  const forms = review ? review.formsWaiting() : 0;
+  byId('learn-tab').hidden = waiting === 0 && forms === 0 && mode !== 'learn';
+  byId('learn-waiting').textContent = [
+    ...(waiting > 0 ? [t('menu.waiting', { count: waiting })] : []),
+    ...(forms > 0 ? [t('menu.formsWaiting', { count: forms })] : []),
+  ].join(' · ');
   sideMenu.showModal();
 }
 // Opening the menu is a pause in studying: a streak screen still waiting
@@ -418,6 +430,12 @@ byId('learn-next-button').addEventListener('click', () => {
   if (mode === 'review') {
     setMode('learn');
   }
+});
+// In Review with nothing due: Learn, on the forms in the other script
+// (docs/cards.md, "Reading the other script").
+byId('learn-forms-button').addEventListener('click', () => {
+  learnFormsNext = true;
+  setMode('learn');
 });
 // At the end of today's words in Learn: on to Review, where their cards now are.
 byId('review-now-button').addEventListener('click', () => setMode('review'));
@@ -1084,6 +1102,7 @@ async function startUp() {
       lessonNextButton: byId('lesson-next-button'),
       learnNextButton: byId('learn-next-button'),
       reviewNowButton: byId('review-now-button'),
+      learnFormsButton: byId('learn-forms-button'),
       learnStrip: byId('learn-strip'),
       learnedPill: byId('learned-pill'),
       addWordsButton: byId('add-words-button'),

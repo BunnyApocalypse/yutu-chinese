@@ -29,7 +29,9 @@ const byId = (id) => document.getElementById(id);
 // { id, label, depth, parentId, path } (label: the deck's own name; path:
 // its whole path); the ID of the deck chosen; the script its Chinese is in
 // (lang.js); the decks whose decks inside are shown; and choose(id), called
-// with the deck tapped.
+// with the deck tapped. A row may also have `note` (said after its name,
+// "12 to learn"), `script` (its own script, for Chinese in it) and
+// `heading` (a line of text before it, "New words from").
 let panel = null;
 let listenersAdded = false;
 
@@ -114,8 +116,14 @@ function render() {
       radio.value = row.id;
       radio.checked = row.id === chosen;
       const name = document.createElement('span');
-      fillMixed(name, row.label, script);
+      fillMixed(name, row.label, row.script ?? script);
       label.append(radio, name);
+      if (row.note) {
+        const note = document.createElement('span');
+        note.className = 'deck-choice-note';
+        note.textContent = row.note;
+        label.append(note);
+      }
       item.append(label);
       if (hasInside.has(row.id)) {
         const fold = document.createElement('button');
@@ -128,8 +136,14 @@ function render() {
           '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5 L16 12 L9 19" /></svg>';
         item.append(fold);
       }
-      return item;
-    }),
+      if (!row.heading) {
+        return item;
+      }
+      const heading = document.createElement('li');
+      heading.className = 'deck-choice-heading';
+      heading.textContent = row.heading;
+      return [heading, item];
+    }).flat(),
   );
 }
 
@@ -138,6 +152,11 @@ function render() {
 // buttons:  the buttons naming the deck chosen, each with a .deck-select-name
 // choose(deckId): called when a deck is chosen, '' for all words
 //
+// show(decks, chosenId, script, first): `first`, if given, is an entry before
+// the decks, { id, label, note, script, title } (in Learn, the forms in the
+// other script, otherScript.js): the panel then has its `title`, and the
+// decks a heading of their own.
+//
 // Returns { show(decks, chosenId, script) }, which names the deck chosen on
 // the buttons and remembers the decks for the panel.
 export function createDeckChooser({ buttons, choose }) {
@@ -145,11 +164,25 @@ export function createDeckChooser({ buttons, choose }) {
   let rows = [];
   let chosen = '';
   let script = 'traditional';
+  let title = '';
 
-  function show(decks, chosenId, scriptNow) {
+  function show(decks, chosenId, scriptNow, first = null) {
     chosen = chosenId;
     script = scriptNow;
-    rows = [{ id: '', label: t('review.allWords'), depth: 0, parentId: null, path: t('review.allWords') }];
+    title = first?.title ?? t('review.chooseDeckTitle');
+    rows = [
+      ...(first
+        ? [{ id: first.id, label: first.label, depth: 0, parentId: null, path: first.label, note: first.note, script: first.script }]
+        : []),
+      {
+        id: '',
+        label: t('review.allWords'),
+        depth: 0,
+        parentId: null,
+        path: t('review.allWords'),
+        ...(first && { heading: t('learnForms.newWordsFrom') }),
+      },
+    ];
     // The deck each row is inside is the last row one level up, since the
     // tree lists every deck straight after the one it is inside.
     const above = [];
@@ -163,7 +196,7 @@ export function createDeckChooser({ buttons, choose }) {
     }
     const current = rows.find((row) => row.id === chosen) || rows[0];
     for (const button of buttons) {
-      fillMixed(button.querySelector('.deck-select-name'), current.label, script);
+      fillMixed(button.querySelector('.deck-select-name'), current.label, current.script ?? script);
       button.setAttribute('aria-label', t('review.deckToStudyIs', { deck: current.path }));
     }
     // The decks changed while the panel was open: shown afresh.
@@ -177,7 +210,7 @@ export function createDeckChooser({ buttons, choose }) {
   for (const button of buttons) {
     button.addEventListener('click', () => {
       openPanel({
-        title: t('review.chooseDeckTitle'),
+        title,
         rows,
         chosen,
         script,
