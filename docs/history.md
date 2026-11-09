@@ -4,6 +4,12 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the eighth session of 2026-11-09 (the Show list on a phone; released to `stable` with the "What's new" entry `2026-11-09-7`).**
+
+- **Built:** the Words tab's Show list takes its whole row under 600px (`.show-choice` in `src/style.css`; the owner chose it from pictures). Browser: other script, leeches, accessibility, words, decks, 60 of 60; no full run. Italian and German written by Claude, not checked by a reader.
+- **Sync tested by the owner** between their own devices (said 2026-11-09): the "Not tried" and "Next: the owner's test of sync" lines in the handovers below are done.
+- **The sync server not checked:** this computer has no Ansible and no record of the server's SSH key, so whether `deploy.yml` was run after `01e0985` (the review's fixes) is unknown. Check with `cd deploy && ansible-playbook deploy.yml --check --diff`.
+
 **Handover from the seventh session of 2026-11-09 (a word's forms on its page, "Studied simplified forms"; released to `stable` with the "What's new" entry `2026-11-09-6`).**
 
 - **Asked by the owner** (2026-11-09): rename the Words tab "Cards", since sentences are there too? And a way to see the simplified/traditional forms cards there. **Not renamed** (advice given, the owner went on without it: a card is one question about a word, and the tab lists words; "Cards" already confused tester 4). A first draft only filtered the list, not what the owner meant: **they wanted the cards' content**.

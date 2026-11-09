@@ -13,6 +13,12 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-09-7',
+    items: ['On a phone, the Show list in Words is now as wide as the screen, so its choices are no longer cut short.'],
+    it: ['Sul telefono, l’elenco Mostra in Parole ora è largo quanto lo schermo, così le sue scelte non vengono più tagliate.'],
+    de: ['Auf dem Handy ist die Liste Zeigen unter Wörter jetzt so breit wie der Bildschirm, sodass ihre Einträge nicht mehr abgeschnitten werden.'],
+  },
+  {
     id: '2026-11-09-6',
     items: [
       'A word’s page now has its simplified (or traditional) form, folded above Cards: what changes in it and where else that change appears. It is on every word written differently, learned or not, if you use both scripts or Also read simplified.',
