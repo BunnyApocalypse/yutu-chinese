@@ -13,6 +13,21 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-09-5',
+    items: [
+      'With Also read simplified (or traditional) on, Review’s deck chooser has your cards in the other script first: choose them to review only those.',
+      '么 (yāo, “tiny”) is no longer taught as changing to 幺: they are two ways of writing one character, and in simplified text 么 nearly always stands for 麼 (as in 什麼).',
+    ],
+    it: [
+      'Con Leggere anche i semplificati (o i tradizionali) attivo, la scelta del mazzo in Ripasso ha per prime le tue carte nell’altra scrittura: sceglile per ripassare solo quelle.',
+      '么 (yāo, “minuscolo”) non viene più insegnato come se diventasse 幺: sono due modi di scrivere lo stesso carattere, e nei testi semplificati 么 sta quasi sempre per 麼 (come in 什麼).',
+    ],
+    de: [
+      'Mit Auch Kurzzeichen (oder Langzeichen) lesen stehen in der Stapelauswahl beim Wiederholen deine Karten in der anderen Schrift an erster Stelle: Wähle sie, um nur diese zu wiederholen.',
+      '么 (yāo, „winzig“) wird nicht mehr so gelehrt, als würde es zu 幺: Es sind zwei Schreibweisen desselben Zeichens, und in Kurzzeichentexten steht 么 fast immer für 麼 (wie in 什麼).',
+    ],
+  },
+  {
     id: '2026-11-09-4',
     items: ['方 may be written with its ノ before its ㇆, as many native writers do, wherever it appears (放, 房, 旁, 訪…).'],
     it: ['方 si può scrivere con la ノ prima del ㇆, come fanno molti madrelingua, ovunque compaia (放, 房, 旁, 訪…).'],
