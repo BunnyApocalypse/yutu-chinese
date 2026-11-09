@@ -1045,6 +1045,11 @@ async function startUp() {
       sentenceReadingCheckbox: byId('sentence-reading-checkbox'),
       sentenceWritingSelect: byId('sentence-writing-select'),
       typeCheckboxes: [...document.querySelectorAll('#settings-panel [data-card-type]')],
+      otherScriptLegend: byId('other-script-legend'),
+      otherScriptHint: byId('other-script-hint'),
+      otherScriptSelect: byId('other-script-select'),
+      otherScriptTypes: byId('other-script-types'),
+      otherScriptCheckboxes: [...document.querySelectorAll('#settings-panel [data-other-script-type]')],
     },
     onSettingsChange,
   );

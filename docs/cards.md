@@ -90,6 +90,14 @@ The owner, 2026-10-13: a learner switching scripts keeps their words, with the c
 - **Correcting the traditional form or the pinyin** in the pop-up panel changes the word's ID: `renameWord` in `src/db.js` moves the word, cards and reviews in one transaction.
 - **Not handled:** making the two forms the same again leaves the `#simplified` card unused; correcting traditional forms in bulk.
 
+## Reading the other script (being built)
+
+The owner, 2026-11-09: studying in traditional, they want to be able to read (看得懂) simplified, with cards only for words whose characters look really different (專業 → 专业), not for a radical (詞 → 词) or a stroke or two (黃 → 黄). Conservative: when in doubt, no cards.
+
+- **Settings › Chinese, "Also read simplified (简体字)"** (or traditional, named after the script the cards are not in; `other-script-legend`, refilled by `fillPanel` when Script changes). "Which words" (`otherScript`): `off` (the default), `different`, `all`. The kinds (`otherScriptTypes`, shown unless off, at least one): meaning and pinyin on by default, tone and writing off (the owner, 2026-11-09). Both synced, not device settings.
+- **Sorting the pairs**, from Make Me a Hanzi's breakdowns (`data/makemeahanzi/`), compared part by part: only radical forms swapped (言→讠, 金→钅, 門→门 …) is the same; a part a stroke or two apart (兌/兑) or a part simplified the usual way (戔→戋, 賣→卖) counts as readable too; anything else is different. On HSK 3.0 and TOCFL's 1,190 pairs: 369, 125, 140 and 556. The owner is checking the sorting (a review page); their moves become a hand-kept list of exceptions.
+- **Built so far:** the settings only; they do nothing yet. To come: the classifier and its tests, the cards (IDs through `cardIdFor`, the writing card being the existing `#writing#simplified`), when a word's cards start (once the word is learned, the hint says), Review, the word page, Progress.
+
 ## Leeches and suspended cards
 
 - **A leech** is a card graded Again at least `leechLapses` times after being learned (default 6, the owner's number; 2 to 30), counted from ts-fsrs's own `lapses`, so it survives rebuilding from reviews (`isLeech`, `lapsesOf` in `src/leeches.js`).

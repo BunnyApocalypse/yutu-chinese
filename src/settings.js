@@ -17,7 +17,7 @@ import {
   MAX_STREAK_WORDS,
 } from './streak.js';
 import { TARGET_RETENTIONS, DEFAULT_TARGET_RETENTION, setTargetRetention } from './scheduler.js';
-import { LANGUAGE_NAMES, language, setLanguage, formatPercent } from './text.js';
+import { LANGUAGE_NAMES, language, setLanguage, formatPercent, t } from './text.js';
 
 const MAX_NEW_WORDS_PER_DAY = 50;
 
@@ -30,7 +30,10 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //   hintSelect, newWordsInput, gradeButtonsSelect, retentionSelect,
 //   meaningDetailSelect,
 //   typeCheckboxes (a list of the four checkboxes; each has a
-//   data-card-type attribute saying which type it is)
+//   data-card-type attribute saying which type it is),
+//   otherScriptLegend, otherScriptHint, otherScriptSelect, otherScriptTypes
+//   (the box holding otherScriptCheckboxes, each with a
+//   data-other-script-type attribute)
 // onChange: called after any setting changes
 //
 // Returns an object whose properties are the current settings:
@@ -107,6 +110,12 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //   streakCards, streakWords: how many cards reviewed, or words learned, make
 //                   a day count for the streak
 //   enabledTypes:   the card types switched on, e.g. ['meaning', 'writing']
+//   otherScript:    which words also get cards for reading them in the
+//                   script their cards are not in (otherScript.js): 'off',
+//                   'different' (those that look really different, not by a
+//                   radical or a stroke or two) or 'all'
+//   otherScriptTypes: the kinds of those cards: 'meaning' and 'pinyin' (the
+//                   default), 'tone', 'writing'; at least one
 //   studyDeck:      the ID of the deck studied in Review and Learn, or ''
 //                   for all words. Chosen at the top of those two tabs, not
 //                   in the panel.
@@ -149,6 +158,11 @@ export async function createSettings(elements, onChange) {
     sentenceReadingCheckbox,
     sentenceWritingSelect,
     typeCheckboxes,
+    otherScriptLegend,
+    otherScriptHint,
+    otherScriptSelect,
+    otherScriptTypes,
+    otherScriptCheckboxes,
   } = elements;
 
   const settings = {
@@ -181,6 +195,10 @@ export async function createSettings(elements, onChange) {
     sentenceReading: await getSetting('sentenceReading', true),
     sentenceWriting: await getSetting('sentenceWriting', 'word'),
     enabledTypes: await getSetting('enabledTypes', CARD_TYPES),
+    otherScript: await getSetting('otherScript', 'off'),
+    // Meaning and pinyin at first; tone and writing are there to switch on
+    // (the owner, 2026-11-09).
+    otherScriptTypes: await getSetting('otherScriptTypes', ['meaning', 'pinyin']),
     studyDeck: await getSetting('studyDeck', ''),
   };
   // "Follow device theme" needs nothing: the style sheet does that by itself.
@@ -224,6 +242,20 @@ export async function createSettings(elements, onChange) {
     for (const checkbox of typeCheckboxes) {
       checkbox.checked = settings.enabledTypes.includes(checkbox.dataset.cardType);
     }
+    // Named after the script the cards are not in, which the Script
+    // setting just above decides.
+    const simplifiedIsOther = settings.script === 'traditional';
+    otherScriptLegend.innerHTML = simplifiedIsOther
+      ? t('settings.otherScriptLegendSimplified')
+      : t('settings.otherScriptLegendTraditional');
+    otherScriptHint.innerHTML = simplifiedIsOther
+      ? t('settings.otherScriptHintSimplified')
+      : t('settings.otherScriptHintTraditional');
+    otherScriptSelect.value = settings.otherScript;
+    otherScriptTypes.hidden = settings.otherScript === 'off';
+    for (const checkbox of otherScriptCheckboxes) {
+      checkbox.checked = settings.otherScriptTypes.includes(checkbox.dataset.otherScriptType);
+    }
   }
 
   async function change(key, value) {
@@ -253,6 +285,8 @@ export async function createSettings(elements, onChange) {
     settings.script = scriptSelect.value.replace('both-', '');
     await setSetting('bothScripts', both);
     await change('script', settings.script);
+    // "Also learn to read …" names the other script.
+    fillPanel();
   });
   pronunciationSelect.addEventListener('change', () =>
     change('pronunciation', pronunciationSelect.value),
@@ -386,6 +420,24 @@ export async function createSettings(elements, onChange) {
         return;
       }
       change('enabledTypes', enabled);
+    });
+  }
+
+  otherScriptSelect.addEventListener('change', () => {
+    otherScriptTypes.hidden = otherScriptSelect.value === 'off';
+    change('otherScript', otherScriptSelect.value);
+  });
+  for (const checkbox of otherScriptCheckboxes) {
+    checkbox.addEventListener('change', () => {
+      const chosen = otherScriptCheckboxes
+        .filter((box) => box.checked)
+        .map((box) => box.dataset.otherScriptType);
+      if (chosen.length === 0) {
+        // None at all is what "No words" above is for.
+        checkbox.checked = true;
+        return;
+      }
+      change('otherScriptTypes', chosen);
     });
   }
 

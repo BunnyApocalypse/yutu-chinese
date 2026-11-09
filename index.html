@@ -1622,6 +1622,32 @@
           <label><input type="checkbox" data-card-type="writing" /> <span data-t="settings.cardTypeWriting"></span></label>
         </fieldset>
 
+        <!-- Reading the script the cards are not in, without writing it
+             (otherScript.js). The legend names that script, so it is filled
+             in by settings.js when the Script setting changes. -->
+        <fieldset class="setting">
+          <legend id="other-script-legend"></legend>
+          <div class="setting">
+            <span>
+              <label for="other-script-select" data-t="settings.otherScriptWhich"></label>
+              <button class="help-button" type="button" data-t-aria-label="settings.whatDoesThisDo" aria-expanded="false" aria-controls="other-script-hint">?</button>
+            </span>
+            <select id="other-script-select">
+              <option value="off" data-t="settings.otherScriptOff"></option>
+              <option value="different" data-t="settings.otherScriptDifferent"></option>
+              <option value="all" data-t="settings.otherScriptAll"></option>
+            </select>
+            <p id="other-script-hint" class="hint" hidden></p>
+          </div>
+          <!-- Hidden while the choice above is Off. -->
+          <div id="other-script-types">
+            <label><input type="checkbox" data-other-script-type="meaning" /> <span data-t="settings.otherScriptMeaning"></span></label>
+            <label><input type="checkbox" data-other-script-type="pinyin" /> <span data-t="settings.otherScriptPinyin"></span></label>
+            <label><input type="checkbox" data-other-script-type="tone" /> <span data-t="settings.otherScriptTone"></span></label>
+            <label><input type="checkbox" data-other-script-type="writing" /> <span data-t="settings.otherScriptWriting"></span></label>
+          </div>
+        </fieldset>
+
         <fieldset class="setting">
           <legend data-t="settings.sentences"></legend>
           <label><input id="sentence-reading-checkbox" type="checkbox" /> <span data-t="settings.sentenceReading"></span></label>
