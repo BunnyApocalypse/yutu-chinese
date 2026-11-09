@@ -2331,9 +2331,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // The words studied: all of them, or those in the chosen deck and the
   // decks inside it. A word in several decks still has one set of cards, so
   // this only narrows down which words come up.
+  // While Review has only the cards in the other script, all words: the
+  // forms are learned across decks.
   function studyWords() {
     const deck = studyDeck();
-    if (!deck) {
+    if (!deck || reviewingOther) {
       return words;
     }
     const ids = deckWithInside(decks, deck.id);
@@ -2350,9 +2352,18 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // In Learn, the forms in the other script come first while there are some
   // (formsEntry); while they are learned the deck's picture in the corner is
   // the other script's first character, 简 or 繁 (the owner, 2026-11-09).
+  // In Review, the cards in the other script come first in the same way
+  // (otherCardsEntry).
   function showDeckChoice() {
-    const entry = formsEntry();
-    const chosen = learningForms && entry ? FORMS_CHOICE : studyDeck() ? settings.studyDeck : '';
+    const entry = formsEntry() ?? otherCardsEntry();
+    const chosen =
+      learningForms && entry
+        ? FORMS_CHOICE
+        : reviewingOther && entry
+          ? OTHER_CARDS_CHOICE
+          : studyDeck()
+            ? settings.studyDeck
+            : '';
     deckChooser.show(decks, chosen, settings.script, entry);
     deckButton.hidden = decks.length < 2 && !entry;
     deckTag.hidden = decks.length < 2 && !entry;
@@ -2396,6 +2407,16 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         sitting = null;
         round = null;
       }
+      // The cards in the other script are no deck either: chosen, Review
+      // has only them, and the deck studied stays as it was.
+      if (deckId === OTHER_CARDS_CHOICE || reviewingOther) {
+        reviewingOther = deckId === OTHER_CARDS_CHOICE;
+        if (reviewingOther || deckId === settings.studyDeck) {
+          showDeckChoice();
+          showNext();
+          return;
+        }
+      }
       settings.change('studyDeck', deckId);
     },
   });
@@ -2416,6 +2437,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   // The entry's ID in the deck chooser (no deck has it: deck IDs are random).
   const FORMS_CHOICE = '#forms';
+  // The same for the cards in the other script in Review, and whether
+  // Review has only those (see "Reviewing only the cards in the other
+  // script").
+  const OTHER_CARDS_CHOICE = '#other-cards';
+  let reviewingOther = false;
   const FORMS_PER_SITTING = 5;
   // True while Learn shows the forms (chosen in the deck chooser, or from
   // Review's end), until a deck is chosen or Learn is left.
@@ -2809,6 +2835,49 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     };
   }
 
+  // ---- Reviewing only the cards in the other script ----
+  //
+  // The owner, 2026-11-09: Review's deck chooser has "简体字 cards" before
+  // the decks, as Learn has the forms, while some of those cards exist.
+  // Chosen, Review has only the cards in the other script (otherCardsOf),
+  // of all words, and no word's own cards (studiedCardType). Not saved:
+  // opening Review again, or choosing a deck, goes back to the deck studied.
+
+  // The kinds of card Review plans: none of a word's own while only the
+  // cards in the other script are reviewed.
+  function studiedCardType(word, type) {
+    return !reviewingOther && hasCardType(word, type);
+  }
+
+  // The chooser's entry for the cards in the other script, in Review while
+  // some exist: { id, label, note, script, title, heading }, or null. The
+  // note counts those due now, new ones included.
+  function otherCardsEntry() {
+    if (mode !== 'review' || settings.otherScript === 'off') {
+      return null;
+    }
+    const all = words.filter((word) => !isSentence(word));
+    if (!all.some((word) => otherCardsOf(word)?.types.length > 0)) {
+      return null;
+    }
+    const plan = planSession(all, cards, Date.now(), {
+      newWordsPerDay: goalForToday(),
+      enabledTypes: CARD_TYPES,
+      hasCardType: () => false,
+      scriptOf: (word) => scriptFor(word, settings),
+      otherCardsOf,
+    });
+    const other = otherScriptName();
+    return {
+      id: OTHER_CARDS_CHOICE,
+      label: t(other === 'simplified' ? 'reviewOther.entrySimplified' : 'reviewOther.entryTraditional'),
+      note: t('reviewOther.due', { count: plan.dueCount + plan.newCardCount }),
+      script: other,
+      title: t('reviewOther.chooserTitle'),
+      heading: t('reviewOther.decks'),
+    };
+  }
+
   // ---- Choosing the next card ----
 
   // The script a word is shown in on the card up now: the other script on
@@ -2820,12 +2889,13 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   // A word's cards in the other script, for planSession: { script, types },
   // or null. Only for a word whose forms were learned (`formsLearnedAt`,
-  // otherScript.js), with the setting on; the kinds are the setting's.
+  // otherScript.js), with the setting on; the kinds are the setting's. None
+  // for a word written alike, or differing only by a variant (么 → 幺).
   function otherCardsOf(word) {
     if (
       settings.otherScript === 'off' ||
       word.formsLearnedAt === undefined ||
-      word.traditional === word.simplified ||
+      differingPairs(word).length === 0 ||
       isSentence(word) ||
       isRadical(word)
     ) {
@@ -3050,7 +3120,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       which,
       missedToday,
       retrievability: (card) => retrievability(card.fsrsState, now),
-      hasCardType,
+      hasCardType: studiedCardType,
       scriptOf: (word) => scriptFor(word, settings),
       otherCardsOf,
     });
@@ -3061,7 +3131,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     return (
       practiceCards(studyWords(), cards, Date.now(), {
         which: 'today',
-        hasCardType,
+        hasCardType: studiedCardType,
         scriptOf: (word) => scriptFor(word, settings),
         otherCardsOf,
       }).length > 0
@@ -3232,11 +3302,15 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // Every kind: hasCardType says which are switched on, since
       // sentences have settings of their own.
       enabledTypes: CARD_TYPES,
-      hasCardType,
+      hasCardType: studiedCardType,
       scriptOf: (word) => scriptFor(word, settings),
       otherCardsOf,
     });
     const total = plan.dueCount + plan.newCardCount;
+    // The chooser's count of cards in the other script, kept up to date.
+    if (settings.otherScript !== 'off') {
+      showDeckChoice();
+    }
     if (plan.next && !sitting) {
       if (settings.reviewStart && total > SMALLEST_LIMIT) {
         countsElement.textContent = '';
@@ -3438,6 +3512,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       mode = newMode;
       repeatedWord = word;
       learningForms = mode === 'learn' && onForms;
+      reviewingOther = false;
       formsBatch = null;
       endFormsLesson();
       // The style sheet centers the kind of card in Learn (main.learning),
@@ -3553,6 +3628,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       if (settings.otherScript === 'off' && learningForms) {
         learningForms = false;
         endFormsLesson();
+      }
+      if (settings.otherScript === 'off') {
+        reviewingOther = false;
       }
       ensureForms();
       showDeckChoice(); // the deck studied may have been chosen elsewhere

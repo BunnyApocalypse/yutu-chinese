@@ -153,9 +153,10 @@ function render() {
 // choose(deckId): called when a deck is chosen, '' for all words
 //
 // show(decks, chosenId, script, first): `first`, if given, is an entry before
-// the decks, { id, label, note, script, title } (in Learn, the forms in the
-// other script, otherScript.js): the panel then has its `title`, and the
-// decks a heading of their own.
+// the decks, { id, label, note, script, title, heading } (in Learn, the forms
+// in the other script, otherScript.js; in Review, the cards there): the
+// panel then has its `title`, and the decks a heading of their own
+// (`heading`, or "New words from").
 //
 // Returns { show(decks, chosenId, script) }, which names the deck chosen on
 // the buttons and remembers the decks for the panel.
@@ -180,7 +181,7 @@ export function createDeckChooser({ buttons, choose }) {
         depth: 0,
         parentId: null,
         path: t('review.allWords'),
-        ...(first && { heading: t('learnForms.newWordsFrom') }),
+        ...(first && { heading: first.heading ?? t('learnForms.newWordsFrom') }),
       },
     ];
     // The deck each row is inside is the last row one level up, since the

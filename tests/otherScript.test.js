@@ -35,6 +35,11 @@ test('a word lists the character pairs that differ', () => {
   assert.deepEqual(differingPairs(word('人', '人')), []);
 });
 
+test('a variant pair is not a difference: 么 yāo is not taught as 幺', () => {
+  assert.deepEqual(differingPairs(word('么', '幺')), []);
+  assert.deepEqual(differingPairs(word('什麼', '什么')), [['麼', '么']]);
+});
+
 test("a word's changes are each listed once", () => {
   assert.deepEqual(changesOfWord(word('們們', '们们'), changesOf).map(keyOf), ['門→门']);
 });

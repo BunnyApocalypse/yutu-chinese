@@ -14,16 +14,25 @@
 
 import { needsLearning, keyOf } from './scriptKeys.js';
 
+// Pairs that are two ways of writing one character, not a simplification,
+// and are never taught (the owner, 2026-11-09): 么 yāo ("tiny") is written
+// 幺 on the mainland, but in simplified text 么 is nearly always 什么's
+// (麼 → 么), so a card teaching 么 → 幺 teaches the wrong habit.
+const VARIANT_PAIRS = new Set(['么幺']);
+
 // The character pairs in which a word's two forms differ, as [traditional,
-// simplified]. A word whose two forms are not as long as each other (it
-// happens in the dictionary, rarely) is one pair, the whole word.
+// simplified], leaving out VARIANT_PAIRS. A word whose two forms are not as
+// long as each other (it happens in the dictionary, rarely) is one pair, the
+// whole word.
 export function differingPairs(word) {
   const traditional = [...(word.traditional ?? '')];
   const simplified = [...(word.simplified ?? '')];
   if (traditional.length !== simplified.length) {
     return word.traditional === word.simplified ? [] : [[word.traditional, word.simplified]];
   }
-  return traditional.map((char, i) => [char, simplified[i]]).filter(([t, s]) => t !== s);
+  return traditional
+    .map((char, i) => [char, simplified[i]])
+    .filter(([t, s]) => t !== s && !VARIANT_PAIRS.has(t + s));
 }
 
 // A word's changes, each key once, in the order of its characters.

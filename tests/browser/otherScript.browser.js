@@ -166,6 +166,51 @@ describe('cards in the other script', { concurrency: false }, () => {
     assert.equal(await textOf(page, 'script-flag'), 'trad. 繁體');
     assert.equal(await page.evaluate(`document.querySelector('#card-face .face-word').lang`), 'zh-Hant-TW');
   });
+
+  // The owner, 2026-11-09: Review's deck chooser has "简体字 cards" first,
+  // with only those cards, as Learn has the forms.
+  it('reviews only the cards in simplified when chosen in the deck chooser', async () => {
+    // Both words' own meaning cards due, and 我們's in simplified new.
+    const due = (each) => ({ ...each, due: Date.now() - DAY, fsrsState: { ...each.fsrsState, due: new Date(Date.now() - DAY).toISOString() } });
+    await inDatabase(`
+      stores.reviews.clear();
+      for (const each of ${JSON.stringify([due(card('我們|wo3men5#meaning', '我們|wo3men5', 'meaning')), due(card('人|ren2#meaning', '人|ren2', 'meaning'))])}) {
+        stores.cards.put(each);
+      }
+    `);
+    await setSettings({ script: 'traditional' });
+    await reloadApp(page);
+    await waitUntil(page, `!document.getElementById('card-face').hidden`, 'a card');
+    assert.equal(await textOf(page, 'script-flag'), '');
+    await page.evaluate(`document.getElementById('deck-choice-button').click()`);
+    await waitUntil(page, `document.getElementById('deck-choice-dialog').open`, 'the chooser');
+    assert.equal(await textOf(page, 'deck-choice-title'), 'Review what?');
+    const first = await page.evaluate(`(() => {
+      const row = document.querySelector('#deck-choice-list li');
+      return [row.querySelector('input').value, row.querySelector('input').checked, row.textContent];
+    })()`);
+    assert.deepEqual(first, ['#other-cards', false, '简体字 cards1 due']);
+    await page.evaluate(`document.querySelector('#deck-choice-list input[value="#other-cards"]').click()`);
+    await waitUntil(page, `!document.getElementById('deck-choice-dialog').open`, 'the chooser to close');
+    // Only the card in simplified, then the end, though the own cards are due.
+    await cardUp('我们');
+    assert.equal(await textOf(page, 'script-flag'), 'simp. 简体');
+    await page.evaluate(
+      `['pointerdown', 'pointerup'].forEach((type) => document.getElementById('card-face').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`,
+    );
+    await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
+    await page.evaluate(`document.querySelector('#grade-row .grade.primary').click()`);
+    await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the end of Review');
+    assert.deepEqual(
+      (await all('reviews')).map((review) => review.cardId),
+      ['我們|wo3men5#meaning#in-simplified'],
+    );
+    // All words again: the own cards come back.
+    await page.evaluate(`document.getElementById('deck-choice-button').click()`);
+    await waitUntil(page, `document.getElementById('deck-choice-dialog').open`, 'the chooser');
+    await page.evaluate(`document.querySelector('#deck-choice-list input[value=""]').click()`);
+    await waitUntil(page, `!document.getElementById('card-face').hidden && document.getElementById('script-flag').textContent === ''`, 'an own card');
+  });
 });
 
 describe('learning forms in the other script', { concurrency: false }, () => {

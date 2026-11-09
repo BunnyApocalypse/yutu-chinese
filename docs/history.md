@@ -4,6 +4,14 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the sixth session of 2026-11-09 (Review's "简体字 cards", 么 → 幺 not taught; committed on the branch `worktree-review-other-script`, not merged or pushed).**
+
+- **Asked by the owner** (2026-11-09): "a form card says 么 is simplified to 幺, that doesn't seem right", and no way to review only the cards in simplified as one chooses a deck. Also asked whether the card-flash and new-device pop-up fixes were on `stable`: they were (`755c51f`, `d93a65a`, released 2026-11-09); the owner's devices likely hadn't updated yet. To ask: are both gone after two restarts?
+- **么 → 幺:** the owner's Skritter import has 么 yāo ("tiny"), traditional 么 and simplified 幺 in CC-CEDICT: a variant, not a simplification, and 么 in simplified text is 什么's. Now never taught (`VARIANT_PAIRS`, `docs/cards.md`). Checked on the owner's backup of 2026-11-05: the only such pair among their words.
+- **"简体字 cards" in Review's deck chooser** (`otherCardsEntry`, `reviewingOther`; `docs/cards.md`, "Reviewing only them"), not saved, as Learn's forms. Italian and German written by Claude, not checked by a reader.
+- **Tests:** 419 unit tests (new: a variant pair); `otherScript.browser.js` 8 of 8 (new test checked to fail with the restriction broken); full browser run 280 of 280, the grid 384 (21 skipped).
+- **Not done:** a "What's new" entry; release when the owner says.
+
 **Handover from the fifth session of 2026-11-09 (方 with its ノ before its ㇆; released to `stable` with the "What's new" entry `2026-11-09-4`).**
 
 - **Why** (the owner, 2026-11-09): a native writer confirmed writing 方's ノ before its ㇆, so that order should pass too.
