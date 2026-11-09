@@ -4,6 +4,11 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the third session of 2026-11-09 (the README rewritten; pushed to `main`).**
+
+- **Built** (the owner, 2026-11-09): `README.md` written afresh for the app as it is now, short, with "Running your own sync server" kept as it was. The owner asked for no "local-first", no "alternative to Skritter" (it is its own thing), no free practice (not core). Pictures of the introduction and writing in both looks in `docs/images/`, taken with `SIZES=phone node scripts/ux-atlas.js` (test words only); take them again there when the looks change.
+- **Tests:** none needed (no app change).
+
 **Handover from the second session of 2026-11-09 (a sync code shown again is hidden on leaving Settings; released to `stable`).**
 
 - **Why** (the owner, 2026-11-09): "Show sync code" stayed open after leaving Settings, so the code was still up the next time Settings opened.
