@@ -142,6 +142,13 @@ describe('sync in Settings', { concurrency: false }, () => {
     assert.ok(await page.evaluate(`document.getElementById('sync-saved-button').hidden`));
     await tap(page, 'sync-code-hide');
     await waitUntil(page, shown('sync-on'), 'sync on again');
+    // Closing Settings hides it too.
+    await tap(page, 'sync-show-code-button');
+    await waitUntil(page, shown('sync-code-step'), 'the code again');
+    await page.evaluate(`document.getElementById('settings-panel').close()`);
+    await openSettings(page, 'settings-data');
+    await waitUntil(page, shown('sync-on'), 'sync on after closing Settings');
+    assert.equal(await textOf(page, 'sync-code'), '');
   });
 
   it('turns sync off, keeping the words and forgetting the code', async () => {

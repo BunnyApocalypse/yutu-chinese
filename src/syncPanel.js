@@ -172,6 +172,16 @@ export async function createSyncPanel(control) {
   byId('sync-code-cancel').addEventListener('click', hideCode);
   byId('sync-code-hide').addEventListener('click', hideCode);
 
+  // Leaving Settings hides a code shown again, so it isn't still on the
+  // screen the next time Settings opens. A code made just now stays: sync
+  // isn't on until "I've saved it", and the learner may have written it
+  // down already.
+  byId('settings-panel').addEventListener('close', () => {
+    if (shownCode && !byId('sync-code-hide').hidden) {
+      hideCode();
+    }
+  });
+
   byId('sync-now-button').addEventListener('click', () => control.syncNow());
 
   byId('sync-show-code-button').addEventListener('click', async () => {
