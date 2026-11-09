@@ -13,6 +13,12 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-09-2',
+    items: ['Your sync code, once shown again in Settings, is hidden when you close Settings.'],
+    it: ['Il codice di sincronizzazione, se lo mostri di nuovo nelle Impostazioni, viene nascosto quando chiudi le Impostazioni.'],
+    de: ['Dein Synchronisierungscode wird, wenn du ihn in den Einstellungen erneut anzeigst, beim Schließen der Einstellungen wieder verborgen.'],
+  },
+  {
     id: '2026-11-09',
     items: [
       'Sync between devices: your words, progress and settings stay the same on your phone, tablet and computer. Everything is encrypted on your device before it is sent, and there is no account to make. Turn it on in Settings › Your data and backups.',

@@ -4,6 +4,13 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the second session of 2026-11-09 (a sync code shown again is hidden on leaving Settings; released to `stable`).**
+
+- **Why** (the owner, 2026-11-09): "Show sync code" stayed open after leaving Settings, so the code was still up the next time Settings opened.
+- **Built:** closing Settings (`settings-panel`'s `close`) hides a code shown again (`src/syncPanel.js`; `docs/sync.md`). A code just made, before "I've saved it", stays: sync isn't on yet, and the learner may have written it down.
+- **Released to `stable`** (the owner, 2026-11-09) with the "What's new" entry `2026-11-09-2`. Italian and German written by Claude, not checked by a reader.
+- **Tests:** `syncSettings.browser.js`, 24 of 24, with a new step in "shows the code again only after a warning, and hides it again". No full browser run.
+
 **Handover from the session of 2026-11-09 (sync offered to existing users, sync chosen at first in the introduction; pushed to `main` and the test copy, not `stable`).**
 
 - **Asked by the owner before releasing** (2026-11-09): a pop-up offering sync once to someone already using the app (`src/syncInvite.js`), and "Turn on sync" chosen at first on the introduction's last screen (finishing still waits for the code to be ticked as saved; the owner: that tick is consent enough, with "Just this device" beside it). Details: `docs/sync.md`. Italian and German written by Claude, not checked by a reader. Pictures: `local/sync-invite-pictures/`.
