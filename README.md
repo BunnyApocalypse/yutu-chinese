@@ -2,37 +2,64 @@
 
 玉兔, the Jade Rabbit, lives on the moon.
 
-A personal, local-first Chinese character writing trainer. It runs entirely in the browser: no account, no server, and it works offline once it has been opened.
+A free, local-first app for learning to write Chinese characters, and to read, pronounce and understand the words they make. It is an alternative to Skritter: your own handwriting, graded fairly, with spaced repetition. It runs in the browser, needs no account, and works offline once it has been opened.
 
-**Use it at https://bunnyapocalypse.github.io/yutu-chinese/.** On a phone or tablet, open that address and choose "Install app" or "Add to Home Screen" from the browser's menu. The first time, it saves itself, the stroke data for about 10,600 characters and a dictionary on the device (about 18 MB to download, 45 MB stored); Settings shows the progress. After that it needs no connection. When a newer version has been published, a "New version ready" button appears.
+**Use it at https://bunnyapocalypse.github.io/yutu-chinese/**
 
-Stroke display and grading are done by [Hanzi Writer](https://hanziwriter.org/).
+On a phone or tablet, open that address and choose "Install app" or "Add to Home Screen" from the browser's menu, and it works like an app of its own. The first time, it saves the stroke data for about 10,600 characters and a dictionary on the device in the background (Settings shows the progress); after that it needs no connection. Recordings are kept once played, or all at once from Settings (about 125 MB). When a new version is out, a "New version ready" button appears, and "What's new" says what changed.
 
-## Status
+The interface is in English, Italian and German.
 
-- **Review:** each word has up to four cards, scheduled separately by the [FSRS](https://github.com/open-spaced-repetition/ts-fsrs) scheduler:
-  - **Writing:** you are shown a meaning and write the word stroke by stroke. Your own handwriting stays on screen, and the printed character appears underneath when you finish so you can compare.
-  - **Tone:** you are shown the word and give the tone of each character, by tapping a button or drawing the tone mark.
-  - **Pinyin** and **Meaning:** you are shown the word, recall its reading or meaning, and reveal the answer.
+## What it does
 
-  After each card you grade yourself; where the app can check your answer it suggests a grade.
-- **Learn:** words you add wait until you learn them. Each is taught in a short lesson: a look at the word, its tones, each stroke shown until you write it, the outline, then from memory. Only then does it come up in Review.
-- **Free practice:** try any kind of card for a word, or write any characters at all. Nothing is recorded.
-- Traditional, simplified or both: learning one script, you are only asked for and shown that one. You can switch later and keep your words: writing the ones that differ is learned again in the new script, and what you knew in the old one is kept. Traditional uses Taiwan-standard forms and stroke order; where the mainland stroke order uses the same strokes, that is accepted too.
-- Two strokes written without lifting the pen (such as the hook of 子) are accepted where one runs into the next.
-- A short introduction the first time, which sets up the script, pronunciation and kinds of card, and explains why the app asks to store its data for the long term.
-- Ready-made word lists to start from: HSK 3.0, HSK 2.0 and TOCFL, added level by level.
-- A **Words** tab to add your words (the app starts with none): one at a time, with the fields filled in from a built-in dictionary as you type the characters, or as a list from a TSV or CSV file. Words can be searched, changed, moved to the front of the queue, and removed. A word can also be corrected from the answer page of a review.
-- A choice between keeping your own handwriting on screen ("raw input") and having each correct stroke snap to the printed one.
-- Settings for new words per day, which kinds of card you want, how much of a dictionary entry is filled in as a word's meaning, and pronunciation: mainland only, or both mainland and Taiwan with either one first. With both, tone cards accept both regions' tones.
+### Writing
+
+- **Write with your finger, a stylus or a mouse.** Your own handwriting stays on screen as you drew it ("raw input"), with the printed character shown underneath when you finish so you can compare; or each correct stroke can snap to the printed one.
+- **Grading that isn't fussy.** Small, awkward strokes pass when written reasonably, and common handwriting shortcuts are accepted, such as 子 in two strokes or two strokes joined without lifting the pen. The character can be written anywhere in the box, at a natural size.
+- **Traditional, simplified, or both, each first-class.** Traditional uses Taiwan-standard forms and stroke order (為 with 9 strokes, 辶 and 艹 with 4); where the mainland order differs only in the order of the same strokes, it is accepted too. You can switch script later and keep your words.
+- **Gestures:** hold still on the writing area for a hint, or swipe up to start the character again.
+
+### Studying
+
+- **Four kinds of card for each word**, each scheduled on its own with [FSRS](https://github.com/open-spaced-repetition/ts-fsrs): **writing** (see the meaning, write the word), **tone** (tap or draw each character's tone), **pinyin** and **meaning** (recall, then reveal). Turn off the kinds you don't want.
+- **Learn:** new words wait until you learn them, a set number a day. Each is taught in a short lesson: a first look, its tones, each stroke shown until you write it, then the outline, then from memory.
+- **Review:** the cards that are due, the most overdue first. You grade yourself; where the app can check your answer, it suggests the grade. Choose how many cards to do, and keep practicing at the end without changing any schedule.
+- **Free practice:** any kind of card for any word, or write any characters at all. Nothing is recorded.
+- **Leeches:** cards you keep forgetting are pointed out, or suspended if you prefer. Download them as a list, or copy them as a prompt for an AI to make memory aids.
+- **Sentences:** make cards from a word's example sentence, or your own: read the sentence, or write the missing word or the whole sentence.
+- **Mainland or Taiwan pronunciation, or both** with either one first; with both, tone cards accept both regions' tones.
+- **Streaks and encouragement** that can each be turned off in Settings.
+
+### Words and decks
+
+- **The app starts empty: you choose what to learn.** Add words one at a time, filled in from the built-in dictionary (CC-CEDICT) as you type the characters, or a whole list from a file or pasted text.
+- **Ready-made lists:** HSK 3.0, HSK 2.0, TOCFL, and the 214 Kangxi radicals, added level by level, grouped into themes.
+- **Decks and sub-decks.** A word can be in several decks and still has one schedule; study one deck or all of them.
+- **A page for every word:** its characters and how each is built, a tip for remembering it, a learning note and example sentence for the ready-made lists' words, its cards and their history. Suspend, resume or start over any card, alone or for many words at once.
+- **Hear any word**, from recordings of native speakers, or put together syllable by syllable when a word has none.
+- **Progress:** today's numbers, your cards from new to mature, the days you studied, time spent, and words and characters learned over time.
+
+### Bringing your history along
+
+- **From Anki:** `.apkg` and `.colpkg` files, with their schedules and review history.
+- **From Skritter:** the `.zip` of your data that Skritter's support sends on request. The app explains how to ask for it, with a letter ready to copy.
+
+Importing again later adds only what is new.
+
+### Comfort
+
+- Three looks (Yutu light, Yutu dark, or follow the device), with colors checked for contrast in both, and the OpenDyslexic font as an option.
+- A short introduction the first time, and tips that show the first time something is used (they can be switched off).
 
 ## Your data
 
-Everything is stored in your browser on your device (IndexedDB). There is no account and no sync: each device, and each address you open the app from, has its own separate progress.
+**Everything is stored on your device**, in the browser's own database. There is no account, and nobody but you can read your words or your progress.
 
-Use **Export backup** to save everything as one file, and **Import backup** to load such a file on another device. Importing replaces what is on that device.
+- **Sync between devices** (optional): your words, progress and settings stay the same on your phone, tablet and computer. Turn it on in Settings › Your data and backups, save the sync code it gives you, and enter or scan that code on your other devices. Everything is encrypted on the device before it is sent, so the sync server only ever holds files it can't read. The server is our own small free-software program, and you can run your own (below).
+- **Backups:** Export backup saves everything as one file; Import backup loads it on any device, replacing what is there or combining the two.
+- **Keep your sync code somewhere safe.** If every device is lost or wiped, the code is the only way to get the synced data back; without it, nobody can open it, us included.
 
-Syncing between devices is being tested in the test copy (https://bunnyapocalypse.github.io/yutu-chinese/test/). It is optional, and everything is encrypted on the device before it is sent, so the sync server can't read it. You can run your own sync server: see "Running your own sync server" below.
+How syncing works, and why it is built this way: `docs/sync.md`.
 
 ## Running your own sync server
 
@@ -75,47 +102,48 @@ On each device, before turning sync on or joining: Settings › Your data and ba
 - **No backups needed:** every device keeps everything and sends it all again if the server loses it. Stopping the server loses nobody's words; syncing just stops.
 - **Limits** keep one person from filling the server or using it as free storage. For a school whose class turns sync on together, give its address more room: `GENEROUS_ADDRESSES` (`server/README.md`).
 
-## Running it
+## Feedback
 
-You need [Node.js](https://nodejs.org/) 20.19 or newer.
+Use "Send feedback" in the app's menu: it opens an email with the app's version and your device already filled in (nothing about your words), or points to this repository's [issue tracker](https://github.com/BunnyApocalypse/yutu-chinese/issues).
+
+## Developing
+
+You need [Node.js](https://nodejs.org/) 20.19 or newer (22 or newer for the browser tests and the sync server).
 
 ```
-npm install      # once, downloads the dependencies
-npm run dev      # starts the dev server
-npm test         # runs the tests
+npm install            # once, downloads the dependencies
+npm run dev            # the app at http://localhost:5173
+npm test               # unit tests
+npm run test:browser   # the real app in headless Chromium, about four minutes
+npm run sync-server    # a sync server on this computer, http://127.0.0.1:8787
+npm run build          # the published version, in dist/
 ```
 
-`npm run test:browser` runs a second set of tests that write characters in the real app, in several browsers at once. It needs Node.js 22 or newer and Chromium or Chrome installed, and takes about half a minute.
+On a phone on the same Wi-Fi, open the "Network" address Vite prints. The browser tests need Chromium or Chrome installed; don't change files while they run, since the dev server reloads the pages.
 
-Then open:
+It is plain JavaScript with no framework, built with [Vite](https://vite.dev/). Stroke display and grading are done by [Hanzi Writer](https://hanziwriter.org/). All data stays in IndexedDB; a service worker keeps the app working offline.
 
-- on this computer: http://localhost:5173
-- on a phone on the same Wi-Fi: the "Network" address Vite prints, e.g. `http://192.168.10.200:5173`
+- `docs/README.md` is the index of the design notes, one file per area of the app; `docs/layout.md` lists every file.
+- `CLAUDE.md` holds the rules that cut across the code.
+- Stroke data is copied into `public/` the first time you run `npm run dev` or `npm run build`.
 
-Stop the server with Ctrl+C.
+**Deploying:** pushing `main` publishes the test copy at https://bunnyapocalypse.github.io/yutu-chinese/test/ (its data is kept apart from the main copy's); the `stable` branch is the main copy (`.github/workflows/deploy.yml`).
 
-`npm run build` makes the version that is published, in `dist/`. Every push to `main` builds and publishes it to the address above (`.github/workflows/deploy.yml`).
+## License and credits
 
-## Stroke data
+The app's own code is free software under the GNU General Public License, version 3 only: see [LICENSE](LICENSE).
 
-Stroke data comes from two sources, both licensed under the Arphic Public License:
+It is built on the work of others. Each keeps its own license, and each data set has a README with its source in its own folder:
 
-- [hanzi-writer-data](https://github.com/chanind/hanzi-writer-data), derived from [Make Me a Hanzi](https://github.com/skishore/makemeahanzi): about 9,500 characters.
-- [animCJK](https://github.com/parsimonhi/animCJK): Taiwan-standard forms for about 1,000 traditional characters, kept in `data/animcjk/`. These are used when the script is set to Traditional. Traditional characters outside this set fall back to the first source, whose forms can differ from the Taiwan standard.
+- **Stroke data:** [Make Me a Hanzi](https://github.com/skishore/makemeahanzi) (by way of [hanzi-writer-data](https://github.com/chanind/hanzi-writer-data)) and [AnimCJK](https://github.com/parsimonhi/animCJK) for Taiwan's forms (`data/animcjk/`), under the Arphic Public License. That license is not compatible with the GPL, so the stroke data is kept as separate data files the app loads, not part of its code.
+- **How characters are built:** Make Me a Hanzi's dictionary (`data/makemeahanzi/`), GNU LGPL.
+- **Dictionary and tones:** [CC-CEDICT](https://cc-cedict.org/wiki/) (`data/cedict/`), CC BY-SA 4.0.
+- **Recordings:** [audio-cmn](https://github.com/hugolpz/audio-cmn) (`data/audio-cmn/`), CC BY-SA.
+- **Learning notes, example sentences and character tips** (`data/notes/`, `data/character-tips/`): written for this app by an AI model (Anthropic's Claude), CC BY-SA 4.0. No fluent speaker has checked them all line by line, so they may be wrong; the app says which ones have been checked.
+- **Word lists:** HSK from [ivankra/hsk30](https://github.com/ivankra/hsk30) and [glxxyz/hskhsk.com](https://github.com/glxxyz/hskhsk.com) (MIT); TOCFL from the list published by Taiwan's Steering Committee for the Test of Proficiency-Huayu, which states no license; the Kangxi radicals from Unicode's CJKRadicals.txt (`data/wordlists/`).
+- **The OpenDyslexic font** (`public/fonts/opendyslexic/`): SIL Open Font License 1.1, kept as separate font files.
+- **Libraries:** [Hanzi Writer](https://github.com/chanind/hanzi-writer), [ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs), [sql.js](https://github.com/sql-js/sql.js) and [fzstd](https://github.com/101arrowz/fzstd) (reading Anki files), [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (MIT) and [jsQR](https://github.com/cozmo/jsQR) (Apache 2.0) for the sync code's QR code.
 
-Both are copied into `public/` automatically the first time you run `npm run dev` or `npm run build`.
+The full list is under Help › Credits and licenses in the app.
 
-## License
-
-The app's own code is free software under the GNU General Public License, version 3. See [LICENSE](LICENSE).
-
-The stroke data is **not** covered by the GPL. It is separate material under the Arphic Public License, a free license of its own that is not compatible with the GPL, so it keeps that license:
-
-- `data/animcjk/` (see the README in that folder)
-- the `hanzi-writer-data` package, downloaded by `npm install`
-
-The HSK word lists in `data/wordlists/hsk/` are built from [ivankra/hsk30](https://github.com/ivankra/hsk30) and [glxxyz/hskhsk.com](https://github.com/glxxyz/hskhsk.com), both under the MIT License (see the README in that folder). The TOCFL word list in `data/wordlists/tocfl/` is built from the file published by the test's committee, which states no license (see the README there).
-
-The tone table and the dictionary in `data/cedict/` are adapted from [CC-CEDICT](https://cc-cedict.org/wiki/) and are under the Creative Commons Attribution-ShareAlike 4.0 license (see the README in that folder).
-
-The libraries the app uses, [Hanzi Writer](https://github.com/chanind/hanzi-writer) and [ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs), are under the MIT license, which is compatible with the GPL.
+Skritter is a trademark of Inkren Inc. 玉兔中文 can import the data Skritter sends you, but is not affiliated with or endorsed by Skritter.
