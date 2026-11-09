@@ -1528,9 +1528,14 @@ export function createQuiz(target, size, handlers) {
         completed = true;
         let order = null;
         if (baseData.altOrder) {
-          // (The big set's 忄 has the Taiwan order second: inTaiwanOrder.)
+          // (The big set's 忄 has the Taiwan order second: inTaiwanOrder.
+          // A 方 alone has its ノ before its ㇆ second: withFangInEitherOrder.)
           const standard = isStandardOrder(sequenceWithoutGrassJoins());
-          order = standard !== Boolean(baseData.altOrderIsTaiwan) ? 'moe' : 'mainland';
+          if (baseData.altOrderIsFang) {
+            order = standard ? 'moe' : 'other';
+          } else {
+            order = standard !== Boolean(baseData.altOrderIsTaiwan) ? 'moe' : 'mainland';
+          }
         }
         showDemo(sequence.length); // nothing left to show
         const passed = handlers.onComplete({ totalMistakes: mistakes, hintShown, order });

@@ -34,7 +34,7 @@ import { innerBoxForms } from '../../src/innerBox.js';
 // 9th stroke in its mainland shape was refused at half size, bottom right,
 // with or without this). Half the size is no longer followed (MIN_SCALE in
 // src/frame.js, 2026-11-08): the owner writes at 0.6 of the box and up.
-const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢愉母出長麼這謝子好食房藍雨草花觀聽充流育骨體滑郵華飽薦遍');
+const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢愉母出長麼這謝子好食房藍雨草花觀聽充流育骨體滑郵華飽薦遍方旁');
 
 // Where and how big the character is written, compared with the centered
 // reference: `scale` times the size, moved `dx` to the right and `dy` up, in
@@ -158,12 +158,15 @@ describe('writing grid', { concurrency: BROWSER_COUNT }, () => {
   for (const char of CHARS) {
     const data = loadStrokeData(char);
     const moeOrder = data.medians.map((median, index) => index);
-    // (The big set's 忄 has the Taiwan order second: inTaiwanOrder.)
+    // (The big set's 忄 has the Taiwan order second: inTaiwanOrder. A 方
+    // alone has its ノ before its ㇆ second: withFangInEitherOrder.)
     const orders = !data.altOrder
       ? { MOE: moeOrder }
       : data.altOrderIsTaiwan
         ? { MOE: data.altOrder, mainland: moeOrder }
-        : { MOE: moeOrder, mainland: data.altOrder };
+        : data.altOrderIsFang
+          ? { MOE: moeOrder, '方 ノ first': data.altOrder }
+          : { MOE: moeOrder, mainland: data.altOrder };
     const ways = Object.entries(orders).map(([orderName, strokeOrder]) => ({
       label: `${orderName} order`,
       strokeOrder,

@@ -177,7 +177,8 @@ export function createWordFlow(elements) {
   let suggestedPerChar = []; // the verdict the app proposed (true = passed)
   let passedPerChar = []; // the verdict that stands (true = passed)
   let orderPerChar = []; // 'moe' or 'mainland' where a character has two
-  //                        accepted stroke orders, otherwise null
+  //                        accepted stroke orders ('other' for a 方 with its
+  //                        ノ before its ㇆), otherwise null
   let skippedPerChar = []; // true where the character was skipped, not written
   let finishedPerChar = []; // true once the character has been written or skipped
   let drawingPerChar = []; // a copy of the raw input as each character was

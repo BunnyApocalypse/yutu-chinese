@@ -30,7 +30,10 @@
 //               Also added when loaded to the big set's characters with a
 //               艹 written 丨 一 丨 一 (the data's own order) or a 忄 written
 //               丶 丶 丨 (the Taiwan order, then marked altOrderIsTaiwan;
-//               inTaiwanOrder in shortcuts.js).
+//               inTaiwanOrder in shortcuts.js). In both scripts, also
+//               added to every character with a 方, its ノ before its ㇆
+//               (withFangInEitherOrder; marked altOrderIsFang when that is
+//               all that differs).
 //   altShapes:  Taiwan set only, for some characters: strokes the mainland
 //               form writes in another shape in the same place, as
 //               { strokeNum: median } (the dot under 人 in 食, where Taiwan's
@@ -45,7 +48,7 @@
 // 1024 across, and from about -124 (bottom) to 900 (top) upwards.
 
 import { innerBoxForms } from './innerBox.js';
-import { inTaiwanOrder } from './shortcuts.js';
+import { inTaiwanOrder, withFangInEitherOrder } from './shortcuts.js';
 
 // BASE_URL is the folder the app is served from ("/" during development).
 const BASE = import.meta.env.BASE_URL;
@@ -114,9 +117,10 @@ export async function loadCharData(char, script) {
       const bigSetData = await fetchCharFile('char-data', char);
       data = bigSetData && inTaiwanOrder(bigSetData);
     }
-    return data && withSecondForms(char, data);
+    return data && withSecondForms(char, withFangInEitherOrder(data));
   }
-  return fetchCharFile('char-data', char);
+  const data = await fetchCharFile('char-data', char);
+  return data && withFangInEitherOrder(data);
 }
 
 // The traditional character's data with all its second forms as `altForms`:

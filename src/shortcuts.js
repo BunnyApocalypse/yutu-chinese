@@ -13,7 +13,8 @@
 //
 // Only pairs are handled, and one shortcut that changes the order: 艹 in 3
 // strokes (see "艹 in three strokes" below). At the end, the big set's 艹 and
-// 忄 are put in the Taiwan order for traditional writing. Three or more
+// 忄 are put in the Taiwan order for traditional writing, and 方 gets its
+// ノ before its ㇆ as a second order in both scripts. Three or more
 // strokes in one go, and other shortcuts that change the order of strokes
 // or drop some, are not.
 //
@@ -427,4 +428,94 @@ export function inTaiwanOrder(charData) {
     altOrder,
     ...(heart && tops.length === 0 && { altOrderIsTaiwan: true }),
   };
+}
+
+// ---- 方 with its ノ before its ㇆ ----
+//
+// Both sets write 方 丶 一 ㇆ ノ. Many native writers put the ノ before the ㇆
+// (the owner, 2026-11-09, asked one who does), so that order is accepted
+// too, wherever 方 stands (放, 房, 旁, 訪, 旅, 族, 遊…), in both scripts:
+// charData.js adds it as altOrder (withFangInEitherOrder).
+//
+// Found by shape, as four strokes in a row: a short dot above a level
+// stroke, then a ㇆ and a ノ both hanging from the level stroke, the ㇆ going
+// right and turning down, the ノ going down and to the left of the ㇆. In
+// the Taiwan set 13 characters, in the big set 88: every one Make Me a
+// Hanzi lists with a 方 in it, and 贅, 聱 and 鏊, whose 敖 is written with
+// a 方 in that set (tests/shortcuts.test.js).
+
+// The dot is at most this share of the level stroke's length.
+const FANG_DOT_SHARE = 0.75;
+// The ㇆ goes right at least this share of the level stroke's length, then
+// down at least FANG_TURN_DROP of it.
+const FANG_TURN_RIGHT = 0.15;
+const FANG_TURN_DROP = 0.25;
+// The ノ ends at least this share of the level stroke's length left of
+// where the ㇆ begins, and that much and more below where it begins itself.
+const FANG_SWEEP_LEFT = 0.2;
+const FANG_SWEEP_DROP = 0.3;
+
+// The stroke numbers at which a 方 written 丶 一 ㇆ ノ begins: [] for most.
+export function fangsOf(charData) {
+  const { medians } = charData;
+  const first = (median) => ({ x: median[0][0], y: median[0][1] });
+  const last = (median) => ({ x: median[median.length - 1][0], y: median[median.length - 1][1] });
+  const found = [];
+  for (let at = 0; at + 3 < medians.length; at++) {
+    const [dot, level, turn, sweep] = medians.slice(at, at + 4);
+    const length = last(level).x - first(level).x;
+    if (length <= 0 || !isLevel(level)) {
+      continue;
+    }
+    const levelY = heightOf(level);
+    const over = (x) => x > first(level).x && x < last(level).x;
+    // The dot: short, going down, over the level stroke.
+    const isDot =
+      distance(first(dot), last(dot)) < FANG_DOT_SHARE * length &&
+      last(dot).y < first(dot).y &&
+      (first(dot).y + last(dot).y) / 2 > levelY &&
+      over((first(dot).x + last(dot).x) / 2);
+    // The ㇆: from under the level stroke, right as far as its corner, then down.
+    const corner = turn.reduce((best, point) => (point[0] > best[0] ? point : best));
+    const lowest = Math.min(...turn.map((point) => point[1]));
+    const isTurn =
+      first(turn).y < levelY &&
+      over(first(turn).x) &&
+      corner[0] - first(turn).x > FANG_TURN_RIGHT * length &&
+      corner[1] - lowest > FANG_TURN_DROP * length;
+    // The ノ: from under the level stroke, down to the left of the ㇆.
+    const isSweep =
+      first(sweep).y < levelY &&
+      over(first(sweep).x) &&
+      last(sweep).x < first(turn).x - FANG_SWEEP_LEFT * length &&
+      last(sweep).y < first(sweep).y - FANG_SWEEP_DROP * length;
+    if (isDot && isTurn && isSweep) {
+      found.push(at);
+    }
+  }
+  return found;
+}
+
+// A copy of `charData` whose second accepted order (`altOrder`) also has
+// the ノ of each 方 before its ㇆; `charData` itself if it has no 方. With no
+// second order before, the 方 is all that differs, which is marked
+// `altOrderIsFang`, so a review says 'other' for the order used, not
+// 'mainland'. With one (the 忄 of 愣 in traditional), the 方 joins it: the
+// two orders part in separate places, and each place may be written either
+// way (quiz.js, "Two accepted stroke orders"); the order a review notes is
+// then the 忄's or the 艹's.
+export function withFangInEitherOrder(charData) {
+  const fangs = fangsOf(charData);
+  if (fangs.length === 0) {
+    return charData;
+  }
+  const altOrder = charData.altOrder ? [...charData.altOrder] : charData.strokes.map((stroke, index) => index);
+  for (const at of fangs) {
+    const turnAt = altOrder.indexOf(at + 2);
+    // Only where the second order has the ㇆ and the ノ next to each other.
+    if (altOrder[turnAt + 1] === at + 3) {
+      [altOrder[turnAt], altOrder[turnAt + 1]] = [at + 3, at + 2];
+    }
+  }
+  return { ...charData, altOrder, ...(!charData.altOrder && { altOrderIsFang: true }) };
 }

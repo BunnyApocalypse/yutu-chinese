@@ -15,7 +15,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
-import { inTaiwanOrder } from '../../src/shortcuts.js';
+import { inTaiwanOrder, withFangInEitherOrder } from '../../src/shortcuts.js';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -656,7 +656,7 @@ export function loadStrokeData(char) {
     if (fs.existsSync(file)) {
       const data = JSON.parse(fs.readFileSync(file, 'utf8'));
       // As src/charData.js hands it over when writing traditional.
-      return folder === 'public/char-data' ? inTaiwanOrder(data) : data;
+      return withFangInEitherOrder(folder === 'public/char-data' ? inTaiwanOrder(data) : data);
     }
   }
   throw new Error(`No stroke data for ${char}. Run "node scripts/copy-char-data.js" first.`);
