@@ -19,6 +19,7 @@ import {
   judgeChar,
   formatInterval,
   cardIdFor,
+  otherScriptCardId,
   lessonSteps,
   nextToLearn,
   CARD_TYPES,
@@ -251,7 +252,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // full form) is marked as Chinese in the word's script.
   function fillWithoutChinese(element, word) {
     const parts = meaningWithoutChinese(word.definition, GAP_MARK).split(GAP_MARK);
-    const script = scriptFor(word, settings);
+    const script = cardScript(word);
     const mixed = (text) => {
       const holder = document.createElement('span');
       fillMixed(holder, text, script);
@@ -300,7 +301,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     statusRow.classList.toggle('ghost', !(writing || tone));
     // A word of one character has no row of slots on any of its cards.
     if (current) {
-      wordRow.classList.toggle('single', Array.from(current.word[scriptFor(current.word, settings)]).length === 1);
+      wordRow.classList.toggle('single', Array.from(current.word[cardScript(current.word)]).length === 1);
     }
     // These belong to the writing card and may be left over from the last
     // one. (A writing card shows its stroke count again when it starts.)
@@ -317,7 +318,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // Above the card: a note if this word is in another script than the rest
   // of the deck. Pass null to take it away.
   function showScriptFlag(word) {
-    fillMixed(scriptFlag, word ? scriptFlagFor(word, settings) : '', word ? scriptFor(word, settings) : settings.script);
+    fillMixed(scriptFlag, word ? scriptFlagFor(word, settings, cardScript(word)) : '', word ? cardScript(word) : settings.script);
     scriptFlag.hidden = scriptFlag.textContent === '';
     // It lies in the face's top corner: the face's text starts below it.
     cardFace.classList.toggle('flagged', !scriptFlag.hidden);
@@ -571,7 +572,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
             options = null;
             await suspend(word, type);
             leavePast();
-            showNotice(t('review.suspendedCard', { kind: kindName(type), word: word[scriptFor(word, settings)] }));
+            showNotice(t('review.suspendedCard', { kind: kindName(type), word: word[cardScript(word)] }));
             return true;
           },
           async startOver() {
@@ -591,7 +592,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
             graded = graded.filter((entry) => entry !== past);
             await startOver(word, type);
             leavePast();
-            showNotice(t('review.startedOver', { kind: kindName(type), word: word[scriptFor(word, settings)] }));
+            showNotice(t('review.startedOver', { kind: kindName(type), word: word[cardScript(word)] }));
             return true;
           },
         };
@@ -709,8 +710,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     }
 
     const newCard = {
-      // Writing cards are kept per script (see cardIdFor).
-      id: cardIdFor(word, type, scriptFor(word, settings)),
+      // Writing cards are kept per script (see cardIdFor); a card in the
+      // other script has an ID of its own (otherScriptCardId).
+      id: current.other ? otherScriptCardId(word, type, current.script) : cardIdFor(word, type, scriptFor(word, settings)),
       wordId: word.id,
       type,
       due: chosen.due,
@@ -726,7 +728,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       time,
       grade: value,
       suggestedGrade: suggested,
-      script: scriptFor(current.word, settings),
+      script: cardScript(current.word),
       log: chosen.log,
       // What was answered; the fields depend on the kind of card.
       ...answerDetails,
@@ -743,6 +745,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       word,
       type,
       script: review.script,
+      other: Boolean(current.other),
       cardBefore: card,
       card: newCard,
       review,
@@ -756,7 +759,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       showNotice(
         t('review.suspendedLeechNow', {
           kind: kindName(type),
-          word: word[scriptFor(word, settings)],
+          word: word[cardScript(word)],
           count: lapsesOf(newCard),
         }),
       );
@@ -894,7 +897,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     if (!left) {
       stopwatch.stop();
     }
-    current = { word: entry.word, type: entry.type, card: entry.card };
+    current = { word: entry.word, type: entry.type, card: entry.card, ...(entry.other && { script: entry.script, other: true }) };
     const back = graded.length - index;
     // Short: "Sentence · writing · the card before" took two lines on a phone.
     typeElement.textContent = t('review.labelBack', { label: labelFor(entry.word, entry.type), count: back });
@@ -1316,7 +1319,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // another word was asked for while its data loaded (wordFlow.start).
   async function showWritingCard() {
     const { word } = current;
-    const script = scriptFor(word, settings);
+    const script = cardScript(word);
     // What is written: the word; or for a sentence its missing word, with
     // the sentence and its gap shown under the meaning, or all of it.
     const asked = isSentence(word)
@@ -1413,7 +1416,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     });
     flows.tone.start({
       word,
-      script: scriptFor(word, settings),
+      script: cardScript(word),
       reading: readingOf(word),
       answers: toneAnswersOf(word),
       offerHelp: offerToneHelp(),
@@ -1442,7 +1445,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // and you choose.
   function showRecallCard(ask) {
     const { word } = current;
-    const script = scriptFor(word, settings);
+    const script = cardScript(word);
     if (ask === 'pinyin') {
       showAskedMeaning(word);
     }
@@ -1608,7 +1611,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     // A word being learned can be heard at every step.
     offerListen(true);
 
-    const script = scriptFor(word, settings);
+    const script = cardScript(word);
     if (step === 'test') {
       pinyinElement.hidden = true;
       showPartsFor('writing');
@@ -2317,6 +2320,42 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   // ---- Choosing the next card ----
 
+  // The script a word is shown in on the card up now: the other script on
+  // a card of the word there (an entry with `other` from planSession), its
+  // own everywhere else.
+  function cardScript(word) {
+    return current?.other && current.word.id === word.id ? current.script : scriptFor(word, settings);
+  }
+
+  // A word's cards in the other script, for planSession: { script, types },
+  // or null. Only for a word whose forms were learned (`formsLearnedAt`,
+  // otherScript.js), with the setting on; the kinds are the setting's.
+  function otherCardsOf(word) {
+    if (
+      settings.otherScript === 'off' ||
+      word.formsLearnedAt === undefined ||
+      word.traditional === word.simplified ||
+      isSentence(word) ||
+      isRadical(word)
+    ) {
+      return null;
+    }
+    const script = scriptFor(word, settings) === 'traditional' ? 'simplified' : 'traditional';
+    const types = CARD_TYPES.filter((type) => settings.otherScriptTypes.includes(type)).filter((type) => {
+      if (isSuspended(word, type)) {
+        return false;
+      }
+      if (type === 'writing') {
+        return !unwritable.has(word.id);
+      }
+      if (type === 'tone') {
+        return toneAnswersOf(word) !== null;
+      }
+      return true;
+    });
+    return { script, types };
+  }
+
   function hasCardType(word, type) {
     // A suspended card does not come up (see leeches.js).
     if (isSuspended(word, type)) {
@@ -2696,6 +2735,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       enabledTypes: CARD_TYPES,
       hasCardType,
       scriptOf: (word) => scriptFor(word, settings),
+      otherCardsOf,
     });
     const total = plan.dueCount + plan.newCardCount;
     if (plan.next && !sitting) {
@@ -2827,7 +2867,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // A writing card that is new starts with its lesson, unless the word
       // was just taught in the Learn tab.
       // (Not a sentence: tracing its characters would teach little.)
-      if (settings.lessons && !current.card && !isSentence(current.word) && !taughtInLearn(current.word)) {
+      // A writing card in the other script is new writing too.
+      if (settings.lessons && !current.card && !isSentence(current.word) && (current.other || !taughtInLearn(current.word))) {
         lesson = { steps: stepsFor(current.word, false), index: 0 };
       }
       const shown = current;

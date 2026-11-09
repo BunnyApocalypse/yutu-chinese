@@ -50,15 +50,31 @@ export function cardIdFor(word, type, script) {
   return script === 'simplified' && isPerScript(word, type) ? `${plain}#simplified` : plain;
 }
 
+// The ID of a card for a word in the script its cards are not in ("Also
+// read simplified", otherScript.js): "#in-simplified" or "#in-traditional"
+// added to the meaning, pinyin and tone cards, apart from the word's own
+// card of that kind, which asks in its own script. Writing is per script
+// anyway, so it is the word's writing card in that script.
+export function otherScriptCardId(word, type, script) {
+  return type === 'writing' ? cardIdFor(word, type, script) : `${cardId(word.id, type)}#in-${script}`;
+}
+
 // Every card ID a word can have, in both scripts.
 export function allCardIds(word) {
+  const other = word.traditional === word.simplified
+    ? []
+    : CARD_TYPES.flatMap((type) => [
+        otherScriptCardId(word, type, 'traditional'),
+        otherScriptCardId(word, type, 'simplified'),
+      ]);
   return [
-    ...new Set(
-      CARD_TYPES.flatMap((type) => [
+    ...new Set([
+      ...CARD_TYPES.flatMap((type) => [
         cardIdFor(word, type, 'traditional'),
         cardIdFor(word, type, 'simplified'),
       ]),
-    ),
+      ...other,
+    ]),
   ];
 }
 
@@ -169,6 +185,7 @@ export function planSession(words, cards, now, options) {
     enabledTypes,
     hasCardType = () => true,
     scriptOf = () => 'traditional',
+    otherCardsOf = () => null,
   } = options;
   const dayStart = startOfStudyDay(now);
   // A study day is not always 24 hours (summer time), so the next one's
@@ -279,6 +296,36 @@ export function planSession(words, cards, now, options) {
         offeredNewCard = true;
         if (heldUntil <= now) {
           newForKnownWords.push({ word, type, card: null });
+        } else {
+          noteAvailableAt(heldUntil, true);
+        }
+      }
+    }
+
+    // Its cards in the other script, for a word whose forms were learned
+    // there (otherScript.js): as its own cards, after them.
+    const other = otherCardsOf(word);
+    for (const type of other?.types ?? []) {
+      const card = cards.get(otherScriptCardId(word, type, other.script));
+      const siblings = studied.filter((each) => each !== card);
+      const heldUntil =
+        siblings.length > 0 ? Math.max(...siblings.map(lastReviewOf)) + SIBLING_GAP_MS : 0;
+      const entry = { word, type, card: card ?? null, script: other.script, other: true };
+      if (card) {
+        const availableAt = Math.max(card.due, heldUntil);
+        if (availableAt <= now) {
+          due.push(entry);
+        } else {
+          noteAvailableAt(availableAt, heldUntil > card.due);
+        }
+      } else {
+        newCardCount += 1;
+        if (offeredNewCard) {
+          continue;
+        }
+        offeredNewCard = true;
+        if (heldUntil <= now) {
+          newForKnownWords.push(entry);
         } else {
           noteAvailableAt(heldUntil, true);
         }

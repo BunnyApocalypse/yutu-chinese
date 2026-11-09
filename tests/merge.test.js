@@ -229,6 +229,17 @@ test('a word learned on both devices keeps the earlier lesson and its time', () 
   assert.equal(data.words[0].learnDuration, undefined);
 });
 
+test("a word's forms in the other script learned on one device stay learned, the earlier time kept", () => {
+  const learnedHere = word('朋友', 'peng2you3', { day: 1, formsLearnedAt: START + 2 * DAY });
+  // Saved later on the other device, which never learned them.
+  const notThere = word('朋友', 'peng2you3', { day: 3 });
+  const learnedLater = word('朋友', 'peng2you3', { day: 4, formsLearnedAt: START + 4 * DAY });
+  for (const [a, b] of [[learnedHere, notThere], [notThere, learnedHere], [learnedLater, learnedHere]]) {
+    const { data } = mergeBackups(device({ words: [a] }), device({ words: [b] }));
+    assert.equal(data.words[0].formsLearnedAt, START + 2 * DAY);
+  }
+});
+
 test('a word corrected on one device takes the place of the old one on the other', () => {
   // The other device still has the word under its old ID, with reviews.
   const old = word('朋友', 'peng2you3', { day: 1, learnedAt: START + DAY, learnDuration: 95000 });

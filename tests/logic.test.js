@@ -28,6 +28,7 @@ import {
   cardId,
   cardIdFor,
   allCardIds,
+  otherScriptCardId,
   lessonSteps,
   CARD_TYPES,
   SIBLING_GAP_MS,
@@ -401,8 +402,51 @@ test('only the writing card of a word that differs is kept per script', () => {
   assert.equal(cardIdFor(STUDY, 'writing', 'simplified'), '學習|xue2xi2#writing#simplified');
   assert.equal(cardIdFor(STUDY, 'meaning', 'simplified'), '學習|xue2xi2#meaning');
   assert.equal(cardIdFor(HELLO, 'writing', 'simplified'), '你好|ni3hao3#writing');
-  assert.equal(allCardIds(STUDY).length, 5);
+  // Five, and the meaning, pinyin and tone cards for reading it in either
+  // script (otherScriptCardId).
+  assert.equal(allCardIds(STUDY).length, 11);
   assert.equal(allCardIds(HELLO).length, 4);
+});
+
+test('a card in the other script has an ID of its own, but writing is per script anyway', () => {
+  assert.equal(otherScriptCardId(STUDY, 'meaning', 'simplified'), '學習|xue2xi2#meaning#in-simplified');
+  assert.equal(otherScriptCardId(STUDY, 'pinyin', 'traditional'), '學習|xue2xi2#pinyin#in-traditional');
+  assert.equal(otherScriptCardId(STUDY, 'writing', 'simplified'), cardIdFor(STUDY, 'writing', 'simplified'));
+  for (const type of CARD_TYPES) {
+    assert.ok(allCardIds(STUDY).includes(otherScriptCardId(STUDY, type, 'simplified')), type);
+  }
+});
+
+test("a word's cards in the other script come after its own, marked with their script", () => {
+  const now = at('2026-10-12T10:00:00');
+  const later = now + 30 * DAY;
+  // 學習 known in traditional, every card; its forms in simplified just learned.
+  const cards = new Map(
+    CARD_TYPES.map((type) => [
+      cardIdFor(STUDY, type, 'traditional'),
+      { due: later, firstReviewedAt: now - 30 * DAY, lastReviewedAt: now - DAY },
+    ]),
+  );
+  const otherCardsOf = (word) => (word === STUDY ? { script: 'simplified', types: ['meaning', 'pinyin'] } : null);
+  const options = { ...ALL_TYPES, scriptOf: () => 'traditional', otherCardsOf };
+  const plan = planSession([STUDY], cards, now, options);
+  assert.deepEqual(
+    [plan.next.word, plan.next.type, plan.next.card, plan.next.script, plan.next.other],
+    [STUDY, 'meaning', null, 'simplified', true],
+  );
+  assert.equal(plan.newCardCount, 2);
+  // Once that one is studied, the pinyin card waits a few minutes, as a
+  // word's cards always do, then comes.
+  cards.set(otherScriptCardId(STUDY, 'meaning', 'simplified'), { due: later, firstReviewedAt: now, lastReviewedAt: now });
+  assert.equal(planSession([STUDY], cards, now, options).next, null);
+  const after = planSession([STUDY], cards, now + SIBLING_GAP_MS, options);
+  assert.deepEqual([after.next.type, after.next.script], ['pinyin', 'simplified']);
+  // Due like any card.
+  cards.set(otherScriptCardId(STUDY, 'pinyin', 'simplified'), { due: now + DAY, firstReviewedAt: now, lastReviewedAt: now });
+  const due = planSession([STUDY], cards, now + 2 * DAY, options);
+  assert.deepEqual([due.next.type, due.next.other, due.dueCount], ['pinyin', true, 1]);
+  // Without otherCardsOf, as before.
+  assert.equal(planSession([STUDY], cards, now + 2 * DAY, { ...ALL_TYPES, scriptOf: () => 'traditional' }).next, null);
 });
 
 test('after switching script, writing is learned again and the rest carries over', () => {

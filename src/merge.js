@@ -135,8 +135,14 @@ function mergeWords(mine, theirs, currentId, removedAt) {
   // When each kind of card of a word was last started over, on either side:
   // the later time, whichever record is kept.
   const startedOverAt = new Map();
+  // When its forms in the other script were learned (otherScript.js): the
+  // earliest, as for learnedAt.
+  const formsLearnedAt = new Map();
   for (const word of [...mine, ...theirs]) {
     const id = currentId(word.id);
+    if (word.formsLearnedAt !== undefined && word.formsLearnedAt < (formsLearnedAt.get(id) ?? Infinity)) {
+      formsLearnedAt.set(id, word.formsLearnedAt);
+    }
     if (word.learnedAt !== undefined && word.learnedAt < (learned.get(id)?.learnedAt ?? Infinity)) {
       learned.set(id, { learnedAt: word.learnedAt, learnDuration: word.learnDuration });
     }
@@ -167,6 +173,9 @@ function mergeWords(mine, theirs, currentId, removedAt) {
     }
     if (startedOverAt.has(id)) {
       merged.startedOverAt = startedOverAt.get(id);
+    }
+    if (formsLearnedAt.has(id)) {
+      merged.formsLearnedAt = formsLearnedAt.get(id);
     }
     const former = [...new Set(formerIds.get(id))].filter((formerId) => formerId !== id);
     if (former.length > 0) {
