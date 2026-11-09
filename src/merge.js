@@ -291,10 +291,16 @@ function mergeCards(words, reviews, sides, removedAt) {
     // Otherwise each card's schedule is worked out afresh from its reviews.
     // Which card a review belongs to goes by the script it was made in, not
     // by its `cardId`: a review made before 2026-10-13 can carry the plain ID
-    // of a card that has since been moved to its "#simplified" ID.
+    // of a card that has since been moved to its "#simplified" ID. Except a
+    // review of a card in the other script ("#meaning#in-simplified",
+    // otherScriptCardId), which always has its card's own ID: by its script
+    // alone it would be taken for the word's own meaning card (found
+    // 2026-11-09, before any was made).
     const reviewsOfCard = new Map();
     for (const review of counted) {
-      const id = cardIdFor(word, review.type, review.script === 'simplified' ? 'simplified' : 'traditional');
+      const id = review.cardId?.includes('#in-')
+        ? review.cardId
+        : cardIdFor(word, review.type, review.script === 'simplified' ? 'simplified' : 'traditional');
       addTo(reviewsOfCard, id, review);
     }
     for (const [id, cardReviews] of reviewsOfCard) {

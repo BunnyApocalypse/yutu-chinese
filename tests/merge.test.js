@@ -240,6 +240,38 @@ test("a word's forms in the other script learned on one device stay learned, the
   }
 });
 
+test("a card in the other script keeps its own reviews when combined, apart from the word's own card", () => {
+  const study = word('學習', 'xue2xi2', { day: 1, simplified: '学习' });
+  const own = `${study.id}#meaning`;
+  const other = `${study.id}#meaning#in-simplified`;
+  // Each device has reviews the other lacks, so the cards are worked out
+  // afresh from the reviews.
+  const here = device({
+    words: [study],
+    studied: [
+      { word: study, grades: [[1, GOOD], [3, GOOD]], name: 'a' },
+      { word: study, grades: [[5, AGAIN]], script: 'simplified', cardId: other, name: 'a' },
+    ],
+  });
+  const there = device({
+    words: [study],
+    studied: [{ word: study, grades: [[1, GOOD], [3, GOOD], [9, GOOD]], name: 'a' }],
+  });
+  const { data } = mergeBackups(here, there);
+  assert.deepEqual(ids(data.cards), [own, other]);
+  const ownCard = data.cards.find((card) => card.id === own);
+  // The word's own card: its three reviews only, not the Again in simplified.
+  assert.deepEqual(
+    { fsrsState: ownCard.fsrsState, due: ownCard.due },
+    replay(data.reviews.filter((review) => review.cardId === own)),
+  );
+  const otherCard = data.cards.find((card) => card.id === other);
+  assert.deepEqual(
+    { fsrsState: otherCard.fsrsState, due: otherCard.due },
+    replay(data.reviews.filter((review) => review.cardId === other)),
+  );
+});
+
 test('a word corrected on one device takes the place of the old one on the other', () => {
   // The other device still has the word under its old ID, with reviews.
   const old = word('朋友', 'peng2you3', { day: 1, learnedAt: START + DAY, learnDuration: 95000 });
