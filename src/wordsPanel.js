@@ -584,8 +584,8 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
   // 繁體字): its forms in the other script as Learn taught them, what
   // changed and where else (formsOnPage in review.js; the owner,
   // 2026-11-09, chose the word's page and above Cards). Folded, except when
-  // the page is opened from a card in that script or from "Also read in
-  // simplified", where it is what was wanted (formsOpenNext).
+  // the page is opened from a card in that script or from "Studied
+  // simplified forms", where it is what was wanted (formsOpenNext).
   const formsPart = byId('word-page-forms');
   const formsSummary = byId('word-page-forms-summary');
   const formsBody = byId('word-page-forms-body');
@@ -610,7 +610,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     formsPart.hidden = false;
   }
 
-  // "Words I also read in simplified" (or traditional) in the Show list:
+  // "Studied simplified forms" (or traditional) in the Show list:
   // the words whose forms in the other script were learned (Learn, on
   // "简体字 forms"; otherScript.js), so their cards there can be found.
   // The option shows only with "Also read simplified" on; switched off
@@ -625,7 +625,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     const option = filterSelect.querySelector('option[value="otherScript"]');
     const on = getSettings().otherScript !== 'off';
     option.hidden = !on;
-    option.textContent = t(otherScriptName() === 'simplified' ? 'words.alsoReadSimplified' : 'words.alsoReadTraditional');
+    option.textContent = t(otherScriptName() === 'simplified' ? 'words.studiedSimplified' : 'words.studiedTraditional');
     if (!on && filterSelect.value === 'otherScript') {
       filterSelect.value = '';
     }

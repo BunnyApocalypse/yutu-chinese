@@ -212,7 +212,7 @@ describe('cards in the other script', { concurrency: false }, () => {
     await waitUntil(page, `!document.getElementById('card-face').hidden && document.getElementById('script-flag').textContent === ''`, 'an own card');
   });
 
-  // The Words tab's Show list: "Also read in simplified" lists the
+  // The Words tab's Show list: "Studied simplified forms" lists the
   // words with cards there, each with both forms; gone with the setting off.
   it('lists the words read in simplified on the Words tab', async () => {
     const option = `document.querySelector('#word-filter option[value="otherScript"]')`;
@@ -220,7 +220,7 @@ describe('cards in the other script', { concurrency: false }, () => {
     await tap(page, 'words-tab');
     await waitUntil(page, `${rows}.length === 2`, 'the words');
     assert.equal(await page.evaluate(`${option}.hidden`), false);
-    assert.equal(await page.evaluate(`${option}.textContent`), 'Also read in simplified');
+    assert.equal(await page.evaluate(`${option}.textContent`), 'Studied simplified forms');
     await choose(page, 'word-filter', 'otherScript');
     // 人 is written the same in both scripts, so it has no cards there.
     await waitUntil(page, `${rows}.length === 1`, 'only 我們');
