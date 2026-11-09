@@ -19,6 +19,9 @@
 // nothing is measured after a resize a real device would not have.
 //
 // SIZES=phone node scripts/ux-atlas.js runs one size only.
+// README=1 also adds 兔子 (the same in both scripts), first to learn and the
+// writing card in Review, for the README's pictures: docs/images/
+// writing-light.png and writing-dark.png are 16-review-writing-grades.
 // To compare a change in the looks before making it: TRY_CSS adds a few
 // lines of style to every screen, and OUT puts the pictures elsewhere, e.g.
 //   SIZES=phone OUT=local/ux-atlas-blue TRY_CSS=':root{--quiet-text:var(--accent)}' node scripts/ux-atlas.js
@@ -34,6 +37,7 @@ import {
   type,
   waitUntil,
   addTestWords,
+  pasteList,
   openLearn,
   openDeckPage,
   writingArea,
@@ -202,6 +206,10 @@ const TEST_WORDS = fs
     return { simplified, traditional, pinyin, definition };
   });
 
+// The word in the README's pictures of writing (README=1).
+const README_WORD = { simplified: '兔子', traditional: '兔子', pinyin: 'tu4zi5', definition: 'rabbit' };
+if (process.env.README) TEST_WORDS.push(README_WORD);
+
 // Walks the app at one size, filling `shots` (one entry per screen).
 async function walk(page, sizeName, size, shots) {
   const log = (text) => console.log(`[${sizeName}] ${text}`);
@@ -286,6 +294,32 @@ async function walk(page, sizeName, size, shots) {
   });
 
   await step('adding the test words', () => addTestWords(page));
+  if (process.env.README) {
+    await step('adding the README word, first to learn', async () => {
+      const w = README_WORD;
+      await openDeckPage(page);
+      await pasteList(page, `${w.simplified}\t${w.traditional}\t${w.pinyin}\t${w.definition}\n`);
+      await tap(page, 'add-list-button');
+      await waitUntil(page, `document.getElementById('word-count').textContent === '${TEST_WORDS.length}'`, 'the README word');
+      // Learn takes words by their `order`: before all the others.
+      await page.evaluate(`new Promise((resolve, reject) => {
+        const opening = indexedDB.open('hanzi-trainer');
+        opening.onsuccess = () => {
+          const tx = opening.result.transaction('words', 'readwrite');
+          const store = tx.objectStore('words');
+          store.getAll().onsuccess = (event) => {
+            const words = event.target.result;
+            const first = Math.min(...words.map((word) => word.order));
+            const word = words.find((word) => word.traditional === '${w.traditional}');
+            store.put({ ...word, order: first - 1 });
+          };
+          tx.oncomplete = resolve;
+          tx.onerror = () => reject(tx.error);
+        };
+      })`);
+      await reloadApp(page);
+    });
+  }
 
   await step('the menu', async () => {
     await tap(page, 'menu-button');
@@ -346,7 +380,7 @@ async function walk(page, sizeName, size, shots) {
     await type(page, 'word-search', '');
   });
 
-  // The lesson, every step of the first word to learn (我們, two characters).
+  // The lesson, every step of the first word to learn (我們, two characters; 兔子 with README=1).
   await step('Learn', async () => {
     await openLearn(page);
     for (let number = 1; number <= 8; number++) {
@@ -424,7 +458,9 @@ async function walk(page, sizeName, size, shots) {
           const store = tx.objectStore('cards');
           store.getAll().onsuccess = (event) => {
             for (const card of event.target.result) {
-              const due = card.type === '${type}' ? 0 : Date.now() + 365 * 86400000;
+              // With README=1, the writing card shown is the README word's.
+              const shown = card.type === '${type}' && (${type === 'writing' && Boolean(process.env.README)} ? card.id.startsWith('${README_WORD.traditional}|') : true);
+              const due = shown ? 0 : Date.now() + 365 * 86400000;
               store.put({ ...card, due, lastReviewedAt: 1 });
             }
           };

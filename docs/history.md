@@ -6,7 +6,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Handover from the third session of 2026-11-09 (the README rewritten; pushed to `main`).**
 
-- **Built** (the owner, 2026-11-09): `README.md` written afresh for the app as it is now, short, with "Running your own sync server" kept as it was. The owner asked for no "local-first", no "alternative to Skritter" (it is its own thing), no free practice (not core). Pictures of the introduction and writing in both looks in `docs/images/`, taken with `SIZES=phone node scripts/ux-atlas.js` (test words only); take them again there when the looks change.
+- **Built** (the owner, 2026-11-09): `README.md` written afresh for the app as it is now, short, with "Running your own sync server" kept as it was. The owner asked for no "local-first", no "alternative to Skritter" (it is its own thing), no free practice (not core). Pictures of the introduction and writing in both looks in `docs/images/`, of 兔子 (the same in both scripts, the owner, 2026-11-09), taken with `SIZES=phone README=1 node scripts/ux-atlas.js` (`16-review-writing-grades`, `19-welcome-1` for the introduction); take them again there when the looks change.
 - **Tests:** none needed (no app change).
 
 **Handover from the second session of 2026-11-09 (a sync code shown again is hidden on leaving Settings; released to `stable`).**
