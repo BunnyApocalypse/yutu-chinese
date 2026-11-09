@@ -206,3 +206,46 @@ export function summaryList(items, { table, view, reading, open }) {
   }
   return list;
 }
+
+// Under the answer of a card in the other script in Review, in place of the
+// word's learning note (the owner, 2026-11-09: the forms are what such a card
+// is about): its changes, and where else each is, as step 2 has them but
+// shorter, the words as pairs only; then "About this word". Null for a word
+// with no change to show (it then has its note).
+// changes: the word's changes to learn (changesOfWord, needsLearning)
+// onMore(): opens the word's page
+export function answerTip(word, changes, { table, view, elsewhere }, onMore) {
+  const tip = element('div', 'face-tip forms-tip');
+  const pair = ([traditional, simplified]) => {
+    const [before, after] = view.other === 'simplified' ? [traditional, simplified] : [simplified, traditional];
+    const shown = element('span', 'forms-pair');
+    shown.append(chinese(before, view.own), element('span', 'forms-arrow', '→'), chinese(after, view.other));
+    return shown;
+  };
+  for (const change of changes.slice(0, CHANGES_SHOWN)) {
+    tip.append(changeLine(changeShown(change, word, table, view), view));
+    const found = elsewhere(change);
+    const pairs = [
+      ...found.words.slice(0, WORDS_SHOWN).map((other) => [other.traditional, other.simplified]),
+      ...found.characters.slice(0, CHARACTERS_SHOWN),
+    ];
+    if (pairs.length > 0) {
+      const more = element('p', 'forms-more');
+      more.append(element('span', 'forms-label', t('learnForms.alsoIn')), ...pairs.map(pair));
+      tip.append(more);
+    }
+  }
+  if (tip.childElementCount === 0) {
+    return null;
+  }
+  const about = element('button', 'link-button face-tip-more', t('tip.aboutThisWord'));
+  about.type = 'button';
+  // A tap on the card's face reveals or moves on; a tap on this must not.
+  about.addEventListener('pointerup', (event) => event.stopPropagation());
+  about.addEventListener('click', (event) => {
+    event.stopPropagation();
+    onMore();
+  });
+  tip.append(about);
+  return tip;
+}

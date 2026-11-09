@@ -5561,3 +5561,15 @@ button.deck-open {
 .forms-pair {
   white-space: nowrap;
 }
+
+/* Under the answer of a card in the other script (answerTip): "Also in"
+   before the pairs, on their line. */
+.forms-tip .forms-more {
+  align-items: baseline;
+  font-size: var(--size-body);
+}
+
+.forms-tip .forms-label {
+  font-size: var(--size-small);
+  color: var(--muted);
+}

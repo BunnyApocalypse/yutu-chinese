@@ -131,6 +131,10 @@ describe('cards in the other script', { concurrency: false }, () => {
     );
     await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
     assert.match(await textOf(page, 'card-face'), /we; us/);
+    // Under the answer, the forms in place of the word's note (the owner,
+    // 2026-11-09): its change, and where else it is.
+    await waitUntil(page, `document.querySelector('#card-face .forms-tip') !== null`, 'the forms under the answer');
+    assert.match(await textOf(page, 'card-face'), /門→门Also in/);
     await page.evaluate(`document.querySelector('#grade-row .grade.primary').click()`);
     await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the end of Review');
     const reviews = await all('reviews');

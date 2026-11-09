@@ -57,10 +57,10 @@ import { createStopwatch } from './timing.js';
 import { showPastCard } from './pastCard.js';
 import { freshTaps } from './freshTap.js';
 import { t, formatDateTime } from './text.js';
-import { formsToLearn, whereElse, differingPairs } from './otherScript.js';
-import { keyOf } from './scriptKeys.js';
+import { formsToLearn, whereElse, differingPairs, changesOfWord } from './otherScript.js';
+import { keyOf, needsLearning } from './scriptKeys.js';
 import { loadForms } from './formsLoader.js';
-import { FORMS_STEPS, changeShown, changedFace, elsewhereFace, readFace, summaryList } from './formsFlow.js';
+import { FORMS_STEPS, changeShown, changedFace, elsewhereFace, readFace, summaryList, answerTip } from './formsFlow.js';
 
 // The same for a sentence, which has two kinds of card (see sentences.js).
 const SENTENCE_LABELS = {
@@ -1464,8 +1464,16 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       onReveal: () => offerGrades(GOOD, {}),
       onContinue: () => grade(suggested),
       backToCard: backToCard(),
-      // Under the answer, the word's learning tip (cardTip.js).
-      onAnswerShown: () => addTip(word, script, () => current && current.word === word && current.type === ask),
+      // Under the answer, the word's learning tip (cardTip.js); on a card in
+      // the other script, its forms instead (addFormsTip).
+      onAnswerShown: () => {
+        const still = () => current && current.word === word && current.type === ask;
+        if (current.other) {
+          addFormsTip(word, script, still);
+        } else {
+          addTip(word, script, still);
+        }
+      },
     });
   }
 
@@ -1506,6 +1514,26 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         }
       })
       .catch(() => {});
+  }
+
+  // On a card in the other script, under the answer: the changes the word
+  // has and where else each is (answerTip in formsFlow.js), in place of its
+  // learning note (the owner, 2026-11-09); the note if it has none to show.
+  function addFormsTip(word, script, still) {
+    ensureForms().then((loaded) => {
+      if (!still()) {
+        return;
+      }
+      const changes = loaded ? changesOfWord(word, loaded.table.changesOf).filter(needsLearning) : [];
+      const tip = changes.length > 0 ? answerTip(word, changes, formsContext(word), openAbout) : null;
+      if (!tip) {
+        addTip(word, script, still);
+        return;
+      }
+      cardFace.classList.add('with-tip');
+      cardFace.append(tip);
+      cardAboutButton.hidden = true;
+    });
   }
 
   // Shows a tone, pinyin or meaning card for Free practice. Returns false if
