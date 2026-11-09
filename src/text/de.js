@@ -1323,6 +1323,8 @@ export default {
   // A word's page (index.html)
   'page.startOverMakesA': '<b>Neu beginnen</b> macht eine Karte wieder neu. <b>Aussetzen</b> hält eine Karte samt Verlauf und Zeitplan zurück, bis du sie fortsetzt. <b>Ich kenne dieses Wort</b> beantwortet seine neuen Karten mit „Einfach“, sodass das Wort seine Lektion überspringt und die Karten in einigen Tagen im Wiederholen drankommen.',
   'page.editCardsSummary': 'Karten',
+  'page.formsSimplified': '简体字-Form',
+  'page.formsTraditional': '繁體字-Form',
   'page.cardsExplained':
     'Ein Wort wird als einige Karten gelernt, jede fragt nach einer Sache: Bedeutung, Pinyin, Töne oder Schreiben. Jede Karte hat ihren eigenen Zeitplan. So steht es um jede einzelne.',
   'page.knowWordButton': 'Ich kenne dieses Wort',

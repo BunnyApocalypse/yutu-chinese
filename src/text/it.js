@@ -1322,6 +1322,8 @@ export default {
   // A word's page (index.html)
   'page.startOverMakesA': '<b>Ricomincia</b> rende nuova una carta. <b>Sospendi</b> impedisce a una carta di comparire, conservandone storia e programmazione, finché non la riattivi. <b>Conosco questa parola</b> risponde «Facile» alle sue carte nuove, così la parola salta la lezione e le carte compaiono nel Ripasso tra qualche giorno.',
   'page.editCardsSummary': 'Carte',
+  'page.formsSimplified': 'Forma 简体字',
+  'page.formsTraditional': 'Forma 繁體字',
   'page.cardsExplained':
     'Una parola si studia come alcune carte, ognuna con una sola domanda: il significato, il pinyin, i toni o la scrittura. Ogni carta ha la sua programmazione. Ecco a che punto è ciascuna.',
   'page.knowWordButton': 'Conosco questa parola',

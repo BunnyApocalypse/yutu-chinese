@@ -1339,6 +1339,8 @@ export default {
   // A word's page (index.html)
   'page.startOverMakesA': '<b>Start over</b> makes a card new again. <b>Suspend</b> keeps a card from coming up, with its history and schedule, until resumed. <b>I know this word</b> answers its new cards "Easy", so the word skips its lesson and the cards come up in Review in a few days.',
   'page.editCardsSummary': 'Cards',
+  'page.formsSimplified': '简体字 form',
+  'page.formsTraditional': '繁體字 form',
   'page.cardsExplained':
     'A word is studied as a few cards, each asking one thing: its meaning, its pinyin, its tones, or writing it. Each card has its own schedule. Here is how each one stands.',
   'page.knowWordButton': 'I know this word',

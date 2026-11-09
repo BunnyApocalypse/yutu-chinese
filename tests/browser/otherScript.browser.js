@@ -227,6 +227,35 @@ describe('cards in the other script', { concurrency: false }, () => {
     assert.deepEqual(await page.evaluate(rows), ['我們 · 我们']);
     assert.equal(await page.evaluate(`document.querySelector('#word-list .entry-characters span:last-child').lang`), 'zh-Hans-CN');
 
+    // A tap opens the word's page with its forms unfolded, above its cards:
+    // the word in simplified, what changed, and what it is.
+    const forms = `document.getElementById('word-page-forms')`;
+    const openRow = (characters) =>
+      page.evaluate(`[...document.querySelectorAll('#word-list li button')].find((row) => row.querySelector('.entry-characters').textContent.startsWith(${JSON.stringify(characters)})).click()`);
+    await openRow('我們');
+    await waitUntil(page, `document.getElementById('word-page').open && !${forms}.hidden`, 'the forms on the page');
+    assert.equal(await page.evaluate(`${forms}.open`), true);
+    assert.equal(await page.evaluate(`${forms}.nextElementSibling.id`), 'edit-cards-row');
+    assert.equal(await textOf(page, 'word-page-forms-summary'), '简体字 form');
+    const body = await textOf(page, 'word-page-forms-body');
+    assert.match(body, /^我们 in simplified/);
+    assert.match(body, /門→门/);
+    assert.match(body, /門 is written 门 in simplified/);
+    await tap(page, 'word-page-close');
+
+    // From All words, folded; and none for 人, written the same.
+    await choose(page, 'word-filter', '');
+    await waitUntil(page, `${rows}.length === 2`, 'all the words again');
+    await openRow('我們');
+    await waitUntil(page, `document.getElementById('word-page').open && !${forms}.hidden`, 'the forms on the page');
+    assert.equal(await page.evaluate(`${forms}.open`), false);
+    await tap(page, 'word-page-close');
+    await openRow('人');
+    await waitUntil(page, `document.getElementById('word-page').open && !document.getElementById('word-page-cards').hidden`, "人's page");
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    assert.equal(await page.evaluate(`${forms}.hidden`), true);
+    await tap(page, 'word-page-close');
+
     await setSettings({ otherScript: 'off' });
     await reloadApp(page);
     await tap(page, 'words-tab');

@@ -60,7 +60,7 @@ import { t, formatDateTime } from './text.js';
 import { formsToLearn, whereElse, differingPairs, changesOfWord } from './otherScript.js';
 import { keyOf, needsLearning } from './scriptKeys.js';
 import { loadForms } from './formsLoader.js';
-import { FORMS_STEPS, changeShown, changedFace, elsewhereFace, readFace, summaryList, answerTip } from './formsFlow.js';
+import { FORMS_STEPS, changeShown, changedFace, elsewhereFace, readFace, summaryList, answerTip, pageForms } from './formsFlow.js';
 
 // The same for a sentence, which has two kinds of card (see sentences.js).
 const SENTENCE_LABELS = {
@@ -601,7 +601,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
             return true;
           },
         };
-    showWord(word, thisCard);
+    // From a card in the other script, its forms on the page are unfolded.
+    showWord(word, thisCard, { formsOpen: Boolean(shown.other) });
   }
 
   // After Suspend or Start over: the card left when looking back, if any,
@@ -2917,6 +2918,28 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     return { script, types };
   }
 
+  // The word's page's fold-out with its forms (pageForms in formsFlow.js):
+  // for a word with cards in the other script, as otherCardsOf has it
+  // whatever kinds are on; null for any other, or with the setting off.
+  async function formsOnPage(word) {
+    if (
+      settings.otherScript === 'off' ||
+      word.formsLearnedAt === undefined ||
+      differingPairs(word).length === 0 ||
+      isSentence(word) ||
+      isRadical(word)
+    ) {
+      return null;
+    }
+    const loaded = await ensureForms();
+    if (!loaded) {
+      return null;
+    }
+    formsState(); // the learner's own pairs added to the table
+    const changes = changesOfWord(word, loaded.table.changesOf).filter(needsLearning);
+    return { script: viewOf(word).other, parts: pageForms(word, changes, formsContext(word)) };
+  }
+
   function hasCardType(word, type) {
     // A suspended card does not come up (see leeches.js).
     if (isSuspended(word, type)) {
@@ -3616,6 +3639,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     // A word's cards in the other script, { script, types } or null (the
     // Progress tab).
     otherCardsOf,
+
+    // A word's forms in the other script for its page: { script, parts }
+    // (parts null when it has no change to show), or null.
+    formsOnPage,
 
     // Works out the next card afresh, e.g. after a setting changed.
     refresh() {

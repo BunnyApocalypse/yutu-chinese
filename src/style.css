@@ -5573,3 +5573,50 @@ button.deck-open {
   font-size: var(--size-small);
   color: var(--muted);
 }
+
+/* On a word's page, the fold-out with its forms (pageForms): the word in
+   the other script, then each change, what it is, and where else. */
+.forms-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-tiny);
+  color: var(--text-soft);
+}
+
+.forms-page p {
+  margin: 0;
+}
+
+.forms-word {
+  color: var(--muted);
+}
+
+.forms-word-han {
+  font-size: var(--size-large);
+  color: var(--text);
+}
+
+.forms-page .forms-change {
+  margin-top: var(--space-small);
+  font-size: 1.5rem;
+  color: var(--accent);
+}
+
+.forms-page .forms-label {
+  margin-top: var(--space-small);
+  font-size: var(--size-small);
+  color: var(--muted);
+}
+
+.forms-page .forms-more {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-tiny) var(--space-medium);
+  font-size: var(--size-large);
+}
+
+/* The line on a change, whole here (on a card it is cut after three). */
+.forms-page .face-tip-text {
+  display: block;
+  overflow: visible;
+}

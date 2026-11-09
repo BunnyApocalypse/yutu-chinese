@@ -87,7 +87,7 @@ const byId = (id) => document.getElementById(id);
 // Returns { show(view), edit(word), showWord(word) }; call show() whenever
 // one of the two tabs is opened ('decks' or 'words') or a setting has
 // changed (without a view: the one that was showing).
-export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord, canPractice, setMode, getMode, repeatLesson) {
+export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord, canPractice, setMode, getMode, repeatLesson, formsOnPage) {
 
 
   const countElement = byId('word-count');
@@ -350,6 +350,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     // Read afresh first: a page can lead on to another of your words.
     showCards: async (word) => {
       cardsPanel.clear();
+      showForms(word); // not waited for: the cards come at once
       await loadWord(word);
       return wordDialog.showCardsOnPage(words.find((entry) => entry.id === word.id) || word);
     },
@@ -579,6 +580,36 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
 
   // ---- The words read in the other script ----
 
+  // On a word's page, above its cards, the fold-out "简体字 form" (or
+  // 繁體字): its forms in the other script as Learn taught them, what
+  // changed and where else (formsOnPage in review.js; the owner,
+  // 2026-11-09, chose the word's page and above Cards). Folded, except when
+  // the page is opened from a card in that script or from "Also read in
+  // simplified", where it is what was wanted (formsOpenNext).
+  const formsPart = byId('word-page-forms');
+  const formsSummary = byId('word-page-forms-summary');
+  const formsBody = byId('word-page-forms-body');
+  let formsOpenNext = false;
+  // The word the fold-out is being filled for, so that an answer for a word
+  // left already is not shown.
+  let formsFor = null;
+
+  async function showForms(word) {
+    const open = formsOpenNext;
+    formsOpenNext = false;
+    formsFor = word.id;
+    formsPart.hidden = true;
+    formsBody.replaceChildren();
+    const shown = await formsOnPage(word);
+    if (formsFor !== word.id || !shown?.parts) {
+      return;
+    }
+    fillMixed(formsSummary, t(shown.script === 'simplified' ? 'page.formsSimplified' : 'page.formsTraditional'), shown.script);
+    formsBody.replaceChildren(...shown.parts);
+    formsPart.open = open;
+    formsPart.hidden = false;
+  }
+
   // "Words I also read in simplified" (or traditional) in the Show list:
   // the words whose forms in the other script were learned (Learn, on
   // "简体字 forms"; otherScript.js), so their cards there can be found.
@@ -741,6 +772,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
           cardsPanel.toggle(word);
           button.classList.toggle('selected', cardsPanel.isSelected(word));
         } else {
+          formsOpenNext = onlyOtherScript;
           wordPage.open(word);
         }
       });
@@ -955,9 +987,12 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
 
     // Opens a word's page from elsewhere in the app (Review's "About this
     // word"); thisCard: the card it was opened from (see wordPage.js).
-    async showWord(word, thisCard = null) {
+    // options: formsOpen, its forms in the other script unfolded (from a
+    // card in that script).
+    async showWord(word, thisCard = null, { formsOpen = false } = {}) {
       applySettings();
       await loadWord(word);
+      formsOpenNext = formsOpen;
       wordPage.open(words.find((entry) => entry.id === word.id) || word, thisCard);
     },
 

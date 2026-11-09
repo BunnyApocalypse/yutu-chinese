@@ -250,6 +250,8 @@ const wordsPanel = createWordsPanel(
   (newMode, options) => setMode(newMode, options),
   () => mode,
   (word) => repeatLesson(word),
+  // A word's forms in the other script, for its page (review.js).
+  (word) => review.formsOnPage(word),
 );
 
 // Free practice: any kind of card for what is in the text box. Nothing is
@@ -1124,7 +1126,7 @@ async function startUp() {
     { writing: flow, tone: toneFlow, recall: recallCard },
     settings,
     (word) => wordsPanel.edit(word),
-    (word, thisCard) => wordsPanel.showWord(word, thisCard),
+    (word, thisCard, options) => wordsPanel.showWord(word, thisCard, options),
     (word) => wordsPanel.noteOf(word),
     (element, text, script) => wordsPanel.tappableText(element, text, script),
     createStreakScreen(() => settings.change('streaks', false)),

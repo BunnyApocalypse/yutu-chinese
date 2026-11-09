@@ -189,6 +189,27 @@ export function elsewhereFace(item, { table, view, elsewhere, gloss, tappable })
   return parts.length > 0 ? parts : null;
 }
 
+// On the word's page, the fold-out with its forms (the owner, 2026-11-09: to
+// see the cards of Learn again): the word in the other script, then for each
+// change its line and what it is (as step 1), and where else it is (as step
+// 2). Null for a word with no change to show.
+// changes: the word's changes to learn (changesOfWord, needsLearning)
+export function pageForms(word, changes, context) {
+  const { table, view, tappable } = context;
+  if (changes.length === 0) {
+    return null;
+  }
+  const form = element('p', 'forms-word');
+  form.append(chinese(word[view.other], view.other, 'forms-word-han'), ' ', t(IN_SCRIPT[view.other]));
+  const parts = [form];
+  for (const change of changes) {
+    const shown = changeShown(change, word, table, view);
+    const [line, ...elsewhere] = elsewhereFace({ word, keys: [change] }, context) ?? [changeLine(shown, view, tappable)];
+    parts.push(line, explanation(change, shown, view), ...elsewhere);
+  }
+  return parts;
+}
+
 // Step 3: the word to read; once shown, its reading and meaning.
 export function readFace(word, shown, { view, reading }) {
   const characters = document.createElement('p');
