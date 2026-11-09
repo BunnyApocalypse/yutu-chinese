@@ -46,6 +46,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - **Built:** the Words tab's Show list takes its whole row under 600px (`.show-choice` in `src/style.css`; the owner chose it from pictures), released with "What's new" `2026-11-09-7`. Browser: other script, leeches, accessibility, words, decks, 60 of 60; 419 unit tests; no full run.
 - **Cleaned up:** the 57 session handovers before this one folded into the list above (all of them: `git show 9557934:docs/history.md`), and the roadmap's done list of the owner's feedback from real study.
 - `node_modules` on the owner's computer lacked `qrcode-generator` and `jsqr`; `npm ci --ignore-scripts` put them back.
+
 **To know** (lessons that hold across sessions):
 
 - Pictures for a decision: the atlas with `SIZES=` and `TRY_CSS=` for a look (`scripts/ux-atlas.js`), or a small script on the browser tests' harness for anything else. Put them in `local/`, delete them once the point is built, and always give the picture's path. The owner chooses from pictures side by side.
@@ -57,7 +58,6 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - A label beside a heading must fit on a 360px phone: measure it in the page rather than guess.
 - Rename by pattern only at exact places, then compare strings and comments with the original.
 - Files in `~/Downloads` (the old test files, tester 3's `notes.txt`, now in `local/testing/`) are the owner's to delete.
-
 - A raw input recording replays outside the browser (`local/ting-replay.mjs`), which shows a refused stroke's cause at once. The owner's `npm run dev` runs in the main checkout, so work in a worktree is tried from there or brought into `main` first.
 - Hanzi Writer's tolerances are fixed distances in the data's units, so anything judged on stroke data moved into the frame must scale with it (`isJoinable`'s `scale`).
 - In a copy of the raw input shown smaller, the strokes must lose `vector-effect: non-scaling-stroke` or they look swollen (`quiz.drawing()`). The meaning line's cut-off (`clamp.js`) can cut only a part marked `data-clamp`.
