@@ -4,7 +4,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
-**As of 2026-11-09:** `main` and `stable` are the same (released with the "What's new" entry `2026-11-09-7`). Syncing is built, released and tested by the owner between their own devices. How each thing was built is in its area's file. **Each session adds its handover just below this list** (what was built, tests, what is open); the next cleanup folds them back into the list.
+**As of 2026-11-09:** `main` and `stable` are the same (released with the "What's new" entry `2026-11-09-8`). Syncing is built, released and tested by the owner between their own devices. How each thing was built is in its area's file. **Each session adds its handover just below this list** (what was built, tests, what is open); the next cleanup folds them back into the list.
 
 **Waiting on the owner** (tried on a real device, or a question to answer):
 
@@ -47,6 +47,11 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - **Built:** the Words tab's Show list takes its whole row under 600px (`.show-choice` in `src/style.css`; the owner chose it from pictures), released with "What's new" `2026-11-09-7`. Browser: other script, leeches, accessibility, words, decks, 60 of 60; 419 unit tests; no full run.
 - **Cleaned up:** the 57 session handovers before this one folded into the list above (all of them: `git show 9557934:docs/history.md`), and the roadmap's done list of the owner's feedback from real study.
 - `node_modules` on the owner's computer lacked `qrcode-generator` and `jsqr`; `npm ci --ignore-scripts` put them back.
+
+**Handover from the session of 2026-11-09 (ts-fsrs 6, weights fitted to the learner, sync and newer apps).**
+
+- **Talked through with the owner:** ts-fsrs 6 and FSRS-7 (not before the wider release planned for late November or early December; come back on 2026-12-07, checklist under "Near-term"); FSRS's weights, and fitting them to the learner in the app, a to-do with `fsrs-browser` (`docs/cards.md`, after "FSRS").
+- **Built and released** (`2026-11-09-8`): an older app meeting a batch, snapshot or file from a newer one reports `too-new` ("Update the app on this device") and takes nothing in; snapshots were taken in before without any check of their format. With it the rule: a change to what synced records mean raises `BATCH_FORMAT` and `SNAPSHOT_FORMAT` (`docs/sync.md`, "Encryption and pairing"). 422 unit tests (4 new, each failing on the old code); `sync.browser.js` and `syncSettings.browser.js` four times: 33 of 33 three times, once "reminders while syncing" failed (output not kept; unrelated to the change, to watch); no full run.
 
 **To know** (lessons that hold across sessions):
 

@@ -13,6 +13,12 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-09-8',
+    items: ['Syncing: if another of your devices has a newer version of the app, this one now says to update it, and waits, rather than saying changes couldn’t be opened.'],
+    it: ['Sincronizzazione: se un altro dei tuoi dispositivi ha una versione più recente dell’app, questo ora dice di aggiornarla, e aspetta, invece di dire che le modifiche non si sono potute aprire.'],
+    de: ['Synchronisierung: Hat ein anderes deiner Geräte eine neuere Version der App, sagt dieses jetzt, dass du es aktualisieren sollst, und wartet, statt zu melden, dass sich Änderungen nicht öffnen ließen.'],
+  },
+  {
     id: '2026-11-09-7',
     items: ['On a phone, the Show list in Words is now as wide as the screen, so its choices are no longer cut short.'],
     it: ['Sul telefono, l’elenco Mostra in Parole ora è largo quanto lo schermo, così le sue scelte non vengono più tagliate.'],

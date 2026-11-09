@@ -20,7 +20,7 @@
 - **Session order:** due cards first (longest overdue first), then new cards of words already introduced; the day starts at 4:00.
 - **Settings** (`settings` store): `script`, `pronunciation`, `rawInput`, `newWordsPerDay`, `enabledTypes`, `leechLapses`, `leechAction`, `streaks`, `streakCards`, `streakWords`, `sound`, `sentenceReading`, `sentenceWriting`, and more. A type switched off never appears but keeps its cards and history; at least one stays on.
 - **Reviews** store the final verdicts (`passedPerChar`), the proposed ones (`suggestedPerChar`), and `mistakesPerChar`. Dates are numbers (milliseconds); FSRS state is plain JSON with ISO dates, so records go into a backup unchanged.
-- **No sync.** Each browser on each device has its own data; Export/Import backup moves it as one JSON file, combined or replacing (`docs/merging.md`).
+- **Each browser on each device has its own data.** Syncing between devices (opt-in, through our own server, encrypted on the device) keeps them the same (`docs/sync.md`); Export/Import backup moves it as one JSON file, combined or replacing (`docs/merging.md`).
 - **Free practice records nothing** (`startFreePractice` in `src/main.js`, `practice` in `src/review.js`): writing works for any typed characters; the other kinds need the word in the word list. No grade buttons (`docs/interface.md`, "Practice").
 
 ## The tone card
