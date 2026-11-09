@@ -13,6 +13,12 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-09-4',
+    items: ['方 may be written with its ノ before its ㇆, as many native writers do, wherever it appears (放, 房, 旁, 訪…).'],
+    it: ['方 si può scrivere con la ノ prima del ㇆, come fanno molti madrelingua, ovunque compaia (放, 房, 旁, 訪…).'],
+    de: ['方 darf mit dem ノ vor dem ㇆ geschrieben werden, wie es viele Muttersprachler tun, überall, wo es vorkommt (放, 房, 旁, 訪…).'],
+  },
+  {
     id: '2026-11-09-3',
     items: [
       'Learn to read the other script, if you like: switch on Also read simplified (or traditional) in Settings › Chinese. Learn then teaches each change once, on one of your words, shows where else it appears, and adds cards for reading the word in that script. Changes of a stroke or so are left out.',

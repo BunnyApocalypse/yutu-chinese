@@ -4,6 +4,14 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the fifth session of 2026-11-09 (方 with its ノ before its ㇆; released to `stable` with the "What's new" entry `2026-11-09-4`).**
+
+- **Why** (the owner, 2026-11-09): a native writer confirmed writing 方's ノ before its ㇆, so that order should pass too.
+- **Built** (`docs/writing.md`, "Two accepted stroke orders"): `fangsOf` finds 方 by shape wherever it stands, `withFangInEitherOrder` (`src/shortcuts.js`) adds the swapped order as `altOrder` in `loadCharData`, in both scripts: 13 characters of the Taiwan set, 88 of the big set. A review notes `'other'` for it (`altOrderIsFang`).
+- **Tests:** 418 unit tests (new in `tests/shortcuts.test.js`, including that nothing without a 方 is found); the writing grid on 方 旁 放, 34 of 34 (2 skipped), 方 and 旁 now in the grid for good. No full browser run.
+- **Italian and German** of the "What's new" line written by Claude, not checked by a reader.
+- **Not tried by the owner yet** on a real device.
+
 **Handover from the fourth session of 2026-11-09 ("Also read simplified": learning to read the other script; released to `stable` with the "What's new" entry `2026-11-09-3`).**
 
 - **Why** (the owner, 2026-11-09): studying in traditional, to be able to read (看得懂) simplified, without a card for every character that differs, and only where it looks really different (專業/专业, not 詞/词 nor 黃/黄).
