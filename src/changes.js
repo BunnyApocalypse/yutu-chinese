@@ -13,6 +13,27 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-09',
+    items: [
+      'Sync between devices: your words, progress and settings stay the same on your phone, tablet and computer. Everything is encrypted on your device before it is sent, and there is no account to make. Turn it on in Settings › Your data and backups.',
+      'Importing a backup no longer freezes the app: you can keep using it while the file is read.',
+      'Adding a list of words is simpler: choose a file or paste it, see at once what was found, and add it with one button.',
+      'Choosing a deck in Review asks again how many cards you want, and two cards close together no longer mix up the word being written.',
+    ],
+    it: [
+      'Sincronizzazione tra dispositivi: le tue parole, i progressi e le impostazioni restano uguali su telefono, tablet e computer. Tutto viene cifrato sul tuo dispositivo prima di essere inviato, e non c’è nessun account da creare. Attivala in Impostazioni › I tuoi dati e i backup.',
+      'Importare un backup non blocca più l’app: puoi continuare a usarla mentre il file viene letto.',
+      'Aggiungere una lista di parole è più semplice: scegli un file o incollalo, vedi subito cosa è stato trovato e aggiungilo con un solo pulsante.',
+      'Scegliendo un mazzo nel Ripasso ti viene chiesto di nuovo quante carte vuoi, e due carte vicine non confondono più la parola che stai scrivendo.',
+    ],
+    de: [
+      'Synchronisierung zwischen Geräten: Deine Wörter, dein Fortschritt und deine Einstellungen bleiben auf Handy, Tablet und Computer gleich. Alles wird auf deinem Gerät verschlüsselt, bevor es gesendet wird, und du musst kein Konto anlegen. Schalte sie ein unter Einstellungen › Deine Daten und Sicherungen.',
+      'Das Importieren einer Sicherung friert die App nicht mehr ein: Du kannst sie weiter benutzen, während die Datei gelesen wird.',
+      'Eine Wortliste hinzuzufügen ist einfacher: Wähle eine Datei oder füge sie ein, sieh sofort, was gefunden wurde, und füge sie mit einem Knopf hinzu.',
+      'Beim Wählen eines Stapels im Wiederholen wirst du wieder gefragt, wie viele Karten du möchtest, und zwei kurz aufeinanderfolgende Karten bringen das geschriebene Wort nicht mehr durcheinander.',
+    ],
+  },
+  {
     id: '2026-11-07',
     items: [
       'Importing from Skritter now explains how to get your data: a letter to send Skritter’s support, ready to copy, that fits where you live.',

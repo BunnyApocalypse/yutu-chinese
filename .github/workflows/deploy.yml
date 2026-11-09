@@ -74,16 +74,19 @@ jobs:
       # The stable copy. "npm ci" installs exactly what package-lock.json
       # lists; "--ignore-scripts" stops any package from running code of its
       # own while being installed (none needs to).
+      # VITE_SYNC_SERVER: where it syncs (docs/sync.md; released 2026-11-09).
       - name: Build the stable copy
         working-directory: stable
+        env:
+          VITE_SYNC_SERVER: https://yutu.bunnyapocalypse.space
         run: |
           npm ci --ignore-scripts
           npm test
           npm run build
 
       # The test copy. VITE_CHANNEL tells the build which copy it is;
-      # VITE_SYNC_SERVER where it syncs (docs/sync.md). Only the test copy
-      # for now: the stable one gets it when syncing is released.
+      # VITE_SYNC_SERVER where it syncs (docs/sync.md), the same server as
+      # the stable copy.
       - name: Build the test copy
         working-directory: test
         env:
