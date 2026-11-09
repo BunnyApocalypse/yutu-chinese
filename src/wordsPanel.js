@@ -50,6 +50,7 @@ import {
 import { isSentence } from './sentences.js';
 import { allCardIds } from './session.js';
 import { isRadical } from './radicals.js';
+import { differingPairs } from './otherScript.js';
 import { t } from './text.js';
 
 // With thousands of words, building a row for each would make the page slow,
@@ -573,6 +574,41 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     wordDialog.applySettings(asks, both);
     sentenceForm.applySettings(both);
     listForm.applySettings(asks, both);
+    showOtherScriptChoice();
+  }
+
+  // ---- The words read in the other script ----
+
+  // "Words I also read in simplified" (or traditional) in the Show list:
+  // the words whose forms in the other script were learned (Learn, on
+  // "简体字 forms"; otherScript.js), so their cards there can be found.
+  // The option shows only with "Also read simplified" on; switched off
+  // while chosen, the list goes back to all words.
+
+  // The script the cards are not in, for the deck as a whole (Settings).
+  function otherScriptName() {
+    return getSettings().script === 'traditional' ? 'simplified' : 'traditional';
+  }
+
+  function showOtherScriptChoice() {
+    const option = filterSelect.querySelector('option[value="otherScript"]');
+    const on = getSettings().otherScript !== 'off';
+    option.hidden = !on;
+    option.textContent = t(otherScriptName() === 'simplified' ? 'words.alsoReadSimplified' : 'words.alsoReadTraditional');
+    if (!on && filterSelect.value === 'otherScript') {
+      filterSelect.value = '';
+    }
+  }
+
+  // True for a word with cards in the other script (as otherCardsOf in
+  // review.js decides, without the kinds of card).
+  function readsOtherScript(word) {
+    return (
+      word.formsLearnedAt !== undefined &&
+      differingPairs(word).length > 0 &&
+      !isSentence(word) &&
+      !isRadical(word)
+    );
   }
 
   // ---- The list of words ----
@@ -608,11 +644,14 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
       leechesOf.set(leech.word.id, [...(leechesOf.get(leech.word.id) || []), leech]);
     }
     const onlySuspended = filterSelect.value === 'suspended';
+    const onlyOtherScript = filterSelect.value === 'otherScript';
     const filtered = onlyLeeches
       ? [...new Set(shownLeeches.map((leech) => leech.word))]
       : onlySuspended
         ? searched.filter((word) => describeSuspended(word) !== '')
-        : searched;
+        : onlyOtherScript
+          ? searched.filter(readsOtherScript)
+          : searched;
     // The order: as the words are learned, by which has a card due soonest
     // (words with no card studied last), or by which was forgotten most.
     const cardsOf = new Map();
@@ -638,7 +677,9 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
             ? t('words.noLeeches', { count: leechLapses })
             : onlySuspended
               ? t('words.noSuspended')
-              : dictionaryWanted()
+              : onlyOtherScript
+                ? t(otherScriptName() === 'simplified' ? 'words.noneReadSimplified' : 'words.noneReadTraditional')
+                : dictionaryWanted()
                 ? t('words.noneOfYoursMatch')
                 : t('words.noneMatch');
 
@@ -653,8 +694,11 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'word-entry';
+      // Listing the words read in the other script, each shows both forms,
+      // also with one script set in Settings.
+      const rowSettings = onlyOtherScript ? { ...getSettings(), bothScripts: true } : getSettings();
       button.append(
-        charactersElement(word, getSettings()),
+        charactersElement(word, rowSettings),
         mixedSpan('entry-pinyin', showReading(word.pinyin, Array.from(word.traditional)), scriptFor(word, getSettings())),
         mixedSpan('entry-definition', word.definition, scriptFor(word, getSettings())),
       );
