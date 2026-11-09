@@ -274,8 +274,12 @@ describe('sync in the introduction', { concurrency: false }, () => {
     await click(page, 'input[name="welcome-start"][value=""]');
     await tap(page, 'welcome-next');
     assert.ok(await page.evaluate(shown('welcome-sync')));
-    // "Not now" is chosen at first; the screen finishes as before.
-    assert.equal(await page.evaluate(`document.getElementById('welcome-next').disabled`), false);
+    // Sync is chosen at first (the owner, 2026-11-09), its code shown at once.
+    assert.equal(await page.evaluate(`document.querySelector('input[name="welcome-sync"]:checked').value`), 'on');
+    await waitUntil(page, `document.getElementById('welcome-code').textContent !== ''`, 'the code');
+    // "Just this device for now" finishes as before; back to sync.
+    await click(page, 'input[name="welcome-sync"][value=""]');
+    await waitUntil(page, `!document.getElementById('welcome-next').disabled`, 'the button to finish');
     await click(page, 'input[name="welcome-sync"][value="on"]');
     await waitUntil(page, shown('welcome-sync-code'), 'the code');
     code = await textOf(page, 'welcome-code');
@@ -772,5 +776,85 @@ describe('Review after a sync', { concurrency: false }, () => {
     await b.evaluate(`document.querySelector('#review-start .sync-note button').click()`);
     await waitFor(async () => (await startCount()) > asked, 'B to count the five words', 15000);
     assert.ok(await b.evaluate(`!document.getElementById('review-start').hidden`));
+  });
+});
+
+// Sync offered once to someone already using the app (syncInvite.js): a
+// device that finished the introduction with sync off, starting again.
+describe('the sync offer', { concurrency: false }, () => {
+  let app;
+  let browsers;
+  let server;
+  let folder;
+  let page;
+  const offerOpen = `document.getElementById('sync-invite-dialog').open`;
+
+  before(async () => {
+    app = await startApp();
+    folder = await fs.mkdtemp(path.join(os.tmpdir(), 'yutu-sync-offer-'));
+    server = await createSyncServer({ dataDir: folder, log: false, allowedOrigins: [new URL(app.url).origin] });
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    browsers = await startBrowsers(app.url, 1);
+    await browsers.use(async (thePage) => {
+      page = thePage;
+    });
+    // The first start was a first use: no offer, and marked as shown.
+    assert.equal(await page.evaluate(offerOpen), false);
+    await page.evaluate(`(async () => {
+      const db = await import('/src/db.js');
+      await db.setSyncValue('server', 'http://127.0.0.1:${server.address().port}');
+      await db.setSetting('welcomeDone', true);
+      for (const key of Object.keys(localStorage)) {
+        if (key.startsWith('sync-invite-shown')) localStorage.removeItem(key);
+      }
+    })()`);
+  });
+
+  after(async () => {
+    const errors = browsers?.errors() ?? [];
+    browsers?.close();
+    await app?.close();
+    await new Promise((resolve) => server?.close(resolve));
+    await fs.rm(folder, { recursive: true, force: true });
+    assert.deepEqual(errors, [], 'the page threw errors');
+  });
+
+  it('opens once at start, and not again after "Not now"', async () => {
+    await reloadApp(page);
+    await waitUntil(page, offerOpen, 'the offer');
+    assert.equal(await textOf(page, '#sync-invite-start h2'), 'New: sync between devices');
+    await tap(page, 'sync-invite-not-now');
+    assert.equal(await page.evaluate(offerOpen), false);
+    await reloadApp(page);
+    // (What's new and the rest have had time to open by now.)
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    assert.equal(await page.evaluate(offerOpen), false);
+  });
+
+  it('can be shown again from For testing, and turns sync on with a new code', async () => {
+    await openSettings(page, 'settings-testing');
+    await tap(page, 'sync-invite-show');
+    await waitUntil(page, offerOpen, 'the offer');
+    await tap(page, 'sync-invite-have-code');
+    // A code that isn't one is said so.
+    await type(page, 'sync-invite-code-input', 'ABCD');
+    await page.evaluate(`document.getElementById('sync-invite-join').requestSubmit()`);
+    await waitUntil(page, shown('sync-invite-join-error'), 'the mistake');
+    assert.equal(await textOf(page, 'sync-invite-join-error'), 'A sync code has 32 letters and digits.');
+    await page.evaluate(`document.querySelector('#sync-invite-join .sync-invite-back').click()`);
+    await tap(page, 'sync-invite-turn-on');
+    await waitUntil(page, `document.getElementById('sync-invite-code').textContent !== ''`, 'the code');
+    assert.equal(await page.evaluate(`document.querySelectorAll('#sync-invite-qr svg path').length`), 1);
+    // Nothing sent before the code is saved.
+    assert.deepEqual(await filesOnServer(folder), []);
+    await tap(page, 'sync-invite-saved');
+    await waitUntil(page, `document.getElementById('sync-invite-status').textContent === 'All your words and progress are synced.'`, 'synced', 15000);
+    assert.ok((await filesOnServer(folder)).some((name) => name.startsWith('batch-')));
+    await tap(page, 'sync-invite-done');
+    assert.equal(await page.evaluate(offerOpen), false);
+    // With sync on, For testing says so instead of offering it.
+    await tap(page, 'sync-invite-show');
+    assert.match(await textOf(page, 'sync-invite-show-note'), /^Sync is on on this device/);
+    assert.equal(await page.evaluate(offerOpen), false);
   });
 });

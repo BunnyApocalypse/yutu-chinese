@@ -2528,6 +2528,24 @@ button.slot {
   margin: var(--space-medium) 0;
 }
 
+/* The pop-up offering sync once (syncInvite.js): its points a little apart,
+   and its buttons one under another, the main one first and full width. */
+.sync-invite-points li {
+  margin-block-end: var(--space-small);
+}
+
+.sync-invite h2 + .hint {
+  margin-block-start: var(--space-small);
+}
+
+.sync-invite-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-small);
+  margin: var(--space-medium) 0;
+}
+
 /* What the camera sees while scanning (syncScan.js). */
 .scan-video {
   display: block;

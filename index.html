@@ -935,6 +935,70 @@
 
       <!-- Asks before something that cannot be undone (confirm.js). -->
       <!-- What syncing does with a learner's data (syncPanel.js; docs/sync.md). -->
+      <!-- Sync between devices, offered once to someone already using the
+           app on this device (syncInvite.js; the owner, 2026-11-09). One
+           part shown at a time: the invitation, the new code, a code from
+           another device, sync on. -->
+      <dialog id="sync-invite-dialog" class="settings-panel sync-invite">
+        <div id="sync-invite-start">
+          <h2 data-t="syncInvite.title"></h2>
+          <p data-t="syncInvite.lead"></p>
+          <ul class="sync-invite-points">
+            <li data-t="syncInvite.pointDevices"></li>
+            <li data-t="syncInvite.pointSafe"></li>
+            <li data-t="syncInvite.pointPrivate"></li>
+          </ul>
+          <p><button class="link-button sync-privacy-button" type="button" data-t="sync.privacy"></button></p>
+          <div class="sync-invite-buttons">
+            <button id="sync-invite-turn-on" class="primary" type="button" data-t="sync.turnOn"></button>
+            <button id="sync-invite-have-code" type="button" data-t="sync.haveCode"></button>
+            <button id="sync-invite-not-now" class="link-button" type="button" data-t="offer.notNow"></button>
+          </div>
+          <p class="hint" data-t="syncInvite.later"></p>
+        </div>
+        <div id="sync-invite-code-step" hidden>
+          <h2 data-t="syncInvite.codeTitle"></h2>
+          <p id="sync-invite-code" class="sync-code"></p>
+          <p class="hint" data-t="sync.codeExplain"></p>
+          <div class="sync-buttons">
+            <button id="sync-invite-copy" class="small" type="button" data-t="sync.copy"></button>
+            <button id="sync-invite-file" class="small" type="button" data-t="sync.saveFile"></button>
+            <button id="sync-invite-print" class="small" type="button" data-t="sync.print"></button>
+          </div>
+          <p id="sync-invite-code-note" class="hint" role="status"></p>
+          <p class="hint" data-t="sync.passwordManager"></p>
+          <div id="sync-invite-qr"></div>
+          <p class="hint" data-t-html="sync.scanHint"></p>
+          <div class="sync-invite-buttons">
+            <button id="sync-invite-saved" class="primary" type="button" data-t="sync.saved"></button>
+            <button class="link-button sync-invite-back" type="button" data-t="syncInvite.back"></button>
+          </div>
+        </div>
+        <form id="sync-invite-join" hidden>
+          <h2 data-t="syncInvite.joinTitle"></h2>
+          <p class="hint" data-t="syncInvite.joinWhere"></p>
+          <div class="sync-join">
+            <label for="sync-invite-code-input" data-t="sync.codeLabel"></label>
+            <input id="sync-invite-code-input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" />
+          </div>
+          <p id="sync-invite-join-error" class="hint sync-problem" role="alert" hidden></p>
+          <div class="sync-invite-buttons">
+            <button id="sync-invite-join-submit" class="primary" type="submit" data-t="sync.join"></button>
+            <button id="sync-invite-scan" type="button" data-t="scan.button"></button>
+            <button class="link-button sync-invite-back" type="button" data-t="syncInvite.back"></button>
+          </div>
+        </form>
+        <div id="sync-invite-on" hidden>
+          <h2 data-t="syncInvite.onTitle"></h2>
+          <p id="sync-invite-status" class="hint" role="status"></p>
+          <p data-t-html="syncInvite.nextDevice"></p>
+          <div class="sync-invite-buttons">
+            <button id="sync-invite-done" class="primary" type="button" data-t="syncInvite.done"></button>
+          </div>
+        </div>
+        <button id="sync-invite-close" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
+      </dialog>
+
       <dialog id="privacy-dialog" class="settings-panel">
         <h2 data-t="privacy.title"></h2>
         <p data-t="privacy.intro"></p>
@@ -1900,6 +1964,12 @@
           <p id="storage-readout" class="hint" role="status"></p>
           <button id="storage-readout-refresh" class="small" type="button" data-t="testing.checkAgain"></button>
           <button id="storage-readout-ask" class="small" type="button" data-t="testing.askNow"></button>
+        </div>
+        <div class="setting">
+          <span data-t="testing.syncInvite"></span>
+          <p class="hint" data-t="testing.syncInviteHint"></p>
+          <button id="sync-invite-show" class="small" type="button" data-t="testing.syncInviteShow"></button>
+          <p id="sync-invite-show-note" class="hint" role="status"></p>
         </div>
         <!-- Only where the group was shown by tapping the version line (testerSettings.js). -->
         <div class="setting" id="tester-settings-hide-row" hidden>

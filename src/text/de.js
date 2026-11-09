@@ -265,6 +265,21 @@ export default {
   'sync.deleteDetail':
     'Deine synchronisierten Wörter werden vom Synchronisierungsserver gelöscht, für alle deine Geräte, und die Synchronisierung wird hier ausgeschaltet. Jedes Gerät behält die Wörter, die es hat.',
   'sync.deleteYes': 'Löschen',
+  'syncInvite.title': 'Neu: Synchronisierung zwischen Geräten',
+  'syncInvite.lead': 'Deine Wörter und dein Fortschritt können dir jetzt von Gerät zu Gerät folgen.',
+  'syncInvite.pointDevices': 'Lerne auf dem Handy und mach dann auf dem Tablet oder Computer genau dort weiter, wo du aufgehört hast.',
+  'syncInvite.pointSafe': 'Immer eine Kopie außerhalb dieses Geräts: Handy verloren, Wörter behalten. Keine Sicherungsdateien mehr, an die du denken musst.',
+  'syncInvite.pointPrivate': 'Auf diesem Gerät verschlüsselt, bevor es gesendet wird. Kein Konto und keine E-Mail: Ein Code ist der Schlüssel, und nur du hast ihn.',
+  'syncInvite.later': 'Du kannst sie auch später einschalten, unter Einstellungen › Deine Daten und Sicherungen.',
+  'syncInvite.codeTitle': 'Speichere deinen Synchronisierungscode',
+  'syncInvite.back': 'Zurück',
+  'syncInvite.joinTitle': 'Mit deinem anderen Gerät synchronisieren',
+  'syncInvite.joinWhere': 'Öffne auf dem Gerät, das schon synchronisiert, Einstellungen › Deine Daten und Sicherungen › Synchronisierungscode zeigen, und tippe den Code dann hier ein oder scanne seinen QR-Code.',
+  'syncInvite.onTitle': 'Die Synchronisierung ist eingeschaltet',
+  'syncInvite.allSynced': 'Alle deine Wörter und dein ganzer Fortschritt sind synchronisiert.',
+  'syncInvite.nextDevice':
+    'Um ein weiteres Gerät hinzuzufügen, öffne dort <span lang="zh-Hant-TW">玉兔中文</span> und wähle „Ich habe einen Synchronisierungscode“ unter Einstellungen › Deine Daten und Sicherungen, oder scanne den QR-Code, den du gespeichert hast.',
+  'syncInvite.done': 'Fertig',
 
   // Den QR-Code eines Synchronisierungscodes scannen (index.html, scan-dialog; syncScan.js)
   'scan.button': 'QR-Code scannen',
@@ -304,6 +319,11 @@ export default {
   'testing.clearRawInputQuestion': 'Die bisher aufgezeichnete Roheingabe löschen?',
   'testing.shownNow': 'Einstellungen › Zum Testen wird auf diesem Gerät jetzt angezeigt.',
   'testing.hide': 'Diese Einstellungen ausblenden',
+  'testing.syncInvite': 'Das Synchronisierungsangebot',
+  'testing.syncInviteHint': 'Das Fenster, das allen, die die App schon nutzen, einmal die Synchronisierung anbietet. Zeigt es auf diesem Gerät noch einmal.',
+  'testing.syncInviteShow': 'Synchronisierungsangebot zeigen',
+  'testing.syncInviteSyncOn': 'Auf diesem Gerät ist die Synchronisierung eingeschaltet. Schalte sie zuerst aus, um das Angebot zu sehen.',
+  'testing.syncInviteNoServer': 'Diese Kopie der App hat keinen Synchronisierungsserver, also gibt es nichts anzubieten.',
   'testing.pseudoLanguage': 'Testsprache zeigen',
   'testing.pseudoLanguageHint':
     'Jeder Text in ähnlich aussehenden Buchstaben und ein Drittel länger, wie es andere Sprachen oft sind: Text, der noch in schlichtem Englisch steht, wurde nicht für die Übersetzung vorbereitet. Die App startet neu, wenn das geändert wird. Nur auf diesem Gerät.',

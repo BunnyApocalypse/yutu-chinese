@@ -21,6 +21,14 @@ describe('the introduction', { concurrency: false }, () => {
   const heading = () =>
     page.evaluate(`[...document.querySelectorAll('#welcome [data-step]:not([hidden]) h2')].find((h2) => h2.offsetParent).textContent`);
   const click = (selector) => page.evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);
+  // Sync is chosen at first on the last screen, and finishing waits for the
+  // code to be ticked as saved (the owner, 2026-11-09); the tests not about
+  // sync choose this device only (syncSettings.browser.js has sync).
+  // (The buttons follow the choice a moment later.)
+  const justThisDevice = async () => {
+    await click('input[name="welcome-sync"][value=""]');
+    await waitUntil(page, `!document.getElementById('welcome-next').disabled`, 'the button to finish');
+  };
 
   before(async () => {
     app = await startApp();
@@ -114,8 +122,16 @@ describe('the introduction', { concurrency: false }, () => {
 
   it('ends with one button that keeps the words, and "Not now"', async () => {
     await tap(page, 'welcome-next');
-    assert.equal(await heading(), 'Keep your words safe');
     assert.equal(await textOf(page, 'welcome-progress'), '4 of 4');
+    // Sync chosen at first, its code shown, and finishing waits for it to be
+    // ticked as saved; the heading says the words are kept on this device.
+    await waitUntil(page, `document.getElementById('welcome-code').textContent !== ''`, 'the sync code');
+    assert.equal(await page.evaluate(`document.querySelector('input[name="welcome-sync"]:checked').value`), 'on');
+    assert.equal(await heading(), 'Keep your words on this device');
+    assert.equal(await page.evaluate(`document.getElementById('welcome-next').disabled`), true);
+    await justThisDevice();
+    assert.equal(await page.evaluate(`document.getElementById('welcome-next').disabled`), false);
+    await waitUntil(page, `document.getElementById('welcome-keep-heading').textContent === 'Keep your words safe'`, 'the heading without sync');
     // The test's browser is a Chromium, which keeps only an installed app's
     // data: the button installs where the browser offers it, with "Not now"
     // beside it; otherwise the screen is the steps to install from the
@@ -253,6 +269,7 @@ describe('the introduction', { concurrency: false }, () => {
     assert.equal(await page.evaluate(`document.querySelector('input[name="welcome-start"]:checked').value`), '');
     await click('input[name="welcome-start"][value="tocfl|Novice 1"]');
     await tap(page, 'welcome-next');
+    await justThisDevice();
     // The main button does what keeps the words: here it installs, or (no
     // install question) starts and quietly notes that they are to be kept,
     // so that the app asks again by itself once installed.
@@ -282,6 +299,7 @@ describe('the introduction', { concurrency: false }, () => {
     }
     await click('input[name="welcome-start"][value="anki"]');
     await tap(page, 'welcome-next');
+    await justThisDevice();
     await tap(page, 'welcome-next');
     await waitUntil(page, `!${welcomeOpen} && document.getElementById('anki-dialog').open`, 'the Anki import');
     assert.equal(await page.evaluate(`document.getElementById('place-title').textContent`), 'Decks');
@@ -297,6 +315,7 @@ describe('the introduction', { concurrency: false }, () => {
     }
     await click('input[name="welcome-start"][value="skritter"]');
     await tap(page, 'welcome-next');
+    await justThisDevice();
     await tap(page, 'welcome-next');
     await waitUntil(page, `!${welcomeOpen} && document.getElementById('skritter-dialog').open`, 'the Skritter import');
     assert.equal(await page.evaluate(`document.getElementById('place-title').textContent`), 'Decks');

@@ -272,6 +272,22 @@ export default {
   'sync.deleteDetail':
     'Your synced words are deleted from the sync server, for all your devices, and sync is turned off here. Each device keeps the words it has.',
   'sync.deleteYes': 'Delete',
+  // The pop-up offering sync once to someone already using the app (syncInvite.js).
+  'syncInvite.title': 'New: sync between devices',
+  'syncInvite.lead': 'Your words and progress can now follow you from device to device.',
+  'syncInvite.pointDevices': 'Study on your phone, then pick up on your tablet or computer right where you left off.',
+  'syncInvite.pointSafe': 'Always a copy off this device: lose your phone, keep your words. No more backup files to remember.',
+  'syncInvite.pointPrivate': 'Encrypted on this device before it is sent. No account and no email: one code is the key, and only you have it.',
+  'syncInvite.later': 'You can also turn it on later, in Settings › Your data and backups.',
+  'syncInvite.codeTitle': 'Save your sync code',
+  'syncInvite.back': 'Back',
+  'syncInvite.joinTitle': 'Sync with your other device',
+  'syncInvite.joinWhere': 'On the device that already syncs, open Settings › Your data and backups › Show sync code, then type the code here or scan its QR code.',
+  'syncInvite.onTitle': 'Sync is on',
+  'syncInvite.allSynced': 'All your words and progress are synced.',
+  'syncInvite.nextDevice':
+    'To add another device, open <span lang="zh-Hant-TW">玉兔中文</span> there and choose “I have a sync code” in Settings › Your data and backups, or scan the QR code you saved.',
+  'syncInvite.done': 'Done',
 
   // Scanning a sync code's QR code (index.html, scan-dialog; syncScan.js)
   'scan.button': 'Scan a QR code',
@@ -311,6 +327,11 @@ export default {
   'testing.clearRawInputQuestion': 'Clear the raw input recorded so far?',
   'testing.shownNow': 'Settings › For testing is now shown on this device.',
   'testing.hide': 'Hide these settings',
+  'testing.syncInvite': 'The sync offer',
+  'testing.syncInviteHint': 'The pop-up offering sync once to someone already using the app. Shows it again on this device.',
+  'testing.syncInviteShow': 'Show the sync offer',
+  'testing.syncInviteSyncOn': 'Sync is on on this device. Turn it off first to see the offer.',
+  'testing.syncInviteNoServer': 'This copy of the app has no sync server, so there is nothing to offer.',
   'testing.pseudoLanguage': 'Show the test language',
   'testing.pseudoLanguageHint':
     'Every text in look-alike letters and a third longer, as other languages often are: text still in plain English has not been made ready for translation. The app starts again when this is changed. Only on this device.',

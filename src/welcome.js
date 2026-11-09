@@ -247,17 +247,18 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
     await showKeepState();
   }
 
+  async function showSyncChoice() {
+    if (syncChosen() && !newCode) {
+      newCode = await makeCode();
+      await showNewCode();
+    }
+    codePart.hidden = !syncChosen();
+    // With sync on, the line about this browser keeping the words no
+    // longer says to export backups (welcomeStorage).
+    showKeepState();
+  }
   for (const radio of dialog.querySelectorAll('input[name="welcome-sync"]')) {
-    radio.addEventListener('change', async () => {
-      if (syncChosen() && !newCode) {
-        newCode = await makeCode();
-        await showNewCode();
-      }
-      codePart.hidden = !syncChosen();
-      // With sync on, the line about this browser keeping the words no
-      // longer says to export backups (welcomeStorage).
-      showKeepState();
-    });
+    radio.addEventListener('change', showSyncChoice);
   }
   savedBox.addEventListener('change', () => showStep());
   byId('welcome-copy-button').addEventListener('click', async () => {
@@ -524,12 +525,14 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
     byId('welcome-sync-server-fold').open = false;
     joinNote.hidden = true;
     byId('welcome-from-link').hidden = true;
-    choose('welcome-sync', '');
+    // Sync is chosen at first where it is offered (the owner, 2026-11-09):
+    // the code shows at once, and finishing still waits for "I've saved my
+    // sync code", or for "Just this device for now".
+    choose('welcome-sync', sync.available ? 'on' : '');
     newCode = null;
-    codePart.hidden = true;
     savedBox.checked = false;
     codeNote.textContent = '';
-    showKeepState();
+    showSyncChoice();
     step = 0;
     showStep();
     // showModal() opens a <dialog> on top of the page and dims the rest.

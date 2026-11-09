@@ -265,6 +265,21 @@ export default {
   'sync.deleteDetail':
     'Le tue parole sincronizzate vengono eliminate dal server di sincronizzazione, per tutti i tuoi dispositivi, e la sincronizzazione viene disattivata qui. Ogni dispositivo conserva le parole che ha.',
   'sync.deleteYes': 'Elimina',
+  'syncInvite.title': 'Novità: sincronizzazione tra dispositivi',
+  'syncInvite.lead': 'Le tue parole e i tuoi progressi ora possono seguirti da un dispositivo all’altro.',
+  'syncInvite.pointDevices': 'Studia sul telefono, poi riprendi sul tablet o sul computer proprio da dove eri rimasto.',
+  'syncInvite.pointSafe': 'Sempre una copia fuori da questo dispositivo: perdi il telefono, non le tue parole. Niente più file di backup da ricordare.',
+  'syncInvite.pointPrivate': 'Cifrato su questo dispositivo prima di essere inviato. Nessun account e nessuna email: un codice è la chiave, e ce l’hai solo tu.',
+  'syncInvite.later': 'Puoi anche attivarla più tardi, in Impostazioni › I tuoi dati e i backup.',
+  'syncInvite.codeTitle': 'Salva il tuo codice di sincronizzazione',
+  'syncInvite.back': 'Indietro',
+  'syncInvite.joinTitle': 'Sincronizza con l’altro dispositivo',
+  'syncInvite.joinWhere': 'Sul dispositivo che già sincronizza, apri Impostazioni › I tuoi dati e i backup › Mostra il codice di sincronizzazione, poi scrivi qui il codice o scansiona il suo codice QR.',
+  'syncInvite.onTitle': 'La sincronizzazione è attiva',
+  'syncInvite.allSynced': 'Tutte le tue parole e i tuoi progressi sono sincronizzati.',
+  'syncInvite.nextDevice':
+    'Per aggiungere un altro dispositivo, apri lì <span lang="zh-Hant-TW">玉兔中文</span> e scegli “Ho un codice di sincronizzazione” in Impostazioni › I tuoi dati e i backup, oppure scansiona il codice QR che hai salvato.',
+  'syncInvite.done': 'Fatto',
 
   // Inquadrare il codice QR di un codice di sincronizzazione (index.html, scan-dialog; syncScan.js)
   'scan.button': 'Scansiona un codice QR',
@@ -304,6 +319,11 @@ export default {
   'testing.clearRawInputQuestion': 'Cancellare l\'input grezzo registrato finora?',
   'testing.shownNow': 'Impostazioni › Per i test ora è visibile su questo dispositivo.',
   'testing.hide': 'Nascondi queste impostazioni',
+  'testing.syncInvite': 'L’offerta di sincronizzazione',
+  'testing.syncInviteHint': 'La finestra che propone la sincronizzazione una volta a chi usa già l’app. La mostra di nuovo su questo dispositivo.',
+  'testing.syncInviteShow': 'Mostra l’offerta di sincronizzazione',
+  'testing.syncInviteSyncOn': 'La sincronizzazione è attiva su questo dispositivo. Disattivala prima per vedere l’offerta.',
+  'testing.syncInviteNoServer': 'Questa copia dell’app non ha un server di sincronizzazione, quindi non c’è niente da proporre.',
   'testing.pseudoLanguage': 'Mostra la lingua di prova',
   'testing.pseudoLanguageHint':
     'Ogni testo con lettere simili e un terzo più lungo, come spesso sono le altre lingue: il testo ancora in inglese semplice non è stato preparato per la traduzione. L\'app riparte quando lo cambi. Solo su questo dispositivo.',

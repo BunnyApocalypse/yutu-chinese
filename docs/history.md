@@ -4,6 +4,13 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the session of 2026-11-09 (sync offered to existing users, sync chosen at first in the introduction; pushed to `main` and the test copy, not `stable`).**
+
+- **Asked by the owner before releasing** (2026-11-09): a pop-up offering sync once to someone already using the app (`src/syncInvite.js`), and "Turn on sync" chosen at first on the introduction's last screen (finishing still waits for the code to be ticked as saved; the owner: that tick is consent enough, with "Just this device" beside it). Details: `docs/sync.md`. Italian and German written by Claude, not checked by a reader. Pictures: `local/sync-invite-pictures/`.
+- **To try it on the test copy:** Settings › For testing › "Show the sync offer" (with sync off on that device); or a device that has finished the introduction and never synced sees it once at its next start.
+- **Tests:** 386 unit tests; full browser run 271 of 271, the grid 354 (21 skipped). New: "the sync offer" in `syncSettings.browser.js`; the introduction's tests choose "Just this device" before finishing.
+- **Review:** draft PR #2 (`main` into `stable`) is open only for `/code-review ultra 2`; close it, never merge it (merging moves `stable` and breaks `git push origin main:stable`).
+
 **Handover from the sixth session of 2026-11-08 (choosing a deck in Review; pushed to `main` and the test copy, not `stable`, no "What's new" entry).**
 
 - **Why** (the owner, 2026-11-08): choosing another deck during Review put a card of it straight up, and now and then another card showed for a moment before the real one.

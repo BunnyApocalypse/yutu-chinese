@@ -41,6 +41,7 @@ import { createProgressPanel } from './progressPanel.js';
 import { setUpTesterSettings } from './testerSettings.js';
 import { createSyncControl } from './syncControl.js';
 import { createSyncPanel } from './syncPanel.js';
+import { createSyncInvite } from './syncInvite.js';
 import { createSyncNote } from './syncNote.js';
 import { takeCodeFromLink } from './syncCodeView.js';
 import { startSyncTiming, syncIsLate } from './syncTiming.js';
@@ -104,6 +105,7 @@ let basics = null;
 // Syncing between devices (set up in startUp).
 let syncControl = null;
 let syncPanel = null;
+let syncInvite = null;
 let syncNote = null;
 // The pop-up when syncing fails too long, made once the app has started.
 let syncLate = null;
@@ -1130,6 +1132,7 @@ async function startUp() {
     },
     onStatus: (status) => {
       syncPanel?.show(status);
+      syncInvite?.show(status);
       syncNote?.show(status);
       welcome?.showSyncStatus(status);
       // No advice to export backups while syncing, and the dot for syncing
@@ -1143,6 +1146,8 @@ async function startUp() {
   });
   await syncControl.start();
   syncPanel = await createSyncPanel(syncControl);
+  // Sync offered once to someone already using the app (syncInvite.js).
+  syncInvite = createSyncInvite(syncControl);
   // The quiet line on the start and end of Review and the end of Learn.
   syncNote = createSyncNote(syncControl);
   // Syncing by itself (syncTiming.js), never while a character is being
@@ -1317,9 +1322,12 @@ async function startUp() {
       syncPanel.offerJoin(linkCode);
     }
   }
-  // What changed since the app was last opened here. Before the screen is
-  // shown, so that its tip waits for this to be closed (tips.js).
-  whatsNew.openIfNew(firstUse);
+  // Sync offered once to someone already using the app, then what changed
+  // since the app was last opened here, so that the two never open on top
+  // of each other. Before the screen is shown, so that its tip waits for
+  // them to be closed (tips.js). Not with a sync link: Settings is open.
+  const invited = linkCode ? Promise.resolve() : syncInvite.openIfNew(firstUse);
+  invited.then(() => whatsNew.openIfNew(firstUse));
   // Syncing failing too long: from now on, after What's new, which it
   // doesn't go over.
   syncLate = syncLateMessage;
