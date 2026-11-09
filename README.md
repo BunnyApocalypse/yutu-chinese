@@ -10,8 +10,8 @@ On a phone or tablet, choose "Install app" or "Add to Home Screen" from the brow
 
 <p>
   <img src="docs/images/introduction.png" width="260" alt="The introduction's first screen: a welcome, and a choice of light, dark or the device's look">
-  <img src="docs/images/writing-light.png" width="260" alt="A written character, 們, in the light look, with the grade buttons below">
-  <img src="docs/images/writing-dark.png" width="260" alt="The same character in the dark look">
+  <img src="docs/images/writing-light.png" width="260" alt="A written word, 兔子 (rabbit), in the light look, with the grade buttons below">
+  <img src="docs/images/writing-dark.png" width="260" alt="The same word in the dark look">
 </p>
 
 ## What it does
