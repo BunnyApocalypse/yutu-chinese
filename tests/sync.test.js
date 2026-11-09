@@ -8,7 +8,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { createSync, encodeFile, decodeFile } from '../src/sync.js';
+import { createSync, encodeFile, decodeFile, SNAPSHOT_FORMAT } from '../src/sync.js';
+import { BATCH_FORMAT } from '../src/syncBatch.js';
 import { mergeBackups, DEVICE_SETTINGS } from '../src/merge.js';
 import { makeCode, keysFor } from '../src/syncCode.js';
 import { word, sorted, twoDevices, memoryDevice, learnersData } from './fixtures/devices.js';
@@ -179,6 +180,51 @@ test('a file that isn\'t the batch its name says is not taken in', async () => {
   const result = await syncB();
   assert.equal(result.takenIn, 0);
   assert.deepEqual(result.problems.map((problem) => problem.reason), ['bad-batch']);
+});
+
+test('a batch made by a newer version of the app is not taken in, and this device still sends its own', async () => {
+  const { storage, syncA, syncB, b } = setUp();
+  await syncA();
+  const [name] = storage.files.keys();
+  const batch = await opened(storage, name);
+  storage.files.set(name, await encodeFile({ ...batch, format: BATCH_FORMAT + 1 }, key, name));
+  const before = structuredClone(b.data());
+  const result = await syncB();
+  assert.equal(result.takenIn, 0);
+  assert.equal(result.sent, 1);
+  assert.deepEqual(result.problems.map((problem) => problem.reason), ['too-new']);
+  assert.deepEqual(b.data(), before);
+});
+
+test('a file encrypted in a way only a newer app knows is not taken in', async () => {
+  const { storage, syncA, syncB } = setUp();
+  await syncA();
+  const [name] = storage.files.keys();
+  const file = storage.files.get(name).slice();
+  file[0] = 2;
+  storage.files.set(name, file);
+  const result = await syncB();
+  assert.equal(result.takenIn, 0);
+  assert.deepEqual(result.problems.map((problem) => problem.reason), ['too-new']);
+});
+
+test('a snapshot made by a newer version of the app is not taken in, kept, and no snapshot is made meanwhile', async () => {
+  const { a, b, storage, syncA, syncB } = setUp({ snapshotAfterBytes: 1 });
+  await syncA();
+  // A's batch went with its snapshot, so B can only join from the snapshot.
+  const deviceA = await a.getSyncValue('device');
+  assert.deepEqual(names(storage, `batch-${deviceA}`), []);
+  const [name] = names(storage, 'snapshot-');
+  const snapshot = await opened(storage, name);
+  storage.files.set(name, await encodeFile({ ...snapshot, format: SNAPSHOT_FORMAT + 1 }, key, name));
+  const before = structuredClone(b.data());
+  for (const result of [await syncB(), await syncB()]) {
+    assert.equal(result.snapshotTakenIn, false);
+    assert.equal(result.snapshotMade, false);
+    assert.deepEqual(result.problems.map((problem) => problem.reason), ['too-new']);
+  }
+  assert.deepEqual(b.data(), before);
+  assert.deepEqual(names(storage, 'snapshot-'), [name]);
 });
 
 test('a sync asked for while one runs waits for it, then runs once for all that asked', async () => {

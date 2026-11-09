@@ -83,6 +83,10 @@ test('an encrypted file shows nothing of what is in it, and can\'t be changed or
   changed[20] ^= 1;
   await assert.rejects(decrypt(encryption, 'batch-a-0000000001', changed), { reason: 'cannot-open' });
   const unknown = file.slice();
-  unknown[0] = 9;
+  unknown[0] = 0;
   await assert.rejects(decrypt(encryption, 'batch-a-0000000001', unknown), { reason: 'cannot-open' });
+  // A later version than this app knows: made by a newer copy of the app.
+  const newer = file.slice();
+  newer[0] = 9;
+  await assert.rejects(decrypt(encryption, 'batch-a-0000000001', newer), { reason: 'too-new' });
 });

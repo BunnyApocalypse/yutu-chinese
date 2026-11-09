@@ -172,6 +172,7 @@ const PROBLEMS = {
   refused: 'sync.problem.refused',
   'cannot-open': 'sync.problem.cannotOpen',
   'bad-batch': 'sync.problem.cannotOpen',
+  'too-new': 'sync.problem.tooNew',
   'missing-batch': 'sync.problem.missing',
   'too-large': 'sync.problem.full',
   'account-full': 'sync.problem.full',

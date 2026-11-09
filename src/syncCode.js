@@ -118,8 +118,15 @@ export async function encrypt(key, name, bytes) {
 }
 
 // Opens what encrypt made. Throws, with error.reason 'cannot-open', for a
-// file made with another code, under another name, or changed in any way.
+// file made with another code, under another name, or changed in any way;
+// with 'too-new' for a file whose first byte is a later version than this
+// app knows (made by a newer copy of the app on another device: this one
+// needs updating). That byte isn't protected by the encryption, so a file
+// changed there says 'too-new' too, which does no harm: nothing is taken in.
 export async function decrypt(key, name, file) {
+  if (file[0] > FILE_VERSION) {
+    throw Object.assign(new Error('This file was made by a newer version of the app.'), { reason: 'too-new' });
+  }
   try {
     if (file[0] !== FILE_VERSION) {
       throw new Error('unknown version');

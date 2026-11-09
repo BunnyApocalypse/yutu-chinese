@@ -49,6 +49,16 @@ import { randomId } from './db.js';
 
 export const SNAPSHOT_FORMAT = 1;
 
+// BATCH_FORMAT (syncBatch.js) and SNAPSHOT_FORMAT are raised whenever what
+// a synced record means changes, so that an older copy of the app on
+// another device stops at the newer files ('too-new') rather than taking in
+// records it would get wrong. A newer app reads every older format.
+
+// The reasons a file is left alone, reported as a problem, rather than
+// syncing failing: made with another sync code, or by a newer app.
+const CANNOT_TAKE_IN = ['cannot-open', 'too-new'];
+const tooNew = () => Object.assign(new Error('This file was made by a newer version of the app.'), { reason: 'too-new' });
+
 // A snapshot is made when the batches since the newest add up to this much
 // (sync.md: the owner's month of study is about 0.4 MB, their whole
 // snapshot 5.7 MB), or are this many: a batch goes every few minutes of
@@ -74,7 +84,8 @@ export async function encodeFile(object, key, name) {
 }
 
 // Opens what encodeFile made. Throws with error.reason 'cannot-open' for a
-// file made with another sync code, or changed.
+// file made with another sync code, or changed; 'too-new' for one made by a
+// newer version of the app (decrypt in syncCode.js).
 export async function decodeFile(bytes, key, name) {
   const compressed = await decrypt(key, name, bytes);
   const stream = new Blob([compressed]).stream().pipeThrough(new DecompressionStream('gzip'));
@@ -214,7 +225,7 @@ async function send(local, storage, key, device, report) {
 // covers }], oldest first. Each covers file is read once and kept on this
 // device (`coversKnown`, { name: covers }, only the listed ones kept). One
 // that can't be opened is left out; the newest one being so throws, with
-// reason 'cannot-open'.
+// reason 'cannot-open' or 'too-new'.
 async function withCovers(local, storage, key, snapshots) {
   const known = await local.getSyncValue('coversKnown', {});
   const kept = {};
@@ -230,7 +241,7 @@ async function withCovers(local, storage, key, snapshots) {
         if (error.reason === 'not-found') {
           continue;
         }
-        if (error.reason !== 'cannot-open' || snapshot === snapshots.at(-1)) {
+        if (!CANNOT_TAKE_IN.includes(error.reason) || snapshot === snapshots.at(-1)) {
           throw error;
         }
         continue;
@@ -249,6 +260,9 @@ async function takeInSnapshot(local, storage, key, device, snapshot, taken, repo
   const file = await readTelling(storage, snapshot.name, report);
   report({ phase: 'open' });
   const contents = await decodeFile(file, key, snapshot.name);
+  if (contents.format > SNAPSHOT_FORMAT) {
+    throw tooNew();
+  }
   const changes = await takeInWhole(local, contents.data, report);
   for (const [other, number] of Object.entries(contents.covers)) {
     if (other !== device) {
@@ -270,6 +284,9 @@ async function takeInSnapshot(local, storage, key, device, snapshot, taken, repo
 //                    its later ones wait
 //   'bad-batch'      a file isn't the batch its name says
 //   'cannot-open'    a file can't be opened with this sync code
+//   'too-new'        a file was made by a newer version of the app, which
+//                    this one can't read: that device's later batches wait
+//                    until this app is updated
 async function takeIn(local, storage, key, device, batches, snapshots, report) {
   // The last batch taken in from each device: { device: number }.
   const taken = { ...(await local.getSyncValue('taken', {})) };
@@ -313,10 +330,10 @@ async function takeIn(local, storage, key, device, batches, snapshots, report) {
         next = null;
         continue;
       }
-      if (error.reason !== 'cannot-open') {
+      if (!CANNOT_TAKE_IN.includes(error.reason)) {
         throw error;
       }
-      problems.push({ reason: 'cannot-open', device: next.device });
+      problems.push({ reason: error.reason, device: next.device });
     }
     next = null;
   }
@@ -345,10 +362,14 @@ async function takeIn(local, storage, key, device, batches, snapshots, report) {
           problems.push({ reason: 'missing-batch', device: other });
           break;
         }
-        if (error.reason !== 'cannot-open') {
+        if (!CANNOT_TAKE_IN.includes(error.reason)) {
           throw error;
         }
-        problems.push({ reason: 'cannot-open', device: other });
+        problems.push({ reason: error.reason, device: other });
+        break;
+      }
+      if (batch.format > BATCH_FORMAT) {
+        problems.push({ reason: 'too-new', device: other });
         break;
       }
       if (batch.format !== BATCH_FORMAT || batch.device !== other || batch.number !== number) {
@@ -441,7 +462,15 @@ async function tidy(local, storage, key, device, files, snapshots) {
     return;
   }
   if ((await local.getSyncValue('checkedSnapshot', null)) !== newest.name) {
-    const contents = await decodeFile(await storage.read(newest.name), key, newest.name);
+    let contents;
+    try {
+      contents = await decodeFile(await storage.read(newest.name), key, newest.name);
+    } catch (error) {
+      if (error.reason === 'too-new') {
+        return;
+      }
+      throw error;
+    }
     if (contents.format !== SNAPSHOT_FORMAT || !contents.data) {
       return;
     }
@@ -537,10 +566,10 @@ export function createSync({
     try {
       snapshots = await withCovers(local, storage, key, files.snapshots);
     } catch (error) {
-      if (error.reason !== 'cannot-open') {
+      if (!CANNOT_TAKE_IN.includes(error.reason)) {
         throw error;
       }
-      problems.push({ reason: 'cannot-open', device: files.snapshots.at(-1).device });
+      problems.push({ reason: error.reason, device: files.snapshots.at(-1).device });
     }
     let startedAfresh = false;
     // (Not when the newest snapshot can't be opened: what it covers isn't
@@ -561,9 +590,12 @@ export function createSync({
     // packing it all again at once would double the wait (2026-11-07, the
     // owner's tablet). Nor right after taking a whole history in: that is a
     // device joining, waiting for its words. The next sync, here or on
-    // another device, makes it, in the background.
+    // another device, makes it, in the background. Nor while another
+    // device's files are too new for this app: the batches it can't take in
+    // stay uncovered, and it would make a snapshot at every sync.
     const due = since.bytes > snapshotAfterBytes || since.count > snapshotAfterBatches;
-    if (due && !sending?.everything && !fetched.tookWhole) {
+    const behind = [...problems, ...fetched.problems].some((problem) => problem.reason === 'too-new');
+    if (due && !sending?.everything && !fetched.tookWhole && !behind) {
       snapshots = [...snapshots, await saveSnapshot(local, storage, key, device, snapshots.at(-1), report)];
       snapshotMade = true;
     }
