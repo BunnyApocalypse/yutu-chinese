@@ -4,7 +4,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
-**Handover from the fourth session of 2026-11-09 ("Also read simplified": learning to read the other script; pushed to `main` and the test copy, not `stable`, no "What's new" entry).**
+**Handover from the fourth session of 2026-11-09 ("Also read simplified": learning to read the other script; released to `stable` with the "What's new" entry `2026-11-09-3`).**
 
 - **Why** (the owner, 2026-11-09): studying in traditional, to be able to read (看得懂) simplified, without a card for every character that differs, and only where it looks really different (專業/专业, not 詞/词 nor 黃/黄).
 - **Built** (everything in `docs/cards.md`, "Reading the other script"):
@@ -17,7 +17,8 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - **Speed** (the owner's backup, page slowed 6 times): startup unchanged; a step 0.3 s; the menu 0.6 s either way. The owner's words give 307 to learn the forms of.
 - **Tests:** 414 unit tests (new `tests/otherScript.test.js`, `tests/scriptKeys.test.js`, and in logic, merge, cardManager, progress); new `tests/browser/otherScript.browser.js` (7). Full browser run 279 of 279, the grid 354 (21 skipped), before the last three commits (the forms' words tappable, the rarer keys, docs; those run with `otherScript.browser.js` and `review.browser.js`, 31 of 31).
 - **Italian and German** written by Claude, not checked by a reader.
-- **Not tried by the owner yet** on a real device. **Next:** release to `stable` first (see above), or try it on the test copy on a sync code of its own; then switch it on (Settings › Chinese) and learn a few forms from Learn's deck chooser.
+- **Released to `stable`** (the owner, 2026-11-09), so both copies combine reviews of a card in the other script rightly and the setting is safe on a shared sync account (once every device has updated: a device still on an older copy combines them wrongly). The "What's new" lines in Italian and German written by Claude, not checked by a reader.
+- **Not tried by the owner yet** on a real device. **Next:** switch it on (Settings › Chinese) and learn a few forms from Learn's deck chooser.
 
 **Handover from the third session of 2026-11-09 (the README rewritten; pushed to `main`).**
 

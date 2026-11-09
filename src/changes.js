@@ -13,6 +13,18 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-09-3',
+    items: [
+      'Learn to read the other script, if you like: switch on Also read simplified (or traditional) in Settings › Chinese. Learn then teaches each change once, on one of your words, shows where else it appears, and adds cards for reading the word in that script. Changes of a stroke or so are left out.',
+    ],
+    it: [
+      'Impara a leggere l’altra scrittura, se vuoi: attiva Leggere anche i semplificati (o i tradizionali) in Impostazioni › Cinese. Impara insegna allora ogni cambiamento una volta, su una delle tue parole, mostra dove altro compare e aggiunge carte per leggere la parola in quella scrittura. I cambiamenti di un tratto o poco più sono lasciati fuori.',
+    ],
+    de: [
+      'Lerne die andere Schrift lesen, wenn du möchtest: Schalte Auch Kurzzeichen (oder Langzeichen) lesen ein unter Einstellungen › Chinesisch. Lernen bringt dir dann jede Änderung einmal bei, an einem deiner Wörter, zeigt, wo sie noch vorkommt, und fügt Karten hinzu, um das Wort in dieser Schrift zu lesen. Änderungen von etwa einem Strich bleiben außen vor.',
+    ],
+  },
+  {
     id: '2026-11-09-2',
     items: ['Your sync code, once shown again in Settings, is hidden when you close Settings.'],
     it: ['Il codice di sincronizzazione, se lo mostri di nuovo nelle Impostazioni, viene nascosto quando chiudi le Impostazioni.'],
