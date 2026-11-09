@@ -135,6 +135,13 @@ describe('cards in the other script', { concurrency: false }, () => {
     // 2026-11-09): its change, and where else it is.
     await waitUntil(page, `document.querySelector('#card-face .forms-tip') !== null`, 'the forms under the answer');
     assert.match(await textOf(page, 'card-face'), /門→门Also in/);
+    // Its words open their reading and meaning, as in a note, without
+    // moving the card on.
+    await waitUntil(page, `document.querySelector('#card-face .forms-tip .note-word') !== null`, 'tappable words');
+    await page.evaluate(`document.querySelector('#card-face .forms-tip .note-word').click()`);
+    await waitUntil(page, `document.getElementById('word-peek').matches(':popover-open')`, 'the popup');
+    assert.equal(await page.evaluate(`document.getElementById('grade-row').hidden`), false);
+    await page.evaluate(`document.getElementById('word-peek').hidePopover()`);
     await page.evaluate(`document.querySelector('#grade-row .grade.primary').click()`);
     await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the end of Review');
     const reviews = await all('reviews');

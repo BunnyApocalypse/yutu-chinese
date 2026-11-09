@@ -48,6 +48,14 @@ function chinese(text, script, className = '') {
   return made;
 }
 
+// The same, its words to be tapped for their reading and meaning, as in a
+// learning note, where `tappable` is given (tappableText in wordPage.js).
+function tappableChinese(text, script, tappable) {
+  const made = chinese(text, script);
+  tappable?.(made, text, script);
+  return made;
+}
+
 // The two sides of a change as shown: in the cards' script first, the other
 // script after. A part with no character of its own (the right of 經) is
 // shown by the characters it is in, `inside` then true.
@@ -63,10 +71,26 @@ export function changeShown(change, word, table, view) {
 }
 
 // "爭 → 争", larger, in the accent color.
-function changeLine({ before, after }, view) {
+function changeLine({ before, after }, view, tappable) {
   const line = element('p', 'forms-change');
-  line.append(chinese(before, view.own), element('span', 'forms-arrow', '→'), chinese(after, view.other));
+  line.append(
+    tappableChinese(before, view.own, tappable),
+    element('span', 'forms-arrow', '→'),
+    tappableChinese(after, view.other, tappable),
+  );
   return line;
+}
+
+// A pair of characters or words, "問 → 问", its words to be tapped.
+function pairShown([traditional, simplified], view, tappable) {
+  const [before, after] = view.other === 'simplified' ? [traditional, simplified] : [simplified, traditional];
+  const shown = element('span', 'forms-pair');
+  shown.append(
+    tappableChinese(before, view.own, tappable),
+    element('span', 'forms-arrow', '→'),
+    tappableChinese(after, view.other, tappable),
+  );
+  return shown;
 }
 
 // A text with {before} and {after} in it, each put in as Chinese in its own
@@ -130,21 +154,22 @@ const CHANGES_SHOWN = 2;
 // (no change, or none found anywhere else): the step is then left out.
 // elsewhere(change): { words, characters } (whereElse in otherScript.js)
 // gloss(element, word): fills an element with a word's reading and meaning
-export function elsewhereFace(item, { table, view, elsewhere, gloss }) {
+// tappable(element, text, script): makes the words in it tappable
+export function elsewhereFace(item, { table, view, elsewhere, gloss, tappable }) {
   const parts = [];
   for (const change of item.keys.slice(0, CHANGES_SHOWN)) {
     const found = elsewhere(change);
     if (found.words.length === 0 && found.characters.length === 0) {
       continue;
     }
-    parts.push(changeLine(changeShown(change, item.word, table, view), view));
+    parts.push(changeLine(changeShown(change, item.word, table, view), view, tappable));
     if (found.words.length > 0) {
       parts.push(element('p', 'forms-label', t('learnForms.inYourWords')));
       const rows = element('div', 'forms-rows');
       for (const word of found.words.slice(0, WORDS_SHOWN)) {
         const row = element('div', 'forms-row');
         const han = element('span', 'forms-han');
-        han.append(chinese(word[view.own], view.own), element('span', 'forms-arrow', '→'), chinese(word[view.other], view.other));
+        han.append(pairShown([word.traditional, word.simplified], view, tappable));
         const about = element('span', 'forms-gloss');
         gloss(about, word);
         row.append(han, about);
@@ -155,11 +180,8 @@ export function elsewhereFace(item, { table, view, elsewhere, gloss }) {
     if (found.characters.length > 0) {
       parts.push(element('p', 'forms-label', t('learnForms.alsoIn')));
       const more = element('p', 'forms-more');
-      for (const [traditional, simplified] of found.characters.slice(0, CHARACTERS_SHOWN)) {
-        const [before, after] = view.other === 'simplified' ? [traditional, simplified] : [simplified, traditional];
-        const pair = element('span', 'forms-pair');
-        pair.append(chinese(before, view.own), element('span', 'forms-arrow', '→'), chinese(after, view.other));
-        more.append(pair);
+      for (const pair of found.characters.slice(0, CHARACTERS_SHOWN)) {
+        more.append(pairShown(pair, view, tappable));
       }
       parts.push(more);
     }
@@ -214,16 +236,10 @@ export function summaryList(items, { table, view, reading, open }) {
 // with no change to show (it then has its note).
 // changes: the word's changes to learn (changesOfWord, needsLearning)
 // onMore(): opens the word's page
-export function answerTip(word, changes, { table, view, elsewhere }, onMore) {
+export function answerTip(word, changes, { table, view, elsewhere, tappable }, onMore) {
   const tip = element('div', 'face-tip forms-tip');
-  const pair = ([traditional, simplified]) => {
-    const [before, after] = view.other === 'simplified' ? [traditional, simplified] : [simplified, traditional];
-    const shown = element('span', 'forms-pair');
-    shown.append(chinese(before, view.own), element('span', 'forms-arrow', '→'), chinese(after, view.other));
-    return shown;
-  };
   for (const change of changes.slice(0, CHANGES_SHOWN)) {
-    tip.append(changeLine(changeShown(change, word, table, view), view));
+    tip.append(changeLine(changeShown(change, word, table, view), view, tappable));
     const found = elsewhere(change);
     const pairs = [
       ...found.words.slice(0, WORDS_SHOWN).map((other) => [other.traditional, other.simplified]),
@@ -231,7 +247,7 @@ export function answerTip(word, changes, { table, view, elsewhere }, onMore) {
     ];
     if (pairs.length > 0) {
       const more = element('p', 'forms-more');
-      more.append(element('span', 'forms-label', t('learnForms.alsoIn')), ...pairs.map(pair));
+      more.append(element('span', 'forms-label', t('learnForms.alsoIn')), ...pairs.map((each) => pairShown(each, view, tappable)));
       tip.append(more);
     }
   }

@@ -2514,6 +2514,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
           changesOf: forms.table.changesOf,
         }),
       open: (of) => showWord(of),
+      // Its words tapped for their reading and meaning, as in a note.
+      tappable: tappableText,
     };
   }
 
