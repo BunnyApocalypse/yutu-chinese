@@ -56,7 +56,7 @@ Each area's file in `docs/` (index `docs/README.md`) has the names in the code, 
 - Importing from Anki (.apkg, .colpkg), imported schedules: `docs/anki.md`
 - Importing from Skritter (the .zip its support sends): `docs/skritter.md`
 - `changedAt`, removal marks, `formerIds`, combining backups: `docs/merging.md`
-- Syncing between devices (being built), the sync server: `docs/sync.md`
+- Syncing between devices, the sync server: `docs/sync.md`
 - Dependencies, updates, Dependabot, the SBOM, the deploy's actions: `docs/supply-chain.md`
 - The word page, sentences, sound: `docs/word-page.md`
 - Writing a character (raw input, shortcuts, the frame, stroke orders, gestures): `docs/writing.md`
@@ -76,7 +76,7 @@ Each area's file in `docs/` (index `docs/README.md`) has the names in the code, 
 - **Every review is logged and never deleted**, and never changed except when corrected in the same sitting of Review (looking back, `docs/cards.md`); cards can be rebuilt from reviews (`replay` in `src/scheduler.js`). Removing a word deletes its cards, never its reviews, and leaves a mark in `removed`.
 - **`changedAt` is stamped by `putAll` in `src/db.js`, never by callers**; a change the app makes by itself to old records passes `{ stamp: false }`. Compare records without it.
 - **The word's pop-up panel rebuilds the word from its form**, so fields not in the form are carried over by hand: `decks`, `formerIds`, `learnedAt`, `suspended`, `startedOverAt`, `importedAt`, `formsLearnedAt`. A new such field must be added there.
-- **Changing the store layout** means raising `DATABASE_VERSION` in `src/db.js`, handling existing databases in `onupgradeneeded` by `oldVersion`, and usually raising the backup version (the database at 3, the backup at 2; old backups must still be read). Testers' data is always carried over.
+- **Changing the store layout** means raising `DATABASE_VERSION` in `src/db.js`, handling existing databases in `onupgradeneeded` by `oldVersion`, and usually raising the backup version (the database at 4, the backup at 2; old backups must still be read). Testers' data is always carried over.
 - **A setting that belongs to the device** goes in `DEVICE_SETTINGS` in `src/merge.js`, or combining backups takes it from the other device.
 - **A word's script comes from `scriptFor(word, settings)`** (`src/words.js`), never `settings.script`. Card IDs come from `cardIdFor` / `allCardIds` (`src/session.js`), never built by hand.
 - **`word.pinyin` may be empty or not syllables** (sentences, radicals); code reading it must cope.
@@ -104,5 +104,5 @@ Each area's file in `docs/` (index `docs/README.md`) has the names in the code, 
 - **Start with the handover at the top of `docs/history.md`**; the roadmap (agreed 2026-10-18) follows it.
 - **The name is 玉兔中文** (Yùtù Zhōngwén, "Jade Rabbit Chinese"; the owner, 2026-10-15); "Yutu Chinese" where Chinese can't be marked with `lang` (plain text, file names); the browser tab and the home-screen label are "玉兔 Yutu" (`docs/goals.md`). The database (`hanzi-trainer`) and backup format (`hanzi-trainer-backup`) keep the old name for good.
 - **The owner studies in the app for good** (2026-10-26), with their Skritter history imported (`exports/`, git-ignored; `docs/skritter.md`).
-- **The owner has not tried** combining backups between real devices: ask how it went before building further on it. (Sentences: tried and liked, 2026-11-04; leeches: tried, 2026-11-06.)
+- **The owner has not tried** combining backups between real devices: ask how it went before building further on it. (Sentences: tried and liked, 2026-11-04; leeches: tried, 2026-11-06; syncing between their devices: tested, 2026-11-09.)
 - `tests/words.tsv` has 109 test words; the app itself starts with none.
