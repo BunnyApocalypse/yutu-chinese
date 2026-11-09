@@ -16,7 +16,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - **Learn's words as one sitting** (2026-10-31): how it feels. On a tablet held sideways the pill is centered on the screen, not the side column.
 - **子 written with the top and hook joined** (2026-10-30): the owner finds it hard to get accepted; a raw input recording from the tablet before changing anything (`local/strictness/README.md`).
 - **The testing list** (roadmap, item 9): Safari and Firefox data safety, "Keep my words safe" in Chrome, combining backups between two real devices.
-- **The sync server:** whether `ansible-playbook deploy.yml` was run after `01e0985` (the review's fixes to `server/server.js`) is not known. Check with `cd deploy && ansible-playbook deploy.yml --check --diff` (it changes nothing; `server.js` reported as changed means the server is behind). Ansible is not installed on the owner's Fedora 45 computer, which also has no record of the server's SSH key.
+- **The sync server** has the review's fixes (`01e0985`; checked 2026-11-09 with `deploy.yml --check`, nothing to change). 7 system updates were waiting then: `ansible-playbook update.yml` when convenient.
 - **Sync, decisions left** (`docs/sync.md`, "Decisions for the owner"): a reminder to keep the sync code safe now and then, or none.
 
 **Not built, known:**
