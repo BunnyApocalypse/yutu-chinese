@@ -262,6 +262,28 @@ describe('cards in the other script', { concurrency: false }, () => {
     await waitUntil(page, `${rows}.length === 2`, 'all the words');
     assert.equal(await page.evaluate(`${option}.hidden`), true);
     assert.equal(await page.evaluate(`document.getElementById('word-filter').value`), '');
+    // With one script only, no forms.
+    await openRow('我們');
+    await waitUntil(page, `document.getElementById('word-page').open && !document.getElementById('word-page-cards').hidden`, "我們's page");
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    assert.equal(await page.evaluate(`${forms}.hidden`), true);
+    await tap(page, 'word-page-close');
+
+    // With "Both", every word written differently has them, its forms
+    // learned or not (the owner, 2026-11-09), "Also read" on or off.
+    await inDatabase(
+      `stores.words.put({ id: '門|men2', traditional: '門', simplified: '门', pinyin: 'men2', definition: 'door', order: 2, addedAt: 1 });`,
+    );
+    await setSettings({ bothScripts: true });
+    await reloadApp(page);
+    await tap(page, 'words-tab');
+    await waitUntil(page, `${rows}.length === 3`, 'the three words');
+    await openRow('門');
+    await waitUntil(page, `document.getElementById('word-page').open && !${forms}.hidden`, "門's forms");
+    assert.equal(await page.evaluate(`${forms}.open`), false);
+    await page.evaluate(`${forms}.open = true`);
+    assert.match(await textOf(page, 'word-page-forms-body'), /^门 in simplified/);
+    await tap(page, 'word-page-close');
   });
 });
 

@@ -2449,6 +2449,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   let learningForms = false;
   // { table, morePairs } once loaded (formsLoader.js); null until then.
   let forms = null;
+  // True once ensureForms has shown what was waiting for them: the word's
+  // page may load them first, with the setting off (formsOnPage).
+  let formsShown = false;
   // The word on screen: { item, steps, index, shown } (shown: its reading,
   // at the last step).
   let formsLesson = null;
@@ -2473,7 +2476,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       return Promise.resolve(null);
     }
     return loadForms().then((loaded) => {
-      const first = !forms;
+      const first = !formsShown;
+      formsShown = true;
       forms = loaded;
       if (first) {
         showDeckChoice();
@@ -2919,19 +2923,21 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   }
 
   // The word's page's fold-out with its forms (pageForms in formsFlow.js):
-  // for a word with cards in the other script, as otherCardsOf has it
-  // whatever kinds are on; null for any other, or with the setting off.
+  // for every word written differently in the two scripts, learned or not
+  // (the owner, 2026-11-09: folded, it hides nothing), for someone using
+  // both ("Both" scripts, or "Also read" on); null for any other.
   async function formsOnPage(word) {
     if (
-      settings.otherScript === 'off' ||
-      word.formsLearnedAt === undefined ||
+      (settings.otherScript === 'off' && !settings.bothScripts) ||
       differingPairs(word).length === 0 ||
       isSentence(word) ||
       isRadical(word)
     ) {
       return null;
     }
-    const loaded = await ensureForms();
+    // With "Also read" off the files are loaded all the same, without what
+    // ensureForms does once they are here (the chooser's entry, the counts).
+    const loaded = settings.otherScript === 'off' ? (forms = await loadForms()) : await ensureForms();
     if (!loaded) {
       return null;
     }
