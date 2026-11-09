@@ -81,17 +81,24 @@ export const DEFAULTS = {
   // someone filling the server can't stop their syncing.
   newAccountsUntilPercent: 80,
   // New accounts a day: in all, and from one address (a whole class
-  // turning sync on together at a university).
-  newAccountsPerDay: 100,
+  // turning sync on together at a university). Of the whole server's, one
+  // address can take only a small share, and an IPv6 /48 block four
+  // addresses' worth, so that a few sources can't use up the day for every
+  // new learner (the review of 2026-11-09: it was 100, two addresses' worth).
+  newAccountsPerDay: 2000,
   newAccountsPerAddressPerDay: 50,
   // Requests a minute from one account (a device joining takes in a
   // snapshot and up to a few hundred batches at once), and from one address
   // without a working secret (refused, or an account not made yet).
   requestsPerAccountPerMinute: 1200,
   requestsPerAddressPerMinute: 600,
-  // Files being saved at once, by one account and in all.
+  // Files being saved at once, by one account, from one address, and in
+  // all. From one address only a quarter of all, so that one client sending
+  // slowly through accounts of its own can't hold every place (the review
+  // of 2026-11-09).
   uploadsAtOncePerAccount: 4,
-  uploadsAtOnce: 32,
+  uploadsAtOncePerAddress: 16,
+  uploadsAtOnce: 64,
   // What one account may take in an hour: a device joining takes a few
   // megabytes, or tens.
   downloadBytesPerAccountPerHour: 1024 * MB,
@@ -115,6 +122,9 @@ export const DEFAULTS = {
 // How much higher the limits by address are for generousAddresses.
 const GENEROUS_TIMES = 10;
 
+// New accounts from one IPv6 /48 block: this many addresses' worth.
+const BLOCK_TIMES = 4;
+
 // The settings from the environment, as on the server (server/README.md).
 export function settingsFromEnvironment(env = process.env) {
   const number = (name, fallback) => (env[name] ? Number(env[name]) : fallback);
@@ -132,6 +142,7 @@ export function settingsFromEnvironment(env = process.env) {
     requestsPerAccountPerMinute: number('REQUESTS_PER_ACCOUNT_PER_MINUTE', DEFAULTS.requestsPerAccountPerMinute),
     requestsPerAddressPerMinute: number('REQUESTS_PER_ADDRESS_PER_MINUTE', DEFAULTS.requestsPerAddressPerMinute),
     uploadsAtOncePerAccount: number('UPLOADS_AT_ONCE_PER_ACCOUNT', DEFAULTS.uploadsAtOncePerAccount),
+    uploadsAtOncePerAddress: number('UPLOADS_AT_ONCE_PER_ADDRESS', DEFAULTS.uploadsAtOncePerAddress),
     uploadsAtOnce: number('UPLOADS_AT_ONCE', DEFAULTS.uploadsAtOnce),
     downloadBytesPerAccountPerHour: number('DOWNLOAD_MB_PER_ACCOUNT_PER_HOUR', DEFAULTS.downloadBytesPerAccountPerHour / MB) * MB,
     generousAddresses: (env.GENEROUS_ADDRESSES || '').split(',').map((entry) => entry.trim()).filter(Boolean),
@@ -189,8 +200,10 @@ function counter(stretchMs) {
 // What an address is counted as: an IPv4 address as it is (also when it
 // comes as IPv6, ::ffff:192.0.2.1), an IPv6 address by its /64 block, the
 // first four of its eight groups (a home, an office or a phone gets a whole
-// block, and can pick any address in it).
-export function addressKey(address = '') {
+// block, and can pick any address in it). With `groups` 3, by its /48 block:
+// a home may be given a /56 or a /48, so 256 or more /64s (new accounts are
+// counted by that too).
+export function addressKey(address = '', groups = 4) {
   const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(address);
   if (mapped) {
     return mapped[1];
@@ -205,8 +218,8 @@ export function addressKey(address = '') {
   const halves = address.split('%')[0].toLowerCase().split('::');
   const head = groupsOf(halves[0]);
   const tail = halves.length > 1 ? groupsOf(halves[1]) : [];
-  const groups = halves.length > 1 ? [...head, ...Array(8 - head.length - tail.length).fill('0'), ...tail] : head;
-  return `${groups.slice(0, 4).map((group) => parseInt(group, 16).toString(16)).join(':')}::/64`;
+  const all = halves.length > 1 ? [...head, ...Array(8 - head.length - tail.length).fill('0'), ...tail] : head;
+  return `${all.slice(0, groups).map((group) => parseInt(group, 16).toString(16)).join(':')}::/${groups * 16}`;
 }
 
 // Whether an address is one of `entries` ('192.0.2.7', '192.0.2.0/24',
@@ -246,11 +259,13 @@ export async function createSyncServer(given = {}) {
   const requestsByAccount = counter(60 * 1000);
   const requestsByAddress = counter(60 * 1000);
   const accountsByAddress = counter(DAY_MS);
+  const accountsByBlock = counter(DAY_MS);
   const accountsInAll = counter(DAY_MS);
   const downloadsByAccount = counter(60 * 60 * 1000);
   const isGenerous = addressList(settings.generousAddresses);
-  // Files being saved now, by account, and in all.
+  // Files being saved now, by account, by address, and in all.
   const uploadsByAccount = new Map();
+  const uploadsByAddress = new Map();
   let uploads = 0;
 
   // The limits hit since the log was last written, as "limit|address" (the
@@ -369,6 +384,16 @@ export async function createSyncServer(given = {}) {
     if (accountsByAddress(addressKey(address)) > settings.newAccountsPerAddressPerDay * generous) {
       throw overLimit('new-accounts-per-address', addressKey(address), 429, 'too-many');
     }
+    // An IPv6 /48 block, four addresses' worth (an IPv4 address is its own
+    // block, counted above).
+    if (net.isIPv6(address) && !/^::ffff:/i.test(address)) {
+      const block = addressKey(address, 3);
+      if (accountsByBlock(block) > settings.newAccountsPerAddressPerDay * generous * BLOCK_TIMES) {
+        throw overLimit('new-accounts-per-address', block, 429, 'too-many');
+      }
+    }
+    // Only what got past the limits by address counts toward the whole
+    // server's, so that an address refused again and again uses none of it.
     if (accountsInAll('all') > settings.newAccountsPerDay) {
       throw overLimit('new-accounts-per-day', null, 429, 'too-many');
     }
@@ -537,10 +562,15 @@ export async function createSyncServer(given = {}) {
       if ((uploadsByAccount.get(account) || 0) >= settings.uploadsAtOncePerAccount) {
         throw overLimit('uploads-at-once-per-account', source, 429, 'too-many');
       }
+      const generous = isGenerous(address) ? GENEROUS_TIMES : 1;
+      if ((uploadsByAddress.get(source) || 0) >= settings.uploadsAtOncePerAddress * generous) {
+        throw overLimit('uploads-at-once-per-address', source, 429, 'too-many');
+      }
       if (uploads >= settings.uploadsAtOnce) {
         throw overLimit('uploads-at-once', null, 429, 'too-many');
       }
       uploadsByAccount.set(account, (uploadsByAccount.get(account) || 0) + 1);
+      uploadsByAddress.set(source, (uploadsByAddress.get(source) || 0) + 1);
       uploads += 1;
       // Written under a name of its own first, then given its real name with
       // link(), which fails if that name is taken: so a file is never seen
@@ -566,10 +596,12 @@ export async function createSyncServer(given = {}) {
       } finally {
         await fs.rm(temporary, { force: true });
         uploads -= 1;
-        if (uploadsByAccount.get(account) === 1) {
-          uploadsByAccount.delete(account);
-        } else {
-          uploadsByAccount.set(account, uploadsByAccount.get(account) - 1);
+        for (const [counts, key] of [[uploadsByAccount, account], [uploadsByAddress, source]]) {
+          if (counts.get(key) === 1) {
+            counts.delete(key);
+          } else {
+            counts.set(key, counts.get(key) - 1);
+          }
         }
       }
       totalBytes += size;

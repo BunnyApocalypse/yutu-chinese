@@ -23,12 +23,15 @@ sync_new_accounts_until_percent: 80
 # Limits by account wherever a request has one, by address only for what
 # has none yet: so learners sharing an address (a university) don't use up
 # each other's (the owner, 2026-11-08).
-sync_new_accounts_per_day: 100
+# The whole server's are many addresses' worth, so that a few sources can't
+# use them up for everyone (2026-11-09).
+sync_new_accounts_per_day: 2000
 sync_new_accounts_per_address_per_day: 50
 sync_requests_per_account_per_minute: 1200
 sync_requests_per_address_per_minute: 600
 sync_uploads_at_once_per_account: 4
-sync_uploads_at_once: 32
+sync_uploads_at_once_per_address: 16
+sync_uploads_at_once: 64
 sync_download_mb_per_account_per_hour: 1024
 # Addresses or blocks whose limits by address are ten times as high, such
 # as a university whose class turns sync on together:

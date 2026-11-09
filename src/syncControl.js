@@ -88,9 +88,10 @@ function startWorker(onProgress) {
 export function createSyncControl({ onChanged = async () => {}, onStatus = () => {} } = {}) {
   let worker = null;
   let storage = null;
-  // The sync under way on the worker, if any, and whether new ones are
-  // refused for now (while deleting everything).
-  let current = null;
+  // The syncs asked of the worker and not yet answered (several, when one is
+  // asked for while another runs: the worker runs them in turn), and whether
+  // new ones are refused for now (while deleting everything).
+  const asked = new Set();
   let refusing = false;
   // What Settings shows:
   //   on:           whether sync is on on this device
@@ -110,7 +111,13 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
 
   const tell = () => onStatus({ ...status });
 
+  // Starts the worker for a code already kept. The outbox is on before
+  // this (start, turnOn), so that no change goes unnoted while the worker
+  // starts, or if it fails to: the changes then wait in the outbox for the
+  // next start (the review of 2026-11-09). A worker that failed to start is
+  // let go, so that syncNow doesn't ask one that will never answer.
   async function connect(code) {
+    status.on = true;
     const keys = await keysFor(code);
     const address = await serverAddress();
     // On the page too, for deleting everything (Settings).
@@ -120,9 +127,13 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
       status.progress = progress;
       tell();
     });
-    await worker.ask({ type: 'connect', code, address });
-    db.setOutboxOn(true);
-    status.on = true;
+    try {
+      await worker.ask({ type: 'connect', code, address });
+    } catch (error) {
+      worker.stop();
+      worker = null;
+      throw error;
+    }
   }
 
   return {
@@ -146,9 +157,16 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
     async start() {
       const code = await db.getSyncValue('code', null);
       if (code) {
-        await connect(code);
+        db.setOutboxOn(true);
         status.lastSyncedAt = await db.getSyncValue('lastSyncedAt', null);
         status.lastWorkedAt = await db.getSyncValue('lastWorkedAt', null);
+        try {
+          await connect(code);
+        } catch (error) {
+          // Sync stays on; the changes wait in the outbox for the next start.
+          status.problem = error.reason || 'server-error';
+          console.error(error);
+        }
       }
       tell();
     },
@@ -156,13 +174,16 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
     // Turns sync on with a code, new or typed in (readCode in syncCode.js
     // checked it). Everything on this device is sent with the next batch
     // (sendEverything), since the other devices have none of it yet; then
-    // the first sync runs.
+    // the first sync runs. The outbox is on, and "everything" in it, before
+    // the code is kept: from then on sync counts as on, so nothing from
+    // before it may be missing, even if the worker then fails to start.
     async turnOn(code) {
+      db.setOutboxOn(true);
+      await db.sendEverything();
       await db.setSyncValue('code', code);
       status.lastWorkedAt = Date.now();
       await db.setSyncValue('lastWorkedAt', status.lastWorkedAt);
       await connect(code);
-      await db.sendEverything();
       tell();
       return this.syncNow();
     },
@@ -177,9 +198,10 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
       status.running = true;
       tell();
       let result = null;
+      const asking = worker.ask({ type: 'sync', options });
+      asked.add(asking);
       try {
-        current = worker.ask({ type: 'sync', options });
-        result = await current;
+        result = await asking;
         status.lastSyncedAt = Date.now();
         await db.setSyncValue('lastSyncedAt', status.lastSyncedAt);
         status.problem = result.problems[0]?.reason ?? null;
@@ -200,9 +222,12 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
           console.error(error);
         }
       } finally {
-        current = null;
-        status.running = false;
-        status.progress = null;
+        asked.delete(asking);
+        // Still running while another sync asked for waits its turn.
+        status.running = asked.size > 0;
+        if (!status.running) {
+          status.progress = null;
+        }
         tell();
       }
       return result;
@@ -213,12 +238,15 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
 
     // Stops syncing on this device. Its words stay; the other devices go on
     // syncing.
+    // The worker is stopped first, a sync under way with it, so that nothing
+    // it was doing writes its numbers back into the sync store after it was
+    // emptied (a sync turned on again later would then start from them).
     async turnOff() {
       db.setOutboxOn(false);
-      await db.forgetSync();
       worker?.stop();
       worker = null;
       storage = null;
+      await db.forgetSync();
       Object.assign(status, { on: false, running: false, lastSyncedAt: null, lastWorkedAt: null, lastFetchedAt: null, problem: null, progress: null });
       tell();
     },
@@ -235,7 +263,9 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
     async deleteSyncedData() {
       refusing = true;
       try {
-        await current?.catch(() => {});
+        // Every sync asked for, not only the latest: the worker runs them in
+        // turn, and any could save a file after the deleting.
+        await Promise.all([...asked].map((asking) => asking.catch(() => {})));
         await storage.removeAll();
         // Still refusing, until sync is off: a sync starting now would
         // bring the account back too.

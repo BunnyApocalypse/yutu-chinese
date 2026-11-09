@@ -643,25 +643,73 @@ export async function readEverything() {
 // much for one (see replaceEverything). Stopped halfway, the batch is taken
 // in again at the next sync (sync.js notes it as taken in only after), and
 // taking it in twice changes nothing.
-export async function saveTakenIn({ put, remove }, onProgress = () => {}) {
+//
+// before: this device's data as it was read to work the changes out
+// ({ storeName: [records] }: the slice, everything, or {} for a device that
+// had nothing). The page stays in use while a sync runs on its own thread,
+// so a record changed here since then is left as it is, not replaced by one
+// worked out from the older copy (the review of 2026-11-09): one added
+// since, a word, setting or deck saved again (`changedAt`, stamped by
+// putAll), a card graded again (`lastReviewedAt`), a review corrected
+// (`correctedAt`). That change is newer, and in the outbox to be sent; the
+// next batch from elsewhere touching it combines the two. Compared with
+// the copy read, not with a time, as a record from another device carries
+// that device's clock.
+export async function saveTakenIn({ put, remove }, onProgress = () => {}, { before = null } = {}) {
+  const readCopies = new Map();
+  const readCopy = (storeName, key) => {
+    if (!readCopies.has(storeName)) {
+      const keyName = storeName === 'settings' ? 'key' : 'id';
+      readCopies.set(storeName, new Map((before[storeName] || []).map((record) => [record[keyName], record])));
+    }
+    return readCopies.get(storeName).get(key);
+  };
+  const changedSince = (storeName, key, stored) => {
+    if (!stored) {
+      return false;
+    }
+    const copy = readCopy(storeName, key);
+    return (
+      !copy ||
+      stored.changedAt !== copy.changedAt ||
+      stored.lastReviewedAt !== copy.lastReviewedAt ||
+      stored.correctedAt !== copy.correctedAt
+    );
+  };
+  // Each record is looked at in the same transaction that writes it, so
+  // nothing can come between.
+  const unlessChanged = (store, storeName, key, write) => {
+    if (before === null) {
+      write();
+      return;
+    }
+    store.get(key).onsuccess = (event) => {
+      if (!changedSince(storeName, key, event.target.result)) {
+        write();
+      }
+    };
+  };
   const total = Object.values(put).reduce((sum, records) => sum + records.length, 0);
   let saved = 0;
   const removing = Object.keys(remove);
   if (removing.length > 0) {
     await transaction(removing, 'readwrite', (tx) => {
       for (const [storeName, keys] of Object.entries(remove)) {
+        const store = tx.objectStore(storeName);
         for (const key of keys) {
-          tx.objectStore(storeName).delete(key);
+          unlessChanged(store, storeName, key, () => store.delete(key));
         }
       }
     });
   }
   for (const [storeName, records] of Object.entries(put)) {
+    const keyName = storeName === 'settings' ? 'key' : 'id';
     for (let start = 0; start < records.length; start += RECORDS_AT_A_TIME) {
       const part = records.slice(start, start + RECORDS_AT_A_TIME);
       await transaction([storeName], 'readwrite', (tx) => {
+        const store = tx.objectStore(storeName);
         for (const record of part) {
-          tx.objectStore(storeName).put(record);
+          unlessChanged(store, storeName, record[keyName], () => store.put(record));
         }
       });
       saved += part.length;

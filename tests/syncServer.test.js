@@ -213,6 +213,8 @@ test('an IPv6 address counts by its /64 block', () => {
   assert.equal(addressKey('fe80::1%eth0'), 'fe80:0:0:0::/64');
   assert.equal(addressKey('::1'), '0:0:0:0::/64');
   assert.equal(addressKey('64:ff9b::192.0.2.7'), '64:ff9b:0:0::/64');
+  // By its /48 block, for new accounts.
+  assert.equal(addressKey('2001:db8:1:2:3:4:5:6', 3), '2001:db8:1::/48');
 });
 
 test('requests count by account, so learners sharing an address don\'t limit each other', () =>
@@ -266,6 +268,44 @@ test('limits new accounts by address (an IPv6 block as one) and in all', async (
     assert.equal(await saveFrom(address, '198.51.100.1', (await account(address)).keys), 429);
   });
 });
+
+test('a few sources can\'t use up the day\'s new accounts for everyone', async () => {
+  // An IPv6 /48 block (one home's /56 is in one) gets four addresses' worth,
+  // however many /64s it uses.
+  await withServer({ newAccountsPerAddressPerDay: 1, trustProxy: true }, async ({ address }) => {
+    for (let block = 0; block < 4; block++) {
+      assert.equal(await saveFrom(address, `2001:db8:1:${block}::1`, (await account(address)).keys), 201);
+    }
+    assert.equal(await saveFrom(address, '2001:db8:1:ff::1', (await account(address)).keys), 429);
+    assert.equal(await saveFrom(address, '2001:db8:2:0::1', (await account(address)).keys), 201);
+  });
+  // An address refused again and again uses none of the whole server's.
+  await withServer({ newAccountsPerAddressPerDay: 1, newAccountsPerDay: 2, trustProxy: true }, async ({ address }) => {
+    assert.equal(await saveFrom(address, '192.0.2.1', (await account(address)).keys), 201);
+    for (let tries = 0; tries < 5; tries++) {
+      assert.equal(await saveFrom(address, '192.0.2.1', (await account(address)).keys), 429);
+    }
+    assert.equal(await saveFrom(address, '192.0.2.2', (await account(address)).keys), 201);
+  });
+});
+
+test('limits files being saved at once from one address, across its accounts', () =>
+  withServer({ uploadsAtOncePerAddress: 1 }, async ({ address }) => {
+    const first = await account(address);
+    const second = await account(address);
+    await first.storage.save('one', bytes('1'));
+    await second.storage.save('one', bytes('1'));
+    // A save of the first account's that has begun and not ended.
+    const url = new URL(`${address}/v1/accounts/${first.keys.account}/files/slow`);
+    const slow = http.request(url, { method: 'PUT', headers: { Authorization: `Bearer ${first.keys.access}` } }, (response) => response.resume());
+    const ended = new Promise((resolve) => slow.on('close', resolve));
+    slow.write('part');
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    await assert.rejects(second.storage.save('two', bytes('2')), { reason: 'too-many' });
+    slow.end('end');
+    await ended;
+    await second.storage.save('two', bytes('2'));
+  }));
 
 test('keeps the last of the room for accounts already there', () =>
   withServer({ maxTotalBytes: 1000, newAccountsUntilPercent: 50 }, async ({ address }) => {

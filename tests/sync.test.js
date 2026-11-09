@@ -31,6 +31,9 @@ function memoryStorage() {
     },
     async read(name) {
       storage.check();
+      if (!files.has(name)) {
+        throw Object.assign(new Error('not found'), { reason: 'not-found' });
+      }
       return files.get(name);
     },
     async save(name, bytes) {
@@ -249,15 +252,14 @@ test('a snapshot is made when enough is sent, and the batches it covers are dele
   // B's own snapshot waits for its next sync: it has just taken a whole
   // history in (a device joining shouldn't wait for one more).
   assert.equal(second.snapshotMade, false);
-  // Then it makes one (B's batch was more than 1 byte), which covers
-  // everything, so B's batch and A's old snapshot are going: A's when A
-  // next syncs.
+  // Then it makes one (B's batch was more than 1 byte), which holds all of
+  // A's, so B's batch and A's old snapshot go at once: any device deletes
+  // what a newer snapshot holds all of.
   assert.equal((await syncB()).snapshotMade, true);
   assert.equal(names(storage, 'batch-').length, 0);
-  assert.equal(names(storage, 'snapshot-').length, 2);
-  await syncA();
   assert.equal(names(storage, 'snapshot-').length, 1);
   assert.equal(names(storage, 'covers-').length, 1);
+  assert.deepEqual((await syncA()).problems, []);
 });
 
 test('a new device joins from the snapshot and the batches after it', async () => {
@@ -314,6 +316,11 @@ test('a snapshot whose covers file never got saved doesn\'t count, and costs not
   assert.equal(result.snapshotTakenIn, false);
   assert.equal(result.takenIn, 1);
   assert.ok(c.data().words.some((entry) => entry.id === '愛|ai4'));
+  // A's next snapshot is saved whole, and the one left halfway goes.
+  a.save('words', [word('茶', 'cha2', { day: 20 })]);
+  assert.equal((await syncOf(a)()).snapshotMade, true);
+  assert.equal(names(storage, 'snapshot-').length, 1);
+  assert.equal(names(storage, 'covers-').length, 1);
 });
 
 test('a sync that only sends sends, and touches nothing else', async () => {
@@ -394,6 +401,81 @@ test('a snapshot is made after enough batches, however small they are', async ()
   }
   assert.equal(names(storage, 'snapshot-').length, 1);
   assert.equal(names(storage, 'batch-').length, 0);
+});
+
+test('two devices making snapshots at once: the earlier one is kept where the later covers less, and a new device gets everything', async () => {
+  const { a, b, storage, syncA, syncB, syncOf } = setUp();
+  await syncA();
+  await syncB();
+  await syncA();
+  // A's listing comes just before B saves a change and a snapshot that
+  // covers it, deleting B's batches.
+  const listedByA = await storage.list();
+  b.save('words', [word('茶', 'cha2', { day: 20 })]);
+  await createSync({ local: b, storage, key, snapshotAfterBytes: 1 }).syncNow();
+  const deviceB = await b.getSyncValue('device');
+  assert.deepEqual(names(storage, `batch-${deviceB}`), []);
+  // A then makes a snapshot, named later, that knows nothing of B's change.
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  a.save('words', [word('水', 'shui3', { day: 21 })]);
+  const late = { ...storage, list: async () => listedByA };
+  await createSync({ local: a, storage: late, key, snapshotAfterBytes: 1 }).syncNow();
+  assert.equal(names(storage, 'snapshot-').length, 2);
+  // A new device gets both changes: the newest snapshot, then B's from the
+  // earlier one, kept because the newest doesn't hold all of it.
+  const c = memoryDevice();
+  const joined = await syncOf(c)();
+  assert.deepEqual(joined.problems, []);
+  assert.ok(c.data().words.some((entry) => entry.id === '茶|cha2'));
+  assert.ok(c.data().words.some((entry) => entry.id === '水|shui3'));
+  // Once a snapshot holds all of both, they go.
+  await syncB();
+  b.save('words', [word('火', 'huo3', { day: 22 })]);
+  await createSync({ local: b, storage, key, snapshotAfterBytes: 1 }).syncNow();
+  assert.equal(names(storage, 'snapshot-').length, 1);
+  assert.deepEqual((await syncA()).problems, []);
+  assert.deepEqual(learnersData(a.data()), learnersData(b.data()));
+});
+
+test('a device whose files the server lost starts afresh even if it sent a change first', async () => {
+  const { a, b, storage, syncA, syncB, syncOf } = setUp();
+  await syncA();
+  await syncB();
+  await syncA();
+  const before = await a.getSyncValue('device');
+  storage.files.clear();
+  // While studying, A sends a change into the account the server made anew.
+  a.save('words', [word('茶', 'cha2', { day: 20 })]);
+  assert.equal((await syncA({ sendOnly: true })).sent, 2);
+  const result = await syncA();
+  assert.equal(result.startedAfresh, true);
+  // The batch sent under the old ID went: the new one holds it all.
+  assert.deepEqual(names(storage, `batch-${before}`), []);
+  await syncB();
+  const c = memoryDevice();
+  assert.deepEqual((await syncOf(c)()).problems, []);
+  assert.deepEqual(learnersData(c.data()), learnersData(a.data()));
+});
+
+test('a device that stopped syncing leaves nothing on the server for ever', async () => {
+  const { a, b, storage, syncA, syncOf } = setUp();
+  await syncA();
+  // B joins, makes a snapshot, and then stops syncing (turned off, or its
+  // browser's data cleared): it never syncs again.
+  await createSync({ local: b, storage, key, snapshotAfterBytes: 1 }).syncNow();
+  const deviceB = await b.getSyncValue('device');
+  assert.equal(names(storage, `snapshot-`).filter((name) => name.endsWith(deviceB)).length, 1);
+  await syncA();
+  // A studies on and makes a snapshot of its own, which holds all of B's.
+  a.save('words', [word('茶', 'cha2', { day: 20 })]);
+  await createSync({ local: a, storage, key, snapshotAfterBytes: 1 }).syncNow();
+  assert.deepEqual(
+    [...storage.files.keys()].filter((name) => name.includes(deviceB)),
+    [],
+  );
+  const c = memoryDevice();
+  assert.deepEqual((await syncOf(c)()).problems, []);
+  assert.deepEqual(learnersData(c.data()), learnersData(a.data()));
 });
 
 test('a whole history: progress told, packed once, and taken in on an empty device without combining', async () => {
