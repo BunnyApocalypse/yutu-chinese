@@ -10,7 +10,8 @@ import assert from 'node:assert/strict';
 import { startApp, startBrowsers, tap, type, textOf, waitUntil, openDeckPage, isShown } from './harness.js';
 
 const shown = (what) => `document.getElementById('word-page').dataset.shown === ${JSON.stringify(what)}`;
-const texts = (selector) => `[...document.querySelectorAll('#word-page-body ${selector}')].map((found) => found.textContent)`;
+// Inside the page's own content, not the cards and forms under it (wordsPanel.js).
+const texts = (selector) => `[...document.querySelectorAll('#word-page-content ${selector}')].map((found) => found.textContent)`;
 
 // One browser, and the steps in order: each builds on the one before.
 describe('the word page', { concurrency: false }, () => {

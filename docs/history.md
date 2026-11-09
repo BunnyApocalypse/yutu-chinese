@@ -4,6 +4,15 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the seventh session of 2026-11-09 (a word's forms on its page, "Studied simplified forms"; released to `stable` with the "What's new" entry `2026-11-09-6`).**
+
+- **Asked by the owner** (2026-11-09): rename the Words tab "Cards", since sentences are there too? And a way to see the simplified/traditional forms cards there. **Not renamed** (advice given, the owner went on without it: a card is one question about a word, and the tab lists words; "Cards" already confused tester 4). A first draft only filtered the list, not what the owner meant: **they wanted the cards' content**.
+- **Built** (`docs/cards.md`, "Its cards in the other script"): **the fold-out "简体字 form" on a word's page, above Cards** (the owner chose the word's page over a switch on the Words tab or replaying the steps): the word in the other script, each change with its line, "In your words", "Also in" (`pageForms`, `formsOnPage`, `showForms`). **For every word written differently, learned or not**, for anyone using both scripts ("Both" or "Also read" on; the owner: folded, it hides nothing). Folded, unfolded when opened from a card in the other script or from the Show list. And **"Studied simplified forms"** (the owner's name) in the Words tab's Show list: the words with `formsLearnedAt`, both forms on each row.
+- **Open:** the Show box (140px) cuts "Studied simplified forms" on a phone, as it already cut "Leeches: cards I keep forgetting"; the owner was told, not decided.
+- **Tests:** 419 unit tests; `otherScript.browser.js` 9 of 9 (one new test: the Show option, the fold-out unfolded and folded, none for 人 or with one script, an unlearned word with "Both"); full browser run 281 of 281 (`wordPage.browser.js` now reads only the page's own content, `#word-page-content`: it had counted the fold-out's words as the note's), the grid 384 (21 skipped).
+- **Italian and German** written by Claude, not checked by a reader.
+- **Not tried by the owner yet** on a real device.
+
 **Handover from the sixth session of 2026-11-09 (Review's "简体字 cards", 么 → 幺 not taught; released to `stable` with the "What's new" entry `2026-11-09-5`).**
 
 - **Asked by the owner** (2026-11-09): "a form card says 么 is simplified to 幺, that doesn't seem right", and no way to review only the cards in simplified as one chooses a deck. Also asked whether the card-flash and new-device pop-up fixes were on `stable`: they were (`755c51f`, `d93a65a`, released 2026-11-09); the owner's devices likely hadn't updated yet. To ask: are both gone after two restarts?

@@ -13,6 +13,21 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-09-6',
+    items: [
+      'A word’s page now has its simplified (or traditional) form, folded above Cards: what changes in it and where else that change appears. It is on every word written differently, learned or not, if you use both scripts or Also read simplified.',
+      'In Words, Show › Studied simplified forms lists the words whose other form you have learned, each with both forms.',
+    ],
+    it: [
+      'La pagina di una parola ora ha la sua forma semplificata (o tradizionale), chiusa sopra Carte: cosa cambia e dove altro compare quel cambiamento. C’è per ogni parola scritta in modo diverso, studiata o no, se usi entrambe le scritture o Leggere anche i semplificati.',
+      'In Parole, Mostra › Forme semplificate studiate elenca le parole di cui hai imparato l’altra forma, ognuna con entrambe le forme.',
+    ],
+    de: [
+      'Die Seite eines Wortes zeigt jetzt seine Kurzzeichen- (oder Langzeichen-)Form, zugeklappt über Karten: was sich ändert und wo diese Änderung sonst vorkommt. Sie steht bei jedem Wort, das unterschiedlich geschrieben wird, gelernt oder nicht, wenn du beide Schriften nutzt oder Auch Kurzzeichen lesen.',
+      'Unter Wörter listet Zeigen › Gelernte Kurzzeichen die Wörter, deren andere Form du gelernt hast, jedes mit beiden Formen.',
+    ],
+  },
+  {
     id: '2026-11-09-5',
     items: [
       'With Also read simplified (or traditional) on, Review’s deck chooser has your cards in the other script first: choose them to review only those.',
