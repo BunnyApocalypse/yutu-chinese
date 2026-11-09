@@ -78,7 +78,7 @@ test('a change a stroke apart is readable, unless the owner chose to learn it', 
 test('every key chosen to learn is still found a stroke apart', () => {
   // A change of the sorting could leave a chosen key unused without anyone
   // noticing; the pairs the owner judged show it.
-  const pairs = [['強', '强'], ['廚', '厨'], ['災', '灾'], ['砲', '炮'], ['沈', '沉']];
+  const pairs = [['強', '强'], ['廚', '厨'], ['災', '灾'], ['砲', '炮'], ['沈', '沉'], ['俛', '俯'], ['崑', '昆'], ['邨', '村']];
   for (const [traditional, simplified] of pairs) {
     const found = changes(traditional, simplified);
     assert.ok(found.some((change) => change.kind === 'small' && needsLearning(change)), traditional);

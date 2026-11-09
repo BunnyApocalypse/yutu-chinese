@@ -156,12 +156,18 @@ export function keyOf(change) {
 }
 
 // Changes a stroke apart that are learned all the same: the owner went
-// through every key of HSK 3.0 and TOCFL and found these too different to
-// read without learning (2026-11-09). Every other key keeps its kind's rule.
+// through every key a stroke apart in CC-CEDICT on a review page (2026-11-09;
+// first those of HSK 3.0 and TOCFL, then the rarer ones) and found these too
+// different to read without learning. Many of the rarer ones are other
+// characters altogether, variants the mainland dropped (俛 for 俯, 崑 for
+// 昆), only a stroke apart by count. Every other key keeps its kind's rule.
 const SMALL_BUT_LEARNED = new Set([
-  '⺮→穴', '⺼→口', '丁→一', '亙→亘', '冘→冗', '卑→畀', '厶→口', '又→八', '句→勾',
-  '巛→亠', '巛→宀', '巾→冂', '广→厂', '彳→亻', '心→止', '曳→世', '月→木', '爿→土',
-  '王→土', '皿→汤', '石→火', '礻→禾', '禾→木', '糹→至', '艹→丷', '袞→衮',
+  '⺮→穴', '⺼→口', '㿽→益', '丁→一', '二→一', '亙→亘', '亻→纟', '兄→允', '免→府',
+  '八→几', '冘→冗', '刂→乚', '卑→畀', '厶→口', '又→八', '口→丄', '口→忄', '句→勾',
+  '夸→库', '完→官', '屯→木', '山→人', '山→日', '巛→亠', '巛→宀', '巾→冂', '广→厂',
+  '彳→亻', '心→止', '忄→冫', '曳→世', '月→木', '殳→车', '民→氏', '氵→弓', '爿→土',
+  '王→土', '王→玉', '皿→汤', '石→火', '礻→禾', '禾→木', '糹→至', '罒→血', '習→聂',
+  '艹→丷', '袞→衮', '辥→薛', '郎→良', '阝→土', '阝→寸',
 ]);
 
 // Whether a change has to be learned (on one word) before characters with it
