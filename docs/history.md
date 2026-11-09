@@ -4,6 +4,20 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
+**Handover from the fourth session of 2026-11-09 ("Also read simplified": learning to read the other script; pushed to `main` and the test copy, not `stable`, no "What's new" entry).**
+
+- **Why** (the owner, 2026-11-09): studying in traditional, to be able to read (看得懂) simplified, without a card for every character that differs, and only where it looks really different (專業/专业, not 詞/词 nor 黃/黄).
+- **Built** (everything in `docs/cards.md`, "Reading the other script"):
+  - **Settings › Chinese, "Also read simplified (简体字)"** (traditional for a learner of simplified): which words (none, those that look really different, all written differently) and which kinds (meaning and pinyin on, tone and writing off).
+  - **Keys** (`src/scriptKeys.js`): the changes between a character's two forms, from Make Me a Hanzi's breakdowns; a key (爭 → 争, 門 → 门) is learned once, on the first of the learner's words with it, in the order learned (`src/otherScript.js`); one a stroke apart needs none. **The owner went through every key on a review page** (`local/` has none of it: the page was a claude.ai artifact): radical forms, parts and whole characters learned, a stroke apart readable except 51 the owner chose (`SMALL_BUT_LEARNED`), which cover every such key in CC-CEDICT.
+  - **Learning them** (chosen from pictures, `local/screenshots/other-script-flow/`): "简体字 forms" is the first entry of Learn's deck chooser ("Learn what?"; 简 in the corner while on them), and Review's end screen and the menu offer them. Three steps a word (what changed; where else it changes, its words tappable; read it alone), five a sitting, "I can read this"; `src/formsFlow.js`, `src/formsLoader.js`, the "Learning forms" section of `src/review.js`.
+  - **Cards in the other script** in Review (`#meaning#in-simplified`, and the writing card in that script), with the word's forms under the answer in place of its note; also in practice, the word page's Cards and Progress. A word taught has `formsLearnedAt` (carried over by the word's panel, the earlier kept on combining).
+  - Fixed on the way: the word page's review counts would have counted a card in the other script's reviews for the word's own card.
+- **Speed** (the owner's backup, page slowed 6 times): startup unchanged; a step 0.3 s; the menu 0.6 s either way. The owner's words give 307 to learn the forms of.
+- **Tests:** 414 unit tests (new `tests/otherScript.test.js`, `tests/scriptKeys.test.js`, and in logic, merge, cardManager, progress); new `tests/browser/otherScript.browser.js` (7). Full browser run 279 of 279, the grid 354 (21 skipped), before the last three commits (the forms' words tappable, the rarer keys, docs; those run with `otherScript.browser.js` and `review.browser.js`, 31 of 31).
+- **Italian and German** written by Claude, not checked by a reader.
+- **Not tried by the owner yet** on a real device. **Next:** switch it on (Settings › Chinese), learn a few forms from Learn's deck chooser, then a "What's new" entry and the release if it suits.
+
 **Handover from the third session of 2026-11-09 (the README rewritten; pushed to `main`).**
 
 - **Built** (the owner, 2026-11-09): `README.md` written afresh for the app as it is now, short, with "Running your own sync server" kept as it was. The owner asked for no "local-first", no "alternative to Skritter" (it is its own thing), no free practice (not core). Pictures of the introduction and writing in both looks in `docs/images/`, taken with `SIZES=phone node scripts/ux-atlas.js` (test words only); take them again there when the looks change.
