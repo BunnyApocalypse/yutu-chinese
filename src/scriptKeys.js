@@ -155,6 +155,21 @@ export function keyOf(change) {
   return `${change.from}→${change.to}`;
 }
 
+// Changes a stroke apart that are learned all the same: the owner went
+// through every key of HSK 3.0 and TOCFL and found these too different to
+// read without learning (2026-11-09). Every other key keeps its kind's rule.
+const SMALL_BUT_LEARNED = new Set([
+  '⺮→穴', '⺼→口', '丁→一', '亙→亘', '冘→冗', '卑→畀', '厶→口', '又→八', '句→勾',
+  '巛→亠', '巛→宀', '巾→冂', '广→厂', '彳→亻', '心→止', '曳→世', '月→木', '爿→土',
+  '王→土', '皿→汤', '石→火', '礻→禾', '禾→木', '糹→至', '艹→丷', '袞→衮',
+]);
+
+// Whether a change has to be learned (on one word) before characters with it
+// can be read: all but those a stroke apart, and some of those.
+export function needsLearning(change) {
+  return change.kind !== 'small' || SMALL_BUT_LEARNED.has(keyOf(change));
+}
+
 // The changes of many characters at once, as a Map from "繁简" (the two forms
 // written together) to the list partChanges gives, except that a character
 // which is itself a part changed in another (賣, a part of 讀) has that one

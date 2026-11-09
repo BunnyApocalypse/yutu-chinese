@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 import { parseCharacters } from '../src/characters.js';
-import { partChanges, keyOf, changesOfPairs } from '../src/scriptKeys.js';
+import { partChanges, keyOf, changesOfPairs, needsLearning } from '../src/scriptKeys.js';
 
 const characters = parseCharacters(fs.readFileSync('data/makemeahanzi/dictionary.txt', 'utf8'));
 const changes = (traditional, simplified) => partChanges(traditional, simplified, characters);
@@ -65,4 +65,22 @@ test('a character that is a part changed in another has that change', () => {
   const found = changesOfPairs([['讀', '读'], ['賣', '卖']], characters);
   assert.deepEqual(found.get('賣卖'), [{ from: '賣', to: '卖', kind: 'part' }]);
   assert.deepEqual(found.get('讀读').map(keyOf), ['言→讠', '賣→卖']);
+});
+
+test('a change a stroke apart is readable, unless the owner chose to learn it', () => {
+  const [, small] = changes('說', '说');
+  assert.equal(needsLearning(small), false);
+  // 強 → 强: 厶 → 口, one stroke, but chosen to learn.
+  assert.deepEqual(changes('強', '强').map((change) => [keyOf(change), needsLearning(change)]), [['厶→口', true]]);
+  assert.equal(needsLearning({ from: '門', to: '门', kind: 'radical' }), true);
+});
+
+test('every key chosen to learn is still found a stroke apart', () => {
+  // A change of the sorting could leave a chosen key unused without anyone
+  // noticing; the pairs the owner judged show it.
+  const pairs = [['強', '强'], ['廚', '厨'], ['災', '灾'], ['砲', '炮'], ['沈', '沉']];
+  for (const [traditional, simplified] of pairs) {
+    const found = changes(traditional, simplified);
+    assert.ok(found.some((change) => change.kind === 'small' && needsLearning(change)), traditional);
+  }
 });
