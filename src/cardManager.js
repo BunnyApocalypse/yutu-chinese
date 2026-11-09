@@ -3,7 +3,7 @@
 // or database. (Suspending is in leeches.js.)
 
 import { gradeOptions, EASY } from './scheduler.js';
-import { CARD_TYPES, cardIdFor } from './session.js';
+import { CARD_TYPES, cardIdFor, otherScriptCardId } from './session.js';
 import { lapsesOf } from './leeches.js';
 import { isSentence, SENTENCE_CARD_TYPES } from './sentences.js';
 import { isRadical, RADICAL_CARD_TYPES } from './radicals.js';
@@ -40,7 +40,9 @@ export function countedFrom(word, type) {
 // in, in the usual order:
 //   { type, script, card, reviewCount, lapses, suspended }
 // `card` is null for a card never studied. A writing card that exists only
-// in the other script is listed as well, after the one studied.
+// in the other script is listed as well, after the one studied, and so is a
+// card for reading the word in the other script ("Also read simplified",
+// otherScriptCardId), once studied, with `other: true`.
 //
 // word:    the word record
 // cards:   all card records
@@ -51,17 +53,29 @@ export function cardsOfWord(word, cards, reviews, script) {
   const otherScript = script === 'traditional' ? 'simplified' : 'traditional';
   const rows = [];
   // A sentence or a radical has no pinyin or tone card.
+  // The card a review was of: its own ID if it is a card in the other script
+  // (those were always saved so); otherwise worked out from its script, since
+  // reviews from before writing cards were kept per script have the plain ID.
+  const reviewedId = (review) =>
+    review.cardId?.includes('#in-')
+      ? review.cardId
+      : cardIdFor(word, review.type, review.script === 'simplified' ? 'simplified' : 'traditional');
   for (const type of kindsOf(word)) {
     const ids = [[cardIdFor(word, type, script), script]];
     const otherId = cardIdFor(word, type, otherScript);
     if (otherId !== ids[0][0] && byId.has(otherId)) {
       ids.push([otherId, otherScript]);
     }
+    const readingId = otherScriptCardId(word, type, otherScript);
+    if (!ids.some(([id]) => id === readingId) && byId.has(readingId)) {
+      ids.push([readingId, otherScript]);
+    }
     for (const [id, cardScript] of ids) {
       const card = byId.get(id) || null;
       rows.push({
         type,
         script: cardScript,
+        ...(id.includes('#in-') && { other: true }),
         card,
         reviewCount: reviews
           ? reviews.filter(
@@ -70,7 +84,7 @@ export function cardsOfWord(word, cards, reviews, script) {
                 review.wordId === word.id &&
                 review.type === type &&
                 review.time > countedFrom(word, type) &&
-                cardIdFor(word, type, review.script === 'simplified' ? 'simplified' : 'traditional') === id,
+                reviewedId(review) === id,
             ).length
           : null,
         lapses: lapsesOf(card),

@@ -572,6 +572,7 @@ const progressPanel = createProgressPanel({
   panel: progressPanelElement,
   getSettings: () => settings,
   hasCardType: (word, type) => review.hasCardType(word, type),
+  otherCardsOf: (word) => review.otherCardsOf(word),
 });
 
 wordForm.addEventListener('submit', (event) => {

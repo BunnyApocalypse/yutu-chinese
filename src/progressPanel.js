@@ -167,7 +167,9 @@ function placeAcross(element, count, event) {
 // panel:        the tab's <section>
 // getSettings:  () → the settings object (settings.js)
 // hasCardType:  (word, type) → true if the word can have that card (review.js)
-export function createProgressPanel({ panel, getSettings, hasCardType }) {
+// otherCardsOf: (word) → its cards in the other script, { script, types } or
+//               null (review.js)
+export function createProgressPanel({ panel, getSettings, hasCardType, otherCardsOf }) {
   const parts = {
     today: panel.querySelector('#progress-today'),
     stages: panel.querySelector('#progress-stages'),
@@ -285,6 +287,7 @@ export function createProgressPanel({ panel, getSettings, hasCardType }) {
       types,
       hasCardType,
       scriptOf: (word) => scriptFor(word, settings),
+      otherCardsOf,
     });
     const row = (name, counts, total, className = '') => {
       const line = make('div', `stage-row ${className}`);

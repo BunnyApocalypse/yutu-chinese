@@ -2478,19 +2478,54 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // What is left to learn: [{ word, keys }] (formsToLearn); empty with the
   // setting off or before the files are loaded. Worked out again only when
   // the words or cards have changed.
+  // With it, which learned words have each change (`byKey`, key → words in
+  // the order learned), for "where else it changes": looked up, not searched
+  // for (2026-11-09: searching all of the owner's 2,456 words for each change
+  // took 1.7 s a step on a tablet's speed).
   let formsMemo = null;
-  function formsWaiting() {
-    if (!forms || settings.otherScript === 'off') {
-      return [];
-    }
-    if (formsMemo?.words === words && formsMemo.cards === cards.size && formsMemo.mode === settings.otherScript && formsMemo.script === settings.script) {
-      return formsMemo.items;
+  function formsState() {
+    if (
+      formsMemo?.words === words &&
+      formsMemo.cards === cards.size &&
+      formsMemo.mode === settings.otherScript &&
+      formsMemo.script === settings.script
+    ) {
+      return formsMemo;
     }
     const learned = learnedInOrder();
     forms.table.add(learned.flatMap(differingPairs));
     const items = formsToLearn(learned, { mode: settings.otherScript, changesOf: forms.table.changesOf });
-    formsMemo = { words, cards: cards.size, mode: settings.otherScript, script: settings.script, items };
-    return items;
+    const byKey = new Map();
+    for (const word of learned) {
+      for (const change of changesOfWord(word, forms.table.changesOf)) {
+        const key = keyOf(change);
+        if (!byKey.has(key)) {
+          byKey.set(key, []);
+        }
+        byKey.get(key).push(word);
+      }
+    }
+    formsMemo = { words, cards: cards.size, mode: settings.otherScript, script: settings.script, items, byKey };
+    return formsMemo;
+  }
+
+  function formsWaiting() {
+    if (!forms || settings.otherScript === 'off') {
+      return [];
+    }
+    return formsState().items;
+  }
+
+  // Where else a change is: the learner's other words with it, then
+  // characters from the lists (whereElse in otherScript.js).
+  function elsewhereOf(change, word) {
+    const key = keyOf(change);
+    return whereElse(key, {
+      words: formsState().byKey.get(key) ?? [],
+      except: words.find((each) => each.id === word.id) ?? word,
+      morePairs: forms.morePairs,
+      changesOf: forms.table.changesOf,
+    });
   }
 
   // What the steps need to draw a word's card (formsFlow.js).
@@ -2506,13 +2541,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         fillWithoutChinese(meaning, of);
         target.append(meaning);
       },
-      elsewhere: (change) =>
-        whereElse(keyOf(change), {
-          words: learnedInOrder(),
-          except: word,
-          morePairs: forms.morePairs,
-          changesOf: forms.table.changesOf,
-        }),
+      elsewhere: (change) => elsewhereOf(change, word),
       open: (of) => showWord(of),
       // Its words tapped for their reading and meaning, as in a note.
       tappable: tappableText,
@@ -2547,9 +2576,12 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   function startForm(item) {
     current = { word: item.word, type: 'meaning', card: null, learning: true, forms: true };
-    const steps = FORMS_STEPS.filter(
-      (step) => step !== 'elsewhere' || elsewhereFace(item, formsContext(item.word)) !== null,
-    );
+    // "Where else it changes" only when there is somewhere else.
+    const somewhereElse = item.keys.some((change) => {
+      const found = elsewhereOf(change, item.word);
+      return found.words.length > 0 || found.characters.length > 0;
+    });
+    const steps = FORMS_STEPS.filter((step) => step !== 'elsewhere' || somewhereElse);
     formsLesson = { item, steps, index: 0, shown: false };
     stopwatch.start();
     setFocus(true);
@@ -3020,12 +3052,20 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       retrievability: (card) => retrievability(card.fsrsState, now),
       hasCardType,
       scriptOf: (word) => scriptFor(word, settings),
+      otherCardsOf,
     });
   }
 
   // Whether any card was reviewed today, which "Practice again" goes through.
   function reviewedToday() {
-    return practiceCards(studyWords(), cards, Date.now(), { which: 'today', hasCardType, scriptOf: (word) => scriptFor(word, settings) }).length > 0;
+    return (
+      practiceCards(studyWords(), cards, Date.now(), {
+        which: 'today',
+        hasCardType,
+        scriptOf: (word) => scriptFor(word, settings),
+        otherCardsOf,
+      }).length > 0
+    );
   }
 
   async function startRound(which, limit = null) {
@@ -3497,6 +3537,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
     // True if a word can have this kind of card now (the Progress tab).
     hasCardType,
+
+    // A word's cards in the other script, { script, types } or null (the
+    // Progress tab).
+    otherCardsOf,
 
     // Works out the next card afresh, e.g. after a setting changed.
     refresh() {

@@ -447,6 +447,12 @@ test("a word's cards in the other script come after its own, marked with their s
   assert.deepEqual([due.next.type, due.next.other, due.dueCount], ['pinyin', true, 1]);
   // Without otherCardsOf, as before.
   assert.equal(planSession([STUDY], cards, now + 2 * DAY, { ...ALL_TYPES, scriptOf: () => 'traditional' }).next, null);
+  // Practice at the end of Review has them too, marked the same way.
+  const practice = practiceCards([STUDY], cards, now, { which: 'today', scriptOf: () => 'traditional', otherCardsOf });
+  assert.deepEqual(
+    practice.map((entry) => [entry.type, entry.other ?? false, entry.script ?? null]),
+    [['meaning', true, 'simplified'], ['pinyin', true, 'simplified']],
+  );
 });
 
 test('after switching script, writing is learned again and the rest carries over', () => {

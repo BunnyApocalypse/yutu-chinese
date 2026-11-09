@@ -398,6 +398,7 @@ export function practiceCards(words, cards, now, options) {
     retrievability = () => 1,
     hasCardType = () => true,
     scriptOf = () => 'traditional',
+    otherCardsOf = () => null,
   } = options;
   const dayStart = startOfStudyDay(now);
   const found = [];
@@ -413,6 +414,15 @@ export function practiceCards(words, cards, now, options) {
         continue;
       }
       found.push({ word, type, card });
+    }
+    // Its cards in the other script, as for planSession.
+    const other = otherCardsOf(word);
+    for (const type of other?.types ?? []) {
+      const card = cards.get(otherScriptCardId(word, type, other.script));
+      if (!card || (which === 'today' && lastReviewOf(card) < dayStart)) {
+        continue;
+      }
+      found.push({ word, type, card, script: other.script, other: true });
     }
   }
   if (which === 'today') {
