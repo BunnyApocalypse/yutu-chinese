@@ -222,8 +222,14 @@ wordInput.addEventListener('focus', fillSuggestions);
 // the words afresh. Its "Review this deck" and "Learn new words" buttons
 // choose the deck and open that tab.
 const wordsPanel = createWordsPanel(
-  // What the Decks tab has just read is handed on, not read again.
+  // What the Decks tab has just read is handed on, not read again. One word
+  // saved in its pop-up panel: only it and its cards change here too.
   async (held) => {
+    if (held.word) {
+      await review.wordChanged(held.word, held.oldId, held.cards);
+      await loadWordList([...wordList.filter((word) => word.id !== held.oldId && word.id !== held.word.id), held.word]);
+      return;
+    }
     await review.load(held);
     await loadWordList(held.words);
   },

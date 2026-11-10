@@ -369,6 +369,48 @@ describe('grading in Review', { concurrency: false }, () => {
     await inDatabase(`stores.words.delete('幇|bang1'); stores.cards.delete('幇|bang1#writing');`);
   });
 
+  // A word saved in its panel is all Review takes from the Decks tab
+  // (afterWordChange in wordsPanel.js): what the tab holds of other words
+  // may be older than Review's. Here both cards are graded after the tab
+  // read them, and a word's page opened from Review reads only its word.
+  it('keeps the cards graded since the Words tab read them, when a word is saved from About', async () => {
+    await makeDue(['大|da4#meaning', '大|da4', 'meaning'], ['小|xiao3#meaning', '小|xiao3', 'meaning']);
+    await tap(page, 'words-tab');
+    await waitUntil(page, `document.querySelectorAll('#word-list li').length > 0`, 'the words read');
+    await tap(page, 'review-tab');
+    for (let count = 0; count < 2; count++) {
+      await waitUntil(page, `document.getElementById('grade-row').hidden && /[大小]/.test(document.getElementById('card-face').textContent)`, 'a meaning card');
+      await page.evaluate(`['pointerdown', 'pointerup'].forEach((type) => document.getElementById('card-face').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`);
+      await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
+      await chooseGrade('Good');
+    }
+    await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the end of Review');
+    // The last card's word, from About on the card looked back at, edited.
+    await waitUntil(page, `!document.getElementById('look-back-button').hidden`, 'the way back');
+    await tap(page, 'look-back-button');
+    await tap(page, 'card-about-button');
+    await waitUntil(page, `/[大小]/.test(document.getElementById('word-page').dataset.shown || '')`, "the word's page");
+    await tap(page, 'word-page-edit');
+    await waitUntil(page, `document.getElementById('word-dialog').open`, 'the edit panel');
+    const definition = await page.evaluate(`document.getElementById('edit-definition').value`);
+    await page.evaluate(`(() => {
+      document.getElementById('edit-definition').value = '${definition} (edited)';
+      document.getElementById('word-dialog-form').requestSubmit();
+    })()`);
+    await waitUntil(page, `!document.getElementById('word-dialog').open`, 'the panel closed');
+    // Review again: still done, the other card not back from the tab's copy.
+    await tap(page, 'review-tab');
+    await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the end of Review', 2000);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    assert.equal(await isShown(page, 'done-panel'), true);
+    // The meaning as it was, for the tests after this one.
+    await inDatabase(`stores.words.getAll().onsuccess = (event) => {
+      for (const word of event.target.result.filter((each) => each.definition.endsWith(' (edited)'))) {
+        stores.words.put({ ...word, definition: word.definition.replace(' (edited)', '') });
+      }
+    };`);
+  });
+
   // No pause after the answer is shown (the owner, 2026-10-24): a new touch
   // moves on at once, while the end of the touch that showed it does not.
   it('takes a new tap at once after the answer, but not the end of the touch before', async () => {

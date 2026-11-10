@@ -60,7 +60,10 @@ const MAX_ROWS = 200;
 const byId = (id) => document.getElementById(id);
 
 // onChange({ words, cards, decks }): called after the word list has
-//           changed, with everything as just read, for the rest of the app
+//           changed, with everything as just read, for the rest of the app;
+//           or onChange({ word, oldId, cards }) after one word was saved in
+//           its pop-up panel: that word, its ID before (the same if not
+//           changed) and its cards, everything else as it was
 // getSettings: returns the current settings (see settings.js). A function,
 //           because the settings are only read after this panel is set up.
 //
@@ -143,19 +146,32 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
   // read everything first: about 0.4 s of the 0.85 s About took on a tablet
   // with the owner's 9,000 cards (2026-11-06). The lists are new ones, since
   // Review holds the ones it was handed (afterChange).
-  async function loadWord(word) {
+  // oldId: the word's ID before it was saved, if its pop-up panel changed
+  // it (renameWord): what was held under it goes.
+  //
+  // Returns { word, cards } as read; null if everything was read instead
+  // (nothing had been yet).
+  async function loadWord(word, oldId = word.id) {
     if (!loaded) {
       await load();
-      return;
+      return null;
     }
     const [[stored], fresh] = await Promise.all([getSome('words', [word.id]), getSome('cards', allCardIds(word))]);
-    if (stored) {
-      words = words.map((entry) => (entry.id === stored.id ? stored : entry));
+    // In list order: "Learn this word next" changes it.
+    words = words
+      .filter((entry) => entry.id !== oldId || stored)
+      .map((entry) => (entry.id === oldId && stored ? stored : entry))
+      .sort((a, b) => a.order - b.order);
+    cards = [...cards.filter((card) => card.wordId !== word.id && card.wordId !== oldId), ...fresh];
+    if (oldId !== word.id) {
+      studiedWordIds.delete(oldId);
+      // Its reviews were filed under the new ID (the leeches' list reads them).
+      reviews = null;
     }
-    cards = [...cards.filter((card) => card.wordId !== word.id), ...fresh];
     if (fresh.length > 0 || stored?.learnedAt !== undefined) {
       studiedWordIds.add(word.id);
     }
+    return { word: stored, cards: fresh };
   }
 
   async function load() {
@@ -302,6 +318,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     asksFor: () => asksFor(),
     charactersOf: (word) => charactersOf(word),
     afterChange: () => afterChange(),
+    afterWordChange: (word, oldId) => afterWordChange(word, oldId),
     cardsPanel: () => cardsPanel,
     applySettings: () => applySettings(),
   });
@@ -520,10 +537,30 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
   // is done (addSentence below), so another change can come meanwhile.
   let changing = Promise.resolve();
   function afterChange() {
+    return refreshAfter(async () => {
+      await load();
+      return null;
+    });
+  }
+
+  // The same after one word was saved in its pop-up panel (wordDialog.js):
+  // only that word and its cards are read again (loadWord), under its old
+  // ID too if that changed, and only they are handed on. Reading everything
+  // took about 1.6 s of the 1.8 s a Save took at tablet speed with the
+  // owner's 9,400 cards (2026-11-10). What this tab holds of other words may
+  // be older than what Review has (a grade since), so it is never handed on
+  // from here.
+  function afterWordChange(word, oldId = word.id) {
+    return refreshAfter(() => loadWord(word, oldId), oldId);
+  }
+
+  // Reads with `read`, then shows and hands on what was read: everything, or
+  // one word ({ word, cards }, which `read` returns) with its ID before.
+  function refreshAfter(read, oldId = null) {
     changing = changing
       .catch(() => {}) // a refresh that failed doesn't stop the next
       .then(async () => {
-        await load();
+        const one = await read();
         // The lists only while their screen is shown (a word's page over it
         // counts): from elsewhere, such as About in Review, they are drawn
         // when the tab is next opened (show). Drawing them behind another
@@ -534,7 +571,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
         }
         // The bar's deck chooser, for a deck added or renamed meanwhile.
         cardsPanel.refresh();
-        await onChange({ words, cards, decks });
+        await onChange(one?.word ? { word: one.word, oldId, cards: one.cards } : { words, cards, decks });
       });
     return changing;
   }

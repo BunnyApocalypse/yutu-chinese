@@ -32,6 +32,8 @@ const byId = (id) => document.getElementById(id);
 //   asksFor(): which scripts and readings are asked for
 //   charactersOf(word): its characters in the scripts being learned
 //   afterChange(): reads everything afresh and shows it (a promise)
+//   afterWordChange(word, oldId): the same for one word saved here, under
+//     `oldId` before if its ID changed (a promise)
 //   cardsPanel(): the card manager (cardsPanel.js)
 //   applySettings(): fits the forms, this panel's included, to the settings
 //
@@ -251,7 +253,7 @@ export function createWordDialog(shared) {
         await renameWord(openWord.id, withFormerId(sentence, openWord));
       }
       await fileCardsByScript([sentence]);
-      await shared.afterChange();
+      await shared.afterWordChange(sentence, openWord.id);
       dialogResult = { changed: true, word: sentence };
       dialog.close();
       return;
@@ -274,7 +276,7 @@ export function createWordDialog(shared) {
         decks: decksAfter(),
       };
       await putAll('words', [radical]);
-      await shared.afterChange();
+      await shared.afterWordChange(radical);
       dialogResult = { changed: true, word: radical };
       dialog.close();
       return;
@@ -355,7 +357,7 @@ export function createWordDialog(shared) {
     // learned in simplified goes under the simplified form (scriptCards.js).
     await fileCardsByScript([saved]);
     // The panel closes once the rest of the app has the changed word too.
-    await shared.afterChange();
+    await shared.afterWordChange(saved, openWord.id);
     dialogResult = { changed: true, word: saved };
     dialog.close();
   }
@@ -363,7 +365,7 @@ export function createWordDialog(shared) {
   studyNextButton.addEventListener('click', async () => {
     const moved = { ...openWord, order: orderForStudyingNext(shared.words()) };
     await putAll('words', [moved]);
-    await shared.afterChange();
+    await shared.afterWordChange(moved);
     dialogResult = { changed: true, word: moved };
     dialog.close();
   });

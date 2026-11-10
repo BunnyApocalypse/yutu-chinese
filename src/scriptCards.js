@@ -11,15 +11,15 @@
 // Left there, it would pass for knowing the traditional form. The reviews
 // record the script each was done in, so the card can be put right.
 
-import { getAll, moveCards } from './db.js';
+import { getAll, getSome, getReviewsOfWord, moveCards } from './db.js';
 import { PER_SCRIPT_TYPES, cardIdFor } from './session.js';
 
 // Works out which cards under a plain ID belong under the simplified one:
 // those whose latest review was done in simplified.
 //
 // words:   the word records to look at
-// cards:   all card records
-// reviews: all review records
+// cards:   the card records (at least those of these words)
+// reviews: the review records (at least those of these words)
 //
 // Returns [{ from, to }], card IDs. Plain calculation.
 export function cardsLearnedInSimplified(words, cards, reviews) {
@@ -45,9 +45,21 @@ export function cardsLearnedInSimplified(words, cards, reviews) {
   return moves;
 }
 
+// Up to this many words, only their own cards and reviews are read; more
+// (every word, once per device at start) are read all at once.
+const FEW_WORDS = 20;
+
 // Does that for these words in the database. Returns how many cards moved.
+// A word saved in its panel reads only its writing cards and its reviews:
+// reading all the reviews took 2.3 s of the 2.6 s a Save took on a computer
+// with the owner's 186,000 (2026-11-10).
 export async function fileCardsByScript(words) {
-  const moves = cardsLearnedInSimplified(words, await getAll('cards'), await getAll('reviews'));
+  const few = words.length <= FEW_WORDS;
+  const cards = few
+    ? await getSome('cards', words.flatMap((word) => PER_SCRIPT_TYPES.flatMap((type) => [cardIdFor(word, type, 'traditional'), cardIdFor(word, type, 'simplified')])))
+    : await getAll('cards');
+  const reviews = few ? (await Promise.all(words.map((word) => getReviewsOfWord(word.id)))).flat() : await getAll('reviews');
+  const moves = cardsLearnedInSimplified(words, cards, reviews);
   if (moves.length > 0) {
     await moveCards(moves);
   }

@@ -3620,6 +3620,27 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       return loading;
     },
 
+    // One word saved in its pop-up panel (wordsPanel.js, afterWordChange):
+    // it and its cards in place of what is held under its ID before
+    // (`oldId`, the same if unchanged), everything else as it is. The lists
+    // are new ones: the records are shared with the Decks tab.
+    wordChanged(word, oldId, wordCards) {
+      loading = loading.then(() => {
+        words = [...words.filter((entry) => entry.id !== oldId && entry.id !== word.id), word];
+        for (const [id, card] of cards) {
+          if (card.wordId === oldId || card.wordId === word.id) {
+            cards.delete(id);
+          }
+        }
+        for (const card of wordCards) {
+          cards.set(card.id, card);
+        }
+        showDeckChoice();
+        ensureForms(); // not waited for
+      });
+      return loading;
+    },
+
     // Shows Review. If the words are being read afresh just now (a word was
     // changed a moment ago), that is waited for, or the card shown would be
     // chosen from what was there before.
