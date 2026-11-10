@@ -45,7 +45,7 @@ Fetched once into the repository, each folder with a README giving source and li
 - **`npm ci --ignore-scripts`** in `.github/workflows/deploy.yml`: installs exactly what `package-lock.json` lists, and stops any package from running code while being installed. (Not in a project-wide `.npmrc`: there it would also switch off this project's own `predev`, `prebuild` and `postbuild`.)
 - **Actions named by commit**, with the version as a comment (`actions/checkout@3d3c42e… # v7.0.1`): a version name can be moved to other code by whoever controls the action, a commit can't. `upload-pages-artifact` names the action it uses by commit too.
 - **The workflow's permissions** are only reading the code and publishing to Pages; it uses no secrets of its own.
-- **The moving page's workflow** (`old-address/deploy.yml`, for the repository at the old address; `docs/offline.md`) names the same actions by the same commits, and has the same permissions and no secrets. Dependabot doesn't look at it here: when it proposes newer actions for `.github/workflows/deploy.yml`, copy the commits there too.
+- **The moving page's workflow** (`site-repo/deploy.yml`, for `BunnyApocalypse/yutuchinese-site`, which publishes the app at yutuchinese.com during the move; `docs/offline.md`) names the same actions by the same commits, and has the same permissions and no secrets. Dependabot doesn't look at it here: when it proposes newer actions for `.github/workflows/deploy.yml`, copy the commits there too.
 
 ## The sync server
 

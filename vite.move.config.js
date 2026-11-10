@@ -4,8 +4,8 @@ import { defineConfig } from 'vite';
 // address, https://bunnyapocalypse.github.io/yutu-chinese/, shows once the
 // app is at https://yutuchinese.com/app/ (docs/offline.md, "The move to
 // yutuchinese.com"). `npm run build:move` runs it, then
-// scripts/finish-move.js. Published from a repository of its own
-// (old-address/README.md).
+// scripts/finish-move.js. Published by this repository's deploy workflow
+// at the old address during the move (phase 2 in docs/offline.md).
 //
 // It is a small page, without the stroke data, recordings or dictionary: it
 // only reads the learner's words from the browser and hands them over.
