@@ -5653,3 +5653,40 @@ button.deck-open {
   display: block;
   overflow: visible;
 }
+
+/* The moving page, at the app's old address once it is at yutuchinese.com
+   (move.html, move.js): one column of text and buttons. */
+.move-page {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: var(--space-large) var(--space-medium);
+  font-size: var(--size-body);
+  line-height: 1.5;
+}
+
+.move-page h1 {
+  font-size: var(--size-title);
+}
+
+.move-page h2 {
+  margin-top: var(--space-large);
+  font-size: var(--size-large);
+}
+
+.move-page button {
+  min-height: var(--tap);
+}
+
+.move-page .move-note {
+  color: var(--text-soft);
+}
+
+.move-page .move-note:empty {
+  display: none;
+}
+
+.move-page a:not([hidden]) {
+  display: inline-block;
+  min-height: var(--tap-least);
+  color: var(--accent);
+}

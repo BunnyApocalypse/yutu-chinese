@@ -3,6 +3,7 @@ node_modules/
 
 # Build output (recreated by `npm run build`)
 dist/
+dist-move/
 
 # Stroke data copied from node_modules by scripts/copy-char-data.js
 public/char-data/

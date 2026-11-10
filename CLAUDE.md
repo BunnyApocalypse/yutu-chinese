@@ -43,7 +43,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - Both first run `scripts/copy-char-data.js` (`predev`/`prebuild`), which copies stroke data into `public/` if missing.
 - `npm test`: unit tests in `tests/` (Node's test runner) for the plain-calculation code and the sync server; nothing touching the page or IndexedDB.
 - `npm run sync-server`: the sync server on this computer, http://127.0.0.1:8787 (`server/README.md`).
-- The real sync server, `yutu.bunnyapocalypse.space`: Ansible playbooks in `deploy/` (`cd deploy`, then `ansible-playbook status.yml`, `deploy.yml`, `update.yml`; `deploy/README.md`).
+- The real sync server, `sync.yutuchinese.com` (also `yutu.bunnyapocalypse.space`, its first name, still served): Ansible playbooks in `deploy/` (`cd deploy`, then `ansible-playbook status.yml`, `deploy.yml`, `update.yml`; `deploy/README.md`).
 - `npm run test:browser`: the real app in several headless Chromium browsers at once, about four minutes (`tests/browser/CLAUDE.md`). **Don't change files while it runs**: the dev server reloads the pages and tests fail.
 
 ## Read before working on an area

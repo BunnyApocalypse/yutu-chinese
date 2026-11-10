@@ -12,7 +12,8 @@
     "build": "vite build",
     "postbuild": "node scripts/build-offline.js && node scripts/sbom.js",
     "preview": "vite preview",
-    "test": "node --test",
+    "build:move": "vite build --config vite.move.config.js && node scripts/finish-move.js",
+    "test": "node --test 'tests/*.test.js'",
     "pretest:browser": "node scripts/copy-char-data.js && node scripts/copy-audio.js",
     "test:browser": "node tests/browser/run.js",
     "sync-server": "ALLOWED_ORIGINS=http://localhost:5173,http://localhost:4173 DATA_DIR=local/sync-data node server/server.js"

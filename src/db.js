@@ -561,6 +561,28 @@ export function forgetSync() {
   });
 }
 
+// This device's own syncing records, as they are: the sync store and the
+// outbox. Handed to the app at its new address with the words (move.js), so
+// that it carries on syncing where this one stopped, unsent changes included.
+export async function readSyncState() {
+  return { sync: await getAll('sync'), outbox: await getAll('outbox') };
+}
+
+// Puts the syncing records handed over from the app's old address
+// (moveIn.js) in place of this device's, which has none yet.
+export function replaceSyncState({ sync, outbox }) {
+  return transaction(['sync', 'outbox'], 'readwrite', (tx) => {
+    tx.objectStore('sync').clear();
+    tx.objectStore('outbox').clear();
+    for (const record of sync) {
+      tx.objectStore('sync').put(record);
+    }
+    for (const entry of outbox) {
+      tx.objectStore('outbox').put(entry);
+    }
+  });
+}
+
 // The outbox's entries and the records they name, as they are now:
 // { entries, records: { words: [...], ... } }. A record since deleted is
 // left out (a word's removal is sent as its mark in `removed`). With the

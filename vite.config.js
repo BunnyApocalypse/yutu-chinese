@@ -32,6 +32,14 @@ export default defineConfig(({ command }) => ({
     // this computer, and in a build none yet (step 4), so Settings doesn't
     // offer syncing.
     __SYNC_SERVER__: JSON.stringify(process.env.VITE_SYNC_SERVER ?? (command === 'build' ? '' : 'http://127.0.0.1:8787')),
+    // The site the app was at before yutuchinese.com, whose moving page
+    // hands the learner's words over (moveIn.js, docs/offline.md):
+    // VITE_MOVE_FROM if given (the browser tests), in a build the old
+    // address, under `npm run dev` none.
+    __MOVE_FROM__: JSON.stringify(process.env.VITE_MOVE_FROM ?? (command === 'build' ? 'https://bunnyapocalypse.github.io' : '')),
+    // For the moving page (move.html) when the dev server serves it, in the
+    // browser tests (move.browser.js); its own build has vite.move.config.js.
+    __MOVE_TO__: JSON.stringify(process.env.VITE_MOVE_TO ?? ''),
   },
   server: {
     // By default the dev server only answers requests from this computer.

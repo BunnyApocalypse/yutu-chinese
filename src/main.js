@@ -44,6 +44,7 @@ import { createSyncPanel } from './syncPanel.js';
 import { createSyncInvite } from './syncInvite.js';
 import { createSyncNote } from './syncNote.js';
 import { takeCodeFromLink } from './syncCodeView.js';
+import { openedToMoveIn, moveIn } from './moveIn.js';
 import { startSyncTiming, syncIsLate } from './syncTiming.js';
 import { createSyncLateMessage } from './syncLateMessage.js';
 import { applyText, t, formatList, formatNumber } from './text.js';
@@ -1383,4 +1384,10 @@ async function startUp() {
 // Once the first screen is ready, "Loading…" goes and the page is shown
 // (main.starting in index.html). Also if starting fails partway: errors.js
 // says what went wrong, and the page is shown as far as it got.
-startUp().finally(() => document.querySelector('main').classList.remove('starting'));
+// Opened by the page at the app's old address to take the learner's words in
+// (moveIn.js): that first, under "Loading…", then the app starts afresh.
+if (openedToMoveIn()) {
+  moveIn(byId('starting-note'));
+} else {
+  startUp().finally(() => document.querySelector('main').classList.remove('starting'));
+}

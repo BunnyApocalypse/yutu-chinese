@@ -21,7 +21,8 @@ const sources = readdirSync(new URL('src/', root))
   .map((name) => read(`src/${name}`))
   // Comments left out: they quote keys as examples.
   .map((source) => source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, ''));
-const page = read('index.html');
+// The app's page, and the moving page at its old address (move.html).
+const page = read('index.html') + read('move.html');
 
 // Keys asked for by t('…') in the code, and by data-t… in the page.
 const askedInCode = sources.flatMap((source) => [...source.matchAll(/\bt\(\s*'([^']+)'/g)].map((match) => match[1]));

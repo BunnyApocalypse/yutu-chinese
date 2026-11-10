@@ -2,7 +2,7 @@
 
 Ansible playbooks that set up, update and look after a sync server for 玉兔中文 (Yutu Chinese) on **AlmaLinux 10** (Rocky Linux 10 should work the same). They run from your own computer and log in to the server over SSH: nothing needs installing on the server first. How syncing works and why the server is built this way: `docs/sync.md`.
 
-The owner's server is `yutu.bunnyapocalypse.space` (Hetzner, ARM, Germany; `inventory.yml`). To run your own, see "Your own server" below.
+The owner's server is `sync.yutuchinese.com` (Hetzner, ARM, Germany; `inventory.yml`), also answering as `yutu.bunnyapocalypse.space`, its first name, which apps built before 2026-11-10 use (`sync_extra_domains`). To run your own, see "Your own server" below.
 
 ## What you need on your computer
 

@@ -1,0 +1,62 @@
+# Publishes the moving page at the app's old address,
+# https://bunnyapocalypse.github.io/yutu-chinese/ (and test/ under it), once
+# the app is at https://yutuchinese.com/app/. Lives in the repository
+# BunnyApocalypse/yutu-chinese as .github/workflows/deploy.yml; kept in the
+# app's repository as old-address/deploy.yml (old-address/README.md).
+#
+# It builds the moving page from the app's own code, so that it reads the
+# learner's database the way the app does. Started by hand, rarely: when the
+# app's database changes layout.
+#   gh workflow run deploy.yml -R BunnyApocalypse/yutu-chinese
+
+name: Deploy the moving page
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: The branch or commit of BunnyApocalypse/yutuchinese to build from
+        default: stable
+
+# What the workflow may do: read the code, and publish to Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # Actions named by their exact commit, as in the app's own workflow
+      # (docs/supply-chain.md there).
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: BunnyApocalypse/yutuchinese
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+
+      # The stable copy's moving page into dist-move/, the test copy's into
+      # dist-move/test/ (vite.move.config.js). "--ignore-scripts": no package
+      # runs code of its own while being installed.
+      - name: Build the moving pages
+        run: |
+          npm ci --ignore-scripts
+          npm run build:move
+          VITE_CHANNEL=test npm run build:move
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: dist-move
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

@@ -42,6 +42,14 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Tests to watch:** `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
 
+**Handover from the session of 2026-11-10 (yutuchinese.com: the domain, the sync server's new name, the moving page).**
+
+- **The owner's decisions** (`docs/offline.md`, "The move to yutuchinese.com"): the app at `https://yutuchinese.com/app/` (test `/app/test/`), the root kept for a page about the app (forwarding to `/app/` until then), `www` forwarding; a moving page only at the old address; this repository renamed `yutuchinese`, a new `yutu-chinese` publishing the moving page; before the wider release. The sync server's usual name is now `sync.yutuchinese.com`, the old one still served (`docs/sync.md`, "Two names, one server").
+- **Done on the live systems:** Cloudflare DNS for `yutuchinese.com` (A, AAAA, `www`; GitHub's TXT and Proton Mail's were the owner's); the sync server answers to both names and allows `https://yutuchinese.com` (`setup.yml --skip-tags updates`, the owner's yes; the waiting system updates not taken, `update.yml` still to run). The Cloudflare plugin for Claude Code is installed, signed in with DNS editing.
+- **Built, not released:** the moving page and the app taking words in (`move.html`, `src/move.js`, `src/moveIn.js`, `src/moveServiceWorker.js`, `npm run build:move`), texts in English, Italian and German (Claude's, unchecked), `old-address/` for the new repository; the deploy workflow builds with `sync.yutuchinese.com`. `npm test` now runs `tests/*.test.js` only (a built `test/` folder was taken for tests).
+- **Tests:** 423 unit tests; `move.browser.js` 2 of 2, five runs in a row after the language fix; full browser run below.
+- **Next:** the switch-over (`docs/offline.md`, steps 1 to 6), with the owner; try the moving page on a real phone and on an iPhone Home Screen app before telling testers.
+
 **Handover from the session of 2026-11-10 (the deploy: longer wait, one run per release, none for notes).**
 
 - **Why:** the release `2026-11-10` failed four times (and three of the four releases of 2026-11-09 once each): Pages hung at "syncing_files" until `deploy-pages` gave up after 10 minutes (the most it allows; a longer `timeout` was tried and is cut back to 10). The upload is the same size every time; a run that works syncs in under a minute. Each release also started two runs.

@@ -76,6 +76,18 @@ function readLanguage() {
   }
 }
 
+// The language chosen in Settings, or null if none was (the browser's is
+// used): handed to the app at its new address (move.js), since the choice is
+// kept per site, outside the database.
+export function savedLanguage() {
+  try {
+    const saved = globalThis.localStorage?.getItem(LANGUAGE_KEY);
+    return LANGUAGES.includes(saved) ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
 // The language in use for this visit. Changing it reloads the page
 // (setLanguage), so it never changes while the app runs.
 export const language = readLanguage();
@@ -205,14 +217,22 @@ export function applyText(root = document) {
 // Switches the language and starts the app again in it. With none given,
 // the app goes back to following the browser's language.
 export function setLanguage(newLanguage) {
+  if (saveLanguage(newLanguage)) {
+    location.reload();
+  }
+}
+
+// Keeps the language for the next visit (none: the browser's), without
+// changing this one's. False if the browser refused (a private window).
+export function saveLanguage(newLanguage) {
   try {
     if (!newLanguage) {
       localStorage.removeItem(LANGUAGE_KEY);
     } else {
       localStorage.setItem(LANGUAGE_KEY, newLanguage);
     }
+    return true;
   } catch {
-    return;
+    return false;
   }
-  location.reload();
 }
