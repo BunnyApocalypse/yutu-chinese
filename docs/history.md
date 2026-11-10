@@ -42,6 +42,13 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Tests to watch:** `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
 
+**Handover from the session of 2026-11-10 (the deploy: longer wait, one run per release, none for notes).**
+
+- **Why:** the release `2026-11-10` failed three times (and three of the four releases of 2026-11-09 once each): Pages took more than the `deploy-pages` step's 10 minutes to put the 30,000 or so files in place, and each release started two runs that competed.
+- **Changed** (`docs/offline.md`, "The two copies"; `CLAUDE.md`, "Deploying"): `timeout` of 30 minutes on `deploy-pages`; to release, push `stable` first and `main` after it, one run for both (`gh workflow run` only if `main` had nothing new); a push to `main` changing only `docs/` or Markdown files starts no run (`paths-ignore`).
+- **Pushed to `main`** with the owner's yes, to publish the release `2026-11-10` to `stable` at last.
+- **Suggested, not built:** `deploy/deploy.yml` copies `server/` as it is on disk, committed or not, and runs no tests first; fewer files to publish (the test copy repeats the 10,600 single stroke files), which would make every deploy faster but needs its own plan.
+
 **Handover from the session of 2026-11-10 (several decks ticked in Review; released to `stable` with the "What's new" entry `2026-11-10`).**
 
 - **Asked by the owner** (2026-11-10): choose several decks to study, and the 简体字 cards with them, rather than one. **Review only** (the owner: multi-deck Learn later). Then: a count on every row ("it looks weird if only one has the number"), and "All words" at the top (instead of an "Unselect all" button).

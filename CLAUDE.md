@@ -91,10 +91,10 @@ Each area's file in `docs/` (index `docs/README.md`) has the names in the code, 
 
 ## Deploying
 
-- **Stable** from the `stable` branch at https://bunnyapocalypse.github.io/yutu-chinese/ (testers, the owner's data); **test** from `main` at `.../yutu-chinese/test/`. Pushing `main` publishes the test copy. The old `.../hanzi-trainer/` forwards from a repository of its own (`redirect/`).
+- **Stable** from the `stable` branch at https://bunnyapocalypse.github.io/yutu-chinese/ (testers, the owner's data); **test** from `main` at `.../yutu-chinese/test/`. Pushing `main` publishes the test copy, unless the push changes only `docs/` or Markdown files. The old `.../hanzi-trainer/` forwards from a repository of its own (`redirect/`).
 - **Never push unless the owner has said to** (2026-10-15): no branch, not at the end of a session or a background job. Commit freely; say what is committed and not pushed. **Except** (2026-10-19): right after a push the owner asked for, when they ask to clean up or hand over, commits of handover notes and other docs only (nothing in the app) are pushed without asking; say so.
 - **Always hand over before pushing** (the owner, 2026-11-08): the handover at the top of `docs/history.md` is written and committed before the push, so it goes up with the work.
-- **To release:** ask the owner, write the entry at the top of `src/changes.js` (the "What's new" pop-up: what a learner will notice, a few lines), then `git push origin main:stable` and `gh workflow run deploy.yml --ref main` (a run started by the push to `stable` is refused by the environment's rules).
+- **To release:** ask the owner, write the entry at the top of `src/changes.js` (the "What's new" pop-up: what a learner will notice, a few lines), then `git push origin main:stable` first and `git push origin main` after it: the run started by `main` publishes both copies. Only if `main` had nothing new to push, `gh workflow run deploy.yml --ref main` instead (a push to `stable` starts nothing; `docs/offline.md`).
 - **No need to watch a deploy run** after pushing (the owner, 2026-10-19): push and move on, unless the change could affect the build itself (`package.json`, `vite.config.js`, `scripts/`, the workflow, the service worker or offline packs).
 - If a deploy fails with "Fetching artifact metadata failed", don't re-run it; start a fresh run with the command above.
 - The repository is `BunnyApocalypse/yutu-chinese`, with capitals. Never push the app to `BunnyApocalypse/hanzi-trainer` (only the forwarding site).
