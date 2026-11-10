@@ -13,6 +13,21 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-10-2',
+    items: [
+      'The app has its own address now: yutuchinese.com. Your words, progress and settings come along, and the old address only hands them over.',
+      'Installed the app? Install it again from yutuchinese.com and remove the old one.',
+    ],
+    it: [
+      'L’app ha ora un indirizzo tutto suo: yutuchinese.com. Le tue parole, i progressi e le impostazioni vengono con te, e il vecchio indirizzo si limita a trasferirli.',
+      'Hai installato l’app? Installala di nuovo da yutuchinese.com e rimuovi quella vecchia.',
+    ],
+    de: [
+      'Die App hat jetzt eine eigene Adresse: yutuchinese.com. Deine Wörter, dein Fortschritt und deine Einstellungen kommen mit, und die alte Adresse übergibt sie nur noch.',
+      'Du hast die App installiert? Installiere sie erneut von yutuchinese.com und entferne die alte.',
+    ],
+  },
+  {
     id: '2026-11-10',
     items: [
       'Review several decks at once: Review’s deck chooser now has tickboxes. Tick as many decks as you like, and your cards in simplified (or traditional) with them; All words, at the top, unticks the rest.',
