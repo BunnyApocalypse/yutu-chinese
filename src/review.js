@@ -494,6 +494,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       settings.pronunciation === 'taiwan' ? 'taiwan' : 'mainland',
       settings.volume,
     );
+    // Another word was asked to be spoken meanwhile: that one is heard.
+    if (spoken === 'overtaken') {
+      return;
+    }
     // How it was spoken is noted on the button for the browser tests; and
     // the button says so if the word could not be spoken at all.
     listenButton.dataset.spoken = `${word.id} ${spoken}`;
@@ -3519,6 +3523,26 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // Cards come back after a few minutes, so keep checking.
       recheckTimer = setTimeout(showNext, RECHECK_MS);
       return;
+    }
+
+    // A writing card whose word has no stroke data is passed over before it
+    // is shown. Found only once the card was up, its meaning flashed by at
+    // every start of the app (the owner, 2026-11-10: 幇, a rare form of 幫
+    // brought over from Skritter, long overdue and so always first).
+    if (plan.next.type === 'writing') {
+      const { word } = plan.next;
+      const script = plan.next.other ? plan.next.script : scriptFor(word, settings);
+      const text = isSentence(word) ? sentenceWriting(word, script, settings.sentenceWriting).text : word[script];
+      const asked = showNextCalls;
+      const writable = await flows.writing.canWrite(text, script);
+      if (asked !== showNextCalls || !active) {
+        return; // showNext was called again meanwhile
+      }
+      if (!writable) {
+        unwritable.add(word.id);
+        showNext();
+        return;
+      }
     }
 
     current = plan.next;

@@ -93,6 +93,30 @@ describe('hearing a word', { concurrency: false }, () => {
 
   });
 
+  // The owner, 2026-11-10: with no internet, sounds lagged, then played all
+  // at once. A recording not on the device is waited for a moment only;
+  // then the device's voice is tried (none in the test browser: null).
+  it('gives up on a recording that does not come, rather than wait for it', async () => {
+    await page.evaluate(`(() => {
+      window.fetchBefore = window.fetch;
+      window.fetch = (url, ...rest) =>
+        String(url).endsWith('.mp3') ? new Promise(() => {}) : window.fetchBefore(url, ...rest);
+    })()`);
+    // The mainland reading, xīngqī: not fetched before, so not on the device.
+    await tap(page, 'settings-button');
+    await choose(page, 'pronunciation-select', 'mainland');
+    await tap(page, 'settings-close');
+    await page.evaluate(`delete document.getElementById('listen-button').dataset.spoken`);
+    await tap(page, 'listen-button');
+    await waitUntil(page, `${spoken} !== undefined`, 'an answer without the recording', 4000);
+    assert.match(await page.evaluate(spoken), /^星期\|xing1qi1 (null|voice)$/);
+    // Back as it was, for the tests after this one.
+    await page.evaluate(`window.fetch = window.fetchBefore`);
+    await tap(page, 'settings-button');
+    await choose(page, 'pronunciation-select', 'taiwan');
+    await tap(page, 'settings-close');
+  });
+
   it('keeps the volume chosen with the slider', async () => {
     await tap(page, 'settings-button');
     assert.equal(await page.evaluate(`document.getElementById('volume-input').value`), '100');

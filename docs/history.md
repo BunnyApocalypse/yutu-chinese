@@ -42,6 +42,12 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Tests to watch:** `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
 
+**Handover from the session of 2026-11-10 (the card flash at start, sound without internet).**
+
+- **The card flash found:** the card was 幇 (U+5E47), a rare form of 幫 in the owner's Skritter HSK 1 (3.0) › Section 18, with no stroke data in either set; its writing card, overdue since 2026-10-09, came first at every start, showed its meaning, then was found unwritable and passed over. Now passed over before it is shown (`docs/pitfalls.md`, Hanzi Writer). Sync played no part. The word itself still can't be written: the owner can change its traditional form to 幫 (not done; ask how).
+- **Sound without internet:** only the last word asked for plays, and a recording not on the device is waited for 1.5 s, then the device's voice (`docs/word-page.md`).
+- **Tests:** 423 unit tests; `sound`, `review`, `wordPage`, `startup` browser files 43 of 43; the new Review test fails without the fix (the meaning "to help" shown). No full run. Committed on `worktree-flash-and-sound`, not pushed, not released.
+
 **Handover from the session of 2026-11-10 (yutuchinese.com: the domain, the sync server's new name, the moving page).**
 
 - **The owner's decisions** (`docs/offline.md`, "The move to yutuchinese.com"): the app at `https://yutuchinese.com/app/` (test `/app/test/`), the root kept for a page about the app (forwarding to `/app/` until then), `www` forwarding; a moving page only at the old address; this repository renamed `yutuchinese`, a new `yutu-chinese` publishing the moving page; before the wider release. The sync server's usual name is now `sync.yutuchinese.com`, the old one still served (`docs/sync.md`, "Two names, one server").

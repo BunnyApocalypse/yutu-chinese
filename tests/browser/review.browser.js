@@ -326,6 +326,49 @@ describe('grading in Review', { concurrency: false }, () => {
     await chooseGrade(await page.evaluate(SUGGESTED));
   });
 
+  // The owner, 2026-11-10: at every start, the meaning of 幇 (a rare form
+  // of 幫 brought over from Skritter, with no stroke data) flashed by before
+  // the first card. Its writing card, the most overdue, was shown and only
+  // then found unwritable. It must be passed over without being shown.
+  it('passes over a writing card without stroke data before it is shown', async () => {
+    await inDatabase(`stores.words.get('大|da4').onsuccess = (event) => {
+      stores.words.put({
+        id: '幇|bang1',
+        traditional: '幇',
+        simplified: '帮',
+        pinyin: 'bang1',
+        definition: 'to help',
+        order: 0,
+        addedAt: Date.now(),
+        decks: event.target.result.decks,
+      });
+    };
+    stores.cards.put(${JSON.stringify(card('幇|bang1#writing', '幇|bang1', 'writing', -30 * DAY))});`);
+    // Every meaning put on the page from the start, before the app's code runs.
+    await page.send('Page.enable');
+    const { identifier } = await page.send('Page.addScriptToEvaluateOnNewDocument', {
+      source: `window.__meanings = [];
+        new MutationObserver(() => {
+          const text = document.getElementById('prompt-meaning')?.textContent;
+          if (text && window.__meanings.at(-1) !== text) {
+            window.__meanings.push(text);
+          }
+        }).observe(document, { subtree: true, childList: true, characterData: true });`,
+    });
+    try {
+      await makeDue(['大|da4#writing', '大|da4', 'writing']);
+      await waitForFirstStroke();
+      assert.equal(await textOf(page, 'prompt-meaning'), 'big');
+      assert.deepEqual(await page.evaluate(`window.__meanings.filter((text) => text.includes('help'))`), []);
+    } finally {
+      await page.send('Page.removeScriptToEvaluateOnNewDocument', { identifier });
+    }
+    // Put back as it was, for the tests after this one.
+    await write('大');
+    await chooseGrade(await page.evaluate(SUGGESTED));
+    await inDatabase(`stores.words.delete('幇|bang1'); stores.cards.delete('幇|bang1#writing');`);
+  });
+
   // No pause after the answer is shown (the owner, 2026-10-24): a new touch
   // moves on at once, while the end of the touch that showed it does not.
   it('takes a new tap at once after the answer, but not the end of the touch before', async () => {

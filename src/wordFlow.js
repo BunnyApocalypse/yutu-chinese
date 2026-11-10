@@ -947,6 +947,17 @@ export function createWordFlow(elements) {
       return true;
     },
 
+    // Whether any character of `text` has stroke data in `script`, so that a
+    // card can be passed over before it is shown (Review). The writing area
+    // is emptied meanwhile, as start() does; the data loaded is kept, so
+    // start() then has it at once.
+    async canWrite(text, script) {
+      quiz.blank();
+      const typed = Array.from(text).filter((char) => char.trim() !== '');
+      const data = await Promise.all(typed.map((char) => loadCharData(char, script)));
+      return data.some((charData) => charData !== null);
+    },
+
     // Each character written, with a copy of your strokes on it as it was
     // finished ({ char, picture }: an SVG element, see quiz.drawing;
     // undefined for one skipped): for looking back at the card once graded.

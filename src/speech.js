@@ -16,6 +16,14 @@ const address = (file) => new URL(`${BASE}audio/${file}`, window.location.href).
 // from the others (see serviceWorker.js); offline.js fills it too.
 const AUDIO_CACHE = 'offline-audio';
 
+// How long a recording not yet on the device is waited for. With a
+// connection that doesn't reach the internet (Wi-Fi without it, weak mobile
+// data) a request can hang for a long time, and the words asked for
+// meanwhile all played at once when it ended (the owner, 2026-11-10). After
+// this the device's own voice speaks instead; the recording goes on loading
+// and is kept for next time.
+const NETWORK_WAIT_MS = 1500;
+
 // What recordings there are, read once: { words: Set, syllables: Set }.
 let indexPromise = null;
 function loadIndex() {
@@ -41,20 +49,47 @@ async function fetchRecording(file) {
   if (saved) {
     return saved.arrayBuffer();
   }
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`${url}: ${response.status}`);
+  // The browser knows it has no connection at all: not worth asking.
+  if (!navigator.onLine) {
+    throw new Error(`${url}: offline`);
   }
-  if (cache) {
-    // Not waited for: playing does not depend on it.
-    cache.put(url, response.clone()).catch(() => {});
-  }
-  return response.arrayBuffer();
+  const loading = fetch(url).then((response) => {
+    if (!response.ok) {
+      throw new Error(`${url}: ${response.status}`);
+    }
+    if (cache) {
+      // Not waited for: playing does not depend on it.
+      cache.put(url, response.clone()).catch(() => {});
+    }
+    return response.arrayBuffer();
+  });
+  // Once given up on (below), its failing later is nobody's concern.
+  loading.catch(() => {});
+  const tooSlow = new Promise((resolve, reject) => {
+    setTimeout(() => reject(new Error(`${url}: too slow`)), NETWORK_WAIT_MS);
+  });
+  return Promise.race([loading, tooSlow]);
 }
 
 // The Web Audio API plays sound from memory at exact times, which is what
 // playing syllables back to back takes. One AudioContext serves the page.
 let audioContext = null;
+
+// Only the word asked for last is heard: each request to speak is counted,
+// and one overtaken while its recordings loaded plays nothing. What is
+// still sounding stops when the next word begins.
+let requests = 0;
+let sounding = [];
+
+function stopSounding() {
+  for (const source of sounding) {
+    source.stop();
+  }
+  sounding = [];
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+}
 
 // Where the sound in a recording begins and ends, in seconds. Syllable
 // recordings have a moment of silence at either end, which would make a
@@ -80,7 +115,11 @@ function soundSpan(buffer) {
 //
 // files:  as planSpeech gives them
 // volume: from 0 (silent) to 1 (as recorded)
-async function playRecordings(files, volume) {
+// asked:  the request's number (`requests`); nothing is played if another
+//         came meanwhile
+//
+// Returns false if it was overtaken and played nothing.
+async function playRecordings(files, volume, asked) {
   audioContext = audioContext || new AudioContext();
   // A browser keeps the context asleep until the page has been tapped, and
   // resume() then waits for that tap. It is given a moment and no more, so
@@ -89,6 +128,10 @@ async function playRecordings(files, volume) {
   const buffers = await Promise.all(
     files.map(async (file) => audioContext.decodeAudioData(await fetchRecording(file))),
   );
+  if (asked !== requests) {
+    return false;
+  }
+  stopSounding();
   // A "gain node" sits between the recordings and the loudspeaker and
   // turns them down. Loudness is heard in proportions, not in steps, so the
   // slider's value is squared: half-way on the slider then sounds about
@@ -105,7 +148,9 @@ async function playRecordings(files, volume) {
     const span = buffers.length > 1 ? soundSpan(buffer) : { start: 0, duration: buffer.duration };
     source.start(time, span.start, span.duration);
     time += span.duration;
+    sounding.push(source);
   }
+  return true;
 }
 
 // The device's Chinese voice for a region ('taiwan' or 'mainland'), or one
@@ -129,7 +174,7 @@ function speakWithVoice(text, region, volume) {
   utterance.voice = voice;
   utterance.lang = voice.lang;
   utterance.volume = volume;
-  window.speechSynthesis.cancel();
+  stopSounding();
   window.speechSynthesis.speak(utterance);
   return true;
 }
@@ -137,8 +182,9 @@ function speakWithVoice(text, region, volume) {
 // Plays one recording by its name ("s/ma1", "w/5988-5988"), for "Basics of
 // Chinese" (basics.js). Returns false if it could not be played.
 export async function playRecording(file, volume = 1) {
+  requests += 1;
   try {
-    await playRecordings([file], volume);
+    await playRecordings([file], volume, requests);
     return true;
   } catch {
     return false;
@@ -152,18 +198,25 @@ export async function playRecording(file, volume = 1) {
 // region:  'taiwan' or 'mainland', for the device's voice
 // volume:  from 0 (silent) to 1 (full), as the Volume setting has it
 //
-// Returns how it was spoken: 'word', 'syllables' or 'voice'; or null if it
-// could not be (no recording that can be fetched, and no Chinese voice).
+// Returns how it was spoken: 'word', 'syllables' or 'voice'; null if it
+// could not be (no recording that can be fetched, and no Chinese voice); or
+// 'overtaken' if another word was asked for before this one could be
+// played, and nothing was.
 export async function speak(word, reading, region, volume = 1) {
+  requests += 1;
+  const asked = requests;
   const plan = planSpeech(word, reading, await loadIndex());
   if (plan.kind !== 'voice') {
     try {
-      await playRecordings(plan.kind === 'word' ? [plan.file] : plan.files, volume);
-      return plan.kind;
+      const played = await playRecordings(plan.kind === 'word' ? [plan.file] : plan.files, volume, asked);
+      return played ? plan.kind : 'overtaken';
     } catch {
-      // No connection and not played before, or the browser would not play
-      // it: the device's voice is tried instead.
+      // No connection, or too slow, and not played before; or the browser
+      // would not play it: the device's voice is tried instead.
     }
+  }
+  if (asked !== requests) {
+    return 'overtaken';
   }
   return speakWithVoice(word.simplified === word.traditional ? word.simplified : word[region === 'taiwan' ? 'traditional' : 'simplified'], region, volume)
     ? 'voice'

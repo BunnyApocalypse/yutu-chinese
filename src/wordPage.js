@@ -195,6 +195,10 @@ export function createWordPage({
     button.innerHTML = byId('listen-button').innerHTML;
     button.addEventListener('click', async () => {
       const spoken = await speak(word, reading, region(), getSettings().volume);
+      // Another word was asked to be spoken meanwhile: that one is heard.
+      if (spoken === 'overtaken') {
+        return;
+      }
       button.dataset.spoken = String(spoken);
       button.classList.toggle('no-sound', !spoken);
     });
