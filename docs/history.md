@@ -44,8 +44,8 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Handover from the session of 2026-11-10 (the deploy: longer wait, one run per release, none for notes).**
 
-- **Why:** the release `2026-11-10` failed three times (and three of the four releases of 2026-11-09 once each): Pages took more than the `deploy-pages` step's 10 minutes to put the 30,000 or so files in place, and each release started two runs that competed.
-- **Changed** (`docs/offline.md`, "The two copies"; `CLAUDE.md`, "Deploying"): `timeout` of 30 minutes on `deploy-pages`; to release, push `stable` first and `main` after it, one run for both (`gh workflow run` only if `main` had nothing new); a push to `main` changing only `docs/` or Markdown files starts no run (`paths-ignore`).
+- **Why:** the release `2026-11-10` failed four times (and three of the four releases of 2026-11-09 once each): Pages hung at "syncing_files" until `deploy-pages` gave up after 10 minutes (the most it allows; a longer `timeout` was tried and is cut back to 10). The upload is the same size every time; a run that works syncs in under a minute. Each release also started two runs.
+- **Changed** (`docs/offline.md`, "The two copies"; `CLAUDE.md`, "Deploying"): to release, push `stable` first and `main` after it, one run for both (`gh workflow run` only if `main` had nothing new); a push to `main` changing only `docs/` or Markdown files starts no run (`paths-ignore`).
 - **Pushed to `main`** with the owner's yes, to publish the release `2026-11-10` to `stable` at last.
 - **Suggested, not built:** `deploy/deploy.yml` copies `server/` as it is on disk, committed or not, and runs no tests first; fewer files to publish (the test copy repeats the 10,600 single stroke files), which would make every deploy faster but needs its own plan.
 

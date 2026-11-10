@@ -116,8 +116,7 @@ jobs:
           path: stable/dist
       - id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
-        with:
-          # How long to wait for Pages to put the files in place, in
-          # milliseconds: 30 minutes. The site is over 30,000 files, and the
-          # usual 10 minutes was sometimes not enough (2026-11-09 and 10).
-          timeout: 1800000
+        # It waits at most 10 minutes for Pages to put the files in place (a
+        # longer "timeout" is cut back to that). That usually takes under a
+        # minute; now and then Pages hangs and the run fails: start a fresh
+        # one (docs/offline.md).
