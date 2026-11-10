@@ -1,29 +1,25 @@
-# Publishes the app to GitHub Pages: two copies of it, at one address.
+# Publishes the moving page at the app's old address, while the app moves to
+# https://yutuchinese.com (docs/offline.md, "The move to yutuchinese.com",
+# phase 2):
 #
-#   stable branch  ->  https://bunnyapocalypse.github.io/yutu-chinese/
-#                      The copy people use. It only changes when the stable
-#                      branch does, which is moved forward by hand once what
-#                      is on main has been tried.
-#   main branch    ->  https://bunnyapocalypse.github.io/yutu-chinese/test/
-#                      The test copy: every change, as soon as it is pushed.
-#                      It keeps its own database (see CHANNEL in src/db.js),
-#                      so trying it never touches the words and progress in
-#                      the stable copy.
+#   https://bunnyapocalypse.github.io/yutu-chinese/       the stable copy's
+#   https://bunnyapocalypse.github.io/yutu-chinese/test/  the test copy's
 #
-# GitHub runs this on its own computers whenever main changes (except by
-# notes alone, see paths-ignore below), or when it is started by hand. Pages
-# publishes one folder for the whole site, so both copies are built every
-# time: the stable one into dist/, the test one into dist/test/. Nothing is
-# published if either copy's unit tests fail.
+# Each reads the learner's words where the old copy kept them and hands them
+# to the app at yutuchinese.com/app/ (or /app/test/). The app itself is
+# published there by BunnyApocalypse/yutuchinese-site (site-repo/), which
+# builds this repository's stable and main; once the testers have moved,
+# this workflow publishes it at yutuchinese.com itself again (phase 3).
 #
-# To release what is on main, move the stable branch first, then push main:
+# GitHub runs this whenever main changes (except by notes alone, see
+# paths-ignore below), or when it is started by hand. Nothing is published
+# if the unit tests fail.
+#
+# To release what is on main meanwhile:
 #   git push origin main:stable
 #   git push origin main
-# The run started by the push to main builds the new stable copy with it, so
-# one run publishes both. Only if main had nothing new to push, start one by
-# hand instead:
-#   gh workflow run deploy.yml --ref main
-# (A push to stable does not start it by itself: the repository only lets
+#   gh workflow run deploy.yml -R BunnyApocalypse/yutuchinese-site
+# (A push to stable does not start this by itself: the repository only lets
 # the main branch publish to Pages, and a run started from stable is turned
 # away. That is a setting of the "github-pages" environment on GitHub.)
 
@@ -33,8 +29,7 @@ on:
   push:
     branches: [main]
     # A push changing only notes (the docs folder, Markdown files) publishes
-    # nothing: the app is the same, and each run sends the whole site again.
-    # A push with any other file in it runs as usual.
+    # nothing. A push with any other file in it runs as usual.
     paths-ignore:
       - 'docs/**'
       - '**.md'
@@ -63,59 +58,29 @@ jobs:
       # version beside it: a version name like "v7" can be moved to other
       # code by whoever controls the action, a commit cannot. Dependabot
       # proposes newer ones (docs/supply-chain.md).
-      #
-      # Each branch into a folder of its own.
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: stable
-          path: stable
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
-          path: test
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           # The current long-term-support release of Node.js.
           node-version: 24
           cache: npm
-          cache-dependency-path: |
-            stable/package-lock.json
-            test/package-lock.json
 
-      # The stable copy. "npm ci" installs exactly what package-lock.json
-      # lists; "--ignore-scripts" stops any package from running code of its
-      # own while being installed (none needs to).
-      # VITE_SYNC_SERVER: where it syncs (docs/sync.md; released 2026-11-09;
-      # by this name since 2026-11-10, the old yutu.bunnyapocalypse.space
-      # still served for the copies built before, deploy/inventory.yml).
-      - name: Build the stable copy
-        working-directory: stable
-        env:
-          VITE_SYNC_SERVER: https://sync.yutuchinese.com
+      # The stable copy's moving page into dist-move/, the test copy's into
+      # dist-move/test/ (vite.move.config.js). "npm ci" installs exactly what
+      # package-lock.json lists; "--ignore-scripts" stops any package from
+      # running code of its own while being installed (none needs to).
+      - name: Build the moving pages
         run: |
           npm ci --ignore-scripts
           npm test
-          npm run build
-
-      # The test copy. VITE_CHANNEL tells the build which copy it is;
-      # VITE_SYNC_SERVER where it syncs (docs/sync.md), the same server as
-      # the stable copy.
-      - name: Build the test copy
-        working-directory: test
-        env:
-          VITE_CHANNEL: test
-          VITE_SYNC_SERVER: https://sync.yutuchinese.com
-        run: |
-          npm ci --ignore-scripts
-          npm test
-          npm run build
-
-      - name: Put the test copy inside the stable one
-        run: mv test/dist stable/dist/test
+          npm run build:move
+          VITE_CHANNEL=test npm run build:move
 
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          path: stable/dist
+          path: dist-move
       - id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
         # It waits at most 10 minutes for Pages to put the files in place (a
