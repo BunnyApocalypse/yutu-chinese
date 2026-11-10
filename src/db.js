@@ -364,16 +364,21 @@ export function renameWord(oldId, word) {
     note('words', word.id);
     // getAll() answers later, through onsuccess; the transaction stays open
     // until the work started there is done.
+    // Only the word's own cards and reviews are read: its cards by their
+    // IDs, which begin with the word's and a '#', its reviews through the
+    // index by word. Reading them all took about 6 s on a computer with the
+    // owner's 186,000 reviews, the edit panel standing still meanwhile
+    // (2026-11-10).
     const cards = tx.objectStore('cards');
-    cards.getAll().onsuccess = (event) => {
+    cards.getAll(IDBKeyRange.bound(`${oldId}#`, `${oldId}#￿`)).onsuccess = (event) => {
       for (const card of event.target.result.filter((entry) => entry.wordId === oldId)) {
         cards.delete(card.id);
         cards.put({ ...card, id: renamed(card.id), wordId: word.id });
       }
     };
     const reviews = tx.objectStore('reviews');
-    reviews.getAll().onsuccess = (event) => {
-      for (const review of event.target.result.filter((entry) => entry.wordId === oldId)) {
+    reviews.index('wordId').getAll(oldId).onsuccess = (event) => {
+      for (const review of event.target.result) {
         reviews.put({ ...review, cardId: renamed(review.cardId), wordId: word.id });
       }
     };

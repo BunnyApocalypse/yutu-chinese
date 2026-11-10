@@ -406,4 +406,59 @@ describe('the Decks tab', { concurrency: false }, () => {
     assert.equal(back, 'deck-back-button');
     await page.evaluate(`scrollTo(0, 0)`);
   });
+
+  // The owner, 2026-11-10: 幇, a rare form of 幫 with no stroke data, was
+  // in their words unnoticed; and Save on the edit panel showed nothing
+  // while the word was saved.
+  it('says when a word has no stroke data, and that Save is under way', async () => {
+    const editOpen = `document.getElementById('word-dialog').open`;
+    const openEdit = async (search) => {
+      await type(page, 'word-search', search);
+      await waitUntil(page, rows(1));
+      await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
+      await waitUntil(page, editOpen, 'the edit panel');
+    };
+    await type(page, 'add-traditional', '幇');
+    await type(page, 'add-simplified', '帮');
+    await type(page, 'add-pinyin', 'bang1');
+    await type(page, 'add-definition', 'to help');
+    await choose(page, 'add-card-script', 'traditional');
+    await page.evaluate(`document.getElementById('add-word-form').requestSubmit()`);
+    await waitUntil(page, `document.getElementById('add-word-note').textContent.startsWith('Added')`, 'the word added');
+    assert.match(await textOf(page, 'add-word-note'), /No stroke data for 幇, so it has no writing card\.$/);
+
+    // Its meaning changed: "Saving…" at once, then the panel closes.
+    await openEdit('幇');
+    await type(page, 'edit-definition', 'to help; to assist');
+    const atOnce = await page.evaluate(`(() => {
+      document.getElementById('word-dialog-form').requestSubmit();
+      return [document.querySelector('#word-dialog-form button[type="submit"]').disabled, document.getElementById('word-dialog-note').textContent];
+    })()`);
+    assert.deepEqual(atOnce, [true, 'Saving…']);
+    await waitUntil(page, `!${editOpen}`, 'the panel closed');
+
+    // Changed to 幫, which has stroke data: saved at once.
+    await openEdit('幇');
+    await type(page, 'edit-traditional', '幫');
+    await page.evaluate(`document.getElementById('word-dialog-form').requestSubmit()`);
+    await waitUntil(page, `!${editOpen}`, 'the panel closed');
+    // Back to 幇: said first, and saved when Save is pressed again.
+    await openEdit('to assist');
+    await type(page, 'edit-traditional', '幇');
+    await page.evaluate(`document.getElementById('word-dialog-form').requestSubmit()`);
+    await waitUntil(page, `document.getElementById('word-dialog-note').textContent.startsWith('No stroke data for 幇')`, 'the warning');
+    assert.equal(await page.evaluate(editOpen), true);
+    await page.evaluate(`document.getElementById('word-dialog-form').requestSubmit()`);
+    await waitUntil(page, `!${editOpen}`, 'the panel closed');
+    await type(page, 'word-search', '幇');
+    await waitUntil(page, rows(1));
+
+    // Removed again, for anything after this.
+    await openEdit('幇');
+    // (The answer to "Remove?" was lost when the app was opened again.)
+    await page.evaluate(ANSWER_YES);
+    await tap(page, 'remove-word-button');
+    await waitUntil(page, rows(0));
+    await type(page, 'word-search', '');
+  });
 });

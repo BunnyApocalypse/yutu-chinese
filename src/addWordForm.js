@@ -10,7 +10,8 @@ import { showReading } from './readingStyle.js';
 import { fillMixed, fillReading } from './lang.js';
 import { withDeck } from './decks.js';
 import { entryRow } from './wordRows.js';
-import { checkWord, newWordRecords, wordsWithSameCharacters, tidyPinyin } from './words.js';
+import { checkWord, newWordRecords, wordsWithSameCharacters, tidyPinyin, scriptFor } from './words.js';
+import { charsWithoutData } from './charData.js';
 import { lookUp, lookUpByLetters, readTypedPinyin, proposeMeaning } from './dictionary.js';
 import { t } from './text.js';
 
@@ -349,9 +350,14 @@ export function createAddWordForm(shared, dictionaryLoader) {
 
     pinyinPreview.textContent = '';
     suggestions.replaceChildren();
+    // A character with no stroke data (a rare form, the owner, 2026-11-10)
+    // is said at once: the word will have no writing card.
+    const script = scriptFor(added, shared.getSettings());
+    const missing = existing ? [] : await charsWithoutData(added[script], script);
     fillMixed(
       addNote,
-      existing ? t('add.nowInDeckToo', { name }) : t('add.added', { characters: shared.charactersOf(toAdd[0]) }),
+      (existing ? t('add.nowInDeckToo', { name }) : t('add.added', { characters: shared.charactersOf(toAdd[0]) })) +
+        (missing.length > 0 ? ` ${t('add.noStrokeData', { chars: missing.join(' ') })}` : ''),
       shared.getSettings().script,
     );
     await shared.afterChange();

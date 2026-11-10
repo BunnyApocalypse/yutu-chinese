@@ -123,6 +123,16 @@ export async function loadCharData(char, script) {
   return data && withFangInEitherOrder(data);
 }
 
+// The Chinese characters of `text` with no stroke data in `script` (a rare
+// form such as 幇, brought over from Skritter), in a list; punctuation and
+// letters are left out. Without a connection, data not yet saved on the
+// device can't be told from data that doesn't exist, and counts as missing.
+export async function charsWithoutData(text, script) {
+  const chars = Array.from(text).filter((char) => /\p{Script=Han}/u.test(char));
+  const data = await Promise.all(chars.map((char) => loadCharData(char, script)));
+  return chars.filter((char, index) => data[index] === null);
+}
+
 // The traditional character's data with all its second forms as `altForms`:
 // the one stored with it (`altForm`, 充) and the other ways to write the box
 // at the top of 骨 (innerBox.js). A copy, as the big set's data is shared
