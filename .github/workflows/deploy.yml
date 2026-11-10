@@ -11,9 +11,9 @@
 # builds this repository's stable and main; once the testers have moved,
 # this workflow publishes it at yutuchinese.com itself again (phase 3).
 #
-# GitHub runs this whenever main changes (except by notes alone, see
-# paths-ignore below), or when it is started by hand. Nothing is published
-# if the unit tests fail.
+# GitHub runs this when main changes a file the moving page is built from
+# (see paths below), or when it is started by hand. Nothing is published if
+# the unit tests fail.
 #
 # To release what is on main meanwhile:
 #   git push origin main:stable
@@ -28,11 +28,28 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
-    # A push changing only notes (the docs folder, Markdown files) publishes
-    # nothing. A push with any other file in it runs as usual.
-    paths-ignore:
-      - 'docs/**'
-      - '**.md'
+    # Only what the moving page is built from (the owner, 2026-11-10: the
+    # rest of the app never reaches it, and each run risks a hung Pages).
+    # Its own files, and the app's it imports: the database, the backup,
+    # the sync code, the texts, the style sheet. A new import in src/move.js
+    # (or a new file in move.html) goes here too.
+    # In phase 3, when this publishes the app again, this list goes and
+    # paths-ignore (docs/**, **.md) comes back.
+    paths:
+      - 'move.html'
+      - 'src/move.js'
+      - 'src/moveServiceWorker.js'
+      - 'vite.move.config.js'
+      - 'scripts/finish-move.js'
+      - 'src/db.js'
+      - 'src/backup.js'
+      - 'src/syncCode.js'
+      - 'src/style.css'
+      - 'src/text.js'
+      - 'src/text/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/deploy.yml'
   # Also allows starting it by hand from the repository's Actions tab.
   workflow_dispatch:
 
