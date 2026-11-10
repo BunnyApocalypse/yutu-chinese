@@ -28,7 +28,7 @@ I am deliberately not explaining how the app works. If you cannot work something
 
 ## Telling me what you find
 
-In the app, the menu (☰) has "Send feedback": it writes an email to **yutufeedback.delicious577@passmail.com** with your device and the app's version already filled in. If you have a GitHub account, you can instead open an issue at https://github.com/BunnyApocalypse/yutu-chinese/issues.
+In the app, the menu (☰) has "Send feedback": it writes an email to **contact@yutuchinese.com** with your device and the app's version already filled in. If you have a GitHub account, you can instead open an issue at https://github.com/BunnyApocalypse/yutu-chinese/issues.
 
 The most useful reports say three things: what you were trying to do, what you did, and what happened. A screenshot helps a lot. If the app ever shows a red line with "Details", please copy the details into your report.
 

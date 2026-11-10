@@ -1264,7 +1264,7 @@ export default {
   'streak.streakOff': 'Serien nicht zählen',
 
   // Send feedback (index.html)
-  'feedback.theEmailOpensIn': 'Die E-Mail öffnet sich in deiner Mail-App, mit der Version der App sowie deinem Gerät und Browser bereits eingetragen. Nichts über deine Wörter oder dein Lernen ist darin enthalten. Die Adresse lautet <span class="feedback-address">yutufeedback.delicious577@passmail.com</span>. Für ein Issue auf GitHub brauchst du ein GitHub-Konto.',
+  'feedback.theEmailOpensIn': 'Die E-Mail öffnet sich in deiner Mail-App, mit der Version der App sowie deinem Gerät und Browser bereits eingetragen. Nichts über deine Wörter oder dein Lernen ist darin enthalten. Die Adresse lautet <span class="feedback-address">contact@yutuchinese.com</span>. Für ein Issue auf GitHub brauchst du ein GitHub-Konto.',
   'feedback.sendFeedback': 'Feedback senden',
   'feedback.somethingBrokenOrConfusing': 'Etwas kaputt oder unklar, eine Frage, eine Idee: Jede Nachricht hilft, die App zu verbessern.',
   'feedback.feedbackEmail': 'E-Mail schreiben',

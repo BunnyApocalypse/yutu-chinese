@@ -12,7 +12,7 @@ import { aboutThisDevice } from './errors.js';
 import { closeOnTapBeside } from './dialogs.js';
 import { t } from './text.js';
 
-const ADDRESS = 'yutufeedback.delicious577@passmail.com';
+const ADDRESS = 'contact@yutuchinese.com';
 const ISSUES = 'https://github.com/BunnyApocalypse/yutu-chinese/issues';
 
 const byId = (id) => document.getElementById(id);

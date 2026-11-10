@@ -1281,7 +1281,7 @@ export default {
   'streak.streakOff': "Don't count streaks",
 
   // Send feedback (index.html)
-  'feedback.theEmailOpensIn': 'The email opens in your mail app, with which version of the app this is and which device and browser you use already written in. Nothing about your words or your studying is in it. The address is <span class="feedback-address">yutufeedback.delicious577@passmail.com</span>. An issue on GitHub needs a GitHub account.',
+  'feedback.theEmailOpensIn': 'The email opens in your mail app, with which version of the app this is and which device and browser you use already written in. Nothing about your words or your studying is in it. The address is <span class="feedback-address">contact@yutuchinese.com</span>. An issue on GitHub needs a GitHub account.',
   'feedback.sendFeedback': 'Send feedback',
   'feedback.somethingBrokenOrConfusing': 'Something broken or confusing, a question, an idea: every message helps make the app better.',
   'feedback.feedbackEmail': 'Write an email',
