@@ -6,6 +6,11 @@
 ansible_user: yutu
 admin_user: yutu
 
+# Other names the server still answers to besides sync_domain, each with a
+# certificate of its own: an earlier name that apps already out there use.
+# Each must point at the server too (A and AAAA records).
+sync_extra_domains: []
+
 # Where the server's program is kept, and its files.
 sync_code_dir: /opt/yutu-sync
 sync_data_dir: /var/lib/yutu-sync
