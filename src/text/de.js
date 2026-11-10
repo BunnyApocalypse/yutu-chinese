@@ -536,6 +536,11 @@ export default {
   // The study screen: Review, Learn and Free practice (index.html)
   'review.deckToStudyIs': 'Stapel zum Lernen: {deck}',
   'review.chooseDeckTitle': 'Welchen Stapel lernen?',
+  'review.reviewDecksTitle': 'Welche Stapel wiederholen?',
+  'review.decksDone': 'Fertig',
+  'review.decksToStudyAre': 'Stapel zum Lernen: {decks}',
+  'review.decksTicked': { one: '{count} Stapel', other: '{count} Stapel' },
+  'review.entryAndDecks': { one: '{entry} + {count} Stapel', other: '{entry} + {count} Stapel' },
   'review.decksInside': 'Stapel in {deck}',
   'review.hearTheWord': 'Wort anhören',
   'review.pinyinButton': 'Pinyin zeigen',

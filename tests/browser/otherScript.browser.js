@@ -11,7 +11,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, reloadApp, textOf, isShown, waitUntil, tap, choose } from './harness.js';
+import { startApp, startBrowsers, reloadApp, textOf, isShown, waitUntil, tap, choose, tickDecks } from './harness.js';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -26,15 +26,23 @@ describe('cards in the other script', { concurrency: false }, () => {
     page.evaluate(`new Promise((resolve, reject) => {
       const opening = indexedDB.open('hanzi-trainer');
       opening.onsuccess = () => {
-        const tx = opening.result.transaction(['words', 'cards', 'reviews', 'settings'], 'readwrite');
+        const tx = opening.result.transaction(['words', 'cards', 'reviews', 'settings', 'decks'], 'readwrite');
         const stores = {
           words: tx.objectStore('words'),
           cards: tx.objectStore('cards'),
           reviews: tx.objectStore('reviews'),
           settings: tx.objectStore('settings'),
+          decks: tx.objectStore('decks'),
         };
         const result = {};
-        ${body}
+        // A mistake in the body fails the test, instead of leaving it
+        // waiting for good.
+        try {
+          ${body}
+        } catch (error) {
+          reject(error);
+          return;
+        }
         tx.oncomplete = () => {
           opening.result.close();
           resolve(JSON.stringify(result));
@@ -185,31 +193,69 @@ describe('cards in the other script', { concurrency: false }, () => {
     await page.evaluate(`document.getElementById('deck-choice-button').click()`);
     await waitUntil(page, `document.getElementById('deck-choice-dialog').open`, 'the chooser');
     assert.equal(await textOf(page, 'deck-choice-title'), 'Review what?');
-    const first = await page.evaluate(`(() => {
-      const row = document.querySelector('#deck-choice-list li');
-      return [row.querySelector('input').value, row.querySelector('input').checked, row.textContent];
-    })()`);
-    assert.deepEqual(first, ['#other-cards', false, '简体字 cards1 due']);
-    await page.evaluate(`document.querySelector('#deck-choice-list input[value="#other-cards"]').click()`);
-    await waitUntil(page, `!document.getElementById('deck-choice-dialog').open`, 'the chooser to close');
+    // "All words" first, then the cards in simplified, then the decks under
+    // a heading; each row with how many are due (the owner, 2026-11-10).
+    const rows = await page.evaluate(`[...document.querySelectorAll('#deck-choice-list li')].map((row) =>
+      row.querySelector('input') ? [row.querySelector('input').value, row.querySelector('input').checked, row.textContent] : row.textContent)`);
+    assert.deepEqual(rows[0].slice(0, 2), ['', true]);
+    assert.match(rows[0][2], /^All words\d+ due$/);
+    assert.deepEqual(rows[1], ['#other-cards', false, '简体字 cards1 due']);
+    assert.equal(rows[2], 'Your words from');
+    assert.match(rows[3][2], /^Chinese 中文\d+ due$/);
+    await tickDecks(page, ['#other-cards']);
     // Only the card in simplified, then the end, though the own cards are due.
+    const answer = async () => {
+      await page.evaluate(
+        `['pointerdown', 'pointerup'].forEach((type) => document.getElementById('card-face').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`,
+      );
+      await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
+      await page.evaluate(`document.querySelector('#grade-row .grade.primary').click()`);
+    };
     await cardUp('我们');
     assert.equal(await textOf(page, 'script-flag'), 'simp. 简体');
-    await page.evaluate(
-      `['pointerdown', 'pointerup'].forEach((type) => document.getElementById('card-face').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`,
-    );
-    await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
-    await page.evaluate(`document.querySelector('#grade-row .grade.primary').click()`);
+    await answer();
     await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the end of Review');
     assert.deepEqual(
       (await all('reviews')).map((review) => review.cardId),
       ['我們|wo3men5#meaning#in-simplified'],
     );
-    // All words again: the own cards come back.
+
+    // Ticked with a deck (the owner, 2026-11-10): the own cards of the
+    // deck's words come too, and no others. 人 in a deck of its own.
+    await inDatabase(`
+      stores.decks.put({ id: 'people', name: 'People', parentId: null, order: 1 });
+      stores.words.get('人|ren2').onsuccess = (event) => {
+        const word = event.target.result;
+        stores.words.put({ ...word, decks: [...word.decks, 'people'] });
+      };
+    `);
+    await reloadApp(page);
+    // The choice was kept.
+    await waitUntil(page, `document.getElementById('deck-choice-button').textContent === '简体字 cards'`, 'the cards in simplified chosen');
     await page.evaluate(`document.getElementById('deck-choice-button').click()`);
-    await waitUntil(page, `document.getElementById('deck-choice-dialog').open`, 'the chooser');
-    await page.evaluate(`document.querySelector('#deck-choice-list input[value=""]').click()`);
+    await tickDecks(page, ['#other-cards', 'people']);
+    assert.equal(await textOf(page, 'deck-choice-button'), '简体字 cards + 1 deck');
+    await cardUp('人');
+    await answer();
+    await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the end of Review');
+    assert.deepEqual(
+      (await all('reviews')).map((review) => review.cardId).sort(),
+      ['人|ren2#meaning', '我們|wo3men5#meaning#in-simplified'],
+    );
+
+    // All words again: the own cards come back (not yet 我們's, held back
+    // a while after its card in simplified was answered).
+    await page.evaluate(`document.getElementById('deck-choice-button').click()`);
+    await tickDecks(page, []);
     await waitUntil(page, `!document.getElementById('card-face').hidden && document.getElementById('script-flag').textContent === ''`, 'an own card');
+    await inDatabase(`
+      stores.decks.delete('people');
+      stores.words.get('人|ren2').onsuccess = (event) => {
+        const word = event.target.result;
+        stores.words.put({ ...word, decks: word.decks.filter((id) => id !== 'people') });
+      };
+    `);
+    await reloadApp(page);
   });
 
   // The Words tab's Show list: "Studied simplified forms" lists the
@@ -296,15 +342,23 @@ describe('learning forms in the other script', { concurrency: false }, () => {
     page.evaluate(`new Promise((resolve, reject) => {
       const opening = indexedDB.open('hanzi-trainer');
       opening.onsuccess = () => {
-        const tx = opening.result.transaction(['words', 'cards', 'reviews', 'settings'], 'readwrite');
+        const tx = opening.result.transaction(['words', 'cards', 'reviews', 'settings', 'decks'], 'readwrite');
         const stores = {
           words: tx.objectStore('words'),
           cards: tx.objectStore('cards'),
           reviews: tx.objectStore('reviews'),
           settings: tx.objectStore('settings'),
+          decks: tx.objectStore('decks'),
         };
         const result = {};
-        ${body}
+        // A mistake in the body fails the test, instead of leaving it
+        // waiting for good.
+        try {
+          ${body}
+        } catch (error) {
+          reject(error);
+          return;
+        }
         tx.oncomplete = () => {
           opening.result.close();
           resolve(JSON.stringify(result));

@@ -17,11 +17,17 @@
 //
 // As in every deck chooser, the groups inside the ready-made levels are left
 // out, except the one chosen (see fillDeckSelect in decksPanel.js).
+//
+// Review's chooser has tickboxes instead (the owner, 2026-11-10): as many
+// decks as wanted, and the cards in the other script with them. A deck
+// ticked includes the decks inside it, shown ticked and greyed; "All words"
+// is ticked when nothing else is. The panel stays open while ticking, and
+// the choice is made when it closes, by "Done" or any other way.
 
 import { deckTree, isReadyMadeGroup } from './decks.js';
 import { closeOnTapBeside } from './dialogs.js';
 import { fillMixed } from './lang.js';
-import { t } from './text.js';
+import { formatList, t } from './text.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -32,6 +38,8 @@ const byId = (id) => document.getElementById(id);
 // with the deck tapped. A row may also have `note` (said after its name,
 // "12 to learn"), `script` (its own script, for Chinese in it) and
 // `heading` (a line of text before it, "New words from").
+// With tickboxes, `ticked` is a Set of the IDs ticked (none for all words),
+// and choose(ids) is called with them as the panel closes, if they changed.
 let panel = null;
 let listenersAdded = false;
 
@@ -44,12 +52,19 @@ function addPanelListeners() {
   const dialog = byId('deck-choice-dialog');
   const list = byId('deck-choice-list');
   // Choosing a deck closes the panel; so does tapping the one already chosen.
+  // A tickbox changes what is ticked, and the panel stays open.
   list.addEventListener('change', (event) => {
+    if (panel.ticked) {
+      tick(event.target.value, event.target.checked);
+      render();
+      list.querySelector(`input[value="${CSS.escape(event.target.value)}"]`)?.focus();
+      return;
+    }
     dialog.close();
     panel.choose(event.target.value);
   });
   list.addEventListener('click', (event) => {
-    if (event.target.matches?.('input') && event.target.value === panel.chosen) {
+    if (!panel.ticked && event.target.matches?.('input') && event.target.value === panel.chosen) {
       dialog.close();
     }
     const fold = event.target.closest('.deck-fold');
@@ -65,11 +80,68 @@ function addPanelListeners() {
     }
   });
   byId('deck-choice-close').addEventListener('click', () => dialog.close());
+  byId('deck-choice-done').addEventListener('click', () => dialog.close());
+  // The decks ticked are chosen as the panel closes, however it is closed:
+  // ticks are not lost to a tap beside it.
+  dialog.addEventListener('close', () => {
+    if (!dialog.open) {
+      finishTicking(panel);
+    }
+  });
   closeOnTapBeside(dialog);
 }
 
-// The decks the deck with this ID is inside, so that it can be seen.
-function branchOf(rows, id) {
+// Chooses what a panel with tickboxes has ticked, if it changed, once. The
+// browser sends "close" a moment after the panel closes: a button opening
+// the panel again before then finishes the one closed first
+// (finishClosedPanel), before it reads what is chosen, or those ticks would
+// be lost.
+function finishTicking(closed) {
+  if (!closed?.ticked || closed.finished) {
+    return;
+  }
+  closed.finished = true;
+  const ids = [...closed.ticked];
+  const same = ids.length === closed.chosen.length && ids.every((id) => closed.chosen.includes(id));
+  if (!same) {
+    closed.choose(ids);
+  }
+}
+
+// A tickbox ticked (on) or unticked. "All words" ('') unticks everything
+// else; a deck ticked takes the place of the decks inside it that were
+// ticked, as it includes them.
+function tick(id, on) {
+  const { ticked, rows } = panel;
+  if (id === '') {
+    ticked.clear();
+    return;
+  }
+  if (!on) {
+    ticked.delete(id);
+    return;
+  }
+  ticked.add(id);
+  for (const row of rows) {
+    if (ancestorsOf(rows, row.id).has(id)) {
+      ticked.delete(row.id);
+    }
+  }
+}
+
+function finishClosedPanel() {
+  if (panel && !byId('deck-choice-dialog').open) {
+    finishTicking(panel);
+  }
+}
+
+// Whether the row is inside a deck ticked: then it is ticked too, and greyed.
+function insideTicked(row) {
+  return [...ancestorsOf(panel.rows, row.id)].some((id) => panel.ticked.has(id));
+}
+
+// The decks the deck with this ID is inside (so that it can be seen).
+function ancestorsOf(rows, id) {
   const branch = new Set();
   let row = rows.find((entry) => entry.id === id);
   while (row?.parentId) {
@@ -80,11 +152,15 @@ function branchOf(rows, id) {
 }
 
 // Opens the panel. title: its heading; rows, chosen, script, choose: as for
-// `panel` above.
+// `panel` above. `chosen` is a list of IDs for tickboxes.
 function openPanel({ title, rows, chosen, script, choose }) {
   addPanelListeners();
-  panel = { rows, chosen, script, choose, unfolded: branchOf(rows, chosen) };
+  const ticked = Array.isArray(chosen) ? new Set(chosen) : null;
+  // The branches of the decks chosen start open.
+  const unfolded = new Set((ticked ? chosen : [chosen]).flatMap((id) => [...ancestorsOf(rows, id)]));
+  panel = { rows, chosen, script, choose, unfolded, ticked };
   byId('deck-choice-title').textContent = title;
+  byId('deck-choice-bar').hidden = !ticked;
   render();
   byId('deck-choice-dialog').showModal();
   // The keyboard's focus on the deck chosen, not the first in the list.
@@ -92,7 +168,7 @@ function openPanel({ title, rows, chosen, script, choose }) {
 }
 
 function render() {
-  const { rows, chosen, script, unfolded } = panel;
+  const { rows, chosen, script, unfolded, ticked } = panel;
   const hasInside = new Set(rows.map((row) => row.parentId).filter(Boolean));
   const shown = rows.filter((row) => {
     for (let parent = row.parentId; parent; parent = rows.find((entry) => entry.id === parent).parentId) {
@@ -111,10 +187,17 @@ function render() {
       const label = document.createElement('label');
       label.className = 'deck-choice';
       const radio = document.createElement('input');
-      radio.type = 'radio';
+      radio.type = ticked ? 'checkbox' : 'radio';
       radio.name = 'deck-choice';
       radio.value = row.id;
-      radio.checked = row.id === chosen;
+      if (!ticked) {
+        radio.checked = row.id === chosen;
+      } else if (row.id === '') {
+        radio.checked = ticked.size === 0;
+      } else {
+        radio.checked = ticked.has(row.id) || insideTicked(row);
+        radio.disabled = radio.checked && !ticked.has(row.id);
+      }
       const name = document.createElement('span');
       fillMixed(name, row.label, row.script ?? script);
       label.append(radio, name);
@@ -150,18 +233,24 @@ function render() {
 // The deck studied in Review and Learn.
 //
 // buttons:  the buttons naming the deck chosen, each with a .deck-select-name
-// choose(deckId): called when a deck is chosen, '' for all words
+// choose(deckId): called when a deck is chosen, '' for all words; with
+//           tickboxes, choose(ids) with the IDs ticked, [] for all words
 //
 // show(decks, chosenId, script, first): `first`, if given, is an entry before
 // the decks, { id, label, note, script, title, heading } (in Learn, the forms
 // in the other script, otherScript.js; in Review, the cards there): the
 // panel then has its `title`, and the decks a heading of their own
-// (`heading`, or "New words from").
+// (`heading`, or "New words from"). `chosenId` a list of IDs (Review) has
+// the panel show tickboxes; the buttons then say "3 decks" where more than
+// one is ticked, or "简体字 cards + 2 decks".
+// notes(), if given: a Map of a note for each row by its ID ("12 due",
+//           '' for all words), asked for as the panel opens, so that it is
+//           not worked out at every card; or null for none
 //
 // Returns { show(decks, chosenId, script) }, which names the deck chosen on
 // the buttons and remembers the decks for the panel.
-export function createDeckChooser({ buttons, choose }) {
-  // The first row is "All words", with the ID ''.
+export function createDeckChooser({ buttons, choose, notes = () => null }) {
+  // "All words" has the ID ''.
   let rows = [];
   let chosen = '';
   let script = 'traditional';
@@ -170,49 +259,82 @@ export function createDeckChooser({ buttons, choose }) {
   function show(decks, chosenId, scriptNow, first = null) {
     chosen = chosenId;
     script = scriptNow;
-    title = first?.title ?? t('review.chooseDeckTitle');
-    rows = [
-      ...(first
-        ? [{ id: first.id, label: first.label, depth: 0, parentId: null, path: first.label, note: first.note, script: first.script }]
-        : []),
-      {
-        id: '',
-        label: t('review.allWords'),
-        depth: 0,
-        parentId: null,
-        path: t('review.allWords'),
-        ...(first && { heading: first.heading ?? t('learnForms.newWordsFrom') }),
-      },
-    ];
+    title = first?.title ?? t(Array.isArray(chosenId) ? 'review.reviewDecksTitle' : 'review.chooseDeckTitle');
+    const entry = first && {
+      id: first.id,
+      label: first.label,
+      depth: 0,
+      parentId: null,
+      path: first.label,
+      note: first.note,
+      script: first.script,
+    };
+    const allWords = { id: '', label: t('review.allWords'), depth: 0, parentId: null, path: t('review.allWords') };
+    const heading = first && (first.heading ?? t('learnForms.newWordsFrom'));
+    // With tickboxes "All words" is first, as ticking it unticks the rest
+    // (the owner, 2026-11-10), and the heading goes on the first deck.
+    // Otherwise the entry is first, and the heading on "All words".
+    rows = Array.isArray(chosenId)
+      ? [allWords, ...(entry ? [entry] : [])]
+      : [...(entry ? [entry] : []), { ...allWords, ...(heading && { heading }) }];
+    let headingLeft = Array.isArray(chosenId) ? heading : null;
     // The deck each row is inside is the last row one level up, since the
     // tree lists every deck straight after the one it is inside.
+    const kept = new Set(Array.isArray(chosenId) ? chosenId : [chosenId]);
     const above = [];
     for (const { deck, depth, label } of deckTree(decks)) {
-      if (isReadyMadeGroup(deck.id) && deck.id !== chosenId) {
+      if (isReadyMadeGroup(deck.id) && !kept.has(deck.id)) {
         continue;
       }
       above.length = depth;
-      rows.push({ id: deck.id, label: deck.name, depth, parentId: above[depth - 1] ?? null, path: label });
+      rows.push({
+        id: deck.id,
+        label: deck.name,
+        depth,
+        parentId: above[depth - 1] ?? null,
+        path: label,
+        ...(headingLeft && { heading: headingLeft }),
+      });
+      headingLeft = null;
       above.push(deck.id);
     }
-    const current = rows.find((row) => row.id === chosen) || rows[0];
-    for (const button of buttons) {
-      fillMixed(button.querySelector('.deck-select-name'), current.label, current.script ?? script);
-      button.setAttribute('aria-label', t('review.deckToStudyIs', { deck: current.path }));
+    const picked = Array.isArray(chosen) ? rows.filter((row) => kept.has(row.id)) : [];
+    if (picked.length > 1) {
+      // Several ticked: how many, the entry before the decks by its name.
+      const entry = first && picked.find((row) => row.id === first.id);
+      const count = picked.length - (entry ? 1 : 0);
+      const label = entry ? t('review.entryAndDecks', { entry: entry.label, count }) : t('review.decksTicked', { count });
+      for (const button of buttons) {
+        fillMixed(button.querySelector('.deck-select-name'), label, entry?.script ?? script);
+        button.setAttribute('aria-label', t('review.decksToStudyAre', { decks: formatList(picked.map((row) => row.path)) }));
+      }
+    } else {
+      const current = picked[0] || rows.find((row) => row.id === chosen) || rows[0];
+      for (const button of buttons) {
+        fillMixed(button.querySelector('.deck-select-name'), current.label, current.script ?? script);
+        button.setAttribute('aria-label', t('review.deckToStudyIs', { deck: current.path }));
+      }
     }
     // The decks changed while the panel was open: shown afresh.
     if (byId('deck-choice-dialog').open && panel?.owner === show) {
-      panel.rows = rows;
+      panel.rows = withNotes(rows);
       panel.script = script;
       render();
     }
   }
 
+  // The rows with their notes, where notes() has one.
+  function withNotes(list) {
+    const each = notes();
+    return each ? list.map((row) => (each.has(row.id) ? { ...row, note: each.get(row.id) } : row)) : list;
+  }
+
   for (const button of buttons) {
     button.addEventListener('click', () => {
+      finishClosedPanel();
       openPanel({
         title,
-        rows,
+        rows: withNotes(rows),
         chosen,
         script,
         choose: (deckId) => {
@@ -292,6 +414,7 @@ export function deckButtonFor(select, { titleKey, script }) {
   new MutationObserver(showChosen).observe(select, { childList: true });
 
   button.addEventListener('click', () => {
+    finishClosedPanel();
     openPanel({
       title: t(titleKey),
       rows: rowsFromSelect(select),

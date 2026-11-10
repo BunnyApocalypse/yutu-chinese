@@ -547,6 +547,13 @@ export default {
   // The study screen: Review, Learn and Free practice (index.html)
   'review.deckToStudyIs': 'Deck to study: {deck}',
   'review.chooseDeckTitle': 'Study which deck?',
+  // Review's chooser, where decks are ticked, as many as wanted.
+  'review.reviewDecksTitle': 'Review which decks?',
+  'review.decksDone': 'Done',
+  'review.decksToStudyAre': 'Decks to study: {decks}',
+  'review.decksTicked': { one: '{count} deck', other: '{count} decks' },
+  // "简体字 cards + 2 decks"
+  'review.entryAndDecks': { one: '{entry} + {count} deck', other: '{entry} + {count} decks' },
   'review.decksInside': 'Decks inside {deck}',
   'review.hearTheWord': 'Hear the word',
   'review.pinyinButton': 'Show pinyin',

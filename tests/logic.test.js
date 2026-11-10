@@ -326,6 +326,20 @@ test('words that only have writing cards get their other cards as new', () => {
   assert.equal(plan.newCardCount, 3);
 });
 
+test("counts each word's due and new cards, for the deck chooser's counts", () => {
+  const now = at('2026-10-12T10:00:00');
+  const old = now - 3 * DAY;
+  const cards = new Map([
+    studied('w0', 'meaning', { due: now - MINUTE, first: old, last: old }),
+    studied('w0', 'writing', { due: now + 2 * DAY, first: old, last: old }),
+  ]);
+  const words = makeWords(1);
+  const plan = planSession(words, cards, now, ALL_TYPES);
+  // The meaning card due, and pinyin and tone new; writing is not due yet.
+  assert.equal(plan.dueCount + plan.newCardCount, 3);
+  assert.deepEqual([...plan.cardsByWord], [[words[0].id, 3]]);
+});
+
 test('card types that are switched off never appear', () => {
   const now = at('2026-10-12T10:00:00');
   const old = now - 3 * DAY;

@@ -24,6 +24,7 @@ import {
   textOf,
   isShown,
   waitUntil,
+  tickDecks,
   ANSWER_YES,
 } from './harness.js';
 
@@ -910,9 +911,14 @@ describe('grading in Review', { concurrency: false }, () => {
     `);
   });
 
-  it('names the deck studied on the card, and changes it from there', async () => {
-    // A second deck, so there is a choice; the word is not in it.
-    await inDatabase(`stores.decks.put({ id: 'other', name: 'Other', parentId: null, order: 1 });`);
+  it('names the decks reviewed on the card, and ticks several from there', async () => {
+    // A second deck with one inside it, so there is a choice; the word is
+    // in neither.
+    await inDatabase(`
+      stores.decks.put({ id: 'other', name: 'Other', parentId: null, order: 1 });
+      stores.decks.put({ id: 'inner', name: 'Inner', parentId: 'other', order: 0 });
+    `);
+    const [ownDeck] = (await all('words')).find((word) => word.id === '大|da4').decks;
     await makeDue(['大|da4#writing', '大|da4', 'writing']);
     await waitForFirstStroke();
     // While a card is up, the chooser above is put away, and the card's top
@@ -923,15 +929,37 @@ describe('grading in Review', { concurrency: false }, () => {
     assert.equal(await textOf(page, 'deck-tag'), 'All words');
     await tap(page, 'deck-tag');
     await waitUntil(page, `document.getElementById('deck-choice-dialog').open`, 'the deck chooser');
-    // Choosing the other deck: none of its words is due.
-    await page.evaluate(`[...document.querySelectorAll('#deck-choice-list input')].find((radio) => radio.value === 'other').click()`);
+    assert.equal(await textOf(page, 'deck-choice-title'), 'Review which decks?');
+    // Ticking the other deck: the panel stays open, "All words" is
+    // unticked, and the deck inside it is ticked too, greyed.
+    const box = (id) => `document.querySelector('#deck-choice-list input[value="${id}"]')`;
+    await page.evaluate(`${box('other')}.click()`);
+    await page.evaluate(`document.querySelector('#deck-choice-list .deck-fold').click()`);
+    assert.equal(await page.evaluate(`document.getElementById('deck-choice-dialog').open`), true);
+    const ticks = await page.evaluate(`['', 'other', 'inner'].map((id) => {
+      const input = document.querySelector('#deck-choice-list input[value="' + id + '"]');
+      return [input.checked, input.disabled];
+    })`);
+    assert.deepEqual(ticks, [[false, false], [true, false], [true, true]]);
+    // Done: none of its words is due.
+    await tap(page, 'deck-choice-done');
     await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'nothing due in the deck');
     assert.equal(await textOf(page, 'deck-choice-button'), 'Other');
-    // Back to all words, and the deck removed again.
+    // The word's own deck ticked as well: its card is back, the button says
+    // how many, and the choice is kept.
     await tap(page, 'deck-choice-button');
-    await page.evaluate(`document.querySelector('#deck-choice-list input[value=""]').click()`);
+    await tickDecks(page, ['other', ownDeck]);
+    await waitUntil(page, `document.querySelector('#deck-tag .deck-select-name').textContent === '2 decks'`, 'two decks named');
     await waitForFirstStroke();
-    await inDatabase(`stores.decks.delete('other');`);
+    assert.deepEqual((await all('settings')).find((setting) => setting.key === 'reviewDecks').value, ['other', ownDeck]);
+    await reloadApp(page);
+    await waitForFirstStroke();
+    assert.equal(await textOf(page, 'deck-tag'), '2 decks');
+    // Back to all words, and the decks removed again.
+    await tap(page, 'deck-tag');
+    await tickDecks(page, []);
+    await waitUntil(page, `document.querySelector('#deck-tag .deck-select-name').textContent === 'All words'`, 'all words');
+    await inDatabase(`stores.decks.delete('other'); stores.decks.delete('inner');`);
     await reloadApp(page);
   });
 
@@ -945,7 +973,7 @@ describe('grading in Review', { concurrency: false }, () => {
     const chooseDeck = async (deckId) => {
       await tap(page, 'deck-tag');
       await waitUntil(page, `document.getElementById('deck-choice-dialog').open`, 'the deck chooser');
-      await page.evaluate(`[...document.querySelectorAll('#deck-choice-list input')].find((radio) => radio.value === '${deckId}').click()`);
+      await tickDecks(page, [deckId]);
     };
     // Deck "many": 25 words with a meaning card each, so Review asks how
     // many. Decks "me" and "sky": one written word each, 我 and 天, whose
@@ -961,7 +989,7 @@ describe('grading in Review', { concurrency: false }, () => {
       stores.words.put({ id: '我|wo3', traditional: '我', simplified: '我', pinyin: 'wo3', definition: 'I; me', order: 0, addedAt: 1, learnedAt: 1, decks: ['me'] });
       stores.words.put({ id: '天|tian1', traditional: '天', simplified: '天', pinyin: 'tian1', definition: 'sky', order: 0, addedAt: 1, learnedAt: 1, decks: ['sky'] });
       stores.settings.put({ key: 'reviewStart', value: true });
-      stores.settings.put({ key: 'studyDeck', value: 'sky' });
+      stores.settings.put({ key: 'reviewDecks', value: ['sky'] });
     `);
     await makeDue(
       ['我|wo3#writing', '我|wo3', 'writing'],
@@ -1007,7 +1035,7 @@ describe('grading in Review', { concurrency: false }, () => {
         stores.words.delete(id);
         stores.cards.delete(id + '#writing');
       });
-      stores.settings.put({ key: 'studyDeck', value: '' });
+      stores.settings.put({ key: 'reviewDecks', value: [] });
       stores.settings.put({ key: 'reviewStart', value: false });
     `);
     await reloadApp(page);

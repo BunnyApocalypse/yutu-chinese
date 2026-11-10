@@ -228,7 +228,13 @@ const wordsPanel = createWordsPanel(
   },
   () => settings,
   async (deckId, newMode) => {
-    await settings.change('studyDeck', deckId);
+    // Review's decks are ticked in a list: "Review this deck" ticks this
+    // one alone.
+    if (newMode === 'review') {
+      await settings.change('reviewDecks', [deckId]);
+    } else {
+      await settings.change('studyDeck', deckId);
+    }
     studiedFrom = { mode, scrollY: window.scrollY };
     // setMode sets the top bar at once, before it waits for the cards; the
     // way back goes in at once too, not after them.

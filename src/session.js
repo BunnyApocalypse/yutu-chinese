@@ -152,6 +152,8 @@ export function nextToLearn(words, cards) {
 //                 never studied), or null if there is nothing to do right now
 //   dueCount:     how many studied cards are due now
 //   newCardCount: how many never-studied cards are waiting for learned words
+//   cardsByWord:  a Map of how many of those two each word has, by its ID
+//                 (none for a word with neither)
 //   newWordsLeftToday: how many cards to be learned again in another script
 //                 (or of words from Anki) can still be started today
 //   fromAnki:     true if some of those are cards of words from Anki
@@ -205,6 +207,8 @@ export function planSession(words, cards, now, options) {
   let nextHeldBack = false;
   let introducedToday = 0;
   let newCardCount = 0;
+  // Each word's never-studied cards, by its ID (cardsByWord).
+  const newOfWord = new Map();
   let reviewedToday = 0;
   let laterToday = 0;
   let tomorrow = 0;
@@ -289,6 +293,7 @@ export function planSession(words, cards, now, options) {
         toLearnAgain.push({ word, type, heldUntil, learnedAt: firstStudied, imported: true });
       } else {
         newCardCount += 1;
+        newOfWord.set(word.id, (newOfWord.get(word.id) ?? 0) + 1);
         // Only the word's next new card is on offer; the rest wait their turn.
         if (offeredNewCard) {
           continue;
@@ -320,6 +325,7 @@ export function planSession(words, cards, now, options) {
         }
       } else {
         newCardCount += 1;
+        newOfWord.set(word.id, (newOfWord.get(word.id) ?? 0) + 1);
         if (offeredNewCard) {
           continue;
         }
@@ -360,10 +366,16 @@ export function planSession(words, cards, now, options) {
     next = { word: againNow[0].word, type: againNow[0].type, card: null };
   }
 
+  const cardsByWord = new Map(newOfWord);
+  for (const entry of due) {
+    cardsByWord.set(entry.word.id, (cardsByWord.get(entry.word.id) ?? 0) + 1);
+  }
+
   return {
     next,
     dueCount: due.length,
     newCardCount,
+    cardsByWord,
     newWordsLeftToday,
     fromAnki: toLearnAgain.some((entry) => entry.imported),
     learnedToday: introducedToday,

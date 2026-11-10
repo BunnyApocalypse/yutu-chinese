@@ -1058,10 +1058,15 @@
       </dialog>
 
       <!-- Choosing a deck: the one studied in Review and Learn, and every
-           other deck chosen (deckChooser.js, which gives the heading). -->
+           other deck chosen (deckChooser.js, which gives the heading).
+           Review's decks are ticked, as many as wanted, and "Done" (shown
+           only then) closes the panel with them. -->
       <dialog id="deck-choice-dialog" class="settings-panel deck-choice-dialog">
         <h2 id="deck-choice-title"></h2>
         <ul id="deck-choice-list" class="deck-choice-list"></ul>
+        <div id="deck-choice-bar" class="deck-choice-bar" hidden>
+          <button id="deck-choice-done" class="primary" type="button" data-t="review.decksDone"></button>
+        </div>
         <button id="deck-choice-close" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 

@@ -536,6 +536,11 @@ export default {
   // The study screen: Review, Learn and Free practice (index.html)
   'review.deckToStudyIs': 'Mazzo da studiare: {deck}',
   'review.chooseDeckTitle': 'Quale mazzo studiare?',
+  'review.reviewDecksTitle': 'Ripassare quali mazzi?',
+  'review.decksDone': 'Fatto',
+  'review.decksToStudyAre': 'Mazzi da studiare: {decks}',
+  'review.decksTicked': { one: '{count} mazzo', other: '{count} mazzi' },
+  'review.entryAndDecks': { one: '{entry} + {count} mazzo', other: '{entry} + {count} mazzi' },
   'review.decksInside': 'Mazzi dentro {deck}',
   'review.hearTheWord': 'Ascolta la parola',
   'review.pinyinButton': 'Mostra pinyin',

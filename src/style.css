@@ -4357,11 +4357,30 @@ button.word-entry.selected {
   overflow-wrap: anywhere;
 }
 
-.deck-choice input[type='radio'] {
+.deck-choice :is(input[type='radio'], input[type='checkbox']) {
   flex: none;
   width: 20px;
   height: 20px;
   margin: 0;
+}
+
+/* Review's "Done" (several decks ticked): held at the panel's foot while
+   a long list of decks scrolls under it, as the introduction's bar is. The
+   negative margins reach over the panel's padding. */
+.deck-choice-bar {
+  position: sticky;
+  bottom: calc(-1 * var(--space-huge));
+  z-index: 1;
+  display: flex;
+  justify-content: flex-end;
+  margin: var(--space-large) calc(-1 * var(--space-huge)) calc(-1 * var(--space-huge));
+  padding: var(--space-medium) var(--space-huge) var(--space-huge);
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+}
+
+.deck-choice-bar[hidden] {
+  display: none;
 }
 
 button.deck-fold {

@@ -2323,29 +2323,56 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   // ---- Studying one deck ----
 
-  // The deck chosen at the top of Review and Learn, or null for all words
-  // (also if the deck chosen has since been deleted).
+  // The deck chosen at the top of Learn, or null for all words (also if the
+  // deck chosen has since been deleted).
   function studyDeck() {
     return decks.find((deck) => deck.id === settings.studyDeck) || null;
   }
 
-  // The words studied: all of them, or those in the chosen deck and the
-  // decks inside it. A word in several decks still has one set of cards, so
-  // this only narrows down which words come up.
-  // While Review has only the cards in the other script, all words: the
-  // forms are learned across decks.
-  function studyWords() {
-    const deck = studyDeck();
-    if (!deck || reviewingOther) {
-      return words;
+  // What Review has, ticked at the top of it (the owner, 2026-11-10: as
+  // many decks as wanted, and the cards in the other script with them):
+  // { ids, other, deck }. ids: the decks ticked and those inside them, or
+  // null for all words (also if every deck ticked has since been deleted);
+  // other: true if the cards in the other script are ticked, of every word,
+  // while the chooser offers them (otherOffered); deck: the one deck
+  // ticked, else null. Worked out once for each choice and set of decks, as
+  // Review asks for each word.
+  let reviewChoiceKept = null;
+  function reviewChoice() {
+    const key = `${settings.reviewDecks.join('\n')}|${otherOffered}|${settings.otherScript}`;
+    if (reviewChoiceKept?.key !== key || reviewChoiceKept.decks !== decks) {
+      const ticked = decks.filter((deck) => settings.reviewDecks.includes(deck.id));
+      const ids = new Set(ticked.flatMap((deck) => [...deckWithInside(decks, deck.id)]));
+      const choice = {
+        ids: ticked.length > 0 ? ids : null,
+        other: otherOffered && settings.otherScript !== 'off' && settings.reviewDecks.includes(OTHER_CARDS_CHOICE),
+        deck: ticked.length === 1 ? ticked[0] : null,
+      };
+      reviewChoiceKept = { key, decks, choice };
     }
-    const ids = deckWithInside(decks, deck.id);
-    return words.filter((word) => isInDecks(word, ids));
+    return reviewChoiceKept.choice;
   }
 
-  // The goal for new words a day: the deck's own, or the one in Settings.
+  // The words studied: all of them, or those in the chosen decks and the
+  // decks inside them. A word in several decks still has one set of cards,
+  // so this only narrows down which words come up.
+  // While Review has the cards in the other script, all words: the forms
+  // are learned across decks (studiedCardType leaves out the own cards of
+  // words outside the decks).
+  function studyWords() {
+    const ids =
+      mode === 'review'
+        ? reviewChoice().other
+          ? null
+          : reviewChoice().ids
+        : studyDeck() && deckWithInside(decks, studyDeck().id);
+    return ids ? words.filter((word) => isInDecks(word, ids)) : words;
+  }
+
+  // The goal for new words a day: the deck's own, or the one in Settings
+  // (also with several decks ticked in Review).
   function goalForToday() {
-    return dailyGoal(studyDeck(), settings.newWordsPerDay);
+    return dailyGoal(mode === 'review' ? reviewChoice().deck : studyDeck(), settings.newWordsPerDay);
   }
 
   // The list of decks to choose from. With only the deck the app starts
@@ -2354,14 +2381,18 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // (formsEntry); while they are learned the deck's picture in the corner is
   // the other script's first character, 简 or 繁 (the owner, 2026-11-09).
   // In Review, the cards in the other script come first in the same way
-  // (otherCardsEntry).
+  // (otherCardsEntry), and the decks are ticked, as many as wanted: the
+  // chooser is handed a list.
   function showDeckChoice() {
     const entry = formsEntry() ?? otherCardsEntry();
+    otherOffered = entry?.id === OTHER_CARDS_CHOICE;
     const chosen =
-      learningForms && entry
-        ? FORMS_CHOICE
-        : reviewingOther && entry
-          ? OTHER_CARDS_CHOICE
+      mode === 'review'
+        ? settings.reviewDecks.filter((id) =>
+            id === OTHER_CARDS_CHOICE ? otherOffered : decks.some((deck) => deck.id === id),
+          )
+        : learningForms && entry
+          ? FORMS_CHOICE
           : studyDeck()
             ? settings.studyDeck
             : '';
@@ -2386,6 +2417,13 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     choose: (deckId) => {
       batch = null;
       formsBatch = null;
+      // Review: the list ticked, saved.
+      if (Array.isArray(deckId)) {
+        sitting = null;
+        round = null;
+        settings.change('reviewDecks', deckId);
+        return;
+      }
       // The forms are no deck: chosen, Learn shows them; the deck studied
       // stays as it was.
       if (deckId === FORMS_CHOICE) {
@@ -2404,23 +2442,49 @@ export function createReview(elements, flows, settings, editWord, showWord, note
           return;
         }
       }
-      if (mode === 'review') {
-        sitting = null;
-        round = null;
-      }
-      // The cards in the other script are no deck either: chosen, Review
-      // has only them, and the deck studied stays as it was.
-      if (deckId === OTHER_CARDS_CHOICE || reviewingOther) {
-        reviewingOther = deckId === OTHER_CARDS_CHOICE;
-        if (reviewingOther || deckId === settings.studyDeck) {
-          showDeckChoice();
-          showNext();
-          return;
-        }
-      }
       settings.change('studyDeck', deckId);
     },
+    notes: dueNotes,
   });
+
+  // The count after each row of Review's chooser (the owner, 2026-11-10:
+  // only the cards in the other script had one, which looked odd): the
+  // cards due now, new ones included, as for that entry, of the words of
+  // each deck and the decks inside it, or of all words. Worked out as the
+  // panel opens, not at every card.
+  function dueNotes() {
+    if (mode !== 'review') {
+      return null;
+    }
+    const plan = planSession(words, cards, Date.now(), {
+      newWordsPerDay: settings.newWordsPerDay,
+      enabledTypes: CARD_TYPES,
+      hasCardType,
+      scriptOf: (word) => scriptFor(word, settings),
+      otherCardsOf,
+    });
+    // Each word's cards count in each of its decks and the decks those are
+    // inside, once each.
+    const parentOf = new Map(decks.map((deck) => [deck.id, deck.parentId]));
+    const byDeck = new Map();
+    for (const word of words) {
+      const count = plan.cardsByWord.get(word.id);
+      if (!count) {
+        continue;
+      }
+      const reached = new Set();
+      for (const deckId of word.decks || []) {
+        for (let id = deckId; id && !reached.has(id); id = parentOf.get(id)) {
+          reached.add(id);
+        }
+      }
+      for (const id of reached) {
+        byDeck.set(id, (byDeck.get(id) ?? 0) + count);
+      }
+    }
+    const due = (count) => t('reviewOther.due', { count });
+    return new Map([['', due(plan.dueCount + plan.newCardCount)], ...decks.map((deck) => [deck.id, due(byDeck.get(deck.id) ?? 0)])]);
+  }
 
 
   // ---- Learning forms in the other script ----
@@ -2438,11 +2502,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   // The entry's ID in the deck chooser (no deck has it: deck IDs are random).
   const FORMS_CHOICE = '#forms';
-  // The same for the cards in the other script in Review, and whether
-  // Review has only those (see "Reviewing only the cards in the other
-  // script").
+  // The same for the cards in the other script in Review, and whether the
+  // chooser offers them (see "Reviewing the cards in the other script").
   const OTHER_CARDS_CHOICE = '#other-cards';
-  let reviewingOther = false;
+  let otherOffered = false;
   const FORMS_PER_SITTING = 5;
   // True while Learn shows the forms (chosen in the deck chooser, or from
   // Review's end), until a deck is chosen or Learn is left.
@@ -2840,18 +2903,25 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     };
   }
 
-  // ---- Reviewing only the cards in the other script ----
+  // ---- Reviewing the cards in the other script ----
   //
   // The owner, 2026-11-09: Review's deck chooser has "简体字 cards" before
   // the decks, as Learn has the forms, while some of those cards exist.
-  // Chosen, Review has only the cards in the other script (otherCardsOf),
-  // of all words, and no word's own cards (studiedCardType). Not saved:
-  // opening Review again, or choosing a deck, goes back to the deck studied.
+  // Ticked, Review has the cards in the other script (otherCardsOf) of all
+  // words, and the own cards only of the words in the decks ticked with it
+  // (studiedCardType); none, ticked alone. Saved with the decks (the owner,
+  // 2026-11-10).
 
-  // The kinds of card Review plans: none of a word's own while only the
-  // cards in the other script are reviewed.
+  // The kinds of card Review plans: of a word's own, only those of words in
+  // the decks ticked while the cards in the other script are ticked too.
   function studiedCardType(word, type) {
-    return !reviewingOther && hasCardType(word, type);
+    if (mode === 'review') {
+      const { ids, other } = reviewChoice();
+      if (other && !(ids && isInDecks(word, ids))) {
+        return false;
+      }
+    }
+    return hasCardType(word, type);
   }
 
   // The chooser's entry for the cards in the other script, in Review while
@@ -3541,7 +3611,6 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       mode = newMode;
       repeatedWord = word;
       learningForms = mode === 'learn' && onForms;
-      reviewingOther = false;
       formsBatch = null;
       endFormsLesson();
       // The style sheet centers the kind of card in Learn (main.learning),
@@ -3661,9 +3730,6 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       if (settings.otherScript === 'off' && learningForms) {
         learningForms = false;
         endFormsLesson();
-      }
-      if (settings.otherScript === 'off') {
-        reviewingOther = false;
       }
       ensureForms();
       showDeckChoice(); // the deck studied may have been chosen elsewhere

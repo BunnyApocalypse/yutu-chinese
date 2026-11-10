@@ -116,9 +116,13 @@ const MAX_NEW_WORDS_PER_DAY = 50;
 //                   radical or a stroke or two) or 'all'
 //   otherScriptTypes: the kinds of those cards: 'meaning' and 'pinyin' (the
 //                   default), 'tone', 'writing'; at least one
-//   studyDeck:      the ID of the deck studied in Review and Learn, or ''
-//                   for all words. Chosen at the top of those two tabs, not
-//                   in the panel.
+//   studyDeck:      the ID of the deck studied in Learn, or '' for all
+//                   words. Chosen at the top of Learn, not in the panel.
+//   reviewDecks:    the IDs of the decks reviewed in Review, as many as
+//                   ticked (each with the decks inside it), [] for all
+//                   words; '#other-cards' among them for the cards in the
+//                   other script of every word (review.js). Chosen at the
+//                   top of Review.
 // and two functions:
 //   change(key, value): saves a setting and tells the rest of the app (the
 //                       introduction sets them so)
@@ -165,6 +169,9 @@ export async function createSettings(elements, onChange) {
     otherScriptCheckboxes,
   } = elements;
 
+  // Review's decks start as the deck studied (both were this one setting
+  // until 2026-11-10).
+  const studyDeck = await getSetting('studyDeck', '');
   const settings = {
     script: await getSetting('script', 'simplified'),
     bothScripts: await getSetting('bothScripts', false),
@@ -199,7 +206,8 @@ export async function createSettings(elements, onChange) {
     // Meaning and pinyin at first; tone and writing are there to switch on
     // (the owner, 2026-11-09).
     otherScriptTypes: await getSetting('otherScriptTypes', ['meaning', 'pinyin']),
-    studyDeck: await getSetting('studyDeck', ''),
+    studyDeck,
+    reviewDecks: await getSetting('reviewDecks', studyDeck ? [studyDeck] : []),
   };
   // "Follow device theme" needs nothing: the style sheet does that by itself.
   setTheme(settings.theme);
