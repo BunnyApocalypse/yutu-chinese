@@ -63,6 +63,8 @@ Nothing is deleted at the old address. Its service worker (`src/moveServiceWorke
 
 **DNS** (Cloudflare, 2026-11-10, all "DNS only"): `yutuchinese.com` A 185.199.108.153, .109.153, .110.153, .111.153 and AAAA 2606:50c0:8000::153 to 8003::153 (GitHub Pages' addresses, from GitHub's documentation, checked against `bunnyapocalypse.github.io`); `www` CNAME `bunnyapocalypse.github.io`; GitHub's TXT `_github-pages-challenge-bunnyapocalypse` (the domain verified for the account, so no one else's Pages site can claim it); `sync` A and AAAA to the sync server. Never a wildcard record (GitHub: a takeover risk even when verified). Proton Mail's records are there too.
 
+**The default Android icon** (the owner's tablet, 2026-11-10): the app added to the home screen from `yutuchinese.com/app/` in Firefox got Android's default icon, the right name; the manifest and icons were right, giving the root page the icon and manifest too (`site-repo/deploy.yml`) and clearing Firefox's cached images didn't help, **restarting the tablet did** (the launcher keeps its own icons). Say so to a tester who sees it. (Firefox on Android makes a shortcut rather than installing from the manifest, and its icon is known to be unreliable: Mozilla bug 1234558.)
+
 **The site's root** at the switch-over: a page forwarding everyone to `app/` at once (in the browser: GitHub Pages has no server redirects; nothing the browser keeps, so a front page replaces it later without leftovers).
 
 **Not built yet:** phases 2 and 3; the front page; cleaning up the old address's caches once moved.
