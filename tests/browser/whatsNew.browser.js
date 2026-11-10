@@ -64,7 +64,7 @@ describe("what's new and feedback", { concurrency: false }, () => {
     await tap(page, 'whats-new-feedback');
     assert.equal(await isOpen(page, 'whats-new-dialog'), false);
     assert.equal(await isOpen(page, 'feedback-dialog'), true);
-    assert.match(await textOf(page, 'feedback-dialog'), /yutufeedback\.delicious577@passmail\.com/);
+    assert.match(await textOf(page, 'feedback-dialog'), /contact@yutuchinese\.com/);
     await tap(page, 'feedback-close');
     await tap(page, 'settings-close');
 

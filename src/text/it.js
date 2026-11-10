@@ -1263,7 +1263,7 @@ export default {
   'streak.streakOff': 'Non contare le serie',
 
   // Send feedback (index.html)
-  'feedback.theEmailOpensIn': "L'email si apre nella tua app di posta, con già scritti la versione dell'app, il dispositivo e il browser che usi. Non contiene nulla sulle tue parole o sul tuo studio. L'indirizzo è <span class=\"feedback-address\">yutufeedback.delicious577@passmail.com</span>. Per aprire una segnalazione su GitHub serve un account GitHub.",
+  'feedback.theEmailOpensIn': "L'email si apre nella tua app di posta, con già scritti la versione dell'app, il dispositivo e il browser che usi. Non contiene nulla sulle tue parole o sul tuo studio. L'indirizzo è <span class=\"feedback-address\">contact@yutuchinese.com</span>. Per aprire una segnalazione su GitHub serve un account GitHub.",
   'feedback.sendFeedback': 'Invia un commento',
   'feedback.somethingBrokenOrConfusing': "Qualcosa di rotto o poco chiaro, una domanda, un'idea: ogni messaggio aiuta a migliorare l'app.",
   'feedback.feedbackEmail': "Scrivi un'email",
