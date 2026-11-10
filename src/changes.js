@@ -13,6 +13,24 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-10-3',
+    items: [
+      'Review no longer flashes a card that can’t be written before your first card. A word whose characters have no stroke data is now pointed out when you add it or change its characters.',
+      'Saving a changed word is quick again, and says “Saving…” while it does.',
+      'Without an internet connection, a word’s sound no longer comes late, and several words no longer play all at once.',
+    ],
+    it: [
+      'Ripasso non mostra più per un attimo una carta che non si può scrivere prima della tua prima carta. Una parola i cui caratteri non hanno dati sui tratti ora viene segnalata quando la aggiungi o ne cambi i caratteri.',
+      'Salvare una parola modificata è di nuovo veloce, e mentre lo fa dice «Salvataggio…».',
+      'Senza connessione a internet, il suono di una parola non arriva più in ritardo, e più parole non si sentono più tutte insieme.',
+    ],
+    de: [
+      'Beim Wiederholen blitzt vor deiner ersten Karte keine Karte mehr auf, die sich nicht schreiben lässt. Ein Wort, für dessen Zeichen es keine Strichdaten gibt, wird jetzt angezeigt, wenn du es hinzufügst oder seine Zeichen änderst.',
+      'Ein geändertes Wort zu speichern geht wieder schnell und zeigt dabei „Wird gespeichert…“.',
+      'Ohne Internetverbindung kommt der Klang eines Wortes nicht mehr verspätet, und mehrere Wörter erklingen nicht mehr alle auf einmal.',
+    ],
+  },
+  {
     id: '2026-11-10-2',
     items: [
       'The app has its own address now: yutuchinese.com. Your words, progress and settings come along, and the old address only hands them over.',
