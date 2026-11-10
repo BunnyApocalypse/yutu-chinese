@@ -13,6 +13,21 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-10-4',
+    items: [
+      '垂 (in 睡, 郵, 錘) can be written with its long 丨 after the levels: the middle level stroke, the two short strokes, the next level stroke, then the 丨.',
+      'The first stroke of 匕 (in 北, 比, 化) can be written from right to left.',
+    ],
+    it: [
+      '垂 (in 睡, 郵, 錘) si può scrivere con il lungo 丨 dopo i tratti orizzontali: il tratto orizzontale di mezzo, i due tratti brevi, il tratto orizzontale successivo, poi il 丨.',
+      'Il primo tratto di 匕 (in 北, 比, 化) si può scrivere da destra a sinistra.',
+    ],
+    de: [
+      '垂 (in 睡, 郵, 錘) lässt sich mit dem langen 丨 nach den Querstrichen schreiben: der mittlere Querstrich, die zwei kurzen Striche, der nächste Querstrich, dann das 丨.',
+      'Der erste Strich von 匕 (in 北, 比, 化) lässt sich von rechts nach links schreiben.',
+    ],
+  },
+  {
     id: '2026-11-10-3',
     items: [
       'Review no longer flashes a card that can’t be written before your first card. A word whose characters have no stroke data is now pointed out when you add it or change its characters.',

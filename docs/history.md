@@ -47,7 +47,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 - **Built** (`docs/writing.md`): 垂 (睡, 郵, 錘…) accepted with its 丨 after the next level stroke, in both stroke sets, the middle level stroke across or in two halves (`chuiOf`, `withChuiUprightLast`, `grassLevelFor`); and 匕's first stroke written right to left, flat or tilted (`branchesOf`, `withReversedBranches`, `reversedShapes`). Both applied by `withMoreWays` in `src/charData.js`. Where the owner meant "fourth horizontal stroke" the middle level stroke may be two halves; both are accepted. Not accepted: the 丨 right after the joined level stroke.
 - **Tests:** 425 unit tests; the grid for 睡 北 (30 of 30) and 郵 華 方 旁 藍 草 花 食 房 (124 of 124), none failed. The full browser run was not repeated. 睡 and 北 are in the grid now.
-- **Published to the test copy only** (`main`, not `stable`), no "What's new" entry yet.
+- **Released** as "What's new" `2026-11-10-4` (`stable` and `main` pushed, `yutuchinese-site`'s deploy started), with the owner's yes after trying it on the test copy.
 
 **Handover from the session of 2026-11-10 (the card flash at start, sound without internet, a word saved quickly).**
 
