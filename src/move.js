@@ -58,8 +58,8 @@ function recall(key) {
 // An app opened from an iPhone's or iPad's Home Screen.
 const onHomeScreen = () => navigator.standalone === true;
 
-// An installed app (Android, a computer): after moving, it is installed
-// again from the new address, and this one removed.
+// An installed app (Android, a computer): the move is made from the browser
+// instead (start, below).
 const installed = () => window.matchMedia('(display-mode: standalone)').matches;
 
 // The sync link to the new address, as the app makes it (syncLink in
@@ -135,8 +135,7 @@ function moveByWindow() {
     } else if (type === 'yutu-move-done') {
       clearTimeout(timer);
       remember(MOVED_KEY, String(Date.now()));
-      const done = t('move.done', { count: event.data.words, words: formatNumber(event.data.words) });
-      finish(installed() ? `${done} ${t('move.reinstall')}` : done);
+      finish(t('move.done', { count: event.data.words, words: formatNumber(event.data.words) }));
       byId('move-open').hidden = false;
     } else if (type === 'yutu-move-failed') {
       clearTimeout(timer);
@@ -195,6 +194,21 @@ async function start() {
   }
   if (onHomeScreen()) {
     await showHomeScreenSteps();
+  } else if (installed()) {
+    // A window opened from an installed app (Firefox's or Chrome's on
+    // Android) opens in the browser without a way back to this page, so
+    // "Move my words" can't work here; the browser has the same words.
+    const address = window.location.origin + window.location.pathname;
+    byId('move-installed-address').textContent = address;
+    byId('move-copy-button').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(address);
+        byId('move-copy-status').textContent = t('move.copied');
+      } catch {
+        byId('move-copy-status').textContent = t('move.copyFailed');
+      }
+    });
+    byId('move-installed').hidden = false;
   } else {
     byId('move-window').hidden = false;
     byId('move-button').addEventListener('click', moveByWindow);

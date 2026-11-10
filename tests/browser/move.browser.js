@@ -87,7 +87,7 @@ describe('the move to the new address', { concurrency: false }, () => {
       // nothing.
       await go(page, 'about:blank');
       await go(page, `${NEW}/#move-in`);
-      await waitUntil(page, `document.getElementById('starting-note').textContent.includes('backup')`, 'what to do', 10000);
+      await waitUntil(page, `document.getElementById('starting-note').textContent.includes('browser')`, 'what to do', 10000);
       assert.equal(await page.evaluate(`document.querySelector('main').classList.contains('starting')`), true);
       assert.equal(await page.evaluate('location.hash'), '');
       // A reload opens the app as usual (given time to begin loading, so
@@ -149,5 +149,29 @@ describe('the move to the new address', { concurrency: false }, () => {
       assert.equal(code, '0123456789ABCDEFGHJKMNPQRSTVWXYZ');
       // The introduction is not shown: the old address had finished it.
       assert.equal(await page.evaluate(`document.getElementById('welcome-dialog')?.open ?? false`), false);
+    }));
+
+  test('in an installed app, says to move from the browser instead of offering the button', () =>
+    browsers.use(async (page) => {
+      // As in an app installed from the old address (the owner's tablet,
+      // where the window the button opens had no way back). Headless
+      // Chromium doesn't take display-mode from Emulation.setEmulatedMedia,
+      // so the page's question is answered "yes" before its scripts run
+      // (which needs the Page domain on).
+      await page.send('Page.enable');
+      const { identifier } = await page.send('Page.addScriptToEvaluateOnNewDocument', {
+        source: `const realMatchMedia = window.matchMedia.bind(window);
+          window.matchMedia = (query) => query.includes('display-mode: standalone')
+            ? { matches: true, media: query, addEventListener() {}, removeEventListener() {} }
+            : realMatchMedia(query);`,
+      });
+      try {
+        await go(page, `${OLD}/move.html`);
+        await waitUntil(page, `!document.getElementById('move-installed').hidden`, 'the steps for an installed app', 10000);
+        assert.equal(await page.evaluate(`document.getElementById('move-window').hidden`), true);
+        assert.equal(await page.evaluate(`document.getElementById('move-installed-address').textContent`), `${OLD}/move.html`);
+      } finally {
+        await page.send('Page.removeScriptToEvaluateOnNewDocument', { identifier });
+      }
     }));
 });

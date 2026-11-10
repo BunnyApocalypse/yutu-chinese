@@ -24,6 +24,16 @@
         <p><a id="move-open" class="move-open" hidden data-t="move.open"></a></p>
       </section>
 
+      <!-- An installed app (Android, a computer): the window it opens can't
+           answer it, so the move is made from the browser, which has the
+           same words (found on the owner's tablet, 2026-11-10). -->
+      <section id="move-installed" hidden>
+        <p data-t="move.installedText"></p>
+        <p><code id="move-installed-address"></code></p>
+        <button id="move-copy-button" type="button" data-t="move.copyAddress"></button>
+        <p id="move-copy-status" class="move-note" role="status"></p>
+      </section>
+
       <!-- An app on an iPhone's or iPad's Home Screen keeps its words apart
            from Safari, so a window can't reach them: by the sync code, or
            a backup file. -->
