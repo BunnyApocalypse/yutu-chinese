@@ -89,6 +89,12 @@ jobs:
               <meta charset="UTF-8" />
               <meta name="viewport" content="width=device-width, initial-scale=1" />
               <title>玉兔 Yutu</title>
+              <!-- The app's icon and manifest here too: a browser may keep
+                   the icon of the site's top page for every page of it
+                   (Firefox on Android gave the app the default icon). -->
+              <link rel="icon" href="app/icons/icon-192.png" />
+              <link rel="apple-touch-icon" href="app/icons/icon-192.png" />
+              <link rel="manifest" href="app/manifest.webmanifest" />
               <meta http-equiv="refresh" content="0; url=app/" />
               <script>location.replace('app/' + location.search + location.hash);</script>
             </head>
