@@ -4,7 +4,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 ## Where the work stands
 
-**As of 2026-11-09:** `main` and `stable` are the same (released with the "What's new" entry `2026-11-09-8`). Syncing is built, released and tested by the owner between their own devices. How each thing was built is in its area's file. **Each session adds its handover just below this list** (what was built, tests, what is open); the next cleanup folds them back into the list.
+**As of 2026-11-10:** `main` and `stable` are the same (released with the "What's new" entry `2026-11-10`). Syncing is built, released and tested by the owner between their own devices. How each thing was built is in its area's file. **Each session adds its handover just below this list** (what was built, tests, what is open); the next cleanup folds them back into the list.
 
 **Waiting on the owner** (tried on a real device, or a question to answer):
 
@@ -41,6 +41,15 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - A German tester to find. The Italian and German texts Claude wrote since the Italian tester's check are unchecked.
 
 **Tests to watch:** `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
+
+**Handover from the session of 2026-11-10 (several decks ticked in Review; released to `stable` with the "What's new" entry `2026-11-10`).**
+
+- **Asked by the owner** (2026-11-10): choose several decks to study, and the 简体字 cards with them, rather than one. **Review only** (the owner: multi-deck Learn later). Then: a count on every row ("it looks weird if only one has the number"), and "All words" at the top (instead of an "Unselect all" button).
+- **Built** (`docs/decks.md`, "Review ticks as many decks as wanted"; `docs/cards.md`): tickboxes and Done in Review's chooser, `reviewDecks` (synced, started from `studyDeck`; Learn keeps `studyDeck`), a ticked deck includes those inside it (greyed), "N due" after every row (`dueNotes`, `cardsByWord` from `planSession`), the 简体字 cards now saved with the decks. "Review this deck" ticks that deck alone.
+- **Fixed on the way:** ticks lost when the panel was opened again before the browser's late "close" (`finishClosedPanel`); `otherScript.browser.js`'s database helper now fails a test whose body throws, instead of hanging the whole run.
+- **Tests:** 423 unit tests; browser: `review.browser.js` 24 of 24, `otherScript.browser.js` 9 of 9, `tabs.browser.js` 10 of 10, `decks.browser.js` and `accessibility.browser.js` passed. No full run. Pictures: `local/screenshots/review-decks/` (`node local/review-decks-shots.js`).
+- **Italian and German** written by Claude, not checked by a reader.
+- **Not tried by the owner yet** on a real device. A device still on an older copy keeps reviewing its single deck until it updates.
 
 **Handover from the session of 2026-11-09 (the Show list on a phone; this cleanup).**
 

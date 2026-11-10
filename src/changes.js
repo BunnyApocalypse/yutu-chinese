@@ -13,6 +13,21 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-10',
+    items: [
+      'Review several decks at once: Review’s deck chooser now has tickboxes. Tick as many decks as you like, and your cards in simplified (or traditional) with them; All words, at the top, unticks the rest.',
+      'Every entry in Review’s deck chooser now says how many cards are due in it.',
+    ],
+    it: [
+      'Ripassa più mazzi insieme: la scelta del mazzo in Ripasso ora ha delle caselle. Spunta tutti i mazzi che vuoi, e con loro le tue carte in semplificato (o tradizionale); Tutte le parole, in cima, toglie le altre spunte.',
+      'Ogni voce nella scelta del mazzo in Ripasso ora dice quante carte ha da ripassare.',
+    ],
+    de: [
+      'Mehrere Stapel auf einmal wiederholen: Die Stapelauswahl beim Wiederholen hat jetzt Kästchen. Hake so viele Stapel an, wie du möchtest, und deine Karten in Kurzzeichen (oder Langzeichen) dazu; Alle Wörter, ganz oben, entfernt die übrigen Haken.',
+      'Jeder Eintrag der Stapelauswahl beim Wiederholen zeigt jetzt, wie viele Karten darin fällig sind.',
+    ],
+  },
+  {
     id: '2026-11-09-8',
     items: ['Syncing: if another of your devices has a newer version of the app, this one now says to update it, and waits, rather than saying changes couldn’t be opened.'],
     it: ['Sincronizzazione: se un altro dei tuoi dispositivi ha una versione più recente dell’app, questo ora dice di aggiornarla, e aspetta, invece di dire che le modifiche non si sono potute aprire.'],
