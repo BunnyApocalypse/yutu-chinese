@@ -2,8 +2,8 @@
 // address hands everything to the app at the new one (move.js, moveIn.js).
 //
 // A browser keeps data per site, and two different host names are two
-// sites: here the old address is http://localhost:5284 and the new one
-// http://127.0.0.1:5283, each the app's own dev server, on ports of their
+// sites: here the old address is http://localhost:5294 and the new one
+// http://127.0.0.1:5293, each the app's own dev server, on ports of their
 // own (the other files' servers use 5273). Steps build on each other, in
 // one browser.
 
@@ -12,8 +12,8 @@ import assert from 'node:assert/strict';
 import { createServer } from 'vite';
 import { startBrowsers, addTestWords, waitUntil } from './harness.js';
 
-const OLD = 'http://localhost:5284';
-const NEW = 'http://127.0.0.1:5283';
+const OLD = 'http://localhost:5294';
+const NEW = 'http://127.0.0.1:5293';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -62,8 +62,8 @@ describe('the move to the new address', { concurrency: false }, () => {
   let browsers;
 
   before(async () => {
-    oldServer = await serve('localhost', 5284);
-    newServer = await serve('127.0.0.1', 5283);
+    oldServer = await serve('localhost', 5294);
+    newServer = await serve('127.0.0.1', 5293);
     browsers = await startBrowsers(`${OLD}/`, 1);
   });
 
@@ -77,6 +77,24 @@ describe('the move to the new address', { concurrency: false }, () => {
     browsers.use(async (page) => {
       await go(page, `${OLD}/move.html`);
       await waitUntil(page, `location.origin === '${NEW}'`, 'the new address', 10000);
+    }));
+
+  test('opened for the move with no way back to the old page, says so instead of starting empty', () =>
+    browsers.use(async (page) => {
+      // As when an installed Android app opens the new address in a browser
+      // view that keeps no link to it. Through a blank page: from the new
+      // address itself, only the part after # would change, which loads
+      // nothing.
+      await go(page, 'about:blank');
+      await go(page, `${NEW}/#move-in`);
+      await waitUntil(page, `document.getElementById('starting-note').textContent.includes('backup')`, 'what to do', 10000);
+      assert.equal(await page.evaluate(`document.querySelector('main').classList.contains('starting')`), true);
+      assert.equal(await page.evaluate('location.hash'), '');
+      // A reload opens the app as usual (given time to begin loading, so
+      // the wait below runs in the new page).
+      await page.send('Page.reload');
+      await sleep(1000);
+      await waitUntil(page, `!document.querySelector('main').classList.contains('starting')`, 'the app', 10000);
     }));
 
   test('hands every word, the language and syncing over, and keeps them at the old address', () =>
@@ -101,10 +119,17 @@ describe('the move to the new address', { concurrency: false }, () => {
 
       await go(page, `${OLD}/move.html`);
       await waitUntil(page, `!document.getElementById('move-window').hidden`, 'the move button', 10000);
+      // Every line the status shows on the way, to see the saving's progress.
+      await page.evaluate(`window.seen = [];
+        new MutationObserver(() => window.seen.push(document.getElementById('move-status').textContent))
+          .observe(document.getElementById('move-status'), { childList: true, characterData: true, subtree: true })`);
       await click(page, 'move-button');
       // Done when the page notes the move (its text is in Italian now).
       await waitUntil(page, `localStorage.getItem('moved-at') !== null`, 'the move to finish', 20000);
       assert.equal(await page.evaluate(`document.getElementById('move-open').hidden`), false);
+      // The progress of saving at the new address, shown here too
+      // ("Salvataggio su yutuchinese.com: 2.000 di …").
+      assert.ok(await page.evaluate(`window.seen.some((line) => line.includes('yutuchinese.com:'))`));
       // Nothing deleted at the old address.
       assert.equal(await count(page, 'words'), words);
 

@@ -1778,10 +1778,12 @@ export default {
   'move.button': 'Meine Wörter übertragen',
   'move.opening': 'yutuchinese.com wird in einem neuen Fenster geöffnet…',
   'move.sending': 'Deine Wörter werden übergeben…',
+  'move.savingThere': 'Speichern auf yutuchinese.com: {saved} von {total} Einträgen. Lass beide Fenster offen, bis es fertig ist.',
   'move.done': {
     one: 'Fertig: {words} Wort ist auf yutuchinese.com, mit deinem Fortschritt und deinen Einstellungen. Lerne ab jetzt dort.',
     other: 'Fertig: {words} Wörter sind auf yutuchinese.com, mit deinem Fortschritt und deinen Einstellungen. Lerne ab jetzt dort.',
   },
+  'move.reinstall': 'Diese App wurde von der alten Adresse installiert: Installiere sie erneut von yutuchinese.com/app und entferne dann diese.',
   'move.failed': 'Deine Wörter konnten auf yutuchinese.com nicht gespeichert werden. Versuche es noch einmal oder nutze unten eine Sicherungsdatei.',
   'move.noAnswer': 'yutuchinese.com hat nicht geantwortet. Schließe sein Fenster, falls es sich geöffnet hat, und versuche es noch einmal, oder nutze unten eine Sicherungsdatei.',
   'move.blocked': 'Dein Browser hat das neue Fenster blockiert. Erlaube Pop-ups für diese Seite und versuche es noch einmal, oder nutze unten eine Sicherungsdatei.',
@@ -1802,4 +1804,5 @@ export default {
   'move.inSaving': 'Deine Wörter werden gespeichert…',
   'move.inDone': { one: '{words} Wort übertragen. Wird gestartet…', other: '{words} Wörter übertragen. Wird gestartet…' },
   'move.inFailed': 'Deine Wörter konnten nicht übertragen werden ({detail}). Schließe dieses Fenster und versuche es noch einmal von der alten Adresse.',
+  'move.inNoOpener': 'Dieses Fenster erreicht die Seite nicht, von der es geöffnet wurde, daher wurden deine Wörter nicht übertragen. Geh zu dieser Seite zurück, speichere dort eine Sicherungsdatei und importiere sie hier (Einstellungen › Deine Daten und Sicherungen › Sicherung importieren). Lade diese Seite neu, um die App so zu öffnen, wie sie ist.',
 };

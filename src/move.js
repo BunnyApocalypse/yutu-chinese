@@ -58,6 +58,10 @@ function recall(key) {
 // An app opened from an iPhone's or iPad's Home Screen.
 const onHomeScreen = () => navigator.standalone === true;
 
+// An installed app (Android, a computer): after moving, it is installed
+// again from the new address, and this one removed.
+const installed = () => window.matchMedia('(display-mode: standalone)').matches;
+
 // The sync link to the new address, as the app makes it (syncLink in
 // syncCodeView.js): with the server if one was chosen in Settings.
 function syncLinkThere(code, server) {
@@ -98,18 +102,32 @@ function moveByWindow() {
     status.textContent = text;
     button.disabled = false;
   };
-  const timer = setTimeout(() => {
-    if (!finished) {
-      finish(t('move.noAnswer'));
-    }
-  }, WAIT);
+  // Given up on after WAIT without a word from the new window; each word
+  // from it (its progress while saving) starts the wait again, so a big
+  // history taking minutes to save is not given up on.
+  let timer = null;
+  const waitAgain = () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (!finished) {
+        finish(t('move.noAnswer'));
+      }
+    }, WAIT);
+  };
+  waitAgain();
   async function hear(event) {
     // Only the window opened just now, at the new address.
     if (event.origin !== MOVE_ORIGIN || event.source !== there) {
       return;
     }
     const { type } = event.data ?? {};
-    if (type === 'yutu-move-ready') {
+    waitAgain();
+    if (type === 'yutu-move-progress') {
+      status.textContent = t('move.savingThere', {
+        saved: formatNumber(event.data.saved),
+        total: formatNumber(event.data.total),
+      });
+    } else if (type === 'yutu-move-ready') {
       status.textContent = t('move.sending');
       const backup = await buildBackup();
       const { sync, outbox } = await readSyncState();
@@ -117,7 +135,8 @@ function moveByWindow() {
     } else if (type === 'yutu-move-done') {
       clearTimeout(timer);
       remember(MOVED_KEY, String(Date.now()));
-      finish(t('move.done', { count: event.data.words, words: formatNumber(event.data.words) }));
+      const done = t('move.done', { count: event.data.words, words: formatNumber(event.data.words) });
+      finish(installed() ? `${done} ${t('move.reinstall')}` : done);
       byId('move-open').hidden = false;
     } else if (type === 'yutu-move-failed') {
       clearTimeout(timer);

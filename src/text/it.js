@@ -1777,10 +1777,12 @@ export default {
   'move.button': 'Trasferisci le mie parole',
   'move.opening': 'Apertura di yutuchinese.com in una nuova finestra…',
   'move.sending': 'Trasferimento delle tue parole…',
+  'move.savingThere': 'Salvataggio su yutuchinese.com: {saved} di {total} elementi. Tieni aperte entrambe le finestre finché non ha finito.',
   'move.done': {
     one: 'Fatto: {words} parola è su yutuchinese.com, con i tuoi progressi e le impostazioni. D’ora in poi studia lì.',
     other: 'Fatto: {words} parole sono su yutuchinese.com, con i tuoi progressi e le impostazioni. D’ora in poi studia lì.',
   },
+  'move.reinstall': 'Questa app è stata installata dal vecchio indirizzo: installala di nuovo da yutuchinese.com/app, poi rimuovi questa.',
   'move.failed': 'Non è stato possibile salvare le tue parole su yutuchinese.com. Riprova, oppure usa un file di backup qui sotto.',
   'move.noAnswer': 'yutuchinese.com non ha risposto. Chiudi la sua finestra se si è aperta e riprova, oppure usa un file di backup qui sotto.',
   'move.blocked': 'Il browser ha bloccato la nuova finestra. Consenti i pop-up per questa pagina e riprova, oppure usa un file di backup qui sotto.',
@@ -1801,4 +1803,5 @@ export default {
   'move.inSaving': 'Salvataggio delle tue parole…',
   'move.inDone': { one: '{words} parola trasferita. Avvio…', other: '{words} parole trasferite. Avvio…' },
   'move.inFailed': 'Non è stato possibile trasferire le tue parole ({detail}). Chiudi questa finestra e riprova dal vecchio indirizzo.',
+  'move.inNoOpener': 'Questa finestra non riesce a raggiungere la pagina da cui è stata aperta, quindi le tue parole non sono state trasferite. Torna a quella pagina, salva lì un file di backup e importalo qui (Impostazioni › I tuoi dati e i backup › Importa backup). Ricarica questa pagina per aprire l’app così com’è.',
 };

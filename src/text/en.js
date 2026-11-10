@@ -1798,10 +1798,12 @@ export default {
   'move.button': 'Move my words',
   'move.opening': 'Opening yutuchinese.com in a new window…',
   'move.sending': 'Handing your words over…',
+  'move.savingThere': 'Saving at yutuchinese.com: {saved} of {total} records. Keep both windows open until it is done.',
   'move.done': {
     one: 'Done: {words} word is at yutuchinese.com, with your progress and settings. Study there from now on.',
     other: 'Done: {words} words are at yutuchinese.com, with your progress and settings. Study there from now on.',
   },
+  'move.reinstall': 'This app was installed from the old address: install it again from yutuchinese.com/app, then remove this one.',
   'move.failed': 'Your words couldn’t be saved at yutuchinese.com. Try again, or use a backup file below.',
   'move.noAnswer': 'yutuchinese.com didn’t answer. Close its window if it opened and try again, or use a backup file below.',
   'move.blocked': 'Your browser blocked the new window. Allow pop-ups for this page and try again, or use a backup file below.',
@@ -1822,4 +1824,5 @@ export default {
   'move.inSaving': 'Saving your words…',
   'move.inDone': { one: '{words} word brought over. Starting…', other: '{words} words brought over. Starting…' },
   'move.inFailed': 'Your words couldn’t be brought over ({detail}). Close this window and try again from the old address.',
+  'move.inNoOpener': 'This window can’t reach the page it was opened from, so your words weren’t brought over. Go back to that page, save a backup file there, and import it here (Settings › Your data and backups › Import backup). Reload this page to open the app as it is.',
 };

@@ -31,9 +31,11 @@ const MOVE_FROM = typeof __MOVE_FROM__ === 'undefined' ? '' : __MOVE_FROM__;
 const WAIT = 60_000;
 
 // Whether this window was opened by the page at the old address to take the
-// words in.
+// words in. Also without the opener: an app installed on Android may open
+// the new address in Chrome or a browser view of its own, which may not keep
+// the way back (moveIn says so then).
 export function openedToMoveIn() {
-  return Boolean(MOVE_FROM) && window.location.hash === '#move-in' && Boolean(window.opener);
+  return Boolean(MOVE_FROM) && window.location.hash === '#move-in';
 }
 
 // Takes the words in, saying how it goes in `note` (the "Loading…" line),
@@ -43,6 +45,13 @@ export async function moveIn(note) {
   const opener = window.opener;
   // Out of the address, so that a reload starts the app as usual.
   window.history.replaceState(null, '', window.location.pathname + window.location.search);
+  // Opened without a way back to the old page: nothing can come. Said,
+  // with the backup file instead, rather than starting the app empty with
+  // its introduction as if this were a new learner.
+  if (!opener) {
+    note.textContent = t('move.inNoOpener');
+    return;
+  }
   const tell = (message) => opener.postMessage(message, MOVE_FROM);
   note.textContent = t('move.inWaiting');
   let handed;
@@ -61,15 +70,22 @@ export async function moveIn(note) {
     });
     checkBackup(handed.backup);
     note.textContent = t('move.inSaving');
+    // Saved in parts (replaceEverything in db.js): how far, here as Import
+    // backup says it, and to the old window, which shows it too and keeps
+    // waiting while it comes.
+    const onProgress = (saved, total) => {
+      note.textContent = t('import.saving', { saved: formatNumber(saved), total: formatNumber(total) });
+      tell({ type: 'yutu-move-progress', saved, total });
+    };
     const empty = (await countAll('words')) === 0 && (await countAll('reviews')) === 0;
     const syncingHere = Boolean(await getSyncValue('code', null));
     if (empty) {
-      await restoreBackup(handed.backup);
+      await restoreBackup(handed.backup, onProgress);
     } else {
       // Words studied here already (the app was opened at this address
       // first): both kept, as Import backup's "Combine" does.
       const { data } = mergeBackups(await buildBackup(), handed.backup, { summarize: false });
-      await replaceEverything(data);
+      await replaceEverything(data, onProgress);
     }
     // Syncing goes on where the old address left off, unless this address
     // syncs already: then its own stays, and what came is sent with it.
