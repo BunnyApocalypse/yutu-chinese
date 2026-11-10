@@ -11,6 +11,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - **Remind the owner on or after 2026-12-07: ts-fsrs 6** (the owner, 2026-11-09): time to look again at updating it ("Near-term" below has the checklist).
 - **Reading the other script** (2026-11-09; `docs/cards.md`, "Reading the other script"): not tried yet. Switch on Settings › Chinese › "Also read simplified", learn a few forms from Learn's deck chooser, review "简体字 cards", the fold-out "简体字 form" on a word's page, and Words › Show › "Studied simplified forms".
 - **方 with its ノ before its ㇆** (2026-11-09; `docs/writing.md`): not tried yet.
+- **垂 with its 丨 after the levels (睡) and 匕's branch right to left (北)** (2026-11-10; `docs/writing.md`): on the test copy, not tried yet.
 - **Choosing a deck in Review** (2026-11-08): does a wrong card still flash before the real one? And are the card flash and the new-device pop-up gone after two restarts (both fixed on `stable` 2026-11-09)?
 - **The smallest size for writing** (0.55 of the box, 2026-11-08; `docs/writing.md`): is a character written properly ever refused for being small? A raw input recording if so.
 - **郵 with 艹 in three strokes** (2026-11-02): does it feel right in use?
@@ -41,6 +42,12 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - A German tester to find. The Italian and German texts Claude wrote since the Italian tester's check are unchecked.
 
 **Tests to watch:** `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
+
+**Handover from the session of 2026-11-10 (two stroke variants from the owner: 睡 and 北).**
+
+- **Built** (`docs/writing.md`): 垂 (睡, 郵, 錘…) accepted with its 丨 after the next level stroke, in both stroke sets, the middle level stroke across or in two halves (`chuiOf`, `withChuiUprightLast`, `grassLevelFor`); and 匕's first stroke written right to left, flat or tilted (`branchesOf`, `withReversedBranches`, `reversedShapes`). Both applied by `withMoreWays` in `src/charData.js`. Where the owner meant "fourth horizontal stroke" the middle level stroke may be two halves; both are accepted. Not accepted: the 丨 right after the joined level stroke.
+- **Tests:** 425 unit tests; the grid for 睡 北 (30 of 30) and 郵 華 方 旁 藍 草 花 食 房 (124 of 124), none failed. The full browser run was not repeated. 睡 and 北 are in the grid now.
+- **Published to the test copy only** (`main`, not `stable`), no "What's new" entry yet.
 
 **Handover from the session of 2026-11-10 (the card flash at start, sound without internet, a word saved quickly).**
 
