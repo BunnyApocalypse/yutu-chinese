@@ -519,3 +519,167 @@ export function withFangInEitherOrder(charData) {
   }
   return { ...charData, altOrder, ...(!charData.altOrder && { altOrderIsFang: true }) };
 }
+
+// ---- 垂 with its 丨 after the levels ----
+//
+// Both sets write 垂 (睡, 郵, 錘, the lower part of 華) with its long 丨
+// before the strokes that cross it. Many write it last but one instead: ノ,
+// 一, the middle level stroke, the two short strokes, the next level
+// stroke, then the 丨, then the bottom level stroke (the owner, 2026-11-10,
+// in 睡). charData.js adds that as a second order (withChuiUprightLast).
+// The Taiwan set cuts the middle level stroke in two halves (nine strokes
+// in all, the 丨 third); written across both, it is the 艹-in-three-strokes
+// join of quiz.js. The big set has it whole (eight strokes).
+//
+// Found by shape, as a run of strokes: a ノ, a level stroke, a long 丨, then
+// the strokes described in `chuiOf`.
+
+// The 丨 is at least this long.
+const CHUI_MIN_UPRIGHT = 400;
+
+const startOf = (median) => ({ x: median[0][0], y: median[0][1] });
+const endOf = (median) => ({ x: median[median.length - 1][0], y: median[median.length - 1][1] });
+const isFallingLeft = (median) => endOf(median).x < startOf(median).x - 60 && endOf(median).y < startOf(median).y - 60;
+const goesDown = (median) => endOf(median).y < startOf(median).y - 100;
+
+// Where each 垂 begins (its ノ), as { at, whole }: `whole` if the middle
+// level stroke is one stroke (the big set) rather than two halves. [] for
+// most characters. After the 丨 come the middle level stroke, a short stroke
+// down to the left of the 丨 and one down to the right, a level stroke and
+// the bottom level stroke, the last two across the 丨 (the Taiwan set has the
+// left short stroke before the halves, the right one after them).
+export function chuiOf(charData) {
+  const { medians } = charData;
+  const found = [];
+  for (let at = 0; at < medians.length; at++) {
+    for (const whole of [true, false]) {
+      const count = whole ? 8 : 9;
+      if (at + count > medians.length) {
+        continue;
+      }
+      const [slant, top, upright, ...rest] = medians.slice(at, at + count);
+      const parts = whole
+        ? { leftShort: rest[1], rightShort: rest[2], level: rest[3], bottom: rest[4], middles: [rest[0]] }
+        : { leftShort: rest[0], rightShort: rest[3], level: rest[4], bottom: rest[5], middles: [rest[1], rest[2]] };
+      if (!isFallingLeft(slant) || !isLevel(top)) {
+        continue;
+      }
+      const x = (startOf(upright).x + endOf(upright).x) / 2;
+      const height = startOf(upright).y - endOf(upright).y;
+      // The 丨 begins under the top level stroke and runs through the rest.
+      if (height < CHUI_MIN_UPRIGHT || !isUpright(upright) || startOf(upright).y < heightOf(top) - 100) {
+        continue;
+      }
+      const across = (median) =>
+        isLevel(median) && Math.min(startOf(median).x, endOf(median).x) < x - 100 && Math.max(startOf(median).x, endOf(median).x) > x + 100;
+      const ok =
+        goesDown(parts.leftShort) &&
+        goesDown(parts.rightShort) &&
+        endOf(parts.leftShort).x < x &&
+        startOf(parts.rightShort).x > x &&
+        across(parts.level) &&
+        across(parts.bottom) &&
+        heightOf(parts.bottom) < heightOf(parts.level) &&
+        (whole
+          ? across(parts.middles[0])
+          : parts.middles.every(isLevel) && startOf(parts.middles[0]).x < x && endOf(parts.middles[1]).x > x);
+      if (ok) {
+        found.push({ at, whole });
+      }
+    }
+  }
+  return found;
+}
+
+// A copy of `charData` whose second accepted order (`altOrder`) has each
+// 垂's 丨 after the level stroke that follows the short strokes; `charData`
+// itself if it has no 垂. Joins a second order already there as the 方 does,
+// and is marked `altOrderIsFang` (a review says 'other') when there was none.
+export function withChuiUprightLast(charData) {
+  const chuis = chuiOf(charData);
+  if (chuis.length === 0) {
+    return charData;
+  }
+  const altOrder = charData.altOrder ? [...charData.altOrder] : charData.strokes.map((stroke, index) => index);
+  for (const { at, whole } of chuis) {
+    // Offsets from `at`: the data's order from the 丨 on, and the order wanted.
+    const data = whole ? [2, 3, 4, 5, 6, 7] : [2, 3, 4, 5, 6, 7, 8];
+    const wanted = whole ? [3, 4, 5, 6, 2, 7] : [4, 5, 3, 6, 7, 2, 8];
+    const from = altOrder.indexOf(at + 2);
+    // Only where the order has these strokes as the data does.
+    if (from === -1 || !data.every((offset, index) => altOrder[from + index] === at + offset)) {
+      continue;
+    }
+    altOrder.splice(from, data.length, ...wanted.map((offset) => at + offset));
+  }
+  return { ...charData, altOrder, ...(!charData.altOrder && { altOrderIsFang: true }) };
+}
+
+// ---- The branch of 匕 written right to left ----
+//
+// The Taiwan set writes the first stroke of 匕 (北, 比, 化, 死…) as a short
+// level stroke rising from the 丨 of the next stroke to the right. Many write
+// it from right to left instead, falling to the left (the owner, 2026-11-10,
+// in 北). The big set's ノ for it is already a second shape (altShapes), but
+// a flatter stroke, close to level, fits neither. So charData.js adds
+// `reversedShapes`: the stroke run backwards, and the same tilted down at the
+// left, which together fill the gap up to the ノ.
+//
+// Found as two strokes: a short level one rising to the right, and a long
+// one after it that begins above it, goes down past it, and turns right
+// and up (the ㇟), the short stroke starting at its 丨.
+
+const BRANCH_MAX_LENGTH = 400;
+const BRANCH_MIN_LENGTH = 150;
+// How far the tilted copy falls at its left end, in degrees.
+const BRANCH_TILT = 28;
+
+// The numbers of the strokes that are such a branch: [] for most.
+export function branchesOf(charData) {
+  const { medians } = charData;
+  const found = [];
+  for (let at = 0; at + 1 < medians.length; at++) {
+    const [branch, hook] = [medians[at], medians[at + 1]];
+    const length = distance(startOf(branch), endOf(branch));
+    const rises = endOf(branch).y > startOf(branch).y - 20 && Math.abs(angleOf(branch)) < LEVEL_WITHIN + 20;
+    if (length < BRANCH_MIN_LENGTH || length > BRANCH_MAX_LENGTH || !rises || endOf(branch).x < startOf(branch).x + 100) {
+      continue;
+    }
+    // The hook: starts above the branch, runs down along its start, ends
+    // up and to the right of the lowest point.
+    const lowest = hook.reduce((best, point) => (point[1] < best[1] ? point : best));
+    const beside = hook.slice(1).some((point, index) => {
+      const before = hook[index];
+      const [top, bottom] = before[1] > point[1] ? [before, point] : [point, before];
+      const share = (top[1] - startOf(branch).y) / (top[1] - bottom[1]);
+      return share >= 0 && share <= 1 && Math.abs(top[0] + share * (bottom[0] - top[0]) - startOf(branch).x) < 80;
+    });
+    if (startOf(hook).y > startOf(branch).y + 150 && beside && endOf(hook).x > lowest[0] + 150 && endOf(hook).y > lowest[1] + 100) {
+      found.push(at);
+    }
+  }
+  return found;
+}
+
+// `charData` with `reversedShapes` ({ strokeNum: [median, ...] }): for each
+// such branch, its line run backwards and that tilted; itself if none.
+export function withReversedBranches(charData) {
+  const branches = branchesOf(charData);
+  if (branches.length === 0) {
+    return charData;
+  }
+  const reversedShapes = {};
+  for (const strokeNum of branches) {
+    const [start, end] = [startOf(charData.medians[strokeNum]), endOf(charData.medians[strokeNum])];
+    const middle = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
+    const length = distance(start, end);
+    const angle = Math.atan2(start.y - end.y, start.x - end.x) + (BRANCH_TILT * Math.PI) / 180;
+    // `angle` is the direction right to left, turned so the left end falls.
+    const tilted = [
+      [middle.x - (Math.cos(angle) * length) / 2, middle.y - (Math.sin(angle) * length) / 2],
+      [middle.x + (Math.cos(angle) * length) / 2, middle.y + (Math.sin(angle) * length) / 2],
+    ];
+    reversedShapes[strokeNum] = [[[end.x, end.y], [start.x, start.y]], tilted];
+  }
+  return { ...charData, reversedShapes };
+}

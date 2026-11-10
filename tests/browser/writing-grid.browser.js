@@ -19,7 +19,7 @@ import {
   drawStroke,
   loadStrokeData,
 } from './harness.js';
-import { grassTopsOf } from '../../src/shortcuts.js';
+import { grassTopsOf, chuiOf } from '../../src/shortcuts.js';
 import { steepDotsOf } from '../../src/strokeMatch.js';
 import { innerBoxForms } from '../../src/innerBox.js';
 
@@ -34,7 +34,7 @@ import { innerBoxForms } from '../../src/innerBox.js';
 // 9th stroke in its mainland shape was refused at half size, bottom right,
 // with or without this). Half the size is no longer followed (MIN_SCALE in
 // src/frame.js, 2026-11-08): the owner writes at 0.6 of the box and up.
-const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢愉母出長麼這謝子好食房藍雨草花觀聽充流育骨體滑郵華飽薦遍方旁');
+const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢愉母出長麼這謝子好食房藍雨草花觀聽充流育骨體滑郵華飽薦遍方旁睡北');
 
 // Where and how big the character is written, compared with the centered
 // reference: `scale` times the size, moved `dx` to the right and `dy` up, in
@@ -165,7 +165,7 @@ describe('writing grid', { concurrency: BROWSER_COUNT }, () => {
       : data.altOrderIsTaiwan
         ? { MOE: data.altOrder, mainland: moeOrder }
         : data.altOrderIsFang
-          ? { MOE: moeOrder, '方 ノ first': data.altOrder }
+          ? { MOE: moeOrder, 'other (方 ノ first, 垂 丨 late)': data.altOrder }
           : { MOE: moeOrder, mainland: data.altOrder };
     const ways = Object.entries(orders).map(([orderName, strokeOrder]) => ({
       label: `${orderName} order`,
@@ -201,6 +201,25 @@ describe('writing grid', { concurrency: BROWSER_COUNT }, () => {
       const level = [top + 1, top + 2];
       ways.push({ label: 'MOE order, 艹 in three strokes', strokeOrder: [...before, level, top, top + 3, ...after] });
       ways.push({ label: 'MOE order, 艹 in three strokes, upright first', strokeOrder: [...before, top, level, top + 3, ...after] });
+    }
+
+    // 匕's branch written right to left (reversedShapes in src/shortcuts.js).
+    for (const [strokeNum, shapesToWrite] of Object.entries(data.reversedShapes ?? {})) {
+      shapesToWrite.forEach((shape, index) => {
+        ways.push({ label: `MOE order, 匕 branch right to left, way ${index + 1}`, strokeOrder: moeOrder, shapes: { [strokeNum]: shape } });
+      });
+    }
+    // 垂 with the middle level stroke across both halves, its 丨 after the
+    // next level stroke (src/quiz.js, grassLevelFor).
+    for (const { at, whole } of chuiOf(data)) {
+      if (!whole) {
+        const before = moeOrder.slice(0, at + 2);
+        const after = moeOrder.slice(at + 9);
+        ways.push({
+          label: '垂 level across, 丨 late',
+          strokeOrder: [...before, [at + 4, at + 5], at + 3, at + 6, at + 7, at + 2, at + 8, ...after],
+        });
+      }
     }
 
     for (const { label, strokeOrder, shapes, everywhere } of ways) {

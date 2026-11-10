@@ -48,7 +48,7 @@
 // 1024 across, and from about -124 (bottom) to 900 (top) upwards.
 
 import { innerBoxForms } from './innerBox.js';
-import { inTaiwanOrder, withFangInEitherOrder } from './shortcuts.js';
+import { inTaiwanOrder, withFangInEitherOrder, withChuiUprightLast, withReversedBranches } from './shortcuts.js';
 
 // BASE_URL is the folder the app is served from ("/" during development).
 const BASE = import.meta.env.BASE_URL;
@@ -117,10 +117,10 @@ export async function loadCharData(char, script) {
       const bigSetData = await fetchCharFile('char-data', char);
       data = bigSetData && inTaiwanOrder(bigSetData);
     }
-    return data && withSecondForms(char, withFangInEitherOrder(data));
+    return data && withSecondForms(char, withMoreWays(data));
   }
   const data = await fetchCharFile('char-data', char);
-  return data && withFangInEitherOrder(data);
+  return data && withMoreWays(data);
 }
 
 // The Chinese characters of `text` with no stroke data in `script` (a rare
@@ -140,4 +140,10 @@ export async function charsWithoutData(text, script) {
 function withSecondForms(char, data) {
   const altForms = [...(data.altForm ? [data.altForm] : []), ...innerBoxForms(char, data)];
   return altForms.length > 0 ? { ...data, altForms } : data;
+}
+
+// `data` with the orders and shapes found by shape: the 方 with its ノ first,
+// the 垂 with its 丨 late, the 匕 with its first stroke written right to left.
+function withMoreWays(data) {
+  return withReversedBranches(withChuiUprightLast(withFangInEitherOrder(data)));
 }

@@ -18,6 +18,10 @@ import {
   inTaiwanOrder,
   fangsOf,
   withFangInEitherOrder,
+  chuiOf,
+  withChuiUprightLast,
+  branchesOf,
+  withReversedBranches,
 } from '../src/shortcuts.js';
 import { applyFrame } from '../src/frame.js';
 import { parseWordList } from '../src/wordList.js';
@@ -361,4 +365,35 @@ test('no 方 is found where Make Me a Hanzi has none (both sets)', () => {
     if (fangsOf(bigSetData(character)).length > 0 && !hasFang(character)) wrong.push(character);
   }
   assert.deepEqual(wrong, []);
+});
+
+test('a 垂 is found by shape, and its 丨 after the levels accepted (the owner, 2026-11-10)', () => {
+  // Taiwan set: nine strokes, the middle level in two halves.
+  for (const char of ['睡', '郵']) {
+    const [found] = chuiOf(taiwanData.get(char));
+    assert.equal(found.whole, false, char);
+  }
+  const sleep = withChuiUprightLast(taiwanData.get('睡'));
+  assert.deepEqual(sleep.altOrder.slice(5), [5, 6, 9, 10, 8, 11, 12, 7, 13]);
+  assert.equal(sleep.altOrderIsFang, true);
+  // Big set: eight strokes, the middle level whole.
+  for (const char of ['睡', '錘', '捶', '陲', '唾']) {
+    assert.equal(chuiOf(bigSetData(char))[0].whole, true, char);
+  }
+  assert.deepEqual(withChuiUprightLast(bigSetData('睡')).altOrder.slice(5), [5, 6, 8, 9, 10, 11, 7, 12]);
+  // Not in characters without one.
+  for (const char of ['花', '北', '方', '食', '華']) {
+    assert.deepEqual(chuiOf(charData(char, 'traditional')), [], char);
+  }
+});
+
+test('the branch of 匕 may be written right to left (the owner, 2026-11-10)', () => {
+  assert.deepEqual(branchesOf(taiwanData.get('北')), [3]);
+  assert.deepEqual(branchesOf(taiwanData.get('方')), []);
+  const { reversedShapes } = withReversedBranches(taiwanData.get('北'));
+  const [plain, tilted] = reversedShapes[3];
+  // Run backwards, from the right end to the left; the tilted one falls at the left.
+  assert.ok(plain[0][0] > plain[1][0]);
+  assert.ok(tilted[1][1] < plain[1][1]);
+  assert.equal(withReversedBranches(taiwanData.get('方')), taiwanData.get('方'));
 });

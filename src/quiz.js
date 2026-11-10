@@ -14,7 +14,7 @@
 
 import HanziWriter from 'hanzi-writer';
 import { loadCharData } from './charData.js';
-import { isShortcutStroke, joinedLine, grassTopsOf } from './shortcuts.js';
+import { isShortcutStroke, joinedLine, grassTopsOf, chuiOf } from './shortcuts.js';
 import {
   fitFrame,
   applyFrame,
@@ -836,11 +836,13 @@ export function createQuiz(target, size, handlers) {
   // strokeMatch.js), which is then the shape returned. Otherwise null.
   function otherShapeFor(stroke) {
     const stored = baseData.altShapes?.[sequence[stroke.strokeNum]];
-    if (!stored) {
+    // The branch of 匕 may also be written right to left (reversedShapes).
+    const reversed = baseData.reversedShapes?.[sequence[stroke.strokeNum]] ?? [];
+    if (!stored && reversed.length === 0) {
       return null;
     }
     const points = stroke.drawnPath.points;
-    for (const shape of [stored, ...steepDotsOf(stored)]) {
+    for (const shape of [...(stored ? [stored, ...steepDotsOf(stored)] : []), ...reversed]) {
       const inFrame = moved(toPoints(shape), frame).map((point) => [point.x, point.y]);
       // In a small character the strokes lie closer together, so less is
       // allowed (as in isExpectedStrokeAtAnotherSize).
@@ -984,12 +986,21 @@ export function createQuiz(target, size, handlers) {
     const expected = sequence[stroke.strokeNum];
     const written = new Set(sequence.slice(0, stroke.strokeNum));
     const top = grassTops.find(
-      (at) => (expected === at || expected === at + 1) && !written.has(at + 1) && !written.has(at + 2),
+      (at) =>
+        (expected === at || expected === at + 1 || (expected === at - 1 && isChuiTop(at))) &&
+        !written.has(at + 1) &&
+        !written.has(at + 2),
     );
     if (top === undefined) {
       return null;
     }
     return levelFits(top, stroke.drawnPath.points, false) ? top : null;
+  }
+
+  // True if the 艹 beginning at `top` is the middle of a 垂 (its short strokes
+  // and halves), whose 丨 comes just before it in the data.
+  function isChuiTop(top) {
+    return chuiOf(baseData).some((chui) => !chui.whole && chui.at + 3 === top);
   }
 
   // True if `points` fit the level stroke of the 艹 beginning at `top`: both
@@ -1037,11 +1048,14 @@ export function createQuiz(target, size, handlers) {
   // both halves count as written, and what is left of the 艹 comes after.
   function acceptGrassLevel(stroke, top, totalStrokes) {
     const position = stroke.strokeNum;
+    // Written where a 垂's 丨 is expected, the 丨 is left till after the next
+    // level stroke (the second order of 垂, withChuiUprightLast).
+    const upright = sequence[position] === top - 1;
+    const after = upright ? [top - 1, top, top + 1, top + 2, top + 3, top + 4] : [top + 1, top + 2];
     sequence = [
       ...sequence.slice(0, position),
-      top + 1,
-      top + 2,
-      ...sequence.slice(position).filter((strokeNum) => strokeNum !== top + 1 && strokeNum !== top + 2),
+      ...(upright ? [top + 1, top + 2, top, top + 3, top + 4, top - 1] : [top + 1, top + 2]),
+      ...sequence.slice(position).filter((strokeNum) => !after.includes(strokeNum)),
     ];
     grassJoined.push(top);
     noteAccepted(position, [top + 1, top + 2], stroke.drawnPath.points);
@@ -1529,7 +1543,8 @@ export function createQuiz(target, size, handlers) {
         let order = null;
         if (baseData.altOrder) {
           // (The big set's 忄 has the Taiwan order second: inTaiwanOrder.
-          // A 方 alone has its ノ before its ㇆ second: withFangInEitherOrder.)
+          // A 方 or 垂 alone has its second order only there: withFangInEitherOrder,
+          // withChuiUprightLast.)
           const standard = isStandardOrder(sequenceWithoutGrassJoins());
           if (baseData.altOrderIsFang) {
             order = standard ? 'moe' : 'other';
