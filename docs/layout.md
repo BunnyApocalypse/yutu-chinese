@@ -95,7 +95,7 @@
 - `site-repo/`: the README and workflow of `BunnyApocalypse/yutuchinese-site`, which publishes the app at yutuchinese.com during the move (`docs/offline.md`, "The move to yutuchinese.com").
 - `scripts/anki-study-data.py`, `scripts/check-anki-import.js`: for trying the Anki import on real shared decks (`docs/anki.md`): the first gives them made-up learners' histories with Anki's own Python package, the second shows what the import makes of a file (both run by hand; the decks are in the git-ignored `local/anki-decks/`, `local/README.md`).
 - `scripts/ux-atlas.js`: the screenshot atlas and layout report, every screen at four sizes in both looks, into `local/ux-atlas/` (run by hand; see `docs/ux-review.md`).
-- `scripts/icon.html`, `scripts/make-icons.js`: the app's icon as an SVG, and the script that draws it into `public/icons/` (run by hand; see "Icons" in `docs/offline.md`).
+- `scripts/icon.html`, `scripts/make-icons.js`, `data/icon/`: the app's icon as an SVG, the script that draws it into `public/icons/` (run by hand), and the calligraphy and photos it is made of, each under its own license (see "Icons" in `docs/offline.md`).
 - `scripts/build-tone-table.js`, `data/cedict/`: the tone table extracted from CC-CEDICT (run by hand; `docs/words.md`).
 - `scripts/convert-notes.js`: writes each learning note in the other script and lists those it can't be sure of (run by hand after adding notes; `data/notes/README.md`).
 - `scripts/build-word-lists.js`, `data/wordlists/`: the ready-made word lists (run by hand, uses the internet; `docs/word-lists.md`).
