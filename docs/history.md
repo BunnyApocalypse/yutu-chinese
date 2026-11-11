@@ -49,7 +49,8 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - **Tests:** 431 unit tests (6 new; the real-file check fails on the old lists); a full browser run, 291 of 291 and the grid 426 (25 skipped), none failed.
 - **Not tried by the owner.** The renaming at start-up has no browser test of its own.
 - **Pushed to `main`** and `yutuchinese-site`'s deploy started, with the owner's yes (2026-11-11); the owner moves it to `stable` themselves. No "What's new" entry written yet.
-- **Then checked against Taiwan's Ministry of Education dictionary** (the owner asked how the forms were known; they had come from the TOCFL list and Claude's own knowledge): all held but 兇殘 (now 凶殘, the line reversed rather than a second one added); 身份 → 身分, 想象 → 想像, 身分證, 難以想像 added (28 lines). 431 unit tests; no browser run after this part. **Committed, not pushed.**
+- **Then checked against Taiwan's Ministry of Education dictionary** (the owner asked how the forms were known; they had come from the TOCFL list and Claude's own knowledge): all held but 兇殘 (now 凶殘, the line reversed rather than a second one added); 身份 → 身分, 想象 → 想像, 身分證, 難以想像 added (28 lines). 431 unit tests; no browser run after this part.
+- **Released** as "What's new" `2026-11-11-3` (`stable` and `main` pushed, `yutuchinese-site`'s deploy started), on the owner's word. Its Italian and German lines are Claude's, unchecked.
 
 **Handover from the second session of 2026-11-11 (a word removed while it is being learned: the fix of 2026-11-08 brought up to date; released to `stable` with the "What's new" entry `2026-11-11-2`).**
 

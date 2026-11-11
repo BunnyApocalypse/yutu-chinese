@@ -13,6 +13,21 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-11-3',
+    items: [
+      'The HSK lists now use Taiwan’s standard traditional forms (胸, 帳戶, 諮詢, 奇蹟, 身分, 想像…). Words you already added from them are put right by themselves, with your progress kept.',
+      'HSK 3.0 no longer lists a few words twice in two spellings, such as 那裡 and 那裏. If you added a level before, you may still have both.',
+    ],
+    it: [
+      'Le liste HSK ora usano le forme tradizionali standard di Taiwan (胸, 帳戶, 諮詢, 奇蹟, 身分, 想像…). Le parole che ne hai già aggiunto vengono corrette da sole, mantenendo i tuoi progressi.',
+      'HSK 3.0 non elenca più due volte alcune parole in due grafie, come 那裡 e 那裏. Se avevi già aggiunto un livello, potresti averle ancora entrambe.',
+    ],
+    de: [
+      'Die HSK-Listen verwenden jetzt die traditionellen Standardformen Taiwans (胸, 帳戶, 諮詢, 奇蹟, 身分, 想像…). Wörter, die du schon daraus hinzugefügt hast, werden von selbst berichtigt, dein Fortschritt bleibt erhalten.',
+      'HSK 3.0 führt einige Wörter nicht mehr doppelt in zwei Schreibweisen, etwa 那裡 und 那裏. Wenn du schon eine Stufe hinzugefügt hast, hast du vielleicht noch beide.',
+    ],
+  },
+  {
     id: '2026-11-11-2',
     items: [
       'Removing a word from its page while you are learning or reviewing it now goes on to the next card, and Learn’s list of today’s words no longer shows it.',
