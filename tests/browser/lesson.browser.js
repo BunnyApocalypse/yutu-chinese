@@ -662,4 +662,40 @@ describe('learning new words', { concurrency: false }, () => {
     const stored = await inDatabase(`stores.words.get('中|zhong1').onsuccess = (event) => { result.word = event.target.result ?? null; };`);
     assert.equal(stored.word, null);
   });
+
+  it("draws today's summary again without a word removed from its page", { timeout: 60000 }, async () => {
+    // Two words learned today with a goal of two, so Learn opens on the
+    // summary, and one more waiting: had the sitting not shrunk, removing a
+    // word would start teaching 木 to make up the two.
+    await inDatabase(`
+      stores.words.clear();
+      stores.cards.clear();
+      [['山', 'shan1', 'mountain'], ['水', 'shui3', 'water'], ['木', 'mu4', 'tree']].forEach(([char, pinyin, definition], order) => {
+        const word = { id: char + '|' + pinyin, traditional: char, simplified: char, pinyin, definition, order, addedAt: 1 };
+        if (order < 2) {
+          word.learnedAt = Date.now() - 60000 + order;
+        }
+        stores.words.put(word);
+      });
+      stores.settings.put({ key: 'enabledTypes', value: ['tone', 'writing'] });
+      stores.settings.put({ key: 'newWordsPerDay', value: 2 });
+    `);
+    await reloadApp(page);
+    await openLearn(page);
+    const listed = () => page.evaluate(`[...document.querySelectorAll('#done-message .learned-word')].map((row) => row.textContent)`);
+    await waitUntil(page, `document.querySelectorAll('#done-message .learned-word').length === 2`, 'the summary');
+    assert.deepEqual(await listed(), ['山shānmountain', '水shuǐwater']);
+    // The word's page from the summary, then Edit, then Remove in the panel.
+    await page.evaluate(ANSWER_YES);
+    await page.evaluate(`document.querySelector('#done-message .learned-word').click()`);
+    await waitUntil(page, `document.getElementById('word-page').dataset.shown === '山|shan1'`, "the word's page");
+    await tap(page, 'word-page-edit');
+    await waitUntil(page, `document.getElementById('word-dialog').open`, "the word's panel");
+    await tap(page, 'remove-word-button');
+    await waitUntil(page, `document.querySelectorAll('#done-message .learned-word').length === 1`, 'the summary without 山');
+    assert.deepEqual(await listed(), ['水shuǐwater']);
+    // Still the summary, not 木's lesson.
+    assert.equal(await page.evaluate(`document.querySelector('main').classList.contains('learn-summary')`), true);
+    assert.equal(await page.evaluate(`document.getElementById('study-area').hidden`), true);
+  });
 });

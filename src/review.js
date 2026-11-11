@@ -676,6 +676,15 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     if (batch) {
       batch.ids = batch.ids.filter((id) => present.has(id));
     }
+    // Learn's summary of today's words (no card up): drawn again without the
+    // gone word. The sitting shrinks by as many words, so the summary stays
+    // a summary rather than starting a word to make up the number.
+    const removedFromBatch = batch ? learnedBefore - batch.ids.length : 0;
+    if (active && !current && mode === 'learn' && !learningForms && removedFromBatch > 0 && page.classList.contains('learn-summary')) {
+      batch.size = Math.max(0, batch.size - removedFromBatch);
+      showNextToLearn();
+      return;
+    }
     if (!active || !current || current.repeating) {
       return;
     }

@@ -46,7 +46,9 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 **Handover from the second session of 2026-11-11 (a word removed while it is being learned: the fix of 2026-11-08 brought up to date; on the branch `fix-learn-remove`, not merged, not pushed).**
 
 - **The owner found (2026-11-08)** that removing a word during its lesson in Learn (About, then Edit on its page, then Remove) left the lesson going on with it; Review had the same gap. **Fixed then** on `fix-learn-remove` and left unmerged: `forgetGoneWords` in `src/review.js` (`docs/cards.md`, under "From a card in Review"). **Brought up to date:** `main` merged in (100 commits); since then saving one word skips `load()` (`wordChanged`), so `forgetGoneWords` is called there too when the word's ID changed (a rename from its page).
-- **Not done:** Learn's summary of today's words still lists a word removed from it until it is shown again.
+- **And the gap it left:** Learn's summary of today's words is drawn again without a word removed from it (the owner, 2026-11-11), the sitting one word smaller so no other word starts.
+- **Tests:** a second step in `lesson.browser.js` (fails without the change: "the summary without 山"). 425 unit tests; a full browser run, 291 of 291 and the grid 426 (25 skipped), none failed. The rename through `wordChanged` has no test of its own.
+- **Next:** the owner tries it on the test copy once merged into `main`; then to `stable` with a "What's new" line.
 
 **Handover from the session of 2026-11-11 (the calligrapher's 兔 as the icon; released to `stable` with the "What's new" entry `2026-11-11`).**
 
