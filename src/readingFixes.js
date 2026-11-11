@@ -119,6 +119,26 @@ export function formsToCorrect(fixes, words) {
   return found;
 }
 
+// The words formsToCorrect leaves alone because the device has the right
+// spelling too: the second copy of a word the list had twice (那裏 beside
+// 那裡). main.js removes one that was never studied (the owner, 2026-11-11);
+// one with reviews stays for the learner to remove if they want.
+export function formDuplicates(fixes, words) {
+  const ids = new Set(words.map((word) => word.id));
+  return words.filter(
+    (word) =>
+      !isSentence(word) &&
+      fixes.some(
+        (fix) =>
+          fix.simplified === word.simplified &&
+          fix.pinyin === word.pinyin &&
+          fix.wrong === word.traditional &&
+          inList(word, fix.list) &&
+          ids.has(`${fix.right}|${word.pinyin}`),
+      ),
+  );
+}
+
 // The corrected record of `word`, with `entries` and `detail` as for
 // correctedWord: entries for both spellings. The meaning changes only where
 // the wrong spelling's entry meant another word (颿 "to gallop" for 帆).

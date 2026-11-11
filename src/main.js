@@ -1,7 +1,7 @@
 // Entry point: sets up the page, the three tabs (Review, Free practice and
 // Words), settings and backups.
 
-import { getAll, putAll, getSetting, setSetting, removeWord, removeDecks, renameWord, isOutboxOn, IMPORT_UNFINISHED, onOutboxChange } from './db.js';
+import { getAll, putAll, getSetting, setSetting, removeWord, removeDecks, renameWord, getReviewsOfWord, isOutboxOn, IMPORT_UNFINISHED, onOutboxChange } from './db.js';
 import { allCardIds } from './session.js';
 import { OLD_BUILT_IN_WORD_IDS } from './oldBuiltInWords.js';
 import { createWordFlow } from './wordFlow.js';
@@ -26,7 +26,7 @@ import { isSentence } from './sentences.js';
 import { clampWithPopup } from './clamp.js';
 import { fitMeaning } from './meaningFit.js';
 import { watchForErrors, showVersion } from './errors.js';
-import { parseReadingFixes, wordsToCorrect, correctedWord, parseFormFixes, formsToCorrect, correctedForm } from './readingFixes.js';
+import { parseReadingFixes, wordsToCorrect, correctedWord, parseFormFixes, formsToCorrect, correctedForm, formDuplicates } from './readingFixes.js';
 import { readDictionary, lookUp, DEFAULT_MEANING_DETAIL } from './dictionary.js';
 // The corrections are a small file, so they come with the program ("?raw":
 // Vite hands over the file's text). The dictionary is big and only fetched
@@ -1011,8 +1011,17 @@ async function fileListWordsInDecks() {
 // fetched.
 async function applyReadingFixes() {
   const words = await getAll('words');
+  const formFixes = parseFormFixes(formFixesText);
+  // A word the list had twice in two spellings, added before the list was
+  // put right: the wrong spelling goes if it was never studied (no reviews,
+  // never through Learn), like any removed word. One studied stays.
+  for (const word of formDuplicates(formFixes, words)) {
+    if (!word.learnedAt && (await getReviewsOfWord(word.id)).length === 0) {
+      await removeWord(word.id, allCardIds(word));
+    }
+  }
   const found = wordsToCorrect(parseReadingFixes(readingFixesText), words);
-  const forms = formsToCorrect(parseFormFixes(formFixesText), words);
+  const forms = formsToCorrect(formFixes, words);
   if (found.length === 0 && forms.length === 0) {
     return;
   }

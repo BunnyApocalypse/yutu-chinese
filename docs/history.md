@@ -51,6 +51,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - **Pushed to `main`** and `yutuchinese-site`'s deploy started, with the owner's yes (2026-11-11); the owner moves it to `stable` themselves. No "What's new" entry written yet.
 - **Then checked against Taiwan's Ministry of Education dictionary** (the owner asked how the forms were known; they had come from the TOCFL list and Claude's own knowledge): all held but 兇殘 (now 凶殘, the line reversed rather than a second one added); 身份 → 身分, 想象 → 想像, 身分證, 難以想像 added (28 lines). 431 unit tests; no browser run after this part.
 - **Released** as "What's new" `2026-11-11-3` (`stable` and `main` pushed, `yutuchinese-site`'s deploy started), on the owner's word. Its Italian and German lines are Claude's, unchecked.
+- **Then, the words a device has twice** (the owner chose "remove the unstudied one", 2026-11-11): `formDuplicates` in `src/readingFixes.js`, removed in `applyReadingFixes` (`docs/word-lists.md`). Tests: 432 unit tests; `database.browser.js` two new steps (a spelling renamed with its reviews; 那裏 removed, a studied 哪裏 kept), the second failing with the removal switched off; a full browser run, 293 of 293 and the grid 426 (25 skipped), none failed. **Committed, not pushed or released.**
 
 **Handover from the second session of 2026-11-11 (a word removed while it is being learned: the fix of 2026-11-08 brought up to date; released to `stable` with the "What's new" entry `2026-11-11-2`).**
 

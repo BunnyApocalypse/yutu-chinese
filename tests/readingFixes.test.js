@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-import { parseReadingFixes, wordsToCorrect, correctedWord, parseFormFixes, formsToCorrect, correctedForm } from '../src/readingFixes.js';
+import { parseReadingFixes, wordsToCorrect, correctedWord, parseFormFixes, formsToCorrect, correctedForm, formDuplicates } from '../src/readingFixes.js';
 import { readDictionary, lookUp, proposeMeaning } from '../src/dictionary.js';
 
 const FIXES = parseReadingFixes('# a comment\nhsk-3.0\t说法\tshuo1fa3\tshuo1fa5\tBuddhist\n');
@@ -138,6 +138,17 @@ test('leaves alone a word outside the HSK decks, a sentence, another reading, an
   assert.deepEqual(formsToCorrect(FORM_FIXES, [formWord({ kind: 'sentence' })]), []);
   assert.deepEqual(formsToCorrect(FORM_FIXES, [formWord({ id: '咨詢|zi1xun4', pinyin: 'zi1xun4' })]), []);
   assert.deepEqual(formsToCorrect(FORM_FIXES, [formWord(), formWord({ id: '諮詢|zi1xun2', traditional: '諮詢' })]), []);
+});
+
+test('finds the second spelling of a word only where the device has the right one too', () => {
+  const fixes = parseFormFixes('hsk\t那里\tna4li5\t那裏\t那裡\tlisted twice\n');
+  const there = (traditional, more = {}) => ({
+    id: `${traditional}|na4li5`, traditional, simplified: '那里', pinyin: 'na4li5', decks: ['hsk-3.0/1'], ...more,
+  });
+  assert.deepEqual(formDuplicates(fixes, [there('那裡'), there('那裏')]).map((word) => word.id), ['那裏|na4li5']);
+  assert.deepEqual(formDuplicates(fixes, [there('那裏')]), []);
+  assert.deepEqual(formDuplicates(fixes, [there('那裡'), there('那裏', { decks: ['chinese'] })]), []);
+  assert.deepEqual(formDuplicates(fixes, [there('那裡'), there('那裏', { kind: 'sentence' })]), []);
 });
 
 test('gives the word its new form and ID, remembers the old one, and keeps the rest', () => {

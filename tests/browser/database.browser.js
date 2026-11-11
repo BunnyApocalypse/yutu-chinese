@@ -211,6 +211,51 @@ describe('the database', { concurrency: false }, () => {
     assert.equal(review.cardId, '說法|shuo1fa5#meaning');
   });
 
+  it("gives a list's word the traditional form the list has since put right, with its cards and reviews", async () => {
+    // As added from HSK 2.0 level 5 before 2026-11-11, and studied once.
+    const oldId = '咨詢|zi1xun2';
+    await putRecords(page, {
+      words: [{ id: oldId, traditional: '咨詢', simplified: '咨询', pinyin: 'zi1xun2', definition: 'consultation; to consult; to inquire', decks: ['hsk-2.0/5'], order: 7, addedAt: 1, learnedAt: 2 }],
+      cards: [{ id: `${oldId}#meaning`, wordId: oldId, type: 'meaning', due: 3, firstReviewedAt: 2, lastReviewedAt: 2, fsrsState: null }],
+      reviews: [{ id: 'review-of-zixun', cardId: `${oldId}#meaning`, wordId: oldId, type: 'meaning', time: 2, grade: 3 }],
+    });
+    await reloadApp(page);
+    const word = (await stored(page, 'words')).find((entry) => entry.simplified === '咨询');
+    assert.equal(word.id, '諮詢|zi1xun2');
+    assert.equal(word.traditional, '諮詢');
+    assert.deepEqual(word.formerIds, [oldId]);
+    assert.equal(word.learnedAt, 2);
+    const review = (await stored(page, 'reviews')).find((entry) => entry.id === 'review-of-zixun');
+    assert.equal(review.wordId, '諮詢|zi1xun2');
+    assert.equal(review.cardId, '諮詢|zi1xun2#meaning');
+  });
+
+  it('removes the second spelling of a word the list had twice if it was never studied, and keeps one studied', async () => {
+    // As added from HSK 3.0 level 1 before 2026-11-11: 那裡 and 那裏, 哪裡
+    // and 哪裏. 哪裏 was studied once.
+    const level = ['hsk-3.0/1/04'];
+    const listWord = (traditional, simplified, pinyin, more = {}) => ({
+      id: `${traditional}|${pinyin}`, traditional, simplified, pinyin, definition: 'there', decks: level, order: 9, addedAt: 1, ...more,
+    });
+    await putRecords(page, {
+      words: [
+        listWord('那裡', '那里', 'na4li5'),
+        listWord('那裏', '那里', 'na4li5'),
+        listWord('哪裡', '哪里', 'na3li3'),
+        listWord('哪裏', '哪里', 'na3li3', { learnedAt: 2 }),
+      ],
+      cards: [{ id: '哪裏|na3li3#meaning', wordId: '哪裏|na3li3', type: 'meaning', due: 3, firstReviewedAt: 2, lastReviewedAt: 2, fsrsState: null }],
+      reviews: [{ id: 'review-of-nali', cardId: '哪裏|na3li3#meaning', wordId: '哪裏|na3li3', type: 'meaning', time: 2, grade: 3 }],
+    });
+    await reloadApp(page);
+    const ids = (await stored(page, 'words')).map((word) => word.id);
+    assert.ok(ids.includes('那裡|na4li5'));
+    assert.ok(!ids.includes('那裏|na4li5'));
+    assert.ok((await stored(page, 'removed')).some((mark) => mark.id === '那裏|na4li5'));
+    assert.ok(ids.includes('哪裡|na3li3'));
+    assert.ok(ids.includes('哪裏|na3li3'));
+  });
+
   it("takes a level out of its list's deck, which goes", async () => {
     // As made before 2026-10-14: TOCFL's deck with its level inside.
     await putRecords(page, {
