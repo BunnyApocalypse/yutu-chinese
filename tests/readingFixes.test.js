@@ -160,7 +160,7 @@ test("replaces the wrong form's meaning with the right one's, and keeps a meanin
   assert.equal(correctedForm(word, FORM_FIXES[1], [], 'everyday').definition, 'to gallop');
 });
 
-test('every form correction in the real file has both forms in the dictionary, and the HSK lists have only the right one', () => {
+test('every form correction in the real file has the right form in the dictionary where it has the wrong one, and the HSK lists have only the right one', () => {
   const fixes = parseFormFixes(fs.readFileSync('data/wordlists/form-fixes.tsv', 'utf8'));
   assert.ok(fixes.length > 0);
   const dictionary = readDictionary(fs.readFileSync('data/cedict/dictionary.tsv', 'utf8'));
@@ -173,12 +173,9 @@ test('every form correction in the real file has both forms in the dictionary, a
   );
   for (const fix of fixes) {
     assert.equal(fix.list, 'hsk');
-    for (const form of [fix.wrong, fix.right]) {
-      assert.ok(
-        lookUp(dictionary, form).some((entry) => entry.traditional === form && entry.pinyin === fix.pinyin),
-        `${form} ${fix.pinyin} is not in the dictionary`,
-      );
-    }
+    const has = (form) => lookUp(dictionary, form).some((entry) => entry.traditional === form && entry.pinyin === fix.pinyin);
+    // A word with a meaning of its own (難以想象) has neither.
+    assert.ok(has(fix.right) || !has(fix.wrong), `${fix.right} ${fix.pinyin} is not in the dictionary`);
     const forms = listed.filter((columns) => columns[1] === fix.simplified && columns[3] === fix.pinyin).map((columns) => columns[2]);
     assert.ok(forms.includes(fix.right), `the HSK lists do not have ${fix.simplified} as ${fix.right}`);
     assert.ok(!forms.includes(fix.wrong), `the HSK lists still have ${fix.simplified} as ${fix.wrong}`);

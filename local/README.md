@@ -65,3 +65,7 @@ English Wikipedia's articles on the Chinese dynasties and periods of the 朝代�
 - `moon.html` now also takes `tu=1|2|3`, `sky=ink`, `stars=dots`, `rough=1`; `bg-compare.png` shows them.
 - `speck-1..4.png`: four tiny real ink specks from the calligrapher's sheet, used as stars (`starstyle=specks`); `moon.html` also takes `layout=c` and `starstyle=mixed|aligned|specks`; `starstyle-compare.png` shows them.
 - The commissioned 兔 (`logo-original.png`): by the calligrapher 南蠻大熊, licensed CC BY 4.0 (the owner, 2026-11-10). Credit them by that name.
+
+## moe-dictionary/ (Taiwan forms check, 2026-11-11)
+
+- `dict-revised.json`: Taiwan's Ministry of Education 重編國語辭典修訂本 as JSON, from g0v/moedict-data (`curl -L -o dict-revised.json.xz https://raw.githubusercontent.com/g0v/moedict-data/master/dict-revised.json.xz`, then `xz -dk`). The text is the ministry's, CC BY-ND 3.0 TW; used to check `data/wordlists/form-fixes.tsv` (which form is a word, which "a variant of" it), nothing copied into the repository.

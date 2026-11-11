@@ -255,7 +255,9 @@ function withFormFixes(listId, words) {
     if (!fix) {
       return word;
     }
-    if (!inDictionary(fix.right, fix.pinyin)) {
+    // A word with a meaning of its own (難以想象, in extra-meanings.tsv) is
+    // in the dictionary under neither form, and keeps that meaning.
+    if (!inDictionary(fix.right, fix.pinyin) && inDictionary(fix.wrong, fix.pinyin)) {
       throw new Error(`form-fixes.tsv: the dictionary has no ${fix.right} ${fix.pinyin}`);
     }
     fix.used = true;

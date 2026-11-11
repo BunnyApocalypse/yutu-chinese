@@ -6,11 +6,13 @@
 # each CC-CEDICT entry, can list one word twice, once in each spelling (那里 as 那裡 and as
 # 那裏, each with its own cards). Traditional in the app means Taiwan's standard forms
 # (CLAUDE.md), so these are put right. Found on 2026-11-11 by comparing every HSK word with
-# the dictionary's other spellings of the same word and with the TOCFL list (Taiwan's own);
-# decided by Claude: where both are standard in Taiwan (了解 and 瞭解), the one the HSK 2.0
-# list or Taiwan's Ministry of Education dictionary uses. Not changed: 账 alone stays 賬
-# (the dictionary's 帳 means only "curtain; tent"), and spellings of a word both standard
-# in Taiwan where the list has only one (計劃 and 計畫, 身份 and 身分).
+# the dictionary's other spellings of the same word and with the TOCFL list (Taiwan's own),
+# then checked against Taiwan's Ministry of Education dictionary (重編國語辭典修訂本, read
+# locally, never copied here: local/README.md): the form meant is the one it has as a word
+# where the other is missing or "a variant of" it (胷, 鮮艷, 身份, 想象, 凶殘 over 兇殘);
+# where it gives both as equals ("也作": 了解 and 瞭解, 彙報 and 匯報), the one kept is
+# Claude's choice. Not changed: 账 alone stays 賬 (the ministry has both; CC-CEDICT's 帳
+# means only "curtain; tent"), nor 計劃 and 倒霉 (both forms equal at the ministry).
 #
 # Columns: list ("hsk" is both HSK lists), simplified, reading, form the script picks, form meant, why.
 # The script stops if a line no longer changes anything, so a stale line is noticed.
@@ -35,9 +37,13 @@ hsk	了解	liao3jie3	瞭解	了解	listed twice; both are used in Taiwan
 hsk	尝	chang2	嚐	嘗	listed twice; 嚐 is a variant
 hsk	发布	fa1bu4	發佈	發布	listed twice; 佈 is a variant here
 hsk	汇报	hui4bao4	匯報	彙報	listed twice; Taiwan writes 彙
-hsk	凶残	xiong1can2	凶殘	兇殘	listed twice; both are used in Taiwan
+hsk	凶残	xiong1can2	兇殘	凶殘	listed twice; the ministry has 凶殘 only (the test copy had this line the other way round on 2026-11-11)
 hsk	痴呆	chi1dai1	痴獃	痴呆	listed twice; 獃 is a variant
 hsk	荡漾	dang4yang4	盪漾	蕩漾	listed twice; 盪 is a variant here
 hsk	马后炮	ma3hou4pao4	馬後砲	馬後炮	listed twice; 砲 is a variant here
 hsk	帆	fan1	颿	帆	listed twice; the dictionary's 颿 is another word
 hsk	暂	zan4	蹔	暫	listed twice; the dictionary's 蹔 is another word
+hsk	身份	shen1fen4	身份	身分	the ministry has 身分 only
+hsk	身份证	shen1fen4zheng4	身份證	身分證	the ministry has 身分證 only
+hsk	想象	xiang3xiang4	想象	想像	the ministry has 想像 only
+hsk	难以想象	nan2yi3xiang3xiang4	難以想象	難以想像	the ministry has 難以想像 only
