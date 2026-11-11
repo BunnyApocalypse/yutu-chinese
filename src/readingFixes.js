@@ -1,5 +1,6 @@
-// Readings put right in the ready-made word lists, carried over to words a
-// device already has. Plain calculation; main.js does the saving.
+// Readings and traditional forms put right in the ready-made word lists,
+// carried over to words a device already has. Plain calculation; main.js
+// does the saving.
 //
 // A word's ID is its traditional form and its reading, so when a list's
 // reading of a word is corrected (data/wordlists/reading-fixes.tsv, which
@@ -27,8 +28,11 @@ export function parseReadingFixes(text) {
 
 // True if the word is in a deck of the list `listId` ('hsk-3.0'): the list
 // itself, one of its levels or a group inside one (see listTag in words.js).
-const inList = (word, listId) =>
-  (word.decks || []).some((deck) => deck === listId || deck.startsWith(`${listId}/`));
+// 'hsk' stands for both HSK lists.
+const inList = (word, listId) => {
+  const lists = listId === 'hsk' ? ['hsk-3.0', 'hsk-2.0'] : [listId];
+  return (word.decks || []).some((deck) => lists.some((list) => deck === list || deck.startsWith(`${list}/`)));
+};
 
 // The words a correction applies to: [{ word, fix }]. Only words in one of
 // that list's decks: someone who typed in 说法 shuōfǎ by hand may mean the
@@ -71,6 +75,62 @@ export function correctedWord(word, fix, entries, detail) {
   const corrected = { ...word, pinyin: fix.right, id: `${word.traditional}|${fix.right}`, definition };
   // A record read from the database carries the time it was saved; the new
   // one is stamped when it is saved (renameWord).
+  delete corrected.changedAt;
+  return withFormerId(corrected, word);
+}
+
+// ---- Traditional forms ----
+//
+// The same for a traditional form put right in the lists
+// (data/wordlists/form-fixes.tsv): 咨詢 becomes 諮詢, keeping its reading.
+
+// The corrections file, as text, read into [{ list, simplified, pinyin, wrong, right }].
+export function parseFormFixes(text) {
+  return text
+    .split('\n')
+    .filter((line) => line.trim() !== '' && !line.startsWith('#'))
+    .map((line) => {
+      const [list, simplified, pinyin, wrong, right] = line.split('\t');
+      return { list, simplified, pinyin, wrong, right };
+    });
+}
+
+// The words a correction applies to: [{ word, fix }], found as for readings
+// (wordsToCorrect). Where the device has both spellings (the list had the
+// word twice: 那裡 and 那裏), both are left as they are.
+export function formsToCorrect(fixes, words) {
+  const ids = new Set(words.map((word) => word.id));
+  const found = [];
+  for (const word of words) {
+    if (isSentence(word)) {
+      continue;
+    }
+    const fix = fixes.find(
+      (candidate) =>
+        candidate.simplified === word.simplified &&
+        candidate.pinyin === word.pinyin &&
+        candidate.wrong === word.traditional &&
+        inList(word, candidate.list),
+    );
+    if (fix && !ids.has(`${fix.right}|${word.pinyin}`)) {
+      found.push({ word, fix });
+    }
+  }
+  return found;
+}
+
+// The corrected record of `word`, with `entries` and `detail` as for
+// correctedWord: entries for both spellings. The meaning changes only where
+// the wrong spelling's entry meant another word (颿 "to gallop" for 帆).
+export function correctedForm(word, fix, entries, detail) {
+  const own = (traditional) =>
+    entries.find((entry) => entry.traditional === traditional && entry.pinyin === word.pinyin);
+  const wrong = own(fix.wrong);
+  const right = own(fix.right);
+  const proposedFromWrong = wrong ? MEANING_DETAILS.map((each) => proposeMeaning(wrong.meanings, each)) : [];
+  const definition =
+    right && proposedFromWrong.includes(word.definition) ? proposeMeaning(right.meanings, detail) : word.definition;
+  const corrected = { ...word, traditional: fix.right, id: `${fix.right}|${word.pinyin}`, definition };
   delete corrected.changedAt;
   return withFormerId(corrected, word);
 }

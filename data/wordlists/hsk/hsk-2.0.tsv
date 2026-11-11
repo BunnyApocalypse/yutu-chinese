@@ -393,7 +393,7 @@
 3	照片	照片	zhao4pian4		05 Clothes and belongings
 3	礼物	禮物	li3wu4		05 Clothes and belongings
 3	信用卡	信用卡	xin4yong4ka3		05 Clothes and belongings
-3	春	旾	chun1		06 Seasons and time
+3	春	春	chun1		06 Seasons and time
 3	夏	夏	xia4		06 Seasons and time
 3	秋	秋	qiu1		06 Seasons and time
 3	冬	冬	dong1		06 Seasons and time
@@ -667,7 +667,7 @@
 4	盐	鹽	yan2		04 Food and drink
 4	干杯	乾杯	gan1bei1		04 Food and drink
 4	餐厅	餐廳	can1ting1		04 Food and drink
-4	尝	嚐	chang2		05 Tastes and tableware
+4	尝	嘗	chang2		05 Tastes and tableware
 4	味道	味道	wei4dao5		05 Tastes and tableware
 4	酸	酸	suan1		05 Tastes and tableware
 4	苦	苦	ku3		05 Tastes and tableware
@@ -1238,7 +1238,7 @@
 5	分手	分手	fen1shou3		02 Love and marriage
 5	脖子	脖子	bo2zi5		03 Body and staying healthy
 5	肩膀	肩膀	jian1bang3		03 Body and staying healthy
-5	胸	胷	xiong1		03 Body and staying healthy
+5	胸	胸	xiong1		03 Body and staying healthy
 5	腰	腰	yao1		03 Body and staying healthy
 5	后背	後背	hou4bei4		03 Body and staying healthy
 5	脑袋	腦袋	nao3dai5		03 Body and staying healthy
@@ -1295,7 +1295,7 @@
 5	花生	花生	hua1sheng1		05 Food
 5	梨	梨	li2		05 Food
 5	桃	桃	tao2		05 Food
-5	桔子	桔子	ju2zi5		05 Food
+5	桔子	橘子	ju2zi5		05 Food
 5	煮	煮	zhu3		06 Cooking and tastes
 5	炒	炒	chao3		06 Cooking and tastes
 5	油炸	油炸	you2zha2		06 Cooking and tastes
@@ -1432,7 +1432,7 @@
 5	青	青	qing1		14 Colors, shapes and textures
 5	紫	紫	zi3		14 Colors, shapes and textures
 5	灰	灰	hui1		14 Colors, shapes and textures
-5	鲜艳	鮮艷	xian1yan4		14 Colors, shapes and textures
+5	鲜艳	鮮豔	xian1yan4		14 Colors, shapes and textures
 5	圆	圓	yuan2		14 Colors, shapes and textures
 5	斜	斜	xie2		14 Colors, shapes and textures
 5	歪	歪	wai1		14 Colors, shapes and textures
@@ -1501,13 +1501,13 @@
 5	利息	利息	li4xi1		18 Banking and money
 5	股票	股票	gu3piao4		18 Banking and money
 5	税	稅	shui4		18 Banking and money
-5	账户	賬戶	zhang4hu4		18 Banking and money
+5	账户	帳戶	zhang4hu4		18 Banking and money
 5	支票	支票	zhi1piao4		18 Banking and money
 5	发票	發票	fa1piao4		18 Banking and money
 5	罚款	罰款	fa2kuan3		18 Banking and money
 5	押金	押金	ya1jin1		18 Banking and money
 5	收据	收據	shou1ju4		18 Banking and money
-5	结账	結賬	jie2zhang4		18 Banking and money
+5	结账	結帳	jie2zhang4		18 Banking and money
 5	财产	財產	cai2chan3		18 Banking and money
 5	欠	欠	qian4		18 Banking and money
 5	赔偿	賠償	pei2chang2		18 Banking and money
@@ -1870,7 +1870,7 @@
 5	亲自	親自	qin1zi4		38 Maybe, apparently, really
 5	地道	地道	di4dao5		38 Maybe, apparently, really
 5	打听	打聽	da3ting5		39 Asking and persuading
-5	咨询	咨詢	zi1xun2		39 Asking and persuading
+5	咨询	諮詢	zi1xun2		39 Asking and persuading
 5	询问	詢問	xun2wen4		39 Asking and persuading
 5	请求	請求	qing3qiu2		39 Asking and persuading
 5	征求	徵求	zheng1qiu2		39 Asking and persuading
@@ -2446,7 +2446,7 @@
 5	收获	收穫	shou1huo4		73 Progress and improvement
 5	进步	進步	jin4bu4		73 Progress and improvement
 5	退步	退步	tui4bu4		73 Progress and improvement
-5	奇迹	奇跡	qi2ji4		73 Progress and improvement
+5	奇迹	奇蹟	qi2ji4		73 Progress and improvement
 5	出色	出色	chu1se4		73 Progress and improvement
 5	成长	成長	cheng2zhang3		73 Progress and improvement
 5	成熟	成熟	cheng2shu2		73 Progress and improvement
@@ -3328,7 +3328,7 @@
 6	回收	回收	hui2shou1
 6	悔恨	悔恨	hui3hen4
 6	毁灭	毀滅	hui3mie4
-6	汇报	匯報	hui4bao4
+6	汇报	彙報	hui4bao4
 6	会晤	會晤	hui4wu4
 6	贿赂	賄賂	hui4lu4
 6	昏迷	昏迷	hun1mi2

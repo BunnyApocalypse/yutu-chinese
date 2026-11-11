@@ -26,12 +26,13 @@ import { isSentence } from './sentences.js';
 import { clampWithPopup } from './clamp.js';
 import { fitMeaning } from './meaningFit.js';
 import { watchForErrors, showVersion } from './errors.js';
-import { parseReadingFixes, wordsToCorrect, correctedWord } from './readingFixes.js';
+import { parseReadingFixes, wordsToCorrect, correctedWord, parseFormFixes, formsToCorrect, correctedForm } from './readingFixes.js';
 import { readDictionary, lookUp, DEFAULT_MEANING_DETAIL } from './dictionary.js';
 // The corrections are a small file, so they come with the program ("?raw":
 // Vite hands over the file's text). The dictionary is big and only fetched
 // when a correction applies ("?url": Vite hands over its address).
 import readingFixesText from '../data/wordlists/reading-fixes.tsv?raw';
+import formFixesText from '../data/wordlists/form-fixes.tsv?raw';
 import dictionaryUrl from '../data/cedict/dictionary.tsv?url';
 import { closeOnTapBeside } from './dialogs.js';
 import { createFeedback } from './feedback.js';
@@ -1003,13 +1004,16 @@ async function fileListWordsInDecks() {
   }
 }
 
-// Words added from a ready-made list whose reading the list has since put
-// right (see src/readingFixes.js) are given the reading meant. Looked at on
-// every start, since an older backup may bring such words back; usually
-// there is nothing to do, and the dictionary is not fetched.
+// Words added from a ready-made list whose reading or traditional form the
+// list has since put right (see src/readingFixes.js) are given the one
+// meant. Looked at on every start, since an older backup may bring such
+// words back; usually there is nothing to do, and the dictionary is not
+// fetched.
 async function applyReadingFixes() {
-  const found = wordsToCorrect(parseReadingFixes(readingFixesText), await getAll('words'));
-  if (found.length === 0) {
+  const words = await getAll('words');
+  const found = wordsToCorrect(parseReadingFixes(readingFixesText), words);
+  const forms = formsToCorrect(parseFormFixes(formFixesText), words);
+  if (found.length === 0 && forms.length === 0) {
     return;
   }
   // The dictionary decides the new meaning. Without it (offline, before it
@@ -1024,6 +1028,15 @@ async function applyReadingFixes() {
   for (const { word, fix } of found) {
     const entries = dictionary ? lookUp(dictionary, word.traditional) : [];
     await renameWord(word.id, correctedWord(word, fix, entries, detail));
+  }
+  for (const { word, fix } of forms) {
+    // A word found for both would have been renamed above; it is found
+    // again at the next start under its new reading.
+    if (found.some((each) => each.word.id === word.id)) {
+      continue;
+    }
+    const entries = dictionary ? [...lookUp(dictionary, fix.wrong), ...lookUp(dictionary, fix.right)] : [];
+    await renameWord(word.id, correctedForm(word, fix, entries, detail));
   }
 }
 

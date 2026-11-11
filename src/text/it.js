@@ -1746,7 +1746,7 @@ export default {
   'welcome.moreLevelsAndWords': 'Altri livelli, e parole tue, si possono aggiungere in qualsiasi momento in <b>Mazzi</b>.',
   'welcome.startWith': 'Inizia con',
   'welcome.keepYourWordsSafe': 'Proteggi le tue parole',
-  'welcome.hsk30Level': 'HSK livello 1 (versione 3.0): l’esame della Cina continentale, 512 parole',
+  'welcome.hsk30Level': 'HSK livello 1 (versione 3.0): l’esame della Cina continentale, 509 parole',
   'welcome.tocflNovice1Taiwans': 'TOCFL, Novice 1: l’esame di Taiwan, 182 parole',
   'welcome.aDeckFromAnki': 'Un mazzo di Anki: porta le tue parole e le loro pianificazioni',
   'welcome.fromSkritter': 'Le tue parole da Skritter, con le loro pianificazioni',

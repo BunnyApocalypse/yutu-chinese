@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-import { parseReadingFixes, wordsToCorrect, correctedWord } from '../src/readingFixes.js';
+import { parseReadingFixes, wordsToCorrect, correctedWord, parseFormFixes, formsToCorrect, correctedForm } from '../src/readingFixes.js';
 import { readDictionary, lookUp, proposeMeaning } from '../src/dictionary.js';
 
 const FIXES = parseReadingFixes('# a comment\nhsk-3.0\t说法\tshuo1fa3\tshuo1fa5\tBuddhist\n');
@@ -94,5 +94,93 @@ test("every correction in the real file has both readings in the dictionary, and
       .map((columns) => columns[3]);
     assert.ok(listed.includes(fix.right), `${fix.list} does not list ${fix.simplified} ${fix.right}`);
     assert.ok(!listed.includes(fix.wrong), `${fix.list} still lists ${fix.simplified} ${fix.wrong}`);
+  }
+});
+
+// ---- Traditional forms ----
+
+const FORM_FIXES = parseFormFixes('# a comment\nhsk\t咨询\tzi1xun2\t咨詢\t諮詢\tTaiwan writes 諮\nhsk\t帆\tfan1\t颿\t帆\tanother word\n');
+
+const formWord = (fields) => ({
+  id: '咨詢|zi1xun2',
+  traditional: '咨詢',
+  simplified: '咨询',
+  pinyin: 'zi1xun2',
+  definition: 'consultation; to consult; to inquire',
+  decks: ['hsk-2.0/5/39'],
+  order: 7,
+  learnedAt: 100,
+  changedAt: 200,
+  ...fields,
+});
+
+const FORM_ENTRIES = [
+  { traditional: '咨詢', simplified: '咨询', pinyin: 'zi1xun2', meanings: ['consultation', 'to consult', 'to inquire'] },
+  { traditional: '諮詢', simplified: '咨询', pinyin: 'zi1xun2', meanings: ['to inquire', 'to consult', 'to seek advice from'] },
+  { traditional: '颿', simplified: '帆', pinyin: 'fan1', meanings: ['to gallop'] },
+  { traditional: '帆', simplified: '帆', pinyin: 'fan1', meanings: ['sail'] },
+];
+
+test('reads the form corrections file, leaving out comments', () => {
+  assert.deepEqual(FORM_FIXES[0], { list: 'hsk', simplified: '咨询', pinyin: 'zi1xun2', wrong: '咨詢', right: '諮詢' });
+  assert.equal(FORM_FIXES.length, 2);
+});
+
+test('finds a word of either HSK list under the wrong form', () => {
+  assert.equal(formsToCorrect(FORM_FIXES, [formWord()]).length, 1);
+  assert.equal(formsToCorrect(FORM_FIXES, [formWord({ decks: ['hsk-3.0/6'] })]).length, 1);
+  assert.equal(formsToCorrect(FORM_FIXES, [formWord({ decks: ['hsk-3.0'] })]).length, 1);
+});
+
+test('leaves alone a word outside the HSK decks, a sentence, another reading, and a word whose right form is there already', () => {
+  assert.deepEqual(formsToCorrect(FORM_FIXES, [formWord({ decks: ['chinese'] })]), []);
+  assert.deepEqual(formsToCorrect(FORM_FIXES, [formWord({ decks: ['tocfl/4'] })]), []);
+  assert.deepEqual(formsToCorrect(FORM_FIXES, [formWord({ kind: 'sentence' })]), []);
+  assert.deepEqual(formsToCorrect(FORM_FIXES, [formWord({ id: '咨詢|zi1xun4', pinyin: 'zi1xun4' })]), []);
+  assert.deepEqual(formsToCorrect(FORM_FIXES, [formWord(), formWord({ id: '諮詢|zi1xun2', traditional: '諮詢' })]), []);
+});
+
+test('gives the word its new form and ID, remembers the old one, and keeps the rest', () => {
+  const corrected = correctedForm(formWord(), FORM_FIXES[0], FORM_ENTRIES, 'everyday');
+  assert.equal(corrected.id, '諮詢|zi1xun2');
+  assert.equal(corrected.traditional, '諮詢');
+  assert.equal(corrected.simplified, '咨询');
+  assert.equal(corrected.pinyin, 'zi1xun2');
+  assert.deepEqual(corrected.formerIds, ['咨詢|zi1xun2']);
+  assert.deepEqual(corrected.decks, ['hsk-2.0/5/39']);
+  assert.equal(corrected.learnedAt, 100);
+  assert.equal(corrected.order, 7);
+  assert.equal('changedAt' in corrected, false);
+});
+
+test("replaces the wrong form's meaning with the right one's, and keeps a meaning the learner wrote", () => {
+  const word = formWord({ id: '颿|fan1', traditional: '颿', simplified: '帆', pinyin: 'fan1', definition: 'to gallop' });
+  assert.equal(correctedForm(word, FORM_FIXES[1], FORM_ENTRIES, 'everyday').definition, 'sail');
+  assert.equal(correctedForm({ ...word, definition: 'a sail' }, FORM_FIXES[1], FORM_ENTRIES, 'everyday').definition, 'a sail');
+  assert.equal(correctedForm(word, FORM_FIXES[1], [], 'everyday').definition, 'to gallop');
+});
+
+test('every form correction in the real file has both forms in the dictionary, and the HSK lists have only the right one', () => {
+  const fixes = parseFormFixes(fs.readFileSync('data/wordlists/form-fixes.tsv', 'utf8'));
+  assert.ok(fixes.length > 0);
+  const dictionary = readDictionary(fs.readFileSync('data/cedict/dictionary.tsv', 'utf8'));
+  const listed = ['hsk-3.0', 'hsk-2.0'].flatMap((list) =>
+    fs
+      .readFileSync(`data/wordlists/hsk/${list}.tsv`, 'utf8')
+      .split('\n')
+      .filter((line) => line !== '' && !line.startsWith('#'))
+      .map((line) => line.split('\t')),
+  );
+  for (const fix of fixes) {
+    assert.equal(fix.list, 'hsk');
+    for (const form of [fix.wrong, fix.right]) {
+      assert.ok(
+        lookUp(dictionary, form).some((entry) => entry.traditional === form && entry.pinyin === fix.pinyin),
+        `${form} ${fix.pinyin} is not in the dictionary`,
+      );
+    }
+    const forms = listed.filter((columns) => columns[1] === fix.simplified && columns[3] === fix.pinyin).map((columns) => columns[2]);
+    assert.ok(forms.includes(fix.right), `the HSK lists do not have ${fix.simplified} as ${fix.right}`);
+    assert.ok(!forms.includes(fix.wrong), `the HSK lists still have ${fix.simplified} as ${fix.wrong}`);
   }
 });

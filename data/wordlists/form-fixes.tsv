@@ -1,0 +1,43 @@
+# Traditional forms the build script (scripts/build-word-lists.js) gets wrong, put right by hand.
+#
+# The script takes a listed word's traditional form from the dictionary entry it matches.
+# Where CC-CEDICT spells the same word two ways (那裡 and 那裏, 諮詢 and 咨詢), it can pick a
+# variant that is not Taiwan's standard form, and the HSK 3.0 source, which has a row for
+# each CC-CEDICT entry, can list one word twice, once in each spelling (那里 as 那裡 and as
+# 那裏, each with its own cards). Traditional in the app means Taiwan's standard forms
+# (CLAUDE.md), so these are put right. Found on 2026-11-11 by comparing every HSK word with
+# the dictionary's other spellings of the same word and with the TOCFL list (Taiwan's own);
+# decided by Claude: where both are standard in Taiwan (了解 and 瞭解), the one the HSK 2.0
+# list or Taiwan's Ministry of Education dictionary uses. Not changed: 账 alone stays 賬
+# (the dictionary's 帳 means only "curtain; tent"), and spellings of a word both standard
+# in Taiwan where the list has only one (計劃 and 計畫, 身份 and 身分).
+#
+# Columns: list ("hsk" is both HSK lists), simplified, reading, form the script picks, form meant, why.
+# The script stops if a line no longer changes anything, so a stale line is noticed.
+# The app reads this file too (src/readingFixes.js): a device that added one of these
+# words before the correction has it renamed to the form meant at its next start.
+# So never remove a line that has been published, even once the lists are right.
+hsk	春	chun1	旾	春	a rare old variant
+hsk	胸	xiong1	胷	胸	a variant
+hsk	桔子	ju2zi5	桔子	橘子	Taiwan writes 橘子 (also in the HSK 3.0 list)
+hsk	结账	jie2zhang4	結賬	結帳	Taiwan writes 帳 in accounts
+hsk	账户	zhang4hu4	賬戶	帳戶	Taiwan writes 帳 in accounts
+hsk	账单	zhang4dan1	賬單	帳單	Taiwan writes 帳 in accounts
+hsk	账号	zhang4hao4	賬號	帳號	Taiwan writes 帳 in accounts
+hsk	咨询	zi1xun2	咨詢	諮詢	Taiwan writes 諮
+hsk	奇迹	qi2ji4	奇跡	奇蹟	Taiwan writes 蹟
+hsk	鲜艳	xian1yan4	鮮艷	鮮豔	a variant
+hsk	艾滋病	ai4zi1bing4	艾滋病	愛滋病	Taiwan's spelling of the loanword
+hsk	那里	na4li5	那裏	那裡	listed twice; Taiwan writes 裡
+hsk	哪里	na3li3	哪裏	哪裡	listed twice; Taiwan writes 裡
+hsk	里	li3	裏	裡	listed twice; Taiwan writes 裡
+hsk	了解	liao3jie3	瞭解	了解	listed twice; both are used in Taiwan
+hsk	尝	chang2	嚐	嘗	listed twice; 嚐 is a variant
+hsk	发布	fa1bu4	發佈	發布	listed twice; 佈 is a variant here
+hsk	汇报	hui4bao4	匯報	彙報	listed twice; Taiwan writes 彙
+hsk	凶残	xiong1can2	凶殘	兇殘	listed twice; both are used in Taiwan
+hsk	痴呆	chi1dai1	痴獃	痴呆	listed twice; 獃 is a variant
+hsk	荡漾	dang4yang4	盪漾	蕩漾	listed twice; 盪 is a variant here
+hsk	马后炮	ma3hou4pao4	馬後砲	馬後炮	listed twice; 砲 is a variant here
+hsk	帆	fan1	颿	帆	listed twice; the dictionary's 颿 is another word
+hsk	暂	zan4	蹔	暫	listed twice; the dictionary's 蹔 is another word

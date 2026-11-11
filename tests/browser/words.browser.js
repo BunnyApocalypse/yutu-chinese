@@ -323,7 +323,7 @@ describe('the Decks tab', { concurrency: false }, () => {
     await tap(page, 'ready-decks-button');
     // HSK 3.0 is offered first; its levels appear with their word counts.
     await waitUntil(page, `document.querySelectorAll('#ready-levels li').length === 7`, 'the levels of HSK 3.0');
-    assert.match(await textOf(page, '#ready-levels li span'), /^Level 1: 512 words, \d+ new$/);
+    assert.match(await textOf(page, '#ready-levels li span'), /^Level 1: 509 words, \d+ new$/);
     // Taiwan's list has two levels with names of their own, then five.
     await page.evaluate(`document.querySelector('#ready-list button[data-list="tocfl"]').click()`);
     await waitUntil(page, `document.querySelector('#ready-levels li span')?.textContent.startsWith('Novice 1:')`, 'the levels of TOCFL');

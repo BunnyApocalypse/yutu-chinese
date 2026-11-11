@@ -30,7 +30,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Notes and word lists** (open since late October; check before starting, some may be done):
 
-- Non-Taiwan forms in the HSK list's traditional column (胷, 賬戶, 結賬, 咨詢, 奇跡, 桔子; likely more): correcting the list changes what traditional learners see.
+- Spellings Taiwan prefers where the HSK list has another traditional one (計劃/計畫, 身份/身分, 想象/想像, 倒霉/倒楣; `docs/word-lists.md`, "Reading fixes"): the owner's call. The non-Taiwan forms themselves are fixed (2026-11-11).
 - The TOCFL notes' simplified versions may keep older mainland forms; the mainland words added for the other side are unchecked (least sure 小測, 劫匪, 升艙, 鬧市); the six sentences for the Taiwanese reader (`local/notes-writing/ask.md`) and the `ask` marks are not on a reader's page yet.
 - The mainland reader's general page: the next batch starts at #81.
 - Taiwan forms of parts in tips (房's tip names 户); 8 declined radicals and variants for `radicals.tsv` (氺 镸 旡 爫 攴 彑 襾 阜).
@@ -42,6 +42,13 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - A German tester to find. The Italian and German texts Claude wrote since the Italian tester's check are unchecked.
 
 **Tests to watch:** `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
+
+**Handover from the third session of 2026-11-11 (Taiwan forms in the HSK lists; not released, not pushed).**
+
+- **Talked through with the owner** (2026-11-11): what is left before posting the app to online communities. The owner has since tried Firefox and the move; left from that list: the README still links the old address, Safari's data safety on Apple devices, any layout changes before strangers arrive.
+- **Built** (`docs/word-lists.md`, "Reading fixes"): `data/wordlists/form-fixes.tsv`, 24 traditional forms put right in both HSK lists (旾 → 春, 胷 → 胸, 咨詢 → 諮詢, 奇跡 → 奇蹟, 賬戶 → 帳戶…), which also takes 13 words listed twice out of HSK 3.0 (那裡 and 那裏 in level 1: 512 words now 509, the introduction's text in three languages too). Lists rebuilt (only these lines changed); devices that added such a word have it renamed at start-up; the notes' traditional columns follow. **A device that has both spellings keeps both** (anyone who added HSK 3.0 level 1 before): to decide whether to build merging.
+- **Tests:** 431 unit tests (6 new; the real-file check fails on the old lists); a full browser run, 291 of 291 and the grid 426 (25 skipped), none failed.
+- **Not tried by the owner.** The renaming at start-up has no browser test of its own.
 
 **Handover from the second session of 2026-11-11 (a word removed while it is being learned: the fix of 2026-11-08 brought up to date; released to `stable` with the "What's new" entry `2026-11-11-2`).**
 

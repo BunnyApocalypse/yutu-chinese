@@ -67,7 +67,6 @@
 1	那儿	那兒	na4r5		04 This, that, who, what
 1	这里	這裡	zhe4li3		04 This, that, who, what
 1	那里	那裡	na4li5		04 This, that, who, what
-1	那里	那裏	na4li5		04 This, that, who, what
 1	这些	這些	zhe4xie1		04 This, that, who, what
 1	那些	那些	na4xie1		04 This, that, who, what
 1	这边	這邊	zhe4bian1		04 This, that, who, what
@@ -77,7 +76,6 @@
 1	哪	哪	na3		04 This, that, who, what
 1	哪儿	哪兒	na3r5		04 This, that, who, what
 1	哪里	哪裡	na3li3		04 This, that, who, what
-1	哪里	哪裏	na3li3		04 This, that, who, what
 1	哪些	哪些	na3xie1		04 This, that, who, what
 1	怎么	怎麼	zen3me5		04 This, that, who, what
 1	干什么	幹什麼	gan4shen2me5		04 This, that, who, what
@@ -264,7 +262,6 @@
 1	上	上	shang4		14 Direction and position
 1	下	下	xia4		14 Direction and position
 1	里	裡	li3		14 Direction and position
-1	里	裏	li3		14 Direction and position
 1	外	外	wai4		14 Direction and position
 1	前	前	qian2		14 Direction and position
 1	后	後	hou4		14 Direction and position
@@ -2936,7 +2933,6 @@
 4	主席	主席	zhu3xi2		42 Meetings and discussion
 4	讲座	講座	jiang3zuo4		42 Meetings and discussion
 4	演讲	演講	yan3jiang3		42 Meetings and discussion
-4	汇报	匯報	hui4bao4		42 Meetings and discussion
 4	汇报	彙報	hui4bao4		42 Meetings and discussion
 4	征求	徵求	zheng1qiu2		42 Meetings and discussion
 4	转告	轉告	zhuan3gao4		42 Meetings and discussion
@@ -2957,7 +2953,6 @@
 4	考虑	考慮	kao3lv4		43 Thinking and understanding
 4	疑问	疑問	yi2wen4		43 Thinking and understanding
 4	了解	了解	liao3jie3		43 Thinking and understanding
-4	了解	瞭解	liao3jie3		43 Thinking and understanding
 4	概括	概括	gai4kuo4		43 Thinking and understanding
 4	片面	片面	pian4mian4		43 Thinking and understanding
 4	忽视	忽視	hu1shi4		43 Thinking and understanding
@@ -3238,7 +3233,6 @@
 5	烤鸭	烤鴨	kao3ya1		01 Restaurants and snacks
 5	烤肉	烤肉	kao3rou4		01 Restaurants and snacks
 5	盒饭	盒飯	he2fan4		01 Restaurants and snacks
-5	尝	嚐	chang2		01 Restaurants and snacks
 5	尝	嘗	chang2		01 Restaurants and snacks
 5	酸甜苦辣	酸甜苦辣	suan1tian2ku3la4		01 Restaurants and snacks
 5	叉子	叉子	cha1zi5		01 Restaurants and snacks
@@ -3415,7 +3409,7 @@
 5	紫	紫	zi3		11 Weather, space and colors
 5	青	青	qing1		11 Weather, space and colors
 5	明亮	明亮	ming2liang4		11 Weather, space and colors
-5	鲜艳	鮮艷	xian1yan4		11 Weather, space and colors
+5	鲜艳	鮮豔	xian1yan4		11 Weather, space and colors
 5	社区	社區	she4qu1		12 Places in town
 5	码头	碼頭	ma3tou5		12 Places in town
 5	宾馆	賓館	bin1guan3		12 Places in town
@@ -3889,7 +3883,6 @@
 5	评论	評論	ping2lun4		42 Meetings and reports
 5	评估	評估	ping2gu1		42 Meetings and reports
 5	发布	發布	fa1bu4		42 Meetings and reports
-5	发布	發佈	fa1bu4		42 Meetings and reports
 5	发行	發行	fa1xing2		42 Meetings and reports
 5	倡导	倡導	chang4dao3		42 Meetings and reports
 5	提倡	提倡	ti2chang4		42 Meetings and reports
@@ -4825,7 +4818,7 @@
 6	利	利	li4		36 Money and prices
 6	富有	富有	fu4you3		36 Money and prices
 6	账	賬	zhang4		37 Banks and investing
-6	账户	賬戶	zhang4hu4		37 Banks and investing
+6	账户	帳戶	zhang4hu4		37 Banks and investing
 6	债	債	zhai4		37 Banks and investing
 6	股	股	gu3		37 Banks and investing
 6	股东	股東	gu3dong1		37 Banks and investing
@@ -5308,7 +5301,7 @@
 6	会长	會長	hui4zhang3		70 Meetings and cooperation
 6	处长	處長	chu4zhang3		70 Meetings and cooperation
 6	司长	司長	si1zhang3		70 Meetings and cooperation
-6	咨询	咨詢	zi1xun2		70 Meetings and cooperation
+6	咨询	諮詢	zi1xun2		70 Meetings and cooperation
 6	发起	發起	fa1qi3		70 Meetings and cooperation
 6	合约	合約	he2yue1		71 Agreements and rights
 6	约定	約定	yue1ding4		71 Agreements and rights
@@ -5427,7 +5420,7 @@
 7-9	挨家挨户	挨家挨戶	ai1jia1'ai1hu4
 7-9	癌	癌	ai2
 7-9	癌症	癌症	ai2zheng4
-7-9	艾滋病	艾滋病	ai4zi1bing4
+7-9	艾滋病	愛滋病	ai4zi1bing4
 7-9	唉	唉	ai4
 7-9	爱不释手	愛不釋手	ai4bu4shi4shou3
 7-9	爱理不理	愛理不理	ai4li3bu4li3
@@ -5894,7 +5887,6 @@
 7-9	吃喝玩乐	吃喝玩樂	chi1he1wan2le4
 7-9	吃苦	吃苦	chi1ku3
 7-9	吃亏	吃虧	chi1kui1
-7-9	痴呆	痴獃	chi1dai1
 7-9	痴呆	痴呆	chi1dai1
 7-9	痴迷	痴迷	chi1mi2
 7-9	痴心	痴心	chi1xin1
@@ -6186,7 +6178,6 @@
 7-9	当众	當眾	dang1zhong4
 7-9	当晚	當晚	dang4wan3
 7-9	当真	當真	dang4zhen1
-7-9	荡漾	盪漾	dang4yang4
 7-9	荡漾	蕩漾	dang4yang4
 7-9	档次	檔次	dang4ci4
 7-9	导弹	導彈	dao3dan4
@@ -6456,7 +6447,6 @@
 7-9	阀门	閥門	fa2men2
 7-9	发型	髮型	fa4xing2
 7-9	帆	帆	fan1
-7-9	帆	颿	fan1
 7-9	帆船	帆船	fan1chuan2
 7-9	翻番	翻番	fan1fan1
 7-9	翻来覆去	翻來覆去	fan1lai2fu4qu4
@@ -8188,7 +8178,6 @@
 7-9	麻木	麻木	ma2mu4
 7-9	麻醉	麻醉	ma2zui4
 7-9	马后炮	馬後炮	ma3hou4pao4
-7-9	马后炮	馬後砲	ma3hou4pao4
 7-9	马虎	馬虎	ma3hu5
 7-9	马力	馬力	ma3li4
 7-9	马桶	馬桶	ma3tong3
@@ -8607,7 +8596,7 @@
 7-9	其后	其後	qi2hou4
 7-9	其间	其間	qi2jian1
 7-9	奇花异草	奇花異草	qi2hua1yi4cao3
-7-9	奇迹	奇跡	qi2ji4
+7-9	奇迹	奇蹟	qi2ji4
 7-9	奇特	奇特	qi2te4
 7-9	歧视	歧視	qi2shi4
 7-9	祈祷	祈禱	qi2dao3
@@ -10075,7 +10064,6 @@
 7-9	性情	性情	xing4qing2
 7-9	姓氏	姓氏	xing4shi4
 7-9	凶残	兇殘	xiong1can2
-7-9	凶残	凶殘	xiong1can2
 7-9	凶恶	兇惡	xiong1'e4
 7-9	凶狠	凶狠	xiong1hen3
 7-9	凶猛	兇猛	xiong1meng3
@@ -10611,7 +10599,6 @@
 7-9	载体	載體	zai4ti3
 7-9	攒	攢	zan3
 7-9	暂	暫	zan4
-7-9	暂	蹔	zan4
 7-9	赞不绝口	讚不絕口	zan4bu4jue2kou3
 7-9	赞美	讚美	zan4mei3
 7-9	赞叹	讚嘆	zan4tan4
@@ -10672,8 +10659,8 @@
 7-9	掌管	掌管	zhang3guan3
 7-9	帐篷	帳篷	zhang4peng5
 7-9	帐子	帳子	zhang4zi5
-7-9	账单	賬單	zhang4dan1
-7-9	账号	賬號	zhang4hao4
+7-9	账单	帳單	zhang4dan1
+7-9	账号	帳號	zhang4hao4
 7-9	胀	脹	zhang4
 7-9	招标	招標	zhao1biao1
 7-9	招待	招待	zhao1dai4

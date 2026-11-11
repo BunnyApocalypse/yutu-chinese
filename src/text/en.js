@@ -1767,7 +1767,7 @@ export default {
   'welcome.moreLevelsAndWords': 'More levels, and words of your own, can be added any time in <b>Decks</b>.',
   'welcome.startWith': 'Start with',
   'welcome.keepYourWordsSafe': 'Keep your words safe',
-  'welcome.hsk30Level': "HSK level 1 (version 3.0): mainland China's test, 512 words",
+  'welcome.hsk30Level': "HSK level 1 (version 3.0): mainland China's test, 509 words",
   'welcome.tocflNovice1Taiwans': "TOCFL, Novice 1: Taiwan's test, 182 words",
   'welcome.aDeckFromAnki': 'A deck from Anki: bring your words and their schedules',
   'welcome.fromSkritter': 'Your words from Skritter, with their schedules',

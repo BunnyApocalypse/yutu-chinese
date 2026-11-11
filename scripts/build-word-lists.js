@@ -226,6 +226,43 @@ function corrected(listId, words) {
   });
 }
 
+// ---- Traditional forms put right by hand ----
+//
+// Matching can also pick a spelling that is not Taiwan's standard form (咨詢
+// for 諮詢), or list one word twice in two spellings (那裡 and 那裏). The
+// corrections are in data/wordlists/form-fixes.tsv, which says more. A word
+// that comes to the same ID as another is left out by writeList.
+const formFixes = fs
+  .readFileSync('data/wordlists/form-fixes.tsv', 'utf8')
+  .split('\n')
+  .filter((line) => line !== '' && !line.startsWith('#'))
+  .map((line) => {
+    const [list, simplified, pinyin, wrong, right] = line.split('\t');
+    return { list, simplified, pinyin, wrong, right, used: false };
+  });
+
+// `words` of the list `listId`, with each form correction applied ("hsk"
+// stands for both HSK lists).
+function withFormFixes(listId, words) {
+  return words.map((word) => {
+    const fix = formFixes.find(
+      (candidate) =>
+        (candidate.list === listId || (candidate.list === 'hsk' && listId.startsWith('hsk-'))) &&
+        candidate.simplified === word.simplified &&
+        candidate.pinyin === word.pinyin &&
+        candidate.wrong === word.traditional,
+    );
+    if (!fix) {
+      return word;
+    }
+    if (!inDictionary(fix.right, fix.pinyin)) {
+      throw new Error(`form-fixes.tsv: the dictionary has no ${fix.right} ${fix.pinyin}`);
+    }
+    fix.used = true;
+    return { ...word, traditional: fix.right };
+  });
+}
+
 
 
 // ---- HSK 3.0 ----
@@ -279,7 +316,7 @@ for (const row of rows) {
   hsk3.push({ level: column(row, 'Level'), simplified, ...word });
 }
 // Before the HSK 2.0 and TOCFL lists below take readings from this one.
-hsk3.splice(0, hsk3.length, ...corrected('hsk-3.0', hsk3));
+hsk3.splice(0, hsk3.length, ...withFormFixes('hsk-3.0', corrected('hsk-3.0', hsk3)));
 writeList('hsk-3.0.tsv', 'HSK 3.0 (2021): levels 1 to 6 and 7-9', `ivankra/hsk30 at ${HSK3_VERSION}`, withGroups(hsk3, 'hsk-3.0'));
 if (hsk3LeftOut.length > 0) {
   console.log(`  Left out, for want of a reading: ${hsk3LeftOut.join(' ')}`);
@@ -337,7 +374,7 @@ for (const level of [1, 2, 3, 4, 5, 6]) {
     }
   }
 }
-writeList('hsk-2.0.tsv', 'HSK 2.0 (2012): levels 1 to 6', `glxxyz/hskhsk.com at ${HSK2_VERSION}`, withGroups(corrected('hsk-2.0', hsk2), 'hsk-2.0'));
+writeList('hsk-2.0.tsv', 'HSK 2.0 (2012): levels 1 to 6', `glxxyz/hskhsk.com at ${HSK2_VERSION}`, withGroups(withFormFixes('hsk-2.0', corrected('hsk-2.0', hsk2)), 'hsk-2.0'));
 if (hsk2AsInSource > 0) {
   console.log(`  ${hsk2AsInSource} taken as the source has them: add them to extra-meanings.tsv.`);
 }
@@ -578,4 +615,8 @@ console.log(`  ${tocflLeftOut.length} left out, not being in the dictionary with
 const unused = readingFixes.filter((fix) => !fix.used);
 if (unused.length > 0) {
   throw new Error(`reading-fixes.tsv: no word matched ${unused.map((fix) => `${fix.list} ${fix.simplified} ${fix.wrong}`).join(', ')}`);
+}
+const unusedForms = formFixes.filter((fix) => !fix.used);
+if (unusedForms.length > 0) {
+  throw new Error(`form-fixes.tsv: no word matched ${unusedForms.map((fix) => `${fix.list} ${fix.simplified} ${fix.wrong}`).join(', ')}`);
 }

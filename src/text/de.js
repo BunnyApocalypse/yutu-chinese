@@ -1747,7 +1747,7 @@ export default {
   'welcome.moreLevelsAndWords': 'Weitere Stufen und eigene Wörter kannst du jederzeit unter <b>Stapel</b> hinzufügen.',
   'welcome.startWith': 'Beginnen mit',
   'welcome.keepYourWordsSafe': 'Deine Wörter sichern',
-  'welcome.hsk30Level': 'HSK Stufe 1 (Version 3.0): der Test des chinesischen Festlands, 512 Wörter',
+  'welcome.hsk30Level': 'HSK Stufe 1 (Version 3.0): der Test des chinesischen Festlands, 509 Wörter',
   'welcome.tocflNovice1Taiwans': 'TOCFL, Novice 1: der Test Taiwans, 182 Wörter',
   'welcome.aDeckFromAnki': 'Ein Stapel aus Anki: bring deine Wörter und ihre Lernpläne mit',
   'welcome.fromSkritter': 'Deine Wörter aus Skritter, mit ihren Lernplänen',
