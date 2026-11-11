@@ -13,6 +13,18 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-11-2',
+    items: [
+      'Removing a word from its page while you are learning or reviewing it now goes on to the next card, and Learn’s list of today’s words no longer shows it.',
+    ],
+    it: [
+      'Se rimuovi una parola dalla sua pagina mentre la stai imparando o ripassando, ora si passa alla carta successiva, e l’elenco delle parole di oggi in Impara non la mostra più.',
+    ],
+    de: [
+      'Wenn du ein Wort auf seiner Seite entfernst, während du es lernst oder wiederholst, geht es jetzt mit der nächsten Karte weiter, und die Liste der heutigen Wörter in Lernen zeigt es nicht mehr.',
+    ],
+  },
+  {
     id: '2026-11-11',
     items: [
       'A new icon: 兔 written by the calligrapher 南蠻大熊, on a moon of handmade paper in an ink-wash night sky. The browser tab shows the moon alone.',
