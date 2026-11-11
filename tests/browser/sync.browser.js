@@ -68,13 +68,13 @@ describe('syncing in the database', { concurrency: false }, () => {
       await db.putAll('words', [${JSON.stringify(love)}]);
       await db.putAll('words', [{ ...${JSON.stringify(love)}, definition: 'to love' }]);
       await db.saveReview(${JSON.stringify(loveCard)}, ${JSON.stringify(loveReview)});
-      await db.setSetting('theme', 'dark');
+      await db.setSetting('lastBackupAt', 1);
       await db.putAll('words', [${JSON.stringify(cat)}], { stamp: false });
       await db.removeDecks(['old-deck']);
     `);
-    // The word tidied with { stamp: false } is not sent; the theme is noted,
-    // and left out when the batch is made.
-    assert.deepEqual(await outboxKeys(), ['removed:old-deck', 'reviews:review-1', 'settings:theme', 'words:愛|ai4']);
+    // The word tidied with { stamp: false } is not sent; the last backup's
+    // time (a device setting) is noted, and left out when the batch is made.
+    assert.deepEqual(await outboxKeys(), ['removed:old-deck', 'reviews:review-1', 'settings:lastBackupAt', 'words:愛|ai4']);
     const batch = await inApp(`
       const { records } = await db.readOutbox();
       return sync.buildBatch({ device: 'A', number: 1, madeAt: 0, records });
@@ -119,6 +119,35 @@ describe('syncing in the database', { concurrency: false }, () => {
     assert.ok(stored.card.due < NOW + 60000 + 60 * 60 * 1000, String(stored.card.due - NOW));
     assert.equal(stored.cat.changedAt, NOW);
     assert.deepEqual(await outboxKeys(), ['words:愛|ai4']);
+  });
+
+  it('keeps a word and a card changed on the page while a batch was being worked out', async () => {
+    // The batch brings a newer meaning for 愛 and a review of it; between
+    // reading this device's data and saving, the learner edits 愛 and its
+    // card is graded (the page stays in use while a sync runs).
+    const stored = await inApp(`
+      const later = ${NOW} + 10 * 24 * 60 * 60 * 1000;
+      const batch = sync.buildBatch({ device: 'B', number: 2, madeAt: 0, records: {
+        words: [{ ...${JSON.stringify(love)}, definition: 'theirs', changedAt: later }],
+        reviews: [{ ...${JSON.stringify(loveReview)}, id: 'review-3', time: later, grade: 3 }],
+      } });
+      const slice = await db.readSlice(sync.wordsTouched(batch, await db.getAll('words')));
+      const changes = sync.applyBatch(slice, batch);
+      const [word] = await db.getSome('words', ['愛|ai4']);
+      await db.putAll('words', [{ ...word, definition: 'mine' }]);
+      const [card] = await db.getSome('cards', ['愛|ai4#meaning']);
+      await db.putAll('cards', [{ ...card, due: 42, lastReviewedAt: Date.now() }]);
+      await db.saveTakenIn(changes, undefined, { before: slice });
+      return {
+        word: (await db.getSome('words', ['愛|ai4']))[0],
+        card: (await db.getSome('cards', ['愛|ai4#meaning']))[0],
+        reviews: (await db.getReviewsOfWord('愛|ai4')).map((review) => review.id).sort(),
+      };
+    `);
+    assert.equal(stored.word.definition, 'mine');
+    assert.equal(stored.card.due, 42);
+    // The other device's review is taken in all the same.
+    assert.deepEqual(stored.reviews, ['review-1', 'review-2', 'review-3']);
   });
 
   it('syncs with another device through a storage, encrypted, with the real database', async () => {
@@ -175,7 +204,8 @@ describe('syncing in the database', { concurrency: false }, () => {
     `);
     assert.deepEqual(await outboxKeys(), ['everything']);
     assert.deepEqual(batch.words.map((word) => word.id).sort(), ['愛|ai4', '茶|cha2', '貓|mao1']);
-    assert.deepEqual(batch.reviews.map((review) => review.id).sort(), ['review-1', 'review-2']);
+    // (review-3: the test before.)
+    assert.deepEqual(batch.reviews.map((review) => review.id).sort(), ['review-1', 'review-2', 'review-3']);
     assert.equal(batch.cards.length, 1);
   });
 

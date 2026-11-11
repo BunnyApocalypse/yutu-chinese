@@ -4,7 +4,10 @@
 #
 # No access log: Caddy keeps none unless asked, so no learner's address is
 # written down.
-{{ sync_domain }} {
+#
+# Every name the server answers to (sync_domain, then sync_extra_domains)
+# is served the same: one program, one set of files.
+{{ ([sync_domain] + sync_extra_domains) | join(', ') }} {
 	request_body {
 		max_size {{ sync_max_file_mb + 1 }}MB
 	}

@@ -1,0 +1,111 @@
+# Publishes the app at https://yutuchinese.com, for as long as the app's own
+# repository (BunnyApocalypse/yutu-chinese) still publishes at its old
+# address: the stable copy at /app/, the test copy at /app/test/, and a page
+# forwarding to /app/ at the top. Lives in BunnyApocalypse/yutuchinese-site
+# as .github/workflows/deploy.yml; kept in the app's repository as
+# site-repo/deploy.yml (site-repo/README.md; docs/offline.md, "The move to
+# yutuchinese.com"). Deleted once the app's repository publishes there itself.
+#
+# It builds the app's code the way the app's own workflow does. Started by
+# hand, after a push to the app's main or stable:
+#   gh workflow run deploy.yml -R BunnyApocalypse/yutuchinese-site
+
+name: Deploy yutuchinese.com
+
+on:
+  workflow_dispatch:
+
+# What the workflow may do: read the code, and publish to Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # Actions named by their exact commit, as in the app's own workflow
+      # (docs/supply-chain.md there).
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: BunnyApocalypse/yutu-chinese
+          ref: stable
+          path: stable
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: BunnyApocalypse/yutu-chinese
+          ref: main
+          path: test
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            stable/package-lock.json
+            test/package-lock.json
+
+      # As in the app's own workflow: exactly what package-lock.json lists,
+      # no package running code while installed, the unit tests first.
+      - name: Build the stable copy
+        working-directory: stable
+        env:
+          VITE_SYNC_SERVER: https://sync.yutuchinese.com
+        run: |
+          npm ci --ignore-scripts
+          npm test
+          npm run build
+
+      - name: Build the test copy
+        working-directory: test
+        env:
+          VITE_CHANNEL: test
+          VITE_SYNC_SERVER: https://sync.yutuchinese.com
+        run: |
+          npm ci --ignore-scripts
+          npm test
+          npm run build
+
+      # The site: the stable copy at app/, the test copy at app/test/, and at
+      # the top a page sending everyone on to app/ until a page about the app
+      # is written (GitHub Pages has no redirects of its own; nothing here is
+      # kept by the browser, so that page can simply replace it).
+      - name: Put the site together
+        run: |
+          mkdir site
+          mv stable/dist site/app
+          mv test/dist site/app/test
+          cat > site/index.html <<'EOF'
+          <!doctype html>
+          <html lang="zh-Hant-TW">
+            <head>
+              <meta charset="UTF-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1" />
+              <title>玉兔 Yutu</title>
+              <!-- The app's icon and manifest here too: a browser may keep
+                   the icon of the site's top page for every page of it
+                   (Firefox on Android gave the app the default icon). -->
+              <link rel="icon" href="app/icons/favicon.png" sizes="64x64" />
+              <link rel="apple-touch-icon" href="app/icons/icon-192.png" />
+              <link rel="manifest" href="app/manifest.webmanifest" />
+              <meta http-equiv="refresh" content="0; url=app/" />
+              <script>location.replace('app/' + location.search + location.hash);</script>
+            </head>
+            <body>
+              <p><a href="app/">玉兔中文</a></p>
+            </body>
+          </html>
+          EOF
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

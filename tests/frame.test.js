@@ -14,6 +14,7 @@ import {
   ROOM,
   strokeLeavesRoom,
   NO_FRAME,
+  MIN_SCALE,
 } from '../src/frame.js';
 import { toPoints, resample, averageDistance } from '../src/lines.js';
 
@@ -95,7 +96,7 @@ test('the frame stays within its limits', () => {
   const random = makeRandom(3);
   const medians = taiwanData.get('學').medians;
   const tiny = fitFrame(pairsFor(medians, { scale: 0.2, dx: 0, dy: 0 }, random));
-  assert.equal(tiny.scale, 0.4);
+  assert.equal(tiny.scale, MIN_SCALE);
   const huge = fitFrame(pairsFor(medians, { scale: 2.5, dx: -700, dy: -500 }, random));
   assert.equal(huge.scale, 1.5);
   // Written far off in a corner: followed only part of the way.
@@ -234,7 +235,7 @@ test('a zoom always brings the whole character into the room', () => {
   // Every frame the fit can give: up to 1.5 times the size, the middle moved
   // up to 320 units.
   const frames = [];
-  for (const scale of [0.4, 0.8, 1, 1.2, 1.5]) {
+  for (const scale of [MIN_SCALE, 0.8, 1, 1.2, 1.5]) {
     for (let angle = 0; angle < 360; angle += 45) {
       const radians = (angle * Math.PI) / 180;
       const moveX = 320 * Math.cos(radians);

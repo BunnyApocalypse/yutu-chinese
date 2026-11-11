@@ -62,6 +62,11 @@ const ENTITIES = { nbsp: ' ', amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" }
 // one character or as "a" followed by a separate accent, which look the
 // same but are not equal as text. Some shared decks are in the second form
 // (Anki itself turns a note into the first when it saves it).
+//
+// The result is plain text and may well contain "<" (from &lt;): it must
+// only ever be shown as text (textContent), never as HTML (innerHTML), or a
+// shared deck could put its own code into the app (docs/supply-chain.md,
+// "GitHub's own checks").
 export function cleanField(text) {
   return (text || '')
     .replace(/\[sound:[^\]]*\]/g, '')

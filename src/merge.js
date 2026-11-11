@@ -38,27 +38,26 @@ import { countedFrom } from './cardManager.js';
 import { t } from './text.js';
 
 // Settings that say something about the device, not about the learner.
-// Syncing leaves them out too (syncBatch.js).
+// Syncing leaves them out too (syncBatch.js). The learner's own choices in
+// Settings (the look, the volume, tips on or off, the deck studied) travel
+// with the rest, and so do the tips already seen, so that a tip isn't shown
+// again on each device (the owner, 2026-11-08); the switches under For
+// testing stay with the device they are tried on.
 export const DEVICE_SETTINGS = [
   'welcomeDone',
   'keepDataWanted',
   'cardsFiledByScript',
   'oldBuiltInWordsRemoved',
   'builtInListVersion',
-  'studyDeck',
   'audioOffline',
-  'volume',
   'lastBackupAt',
-  'tipsSeen',
   'backupReminderOff',
-  'tipsOn',
   'swipeReadout',
   'recordRawInput',
   'strokeLeniency',
   'testerSettingsShown',
   'storageMessageShown',
   'storageReminderOff',
-  'theme',
   'importUnfinished',
 ];
 
@@ -136,8 +135,14 @@ function mergeWords(mine, theirs, currentId, removedAt) {
   // When each kind of card of a word was last started over, on either side:
   // the later time, whichever record is kept.
   const startedOverAt = new Map();
+  // When its forms in the other script were learned (otherScript.js): the
+  // earliest, as for learnedAt.
+  const formsLearnedAt = new Map();
   for (const word of [...mine, ...theirs]) {
     const id = currentId(word.id);
+    if (word.formsLearnedAt !== undefined && word.formsLearnedAt < (formsLearnedAt.get(id) ?? Infinity)) {
+      formsLearnedAt.set(id, word.formsLearnedAt);
+    }
     if (word.learnedAt !== undefined && word.learnedAt < (learned.get(id)?.learnedAt ?? Infinity)) {
       learned.set(id, { learnedAt: word.learnedAt, learnDuration: word.learnDuration });
     }
@@ -168,6 +173,9 @@ function mergeWords(mine, theirs, currentId, removedAt) {
     }
     if (startedOverAt.has(id)) {
       merged.startedOverAt = startedOverAt.get(id);
+    }
+    if (formsLearnedAt.has(id)) {
+      merged.formsLearnedAt = formsLearnedAt.get(id);
     }
     const former = [...new Set(formerIds.get(id))].filter((formerId) => formerId !== id);
     if (former.length > 0) {
@@ -283,10 +291,16 @@ function mergeCards(words, reviews, sides, removedAt) {
     // Otherwise each card's schedule is worked out afresh from its reviews.
     // Which card a review belongs to goes by the script it was made in, not
     // by its `cardId`: a review made before 2026-10-13 can carry the plain ID
-    // of a card that has since been moved to its "#simplified" ID.
+    // of a card that has since been moved to its "#simplified" ID. Except a
+    // review of a card in the other script ("#meaning#in-simplified",
+    // otherScriptCardId), which always has its card's own ID: by its script
+    // alone it would be taken for the word's own meaning card (found
+    // 2026-11-09, before any was made).
     const reviewsOfCard = new Map();
     for (const review of counted) {
-      const id = cardIdFor(word, review.type, review.script === 'simplified' ? 'simplified' : 'traditional');
+      const id = review.cardId?.includes('#in-')
+        ? review.cardId
+        : cardIdFor(word, review.type, review.script === 'simplified' ? 'simplified' : 'traditional');
       addTo(reviewsOfCard, id, review);
     }
     for (const [id, cardReviews] of reviewsOfCard) {

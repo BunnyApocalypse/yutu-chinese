@@ -1,6 +1,8 @@
-# How the server is doing, changing nothing: the program, Caddy, the disk,
-# how many accounts there are and what they hold, updates waiting, and the
-# program's last log lines (which name no account, file or address).
+# How the server is doing, changing nothing: the program, Caddy and their
+# versions (what the server is made of: docs/supply-chain.md), the disk,
+# how many accounts there are and what they hold, updates waiting, the
+# limits hit today, and the program's last log lines (which name no
+# account, file or address: the addresses in LIMIT lines are left out).
 #   ansible-playbook status.yml
 
 - name: How the sync server is doing
@@ -12,12 +14,15 @@
       ansible.builtin.shell: |
         set -o pipefail
         echo "Program: $(systemctl is-active yutu-sync)   Caddy: $(systemctl is-active caddy)"
+        echo "Versions: Node $(node --version), Caddy $(caddy version | cut -d' ' -f1), $(rpm -q --qf '%{NAME} %{VERSION}' almalinux-release)"
         echo "Disk: $(df -h --output=used,size,pcent {{ sync_data_dir }} | tail -1)"
         echo "Accounts: $(find {{ sync_data_dir }} -mindepth 1 -maxdepth 1 -type d | wc -l), holding $(du -sh {{ sync_data_dir }} | cut -f1)"
         echo "Updates waiting: $(dnf -q check-update | grep -c '^[a-zA-Z0-9]' || true)"
         needs-restarting -r >/dev/null && echo "Restart needed: no" || echo "Restart needed: yes (update.yml)"
+        echo "Limits hit today (deploy/README.md has how to see their addresses):"
+        journalctl -u yutu-sync --since today --no-pager -o cat --grep '^LIMIT ' | sed 's/ from .*//' | sort | uniq -c || echo "  none"
         echo "Last log lines:"
-        journalctl -u yutu-sync -n 10 --no-pager -o cat
+        journalctl -u yutu-sync -n 10 --no-pager -o cat | grep -v '^LIMIT ' || true
       args:
         executable: /bin/bash
       register: look

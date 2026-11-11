@@ -15,7 +15,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
-import { inTaiwanOrder } from '../../src/shortcuts.js';
+import { inTaiwanOrder, withFangInEitherOrder, withChuiUprightLast, withReversedBranches } from '../../src/shortcuts.js';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -536,11 +536,41 @@ export const choose = (page, id, value) =>
     list.dispatchEvent(new Event('change', { bubbles: true }));
   })()`);
 
-// Chooses the deck studied in Review and Learn ('' for all words) as a
+// Ticks these decks and nothing else in Review's chooser, with its panel
+// open ([] for all words; '#other-cards' for the cards in the other
+// script), unfolding decks until each is listed; then taps Done and waits
+// for the panel to close.
+export async function tickDecks(page, ids) {
+  await page.evaluate(`(() => {
+    const list = document.getElementById('deck-choice-list');
+    // "All words" unticks everything else.
+    list.querySelector('input[value=""]').click();
+    for (const id of ${JSON.stringify(ids)}) {
+      const wanted = () => [...list.querySelectorAll('input')].find((box) => box.value === id);
+      while (!wanted()) {
+        const folded = list.querySelector('.deck-fold[aria-expanded="false"]');
+        if (!folded) {
+          throw new Error('No deck ' + id + ' in the chooser');
+        }
+        folded.click();
+      }
+      wanted().click();
+    }
+    document.getElementById('deck-choice-done').click();
+  })()`);
+  await waitUntil(page, `!document.getElementById('deck-choice-dialog').open`, 'the deck chooser to close');
+}
+
+// Chooses the deck studied in Review or Learn ('' for all words) as a
 // learner would: opens the panel (deckChooser.js), unfolds decks until the
-// one wanted is listed, and taps it. Then waits for the panel to close.
+// one wanted is listed, and taps it (in Review, ticks it alone). Then waits
+// for the panel to close.
 export async function studyDeck(page, deckId) {
   await tap(page, 'deck-choice-button');
+  if (await page.evaluate(`document.querySelector('#deck-choice-list input').type === 'checkbox'`)) {
+    await tickDecks(page, deckId ? [deckId] : []);
+    return;
+  }
   await page.evaluate(`(() => {
     const list = document.getElementById('deck-choice-list');
     const wanted = () => [...list.querySelectorAll('input')].find((radio) => radio.value === ${JSON.stringify(deckId)});
@@ -656,7 +686,7 @@ export function loadStrokeData(char) {
     if (fs.existsSync(file)) {
       const data = JSON.parse(fs.readFileSync(file, 'utf8'));
       // As src/charData.js hands it over when writing traditional.
-      return folder === 'public/char-data' ? inTaiwanOrder(data) : data;
+      return withReversedBranches(withChuiUprightLast(withFangInEitherOrder(folder === 'public/char-data' ? inTaiwanOrder(data) : data)));
     }
   }
   throw new Error(`No stroke data for ${char}. Run "node scripts/copy-char-data.js" first.`);

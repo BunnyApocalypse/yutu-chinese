@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, searchForWorkspaceRoot } from 'vite';
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 
@@ -32,6 +32,14 @@ export default defineConfig(({ command }) => ({
     // this computer, and in a build none yet (step 4), so Settings doesn't
     // offer syncing.
     __SYNC_SERVER__: JSON.stringify(process.env.VITE_SYNC_SERVER ?? (command === 'build' ? '' : 'http://127.0.0.1:8787')),
+    // The site the app was at before yutuchinese.com, whose moving page
+    // hands the learner's words over (moveIn.js, docs/offline.md):
+    // VITE_MOVE_FROM if given (the browser tests), in a build the old
+    // address, under `npm run dev` none.
+    __MOVE_FROM__: JSON.stringify(process.env.VITE_MOVE_FROM ?? (command === 'build' ? 'https://bunnyapocalypse.github.io' : '')),
+    // For the moving page (move.html) when the dev server serves it, in the
+    // browser tests (move.browser.js); its own build has vite.move.config.js.
+    __MOVE_TO__: JSON.stringify(process.env.VITE_MOVE_TO ?? ''),
   },
   server: {
     // By default the dev server only answers requests from this computer.
@@ -44,6 +52,14 @@ export default defineConfig(({ command }) => ({
       // uses up what the system allows ("ENOSPC: System limit for number of
       // file watchers reached").
       ignored: ['**/data/audio-cmn/**', '**/public/audio/**', '**/public/char-data/**', '**/public/char-data-tw/**', '**/local/**', '**/dist/**'],
+    },
+    // The dev server serves only files inside the project. In a git worktree
+    // (.claude/worktrees/…), node_modules is a link to the main copy's, which
+    // lies outside it, so files loaded by their address (sql.js's .wasm, for
+    // reading Anki files) were refused and the Anki tests failed there. Its
+    // real folder is allowed too; elsewhere it is inside the project anyway.
+    fs: {
+      allow: [searchForWorkspaceRoot(process.cwd()), fs.realpathSync('node_modules')],
     },
   },
 }));

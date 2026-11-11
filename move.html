@@ -1,0 +1,57 @@
+<!doctype html>
+<!-- The moving page: what the app's old address shows once the app is at
+     yutuchinese.com (src/move.js; built by vite.move.config.js). Its words
+     are in src/text/en.js under "move.". -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>玉兔 Yutu</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <main class="move-page">
+      <h1 data-t-html="move.title"></h1>
+      <p data-t="move.intro"></p>
+      <p id="move-contents" class="move-note"></p>
+      <p id="move-already" class="move-note" hidden></p>
+
+      <!-- The usual way: the app at the new address opened in a window,
+           and the words handed to it (move.js). -->
+      <section id="move-window" hidden>
+        <button id="move-button" class="primary" type="button" data-t="move.button"></button>
+        <p id="move-status" class="move-note" role="status"></p>
+        <p><a id="move-open" class="move-open" hidden data-t="move.open"></a></p>
+      </section>
+
+      <!-- An installed app (Android, a computer): the window it opens can't
+           answer it, so the move is made from the browser, which has the
+           same words (found on the owner's tablet, 2026-11-10). -->
+      <section id="move-installed" hidden>
+        <p data-t="move.installedText"></p>
+        <p><code id="move-installed-address"></code></p>
+        <button id="move-copy-button" type="button" data-t="move.copyAddress"></button>
+        <p id="move-copy-status" class="move-note" role="status"></p>
+      </section>
+
+      <!-- An app on an iPhone's or iPad's Home Screen keeps its words apart
+           from Safari, so a window can't reach them: by the sync code, or
+           a backup file. -->
+      <section id="move-home-screen" hidden>
+        <h2 data-t="move.homeScreenTitle"></h2>
+        <ol id="move-home-screen-steps"></ol>
+      </section>
+
+      <!-- Always: a backup file, the way that depends on nothing else. -->
+      <section class="move-backup">
+        <h2 data-t="move.backupTitle"></h2>
+        <p data-t="move.backupText"></p>
+        <button id="move-backup-button" type="button" data-t="move.backupButton"></button>
+        <p id="move-backup-status" class="move-note" role="status"></p>
+      </section>
+
+      <p class="move-note" data-t="move.kept"></p>
+    </main>
+    <script type="module" src="/src/move.js"></script>
+  </body>
+</html>

@@ -50,6 +50,7 @@ import {
 import { isSentence } from './sentences.js';
 import { allCardIds } from './session.js';
 import { isRadical } from './radicals.js';
+import { differingPairs } from './otherScript.js';
 import { t } from './text.js';
 
 // With thousands of words, building a row for each would make the page slow,
@@ -59,7 +60,10 @@ const MAX_ROWS = 200;
 const byId = (id) => document.getElementById(id);
 
 // onChange({ words, cards, decks }): called after the word list has
-//           changed, with everything as just read, for the rest of the app
+//           changed, with everything as just read, for the rest of the app;
+//           or onChange({ word, oldId, cards }) after one word was saved in
+//           its pop-up panel: that word, its ID before (the same if not
+//           changed) and its cards, everything else as it was
 // getSettings: returns the current settings (see settings.js). A function,
 //           because the settings are only read after this panel is set up.
 //
@@ -86,7 +90,7 @@ const byId = (id) => document.getElementById(id);
 // Returns { show(view), edit(word), showWord(word) }; call show() whenever
 // one of the two tabs is opened ('decks' or 'words') or a setting has
 // changed (without a view: the one that was showing).
-export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord, canPractice, setMode, getMode, repeatLesson) {
+export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord, canPractice, setMode, getMode, repeatLesson, formsOnPage) {
 
 
   const countElement = byId('word-count');
@@ -142,19 +146,32 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
   // read everything first: about 0.4 s of the 0.85 s About took on a tablet
   // with the owner's 9,000 cards (2026-11-06). The lists are new ones, since
   // Review holds the ones it was handed (afterChange).
-  async function loadWord(word) {
+  // oldId: the word's ID before it was saved, if its pop-up panel changed
+  // it (renameWord): what was held under it goes.
+  //
+  // Returns { word, cards } as read; null if everything was read instead
+  // (nothing had been yet).
+  async function loadWord(word, oldId = word.id) {
     if (!loaded) {
       await load();
-      return;
+      return null;
     }
     const [[stored], fresh] = await Promise.all([getSome('words', [word.id]), getSome('cards', allCardIds(word))]);
-    if (stored) {
-      words = words.map((entry) => (entry.id === stored.id ? stored : entry));
+    // In list order: "Learn this word next" changes it.
+    words = words
+      .filter((entry) => entry.id !== oldId || stored)
+      .map((entry) => (entry.id === oldId && stored ? stored : entry))
+      .sort((a, b) => a.order - b.order);
+    cards = [...cards.filter((card) => card.wordId !== word.id && card.wordId !== oldId), ...fresh];
+    if (oldId !== word.id) {
+      studiedWordIds.delete(oldId);
+      // Its reviews were filed under the new ID (the leeches' list reads them).
+      reviews = null;
     }
-    cards = [...cards.filter((card) => card.wordId !== word.id), ...fresh];
     if (fresh.length > 0 || stored?.learnedAt !== undefined) {
       studiedWordIds.add(word.id);
     }
+    return { word: stored, cards: fresh };
   }
 
   async function load() {
@@ -301,6 +318,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     asksFor: () => asksFor(),
     charactersOf: (word) => charactersOf(word),
     afterChange: () => afterChange(),
+    afterWordChange: (word, oldId) => afterWordChange(word, oldId),
     cardsPanel: () => cardsPanel,
     applySettings: () => applySettings(),
   });
@@ -348,6 +366,8 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     isLearned: (word) => studiedWordIds.has(word.id),
     // Read afresh first: a page can lead on to another of your words.
     showCards: async (word) => {
+      cardsPanel.clear();
+      showForms(word); // not waited for: the cards come at once
       await loadWord(word);
       return wordDialog.showCardsOnPage(words.find((entry) => entry.id === word.id) || word);
     },
@@ -517,10 +537,30 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
   // is done (addSentence below), so another change can come meanwhile.
   let changing = Promise.resolve();
   function afterChange() {
+    return refreshAfter(async () => {
+      await load();
+      return null;
+    });
+  }
+
+  // The same after one word was saved in its pop-up panel (wordDialog.js):
+  // only that word and its cards are read again (loadWord), under its old
+  // ID too if that changed, and only they are handed on. Reading everything
+  // took about 1.6 s of the 1.8 s a Save took at tablet speed with the
+  // owner's 9,400 cards (2026-11-10). What this tab holds of other words may
+  // be older than what Review has (a grade since), so it is never handed on
+  // from here.
+  function afterWordChange(word, oldId = word.id) {
+    return refreshAfter(() => loadWord(word, oldId), oldId);
+  }
+
+  // Reads with `read`, then shows and hands on what was read: everything, or
+  // one word ({ word, cards }, which `read` returns) with its ID before.
+  function refreshAfter(read, oldId = null) {
     changing = changing
       .catch(() => {}) // a refresh that failed doesn't stop the next
       .then(async () => {
-        await load();
+        const one = await read();
         // The lists only while their screen is shown (a word's page over it
         // counts): from elsewhere, such as About in Review, they are drawn
         // when the tab is next opened (show). Drawing them behind another
@@ -531,7 +571,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
         }
         // The bar's deck chooser, for a deck added or renamed meanwhile.
         cardsPanel.refresh();
-        await onChange({ words, cards, decks });
+        await onChange(one?.word ? { word: one.word, oldId, cards: one.cards } : { words, cards, decks });
       });
     return changing;
   }
@@ -572,6 +612,71 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
     wordDialog.applySettings(asks, both);
     sentenceForm.applySettings(both);
     listForm.applySettings(asks, both);
+    showOtherScriptChoice();
+  }
+
+  // ---- The words read in the other script ----
+
+  // On a word's page, above its cards, the fold-out "简体字 form" (or
+  // 繁體字): its forms in the other script as Learn taught them, what
+  // changed and where else (formsOnPage in review.js; the owner,
+  // 2026-11-09, chose the word's page and above Cards). Folded, except when
+  // the page is opened from a card in that script or from "Studied
+  // simplified forms", where it is what was wanted (formsOpenNext).
+  const formsPart = byId('word-page-forms');
+  const formsSummary = byId('word-page-forms-summary');
+  const formsBody = byId('word-page-forms-body');
+  let formsOpenNext = false;
+  // The word the fold-out is being filled for, so that an answer for a word
+  // left already is not shown.
+  let formsFor = null;
+
+  async function showForms(word) {
+    const open = formsOpenNext;
+    formsOpenNext = false;
+    formsFor = word.id;
+    formsPart.hidden = true;
+    formsBody.replaceChildren();
+    const shown = await formsOnPage(word);
+    if (formsFor !== word.id || !shown?.parts) {
+      return;
+    }
+    fillMixed(formsSummary, t(shown.script === 'simplified' ? 'page.formsSimplified' : 'page.formsTraditional'), shown.script);
+    formsBody.replaceChildren(...shown.parts);
+    formsPart.open = open;
+    formsPart.hidden = false;
+  }
+
+  // "Studied simplified forms" (or traditional) in the Show list:
+  // the words whose forms in the other script were learned (Learn, on
+  // "简体字 forms"; otherScript.js), so their cards there can be found.
+  // The option shows only with "Also read simplified" on; switched off
+  // while chosen, the list goes back to all words.
+
+  // The script the cards are not in, for the deck as a whole (Settings).
+  function otherScriptName() {
+    return getSettings().script === 'traditional' ? 'simplified' : 'traditional';
+  }
+
+  function showOtherScriptChoice() {
+    const option = filterSelect.querySelector('option[value="otherScript"]');
+    const on = getSettings().otherScript !== 'off';
+    option.hidden = !on;
+    option.textContent = t(otherScriptName() === 'simplified' ? 'words.studiedSimplified' : 'words.studiedTraditional');
+    if (!on && filterSelect.value === 'otherScript') {
+      filterSelect.value = '';
+    }
+  }
+
+  // True for a word with cards in the other script (as otherCardsOf in
+  // review.js decides, without the kinds of card).
+  function readsOtherScript(word) {
+    return (
+      word.formsLearnedAt !== undefined &&
+      differingPairs(word).length > 0 &&
+      !isSentence(word) &&
+      !isRadical(word)
+    );
   }
 
   // ---- The list of words ----
@@ -607,11 +712,14 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
       leechesOf.set(leech.word.id, [...(leechesOf.get(leech.word.id) || []), leech]);
     }
     const onlySuspended = filterSelect.value === 'suspended';
+    const onlyOtherScript = filterSelect.value === 'otherScript';
     const filtered = onlyLeeches
       ? [...new Set(shownLeeches.map((leech) => leech.word))]
       : onlySuspended
         ? searched.filter((word) => describeSuspended(word) !== '')
-        : searched;
+        : onlyOtherScript
+          ? searched.filter(readsOtherScript)
+          : searched;
     // The order: as the words are learned, by which has a card due soonest
     // (words with no card studied last), or by which was forgotten most.
     const cardsOf = new Map();
@@ -637,7 +745,9 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
             ? t('words.noLeeches', { count: leechLapses })
             : onlySuspended
               ? t('words.noSuspended')
-              : dictionaryWanted()
+              : onlyOtherScript
+                ? t(otherScriptName() === 'simplified' ? 'words.noneReadSimplified' : 'words.noneReadTraditional')
+                : dictionaryWanted()
                 ? t('words.noneOfYoursMatch')
                 : t('words.noneMatch');
 
@@ -652,8 +762,11 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'word-entry';
+      // Listing the words read in the other script, each shows both forms,
+      // also with one script set in Settings.
+      const rowSettings = onlyOtherScript ? { ...getSettings(), bothScripts: true } : getSettings();
       button.append(
-        charactersElement(word, getSettings()),
+        charactersElement(word, rowSettings),
         mixedSpan('entry-pinyin', showReading(word.pinyin, Array.from(word.traditional)), scriptFor(word, getSettings())),
         mixedSpan('entry-definition', word.definition, scriptFor(word, getSettings())),
       );
@@ -696,6 +809,7 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
           cardsPanel.toggle(word);
           button.classList.toggle('selected', cardsPanel.isSelected(word));
         } else {
+          formsOpenNext = onlyOtherScript;
           wordPage.open(word);
         }
       });
@@ -910,9 +1024,12 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
 
     // Opens a word's page from elsewhere in the app (Review's "About this
     // word"); thisCard: the card it was opened from (see wordPage.js).
-    async showWord(word, thisCard = null) {
+    // options: formsOpen, its forms in the other script unfolded (from a
+    // card in that script).
+    async showWord(word, thisCard = null, { formsOpen = false } = {}) {
       applySettings();
       await loadWord(word);
+      formsOpenNext = formsOpen;
       wordPage.open(words.find((entry) => entry.id === word.id) || word, thisCard);
     },
 

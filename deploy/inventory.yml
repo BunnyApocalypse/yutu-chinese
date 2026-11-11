@@ -4,8 +4,15 @@ all:
   hosts:
     sync:
       ansible_host: 2.31.163.171
-      sync_domain: yutu.bunnyapocalypse.space
+      # The usual server's name since 2026-11-10 (the owner); apps built
+      # before then use the old one, still served.
+      sync_domain: sync.yutuchinese.com
+      sync_extra_domains:
+        - yutu.bunnyapocalypse.space
+      # yutuchinese.com: the app's address from the move (docs/offline.md);
+      # bunnyapocalypse.github.io: the app before it, then the moving page.
       sync_allowed_origins:
+        - https://yutuchinese.com
         - https://bunnyapocalypse.github.io
       # The key made for this server (deploy/README.md).
       ansible_ssh_private_key_file: ~/.ssh/yutu_sync

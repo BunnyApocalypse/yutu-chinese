@@ -248,6 +248,16 @@ export const keepData = {
     listeners.push(callback);
   },
 
+  // Whether sync is on (main.js sets it): Settings then no longer says to
+  // export backups now and then (storageAdvice).
+  synced: false,
+  setSynced(on) {
+    if (on !== this.synced) {
+      this.synced = on;
+      tellListeners();
+    }
+  },
+
   // Which family of browser this is (see storageAdvice.js).
   kind: browserKind(navigator.userAgent, navigator.userAgentData ? navigator.userAgentData.brands : []),
 
@@ -324,7 +334,7 @@ export async function setUpOffline({ statusElement, keepElement, updateButton, k
   const showKeeping = async () => {
     const keeping = await keepData.state();
     // (inSettings: Export backup is just above this line.)
-    keepElement.textContent = storageAdvice(keepData.kind, keeping, keepData.mobile, true);
+    keepElement.textContent = storageAdvice(keepData.kind, keeping, keepData.mobile, true, keepData.synced);
     // "Allow long-term storage" only where tapping it can help: not in
     // Chrome before the app is installed (it says no until then), nor in
     // Safari outside the Home Screen or the Dock (only putting it there

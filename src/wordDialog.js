@@ -6,7 +6,8 @@
 //
 // The panel rebuilds the word from its form, so what is not in the form is
 // carried over by hand (see the submit handler): decks, formerIds, learnedAt,
-// learnDuration, suspended, startedOverAt, importedAt (CLAUDE.md).
+// learnDuration, suspended, startedOverAt, importedAt, formsLearnedAt
+// (CLAUDE.md).
 
 import { putAll, removeWord, renameWord } from './db.js';
 import { wordId } from './wordList.js';
@@ -19,6 +20,7 @@ import { ask } from './confirm.js';
 import { isSentence, sentenceId, clozeInBoth } from './sentences.js';
 import { isRadical } from './radicals.js';
 import { checkWord, orderForStudyingNext, scriptFor, withFormerId } from './words.js';
+import { charsWithoutData } from './charData.js';
 import { t, formatList } from './text.js';
 
 const byId = (id) => document.getElementById(id);
@@ -30,6 +32,8 @@ const byId = (id) => document.getElementById(id);
 //   asksFor(): which scripts and readings are asked for
 //   charactersOf(word): its characters in the scripts being learned
 //   afterChange(): reads everything afresh and shows it (a promise)
+//   afterWordChange(word, oldId): the same for one word saved here, under
+//     `oldId` before if its ID changed (a promise)
 //   cardsPanel(): the card manager (cardsPanel.js)
 //   applySettings(): fits the forms, this panel's included, to the settings
 //
@@ -51,11 +55,15 @@ export function createWordDialog(shared) {
   const editCloze = byId('edit-cloze');
   const dialogNote = byId('word-dialog-note');
   const studyNextButton = byId('study-next-button');
+  const saveButton = byId('word-dialog-form').querySelector('button[type="submit"]');
 
   // The word open in the dialog.
   let openWord = null;
   // What became of it, for edit(): see there.
   let dialogResult = null;
+  // The characters last warned about having no stroke data: saved as they
+  // are if Save is pressed again without changing them.
+  let warnedFor = null;
 
   // ---- One word: change, study next, remove ----
 
@@ -141,6 +149,7 @@ export function createWordDialog(shared) {
     byId('edit-decks-row').open = false;
     showDeckCount();
     dialogNote.textContent = '';
+    warnedFor = null;
     // Only a word still waiting can be moved to the front of the line.
     studyNextButton.hidden = studied;
     // showModal() opens a <dialog> on top of the page and dims the rest.
@@ -165,8 +174,22 @@ export function createWordDialog(shared) {
     byId('edit-decks-summary').textContent = count === 0 ? t('edit.decksNone') : t('edit.decksIn', { count });
   }
 
+  // Save: said at once, and the button put away until done (the owner,
+  // 2026-11-10: nothing showed that Save had been pressed while a word was
+  // saved; the panel closes once it is).
   byId('word-dialog-form').addEventListener('submit', async (event) => {
     event.preventDefault();
+    saveButton.disabled = true;
+    dialogNote.textContent = t('edit.saving');
+    try {
+      await save();
+    } finally {
+      saveButton.disabled = false;
+    }
+  });
+
+  // Saves the word as the form has it, or says in the note why not.
+  async function save() {
     // The traditional form and the pinyin make up the word's ID, which its
     // cards and review history are filed under; when either is corrected,
     // those are filed under the new ID (renameWord).
@@ -230,7 +253,7 @@ export function createWordDialog(shared) {
         await renameWord(openWord.id, withFormerId(sentence, openWord));
       }
       await fileCardsByScript([sentence]);
-      await shared.afterChange();
+      await shared.afterWordChange(sentence, openWord.id);
       dialogResult = { changed: true, word: sentence };
       dialog.close();
       return;
@@ -253,7 +276,7 @@ export function createWordDialog(shared) {
         decks: decksAfter(),
       };
       await putAll('words', [radical]);
-      await shared.afterChange();
+      await shared.afterWordChange(radical);
       dialogResult = { changed: true, word: radical };
       dialog.close();
       return;
@@ -285,6 +308,17 @@ export function createWordDialog(shared) {
       return;
     }
     saved.decks = decksAfter();
+    // Characters changed to ones with no stroke data (a rare form, the
+    // owner, 2026-11-10): said first, and saved if Save is pressed again.
+    const script = scriptFor(saved, shared.getSettings());
+    if (saved[script] !== openWord[script] && saved[script] !== warnedFor) {
+      const missing = await charsWithoutData(saved[script], script);
+      if (missing.length > 0) {
+        warnedFor = saved[script];
+        fillMixed(dialogNote, t('edit.noStrokeData', { chars: missing.join(' ') }), script);
+        return;
+      }
+    }
     if (openWord.formerIds) {
       saved.formerIds = openWord.formerIds;
     }
@@ -299,6 +333,9 @@ export function createWordDialog(shared) {
     }
     if (openWord.importedAt !== undefined) {
       saved.importedAt = openWord.importedAt;
+    }
+    if (openWord.formsLearnedAt !== undefined) {
+      saved.formsLearnedAt = openWord.formsLearnedAt;
     }
     // Which cards are suspended is changed on the word's page, not here.
     if (openWord.suspended) {
@@ -320,15 +357,15 @@ export function createWordDialog(shared) {
     // learned in simplified goes under the simplified form (scriptCards.js).
     await fileCardsByScript([saved]);
     // The panel closes once the rest of the app has the changed word too.
-    await shared.afterChange();
+    await shared.afterWordChange(saved, openWord.id);
     dialogResult = { changed: true, word: saved };
     dialog.close();
-  });
+  }
 
   studyNextButton.addEventListener('click', async () => {
     const moved = { ...openWord, order: orderForStudyingNext(shared.words()) };
     await putAll('words', [moved]);
-    await shared.afterChange();
+    await shared.afterWordChange(moved);
     dialogResult = { changed: true, word: moved };
     dialog.close();
   });

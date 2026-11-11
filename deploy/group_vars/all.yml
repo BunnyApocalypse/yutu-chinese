@@ -6,6 +6,11 @@
 ansible_user: yutu
 admin_user: yutu
 
+# Other names the server still answers to besides sync_domain, each with a
+# certificate of its own: an earlier name that apps already out there use.
+# Each must point at the server too (A and AAAA records).
+sync_extra_domains: []
+
 # Where the server's program is kept, and its files.
 sync_code_dir: /opt/yutu-sync
 sync_data_dir: /var/lib/yutu-sync
@@ -17,8 +22,26 @@ sync_port: 8787
 sync_max_file_mb: 64
 sync_max_account_mb: 256
 sync_max_total_mb: 30720
-sync_new_accounts_per_day: 10
-sync_requests_per_minute: 600
+# New accounts only while the server holds less than this share of
+# sync_max_total_mb: the rest is kept for the learners already there.
+sync_new_accounts_until_percent: 80
+# Limits by account wherever a request has one, by address only for what
+# has none yet: so learners sharing an address (a university) don't use up
+# each other's (the owner, 2026-11-08).
+# The whole server's are many addresses' worth, so that a few sources can't
+# use them up for everyone (2026-11-09).
+sync_new_accounts_per_day: 2000
+sync_new_accounts_per_address_per_day: 50
+sync_requests_per_account_per_minute: 1200
+sync_requests_per_address_per_minute: 600
+sync_uploads_at_once_per_account: 4
+sync_uploads_at_once_per_address: 16
+sync_uploads_at_once: 64
+sync_download_mb_per_account_per_hour: 1024
+# Addresses or blocks whose limits by address are ten times as high, such
+# as a university whose class turns sync on together:
+#   sync_generous_addresses: ['192.0.2.0/24', '2001:db8::/48']
+sync_generous_addresses: []
 # An account unused this many days is deleted (0: never). The owner chose a
 # year (2026-11-07).
 sync_expire_days: 365
@@ -29,6 +52,17 @@ sync_paused: false
 
 # Healthchecks ping URL; empty: no watch on the server.
 healthcheck_url: ""
+# A second Healthchecks check, for the limits: red when one was hit (which,
+# and how often, without addresses), or when the server holds more than
+# sync_warn_percent of sync_max_total_mb. Empty: none.
+healthcheck_limits_url: ""
+sync_warn_percent: 70
+
+# How long the server's log (the journal) is kept: the privacy page
+# promises at most 14 days for the addresses in its LIMIT lines. The log
+# is kept in files of a day each, deleted once their newest line is this
+# old, so nothing in it is ever older than this and a day.
+journal_keep_days: 13
 
 # When the server restarts by itself if an update needs it: weekly, early
 # on Monday morning (server time, UTC).

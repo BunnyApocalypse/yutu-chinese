@@ -1,0 +1,8 @@
+# How long the server's log (the journal) is kept. The sync server's LIMIT
+# lines name the addresses that went over a limit, and the privacy page
+# promises they are deleted within 14 days: the log is kept in files of a
+# day each, and a file is deleted once its newest line is older than this.
+# Written by Ansible (deploy/setup.yml).
+[Journal]
+MaxFileSec=1day
+MaxRetentionSec={{ journal_keep_days }}day

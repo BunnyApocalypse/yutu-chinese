@@ -7,10 +7,11 @@
 // sync on (how it went, Sync now, Show sync code, Turn off, Delete).
 
 import { makeCode, readCode } from './syncCode.js';
-import { readServerAddress, serverAnswers } from './syncServer.js';
+import { createServerChoice, hostOf } from './syncServerChoice.js';
 import { closeOnTapBeside } from './dialogs.js';
 import { showCode as fillCode, copyCode, saveCodeFile, printCode, problemText, codeProblemText, progressText } from './syncCodeView.js';
 import { scanForCode } from './syncScan.js';
+import { syncIsLate } from './syncTiming.js';
 import { ask } from './confirm.js';
 import { t, formatDateTime } from './text.js';
 
@@ -30,53 +31,24 @@ export async function createSyncPanel(control) {
   const joinError = byId('sync-join-error');
   const codeNote = byId('sync-code-note');
 
-  // The code on show.
+  // The code on show, and the server in its link (linkServer).
   let shownCode = null;
+  let shownServer = '';
 
   // Nowhere to sync to (a build without a server, and none chosen): nothing
   // to offer.
   setting.hidden = !(await control.server());
-  // The server's name alone, as shown.
-  const hostOf = (address) => new URL(address).host;
 
   // ---- Which sync server ----
   //
-  // Folded away under its name: anyone may run one (deploy/README.md), but
-  // few will. Only while sync is off: a learner's files are on the server
-  // their sync began with. A new address is taken only once it answers.
-  const serverInput = byId('sync-server-input');
-  const serverNote = byId('sync-server-note');
-  async function showServer() {
-    const address = await control.server();
-    byId('sync-server-summary').textContent = t('sync.serverSummary', { host: address ? hostOf(address) : '–' });
-    byId('sync-server-usual').hidden = !control.usualServer || address === control.usualServer;
-  }
-  byId('sync-server-form').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    serverNote.hidden = false;
-    const { address, reason } = readServerAddress(serverInput.value);
-    if (reason) {
-      serverNote.textContent = t(reason === 'notSecure' ? 'sync.serverProblem.notSecure' : 'sync.serverProblem.notAddress');
-      return;
-    }
-    serverNote.textContent = t('sync.serverChecking');
-    if (!(await serverAnswers(address))) {
-      serverNote.textContent = t('sync.serverProblem.noAnswer');
-      return;
-    }
-    await control.chooseServer(address);
-    serverInput.value = '';
-    serverNote.textContent = t('sync.serverChosen', { host: hostOf(address) });
-    setting.hidden = false;
-    await showServer();
+  // Folded away under its name (syncServerChoice.js). Choosing one makes
+  // syncing possible even in a build without a usual server.
+  const serverChoice = createServerChoice('sync', control, {
+    summary: true,
+    onChosen: () => {
+      setting.hidden = false;
+    },
   });
-  byId('sync-server-usual').addEventListener('click', async () => {
-    await control.chooseServer(null);
-    serverNote.hidden = false;
-    serverNote.textContent = t('sync.serverChosen', { host: hostOf(control.usualServer) });
-    await showServer();
-  });
-  await showServer();
 
   // ---- What syncing does with a learner's data ----
   const privacy = byId('privacy-dialog');
@@ -100,7 +72,9 @@ export async function createSyncPanel(control) {
     }
     const when =
       status.lastSyncedAt === null ? t('sync.notYet') : t('sync.lastSynced', { when: formatDateTime(new Date(status.lastSyncedAt)) });
-    return [when, through, status.problem ? problemText(status.problem) : ''].filter(Boolean).join(' ');
+    // Failing too long (the menu's red dot says so too, main.js): first.
+    const late = syncIsLate(status, Date.now()) ? t('sync.late', { when: formatDateTime(new Date(status.lastWorkedAt)) }) : '';
+    return [late, when, through, status.problem ? problemText(status.problem) : ''].filter(Boolean).join(' ');
   }
 
   async function show(status) {
@@ -109,7 +83,7 @@ export async function createSyncPanel(control) {
     }
     showPart(status.on ? on : off);
     byId('sync-status').textContent = statusLine(status, await control.server());
-    await showServer();
+    await serverChoice.refresh();
     byId('sync-now-button').disabled = status.running;
     // The data group's first line says where the words are kept.
     byId('settings-data').querySelector('[data-t="settings.dataWhere"]').textContent = t(
@@ -119,9 +93,10 @@ export async function createSyncPanel(control) {
 
   // Shows a code with its ways to keep it. `isNew`: made just now, so sync
   // is turned on only by "I've saved it" (or not, by Cancel).
-  function showCode(code, isNew) {
+  async function showCode(code, isNew) {
     shownCode = code;
-    fillCode({ codeElement: byId('sync-code'), qrElement: byId('sync-qr') }, code);
+    shownServer = await control.linkServer();
+    fillCode({ codeElement: byId('sync-code'), qrElement: byId('sync-qr') }, code, shownServer);
     codeNote.textContent = '';
     byId('sync-saved-button').hidden = !isNew;
     byId('sync-code-cancel').hidden = !isNew;
@@ -147,9 +122,12 @@ export async function createSyncPanel(control) {
 
   // A code scanned goes in the box; joining is still a tap on the button.
   byId('sync-scan-button').addEventListener('click', async () => {
-    const code = await scanForCode();
-    if (code) {
-      codeInput.value = code;
+    const found = await scanForCode();
+    if (found) {
+      codeInput.value = found.code;
+      if (found.server) {
+        serverChoice.useFromLink(found.server);
+      }
       joinError.hidden = true;
       byId('sync-join-submit').focus();
     }
@@ -180,9 +158,9 @@ export async function createSyncPanel(control) {
     codeNote.textContent = await copyCode(shownCode);
   });
   byId('sync-file-button').addEventListener('click', () => {
-    codeNote.textContent = saveCodeFile(shownCode);
+    codeNote.textContent = saveCodeFile(shownCode, shownServer);
   });
-  byId('sync-print-button').addEventListener('click', () => printCode(shownCode));
+  byId('sync-print-button').addEventListener('click', () => printCode(shownCode, shownServer));
 
   byId('sync-saved-button').addEventListener('click', async () => {
     const code = shownCode;
@@ -193,6 +171,16 @@ export async function createSyncPanel(control) {
 
   byId('sync-code-cancel').addEventListener('click', hideCode);
   byId('sync-code-hide').addEventListener('click', hideCode);
+
+  // Leaving Settings hides a code shown again, so it isn't still on the
+  // screen the next time Settings opens. A code made just now stays: sync
+  // isn't on until "I've saved it", and the learner may have written it
+  // down already.
+  byId('settings-panel').addEventListener('close', () => {
+    if (shownCode && !byId('sync-code-hide').hidden) {
+      hideCode();
+    }
+  });
 
   byId('sync-now-button').addEventListener('click', () => control.syncNow());
 
@@ -239,11 +227,15 @@ export async function createSyncPanel(control) {
   return {
     show,
     // A code from a link (takeCodeFromLink in syncCodeView.js): put in the
-    // box with a warning, never joined by itself.
-    offerJoin(text) {
+    // box with a warning, never joined by itself; the link's server, if any,
+    // tried and chosen.
+    offerJoin({ text, server }) {
       showPart(off);
       codeInput.value = text;
       byId('sync-from-link').hidden = false;
+      if (server) {
+        serverChoice.useFromLink(server);
+      }
       openJoin();
     },
   };

@@ -193,10 +193,11 @@ export function createTips() {
   }
 
   // Shows the first waiting tip whose element is in view, unless a tip is
-  // up, or the introduction or "What's new" (whatsNew.js) is: those are read
-  // first. Closing either is seen by the watch on pop-ups below.
+  // up, or the introduction, the sync offer (syncInvite.js) or "What's new"
+  // (whatsNew.js) is: those are read first. Closing one is seen by the watch
+  // on pop-ups below.
   function next() {
-    if (current || byId('welcome').open || byId('whats-new-dialog').open) {
+    if (current || byId('welcome').open || byId('sync-invite-dialog').open || byId('whats-new-dialog').open) {
       return;
     }
     const key = waiting.find((waitingKey) => targetBox(waitingKey));

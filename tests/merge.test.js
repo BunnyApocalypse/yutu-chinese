@@ -229,6 +229,49 @@ test('a word learned on both devices keeps the earlier lesson and its time', () 
   assert.equal(data.words[0].learnDuration, undefined);
 });
 
+test("a word's forms in the other script learned on one device stay learned, the earlier time kept", () => {
+  const learnedHere = word('朋友', 'peng2you3', { day: 1, formsLearnedAt: START + 2 * DAY });
+  // Saved later on the other device, which never learned them.
+  const notThere = word('朋友', 'peng2you3', { day: 3 });
+  const learnedLater = word('朋友', 'peng2you3', { day: 4, formsLearnedAt: START + 4 * DAY });
+  for (const [a, b] of [[learnedHere, notThere], [notThere, learnedHere], [learnedLater, learnedHere]]) {
+    const { data } = mergeBackups(device({ words: [a] }), device({ words: [b] }));
+    assert.equal(data.words[0].formsLearnedAt, START + 2 * DAY);
+  }
+});
+
+test("a card in the other script keeps its own reviews when combined, apart from the word's own card", () => {
+  const study = word('學習', 'xue2xi2', { day: 1, simplified: '学习' });
+  const own = `${study.id}#meaning`;
+  const other = `${study.id}#meaning#in-simplified`;
+  // Each device has reviews the other lacks, so the cards are worked out
+  // afresh from the reviews.
+  const here = device({
+    words: [study],
+    studied: [
+      { word: study, grades: [[1, GOOD], [3, GOOD]], name: 'a' },
+      { word: study, grades: [[5, AGAIN]], script: 'simplified', cardId: other, name: 'a' },
+    ],
+  });
+  const there = device({
+    words: [study],
+    studied: [{ word: study, grades: [[1, GOOD], [3, GOOD], [9, GOOD]], name: 'a' }],
+  });
+  const { data } = mergeBackups(here, there);
+  assert.deepEqual(ids(data.cards), [own, other]);
+  const ownCard = data.cards.find((card) => card.id === own);
+  // The word's own card: its three reviews only, not the Again in simplified.
+  assert.deepEqual(
+    { fsrsState: ownCard.fsrsState, due: ownCard.due },
+    replay(data.reviews.filter((review) => review.cardId === own)),
+  );
+  const otherCard = data.cards.find((card) => card.id === other);
+  assert.deepEqual(
+    { fsrsState: otherCard.fsrsState, due: otherCard.due },
+    replay(data.reviews.filter((review) => review.cardId === other)),
+  );
+});
+
 test('a word corrected on one device takes the place of the old one on the other', () => {
   // The other device still has the word under its old ID, with reviews.
   const old = word('朋友', 'peng2you3', { day: 1, learnedAt: START + DAY, learnDuration: 95000 });
@@ -294,7 +337,7 @@ test('settings that belong to the device stay as they are on it', () => {
   const mine = device({
     settings: [
       { key: 'welcomeDone', value: true, changedAt: START },
-      { key: 'studyDeck', value: 'chinese', changedAt: START },
+      { key: 'lastBackupAt', value: START, changedAt: START },
       { key: 'cardsFiledByScript', value: true, changedAt: START },
       { key: 'script', value: 'traditional', changedAt: START + 2 * DAY },
       { key: 'rawInput', value: true },
@@ -302,7 +345,8 @@ test('settings that belong to the device stay as they are on it', () => {
   });
   const theirs = device({
     settings: [
-      { key: 'studyDeck', value: 'hsk-3.0', changedAt: START + 5 * DAY },
+      { key: 'lastBackupAt', value: START + 5 * DAY, changedAt: START + 5 * DAY },
+      { key: 'theme', value: 'dark', changedAt: START + 5 * DAY },
       { key: 'keepDataWanted', value: true, changedAt: START + 5 * DAY },
       { key: 'cardsFiledByScript', value: true, changedAt: START + 5 * DAY },
       { key: 'script', value: 'simplified', changedAt: START + DAY },
@@ -314,13 +358,15 @@ test('settings that belong to the device stay as they are on it', () => {
   const value = Object.fromEntries(data.settings.map((setting) => [setting.key, setting.value]));
   assert.deepEqual(value, {
     welcomeDone: true,
-    studyDeck: 'chinese',
+    lastBackupAt: START,
     cardsFiledByScript: true,
     script: 'traditional',
     rawInput: false,
     lessons: false,
+    // The learner's own choice of look travels (the owner, 2026-11-08).
+    theme: 'dark',
   });
-  assert.equal(summary.settingsChanged, 2);
+  assert.equal(summary.settingsChanged, 3);
 
   // A backup from before writing cards were filed by script: the note that
   // it was done here is left out, so the app files the cards again.

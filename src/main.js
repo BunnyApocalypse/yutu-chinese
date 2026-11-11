@@ -36,13 +36,17 @@ import dictionaryUrl from '../data/cedict/dictionary.tsv?url';
 import { closeOnTapBeside } from './dialogs.js';
 import { createFeedback } from './feedback.js';
 import { createWhatsNew } from './whatsNew.js';
-import { createStreakScreen } from './streakScreen.js';
+import { createStreakScreen, loadStreakShown } from './streakScreen.js';
 import { createProgressPanel } from './progressPanel.js';
 import { setUpTesterSettings } from './testerSettings.js';
 import { createSyncControl } from './syncControl.js';
 import { createSyncPanel } from './syncPanel.js';
+import { createSyncInvite } from './syncInvite.js';
+import { createSyncNote } from './syncNote.js';
 import { takeCodeFromLink } from './syncCodeView.js';
-import { startSyncTiming } from './syncTiming.js';
+import { openedToMoveIn, moveIn } from './moveIn.js';
+import { startSyncTiming, syncIsLate } from './syncTiming.js';
+import { createSyncLateMessage } from './syncLateMessage.js';
 import { applyText, t, formatList, formatNumber } from './text.js';
 
 // The page's own text, in the learner's language (src/text.js), before
@@ -102,8 +106,14 @@ let basics = null;
 // Syncing between devices (set up in startUp).
 let syncControl = null;
 let syncPanel = null;
+let syncInvite = null;
+let syncNote = null;
+// The pop-up when syncing fails too long, made once the app has started.
+let syncLate = null;
 // The introduction (welcome.js), which shows a join's progress.
 let welcome = null;
+// The tips (tips.js), read again when syncing brings their setting.
+let tips = null;
 // How long after the last stroke syncing may take changes in (syncTiming.js).
 const WRITING_REST_MS = 4000;
 
@@ -212,14 +222,26 @@ wordInput.addEventListener('focus', fillSuggestions);
 // the words afresh. Its "Review this deck" and "Learn new words" buttons
 // choose the deck and open that tab.
 const wordsPanel = createWordsPanel(
-  // What the Decks tab has just read is handed on, not read again.
+  // What the Decks tab has just read is handed on, not read again. One word
+  // saved in its pop-up panel: only it and its cards change here too.
   async (held) => {
+    if (held.word) {
+      await review.wordChanged(held.word, held.oldId, held.cards);
+      await loadWordList([...wordList.filter((word) => word.id !== held.oldId && word.id !== held.word.id), held.word]);
+      return;
+    }
     await review.load(held);
     await loadWordList(held.words);
   },
   () => settings,
   async (deckId, newMode) => {
-    await settings.change('studyDeck', deckId);
+    // Review's decks are ticked in a list: "Review this deck" ticks this
+    // one alone.
+    if (newMode === 'review') {
+      await settings.change('reviewDecks', [deckId]);
+    } else {
+      await settings.change('studyDeck', deckId);
+    }
     studiedFrom = { mode, scrollY: window.scrollY };
     // setMode sets the top bar at once, before it waits for the cards; the
     // way back goes in at once too, not after them.
@@ -241,6 +263,8 @@ const wordsPanel = createWordsPanel(
   (newMode, options) => setMode(newMode, options),
   () => mode,
   (word) => repeatLesson(word),
+  // A word's forms in the other script, for its page (review.js).
+  (word) => review.formsOnPage(word),
 );
 
 // Free practice: any kind of card for what is in the text box. Nothing is
@@ -289,6 +313,10 @@ function startFreePractice() {
 practiceType.addEventListener('change', startFreePractice);
 
 // keepPlace: back to Decks or Words as they were left (practiceWord).
+// True while Learn is being opened on the forms in the other script
+// (Review's "Learn 简体字 forms"), for setMode to pass on.
+let learnFormsNext = false;
+
 function setMode(newMode, { keepPlace = false } = {}) {
   mode = newMode;
   // Review, Learn and a lesson repeated share the top of the page and the
@@ -340,7 +368,9 @@ function setMode(newMode, { keepPlace = false } = {}) {
     if (mode !== 'lesson') {
       document.dispatchEvent(new CustomEvent('screen-shown', { detail: mode }));
     }
-    return review.activate(mode, { word: repeatedWord });
+    const forms = learnFormsNext;
+    learnFormsNext = false;
+    return review.activate(mode, { word: repeatedWord, forms });
   }
   // Stops any card being shown and brings the study area back for writing.
   review.deactivate();
@@ -371,8 +401,14 @@ function setMode(newMode, { keepPlace = false } = {}) {
 const sideMenu = byId('side-menu');
 function openMenu() {
   const waiting = review ? review.waitingToLearn() : 0;
-  byId('learn-tab').hidden = waiting === 0 && mode !== 'learn';
-  byId('learn-waiting').textContent = waiting > 0 ? t('menu.waiting', { count: waiting }) : '';
+  // Words waiting to have their forms in the other script learned are
+  // learned in Learn too (docs/cards.md, "Reading the other script").
+  const forms = review ? review.formsWaiting() : 0;
+  byId('learn-tab').hidden = waiting === 0 && forms === 0 && mode !== 'learn';
+  byId('learn-waiting').textContent = [
+    ...(waiting > 0 ? [t('menu.waiting', { count: waiting })] : []),
+    ...(forms > 0 ? [t('menu.formsWaiting', { count: forms })] : []),
+  ].join(' · ');
   sideMenu.showModal();
 }
 // Opening the menu is a pause in studying: a streak screen still waiting
@@ -409,6 +445,12 @@ byId('learn-next-button').addEventListener('click', () => {
   if (mode === 'review') {
     setMode('learn');
   }
+});
+// In Review with nothing due: Learn, on the forms in the other script
+// (docs/cards.md, "Reading the other script").
+byId('learn-forms-button').addEventListener('click', () => {
+  learnFormsNext = true;
+  setMode('learn');
 });
 // At the end of today's words in Learn: on to Review, where their cards now are.
 byId('review-now-button').addEventListener('click', () => setMode('review'));
@@ -545,6 +587,7 @@ const progressPanel = createProgressPanel({
   panel: progressPanelElement,
   getSettings: () => settings,
   hasCardType: (word, type) => review.hasCardType(word, type),
+  otherCardsOf: (word) => review.otherCardsOf(word),
 });
 
 wordForm.addEventListener('submit', (event) => {
@@ -646,14 +689,21 @@ exportButton.addEventListener('click', async () => {
 // promised to keep the data (offline.js, "Keeping your data"): if it has, a
 // week; if not, a day, since Safari clears a site that was not opened for
 // 7 days, and a pause that long early on must not find no backup made.
+// While sync is on there is no reminder, nor the button to stop it: syncing
+// keeps a copy (the owner, 2026-11-08). The dot is then for syncing that
+// has been failing too long (syncIsLate in syncTiming.js), which says so in
+// Settings' sync section.
 const BACKUP_DUE_AFTER_MS = 14 * 24 * 60 * 60 * 1000;
 const FIRST_BACKUP_AFTER_MS = { kept: 7 * 24 * 60 * 60 * 1000, notKept: 24 * 60 * 60 * 1000 };
 async function showBackupStatus() {
   const last = await getSetting('lastBackupAt', null);
   const off = await getSetting('backupReminderOff', false);
   const days = last === null ? null : Math.floor((Date.now() - last) / (24 * 60 * 60 * 1000));
+  const syncStatus = syncControl?.status() ?? { on: false };
+  const syncing = syncStatus.on;
+  const late = syncIsLate(syncStatus, Date.now());
   let due = false;
-  if (!off && wordList.length > 0) {
+  if (!off && !syncing && wordList.length > 0) {
     if (last !== null) {
       due = Date.now() - last > BACKUP_DUE_AFTER_MS;
     } else {
@@ -666,7 +716,7 @@ async function showBackupStatus() {
     }
   }
   byId('backup-reminder-button').textContent = t(off ? 'backup.remindAgain' : 'settings.stopBackupReminders');
-  byId('backup-reminder-button').hidden = !off && !due;
+  byId('backup-reminder-button').hidden = syncing || (!off && !due);
   byId('backup-status').textContent = [
     last === null
       ? t('backup.noneYet')
@@ -676,7 +726,7 @@ async function showBackupStatus() {
           ? t('backup.lastYesterday')
           : t('backup.lastDaysAgo', { count: days }),
     due ? t('backup.due') : '',
-    off ? t('backup.remindersOff') : '',
+    off && !syncing ? t('backup.remindersOff') : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -684,16 +734,17 @@ async function showBackupStatus() {
   // button or uses a screen reader, and in Settings the same dot is on the
   // group it is about, in the list of groups.
   const menuButton = byId('menu-button');
-  menuButton.classList.toggle('reminder', due);
-  menuButton.title = t(due ? 'menu.menuBackupDue' : 'menu.menu');
+  menuButton.classList.toggle('reminder', due || late);
+  menuButton.title = t(late ? 'menu.menuSyncLate' : due ? 'menu.menuBackupDue' : 'menu.menu');
   menuButton.setAttribute('aria-label', menuButton.title);
   const settingsButton = byId('settings-button');
-  settingsButton.classList.toggle('reminder', due);
-  settingsButton.title = due ? t('menu.settingsBackupDue') : '';
+  settingsButton.classList.toggle('reminder', due || late);
+  settingsButton.title = late ? t('menu.settingsSyncLate') : due ? t('menu.settingsBackupDue') : '';
   // On a phone there is no resting the mouse on a button, so the menu says
   // in words what the dot is about, under Settings.
   byId('backup-due-line').hidden = !due;
-  document.querySelector('#settings-nav [data-group="settings-data"]').classList.toggle('reminder', due);
+  byId('sync-late-line').hidden = !late;
+  document.querySelector('#settings-nav [data-group="settings-data"]').classList.toggle('reminder', due || late);
 }
 
 byId('backup-reminder-button').addEventListener('click', async () => {
@@ -1028,11 +1079,18 @@ async function startUp() {
       sentenceReadingCheckbox: byId('sentence-reading-checkbox'),
       sentenceWritingSelect: byId('sentence-writing-select'),
       typeCheckboxes: [...document.querySelectorAll('#settings-panel [data-card-type]')],
+      otherScriptLegend: byId('other-script-legend'),
+      otherScriptHint: byId('other-script-hint'),
+      otherScriptSelect: byId('other-script-select'),
+      otherScriptTypes: byId('other-script-types'),
+      otherScriptCheckboxes: [...document.querySelectorAll('#settings-panel [data-other-script-type]')],
     },
     onSettingsChange,
   );
   sizeForFont();
 
+  // The day the streak screen was last shown, synced (streakScreen.js).
+  await loadStreakShown();
   review = createReview(
     {
       deckButton: byId('deck-choice-button'),
@@ -1060,6 +1118,7 @@ async function startUp() {
       lessonNextButton: byId('lesson-next-button'),
       learnNextButton: byId('learn-next-button'),
       reviewNowButton: byId('review-now-button'),
+      learnFormsButton: byId('learn-forms-button'),
       learnStrip: byId('learn-strip'),
       learnedPill: byId('learned-pill'),
       addWordsButton: byId('add-words-button'),
@@ -1080,7 +1139,7 @@ async function startUp() {
     { writing: flow, tone: toneFlow, recall: recallCard },
     settings,
     (word) => wordsPanel.edit(word),
-    (word, thisCard) => wordsPanel.showWord(word, thisCard),
+    (word, thisCard, options) => wordsPanel.showWord(word, thisCard, options),
     (word) => wordsPanel.noteOf(word),
     (element, text, script) => wordsPanel.tappableText(element, text, script),
     createStreakScreen(() => settings.change('streaks', false)),
@@ -1102,16 +1161,35 @@ async function startUp() {
   syncControl = createSyncControl({
     onChanged: async () => {
       await settings.reload();
+      if (tips) {
+        await tips.load();
+        byId('tips-checkbox').checked = tips.on;
+      }
+      await loadStreakShown();
       await review.load();
+      await review.showSynced();
       await loadWordList();
     },
     onStatus: (status) => {
       syncPanel?.show(status);
+      syncInvite?.show(status);
+      syncNote?.show(status);
       welcome?.showSyncStatus(status);
+      // No advice to export backups while syncing, and the dot for syncing
+      // failing too long (showBackupStatus).
+      keepData.setSynced(status.on);
+      if (!status.running) {
+        showBackupStatus();
+        syncLate?.check(status);
+      }
     },
   });
   await syncControl.start();
   syncPanel = await createSyncPanel(syncControl);
+  // Sync offered once to someone already using the app (syncInvite.js).
+  syncInvite = createSyncInvite(syncControl);
+  // The quiet line on the start and end of Review and the end of Learn.
+  syncNote = createSyncNote(syncControl);
   // Syncing by itself (syncTiming.js), never while a character is being
   // written: from a finger or pen touching the writing area until it has
   // rested a few seconds.
@@ -1130,30 +1208,34 @@ async function startUp() {
       }
     }, { capture: true });
   }
+  const isWriting = () => writingNow || Date.now() - lastStrokeAt < WRITING_REST_MS;
   startSyncTiming({
     control: syncControl,
-    isBusy: () => writingNow || Date.now() - lastStrokeAt < WRITING_REST_MS,
+    isBusy: isWriting,
     onOutboxChange,
   });
+  // The pop-up when syncing has been failing too long (syncLateMessage.js),
+  // looked at with each sync status once the app has started (below).
+  const syncLateMessage = createSyncLateMessage({
+    isBusy: isWriting,
+    openSyncSettings: () => {
+      byId('settings-button').click();
+      document.querySelector('#settings-nav [data-group="settings-data"]').click();
+      byId('sync-setting').scrollIntoView({ block: 'start' });
+    },
+  });
 
-  // A join from the introduction that brought words and settings starts the
-  // app again with them (settings are read at start).
-  let joinChanged = false;
   welcome = createWelcome({
     settings,
     keepData,
     hasWords: () => wordList.length > 0,
     sync: {
       available: Boolean(await syncControl.server()),
+      control: syncControl,
+      // What came is in effect once the first sync is done (onChanged).
       join: async (code) => {
-        const result = await syncControl.turnOn(code);
-        joinChanged = Boolean(result?.changed);
+        await syncControl.turnOn(code);
         return syncControl.status();
-      },
-      joined: async () => {
-        if (joinChanged) {
-          window.location.reload();
-        }
       },
       turnOn: (code) => syncControl.turnOn(code),
     },
@@ -1200,7 +1282,7 @@ async function startUp() {
   await setUpTesterSettings();
 
 
-  const tips = createTips();
+  tips = createTips();
   await tips.load();
   const tipsCheckbox = byId('tips-checkbox');
   tipsCheckbox.checked = tips.on;
@@ -1280,9 +1362,16 @@ async function startUp() {
       syncPanel.offerJoin(linkCode);
     }
   }
-  // What changed since the app was last opened here. Before the screen is
-  // shown, so that its tip waits for this to be closed (tips.js).
-  whatsNew.openIfNew(firstUse);
+  // Sync offered once to someone already using the app, then what changed
+  // since the app was last opened here, so that the two never open on top
+  // of each other. Before the screen is shown, so that its tip waits for
+  // them to be closed (tips.js). Not with a sync link: Settings is open.
+  const invited = linkCode ? Promise.resolve() : syncInvite.openIfNew(firstUse);
+  invited.then(() => whatsNew.openIfNew(firstUse));
+  // Syncing failing too long: from now on, after What's new, which it
+  // doesn't go over.
+  syncLate = syncLateMessage;
+  syncLate.check(syncControl.status());
 
   // Review, unless another tab was tapped in the meantime.
   await setMode(mode);
@@ -1301,4 +1390,10 @@ async function startUp() {
 // Once the first screen is ready, "Loading…" goes and the page is shown
 // (main.starting in index.html). Also if starting fails partway: errors.js
 // says what went wrong, and the page is shown as far as it got.
-startUp().finally(() => document.querySelector('main').classList.remove('starting'));
+// Opened by the page at the app's old address to take the learner's words in
+// (moveIn.js): that first, under "Loading…", then the app starts afresh.
+if (openedToMoveIn()) {
+  moveIn(byId('starting-note'));
+} else {
+  startUp().finally(() => document.querySelector('main').classList.remove('starting'));
+}

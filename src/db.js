@@ -364,16 +364,21 @@ export function renameWord(oldId, word) {
     note('words', word.id);
     // getAll() answers later, through onsuccess; the transaction stays open
     // until the work started there is done.
+    // Only the word's own cards and reviews are read: its cards by their
+    // IDs, which begin with the word's and a '#', its reviews through the
+    // index by word. Reading them all took about 6 s on a computer with the
+    // owner's 186,000 reviews, the edit panel standing still meanwhile
+    // (2026-11-10).
     const cards = tx.objectStore('cards');
-    cards.getAll().onsuccess = (event) => {
+    cards.getAll(IDBKeyRange.bound(`${oldId}#`, `${oldId}#￿`)).onsuccess = (event) => {
       for (const card of event.target.result.filter((entry) => entry.wordId === oldId)) {
         cards.delete(card.id);
         cards.put({ ...card, id: renamed(card.id), wordId: word.id });
       }
     };
     const reviews = tx.objectStore('reviews');
-    reviews.getAll().onsuccess = (event) => {
-      for (const review of event.target.result.filter((entry) => entry.wordId === oldId)) {
+    reviews.index('wordId').getAll(oldId).onsuccess = (event) => {
+      for (const review of event.target.result) {
         reviews.put({ ...review, cardId: renamed(review.cardId), wordId: word.id });
       }
     };
@@ -561,6 +566,28 @@ export function forgetSync() {
   });
 }
 
+// This device's own syncing records, as they are: the sync store and the
+// outbox. Handed to the app at its new address with the words (move.js), so
+// that it carries on syncing where this one stopped, unsent changes included.
+export async function readSyncState() {
+  return { sync: await getAll('sync'), outbox: await getAll('outbox') };
+}
+
+// Puts the syncing records handed over from the app's old address
+// (moveIn.js) in place of this device's, which has none yet.
+export function replaceSyncState({ sync, outbox }) {
+  return transaction(['sync', 'outbox'], 'readwrite', (tx) => {
+    tx.objectStore('sync').clear();
+    tx.objectStore('outbox').clear();
+    for (const record of sync) {
+      tx.objectStore('sync').put(record);
+    }
+    for (const entry of outbox) {
+      tx.objectStore('outbox').put(entry);
+    }
+  });
+}
+
 // The outbox's entries and the records they name, as they are now:
 // { entries, records: { words: [...], ... } }. A record since deleted is
 // left out (a word's removal is sent as its mark in `removed`). With the
@@ -643,25 +670,73 @@ export async function readEverything() {
 // much for one (see replaceEverything). Stopped halfway, the batch is taken
 // in again at the next sync (sync.js notes it as taken in only after), and
 // taking it in twice changes nothing.
-export async function saveTakenIn({ put, remove }, onProgress = () => {}) {
+//
+// before: this device's data as it was read to work the changes out
+// ({ storeName: [records] }: the slice, everything, or {} for a device that
+// had nothing). The page stays in use while a sync runs on its own thread,
+// so a record changed here since then is left as it is, not replaced by one
+// worked out from the older copy (the review of 2026-11-09): one added
+// since, a word, setting or deck saved again (`changedAt`, stamped by
+// putAll), a card graded again (`lastReviewedAt`), a review corrected
+// (`correctedAt`). That change is newer, and in the outbox to be sent; the
+// next batch from elsewhere touching it combines the two. Compared with
+// the copy read, not with a time, as a record from another device carries
+// that device's clock.
+export async function saveTakenIn({ put, remove }, onProgress = () => {}, { before = null } = {}) {
+  const readCopies = new Map();
+  const readCopy = (storeName, key) => {
+    if (!readCopies.has(storeName)) {
+      const keyName = storeName === 'settings' ? 'key' : 'id';
+      readCopies.set(storeName, new Map((before[storeName] || []).map((record) => [record[keyName], record])));
+    }
+    return readCopies.get(storeName).get(key);
+  };
+  const changedSince = (storeName, key, stored) => {
+    if (!stored) {
+      return false;
+    }
+    const copy = readCopy(storeName, key);
+    return (
+      !copy ||
+      stored.changedAt !== copy.changedAt ||
+      stored.lastReviewedAt !== copy.lastReviewedAt ||
+      stored.correctedAt !== copy.correctedAt
+    );
+  };
+  // Each record is looked at in the same transaction that writes it, so
+  // nothing can come between.
+  const unlessChanged = (store, storeName, key, write) => {
+    if (before === null) {
+      write();
+      return;
+    }
+    store.get(key).onsuccess = (event) => {
+      if (!changedSince(storeName, key, event.target.result)) {
+        write();
+      }
+    };
+  };
   const total = Object.values(put).reduce((sum, records) => sum + records.length, 0);
   let saved = 0;
   const removing = Object.keys(remove);
   if (removing.length > 0) {
     await transaction(removing, 'readwrite', (tx) => {
       for (const [storeName, keys] of Object.entries(remove)) {
+        const store = tx.objectStore(storeName);
         for (const key of keys) {
-          tx.objectStore(storeName).delete(key);
+          unlessChanged(store, storeName, key, () => store.delete(key));
         }
       }
     });
   }
   for (const [storeName, records] of Object.entries(put)) {
+    const keyName = storeName === 'settings' ? 'key' : 'id';
     for (let start = 0; start < records.length; start += RECORDS_AT_A_TIME) {
       const part = records.slice(start, start + RECORDS_AT_A_TIME);
       await transaction([storeName], 'readwrite', (tx) => {
+        const store = tx.objectStore(storeName);
         for (const record of part) {
-          tx.objectStore(storeName).put(record);
+          unlessChanged(store, storeName, record[keyName], () => store.put(record));
         }
       });
       saved += part.length;

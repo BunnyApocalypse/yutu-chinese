@@ -3,7 +3,10 @@
 // carries a code, read from a QR code by another device's camera, and what
 // to say when syncing goes wrong (docs/sync.md).
 //
-// The link is the app's address with the code after "#sync=". What comes
+// The link is the app's address with the code after "#sync=", and after it
+// "&server=…" where the device syncs through a server other than the usual
+// one (someone running their own), so that the device joining uses the
+// same server (the owner, 2026-11-08). What comes
 // after "#" is never sent to a server: the browser keeps it to itself. The
 // app takes it out of the address at once (takeCodeFromLink), and never
 // joins by itself: a link from someone else would sync the learner's words
@@ -11,24 +14,30 @@
 
 import qrcode from 'qrcode-generator';
 import { formatCode } from './syncCode.js';
+import { serverIn } from './syncScan.js';
 import { t, formatDateTime, formatNumber } from './text.js';
 
 // The app's own address, without anything after "?" or "#".
 const appAddress = () => window.location.href.split('#')[0].split('?')[0];
 
-// The link that opens the app with this code filled in.
-export const syncLink = (code) => `${appAddress()}#sync=${formatCode(code)}`;
+// The link that opens the app with this code filled in. `server`: the sync
+// server's address if not the usual one (linkServer in syncControl.js), else
+// ''.
+export const syncLink = (code, server = '') =>
+  `${appAddress()}#sync=${formatCode(code)}${server ? `&server=${encodeURIComponent(server)}` : ''}`;
 
 // A code from the address the app was opened with ("#sync=…"), taken out of
-// the address so it isn't kept in the history or a bookmark. Returns the
-// text after "#sync=" as it was, unchecked, or null.
+// the address so it isn't kept in the history or a bookmark. Returns
+// { text, server }: the text of the code as it was, unchecked, and the
+// server's address from the link or null (serverIn); or null for no code.
 export function takeCodeFromLink() {
-  const match = /^#sync=(.+)$/.exec(window.location.hash);
+  const match = /^#sync=([^&]+)/.exec(window.location.hash);
   if (!match) {
     return null;
   }
+  const server = serverIn(window.location.hash);
   window.history.replaceState(null, '', window.location.pathname + window.location.search);
-  return decodeURIComponent(match[1]);
+  return { text: decodeURIComponent(match[1]), server };
 }
 
 // A QR code of `text`, drawn as an SVG picture: a square per dark dot, on a
@@ -73,23 +82,26 @@ function qrPicture(text) {
 }
 
 // Shows a code: in groups of four in `codeElement`, and as a QR code of its
-// link in `qrElement` (replacing what was there).
-export function showCode({ codeElement, qrElement }, code) {
+// link in `qrElement` (replacing what was there). `server` as for syncLink.
+export function showCode({ codeElement, qrElement }, code, server = '') {
   codeElement.textContent = formatCode(code);
-  qrElement.replaceChildren(qrPicture(syncLink(code)));
+  qrElement.replaceChildren(qrPicture(syncLink(code, server)));
 }
 
-// The text kept with the code, in a file or on paper.
-function keepingText(code) {
-  return t('sync.keepingText', {
+// The text kept with the code, in a file or on paper; with a server of
+// one's own, which one, for a device where the code is typed.
+function keepingText(code, server) {
+  const text = t('sync.keepingText', {
     code: formatCode(code),
     date: formatDateTime(new Date()),
     address: appAddress(),
-    link: syncLink(code),
+    link: syncLink(code, server),
   });
+  return server ? `${text}\n\n${t('sync.keepingServer', { server })}` : text;
 }
 
 // Copy, Save as file and Print. Each returns the line to show after it.
+// `server` as for syncLink.
 
 export async function copyCode(code) {
   try {
@@ -102,9 +114,9 @@ export async function copyCode(code) {
 }
 
 // Saved as a small text file, as Export backup saves its file.
-export function saveCodeFile(code) {
+export function saveCodeFile(code, server = '') {
   const link = document.createElement('a');
-  link.href = URL.createObjectURL(new Blob([keepingText(code)], { type: 'text/plain' }));
+  link.href = URL.createObjectURL(new Blob([keepingText(code, server)], { type: 'text/plain' }));
   link.download = 'yutu-chinese-sync-code.txt';
   link.click();
   URL.revokeObjectURL(link.href);
@@ -113,7 +125,7 @@ export function saveCodeFile(code) {
 
 // Printed from a page of its own, made in a hidden frame, so that only the
 // code, its QR code and how to use them go on paper, not the screen behind.
-export function printCode(code) {
+export function printCode(code, server = '') {
   const frame = document.createElement('iframe');
   frame.hidden = true;
   document.body.append(frame);
@@ -121,8 +133,8 @@ export function printCode(code) {
   page.documentElement.lang = document.documentElement.lang;
   const text = page.createElement('pre');
   text.style.cssText = 'font: 14pt/1.5 sans-serif; white-space: pre-wrap;';
-  text.textContent = keepingText(code);
-  const picture = qrPicture(syncLink(code));
+  text.textContent = keepingText(code, server);
+  const picture = qrPicture(syncLink(code, server));
   picture.style.cssText = 'width: 6cm; height: 6cm;';
   page.body.append(text, picture);
   frame.contentWindow.print();
@@ -160,6 +172,7 @@ const PROBLEMS = {
   refused: 'sync.problem.refused',
   'cannot-open': 'sync.problem.cannotOpen',
   'bad-batch': 'sync.problem.cannotOpen',
+  'too-new': 'sync.problem.tooNew',
   'missing-batch': 'sync.problem.missing',
   'too-large': 'sync.problem.full',
   'account-full': 'sync.problem.full',

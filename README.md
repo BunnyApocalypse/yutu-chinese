@@ -2,77 +2,140 @@
 
 玉兔, the Jade Rabbit, lives on the moon.
 
-A personal, local-first Chinese character writing trainer. It runs entirely in the browser: no account, no server, and it works offline once it has been opened.
+A free app for learning to write Chinese characters, and to read, pronounce and understand the words they make. It runs in the browser, needs no account, and works offline.
 
-**Use it at https://bunnyapocalypse.github.io/yutu-chinese/.** On a phone or tablet, open that address and choose "Install app" or "Add to Home Screen" from the browser's menu. The first time, it saves itself, the stroke data for about 10,600 characters and a dictionary on the device (about 18 MB to download, 45 MB stored); Settings shows the progress. After that it needs no connection. When a newer version has been published, a "New version ready" button appears.
+**Use it at https://bunnyapocalypse.github.io/yutu-chinese/**
 
-Stroke display and grading are done by [Hanzi Writer](https://hanziwriter.org/).
+On a phone or tablet, choose "Install app" or "Add to Home Screen" from the browser's menu. The interface is in English, Italian and German.
 
-## Status
+<p>
+  <img src="docs/images/introduction.png" width="260" alt="The introduction's first screen: a welcome, and a choice of light, dark or the device's look">
+  <img src="docs/images/writing-light.png" width="260" alt="A written word, 兔子 (rabbit), in the light look, with the grade buttons below">
+  <img src="docs/images/writing-dark.png" width="260" alt="The same word in the dark look">
+</p>
 
-- **Review:** each word has up to four cards, scheduled separately by the [FSRS](https://github.com/open-spaced-repetition/ts-fsrs) scheduler:
-  - **Writing:** you are shown a meaning and write the word stroke by stroke. Your own handwriting stays on screen, and the printed character appears underneath when you finish so you can compare.
-  - **Tone:** you are shown the word and give the tone of each character, by tapping a button or drawing the tone mark.
-  - **Pinyin** and **Meaning:** you are shown the word, recall its reading or meaning, and reveal the answer.
+## What it does
 
-  After each card you grade yourself; where the app can check your answer it suggests a grade.
-- **Learn:** words you add wait until you learn them. Each is taught in a short lesson: a look at the word, its tones, each stroke shown until you write it, the outline, then from memory. Only then does it come up in Review.
-- **Free practice:** try any kind of card for a word, or write any characters at all. Nothing is recorded.
-- Traditional, simplified or both: learning one script, you are only asked for and shown that one. You can switch later and keep your words: writing the ones that differ is learned again in the new script, and what you knew in the old one is kept. Traditional uses Taiwan-standard forms and stroke order; where the mainland stroke order uses the same strokes, that is accepted too.
-- Two strokes written without lifting the pen (such as the hook of 子) are accepted where one runs into the next.
-- A short introduction the first time, which sets up the script, pronunciation and kinds of card, and explains why the app asks to store its data for the long term.
-- Ready-made word lists to start from: HSK 3.0, HSK 2.0 and TOCFL, added level by level.
-- A **Words** tab to add your words (the app starts with none): one at a time, with the fields filled in from a built-in dictionary as you type the characters, or as a list from a TSV or CSV file. Words can be searched, changed, moved to the front of the queue, and removed. A word can also be corrected from the answer page of a review.
-- A choice between keeping your own handwriting on screen ("raw input") and having each correct stroke snap to the printed one.
-- Settings for new words per day, which kinds of card you want, how much of a dictionary entry is filled in as a word's meaning, and pronunciation: mainland only, or both mainland and Taiwan with either one first. With both, tone cards accept both regions' tones.
+### Writing
+
+- **Write with your finger, a stylus or a mouse.** Your handwriting stays on screen as you drew it ("raw input"), or each stroke can snap to the printed one.
+- **Grading that isn't fussy.** Awkward strokes pass when written reasonably, and common shortcuts are accepted, such as 子 in two strokes.
+- **Traditional, simplified, or both, each first-class.**
+- **Gestures:** hold for a hint, swipe up to start the character again.
+
+### Studying
+
+- **Four kinds of card for each word:** writing, tone, pinyin and meaning, each scheduled on its own with [FSRS](https://github.com/open-spaced-repetition/ts-fsrs).
+- **Learn:** a short lesson for each new word, stroke by stroke, before it comes up in Review.
+- **Review:** the cards that are due. You grade yourself, and the app suggests a grade where it can check your answer.
+- **Leeches:** cards you keep forgetting are pointed out or suspended, and can be copied as a prompt for an AI to make memory aids.
+- **Sentences:** read a sentence, or write the missing word.
+- **Mainland or Taiwan pronunciation, or both.**
+
+### Words and decks
+
+- **Add your own words**, filled in from the built-in dictionary, or whole lists from a file.
+- **Ready-made lists:** HSK 3.0, HSK 2.0, TOCFL and the 214 Kangxi radicals.
+- **Decks and sub-decks.** A word can be in several decks and keeps one schedule.
+- **A page for every word:** how its characters are built, tips for remembering them, an example sentence, and its cards.
+- **Recordings** of native speakers for most words.
+- **Progress:** your cards, the days you studied, time spent, and words learned over time.
+
+### Bringing your history along
+
+Import from **Anki** (`.apkg`, `.colpkg`) or **Skritter** (the `.zip` its support sends on request), schedules and review history included.
+
+### Looks
+
+Light, dark, or following the device, and the OpenDyslexic font as an option.
 
 ## Your data
 
-Everything is stored in your browser on your device (IndexedDB). There is no account and no sync: each device, and each address you open the app from, has its own separate progress.
+**Everything is stored on your device.** There is no account, and nobody but you can read your words or your progress.
 
-Use **Export backup** to save everything as one file, and **Import backup** to load such a file on another device. Importing replaces what is on that device.
+- **Sync between devices** (optional): turn it on in Settings, save the sync code, and enter or scan it on your other devices. Everything is encrypted on the device before it is sent. You can run your own sync server (below).
+- **Backups:** Export backup saves everything as one file; Import backup loads it on any device.
+- **Keep your sync code somewhere safe.** Without it, nobody can open your synced data, us included.
 
-## Running it
+## Running your own sync server
 
-You need [Node.js](https://nodejs.org/) 20.19 or newer.
+Syncing goes through our server by default, but anyone can run one: for themselves, a household, a club or a school. It is a small program of our own (`server/server.js`): plain Node.js with no dependencies, keeping each learner's encrypted files in a folder of their own. How syncing works, and why the server is built this way: `docs/sync.md`.
+
+### What you need
+
+- **A Linux machine reachable from the internet**, such as a small rented server (a VPS). Two cores and 4 GB of memory are plenty for thousands of learners; ours is an ARM server at Hetzner in Germany, about €7 a month.
+- **A domain name** with A (IPv4) and AAAA (IPv6) records pointing straight at the machine, **not through a proxy** such as Cloudflare's orange cloud: the proxy would see every request's secret, and the server must see learners' own addresses for its limits.
+- An **HTTPS** front: the app only talks to a sync server over HTTPS (except one on the same computer).
+
+### The easy way: our Ansible playbooks (AlmaLinux 10 or Rocky Linux 10)
+
+The playbooks in `deploy/` set up a fresh machine from your own computer over SSH, the same way as ours: key-only SSH logins, a firewall, security updates by themselves, the program as a locked-down service, Caddy for HTTPS with certificates it renews by itself, the log kept at most 14 days, and an optional watch that emails you. In short:
+
+1. Install Ansible on your computer (on Fedora: `sudo dnf install ansible`).
+2. `cd deploy`, then `cp inventory.example.yml inventory.yml`, and fill in the machine's address, your domain name, and the site the app is opened from (`https://bunnyapocalypse.github.io` for ours).
+3. The first run, as root: `ansible-playbook setup.yml -e ansible_user=root`. From then on the playbooks log in as an admin account of their own.
+4. Later: `deploy.yml` after changing the program or a setting, `update.yml` monthly, `status.yml` to see how it is doing.
+
+The full steps, every setting, and the watch: `deploy/README.md`.
+
+### By hand, on any Linux
+
+1. Install **Node.js 22** or newer, and copy `server/server.js` and `server/package.json` to the machine.
+2. Run it as an account of its own with your system's service manager. Ours, for systemd, with the settings that keep the program from touching anything but its own folder, is `deploy/templates/yutu-sync.service.j2`.
+3. Give it its settings in the environment (every one: `server/README.md`). At least `DATA_DIR` (where the files go), `ALLOWED_ORIGINS` (the site the app is opened from, `https://bunnyapocalypse.github.io` for ours) and `TRUST_PROXY=1`. It listens on `127.0.0.1:8787` only.
+4. Put an HTTPS server in front of it, passing requests on to `127.0.0.1:8787` and **replacing** any `X-Forwarded-For` header the learner sent with their real address (Caddy does both by itself; ours is `deploy/templates/Caddyfile.j2`, four lines). Let it accept request bodies of 65 MB.
+5. Check: `https://<your domain>/v1/health` answers `ok`.
+
+### Pointing the app at it
+
+On each device, before turning sync on or joining: Settings › Your data and backups › Sync between devices, unfold "Sync server", enter `https://<your domain>` and choose "Use this server". In the introduction it is under "Self-hosting?". A sync code's link and QR code made on such a device carry the server along, so the other devices join it by themselves.
+
+### What running one means
+
+- **You hold other people's data**, even though it is encrypted. The app's privacy page ("How syncing handles your data") describes our server, not yours: tell your learners who runs yours, where, and how long you keep things. In the EU, the GDPR applies to you as for us.
+- **The log names an address only when it goes over a limit** (lines starting `LIMIT`). Keep the log short (ours: 14 days) and say so.
+- **Keep it updated.** The playbooks do so by themselves; by hand, turn on your system's automatic security updates.
+- **No backups needed:** every device keeps everything and sends it all again if the server loses it. Stopping the server loses nobody's words; syncing just stops.
+- **Limits** keep one person from filling the server or using it as free storage. For a school whose class turns sync on together, give its address more room: `GENEROUS_ADDRESSES` (`server/README.md`).
+
+## Feedback
+
+"Send feedback" in the app's menu, or this repository's [issue tracker](https://github.com/BunnyApocalypse/yutu-chinese/issues).
+
+## Developing
+
+You need [Node.js](https://nodejs.org/) 20.19 or newer (22 or newer for the browser tests and the sync server).
 
 ```
-npm install      # once, downloads the dependencies
-npm run dev      # starts the dev server
-npm test         # runs the tests
+npm install            # once, downloads the dependencies
+npm run dev            # the app at http://localhost:5173
+npm test               # unit tests
+npm run test:browser   # the real app in headless Chromium, about four minutes
+npm run sync-server    # a sync server on this computer, http://127.0.0.1:8787
+npm run build          # the published version, in dist/
 ```
 
-`npm run test:browser` runs a second set of tests that write characters in the real app, in several browsers at once. It needs Node.js 22 or newer and Chromium or Chrome installed, and takes about half a minute.
+The browser tests need Chromium or Chrome. On a phone on the same Wi-Fi, open the "Network" address Vite prints.
 
-Then open:
+It is plain JavaScript built with [Vite](https://vite.dev/), with [Hanzi Writer](https://hanziwriter.org/) for showing and grading strokes. The design notes are in `docs/` (start at `docs/README.md`).
 
-- on this computer: http://localhost:5173
-- on a phone on the same Wi-Fi: the "Network" address Vite prints, e.g. `http://192.168.10.200:5173`
+Pushing `main` publishes a test copy at https://bunnyapocalypse.github.io/yutu-chinese/test/; the `stable` branch is the main one.
 
-Stop the server with Ctrl+C.
+## License and credits
 
-`npm run build` makes the version that is published, in `dist/`. Every push to `main` builds and publishes it to the address above (`.github/workflows/deploy.yml`).
+The app's own code is free software under the GNU General Public License, version 3 only: see [LICENSE](LICENSE).
 
-## Stroke data
+It is built on the work of others, each under its own license (each data folder has a README with its source):
 
-Stroke data comes from two sources, both licensed under the Arphic Public License:
+- **Stroke data:** [Make Me a Hanzi](https://github.com/skishore/makemeahanzi) (by way of [hanzi-writer-data](https://github.com/chanind/hanzi-writer-data)) and [AnimCJK](https://github.com/parsimonhi/animCJK) for Taiwan's forms (`data/animcjk/`), Arphic Public License. Not GPL-compatible, so kept as separate data files.
+- **How characters are built:** Make Me a Hanzi's dictionary (`data/makemeahanzi/`), GNU LGPL.
+- **Dictionary and tones:** [CC-CEDICT](https://cc-cedict.org/wiki/) (`data/cedict/`), CC BY-SA 4.0.
+- **Recordings:** [audio-cmn](https://github.com/hugolpz/audio-cmn) (`data/audio-cmn/`), CC BY-SA.
+- **Learning notes, example sentences and character tips** (`data/notes/`, `data/character-tips/`): written for this app by an AI model (Anthropic's Claude), CC BY-SA 4.0. Not all have been checked by a fluent speaker; the app says which have.
+- **Word lists:** HSK from [ivankra/hsk30](https://github.com/ivankra/hsk30) and [glxxyz/hskhsk.com](https://github.com/glxxyz/hskhsk.com) (MIT); TOCFL from the list published by Taiwan's Steering Committee for the Test of Proficiency-Huayu, which states no license; the Kangxi radicals from Unicode's CJKRadicals.txt (`data/wordlists/`).
+- **The OpenDyslexic font** (`public/fonts/opendyslexic/`): SIL Open Font License 1.1, kept as separate font files.
+- **Libraries:** [Hanzi Writer](https://github.com/chanind/hanzi-writer), [ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs), [sql.js](https://github.com/sql-js/sql.js) and [fzstd](https://github.com/101arrowz/fzstd) (reading Anki files), [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (MIT) and [jsQR](https://github.com/cozmo/jsQR) (Apache 2.0) for the sync code's QR code.
 
-- [hanzi-writer-data](https://github.com/chanind/hanzi-writer-data), derived from [Make Me a Hanzi](https://github.com/skishore/makemeahanzi): about 9,500 characters.
-- [animCJK](https://github.com/parsimonhi/animCJK): Taiwan-standard forms for about 1,000 traditional characters, kept in `data/animcjk/`. These are used when the script is set to Traditional. Traditional characters outside this set fall back to the first source, whose forms can differ from the Taiwan standard.
+The full list is under Help › Credits and licenses in the app.
 
-Both are copied into `public/` automatically the first time you run `npm run dev` or `npm run build`.
-
-## License
-
-The app's own code is free software under the GNU General Public License, version 3. See [LICENSE](LICENSE).
-
-The stroke data is **not** covered by the GPL. It is separate material under the Arphic Public License, a free license of its own that is not compatible with the GPL, so it keeps that license:
-
-- `data/animcjk/` (see the README in that folder)
-- the `hanzi-writer-data` package, downloaded by `npm install`
-
-The HSK word lists in `data/wordlists/hsk/` are built from [ivankra/hsk30](https://github.com/ivankra/hsk30) and [glxxyz/hskhsk.com](https://github.com/glxxyz/hskhsk.com), both under the MIT License (see the README in that folder). The TOCFL word list in `data/wordlists/tocfl/` is built from the file published by the test's committee, which states no license (see the README there).
-
-The tone table and the dictionary in `data/cedict/` are adapted from [CC-CEDICT](https://cc-cedict.org/wiki/) and are under the Creative Commons Attribution-ShareAlike 4.0 license (see the README in that folder).
-
-The libraries the app uses, [Hanzi Writer](https://github.com/chanind/hanzi-writer) and [ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs), are under the MIT license, which is compatible with the GPL.
+Skritter is a trademark of Inkren Inc. 玉兔中文 can import the data Skritter sends you, but is not affiliated with or endorsed by Skritter.

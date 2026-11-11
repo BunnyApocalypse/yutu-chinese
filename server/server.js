@@ -33,6 +33,18 @@
 // coming back after that finds its files gone and sends everything again
 // (sync.js, startAfresh): nothing a device has is lost.
 //
+// The limits (the owner, 2026-11-08) are counted by account wherever the
+// request carries an account's working secret, so learners sharing one
+// internet address (a university, a household) never use up each other's;
+// by address only for what has no account yet: new accounts, and requests
+// refused or without a secret. An IPv6 address counts by its /64 block (a
+// home or phone has a whole one, and could otherwise change address at
+// will). A limit hit is written to the log once a minute as a line starting
+// "LIMIT", with the address only for the limits one address went over (the
+// privacy page says so; the server's log keeps it at most 14 days:
+// deploy/templates/journald-yutu.conf). The server's watch reports those
+// lines, without the addresses (deploy/templates/healthcheck.sh.j2).
+//
 // An error is answered with its status and { reason }, a word the app acts
 // on: 'bad-request', 'refused', 'not-found', 'exists', 'too-large',
 // 'account-full', 'server-full', 'too-many', 'paused', 'origin'.
@@ -40,7 +52,10 @@
 // Run with: node server/server.js (settings from the environment, below).
 
 import http from 'node:http';
+import net from 'node:net';
 import fs from 'node:fs/promises';
+import { createReadStream, createWriteStream } from 'node:fs';
+import { pipeline } from 'node:stream/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -61,10 +76,35 @@ export const DEFAULTS = {
   maxAccountBytes: 256 * MB,
   // The most the whole server may hold, so the disk never fills.
   maxTotalBytes: 30 * 1024 * MB,
-  // New accounts a day from one address, and requests a minute: enough for
-  // a household, too few for someone using the server as free storage.
-  newAccountsPerAddressPerDay: 10,
+  // New accounts only while the server holds less than this share of
+  // maxTotalBytes: the rest is kept for the learners already there, so
+  // someone filling the server can't stop their syncing.
+  newAccountsUntilPercent: 80,
+  // New accounts a day: in all, and from one address (a whole class
+  // turning sync on together at a university). Of the whole server's, one
+  // address can take only a small share, and an IPv6 /48 block four
+  // addresses' worth, so that a few sources can't use up the day for every
+  // new learner (the review of 2026-11-09: it was 100, two addresses' worth).
+  newAccountsPerDay: 2000,
+  newAccountsPerAddressPerDay: 50,
+  // Requests a minute from one account (a device joining takes in a
+  // snapshot and up to a few hundred batches at once), and from one address
+  // without a working secret (refused, or an account not made yet).
+  requestsPerAccountPerMinute: 1200,
   requestsPerAddressPerMinute: 600,
+  // Files being saved at once, by one account, from one address, and in
+  // all. From one address only a quarter of all, so that one client sending
+  // slowly through accounts of its own can't hold every place (the review
+  // of 2026-11-09).
+  uploadsAtOncePerAccount: 4,
+  uploadsAtOncePerAddress: 16,
+  uploadsAtOnce: 64,
+  // What one account may take in an hour: a device joining takes a few
+  // megabytes, or tens.
+  downloadBytesPerAccountPerHour: 1024 * MB,
+  // Addresses or blocks (such as a university's, '192.0.2.0/24' or
+  // '2001:db8::/48') whose limits by address are ten times as high.
+  generousAddresses: [],
   // Behind Caddy, the learner's address comes in X-Forwarded-For, which
   // Caddy sets; trusted only when the server is reached through it.
   trustProxy: false,
@@ -75,7 +115,15 @@ export const DEFAULTS = {
   // One line per request (method, what, status), never an account, an
   // address or anything in a file.
   log: true,
+  // Where the log's lines go (the tests catch them).
+  print: console.log,
 };
+
+// How much higher the limits by address are for generousAddresses.
+const GENEROUS_TIMES = 10;
+
+// New accounts from one IPv6 /48 block: this many addresses' worth.
+const BLOCK_TIMES = 4;
 
 // The settings from the environment, as on the server (server/README.md).
 export function settingsFromEnvironment(env = process.env) {
@@ -88,8 +136,16 @@ export function settingsFromEnvironment(env = process.env) {
     maxFileBytes: number('MAX_FILE_MB', DEFAULTS.maxFileBytes / MB) * MB,
     maxAccountBytes: number('MAX_ACCOUNT_MB', DEFAULTS.maxAccountBytes / MB) * MB,
     maxTotalBytes: number('MAX_TOTAL_MB', DEFAULTS.maxTotalBytes / MB) * MB,
-    newAccountsPerAddressPerDay: number('NEW_ACCOUNTS_PER_DAY', DEFAULTS.newAccountsPerAddressPerDay),
-    requestsPerAddressPerMinute: number('REQUESTS_PER_MINUTE', DEFAULTS.requestsPerAddressPerMinute),
+    newAccountsUntilPercent: number('NEW_ACCOUNTS_UNTIL_PERCENT', DEFAULTS.newAccountsUntilPercent),
+    newAccountsPerDay: number('NEW_ACCOUNTS_PER_DAY', DEFAULTS.newAccountsPerDay),
+    newAccountsPerAddressPerDay: number('NEW_ACCOUNTS_PER_ADDRESS_PER_DAY', DEFAULTS.newAccountsPerAddressPerDay),
+    requestsPerAccountPerMinute: number('REQUESTS_PER_ACCOUNT_PER_MINUTE', DEFAULTS.requestsPerAccountPerMinute),
+    requestsPerAddressPerMinute: number('REQUESTS_PER_ADDRESS_PER_MINUTE', DEFAULTS.requestsPerAddressPerMinute),
+    uploadsAtOncePerAccount: number('UPLOADS_AT_ONCE_PER_ACCOUNT', DEFAULTS.uploadsAtOncePerAccount),
+    uploadsAtOncePerAddress: number('UPLOADS_AT_ONCE_PER_ADDRESS', DEFAULTS.uploadsAtOncePerAddress),
+    uploadsAtOnce: number('UPLOADS_AT_ONCE', DEFAULTS.uploadsAtOnce),
+    downloadBytesPerAccountPerHour: number('DOWNLOAD_MB_PER_ACCOUNT_PER_HOUR', DEFAULTS.downloadBytesPerAccountPerHour / MB) * MB,
+    generousAddresses: (env.GENEROUS_ADDRESSES || '').split(',').map((entry) => entry.trim()).filter(Boolean),
     trustProxy: env.TRUST_PROXY === '1',
     paused: env.SYNC_PAUSED === '1',
     expireDays: number('EXPIRE_DAYS', DEFAULTS.expireDays),
@@ -117,19 +173,73 @@ class Refusal extends Error {
   }
 }
 
-// Counts requests by address over a stretch of time, forgetting each
-// stretch when it is over.
+// Past this many addresses or accounts in one stretch, new ones are all
+// counted together: someone changing address at will limits themselves
+// instead of filling the server's memory.
+const MOST_COUNTED = 100000;
+
+// Counts by address or account over a stretch of time (requests, or bytes
+// with `amount`), forgetting each stretch when it is over.
 function counter(stretchMs) {
   const counts = new Map();
   let started = Date.now();
-  return (address) => {
+  return (key, amount = 1) => {
     if (Date.now() - started > stretchMs) {
       counts.clear();
       started = Date.now();
     }
-    const count = (counts.get(address) || 0) + 1;
-    counts.set(address, count);
+    if (!counts.has(key) && counts.size >= MOST_COUNTED) {
+      key = 'many';
+    }
+    const count = (counts.get(key) || 0) + amount;
+    counts.set(key, count);
     return count;
+  };
+}
+
+// What an address is counted as: an IPv4 address as it is (also when it
+// comes as IPv6, ::ffff:192.0.2.1), an IPv6 address by its /64 block, the
+// first four of its eight groups (a home, an office or a phone gets a whole
+// block, and can pick any address in it). With `groups` 3, by its /48 block:
+// a home may be given a /56 or a /48, so 256 or more /64s (new accounts are
+// counted by that too).
+export function addressKey(address = '', groups = 4) {
+  const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(address);
+  if (mapped) {
+    return mapped[1];
+  }
+  if (!net.isIPv6(address)) {
+    return address;
+  }
+  // "::" stands for as many groups of zeros as are missing; an IPv4 address
+  // written at the end counts as two groups. (%eth0 and such: which network
+  // card, not part of the address.)
+  const groupsOf = (part) => (part ? part.split(':').flatMap((group) => (group.includes('.') ? ['0', '0'] : [group])) : []);
+  const halves = address.split('%')[0].toLowerCase().split('::');
+  const head = groupsOf(halves[0]);
+  const tail = halves.length > 1 ? groupsOf(halves[1]) : [];
+  const all = halves.length > 1 ? [...head, ...Array(8 - head.length - tail.length).fill('0'), ...tail] : head;
+  return `${all.slice(0, groups).map((group) => parseInt(group, 16).toString(16)).join(':')}::/${groups * 16}`;
+}
+
+// Whether an address is one of `entries` ('192.0.2.7', '192.0.2.0/24',
+// '2001:db8::/48'), with Node's own list of addresses and blocks.
+function addressList(entries) {
+  const list = new net.BlockList();
+  for (const entry of entries) {
+    const [address, prefix] = entry.split('/');
+    const type = net.isIPv6(address) ? 'ipv6' : 'ipv4';
+    if (prefix) {
+      list.addSubnet(address, Number(prefix), type);
+    } else {
+      list.addAddress(address, type);
+    }
+  }
+  return (address = '') => {
+    const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(address);
+    const plain = mapped ? mapped[1] : address.split('%')[0];
+    const version = net.isIP(plain);
+    return version !== 0 && list.check(plain, version === 6 ? 'ipv6' : 'ipv4');
   };
 }
 
@@ -146,8 +256,38 @@ export async function createSyncServer(given = {}) {
     totalBytes += await accountBytes(path.join(dataDir, account));
   }
 
-  const requestsThisMinute = counter(60 * 1000);
-  const accountsToday = counter(24 * 60 * 60 * 1000);
+  const requestsByAccount = counter(60 * 1000);
+  const requestsByAddress = counter(60 * 1000);
+  const accountsByAddress = counter(DAY_MS);
+  const accountsByBlock = counter(DAY_MS);
+  const accountsInAll = counter(DAY_MS);
+  const downloadsByAccount = counter(60 * 60 * 1000);
+  const isGenerous = addressList(settings.generousAddresses);
+  // Files being saved now, by account, by address, and in all.
+  const uploadsByAccount = new Map();
+  const uploadsByAddress = new Map();
+  let uploads = 0;
+
+  // The limits hit since the log was last written, as "limit|address" (the
+  // address left empty for the limits of the whole server or an account's
+  // room) and how many times.
+  const limitsHit = new Map();
+
+  // A refusal for a limit, noted for the log.
+  function overLimit(limit, address, status, reason) {
+    const key = `${limit}|${address ?? ''}`;
+    limitsHit.set(key, (limitsHit.get(key) || 0) + 1);
+    return new Refusal(status, reason);
+  }
+
+  // Writes the limits hit to the log, one line each, and forgets them.
+  function writeLimits() {
+    for (const [key, count] of limitsHit) {
+      const [limit, address] = key.split('|');
+      settings.print(`LIMIT ${limit} refused ${count}${address ? ` from ${address}` : ''}`);
+    }
+    limitsHit.clear();
+  }
 
   function folderOf(account) {
     if (!ACCOUNT.test(account)) {
@@ -237,8 +377,25 @@ export async function createSyncServer(given = {}) {
   // Makes a new account with this access secret. Two first saves at once:
   // the second finds the first's secret and is checked against it.
   async function makeAccount(request, folder, address) {
-    if (accountsToday(address) > settings.newAccountsPerAddressPerDay) {
-      throw new Refusal(429, 'too-many');
+    if (totalBytes >= (settings.maxTotalBytes * settings.newAccountsUntilPercent) / 100) {
+      throw overLimit('new-accounts-room', null, 507, 'server-full');
+    }
+    const generous = isGenerous(address) ? GENEROUS_TIMES : 1;
+    if (accountsByAddress(addressKey(address)) > settings.newAccountsPerAddressPerDay * generous) {
+      throw overLimit('new-accounts-per-address', addressKey(address), 429, 'too-many');
+    }
+    // An IPv6 /48 block, four addresses' worth (an IPv4 address is its own
+    // block, counted above).
+    if (net.isIPv6(address) && !/^::ffff:/i.test(address)) {
+      const block = addressKey(address, 3);
+      if (accountsByBlock(block) > settings.newAccountsPerAddressPerDay * generous * BLOCK_TIMES) {
+        throw overLimit('new-accounts-per-address', block, 429, 'too-many');
+      }
+    }
+    // Only what got past the limits by address counts toward the whole
+    // server's, so that an address refused again and again uses none of it.
+    if (accountsInAll('all') > settings.newAccountsPerDay) {
+      throw overLimit('new-accounts-per-day', null, 429, 'too-many');
     }
     await fs.mkdir(folder, { recursive: true });
     const access = /^Bearer ([0-9a-f]+)$/.exec(request.headers.authorization)[1];
@@ -254,18 +411,26 @@ export async function createSyncServer(given = {}) {
     }
   }
 
-  // Reads a request's body, refusing it as soon as it is too large.
-  async function readBody(request, limit) {
-    const parts = [];
+  // Writes a request's body into a file as it comes, never holding it all
+  // in memory, refusing it as soon as it is too large. Returns its size.
+  // (pipeline: Node's way to pass what one stream gives on to another, here
+  // through a step that counts.)
+  async function saveBody(request, file, limit) {
     let size = 0;
-    for await (const part of request) {
-      size += part.length;
-      if (size > limit) {
-        throw new Refusal(413, 'too-large');
-      }
-      parts.push(part);
-    }
-    return Buffer.concat(parts);
+    await pipeline(
+      request,
+      async function* (parts) {
+        for await (const part of parts) {
+          size += part.length;
+          if (size > limit) {
+            throw new Refusal(413, 'too-large');
+          }
+          yield part;
+        }
+      },
+      createWriteStream(file, { flags: 'wx' }),
+    );
+    return size;
   }
 
   async function listFiles(folder) {
@@ -287,22 +452,45 @@ export async function createSyncServer(given = {}) {
 
   // The answers, by what was asked.
   async function handle(request, response, address) {
+    const source = addressKey(address);
+    // A request without an account's working secret, counted by address.
+    const countAddress = () => {
+      const generous = isGenerous(address) ? GENEROUS_TIMES : 1;
+      if (requestsByAddress(source) > settings.requestsPerAddressPerMinute * generous) {
+        throw overLimit('requests-per-address', source, 429, 'too-many');
+      }
+    };
+
     const url = new URL(request.url, 'http://server');
     const parts = url.pathname.split('/').filter(Boolean);
-    if (parts[0] !== 'v1') {
+    const isAccounts = parts[0] === 'v1' && parts[1] === 'accounts'
+      && (parts.length === 3 || (parts.length === 5 && parts[3] === 'files'));
+    if (!isAccounts) {
+      countAddress();
+      if (parts[0] === 'v1' && parts[1] === 'health' && parts.length === 2 && request.method === 'GET') {
+        return send(response, 200, 'ok');
+      }
       throw new Refusal(404, 'not-found');
-    }
-    if (parts[1] === 'health' && parts.length === 2 && request.method === 'GET') {
-      return send(response, 200, 'ok');
     }
     if (settings.paused) {
       throw new Refusal(503, 'paused');
     }
-    if (parts[1] !== 'accounts' || !(parts.length === 3 || (parts.length === 5 && parts[3] === 'files'))) {
-      throw new Refusal(404, 'not-found');
+    let folder;
+    let exists;
+    try {
+      folder = folderOf(parts[2]);
+      exists = await checkAccess(request, folder);
+    } catch (error) {
+      if (error instanceof Refusal) {
+        countAddress();
+      }
+      throw error;
     }
-    const folder = folderOf(parts[2]);
-    const exists = await checkAccess(request, folder);
+    if (!exists) {
+      countAddress();
+    } else if (requestsByAccount(parts[2]) > settings.requestsPerAccountPerMinute) {
+      throw overLimit('requests-per-account', source, 429, 'too-many');
+    }
 
     if (parts.length === 3) {
       if (request.method === 'GET') {
@@ -323,16 +511,23 @@ export async function createSyncServer(given = {}) {
       if (!exists) {
         throw new Refusal(404, 'not-found');
       }
-      let bytes;
+      let size;
       try {
-        bytes = await fs.readFile(file);
+        size = (await fs.stat(file)).size;
       } catch (error) {
         if (error.code === 'ENOENT') {
           throw new Refusal(404, 'not-found');
         }
         throw error;
       }
-      return send(response, 200, bytes, 'application/octet-stream');
+      if (downloadsByAccount(parts[2], size) > settings.downloadBytesPerAccountPerHour) {
+        throw overLimit('downloads-per-account', source, 429, 'too-many');
+      }
+      // Sent as it is read, never held whole in memory. A learner's device
+      // going away halfway is no error of the server's.
+      response.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Content-Length': size });
+      await pipeline(createReadStream(file), response).catch(() => response.destroy());
+      return;
     }
     if (request.method === 'DELETE') {
       if (exists) {
@@ -349,21 +544,49 @@ export async function createSyncServer(given = {}) {
       return send(response, 204);
     }
     if (request.method === 'PUT') {
-      const body = await readBody(request, settings.maxFileBytes);
-      if (totalBytes + body.length > settings.maxTotalBytes) {
-        throw new Refusal(507, 'server-full');
+      // The size the request says it has, if it says (the app's always do):
+      // a file too large is refused before any of it is read.
+      const declared = Number(request.headers['content-length'] ?? 0);
+      if (declared > settings.maxFileBytes) {
+        throw new Refusal(413, 'too-large');
+      }
+      if (totalBytes + declared > settings.maxTotalBytes) {
+        throw overLimit('server-full', null, 507, 'server-full');
       }
       if (!exists) {
         await makeAccount(request, folder, address);
-      } else if ((await accountBytes(folder)) + body.length > settings.maxAccountBytes) {
-        throw new Refusal(413, 'account-full');
+      } else if ((await accountBytes(folder)) + declared > settings.maxAccountBytes) {
+        throw overLimit('account-full', null, 413, 'account-full');
       }
+      const account = parts[2];
+      if ((uploadsByAccount.get(account) || 0) >= settings.uploadsAtOncePerAccount) {
+        throw overLimit('uploads-at-once-per-account', source, 429, 'too-many');
+      }
+      const generous = isGenerous(address) ? GENEROUS_TIMES : 1;
+      if ((uploadsByAddress.get(source) || 0) >= settings.uploadsAtOncePerAddress * generous) {
+        throw overLimit('uploads-at-once-per-address', source, 429, 'too-many');
+      }
+      if (uploads >= settings.uploadsAtOnce) {
+        throw overLimit('uploads-at-once', null, 429, 'too-many');
+      }
+      uploadsByAccount.set(account, (uploadsByAccount.get(account) || 0) + 1);
+      uploadsByAddress.set(source, (uploadsByAddress.get(source) || 0) + 1);
+      uploads += 1;
       // Written under a name of its own first, then given its real name with
       // link(), which fails if that name is taken: so a file is never seen
       // half written, and never replaced.
       const temporary = path.join(folder, `.saving-${crypto.randomBytes(8).toString('hex')}`);
-      await fs.writeFile(temporary, body);
+      let size;
       try {
+        size = await saveBody(request, temporary, settings.maxFileBytes);
+        // Checked again with the real size, for a request that didn't say
+        // it. (The account's bytes now include this file, as written.)
+        if (totalBytes + size > settings.maxTotalBytes) {
+          throw overLimit('server-full', null, 507, 'server-full');
+        }
+        if ((await accountBytes(folder)) > settings.maxAccountBytes) {
+          throw overLimit('account-full', null, 413, 'account-full');
+        }
         await fs.link(temporary, file);
       } catch (error) {
         if (error.code === 'EEXIST') {
@@ -371,9 +594,17 @@ export async function createSyncServer(given = {}) {
         }
         throw error;
       } finally {
-        await fs.unlink(temporary);
+        await fs.rm(temporary, { force: true });
+        uploads -= 1;
+        for (const [counts, key] of [[uploadsByAccount, account], [uploadsByAddress, source]]) {
+          if (counts.get(key) === 1) {
+            counts.delete(key);
+          } else {
+            counts.set(key, counts.get(key) - 1);
+          }
+        }
       }
-      totalBytes += body.length;
+      totalBytes += size;
       return send(response, 201);
     }
     throw new Refusal(405, 'bad-request');
@@ -404,9 +635,6 @@ export async function createSyncServer(given = {}) {
         response.setHeader('Access-Control-Max-Age', '86400');
         return send(response, 204);
       }
-      if (requestsThisMinute(address) > settings.requestsPerAddressPerMinute) {
-        throw new Refusal(429, 'too-many');
-      }
       await handle(request, response, address);
     } catch (error) {
       if (error instanceof Refusal) {
@@ -425,7 +653,7 @@ export async function createSyncServer(given = {}) {
           : request.url.startsWith('/v1/accounts/')
             ? request.url.includes('/files/') ? 'file' : 'account'
             : 'other';
-        console.log(`${request.method} ${kind} ${response.statusCode}`);
+        settings.print(`${request.method} ${kind} ${response.statusCode}`);
       }
     }
   });
@@ -436,20 +664,26 @@ export async function createSyncServer(given = {}) {
     expireUnused()
       .then((deleted) => {
         if (deleted > 0 && settings.log) {
-          console.log(`Deleted ${deleted} accounts unused for ${settings.expireDays} days`);
+          settings.print(`Deleted ${deleted} accounts unused for ${settings.expireDays} days`);
         }
       })
       .catch((error) => console.error(error));
   const sweeper = setInterval(sweep, DAY_MS);
   const firstSweep = setTimeout(sweep, 60 * 1000);
+  // The limits hit, written once a minute: one line for many refusals.
+  const limitWriter = setInterval(writeLimits, 60 * 1000);
   sweeper.unref();
   firstSweep.unref();
+  limitWriter.unref();
   server.on('close', () => {
     clearInterval(sweeper);
     clearTimeout(firstSweep);
+    clearInterval(limitWriter);
+    writeLimits();
   });
   // For the tests, and for running it by hand.
   server.expireUnused = expireUnused;
+  server.writeLimits = writeLimits;
   return server;
 }
 

@@ -19,7 +19,7 @@ import {
   drawStroke,
   loadStrokeData,
 } from './harness.js';
-import { grassTopsOf } from '../../src/shortcuts.js';
+import { grassTopsOf, chuiOf } from '../../src/shortcuts.js';
 import { steepDotsOf } from '../../src/strokeMatch.js';
 import { innerBoxForms } from '../../src/innerBox.js';
 
@@ -31,9 +31,10 @@ import { innerBoxForms } from '../../src/innerBox.js';
 // strokes, 薦 also in the big set's 丨 一 丨 一), and some with a
 // second form (充流育, also written in the big set's), and some with the box
 // of 骨 (骨體滑, also written in its other orders and shapes; not 髒, whose
-// 9th stroke in its mainland shape is refused at half size, bottom right,
-// with or without this).
-const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢愉母出長麼這謝子好食房藍雨草花觀聽充流育骨體滑郵華飽薦遍');
+// 9th stroke in its mainland shape was refused at half size, bottom right,
+// with or without this). Half the size is no longer followed (MIN_SCALE in
+// src/frame.js, 2026-11-08): the owner writes at 0.6 of the box and up.
+const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢愉母出長麼這謝子好食房藍雨草花觀聽充流育骨體滑郵華飽薦遍方旁睡北');
 
 // Where and how big the character is written, compared with the centered
 // reference: `scale` times the size, moved `dx` to the right and `dy` up, in
@@ -41,8 +42,7 @@ const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢愉母出長
 const POSITIONS = {
   'centered': { scale: 1, dx: 0, dy: 0 },
   'small, top left': { scale: 0.6, dx: -20, dy: 330 },
-  'half size, top left': { scale: 0.45, dx: 30, dy: 420 },
-  'half size, bottom right': { scale: 0.5, dx: 430, dy: -40 },
+  'small, bottom right': { scale: 0.65, dx: 380, dy: -40 },
   'shifted right': { scale: 1, dx: 190, dy: 0 },
   'shifted left': { scale: 1, dx: -190, dy: 0 },
   'larger, low': { scale: 1.2, dx: -90, dy: -110 },
@@ -52,7 +52,7 @@ const POSITIONS = {
 // (second shapes, 艹 in three strokes, second forms, the box of 骨) only at
 // these two, which keeps the grid to a few minutes (2026-11-05: it had grown
 // to 590 characters written, nearly six minutes on four browsers).
-const FEWER_POSITIONS = ['centered', 'half size, top left'];
+const FEWER_POSITIONS = ['centered', 'small, top left'];
 
 // How far each point of a stroke is shaken off its line, in the data's units,
 // so that strokes are not traced perfectly.
@@ -158,12 +158,15 @@ describe('writing grid', { concurrency: BROWSER_COUNT }, () => {
   for (const char of CHARS) {
     const data = loadStrokeData(char);
     const moeOrder = data.medians.map((median, index) => index);
-    // (The big set's 忄 has the Taiwan order second: inTaiwanOrder.)
+    // (The big set's 忄 has the Taiwan order second: inTaiwanOrder. A 方
+    // alone has its ノ before its ㇆ second: withFangInEitherOrder.)
     const orders = !data.altOrder
       ? { MOE: moeOrder }
       : data.altOrderIsTaiwan
         ? { MOE: data.altOrder, mainland: moeOrder }
-        : { MOE: moeOrder, mainland: data.altOrder };
+        : data.altOrderIsFang
+          ? { MOE: moeOrder, 'other (方 ノ first, 垂 丨 late)': data.altOrder }
+          : { MOE: moeOrder, mainland: data.altOrder };
     const ways = Object.entries(orders).map(([orderName, strokeOrder]) => ({
       label: `${orderName} order`,
       strokeOrder,
@@ -198,6 +201,25 @@ describe('writing grid', { concurrency: BROWSER_COUNT }, () => {
       const level = [top + 1, top + 2];
       ways.push({ label: 'MOE order, 艹 in three strokes', strokeOrder: [...before, level, top, top + 3, ...after] });
       ways.push({ label: 'MOE order, 艹 in three strokes, upright first', strokeOrder: [...before, top, level, top + 3, ...after] });
+    }
+
+    // 匕's branch written right to left (reversedShapes in src/shortcuts.js).
+    for (const [strokeNum, shapesToWrite] of Object.entries(data.reversedShapes ?? {})) {
+      shapesToWrite.forEach((shape, index) => {
+        ways.push({ label: `MOE order, 匕 branch right to left, way ${index + 1}`, strokeOrder: moeOrder, shapes: { [strokeNum]: shape } });
+      });
+    }
+    // 垂 with the middle level stroke across both halves, its 丨 after the
+    // next level stroke (src/quiz.js, grassLevelFor).
+    for (const { at, whole } of chuiOf(data)) {
+      if (!whole) {
+        const before = moeOrder.slice(0, at + 2);
+        const after = moeOrder.slice(at + 9);
+        ways.push({
+          label: '垂 level across, 丨 late',
+          strokeOrder: [...before, [at + 4, at + 5], at + 3, at + 6, at + 7, at + 2, at + 8, ...after],
+        });
+      }
     }
 
     for (const { label, strokeOrder, shapes, everywhere } of ways) {
@@ -254,4 +276,36 @@ describe('writing grid', { concurrency: BROWSER_COUNT }, () => {
       assert.ok(result.zoomed, 'the strokes should have been shrunk');
     });
   }
+
+  // A wrong stroke, written for another character, is not taken for the
+  // right one in a tiny character (the owner, 2026-11-08). 中 at 0.75 of the
+  // size: its first stroke, then 和's second where 中's ㇕ is expected. That
+  // fits 中 written at under half the size, which was accepted.
+  const SMALL_CENTERED = { scale: 0.75, dx: 0.25 * 512, dy: 0.25 * 388 };
+  it('a wrong stroke is not taken for the right one written tiny', { timeout: 60000 }, async () => {
+    const name = 'a wrong stroke is not taken for the right one written tiny';
+    const random = makeRandom(name);
+    const zhong = loadStrokeData('中').medians;
+    const wrong = loadStrokeData('和').medians[1];
+    const status = await browsers.use(async (page) => {
+      await startWriting(page, '中');
+      const area = await writingArea(page);
+      const draw = (median) =>
+        drawStroke(
+          page,
+          area,
+          median.map(([x, y]) => [
+            SMALL_CENTERED.scale * x + SMALL_CENTERED.dx + (random() * 2 - 1) * JITTER,
+            SMALL_CENTERED.scale * y + SMALL_CENTERED.dy + (random() * 2 - 1) * JITTER,
+          ]),
+        );
+      await draw(zhong[0]);
+      return draw(wrong);
+    });
+    assert.doesNotMatch(status, /no mistakes$/i, '和\'s stroke was accepted as 中\'s');
+    // Written right at that size, 中 is accepted.
+    const strokeOrder = zhong.map((median, index) => index);
+    const result = await browsers.use((page) => writeChar(page, '中', strokeOrder, SMALL_CENTERED, random));
+    assert.equal(result.status, 'No mistakes', `stroke ${result.strokesDrawn} of 中 was not accepted`);
+  });
 });

@@ -24,6 +24,7 @@ import {
   textOf,
   isShown,
   waitUntil,
+  tickDecks,
   ANSWER_YES,
 } from './harness.js';
 
@@ -323,6 +324,91 @@ describe('grading in Review', { concurrency: false }, () => {
     // The other card graded too, for the tests after this one.
     await write(first === '大' ? '小' : '大');
     await chooseGrade(await page.evaluate(SUGGESTED));
+  });
+
+  // The owner, 2026-11-10: at every start, the meaning of 幇 (a rare form
+  // of 幫 brought over from Skritter, with no stroke data) flashed by before
+  // the first card. Its writing card, the most overdue, was shown and only
+  // then found unwritable. It must be passed over without being shown.
+  it('passes over a writing card without stroke data before it is shown', async () => {
+    await inDatabase(`stores.words.get('大|da4').onsuccess = (event) => {
+      stores.words.put({
+        id: '幇|bang1',
+        traditional: '幇',
+        simplified: '帮',
+        pinyin: 'bang1',
+        definition: 'to help',
+        order: 0,
+        addedAt: Date.now(),
+        decks: event.target.result.decks,
+      });
+    };
+    stores.cards.put(${JSON.stringify(card('幇|bang1#writing', '幇|bang1', 'writing', -30 * DAY))});`);
+    // Every meaning put on the page from the start, before the app's code runs.
+    await page.send('Page.enable');
+    const { identifier } = await page.send('Page.addScriptToEvaluateOnNewDocument', {
+      source: `window.__meanings = [];
+        new MutationObserver(() => {
+          const text = document.getElementById('prompt-meaning')?.textContent;
+          if (text && window.__meanings.at(-1) !== text) {
+            window.__meanings.push(text);
+          }
+        }).observe(document, { subtree: true, childList: true, characterData: true });`,
+    });
+    try {
+      await makeDue(['大|da4#writing', '大|da4', 'writing']);
+      await waitForFirstStroke();
+      assert.equal(await textOf(page, 'prompt-meaning'), 'big');
+      assert.deepEqual(await page.evaluate(`window.__meanings.filter((text) => text.includes('help'))`), []);
+    } finally {
+      await page.send('Page.removeScriptToEvaluateOnNewDocument', { identifier });
+    }
+    // Put back as it was, for the tests after this one.
+    await write('大');
+    await chooseGrade(await page.evaluate(SUGGESTED));
+    await inDatabase(`stores.words.delete('幇|bang1'); stores.cards.delete('幇|bang1#writing');`);
+  });
+
+  // A word saved in its panel is all Review takes from the Decks tab
+  // (afterWordChange in wordsPanel.js): what the tab holds of other words
+  // may be older than Review's. Here both cards are graded after the tab
+  // read them, and a word's page opened from Review reads only its word.
+  it('keeps the cards graded since the Words tab read them, when a word is saved from About', async () => {
+    await makeDue(['大|da4#meaning', '大|da4', 'meaning'], ['小|xiao3#meaning', '小|xiao3', 'meaning']);
+    await tap(page, 'words-tab');
+    await waitUntil(page, `document.querySelectorAll('#word-list li').length > 0`, 'the words read');
+    await tap(page, 'review-tab');
+    for (let count = 0; count < 2; count++) {
+      await waitUntil(page, `document.getElementById('grade-row').hidden && /[大小]/.test(document.getElementById('card-face').textContent)`, 'a meaning card');
+      await page.evaluate(`['pointerdown', 'pointerup'].forEach((type) => document.getElementById('card-face').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`);
+      await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
+      await chooseGrade('Good');
+    }
+    await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the end of Review');
+    // The last card's word, from About on the card looked back at, edited.
+    await waitUntil(page, `!document.getElementById('look-back-button').hidden`, 'the way back');
+    await tap(page, 'look-back-button');
+    await tap(page, 'card-about-button');
+    await waitUntil(page, `/[大小]/.test(document.getElementById('word-page').dataset.shown || '')`, "the word's page");
+    await tap(page, 'word-page-edit');
+    await waitUntil(page, `document.getElementById('word-dialog').open`, 'the edit panel');
+    const definition = await page.evaluate(`document.getElementById('edit-definition').value`);
+    await page.evaluate(`(() => {
+      document.getElementById('edit-definition').value = '${definition} (edited)';
+      document.getElementById('word-dialog-form').requestSubmit();
+    })()`);
+    await waitUntil(page, `!document.getElementById('word-dialog').open`, 'the panel closed');
+    // Review again: still done, the other card not back from the tab's copy.
+    await tap(page, 'review-tab');
+    await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'the end of Review', 2000);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    assert.equal(await isShown(page, 'done-panel'), true);
+    // The meaning as it was, for the tests after this one.
+    await inDatabase(`stores.words.getAll().onsuccess = (event) => {
+      for (const word of event.target.result.filter((each) => each.definition.endsWith(' (edited)'))) {
+        stores.words.put({ ...word, definition: word.definition.replace(' (edited)', '') });
+      }
+    };`);
   });
 
   // No pause after the answer is shown (the owner, 2026-10-24): a new touch
@@ -910,9 +996,14 @@ describe('grading in Review', { concurrency: false }, () => {
     `);
   });
 
-  it('names the deck studied on the card, and changes it from there', async () => {
-    // A second deck, so there is a choice; the word is not in it.
-    await inDatabase(`stores.decks.put({ id: 'other', name: 'Other', parentId: null, order: 1 });`);
+  it('names the decks reviewed on the card, and ticks several from there', async () => {
+    // A second deck with one inside it, so there is a choice; the word is
+    // in neither.
+    await inDatabase(`
+      stores.decks.put({ id: 'other', name: 'Other', parentId: null, order: 1 });
+      stores.decks.put({ id: 'inner', name: 'Inner', parentId: 'other', order: 0 });
+    `);
+    const [ownDeck] = (await all('words')).find((word) => word.id === '大|da4').decks;
     await makeDue(['大|da4#writing', '大|da4', 'writing']);
     await waitForFirstStroke();
     // While a card is up, the chooser above is put away, and the card's top
@@ -923,15 +1014,115 @@ describe('grading in Review', { concurrency: false }, () => {
     assert.equal(await textOf(page, 'deck-tag'), 'All words');
     await tap(page, 'deck-tag');
     await waitUntil(page, `document.getElementById('deck-choice-dialog').open`, 'the deck chooser');
-    // Choosing the other deck: none of its words is due.
-    await page.evaluate(`[...document.querySelectorAll('#deck-choice-list input')].find((radio) => radio.value === 'other').click()`);
+    assert.equal(await textOf(page, 'deck-choice-title'), 'Review which decks?');
+    // Ticking the other deck: the panel stays open, "All words" is
+    // unticked, and the deck inside it is ticked too, greyed.
+    const box = (id) => `document.querySelector('#deck-choice-list input[value="${id}"]')`;
+    await page.evaluate(`${box('other')}.click()`);
+    await page.evaluate(`document.querySelector('#deck-choice-list .deck-fold').click()`);
+    assert.equal(await page.evaluate(`document.getElementById('deck-choice-dialog').open`), true);
+    const ticks = await page.evaluate(`['', 'other', 'inner'].map((id) => {
+      const input = document.querySelector('#deck-choice-list input[value="' + id + '"]');
+      return [input.checked, input.disabled];
+    })`);
+    assert.deepEqual(ticks, [[false, false], [true, false], [true, true]]);
+    // Done: none of its words is due.
+    await tap(page, 'deck-choice-done');
     await waitUntil(page, `!document.getElementById('done-panel').hidden`, 'nothing due in the deck');
     assert.equal(await textOf(page, 'deck-choice-button'), 'Other');
-    // Back to all words, and the deck removed again.
+    // The word's own deck ticked as well: its card is back, the button says
+    // how many, and the choice is kept.
     await tap(page, 'deck-choice-button');
-    await page.evaluate(`document.querySelector('#deck-choice-list input[value=""]').click()`);
+    await tickDecks(page, ['other', ownDeck]);
+    await waitUntil(page, `document.querySelector('#deck-tag .deck-select-name').textContent === '2 decks'`, 'two decks named');
     await waitForFirstStroke();
-    await inDatabase(`stores.decks.delete('other');`);
+    assert.deepEqual((await all('settings')).find((setting) => setting.key === 'reviewDecks').value, ['other', ownDeck]);
+    await reloadApp(page);
+    await waitForFirstStroke();
+    assert.equal(await textOf(page, 'deck-tag'), '2 decks');
+    // Back to all words, and the decks removed again.
+    await tap(page, 'deck-tag');
+    await tickDecks(page, []);
+    await waitUntil(page, `document.querySelector('#deck-tag .deck-select-name').textContent === 'All words'`, 'all words');
+    await inDatabase(`stores.decks.delete('other'); stores.decks.delete('inner');`);
+    await reloadApp(page);
+  });
+
+  // The owner, 2026-11-08: choosing another deck in Review put a card of it
+  // straight up, and now and then another card showed for a moment first.
+  // Two cards coming up close together (two decks chosen quickly, here)
+  // could leave the card asking for one word while the writing area quizzed
+  // the other's character, whichever's stroke data came last.
+  it('asks again how many cards on choosing another deck, and writes the word asked after two quick choices', async () => {
+    const chars = [...'一二三四五六七八九十上下人口手日月山水火木土田目耳'];
+    const chooseDeck = async (deckId) => {
+      await tap(page, 'deck-tag');
+      await waitUntil(page, `document.getElementById('deck-choice-dialog').open`, 'the deck chooser');
+      await tickDecks(page, [deckId]);
+    };
+    // Deck "many": 25 words with a meaning card each, so Review asks how
+    // many. Decks "me" and "sky": one written word each, 我 and 天, whose
+    // stroke data no test before has loaded. Review starts in "sky", so 我's
+    // data is first loaded during the two quick choices.
+    await inDatabase(`
+      stores.decks.put({ id: 'many', name: 'Many', parentId: null, order: 1 });
+      stores.decks.put({ id: 'me', name: 'Me', parentId: null, order: 2 });
+      stores.decks.put({ id: 'sky', name: 'Sky', parentId: null, order: 3 });
+      ${JSON.stringify(chars)}.forEach((char, index) => {
+        stores.words.put({ id: char + '|x' + (index + 1) + '1', traditional: char, simplified: char, pinyin: 'x' + (index + 1) + '1', definition: 'number ' + index, order: 0, addedAt: 1, learnedAt: 1, decks: ['many'] });
+      });
+      stores.words.put({ id: '我|wo3', traditional: '我', simplified: '我', pinyin: 'wo3', definition: 'I; me', order: 0, addedAt: 1, learnedAt: 1, decks: ['me'] });
+      stores.words.put({ id: '天|tian1', traditional: '天', simplified: '天', pinyin: 'tian1', definition: 'sky', order: 0, addedAt: 1, learnedAt: 1, decks: ['sky'] });
+      stores.settings.put({ key: 'reviewStart', value: true });
+      stores.settings.put({ key: 'reviewDecks', value: ['sky'] });
+    `);
+    await makeDue(
+      ['我|wo3#writing', '我|wo3', 'writing'],
+      ['天|tian1#writing', '天|tian1', 'writing'],
+      ...chars.map((char, index) => [`${char}|x${index + 1}1#meaning`, `${char}|x${index + 1}1`, 'meaning']),
+    );
+    await waitForFirstStroke();
+    assert.equal(await textOf(page, 'prompt-meaning'), 'sky');
+
+    // Another deck, with many cards: Review asks first, as on opening it.
+    await chooseDeck('many');
+    await waitUntil(page, `!document.getElementById('review-start').hidden`, 'the start of Review');
+    assert.equal(await textOf(page, 'review-start-count'), '50 cards to review');
+    await tap(page, 'review-all-button');
+    await waitUntil(page, `!document.getElementById('card-face').hidden`, 'a card of the deck');
+
+    // Two decks chosen quickly, 我's stroke data slower than 天's: the
+    // card asks for 天, and 天 is what is written.
+    await page.evaluate(`(() => {
+      const fetchNow = window.fetch;
+      window.fetch = (url, ...rest) => {
+        // Stroke data files are named by the character's number: 我 is 25105.
+        const wait = String(url).includes('/25105.json') ? 900 : String(url).includes('char-data') ? 100 : 0;
+        return new Promise((resolve) => setTimeout(() => resolve(fetchNow(url, ...rest)), wait));
+      };
+    })()`);
+    await chooseDeck('me');
+    await chooseDeck('sky');
+    await waitUntil(page, `document.getElementById('prompt-meaning').textContent === 'sky'`, 'the card of the deck chosen last');
+    // Past the time 我's data comes in.
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    assert.equal(await textOf(page, 'prompt-meaning'), 'sky');
+    await write('天');
+    await chooseGrade(await page.evaluate(SUGGESTED));
+
+    await inDatabase(`
+      ['many', 'me', 'sky'].forEach((id) => stores.decks.delete(id));
+      ${JSON.stringify(chars)}.forEach((char, index) => {
+        stores.words.delete(char + '|x' + (index + 1) + '1');
+        stores.cards.delete(char + '|x' + (index + 1) + '1#meaning');
+      });
+      ['我|wo3', '天|tian1'].forEach((id) => {
+        stores.words.delete(id);
+        stores.cards.delete(id + '#writing');
+      });
+      stores.settings.put({ key: 'reviewDecks', value: [] });
+      stores.settings.put({ key: 'reviewStart', value: false });
+    `);
     await reloadApp(page);
   });
 

@@ -12,12 +12,16 @@
     kind=swatch    the samples of the light and dark looks in the
                    introduction: only the paper, the grid and the character,
                    in dark ink (the style sheet tints it for each look)
+    kind=favicon   the browser tab's icon: the moon alone, with a bigger 兔
+                   and no grid, on a see-through ground (the night sky's
+                   dark square looked bad in a light tab bar)
     size=192       the picture's width and height in pixels
 
-  The character is in AR PL UKai TW, a Kai-style (brush) font (Fedora
-  package cjkuni-ukai-fonts), as the old 字 icon was. It must be installed.
-  The paper's grain and the moon's darker patches are made by the browser
-  from random noise (feTurbulence), so no picture is copied in.
+  Every texture is a real picture, in data/icon/ (see its README for where
+  each comes from and its license): the 兔 and the stars were written by the
+  calligrapher 南蠻大熊; the moon is a photo of washi (Japanese handmade
+  paper); the sky is a photo of a watercolor ink stain, turned dark green.
+  The owner chose them on 2026-11-11 from drafts (local/logo/).
 -->
 <html>
   <head>
@@ -36,66 +40,39 @@
   <body>
     <svg id="icon" width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <!-- The night sky: very dark green, slightly lighter at the top. -->
+        <!-- The night sky under the ink wash: very dark green, lighter at the top. -->
         <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="#17322c" />
           <stop offset="1" stop-color="#0e1f1b" />
         </linearGradient>
-        <!-- A soft glow around the moon. -->
-        <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0.82" stop-color="#f3ead2" stop-opacity="0.35" />
-          <stop offset="1" stop-color="#f3ead2" stop-opacity="0" />
-        </radialGradient>
-        <!-- The paper: cream, lit from the top left, darker at the rim. -->
-        <radialGradient id="paper" cx="0.42" cy="0.38" r="0.7">
-          <stop offset="0" stop-color="#fbf6e8" />
-          <stop offset="0.75" stop-color="#f1e7cd" />
-          <stop offset="1" stop-color="#e3d5b3" />
-        </radialGradient>
-        <!-- The paper's grain: fine noise stretched sideways, faint brown. -->
-        <filter id="grain" x="0" y="0" width="100%" height="100%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.012 0.05" numOctaves="4" seed="7" />
-          <feColorMatrix type="matrix" values="0 0 0 0 0.55  0 0 0 0 0.47  0 0 0 0 0.32  0 0 0 0.55 -0.18" />
-        </filter>
-        <!-- The moon's darker patches: coarse noise, only its peaks kept. -->
-        <filter id="patches" x="0" y="0" width="100%" height="100%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.006" numOctaves="3" seed="3" />
-          <feColorMatrix type="matrix" values="0 0 0 0 0.6  0 0 0 0 0.52  0 0 0 0 0.36  0 0 0 1.1 -0.55" />
-        </filter>
-        <!-- Jade: lighter at the top left, deeper at the bottom right. -->
-        <linearGradient id="jade" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#3f9a74" />
-          <stop offset="0.55" stop-color="#23704f" />
-          <stop offset="1" stop-color="#1a5a3f" />
-        </linearGradient>
+        <!-- The 兔's shape, from the calligrapher's ink (only its see-through
+             parts count: "mask-type: alpha"); it cuts the jade out of a square. -->
+        <mask id="brush" style="mask-type: alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+          <image id="tu" href="../data/icon/tu.png" />
+        </mask>
         <clipPath id="moon-shape"><circle id="moon-clip" cx="256" cy="256" r="222" /></clipPath>
       </defs>
 
       <g id="sky-layer">
         <rect width="512" height="512" fill="url(#sky)" />
-        <g fill="#f3ead2" opacity="0.7">
-          <circle cx="58" cy="70" r="2.2" />
-          <circle cx="452" cy="56" r="1.8" />
-          <circle cx="470" cy="424" r="2" />
-          <circle cx="40" cy="454" r="1.6" />
-          <circle cx="24" cy="250" r="1.2" />
-        </g>
-        <circle id="moon-glow" cx="256" cy="256" r="240" fill="url(#glow)" />
+        <image href="../data/icon/ink-wash.jpg" width="512" height="512" opacity="0.75" />
+        <!-- The stars are filled in by the script below. -->
+        <g id="stars"></g>
       </g>
 
-      <circle id="moon" cx="256" cy="256" r="222" fill="url(#paper)" />
-      <g id="moon-surface" clip-path="url(#moon-shape)">
-        <rect width="512" height="512" filter="url(#patches)" />
-        <rect width="512" height="512" filter="url(#grain)" />
+      <g id="moon" clip-path="url(#moon-shape)">
+        <!-- The washi is blended onto a cream ground ("multiply" darkens the
+             cream by the photo's own shading), so its fibers show. -->
+        <rect width="512" height="512" fill="#f1e9d4" />
+        <image id="paper" href="../data/icon/washi.jpg" x="34" y="34" width="444" height="444"
+          preserveAspectRatio="xMidYMid slice" style="mix-blend-mode: multiply" />
         <!-- The writing grid's cross, as on the writing area. -->
-        <g stroke="#b9a983" stroke-width="2.5" stroke-dasharray="12 9" opacity="0.6">
+        <g id="grid" stroke="#b9a983" stroke-width="2.5" stroke-dasharray="12 9" opacity="0.45">
           <line x1="256" y1="0" x2="256" y2="512" />
           <line x1="0" y1="256" x2="512" y2="256" />
         </g>
+        <rect id="ink" width="512" height="512" fill="#23704f" mask="url(#brush)" />
       </g>
-
-      <text id="character" x="256" y="262" text-anchor="middle" dominant-baseline="central"
-        font-family="AR PL UKai TW" font-size="320" fill="url(#jade)">兔</text>
     </svg>
 
     <script>
@@ -107,28 +84,65 @@
       icon.setAttribute('width', size);
       icon.setAttribute('height', size);
 
-      // Makes the moon (and the character on it) smaller, around the middle.
-      function scaleMoon(factor) {
-        const radius = 222 * factor;
-        document.getElementById('moon').setAttribute('r', radius);
-        document.getElementById('moon-clip').setAttribute('r', radius);
-        document.getElementById('moon-glow').setAttribute('r', radius + 18);
-        const character = document.getElementById('character');
-        character.setAttribute('font-size', 320 * factor);
-        character.setAttribute('y', 256 + 6 * factor);
+      // The 兔, centered a little below the middle; tu.png is 1492 x 1641
+      // pixels. height is in the icon's own units (the icon is 512 across).
+      function placeCharacter(height) {
+        const width = (height * 1492) / 1641;
+        const tu = document.getElementById('tu');
+        tu.setAttribute('x', 256 - width / 2);
+        tu.setAttribute('y', 262 - height / 2);
+        tu.setAttribute('width', width);
+        tu.setAttribute('height', height);
       }
+      placeCharacter(300);
+
+      // Five stars, each a speck of the calligrapher's ink: x, y, size,
+      // turn (degrees), which speck, how bright. Placed unevenly on purpose.
+      const stars = [
+        [40, 60, 14, -15, 1, 1],
+        [128, 22, 10, 10, 3, 0.85],
+        [478, 112, 16, 30, 4, 1],
+        [30, 396, 11, 5, 2, 0.9],
+        [440, 486, 13, 45, 1, 0.95],
+      ];
+      document.getElementById('stars').innerHTML = stars
+        .map(
+          ([x, y, h, turn, speck, brightness], n) => `
+            <mask id="star-${n}" style="mask-type: alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+              <image href="../data/icon/speck-${speck}.png" x="${x - h / 2}" y="${y - h / 2}" width="${h}" height="${h}"
+                transform="rotate(${turn} ${x} ${y})" />
+            </mask>
+            <rect width="512" height="512" fill="#f3ead2" opacity="${brightness}" mask="url(#star-${n})" />`,
+        )
+        .join('');
+
+      const moon = document.getElementById('moon');
 
       if (kind === 'maskable') {
         // Android may cut away everything outside a circle of 80% of the
-        // width; 0.86 keeps the moon and its glow inside that.
-        scaleMoon(0.86);
+        // width; the moon, shrunk to 86% around the middle, stays inside it.
+        moon.setAttribute('transform', 'translate(256 256) scale(0.86) translate(-256 -256)');
       }
 
       if (kind === 'swatch') {
         // Paper to the edges, no sky, the character in dark ink.
         document.getElementById('sky-layer').remove();
-        for (const id of ['moon', 'moon-clip']) document.getElementById(id).setAttribute('r', 400);
-        document.getElementById('character').setAttribute('fill', '#1d1c19');
+        document.getElementById('moon-clip').setAttribute('r', 400);
+        const paper = document.getElementById('paper');
+        paper.setAttribute('x', 0);
+        paper.setAttribute('y', 0);
+        paper.setAttribute('width', 512);
+        paper.setAttribute('height', 512);
+        document.getElementById('ink').setAttribute('fill', '#1d1c19');
+      }
+
+      if (kind === 'favicon') {
+        // The moon alone, filling the picture, with a bigger 兔 and no grid:
+        // at 16 to 32 pixels anything finer is a smudge.
+        document.getElementById('sky-layer').remove();
+        document.getElementById('grid').remove();
+        moon.setAttribute('transform', 'translate(256 256) scale(1.15) translate(-256 -256)');
+        placeCharacter(350);
       }
     </script>
   </body>

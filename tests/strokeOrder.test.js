@@ -188,14 +188,16 @@ test('strokes are attributed to the right order', () => {
   );
 });
 
-test('a first stroke may be half as long, a later stroke may not', () => {
-  // The first stroke of 學, written at 0.45 times the size in the top left corner.
+test('a first stroke may be shorter than a later stroke, but not tiny', () => {
+  // The first stroke of 學, written at 0.6 times the size in the top left
+  // corner (the smallest the owner writes), and at 0.4.
   const median = taiwanData.get('學').medians[0];
-  const drawn = median.map(([x, y]) => ({ x: 0.45 * x + 30, y: 0.45 * y + 420 }));
+  const at = (size) => median.map(([x, y]) => ({ x: size * x + 30, y: size * y + 420 }));
   // Leniency 6 is what the app uses for a first stroke (LENIENCY times
   // FIRST_STROKE_EXTRA_LENIENCY in src/quiz.js), so position does not count.
-  assert.equal(fitsStroke(drawn, median, 6, true), true);
-  assert.equal(fitsStroke(drawn, median, 6), false);
+  assert.equal(fitsStroke(at(0.6), median, 6, true), true);
+  assert.equal(fitsStroke(at(0.4), median, 6, true), false);
+  assert.equal(fitsStroke(at(0.45), median, 6), false);
 });
 
 test('shape tells a level stroke from an upright one, wherever they are', () => {

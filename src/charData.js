@@ -30,7 +30,10 @@
 //               Also added when loaded to the big set's characters with a
 //               艹 written 丨 一 丨 一 (the data's own order) or a 忄 written
 //               丶 丶 丨 (the Taiwan order, then marked altOrderIsTaiwan;
-//               inTaiwanOrder in shortcuts.js).
+//               inTaiwanOrder in shortcuts.js). In both scripts, also
+//               added to every character with a 方, its ノ before its ㇆
+//               (withFangInEitherOrder; marked altOrderIsFang when that is
+//               all that differs).
 //   altShapes:  Taiwan set only, for some characters: strokes the mainland
 //               form writes in another shape in the same place, as
 //               { strokeNum: median } (the dot under 人 in 食, where Taiwan's
@@ -45,7 +48,7 @@
 // 1024 across, and from about -124 (bottom) to 900 (top) upwards.
 
 import { innerBoxForms } from './innerBox.js';
-import { inTaiwanOrder } from './shortcuts.js';
+import { inTaiwanOrder, withFangInEitherOrder, withChuiUprightLast, withReversedBranches } from './shortcuts.js';
 
 // BASE_URL is the folder the app is served from ("/" during development).
 const BASE = import.meta.env.BASE_URL;
@@ -114,9 +117,20 @@ export async function loadCharData(char, script) {
       const bigSetData = await fetchCharFile('char-data', char);
       data = bigSetData && inTaiwanOrder(bigSetData);
     }
-    return data && withSecondForms(char, data);
+    return data && withSecondForms(char, withMoreWays(data));
   }
-  return fetchCharFile('char-data', char);
+  const data = await fetchCharFile('char-data', char);
+  return data && withMoreWays(data);
+}
+
+// The Chinese characters of `text` with no stroke data in `script` (a rare
+// form such as 幇, brought over from Skritter), in a list; punctuation and
+// letters are left out. Without a connection, data not yet saved on the
+// device can't be told from data that doesn't exist, and counts as missing.
+export async function charsWithoutData(text, script) {
+  const chars = Array.from(text).filter((char) => /\p{Script=Han}/u.test(char));
+  const data = await Promise.all(chars.map((char) => loadCharData(char, script)));
+  return chars.filter((char, index) => data[index] === null);
 }
 
 // The traditional character's data with all its second forms as `altForms`:
@@ -126,4 +140,10 @@ export async function loadCharData(char, script) {
 function withSecondForms(char, data) {
   const altForms = [...(data.altForm ? [data.altForm] : []), ...innerBoxForms(char, data)];
   return altForms.length > 0 ? { ...data, altForms } : data;
+}
+
+// `data` with the orders and shapes found by shape: the 方 with its ノ first,
+// the 垂 with its 丨 late, the 匕 with its first stroke written right to left.
+function withMoreWays(data) {
+  return withReversedBranches(withChuiUprightLast(withFangInEitherOrder(data)));
 }

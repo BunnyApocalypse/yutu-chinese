@@ -19,6 +19,7 @@ import {
   judgeChar,
   formatInterval,
   cardIdFor,
+  otherScriptCardId,
   lessonSteps,
   nextToLearn,
   CARD_TYPES,
@@ -56,6 +57,10 @@ import { createStopwatch } from './timing.js';
 import { showPastCard } from './pastCard.js';
 import { freshTaps } from './freshTap.js';
 import { t, formatDateTime } from './text.js';
+import { formsToLearn, whereElse, differingPairs, changesOfWord } from './otherScript.js';
+import { keyOf, needsLearning } from './scriptKeys.js';
+import { loadForms } from './formsLoader.js';
+import { FORMS_STEPS, changeShown, changedFace, elsewhereFace, readFace, summaryList, answerTip, pageForms } from './formsFlow.js';
 
 // The same for a sentence, which has two kinds of card (see sentences.js).
 const SENTENCE_LABELS = {
@@ -154,6 +159,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     writingButtons,
     cardFace,
     toneButtonRow,
+    learnFormsButton,
   } = elements;
 
   let words = [];
@@ -251,7 +257,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // full form) is marked as Chinese in the word's script.
   function fillWithoutChinese(element, word) {
     const parts = meaningWithoutChinese(word.definition, GAP_MARK).split(GAP_MARK);
-    const script = scriptFor(word, settings);
+    const script = cardScript(word);
     const mixed = (text) => {
       const holder = document.createElement('span');
       fillMixed(holder, text, script);
@@ -300,7 +306,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     statusRow.classList.toggle('ghost', !(writing || tone));
     // A word of one character has no row of slots on any of its cards.
     if (current) {
-      wordRow.classList.toggle('single', Array.from(current.word[scriptFor(current.word, settings)]).length === 1);
+      wordRow.classList.toggle('single', Array.from(current.word[cardScript(current.word)]).length === 1);
     }
     // These belong to the writing card and may be left over from the last
     // one. (A writing card shows its stroke count again when it starts.)
@@ -317,7 +323,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // Above the card: a note if this word is in another script than the rest
   // of the deck. Pass null to take it away.
   function showScriptFlag(word) {
-    fillMixed(scriptFlag, word ? scriptFlagFor(word, settings) : '', word ? scriptFor(word, settings) : settings.script);
+    fillMixed(scriptFlag, word ? scriptFlagFor(word, settings, cardScript(word)) : '', word ? cardScript(word) : settings.script);
     scriptFlag.hidden = scriptFlag.textContent === '';
     // It lies in the face's top corner: the face's text starts below it.
     cardFace.classList.toggle('flagged', !scriptFlag.hidden);
@@ -488,6 +494,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       settings.pronunciation === 'taiwan' ? 'taiwan' : 'mainland',
       settings.volume,
     );
+    // Another word was asked to be spoken meanwhile: that one is heard.
+    if (spoken === 'overtaken') {
+      return;
+    }
     // How it was spoken is noted on the button for the browser tests; and
     // the button says so if the word could not be spoken at all.
     listenButton.dataset.spoken = `${word.id} ${spoken}`;
@@ -571,7 +581,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
             options = null;
             await suspend(word, type);
             leavePast();
-            showNotice(t('review.suspendedCard', { kind: kindName(type), word: word[scriptFor(word, settings)] }));
+            showNotice(t('review.suspendedCard', { kind: kindName(type), word: word[cardScript(word)] }));
             return true;
           },
           async startOver() {
@@ -591,11 +601,12 @@ export function createReview(elements, flows, settings, editWord, showWord, note
             graded = graded.filter((entry) => entry !== past);
             await startOver(word, type);
             leavePast();
-            showNotice(t('review.startedOver', { kind: kindName(type), word: word[scriptFor(word, settings)] }));
+            showNotice(t('review.startedOver', { kind: kindName(type), word: word[cardScript(word)] }));
             return true;
           },
         };
-    showWord(word, thisCard);
+    // From a card in the other script, its forms on the page are unfolded.
+    showWord(word, thisCard, { formsOpen: Boolean(shown.other) });
   }
 
   // After Suspend or Start over: the card left when looking back, if any,
@@ -739,8 +750,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     }
 
     const newCard = {
-      // Writing cards are kept per script (see cardIdFor).
-      id: cardIdFor(word, type, scriptFor(word, settings)),
+      // Writing cards are kept per script (see cardIdFor); a card in the
+      // other script has an ID of its own (otherScriptCardId).
+      id: current.other ? otherScriptCardId(word, type, current.script) : cardIdFor(word, type, scriptFor(word, settings)),
       wordId: word.id,
       type,
       due: chosen.due,
@@ -756,7 +768,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       time,
       grade: value,
       suggestedGrade: suggested,
-      script: scriptFor(current.word, settings),
+      script: cardScript(current.word),
       log: chosen.log,
       // What was answered; the fields depend on the kind of card.
       ...answerDetails,
@@ -773,6 +785,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       word,
       type,
       script: review.script,
+      other: Boolean(current.other),
       cardBefore: card,
       card: newCard,
       review,
@@ -786,7 +799,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       showNotice(
         t('review.suspendedLeechNow', {
           kind: kindName(type),
-          word: word[scriptFor(word, settings)],
+          word: word[cardScript(word)],
           count: lapsesOf(newCard),
         }),
       );
@@ -924,7 +937,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     if (!left) {
       stopwatch.stop();
     }
-    current = { word: entry.word, type: entry.type, card: entry.card };
+    current = { word: entry.word, type: entry.type, card: entry.card, ...(entry.other && { script: entry.script, other: true }) };
     const back = graded.length - index;
     // Short: "Sentence · writing · the card before" took two lines on a phone.
     typeElement.textContent = t('review.labelBack', { label: labelFor(entry.word, entry.type), count: back });
@@ -1342,10 +1355,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   // ---- The four kinds of card ----
 
-  // Returns false if the word can't be written (no stroke data).
+  // Returns false if the word can't be written (no stroke data), null if
+  // another word was asked for while its data loaded (wordFlow.start).
   async function showWritingCard() {
     const { word } = current;
-    const script = scriptFor(word, settings);
+    const script = cardScript(word);
     // What is written: the word; or for a sentence its missing word, with
     // the sentence and its gap shown under the meaning, or all of it.
     const asked = isSentence(word)
@@ -1442,7 +1456,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     });
     flows.tone.start({
       word,
-      script: scriptFor(word, settings),
+      script: cardScript(word),
       reading: readingOf(word),
       answers: toneAnswersOf(word),
       offerHelp: offerToneHelp(),
@@ -1471,7 +1485,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // and you choose.
   function showRecallCard(ask) {
     const { word } = current;
-    const script = scriptFor(word, settings);
+    const script = cardScript(word);
     if (ask === 'pinyin') {
       showAskedMeaning(word);
     }
@@ -1485,8 +1499,16 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       onReveal: () => offerGrades(GOOD, {}),
       onContinue: () => grade(suggested),
       backToCard: backToCard(),
-      // Under the answer, the word's learning tip (cardTip.js).
-      onAnswerShown: () => addTip(word, script, () => current && current.word === word && current.type === ask),
+      // Under the answer, the word's learning tip (cardTip.js); on a card in
+      // the other script, its forms instead (addFormsTip).
+      onAnswerShown: () => {
+        const still = () => current && current.word === word && current.type === ask;
+        if (current.other) {
+          addFormsTip(word, script, still);
+        } else {
+          addTip(word, script, still);
+        }
+      },
     });
   }
 
@@ -1527,6 +1549,26 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         }
       })
       .catch(() => {});
+  }
+
+  // On a card in the other script, under the answer: the changes the word
+  // has and where else each is (answerTip in formsFlow.js), in place of its
+  // learning note (the owner, 2026-11-09); the note if it has none to show.
+  function addFormsTip(word, script, still) {
+    ensureForms().then((loaded) => {
+      if (!still()) {
+        return;
+      }
+      const changes = loaded ? changesOfWord(word, loaded.table.changesOf).filter(needsLearning) : [];
+      const tip = changes.length > 0 ? answerTip(word, changes, formsContext(word), openAbout) : null;
+      if (!tip) {
+        addTip(word, script, still);
+        return;
+      }
+      cardFace.classList.add('with-tip');
+      cardFace.append(tip);
+      cardAboutButton.hidden = true;
+    });
   }
 
   // Shows a tone, pinyin or meaning card for Free practice. Returns false if
@@ -1637,7 +1679,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     // A word being learned can be heard at every step.
     offerListen(true);
 
-    const script = scriptFor(word, settings);
+    const script = cardScript(word);
     if (step === 'test') {
       pinyinElement.hidden = true;
       showPartsFor('writing');
@@ -1780,14 +1822,16 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       return;
     }
     lesson.index = toIndex;
-    if (!(await showLessonStep()) && current === shown) {
+    if ((await showLessonStep()) === false && current === shown) {
       unwritable.add(current.word.id);
       showNext();
     }
   }
 
   lessonNextButton.addEventListener('click', () => {
-    if (lesson) {
+    if (formsLesson) {
+      nextFormStep();
+    } else if (lesson) {
       nextLessonStep();
     }
   });
@@ -1795,6 +1839,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // step". (On the other steps the card's face belongs to the tone card or
   // is out of sight; those flows listen for their own taps.)
   cardFace.addEventListener('click', () => {
+    // So it does at every step of learning forms (the last: shows the answer).
+    if (formsLesson) {
+      nextFormStep();
+      return;
+    }
     if (lesson && lesson.steps[lesson.index] === 'meet' && !lessonNextButton.hidden) {
       nextLessonStep();
     }
@@ -1822,6 +1871,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // through a list they half know is not stopped by the summary every few
   // words. It still counts in "learned today".
   skipLessonButton.addEventListener('click', async () => {
+    // Learning forms: "I can read this".
+    if (formsLesson) {
+      finishForm(true);
+      return;
+    }
     // (Not offered in a lesson repeated, which saves nothing.)
     if (!lesson || !current || current.repeating) {
       return;
@@ -2204,7 +2258,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     studyArea.hidden = false;
     showScriptFlag(word);
     const shown = current;
-    if (!(await showLessonStep()) && current === shown) {
+    if ((await showLessonStep()) === false && current === shown) {
       // No stroke data after all: the lesson starts again without writing.
       unwritable.add(word.id);
       startNextWord();
@@ -2215,7 +2269,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // In Learn, "Learn 5 more" at the end of today's words starts another
   // sitting of that many.
   learnNextButton.addEventListener('click', () => {
-    if (mode === 'learn') {
+    if (mode === 'learn' && learningForms) {
+      formsBatch = { size: Math.min(FORMS_PER_SITTING, formsWaiting().length), items: [] };
+      showNextForm();
+    } else if (mode === 'learn') {
       batch = { size: moreToLearn(learnCounts().waiting), ids: [] };
       startNextWord();
     } else if (mode === 'lesson') {
@@ -2246,7 +2303,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     studyArea.hidden = false;
     showScriptFlag(word);
     const shown = current;
-    if (!(await showLessonStep()) && current === shown) {
+    if ((await showLessonStep()) === false && current === shown) {
       // No stroke data after all: the lesson starts again without writing.
       unwritable.add(word.id);
       startRepeat();
@@ -2263,6 +2320,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   // today's words and when there is nothing to learn, the summary or a
   // message.
   function showNextToLearn() {
+    if (learningForms) {
+      showNextForm();
+      return;
+    }
     const { learnedToday, waiting } = learnCounts();
     const goal = goalForToday();
     countsElement.textContent = t('review.learnCounts', { learned: learnedToday, goal, waiting });
@@ -2296,48 +2357,698 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   // ---- Studying one deck ----
 
-  // The deck chosen at the top of Review and Learn, or null for all words
-  // (also if the deck chosen has since been deleted).
+  // The deck chosen at the top of Learn, or null for all words (also if the
+  // deck chosen has since been deleted).
   function studyDeck() {
     return decks.find((deck) => deck.id === settings.studyDeck) || null;
   }
 
-  // The words studied: all of them, or those in the chosen deck and the
-  // decks inside it. A word in several decks still has one set of cards, so
-  // this only narrows down which words come up.
-  function studyWords() {
-    const deck = studyDeck();
-    if (!deck) {
-      return words;
+  // What Review has, ticked at the top of it (the owner, 2026-11-10: as
+  // many decks as wanted, and the cards in the other script with them):
+  // { ids, other, deck }. ids: the decks ticked and those inside them, or
+  // null for all words (also if every deck ticked has since been deleted);
+  // other: true if the cards in the other script are ticked, of every word,
+  // while the chooser offers them (otherOffered); deck: the one deck
+  // ticked, else null. Worked out once for each choice and set of decks, as
+  // Review asks for each word.
+  let reviewChoiceKept = null;
+  function reviewChoice() {
+    const key = `${settings.reviewDecks.join('\n')}|${otherOffered}|${settings.otherScript}`;
+    if (reviewChoiceKept?.key !== key || reviewChoiceKept.decks !== decks) {
+      const ticked = decks.filter((deck) => settings.reviewDecks.includes(deck.id));
+      const ids = new Set(ticked.flatMap((deck) => [...deckWithInside(decks, deck.id)]));
+      const choice = {
+        ids: ticked.length > 0 ? ids : null,
+        other: otherOffered && settings.otherScript !== 'off' && settings.reviewDecks.includes(OTHER_CARDS_CHOICE),
+        deck: ticked.length === 1 ? ticked[0] : null,
+      };
+      reviewChoiceKept = { key, decks, choice };
     }
-    const ids = deckWithInside(decks, deck.id);
-    return words.filter((word) => isInDecks(word, ids));
+    return reviewChoiceKept.choice;
   }
 
-  // The goal for new words a day: the deck's own, or the one in Settings.
+  // The words studied: all of them, or those in the chosen decks and the
+  // decks inside them. A word in several decks still has one set of cards,
+  // so this only narrows down which words come up.
+  // While Review has the cards in the other script, all words: the forms
+  // are learned across decks (studiedCardType leaves out the own cards of
+  // words outside the decks).
+  function studyWords() {
+    const ids =
+      mode === 'review'
+        ? reviewChoice().other
+          ? null
+          : reviewChoice().ids
+        : studyDeck() && deckWithInside(decks, studyDeck().id);
+    return ids ? words.filter((word) => isInDecks(word, ids)) : words;
+  }
+
+  // The goal for new words a day: the deck's own, or the one in Settings
+  // (also with several decks ticked in Review).
   function goalForToday() {
-    return dailyGoal(studyDeck(), settings.newWordsPerDay);
+    return dailyGoal(mode === 'review' ? reviewChoice().deck : studyDeck(), settings.newWordsPerDay);
   }
 
   // The list of decks to choose from. With only the deck the app starts
   // with there is nothing to choose, and it is left out.
+  // In Learn, the forms in the other script come first while there are some
+  // (formsEntry); while they are learned the deck's picture in the corner is
+  // the other script's first character, 简 or 繁 (the owner, 2026-11-09).
+  // In Review, the cards in the other script come first in the same way
+  // (otherCardsEntry), and the decks are ticked, as many as wanted: the
+  // chooser is handed a list.
   function showDeckChoice() {
-    deckChooser.show(decks, studyDeck() ? settings.studyDeck : '', settings.script);
-    deckButton.hidden = decks.length < 2;
-    deckTag.hidden = decks.length < 2;
+    const entry = formsEntry() ?? otherCardsEntry();
+    otherOffered = entry?.id === OTHER_CARDS_CHOICE;
+    const chosen =
+      mode === 'review'
+        ? settings.reviewDecks.filter((id) =>
+            id === OTHER_CARDS_CHOICE ? otherOffered : decks.some((deck) => deck.id === id),
+          )
+        : learningForms && entry
+          ? FORMS_CHOICE
+          : studyDeck()
+            ? settings.studyDeck
+            : '';
+    deckChooser.show(decks, chosen, settings.script, entry);
+    deckButton.hidden = decks.length < 2 && !entry;
+    deckTag.hidden = decks.length < 2 && !entry;
+    // (Empty otherwise, or it would be read as part of the deck's name.)
+    const han = deckTag.querySelector('.deck-tag-han');
+    const onForms = chosen === FORMS_CHOICE;
+    han.textContent = !onForms ? '' : otherScriptName() === 'simplified' ? '简' : '繁';
+    han.lang = langFor(otherScriptName());
+    deckTag.classList.toggle('forms', onForms);
   }
 
   // Saving the setting has the next card worked out afresh (see refresh).
-  // Today's words are the deck's: another deck starts afresh.
+  // Today's words are the deck's: another deck starts afresh. So does Review,
+  // as on opening it: it asks again how many cards to review, and practice
+  // of the deck before ends (the owner, 2026-11-08: a card of the deck
+  // came straight up instead).
   const deckChooser = createDeckChooser({
     buttons: [deckButton, deckTag],
     choose: (deckId) => {
       batch = null;
+      formsBatch = null;
+      // Review: the list ticked, saved.
+      if (Array.isArray(deckId)) {
+        sitting = null;
+        round = null;
+        settings.change('reviewDecks', deckId);
+        return;
+      }
+      // The forms are no deck: chosen, Learn shows them; the deck studied
+      // stays as it was.
+      if (deckId === FORMS_CHOICE) {
+        learningForms = true;
+        endLesson();
+        showDeckChoice();
+        showNext();
+        return;
+      }
+      if (learningForms) {
+        learningForms = false;
+        endFormsLesson();
+        if (deckId === settings.studyDeck) {
+          showDeckChoice();
+          showNext();
+          return;
+        }
+      }
       settings.change('studyDeck', deckId);
     },
+    notes: dueNotes,
   });
 
+  // The count after each row of Review's chooser (the owner, 2026-11-10:
+  // only the cards in the other script had one, which looked odd): the
+  // cards due now, new ones included, as for that entry, of the words of
+  // each deck and the decks inside it, or of all words. Worked out as the
+  // panel opens, not at every card.
+  function dueNotes() {
+    if (mode !== 'review') {
+      return null;
+    }
+    const plan = planSession(words, cards, Date.now(), {
+      newWordsPerDay: settings.newWordsPerDay,
+      enabledTypes: CARD_TYPES,
+      hasCardType,
+      scriptOf: (word) => scriptFor(word, settings),
+      otherCardsOf,
+    });
+    // Each word's cards count in each of its decks and the decks those are
+    // inside, once each.
+    const parentOf = new Map(decks.map((deck) => [deck.id, deck.parentId]));
+    const byDeck = new Map();
+    for (const word of words) {
+      const count = plan.cardsByWord.get(word.id);
+      if (!count) {
+        continue;
+      }
+      const reached = new Set();
+      for (const deckId of word.decks || []) {
+        for (let id = deckId; id && !reached.has(id); id = parentOf.get(id)) {
+          reached.add(id);
+        }
+      }
+      for (const id of reached) {
+        byDeck.set(id, (byDeck.get(id) ?? 0) + count);
+      }
+    }
+    const due = (count) => t('reviewOther.due', { count });
+    return new Map([['', due(plan.dueCount + plan.newCardCount)], ...decks.map((deck) => [deck.id, due(byDeck.get(deck.id) ?? 0)])]);
+  }
+
+
+  // ---- Learning forms in the other script ----
+  //
+  // The owner, 2026-11-09 (docs/cards.md, "Reading the other script"): with
+  // "Also read simplified" on, Learn's deck chooser has "简体字 forms" before
+  // the decks. Chosen, Learn takes the learner's words that teach a change
+  // between the scripts (formsToLearn in otherScript.js), one at a time, in
+  // three steps (formsFlow.js): what changed, where else it changes, and
+  // reading the word alone. At the end the word has `formsLearnedAt`, and
+  // its cards in the other script come up in Review (otherCardsOf). "I can
+  // read this" answers those cards Easy, as "I know this word" does. A
+  // sitting is five words; "Learn 5 more forms" at its end goes on, so the
+  // learner sets the pace. Nothing comes by itself.
+
+  // The entry's ID in the deck chooser (no deck has it: deck IDs are random).
+  const FORMS_CHOICE = '#forms';
+  // The same for the cards in the other script in Review, and whether the
+  // chooser offers them (see "Reviewing the cards in the other script").
+  const OTHER_CARDS_CHOICE = '#other-cards';
+  let otherOffered = false;
+  const FORMS_PER_SITTING = 5;
+  // True while Learn shows the forms (chosen in the deck chooser, or from
+  // Review's end), until a deck is chosen or Learn is left.
+  let learningForms = false;
+  // { table, morePairs } once loaded (formsLoader.js); null until then.
+  let forms = null;
+  // True once ensureForms has shown what was waiting for them: the word's
+  // page may load them first, with the setting off (formsOnPage).
+  let formsShown = false;
+  // The word on screen: { item, steps, index, shown } (shown: its reading,
+  // at the last step).
+  let formsLesson = null;
+  // The sitting: { size, items } (items: those learned, in order).
+  let formsBatch = null;
+
+  // The script the cards are in and the other one, for a word.
+  function viewOf(word) {
+    const own = scriptFor(word, settings);
+    return { own, other: own === 'traditional' ? 'simplified' : 'traditional' };
+  }
+
+  // The other script of the deck as a whole (Settings), for its name.
+  function otherScriptName() {
+    return settings.script === 'traditional' ? 'simplified' : 'traditional';
+  }
+
+  // Loads what the changes are worked out from, once, with the setting on;
+  // then shows what was waiting for it (the counts, the chooser's entry).
+  function ensureForms() {
+    if (settings.otherScript === 'off') {
+      return Promise.resolve(null);
+    }
+    return loadForms().then((loaded) => {
+      const first = !formsShown;
+      formsShown = true;
+      forms = loaded;
+      if (first) {
+        showDeckChoice();
+        if (active && current === null && lookingBack === null) {
+          showNext();
+        }
+      }
+      return forms;
+    });
+  }
+
+  // The learned words, in the order learned (their first review, for words
+  // from before Learn or brought over), sentences and radicals left out.
+  function learnedInOrder() {
+    const firstSeen = new Map();
+    for (const card of cards.values()) {
+      if (card.firstReviewedAt < (firstSeen.get(card.wordId) ?? Infinity)) {
+        firstSeen.set(card.wordId, card.firstReviewedAt);
+      }
+    }
+    return words
+      .filter((word) => !isSentence(word) && !isRadical(word))
+      .map((word) => [word, Math.min(word.learnedAt ?? Infinity, firstSeen.get(word.id) ?? Infinity)])
+      .filter(([, at]) => at !== Infinity)
+      .sort((a, b) => a[1] - b[1])
+      .map(([word]) => word);
+  }
+
+  // What is left to learn: [{ word, keys }] (formsToLearn); empty with the
+  // setting off or before the files are loaded. Worked out again only when
+  // the words or cards have changed.
+  // With it, which learned words have each change (`byKey`, key → words in
+  // the order learned), for "where else it changes": looked up, not searched
+  // for (2026-11-09: searching all of the owner's 2,456 words for each change
+  // took 1.7 s a step on a tablet's speed).
+  let formsMemo = null;
+  function formsState() {
+    if (
+      formsMemo?.words === words &&
+      formsMemo.cards === cards.size &&
+      formsMemo.mode === settings.otherScript &&
+      formsMemo.script === settings.script
+    ) {
+      return formsMemo;
+    }
+    const learned = learnedInOrder();
+    forms.table.add(learned.flatMap(differingPairs));
+    const items = formsToLearn(learned, { mode: settings.otherScript, changesOf: forms.table.changesOf });
+    const byKey = new Map();
+    for (const word of learned) {
+      for (const change of changesOfWord(word, forms.table.changesOf)) {
+        const key = keyOf(change);
+        if (!byKey.has(key)) {
+          byKey.set(key, []);
+        }
+        byKey.get(key).push(word);
+      }
+    }
+    formsMemo = { words, cards: cards.size, mode: settings.otherScript, script: settings.script, items, byKey };
+    return formsMemo;
+  }
+
+  function formsWaiting() {
+    if (!forms || settings.otherScript === 'off') {
+      return [];
+    }
+    return formsState().items;
+  }
+
+  // Where else a change is: the learner's other words with it, then
+  // characters from the lists (whereElse in otherScript.js).
+  function elsewhereOf(change, word) {
+    const key = keyOf(change);
+    return whereElse(key, {
+      words: formsState().byKey.get(key) ?? [],
+      except: words.find((each) => each.id === word.id) ?? word,
+      morePairs: forms.morePairs,
+      changesOf: forms.table.changesOf,
+    });
+  }
+
+  // What the steps need to draw a word's card (formsFlow.js).
+  function formsContext(word) {
+    return {
+      table: forms.table,
+      view: viewOf(word),
+      reading: (target, of = word) => fillReading(target, describeReading(readingOf(of)).main),
+      gloss: (target, of) => {
+        fillReading(target, describeReading(readingOf(of)).main);
+        target.append(', ');
+        const meaning = document.createElement('span');
+        fillWithoutChinese(meaning, of);
+        target.append(meaning);
+      },
+      elsewhere: (change) => elsewhereOf(change, word),
+      open: (of) => showWord(of),
+      // Its words tapped for their reading and meaning, as in a note.
+      tappable: tappableText,
+    };
+  }
+
+  // What Learn shows on the forms: the next word's steps, or the end of the
+  // sitting, or that there is nothing left.
+  async function showNextForm() {
+    if (!forms) {
+      showLearnMessage(t('learnForms.loading'), false);
+      await ensureForms();
+      if (!active || mode !== 'learn' || !learningForms) {
+        return;
+      }
+    }
+    const waiting = formsWaiting();
+    countsElement.textContent = t('learnForms.counts', { count: waiting.length });
+    if (!formsBatch) {
+      formsBatch = { size: Math.min(FORMS_PER_SITTING, waiting.length), items: [] };
+    }
+    const finished = formsBatch.items.length > 0 && (formsBatch.items.length >= formsBatch.size || waiting.length === 0);
+    atEnd = finished || waiting.length === 0;
+    if (finished) {
+      showFormsSummary(waiting.length);
+    } else if (waiting.length === 0) {
+      showLearnMessage(t('learnForms.noneLeft'), false);
+    } else {
+      startForm(waiting[0]);
+    }
+  }
+
+  function startForm(item) {
+    current = { word: item.word, type: 'meaning', card: null, learning: true, forms: true };
+    // "Where else it changes" only when there is somewhere else.
+    const somewhereElse = item.keys.some((change) => {
+      const found = elsewhereOf(change, item.word);
+      return found.words.length > 0 || found.characters.length > 0;
+    });
+    const steps = FORMS_STEPS.filter((step) => step !== 'elsewhere' || somewhereElse);
+    formsLesson = { item, steps, index: 0, shown: false };
+    stopwatch.start();
+    setFocus(true);
+    donePanel.hidden = true;
+    studyArea.hidden = false;
+    showScriptFlag(null);
+    showFormStep();
+  }
+
+  // The notes above the card, a step at a time.
+  const FORM_NOTES = {
+    changed: 'learnForms.noteChanged',
+    elsewhere: 'learnForms.noteElsewhere',
+    read: 'learnForms.noteRead',
+  };
+
+  function showFormStep() {
+    const { item, steps, index, shown } = formsLesson;
+    const step = steps[index];
+    const { word } = item;
+    const context = formsContext(word);
+    typeElement.textContent = t('learnForms.step', { step: index + 1, steps: steps.length });
+    lessonNote.textContent = t(FORM_NOTES[step], { inScript: t(context.view.other === 'simplified' ? 'learnForms.inSimplified' : 'learnForms.inTraditional') });
+    lessonNote.hidden = false;
+    skipLessonButton.textContent = t('learnForms.canRead');
+    skipLessonButton.hidden = false;
+    lessonAboutButton.hidden = true;
+    stopFlows();
+    hideGrades();
+    offerListen(true);
+    showPartsFor('meaning');
+    // As at a new word's first look (showLessonStep): the meaning and reading
+    // above take their room, invisible, so that the card doesn't move.
+    pinyinButton.hidden = true;
+    meaningElement.textContent = word.definition;
+    showPinyin();
+    meaningElement.classList.add('ghost');
+    pinyinElement.classList.add('ghost');
+    const parts =
+      step === 'changed'
+        ? changedFace(item, context)
+        : step === 'elsewhere'
+          ? elsewhereFace(item, context)
+          : readFace(word, shown, context);
+    cardFace.classList.toggle('with-tip', step === 'changed');
+    cardFace.classList.toggle('forms-list', step === 'elsewhere');
+    cardFace.replaceChildren(...parts);
+    showFormsStrip();
+    lessonNextButton.hidden = false;
+    const last = !formsBatch || formsBatch.items.length + 1 >= formsBatch.size;
+    lessonNextButton.textContent =
+      step !== 'read'
+        ? t('study.lessonNextButton')
+        : !shown
+          ? t('learnForms.show')
+          : t(last ? 'review.done' : 'learnForms.nextForm');
+  }
+
+  async function nextFormStep() {
+    const step = formsLesson.steps[formsLesson.index];
+    if (step === 'read' && !formsLesson.shown) {
+      formsLesson.shown = true;
+      showFormStep();
+      if (settings.sound === 'auto') {
+        speakCurrent();
+      }
+      return;
+    }
+    if (formsLesson.index + 1 < formsLesson.steps.length) {
+      formsLesson.index += 1;
+      showFormStep();
+      return;
+    }
+    await finishForm(false);
+  }
+
+  // The word's forms are learned: `formsLearnedAt`, and its cards in the
+  // other script start in Review. known: "I can read this", those cards
+  // answered Easy (markedKnown).
+  async function finishForm(known) {
+    const { item } = formsLesson;
+    const word = words.find((entry) => entry.id === item.word.id) ?? item.word;
+    const now = Date.now();
+    stopwatch.stop();
+    let saved;
+    if (known) {
+      const other = otherCardsOf({ ...word, formsLearnedAt: now });
+      const result = markedKnown(word, [...cards.values()], other?.types ?? [], other?.script, now, randomId, {
+        idOf: otherScriptCardId,
+        mark: 'formsLearnedAt',
+      });
+      await saveKnown([result]);
+      for (const card of result.cards) {
+        cards.set(card.id, card);
+      }
+      noteReviews(result.reviews);
+      saved = result.word;
+    } else {
+      saved = { ...word, formsLearnedAt: now };
+      await putAll('words', [saved]);
+    }
+    words = words.map((entry) => (entry.id === saved.id ? saved : entry));
+    formsBatch?.items.push({ ...item, word: saved });
+    endFormsLesson();
+    showNextForm();
+  }
+
+  // Leaves the steps: the buttons they relabeled get their own text back.
+  function endFormsLesson() {
+    formsLesson = null;
+    lessonNextButton.textContent = t('study.lessonNextButton');
+    skipLessonButton.textContent = t('review.skipLessonButton');
+    cardFace.classList.remove('forms-list');
+  }
+
+  // The top line: the sitting's words as small boxes, each with the new form
+  // it teaches (争), as today's words in Learn (showStrip).
+  function showFormsStrip() {
+    learnStrip.hidden = false;
+    typeElement.classList.add('for-screen-readers');
+    const shownOf = (item) => {
+      const view = viewOf(item.word);
+      return item.keys.length > 0
+        ? changeShown(item.keys[0], item.word, forms.table, view).after
+        : item.word[view.other];
+    };
+    const box = (kind, item) => {
+      const chip = document.createElement('span');
+      chip.className = `learn-chip ${kind}`;
+      if (item) {
+        const text = document.createElement('span');
+        text.className = 'chip-word';
+        text.lang = langFor(viewOf(item.word).other);
+        text.textContent = shownOf(item);
+        chip.append(text);
+      }
+      return chip;
+    };
+    const now = box('current', formsLesson.item);
+    const bar = document.createElement('span');
+    bar.className = 'chip-steps';
+    formsLesson.steps.forEach((step, index) => {
+      const part = document.createElement('span');
+      part.classList.toggle('done', index <= formsLesson.index);
+      bar.append(part);
+    });
+    now.append(bar);
+    const size = Math.max(formsBatch.size, formsBatch.items.length + 1);
+    const count = document.createElement('span');
+    count.className = 'chip-count';
+    count.textContent = `${formsBatch.items.length + 1}/${size}`;
+    learnStrip.replaceChildren(
+      count,
+      ...formsBatch.items.map((item) => box('learned', item)),
+      now,
+      ...Array.from({ length: size - formsBatch.items.length - 1 }, () => box('to-come')),
+    );
+    learnStrip.setAttribute('aria-label', t('learnForms.todaysForms', { learned: formsBatch.items.length, size }));
+    for (const look of ['words', 'squares', 'count']) {
+      learnStrip.dataset.look = look;
+      if (learnStrip.scrollWidth <= learnStrip.clientWidth + 1) {
+        break;
+      }
+    }
+  }
+
+  // The end of the sitting: its words with the changes they taught, "Review
+  // them now" and "Learn 5 more forms".
+  function showFormsSummary(waiting) {
+    showLearnMessage('', false);
+    page.classList.add('learn-summary');
+    const other = otherScriptName();
+    const heading = document.createElement('h2');
+    heading.className = 'done-heading';
+    fillMixed(
+      heading,
+      t(other === 'simplified' ? 'learnForms.summarySimplified' : 'learnForms.summaryTraditional', {
+        count: formsBatch.items.length,
+      }),
+      other,
+    );
+    const list = summaryList(formsBatch.items, formsContext(formsBatch.items[0].word));
+    const next = document.createElement('p');
+    next.className = 'done-next';
+    next.textContent = t('review.summaryCards');
+    doneMessage.replaceChildren(heading, list, next);
+    reviewNowButton.hidden = false;
+    learnNextButton.textContent = t('learnForms.learnMore', { count: Math.min(FORMS_PER_SITTING, waiting) });
+    learnNextButton.classList.remove('primary');
+    learnNextButton.hidden = waiting === 0;
+  }
+
+  // In Review with nothing due: "Learn 简体字 forms · 12" under "Learn new
+  // words", while forms wait (main.js opens Learn on them).
+  function offerForms(on) {
+    const count = on ? formsWaiting().length : 0;
+    learnFormsButton.hidden = count === 0;
+    if (count > 0) {
+      const other = otherScriptName();
+      fillMixed(
+        learnFormsButton,
+        t(other === 'simplified' ? 'learnForms.reviewButtonSimplified' : 'learnForms.reviewButtonTraditional', { count }),
+        other,
+      );
+    }
+  }
+
+  // The chooser's entry for the forms, in Learn while there are some (or
+  // they are being learned): { id, label, note, script, title }, or null.
+  function formsEntry() {
+    if (mode !== 'learn' || settings.otherScript === 'off' || !forms) {
+      return null;
+    }
+    const count = formsWaiting().length;
+    if (count === 0 && !learningForms) {
+      return null;
+    }
+    const other = otherScriptName();
+    return {
+      id: FORMS_CHOICE,
+      label: t(other === 'simplified' ? 'learnForms.entrySimplified' : 'learnForms.entryTraditional'),
+      note: t('learnForms.toLearn', { count }),
+      script: other,
+      title: t('learnForms.chooserTitle'),
+    };
+  }
+
+  // ---- Reviewing the cards in the other script ----
+  //
+  // The owner, 2026-11-09: Review's deck chooser has "简体字 cards" before
+  // the decks, as Learn has the forms, while some of those cards exist.
+  // Ticked, Review has the cards in the other script (otherCardsOf) of all
+  // words, and the own cards only of the words in the decks ticked with it
+  // (studiedCardType); none, ticked alone. Saved with the decks (the owner,
+  // 2026-11-10).
+
+  // The kinds of card Review plans: of a word's own, only those of words in
+  // the decks ticked while the cards in the other script are ticked too.
+  function studiedCardType(word, type) {
+    if (mode === 'review') {
+      const { ids, other } = reviewChoice();
+      if (other && !(ids && isInDecks(word, ids))) {
+        return false;
+      }
+    }
+    return hasCardType(word, type);
+  }
+
+  // The chooser's entry for the cards in the other script, in Review while
+  // some exist: { id, label, note, script, title, heading }, or null. The
+  // note counts those due now, new ones included.
+  function otherCardsEntry() {
+    if (mode !== 'review' || settings.otherScript === 'off') {
+      return null;
+    }
+    const all = words.filter((word) => !isSentence(word));
+    if (!all.some((word) => otherCardsOf(word)?.types.length > 0)) {
+      return null;
+    }
+    const plan = planSession(all, cards, Date.now(), {
+      newWordsPerDay: goalForToday(),
+      enabledTypes: CARD_TYPES,
+      hasCardType: () => false,
+      scriptOf: (word) => scriptFor(word, settings),
+      otherCardsOf,
+    });
+    const other = otherScriptName();
+    return {
+      id: OTHER_CARDS_CHOICE,
+      label: t(other === 'simplified' ? 'reviewOther.entrySimplified' : 'reviewOther.entryTraditional'),
+      note: t('reviewOther.due', { count: plan.dueCount + plan.newCardCount }),
+      script: other,
+      title: t('reviewOther.chooserTitle'),
+      heading: t('reviewOther.decks'),
+    };
+  }
+
   // ---- Choosing the next card ----
+
+  // The script a word is shown in on the card up now: the other script on
+  // a card of the word there (an entry with `other` from planSession), its
+  // own everywhere else.
+  function cardScript(word) {
+    return current?.other && current.word.id === word.id ? current.script : scriptFor(word, settings);
+  }
+
+  // A word's cards in the other script, for planSession: { script, types },
+  // or null. Only for a word whose forms were learned (`formsLearnedAt`,
+  // otherScript.js), with the setting on; the kinds are the setting's. None
+  // for a word written alike, or differing only by a variant (么 → 幺).
+  function otherCardsOf(word) {
+    if (
+      settings.otherScript === 'off' ||
+      word.formsLearnedAt === undefined ||
+      differingPairs(word).length === 0 ||
+      isSentence(word) ||
+      isRadical(word)
+    ) {
+      return null;
+    }
+    const script = scriptFor(word, settings) === 'traditional' ? 'simplified' : 'traditional';
+    const types = CARD_TYPES.filter((type) => settings.otherScriptTypes.includes(type)).filter((type) => {
+      if (isSuspended(word, type)) {
+        return false;
+      }
+      if (type === 'writing') {
+        return !unwritable.has(word.id);
+      }
+      if (type === 'tone') {
+        return toneAnswersOf(word) !== null;
+      }
+      return true;
+    });
+    return { script, types };
+  }
+
+  // The word's page's fold-out with its forms (pageForms in formsFlow.js):
+  // for every word written differently in the two scripts, learned or not
+  // (the owner, 2026-11-09: folded, it hides nothing), for someone using
+  // both ("Both" scripts, or "Also read" on); null for any other.
+  async function formsOnPage(word) {
+    if (
+      (settings.otherScript === 'off' && !settings.bothScripts) ||
+      differingPairs(word).length === 0 ||
+      isSentence(word) ||
+      isRadical(word)
+    ) {
+      return null;
+    }
+    // With "Also read" off the files are loaded all the same, without what
+    // ensureForms does once they are here (the chooser's entry, the counts).
+    const loaded = settings.otherScript === 'off' ? (forms = await loadForms()) : await ensureForms();
+    if (!loaded) {
+      return null;
+    }
+    formsState(); // the learner's own pairs added to the table
+    const changes = changesOfWord(word, loaded.table.changesOf).filter(needsLearning);
+    return { script: viewOf(word).other, parts: pageForms(word, changes, formsContext(word)) };
+  }
 
   function hasCardType(word, type) {
     // A suspended card does not come up (see leeches.js).
@@ -2542,14 +3253,22 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       which,
       missedToday,
       retrievability: (card) => retrievability(card.fsrsState, now),
-      hasCardType,
+      hasCardType: studiedCardType,
       scriptOf: (word) => scriptFor(word, settings),
+      otherCardsOf,
     });
   }
 
   // Whether any card was reviewed today, which "Practice again" goes through.
   function reviewedToday() {
-    return practiceCards(studyWords(), cards, Date.now(), { which: 'today', hasCardType, scriptOf: (word) => scriptFor(word, settings) }).length > 0;
+    return (
+      practiceCards(studyWords(), cards, Date.now(), {
+        which: 'today',
+        hasCardType: studiedCardType,
+        scriptOf: (word) => scriptFor(word, settings),
+        otherCardsOf,
+      }).length > 0
+    );
   }
 
   async function startRound(which, limit = null) {
@@ -2606,7 +3325,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     offerListen(current.type === 'writing' || current.type === 'meaning');
     showRoundLabel();
     if (current.type === 'writing') {
-      if (!(await showWritingCard())) {
+      if ((await showWritingCard()) === false) {
         unwritable.add(current.word.id);
         round.done += 1;
         showNext();
@@ -2716,10 +3435,15 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // Every kind: hasCardType says which are switched on, since
       // sentences have settings of their own.
       enabledTypes: CARD_TYPES,
-      hasCardType,
+      hasCardType: studiedCardType,
       scriptOf: (word) => scriptFor(word, settings),
+      otherCardsOf,
     });
     const total = plan.dueCount + plan.newCardCount;
+    // The chooser's count of cards in the other script, kept up to date.
+    if (settings.otherScript !== 'off') {
+      showDeckChoice();
+    }
     if (plan.next && !sitting) {
       if (settings.reviewStart && total > SMALLEST_LIMIT) {
         countsElement.textContent = '';
@@ -2811,6 +3535,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // the way there when words are waiting.
       learnNextButton.textContent = t('review.learnNewWords');
       learnNextButton.hidden = plan.waitingCount === 0;
+      offerForms(mode === 'review' && words.length > 0);
       lookBackButton.hidden = !(mode === 'review' && graded.length > 0);
       // Practice once the cards are done, when there are cards (see
       // "Practice at the end of Review").
@@ -2828,6 +3553,26 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // Cards come back after a few minutes, so keep checking.
       recheckTimer = setTimeout(showNext, RECHECK_MS);
       return;
+    }
+
+    // A writing card whose word has no stroke data is passed over before it
+    // is shown. Found only once the card was up, its meaning flashed by at
+    // every start of the app (the owner, 2026-11-10: 幇, a rare form of 幫
+    // brought over from Skritter, long overdue and so always first).
+    if (plan.next.type === 'writing') {
+      const { word } = plan.next;
+      const script = plan.next.other ? plan.next.script : scriptFor(word, settings);
+      const text = isSentence(word) ? sentenceWriting(word, script, settings.sentenceWriting).text : word[script];
+      const asked = showNextCalls;
+      const writable = await flows.writing.canWrite(text, script);
+      if (asked !== showNextCalls || !active) {
+        return; // showNext was called again meanwhile
+      }
+      if (!writable) {
+        unwritable.add(word.id);
+        showNext();
+        return;
+      }
     }
 
     current = plan.next;
@@ -2849,11 +3594,15 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // A writing card that is new starts with its lesson, unless the word
       // was just taught in the Learn tab.
       // (Not a sentence: tracing its characters would teach little.)
-      if (settings.lessons && !current.card && !isSentence(current.word) && !taughtInLearn(current.word)) {
+      // A writing card in the other script is new writing too.
+      if (settings.lessons && !current.card && !isSentence(current.word) && (current.other || !taughtInLearn(current.word))) {
         lesson = { steps: stepsFor(current.word, false), index: 0 };
       }
+      const shown = current;
       const started = lesson ? await showLessonStep() : await showWritingCard();
-      if (!started) {
+      // (null, or `current` changed: another card came up while this one's
+      // stroke data loaded, and it is shown instead.)
+      if (started === false && current === shown) {
         unwritable.add(current.word.id);
         showNext();
       }
@@ -2898,10 +3647,38 @@ export function createReview(elements, flows, settings, editWord, showWord, note
           cards.set(card.id, card);
         }
         readReviewsIfChanged(); // not waited for
+        ensureForms(); // not waited for either
         if (activated === activations) {
           forgetGoneWords();
         }
       })();
+      return loading;
+    },
+
+    // One word saved in its pop-up panel (wordsPanel.js, afterWordChange):
+    // it and its cards in place of what is held under its ID before
+    // (`oldId`, the same if unchanged), everything else as it is. The lists
+    // are new ones: the records are shared with the Decks tab.
+    wordChanged(word, oldId, wordCards) {
+      // A word renamed (its ID changed) is gone under its old ID: forgotten
+      // as after load().
+      const activated = activations;
+      loading = loading.then(() => {
+        words = [...words.filter((entry) => entry.id !== oldId && entry.id !== word.id), word];
+        for (const [id, card] of cards) {
+          if (card.wordId === oldId || card.wordId === word.id) {
+            cards.delete(id);
+          }
+        }
+        for (const card of wordCards) {
+          cards.set(card.id, card);
+        }
+        showDeckChoice();
+        ensureForms(); // not waited for
+        if (activated === activations && oldId !== word.id) {
+          forgetGoneWords();
+        }
+      });
       return loading;
     },
 
@@ -2911,11 +3688,17 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     //
     // newMode: 'review', 'learn' for the Learn tab, or 'lesson' for
     //          repeating `word`'s lesson ("Repeat lesson" on its page)
-    async activate(newMode = 'review', { word = null } = {}) {
+    //
+    // forms: in Learn, the forms in the other script (Review's end has a
+    // button for them, main.js)
+    async activate(newMode = 'review', { word = null, forms: onForms = false } = {}) {
       activations += 1;
       active = true;
       mode = newMode;
       repeatedWord = word;
+      learningForms = mode === 'learn' && onForms;
+      formsBatch = null;
+      endFormsLesson();
       // The style sheet centers the kind of card in Learn (main.learning),
       // and in a lesson repeated, which looks the same.
       page.classList.toggle('learning', mode === 'learn' || mode === 'lesson');
@@ -2963,6 +3746,12 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       return learnCounts().waiting;
     },
 
+    // How many words wait to have their forms in the other script learned
+    // (the menu shows it); 0 with the setting off.
+    formsWaiting() {
+      return formsWaiting().length;
+    },
+
     // Leaves the page ready for Free practice, which uses the writing parts.
     deactivate() {
       lookingBack = null;
@@ -2983,6 +3772,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       startPanel.hidden = true;
       learnNextButton.hidden = true;
       reviewNowButton.hidden = true;
+      learnFormsButton.hidden = true;
+      learningForms = false;
+      endFormsLesson();
       learnStrip.hidden = true;
       typeElement.classList.remove('for-screen-readers');
       page.classList.remove('learn-summary');
@@ -3005,6 +3797,14 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     // True if a word can have this kind of card now (the Progress tab).
     hasCardType,
 
+    // A word's cards in the other script, { script, types } or null (the
+    // Progress tab).
+    otherCardsOf,
+
+    // A word's forms in the other script for its page: { script, parts }
+    // (parts null when it has no change to show), or null.
+    formsOnPage,
+
     // Works out the next card afresh, e.g. after a setting changed.
     refresh() {
       // The goal may have changed: today's first words are worked out again
@@ -3012,8 +3812,25 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       if (batch?.first) {
         batch = null;
       }
+      // The setting switched off while the forms were learned: back to words.
+      if (settings.otherScript === 'off' && learningForms) {
+        learningForms = false;
+        endFormsLesson();
+      }
+      ensureForms();
       showDeckChoice(); // the deck studied may have been chosen elsewhere
       return showNext();
+    },
+
+    // After a sync brought changes in and load() has read them (main.js):
+    // the counts and "How many cards?" are worked out again, if no card is
+    // up. A card on screen stays, as the learner may be writing it
+    // (docs/sync.md, "Never in the way"); the counts are put away behind it,
+    // and the next card is chosen from the synced cards anyway.
+    showSynced() {
+      if (active && mode === 'review' && !round && current === null && lookingBack === null) {
+        return showNext();
+      }
     },
   };
 }

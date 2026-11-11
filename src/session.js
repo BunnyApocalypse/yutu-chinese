@@ -50,15 +50,31 @@ export function cardIdFor(word, type, script) {
   return script === 'simplified' && isPerScript(word, type) ? `${plain}#simplified` : plain;
 }
 
+// The ID of a card for a word in the script its cards are not in ("Also
+// read simplified", otherScript.js): "#in-simplified" or "#in-traditional"
+// added to the meaning, pinyin and tone cards, apart from the word's own
+// card of that kind, which asks in its own script. Writing is per script
+// anyway, so it is the word's writing card in that script.
+export function otherScriptCardId(word, type, script) {
+  return type === 'writing' ? cardIdFor(word, type, script) : `${cardId(word.id, type)}#in-${script}`;
+}
+
 // Every card ID a word can have, in both scripts.
 export function allCardIds(word) {
+  const other = word.traditional === word.simplified
+    ? []
+    : CARD_TYPES.flatMap((type) => [
+        otherScriptCardId(word, type, 'traditional'),
+        otherScriptCardId(word, type, 'simplified'),
+      ]);
   return [
-    ...new Set(
-      CARD_TYPES.flatMap((type) => [
+    ...new Set([
+      ...CARD_TYPES.flatMap((type) => [
         cardIdFor(word, type, 'traditional'),
         cardIdFor(word, type, 'simplified'),
       ]),
-    ),
+      ...other,
+    ]),
   ];
 }
 
@@ -136,6 +152,8 @@ export function nextToLearn(words, cards) {
 //                 never studied), or null if there is nothing to do right now
 //   dueCount:     how many studied cards are due now
 //   newCardCount: how many never-studied cards are waiting for learned words
+//   cardsByWord:  a Map of how many of those two each word has, by its ID
+//                 (none for a word with neither)
 //   newWordsLeftToday: how many cards to be learned again in another script
 //                 (or of words from Anki) can still be started today
 //   fromAnki:     true if some of those are cards of words from Anki
@@ -169,6 +187,7 @@ export function planSession(words, cards, now, options) {
     enabledTypes,
     hasCardType = () => true,
     scriptOf = () => 'traditional',
+    otherCardsOf = () => null,
   } = options;
   const dayStart = startOfStudyDay(now);
   // A study day is not always 24 hours (summer time), so the next one's
@@ -188,6 +207,8 @@ export function planSession(words, cards, now, options) {
   let nextHeldBack = false;
   let introducedToday = 0;
   let newCardCount = 0;
+  // Each word's never-studied cards, by its ID (cardsByWord).
+  const newOfWord = new Map();
   let reviewedToday = 0;
   let laterToday = 0;
   let tomorrow = 0;
@@ -272,6 +293,7 @@ export function planSession(words, cards, now, options) {
         toLearnAgain.push({ word, type, heldUntil, learnedAt: firstStudied, imported: true });
       } else {
         newCardCount += 1;
+        newOfWord.set(word.id, (newOfWord.get(word.id) ?? 0) + 1);
         // Only the word's next new card is on offer; the rest wait their turn.
         if (offeredNewCard) {
           continue;
@@ -279,6 +301,37 @@ export function planSession(words, cards, now, options) {
         offeredNewCard = true;
         if (heldUntil <= now) {
           newForKnownWords.push({ word, type, card: null });
+        } else {
+          noteAvailableAt(heldUntil, true);
+        }
+      }
+    }
+
+    // Its cards in the other script, for a word whose forms were learned
+    // there (otherScript.js): as its own cards, after them.
+    const other = otherCardsOf(word);
+    for (const type of other?.types ?? []) {
+      const card = cards.get(otherScriptCardId(word, type, other.script));
+      const siblings = studied.filter((each) => each !== card);
+      const heldUntil =
+        siblings.length > 0 ? Math.max(...siblings.map(lastReviewOf)) + SIBLING_GAP_MS : 0;
+      const entry = { word, type, card: card ?? null, script: other.script, other: true };
+      if (card) {
+        const availableAt = Math.max(card.due, heldUntil);
+        if (availableAt <= now) {
+          due.push(entry);
+        } else {
+          noteAvailableAt(availableAt, heldUntil > card.due);
+        }
+      } else {
+        newCardCount += 1;
+        newOfWord.set(word.id, (newOfWord.get(word.id) ?? 0) + 1);
+        if (offeredNewCard) {
+          continue;
+        }
+        offeredNewCard = true;
+        if (heldUntil <= now) {
+          newForKnownWords.push(entry);
         } else {
           noteAvailableAt(heldUntil, true);
         }
@@ -313,10 +366,16 @@ export function planSession(words, cards, now, options) {
     next = { word: againNow[0].word, type: againNow[0].type, card: null };
   }
 
+  const cardsByWord = new Map(newOfWord);
+  for (const entry of due) {
+    cardsByWord.set(entry.word.id, (cardsByWord.get(entry.word.id) ?? 0) + 1);
+  }
+
   return {
     next,
     dueCount: due.length,
     newCardCount,
+    cardsByWord,
     newWordsLeftToday,
     fromAnki: toLearnAgain.some((entry) => entry.imported),
     learnedToday: introducedToday,
@@ -351,6 +410,7 @@ export function practiceCards(words, cards, now, options) {
     retrievability = () => 1,
     hasCardType = () => true,
     scriptOf = () => 'traditional',
+    otherCardsOf = () => null,
   } = options;
   const dayStart = startOfStudyDay(now);
   const found = [];
@@ -366,6 +426,15 @@ export function practiceCards(words, cards, now, options) {
         continue;
       }
       found.push({ word, type, card });
+    }
+    // Its cards in the other script, as for planSession.
+    const other = otherCardsOf(word);
+    for (const type of other?.types ?? []) {
+      const card = cards.get(otherScriptCardId(word, type, other.script));
+      if (!card || (which === 'today' && lastReviewOf(card) < dayStart)) {
+        continue;
+      }
+      found.push({ word, type, card, script: other.script, other: true });
     }
   }
   if (which === 'today') {

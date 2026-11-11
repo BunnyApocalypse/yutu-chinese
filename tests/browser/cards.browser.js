@@ -63,6 +63,19 @@ describe('managing cards', { concurrency: false }, () => {
     }
     await waitUntil(page, rows(2));
 
+    // The first word's page, then the second's: until the second word is
+    // read afresh, its page shows nothing of the first's cards, and "I know
+    // this word" is not offered (cardsPanel.js, clear).
+    await page.evaluate(`document.querySelectorAll('#word-list li button')[0].click()`);
+    await waitUntil(page, `document.querySelectorAll('#edit-cards li').length === 4 && !document.getElementById('know-word-button').hidden`, "the first word's cards");
+    await tap(page, 'word-page-close');
+    const meanwhile = await page.evaluate(`(() => {
+      document.querySelectorAll('#word-list li button')[1].click();
+      return { rows: document.querySelectorAll('#edit-cards li').length, know: !document.getElementById('know-word-button').hidden };
+    })()`);
+    assert.deepEqual(meanwhile, { rows: 0, know: false });
+    await tap(page, 'word-page-close');
+
     // The second word, 愛: four cards, none studied.
     await page.evaluate(`document.querySelectorAll('#word-list li button')[1].click(); document.getElementById('word-page-edit').click()`);
     await waitUntil(page, `document.querySelectorAll('#edit-cards li').length === 4`, 'the four cards');

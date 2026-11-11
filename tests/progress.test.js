@@ -63,6 +63,14 @@ test('cards are counted by kind and stage, only those a word can have', () => {
     ],
   );
   assert.deepEqual(stages.all, { counts: { new: 3, learning: 0, young: 1, mature: 1 }, total: 5 });
+  // 學's forms in traditional learned: its meaning card there counts too, new.
+  const withOther = cardStages([you, learn], cards, {
+    types: ['meaning'],
+    hasCardType: () => true,
+    scriptOf: () => 'simplified',
+    otherCardsOf: (each) => (each === learn ? { script: 'traditional', types: ['meaning'] } : null),
+  });
+  assert.deepEqual(withOther.rows[0].counts, { new: 2, learning: 0, young: 0, mature: 1 });
 });
 
 test('a word without learnedAt was learned when its first card was first reviewed', () => {

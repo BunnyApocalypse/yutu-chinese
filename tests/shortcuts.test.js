@@ -16,6 +16,12 @@ import {
   crossByCrossGrassOf,
   startsWithMainlandHeart,
   inTaiwanOrder,
+  fangsOf,
+  withFangInEitherOrder,
+  chuiOf,
+  withChuiUprightLast,
+  branchesOf,
+  withReversedBranches,
 } from '../src/shortcuts.js';
 import { applyFrame } from '../src/frame.js';
 import { parseWordList } from '../src/wordList.js';
@@ -301,4 +307,93 @@ test('懞, with both 忄 and a 艹 written 丨 一 丨 一, gets both swaps', ()
   assert.deepEqual(altOrder.slice(0, 3), [0, 2, 1]);
   assert.deepEqual(altOrder.slice(tops[0], tops[0] + 4), [tops[0], tops[0] + 1, tops[0] + 3, tops[0] + 2]);
   assert.equal(altOrderIsTaiwan, undefined);
+});
+
+test('a 方 is found by shape, and its ノ before its ㇆ accepted', () => {
+  // The owner, 2026-11-09: native writers put the ノ first too.
+  assert.deepEqual(fangsOf(taiwanData.get('方')), [0]);
+  assert.deepEqual(fangsOf(bigSetData('方')), [0]);
+  for (const char of ['房', '放', '旁', '旅', '族', '訪', '遊', '邊', '防']) {
+    assert.equal(fangsOf(taiwanData.get(char)).length, 1, char);
+  }
+  for (const char of ['芳', '傍', '激', '旗', '漩', '纺', '谤']) {
+    assert.equal(fangsOf(bigSetData(char)).length, 1, char);
+  }
+  // Other shapes with a dot over a level stroke: 文, 立, 六, 亡, 市, 京.
+  for (const char of ['文', '立', '六', '亡', '市', '京', '刀', '力']) {
+    assert.deepEqual(fangsOf(bigSetData(char)), [], char);
+  }
+  const fang = withFangInEitherOrder(taiwanData.get('方'));
+  assert.deepEqual(fang.altOrder, [0, 1, 3, 2]);
+  assert.equal(fang.altOrderIsFang, true);
+  assert.equal(withFangInEitherOrder(taiwanData.get('快')), taiwanData.get('快'));
+});
+
+test('a 方 joins a second order already there (愣 in traditional)', () => {
+  const data = inTaiwanOrder(bigSetData('愣'));
+  assert.ok(data.altOrder);
+  const [at] = fangsOf(data);
+  const { altOrder, altOrderIsFang } = withFangInEitherOrder(data);
+  // The 忄 as before, the 方 swapped.
+  assert.deepEqual(altOrder.slice(0, at), data.altOrder.slice(0, at));
+  assert.deepEqual(altOrder.slice(at), [at, at + 1, at + 3, at + 2]);
+  assert.equal(altOrderIsFang, undefined);
+  assert.equal(withFangInEitherOrder(data).altOrderIsTaiwan, true);
+});
+
+test('no 方 is found where Make Me a Hanzi has none (both sets)', () => {
+  const dictionary = fs
+    .readFileSync('data/makemeahanzi/dictionary.txt', 'utf8')
+    .trim()
+    .split('\n')
+    .map((line) => JSON.parse(line));
+  const byChar = new Map(dictionary.map((entry) => [entry.character, entry]));
+  // 敖 (in 贅, 聱, 鏊) has a 方 in the stroke data, but no part named 方.
+  const hasFang = (char, seen = new Set()) => {
+    if (char === '方' || char === '敖') return true;
+    const entry = byChar.get(char);
+    if (!entry || seen.has(char)) return false;
+    seen.add(char);
+    return Array.from(entry.decomposition).some((part) => part !== char && hasFang(part, seen));
+  };
+  const wrong = [];
+  for (const [char, data] of taiwanData) {
+    if (fangsOf(data).length > 0 && !hasFang(char)) wrong.push(char);
+  }
+  for (const { character } of dictionary) {
+    if (!fs.existsSync(`node_modules/hanzi-writer-data/${character}.json`)) continue;
+    if (fangsOf(bigSetData(character)).length > 0 && !hasFang(character)) wrong.push(character);
+  }
+  assert.deepEqual(wrong, []);
+});
+
+test('a 垂 is found by shape, and its 丨 after the levels accepted (the owner, 2026-11-10)', () => {
+  // Taiwan set: nine strokes, the middle level in two halves.
+  for (const char of ['睡', '郵']) {
+    const [found] = chuiOf(taiwanData.get(char));
+    assert.equal(found.whole, false, char);
+  }
+  const sleep = withChuiUprightLast(taiwanData.get('睡'));
+  assert.deepEqual(sleep.altOrder.slice(5), [5, 6, 9, 10, 8, 11, 12, 7, 13]);
+  assert.equal(sleep.altOrderIsFang, true);
+  // Big set: eight strokes, the middle level whole.
+  for (const char of ['睡', '錘', '捶', '陲', '唾']) {
+    assert.equal(chuiOf(bigSetData(char))[0].whole, true, char);
+  }
+  assert.deepEqual(withChuiUprightLast(bigSetData('睡')).altOrder.slice(5), [5, 6, 8, 9, 10, 11, 7, 12]);
+  // Not in characters without one.
+  for (const char of ['花', '北', '方', '食', '華']) {
+    assert.deepEqual(chuiOf(charData(char, 'traditional')), [], char);
+  }
+});
+
+test('the branch of 匕 may be written right to left (the owner, 2026-11-10)', () => {
+  assert.deepEqual(branchesOf(taiwanData.get('北')), [3]);
+  assert.deepEqual(branchesOf(taiwanData.get('方')), []);
+  const { reversedShapes } = withReversedBranches(taiwanData.get('北'));
+  const [plain, tilted] = reversedShapes[3];
+  // Run backwards, from the right end to the left; the tilted one falls at the left.
+  assert.ok(plain[0][0] > plain[1][0]);
+  assert.ok(tilted[1][1] < plain[1][1]);
+  assert.equal(withReversedBranches(taiwanData.get('方')), taiwanData.get('方'));
 });

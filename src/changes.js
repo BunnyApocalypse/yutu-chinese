@@ -13,6 +13,168 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-11',
+    items: [
+      'A new icon: 兔 written by the calligrapher 南蠻大熊, on a moon of handmade paper in an ink-wash night sky. The browser tab shows the moon alone.',
+    ],
+    it: [
+      'Una nuova icona: 兔 scritto dal calligrafo 南蠻大熊, su una luna di carta fatta a mano in un cielo notturno d’inchiostro. La scheda del browser mostra solo la luna.',
+    ],
+    de: [
+      'Ein neues Symbol: 兔, geschrieben vom Kalligraphen 南蠻大熊, auf einem Mond aus handgeschöpftem Papier in einem Nachthimmel aus Tusche. Der Browser-Tab zeigt nur den Mond.',
+    ],
+  },
+  {
+    id: '2026-11-10-4',
+    items: [
+      '垂 (in 睡, 郵, 錘) can be written with its long 丨 after the levels: the middle level stroke, the two short strokes, the next level stroke, then the 丨.',
+      'The first stroke of 匕 (in 北, 比, 化) can be written from right to left.',
+    ],
+    it: [
+      '垂 (in 睡, 郵, 錘) si può scrivere con il lungo 丨 dopo i tratti orizzontali: il tratto orizzontale di mezzo, i due tratti brevi, il tratto orizzontale successivo, poi il 丨.',
+      'Il primo tratto di 匕 (in 北, 比, 化) si può scrivere da destra a sinistra.',
+    ],
+    de: [
+      '垂 (in 睡, 郵, 錘) lässt sich mit dem langen 丨 nach den Querstrichen schreiben: der mittlere Querstrich, die zwei kurzen Striche, der nächste Querstrich, dann das 丨.',
+      'Der erste Strich von 匕 (in 北, 比, 化) lässt sich von rechts nach links schreiben.',
+    ],
+  },
+  {
+    id: '2026-11-10-3',
+    items: [
+      'Review no longer flashes a card that can’t be written before your first card. A word whose characters have no stroke data is now pointed out when you add it or change its characters.',
+      'Saving a changed word is quick again, and says “Saving…” while it does.',
+      'Without an internet connection, a word’s sound no longer comes late, and several words no longer play all at once.',
+    ],
+    it: [
+      'Ripasso non mostra più per un attimo una carta che non si può scrivere prima della tua prima carta. Una parola i cui caratteri non hanno dati sui tratti ora viene segnalata quando la aggiungi o ne cambi i caratteri.',
+      'Salvare una parola modificata è di nuovo veloce, e mentre lo fa dice «Salvataggio…».',
+      'Senza connessione a internet, il suono di una parola non arriva più in ritardo, e più parole non si sentono più tutte insieme.',
+    ],
+    de: [
+      'Beim Wiederholen blitzt vor deiner ersten Karte keine Karte mehr auf, die sich nicht schreiben lässt. Ein Wort, für dessen Zeichen es keine Strichdaten gibt, wird jetzt angezeigt, wenn du es hinzufügst oder seine Zeichen änderst.',
+      'Ein geändertes Wort zu speichern geht wieder schnell und zeigt dabei „Wird gespeichert…“.',
+      'Ohne Internetverbindung kommt der Klang eines Wortes nicht mehr verspätet, und mehrere Wörter erklingen nicht mehr alle auf einmal.',
+    ],
+  },
+  {
+    id: '2026-11-10-2',
+    items: [
+      'The app has its own address now: yutuchinese.com. Your words, progress and settings come along, and the old address only hands them over.',
+      'Installed the app? Install it again from yutuchinese.com and remove the old one.',
+    ],
+    it: [
+      'L’app ha ora un indirizzo tutto suo: yutuchinese.com. Le tue parole, i progressi e le impostazioni vengono con te, e il vecchio indirizzo si limita a trasferirli.',
+      'Hai installato l’app? Installala di nuovo da yutuchinese.com e rimuovi quella vecchia.',
+    ],
+    de: [
+      'Die App hat jetzt eine eigene Adresse: yutuchinese.com. Deine Wörter, dein Fortschritt und deine Einstellungen kommen mit, und die alte Adresse übergibt sie nur noch.',
+      'Du hast die App installiert? Installiere sie erneut von yutuchinese.com und entferne die alte.',
+    ],
+  },
+  {
+    id: '2026-11-10',
+    items: [
+      'Review several decks at once: Review’s deck chooser now has tickboxes. Tick as many decks as you like, and your cards in simplified (or traditional) with them; All words, at the top, unticks the rest.',
+      'Every entry in Review’s deck chooser now says how many cards are due in it.',
+    ],
+    it: [
+      'Ripassa più mazzi insieme: la scelta del mazzo in Ripasso ora ha delle caselle. Spunta tutti i mazzi che vuoi, e con loro le tue carte in semplificato (o tradizionale); Tutte le parole, in cima, toglie le altre spunte.',
+      'Ogni voce nella scelta del mazzo in Ripasso ora dice quante carte ha da ripassare.',
+    ],
+    de: [
+      'Mehrere Stapel auf einmal wiederholen: Die Stapelauswahl beim Wiederholen hat jetzt Kästchen. Hake so viele Stapel an, wie du möchtest, und deine Karten in Kurzzeichen (oder Langzeichen) dazu; Alle Wörter, ganz oben, entfernt die übrigen Haken.',
+      'Jeder Eintrag der Stapelauswahl beim Wiederholen zeigt jetzt, wie viele Karten darin fällig sind.',
+    ],
+  },
+  {
+    id: '2026-11-09-8',
+    items: ['Syncing: if another of your devices has a newer version of the app, this one now says to update it, and waits, rather than saying changes couldn’t be opened.'],
+    it: ['Sincronizzazione: se un altro dei tuoi dispositivi ha una versione più recente dell’app, questo ora dice di aggiornarla, e aspetta, invece di dire che le modifiche non si sono potute aprire.'],
+    de: ['Synchronisierung: Hat ein anderes deiner Geräte eine neuere Version der App, sagt dieses jetzt, dass du es aktualisieren sollst, und wartet, statt zu melden, dass sich Änderungen nicht öffnen ließen.'],
+  },
+  {
+    id: '2026-11-09-7',
+    items: ['On a phone, the Show list in Words is now as wide as the screen, so its choices are no longer cut short.'],
+    it: ['Sul telefono, l’elenco Mostra in Parole ora è largo quanto lo schermo, così le sue scelte non vengono più tagliate.'],
+    de: ['Auf dem Handy ist die Liste Zeigen unter Wörter jetzt so breit wie der Bildschirm, sodass ihre Einträge nicht mehr abgeschnitten werden.'],
+  },
+  {
+    id: '2026-11-09-6',
+    items: [
+      'A word’s page now has its simplified (or traditional) form, folded above Cards: what changes in it and where else that change appears. It is on every word written differently, learned or not, if you use both scripts or Also read simplified.',
+      'In Words, Show › Studied simplified forms lists the words whose other form you have learned, each with both forms.',
+    ],
+    it: [
+      'La pagina di una parola ora ha la sua forma semplificata (o tradizionale), chiusa sopra Carte: cosa cambia e dove altro compare quel cambiamento. C’è per ogni parola scritta in modo diverso, studiata o no, se usi entrambe le scritture o Leggere anche i semplificati.',
+      'In Parole, Mostra › Forme semplificate studiate elenca le parole di cui hai imparato l’altra forma, ognuna con entrambe le forme.',
+    ],
+    de: [
+      'Die Seite eines Wortes zeigt jetzt seine Kurzzeichen- (oder Langzeichen-)Form, zugeklappt über Karten: was sich ändert und wo diese Änderung sonst vorkommt. Sie steht bei jedem Wort, das unterschiedlich geschrieben wird, gelernt oder nicht, wenn du beide Schriften nutzt oder Auch Kurzzeichen lesen.',
+      'Unter Wörter listet Zeigen › Gelernte Kurzzeichen die Wörter, deren andere Form du gelernt hast, jedes mit beiden Formen.',
+    ],
+  },
+  {
+    id: '2026-11-09-5',
+    items: [
+      'With Also read simplified (or traditional) on, Review’s deck chooser has your cards in the other script first: choose them to review only those.',
+      '么 (yāo, “tiny”) is no longer taught as changing to 幺: they are two ways of writing one character, and in simplified text 么 nearly always stands for 麼 (as in 什麼).',
+    ],
+    it: [
+      'Con Leggere anche i semplificati (o i tradizionali) attivo, la scelta del mazzo in Ripasso ha per prime le tue carte nell’altra scrittura: sceglile per ripassare solo quelle.',
+      '么 (yāo, “minuscolo”) non viene più insegnato come se diventasse 幺: sono due modi di scrivere lo stesso carattere, e nei testi semplificati 么 sta quasi sempre per 麼 (come in 什麼).',
+    ],
+    de: [
+      'Mit Auch Kurzzeichen (oder Langzeichen) lesen stehen in der Stapelauswahl beim Wiederholen deine Karten in der anderen Schrift an erster Stelle: Wähle sie, um nur diese zu wiederholen.',
+      '么 (yāo, „winzig“) wird nicht mehr so gelehrt, als würde es zu 幺: Es sind zwei Schreibweisen desselben Zeichens, und in Kurzzeichentexten steht 么 fast immer für 麼 (wie in 什麼).',
+    ],
+  },
+  {
+    id: '2026-11-09-4',
+    items: ['方 may be written with its ノ before its ㇆, as many native writers do, wherever it appears (放, 房, 旁, 訪…).'],
+    it: ['方 si può scrivere con la ノ prima del ㇆, come fanno molti madrelingua, ovunque compaia (放, 房, 旁, 訪…).'],
+    de: ['方 darf mit dem ノ vor dem ㇆ geschrieben werden, wie es viele Muttersprachler tun, überall, wo es vorkommt (放, 房, 旁, 訪…).'],
+  },
+  {
+    id: '2026-11-09-3',
+    items: [
+      'Learn to read the other script, if you like: switch on Also read simplified (or traditional) in Settings › Chinese. Learn then teaches each change once, on one of your words, shows where else it appears, and adds cards for reading the word in that script. Changes of a stroke or so are left out.',
+    ],
+    it: [
+      'Impara a leggere l’altra scrittura, se vuoi: attiva Leggere anche i semplificati (o i tradizionali) in Impostazioni › Cinese. Impara insegna allora ogni cambiamento una volta, su una delle tue parole, mostra dove altro compare e aggiunge carte per leggere la parola in quella scrittura. I cambiamenti di un tratto o poco più sono lasciati fuori.',
+    ],
+    de: [
+      'Lerne die andere Schrift lesen, wenn du möchtest: Schalte Auch Kurzzeichen (oder Langzeichen) lesen ein unter Einstellungen › Chinesisch. Lernen bringt dir dann jede Änderung einmal bei, an einem deiner Wörter, zeigt, wo sie noch vorkommt, und fügt Karten hinzu, um das Wort in dieser Schrift zu lesen. Änderungen von etwa einem Strich bleiben außen vor.',
+    ],
+  },
+  {
+    id: '2026-11-09-2',
+    items: ['Your sync code, once shown again in Settings, is hidden when you close Settings.'],
+    it: ['Il codice di sincronizzazione, se lo mostri di nuovo nelle Impostazioni, viene nascosto quando chiudi le Impostazioni.'],
+    de: ['Dein Synchronisierungscode wird, wenn du ihn in den Einstellungen erneut anzeigst, beim Schließen der Einstellungen wieder verborgen.'],
+  },
+  {
+    id: '2026-11-09',
+    items: [
+      'Sync between devices: your words, progress and settings stay the same on your phone, tablet and computer. Everything is encrypted on your device before it is sent, and there is no account to make. Turn it on in Settings › Your data and backups.',
+      'Importing a backup no longer freezes the app: you can keep using it while the file is read.',
+      'Adding a list of words is simpler: choose a file or paste it, see at once what was found, and add it with one button.',
+      'Choosing a deck in Review asks again how many cards you want, and two cards close together no longer mix up the word being written.',
+    ],
+    it: [
+      'Sincronizzazione tra dispositivi: le tue parole, i progressi e le impostazioni restano uguali su telefono, tablet e computer. Tutto viene cifrato sul tuo dispositivo prima di essere inviato, e non c’è nessun account da creare. Attivala in Impostazioni › I tuoi dati e i backup.',
+      'Importare un backup non blocca più l’app: puoi continuare a usarla mentre il file viene letto.',
+      'Aggiungere una lista di parole è più semplice: scegli un file o incollalo, vedi subito cosa è stato trovato e aggiungilo con un solo pulsante.',
+      'Scegliendo un mazzo nel Ripasso ti viene chiesto di nuovo quante carte vuoi, e due carte vicine non confondono più la parola che stai scrivendo.',
+    ],
+    de: [
+      'Synchronisierung zwischen Geräten: Deine Wörter, dein Fortschritt und deine Einstellungen bleiben auf Handy, Tablet und Computer gleich. Alles wird auf deinem Gerät verschlüsselt, bevor es gesendet wird, und du musst kein Konto anlegen. Schalte sie ein unter Einstellungen › Deine Daten und Sicherungen.',
+      'Das Importieren einer Sicherung friert die App nicht mehr ein: Du kannst sie weiter benutzen, während die Datei gelesen wird.',
+      'Eine Wortliste hinzuzufügen ist einfacher: Wähle eine Datei oder füge sie ein, sieh sofort, was gefunden wurde, und füge sie mit einem Knopf hinzu.',
+      'Beim Wählen eines Stapels im Wiederholen wirst du wieder gefragt, wie viele Karten du möchtest, und zwei kurz aufeinanderfolgende Karten bringen das geschriebene Wort nicht mehr durcheinander.',
+    ],
+  },
+  {
     id: '2026-11-07',
     items: [
       'Importing from Skritter now explains how to get your data: a letter to send Skritter’s support, ready to copy, that fits where you live.',

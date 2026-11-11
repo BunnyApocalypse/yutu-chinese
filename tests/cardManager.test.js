@@ -60,6 +60,25 @@ test('how a word\'s cards stand is listed kind by kind', () => {
   assert.equal(cardsOfWord(word, [meaning.card], null, 'traditional')[0].reviewCount, null);
 });
 
+test("a word's card for reading it in the other script is listed after its own, its reviews its own", () => {
+  const meaning = studied(study, 'meaning', [1, 2]);
+  // Reviewed twice in simplified, as a card of its own (otherScriptCardId).
+  const reading = studied(study, 'meaning', [3, 4], { script: 'simplified', name: 'o' });
+  const id = `${study.id}#meaning#in-simplified`;
+  reading.card.id = id;
+  for (const review of reading.reviews) {
+    review.cardId = id;
+  }
+  const rows = cardsOfWord(study, [meaning.card, reading.card], [...meaning.reviews, ...reading.reviews], 'traditional');
+  assert.deepEqual(
+    rows.filter((row) => row.type === 'meaning').map((row) => [row.script, row.other ?? false, row.card.id, row.reviewCount]),
+    [
+      ['traditional', false, `${study.id}#meaning`, 2],
+      ['simplified', true, id, 2],
+    ],
+  );
+});
+
 test('marking a word as known answers its new cards Easy and makes it learned', () => {
   const meaning = studied(study, 'meaning', [1]);
   let next = 0;

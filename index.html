@@ -8,7 +8,8 @@
     <!-- The manifest tells a phone how to install the app: its name, icon and colors. -->
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#f1e9d4" />
-    <link rel="icon" href="/icons/icon-192.png" />
+    <!-- The browser tab's icon: the moon alone, without the night sky's dark square. -->
+    <link rel="icon" href="/icons/favicon.png" sizes="64x64" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
@@ -84,6 +85,8 @@
           </button>
           <!-- Says what the red dot is about (main.js, showBackupStatus). -->
           <p id="backup-due-line" class="backup-due-line" hidden data-t="menu.backupDue"></p>
+          <!-- Or that syncing has been failing too long (main.js, syncIsLate). -->
+          <p id="sync-late-line" class="backup-due-line" hidden data-t="menu.syncLate"></p>
         </div>
       </dialog>
 
@@ -122,6 +125,9 @@
               <rect x="7.5" y="5" width="9" height="14" rx="1.5" transform="rotate(32 12 21)" />
               <rect x="7.5" y="3" width="9" height="14" rx="1.5" />
             </svg>
+            <!-- While Learn shows the forms in the other script, in place of
+                 the picture: 简 or 繁 (review.js, showDeckChoice). -->
+            <span class="deck-tag-han" aria-hidden="true"></span>
             <span class="deck-select-name"></span>
           </button>
           <!-- Speaks the word (review.js, speech.js). The picture is a loudspeaker. -->
@@ -197,6 +203,9 @@
           <button type="submit" data-t="review.otherStart"></button>
         </form>
         <p class="hint" data-t="review.startHint"></p>
+        <!-- While sync is on: how recent this device's words from the others
+             are, and Sync now (syncNote.js). -->
+        <p class="sync-note" hidden><span class="sync-note-text"></span> <button class="link-button" type="button" data-t="sync.now"></button></p>
       </div>
       <div id="done-panel" class="done-panel" hidden>
         <!-- A line of text, or at the end of Review a short summary of the day
@@ -208,6 +217,10 @@
              now are (review.js, main.js). -->
         <button id="review-now-button" class="primary" type="button" hidden data-t="review.reviewNow"></button>
         <button id="learn-next-button" class="primary" type="button" hidden data-t="review.learnNextButton"></button>
+        <!-- In Review with nothing due, while words wait to have their forms
+             in the other script learned: "Learn 简体字 forms · 12" (review.js,
+             offerForms; main.js opens Learn on them). -->
+        <button id="learn-forms-button" type="button" hidden></button>
         <!-- At the end of Review: today's cards again, as practice; at the
              end of that, all cards; and back to Review (review.js, "Practice
              at the end of Review"). -->
@@ -239,6 +252,9 @@
             <button id="storage-message-close" class="small" type="button" data-t="storageMessage.notNow"></button>
           </div>
         </div>
+        <!-- While sync is on: how recent this device's words from the others
+             are, and Sync now (syncNote.js). -->
+        <p class="sync-note" hidden><span class="sync-note-text"></span> <button class="link-button" type="button" data-t="sync.now"></button></p>
       </div>
 
       <!-- The Decks tab: the decks, the words in them, and the ready-made
@@ -498,12 +514,14 @@
           <!-- Which of the words are listed, in what order, and picking several
                of them: side by side in one row (wordsPanel.js, cardsPanel.js). -->
           <div class="list-tools">
-          <label>
+          <label class="show-choice">
             <span data-t="decks.show"></span>
             <select id="word-filter">
               <option value="" data-t="decks.allWords"></option>
               <option value="leeches" data-t="decks.leechesCardsIKeep"></option>
               <option value="suspended" data-t="decks.wordsWithASuspended"></option>
+              <!-- Named by the script in wordsPanel.js (applySettings); only with "Also read" on. -->
+              <option value="otherScript" hidden></option>
             </select>
           </label>
           <label>
@@ -782,6 +800,7 @@
             <li data-t-html="credits.tocflWordListThe"></li>
             <li data-t-html="credits.radicalsThe214Kangxi"></li>
             <li data-t-html="credits.openDyslexic"></li>
+            <li data-t-html="credits.appIcon"></li>
           </ul>
           <p data-t-html="credits.skritterTrademark"></p>
         </div>
@@ -927,6 +946,70 @@
 
       <!-- Asks before something that cannot be undone (confirm.js). -->
       <!-- What syncing does with a learner's data (syncPanel.js; docs/sync.md). -->
+      <!-- Sync between devices, offered once to someone already using the
+           app on this device (syncInvite.js; the owner, 2026-11-09). One
+           part shown at a time: the invitation, the new code, a code from
+           another device, sync on. -->
+      <dialog id="sync-invite-dialog" class="settings-panel sync-invite">
+        <div id="sync-invite-start">
+          <h2 data-t="syncInvite.title"></h2>
+          <p data-t="syncInvite.lead"></p>
+          <ul class="sync-invite-points">
+            <li data-t="syncInvite.pointDevices"></li>
+            <li data-t="syncInvite.pointSafe"></li>
+            <li data-t="syncInvite.pointPrivate"></li>
+          </ul>
+          <p><button class="link-button sync-privacy-button" type="button" data-t="sync.privacy"></button></p>
+          <div class="sync-invite-buttons">
+            <button id="sync-invite-turn-on" class="primary" type="button" data-t="sync.turnOn"></button>
+            <button id="sync-invite-have-code" type="button" data-t="sync.haveCode"></button>
+            <button id="sync-invite-not-now" class="link-button" type="button" data-t="offer.notNow"></button>
+          </div>
+          <p class="hint" data-t="syncInvite.later"></p>
+        </div>
+        <div id="sync-invite-code-step" hidden>
+          <h2 data-t="syncInvite.codeTitle"></h2>
+          <p id="sync-invite-code" class="sync-code"></p>
+          <p class="hint" data-t="sync.codeExplain"></p>
+          <div class="sync-buttons">
+            <button id="sync-invite-copy" class="small" type="button" data-t="sync.copy"></button>
+            <button id="sync-invite-file" class="small" type="button" data-t="sync.saveFile"></button>
+            <button id="sync-invite-print" class="small" type="button" data-t="sync.print"></button>
+          </div>
+          <p id="sync-invite-code-note" class="hint" role="status"></p>
+          <p class="hint" data-t="sync.passwordManager"></p>
+          <div id="sync-invite-qr"></div>
+          <p class="hint" data-t-html="sync.scanHint"></p>
+          <div class="sync-invite-buttons">
+            <button id="sync-invite-saved" class="primary" type="button" data-t="sync.saved"></button>
+            <button class="link-button sync-invite-back" type="button" data-t="syncInvite.back"></button>
+          </div>
+        </div>
+        <form id="sync-invite-join" hidden>
+          <h2 data-t="syncInvite.joinTitle"></h2>
+          <p class="hint" data-t="syncInvite.joinWhere"></p>
+          <div class="sync-join">
+            <label for="sync-invite-code-input" data-t="sync.codeLabel"></label>
+            <input id="sync-invite-code-input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" />
+          </div>
+          <p id="sync-invite-join-error" class="hint sync-problem" role="alert" hidden></p>
+          <div class="sync-invite-buttons">
+            <button id="sync-invite-join-submit" class="primary" type="submit" data-t="sync.join"></button>
+            <button id="sync-invite-scan" type="button" data-t="scan.button"></button>
+            <button class="link-button sync-invite-back" type="button" data-t="syncInvite.back"></button>
+          </div>
+        </form>
+        <div id="sync-invite-on" hidden>
+          <h2 data-t="syncInvite.onTitle"></h2>
+          <p id="sync-invite-status" class="hint" role="status"></p>
+          <p data-t-html="syncInvite.nextDevice"></p>
+          <div class="sync-invite-buttons">
+            <button id="sync-invite-done" class="primary" type="button" data-t="syncInvite.done"></button>
+          </div>
+        </div>
+        <button id="sync-invite-close" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
+      </dialog>
+
       <dialog id="privacy-dialog" class="settings-panel">
         <h2 data-t="privacy.title"></h2>
         <p data-t="privacy.intro"></p>
@@ -965,11 +1048,27 @@
         <button data-same-as="confirm-no" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 
+      <!-- Syncing failing too long (syncLateMessage.js): since when and why. -->
+      <dialog id="sync-late-dialog" class="settings-panel">
+        <h2 data-t="syncLate.title"></h2>
+        <p id="sync-late-detail"></p>
+        <div class="buttons">
+          <button id="sync-late-open" class="small primary" type="button" data-t="syncLate.open"></button>
+          <button id="sync-late-later" class="small" type="button" data-t="syncLate.notNow"></button>
+        </div>
+        <button data-same-as="sync-late-later" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
+      </dialog>
+
       <!-- Choosing a deck: the one studied in Review and Learn, and every
-           other deck chosen (deckChooser.js, which gives the heading). -->
+           other deck chosen (deckChooser.js, which gives the heading).
+           Review's decks are ticked, as many as wanted, and "Done" (shown
+           only then) closes the panel with them. -->
       <dialog id="deck-choice-dialog" class="settings-panel deck-choice-dialog">
         <h2 id="deck-choice-title"></h2>
         <ul id="deck-choice-list" class="deck-choice-list"></ul>
+        <div id="deck-choice-bar" class="deck-choice-bar" hidden>
+          <button id="deck-choice-done" class="primary" type="button" data-t="review.decksDone"></button>
+        </div>
         <button id="deck-choice-close" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 
@@ -981,13 +1080,19 @@
           <!-- For one of the learner's own words: its cards. What is done
                here takes effect at once (cardsPanel.js, wordsPanel.js). -->
           <div id="word-page-cards" hidden>
+          <!-- Its forms in the other script, as Learn taught them, for a word
+               with cards there (formsFlow.js pageForms, wordsPanel.js). -->
+          <details id="word-page-forms" class="add-list" hidden>
+            <summary id="word-page-forms-summary"></summary>
+            <div id="word-page-forms-body" class="forms-page"></div>
+          </details>
           <!-- How each of the word's cards stands (cardsPanel.js). -->
           <details id="edit-cards-row" class="add-list">
             <summary id="edit-cards-summary" data-t="page.editCardsSummary"></summary>
             <p class="hint" data-t="page.cardsExplained"></p>
             <ul id="edit-cards" class="card-rows"></ul>
             <div class="buttons">
-              <button id="know-word-button" class="small" type="button" data-t="page.knowWordButton"></button>
+              <button id="know-word-button" class="small" type="button" data-t="page.knowWordButton" hidden></button>
             </div>
             <p class="hint" data-t-html="page.startOverMakesA"></p>
           </details>
@@ -1208,18 +1313,10 @@
                (main.js; the owner, 2026-10-21). -->
           <p><button id="welcome-basics-button" class="link-button" type="button" data-t="welcome.welcomeBasicsButton"></button></p>
           <!-- Syncing with another device (welcome.js; the owner, 2026-11-07):
-               the words and settings come from there, so the rest of the
-               introduction is skipped. Only where there is a sync server. -->
+               opens the join screen below, as the words and settings come
+               from there. Only where there is a sync server. -->
           <div id="welcome-join" hidden>
             <p><button id="welcome-join-button" class="link-button" type="button" data-t-html="welcome.alreadyUsing"></button></p>
-            <form id="welcome-join-form" class="sync-join" hidden>
-              <p id="welcome-from-link" class="hint sync-problem" hidden data-t="sync.fromLink"></p>
-              <label for="welcome-code-input" data-t="sync.codeLabel"></label>
-              <input id="welcome-code-input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" />
-              <button id="welcome-join-submit" class="small" type="submit" data-t="sync.join"></button>
-              <button id="welcome-scan-button" class="small" type="button" data-t="scan.button"></button>
-              <p id="welcome-join-note" class="hint" role="status" hidden></p>
-            </form>
           </div>
           <!-- Shown at once as it is chosen; saved with the rest at the end
                (welcome.js). Each choice is a small sample of the look: the
@@ -1297,8 +1394,15 @@
         </section>
 
         <section data-step hidden>
+          <!-- After joining (welcome.js): what came from the other device,
+               above the usual lines on keeping the words. -->
+          <div id="welcome-joined" hidden>
+            <h2 data-t="welcome.joinedHeading"></h2>
+            <ul id="welcome-joined-details"></ul>
+          </div>
           <div id="welcome-keep-general">
-            <h2 data-t="welcome.keepYourWordsSafe"></h2>
+            <!-- The heading and the line below it say so when syncing (welcome.js). -->
+            <h2 id="welcome-keep-heading" data-t="welcome.keepYourWordsSafe"></h2>
             <!-- Not "Allow it to keep them": in most browsers there is nothing to
                  allow, and the line below says what this one needs (the
                  owner, 2026-10-19). -->
@@ -1317,7 +1421,8 @@
             <ol class="welcome-steps">
               <li data-t="welcome.tapShareIfYou"></li>
               <li data-t="welcome.tapAddToHome"></li>
-              <li data-t-html="welcome.openFromYourHome"></li>
+              <!-- With sync, the app there is synced again (welcome.js). -->
+              <li id="welcome-open-home" data-t-html="welcome.openFromYourHome"></li>
             </ol>
           </div>
           <div id="welcome-keep-dock" hidden>
@@ -1326,7 +1431,7 @@
             <ol class="welcome-steps">
               <li data-t="welcome.inTheMenuBar"></li>
               <li data-t="welcome.clickAdd"></li>
-              <li data-t-html="welcome.openFromTheDock"></li>
+              <li id="welcome-open-dock" data-t-html="welcome.openFromTheDock"></li>
             </ol>
           </div>
           <!-- The same for a Chromium browser that hasn't offered its own
@@ -1361,6 +1466,19 @@
             <label><input type="radio" name="welcome-sync" value="on" /> <span data-t="sync.turnOn"></span></label>
             <label><input type="radio" name="welcome-sync" value="" /> <span data-t="welcome.syncNotNow"></span></label>
             <div id="welcome-sync-code" hidden>
+              <!-- "Self-hosting?": another sync server, whose address then
+                   goes into the QR code (syncServerChoice.js). -->
+              <details id="welcome-sync-server-fold" class="welcome-more">
+              <summary id="welcome-sync-server-summary" data-t="sync.selfHosting"></summary>
+              <form id="welcome-sync-server-form" class="sync-join">
+                <label for="welcome-sync-server-input" data-t="sync.serverLabel"></label>
+                <input id="welcome-sync-server-input" type="text" inputmode="url" autocomplete="off" spellcheck="false" />
+                <button id="welcome-sync-server-use" class="small" type="submit" data-t="sync.serverUse"></button>
+                <button id="welcome-sync-server-usual" class="small" type="button" data-t="sync.serverUsual"></button>
+                <p id="welcome-sync-server-note" class="hint" role="status" hidden></p>
+              </form>
+              <p class="hint" data-t-html="sync.serverHint"></p>
+            </details>
               <p id="welcome-code" class="sync-code"></p>
               <p class="hint" data-t="sync.codeExplain"></p>
               <p class="sync-buttons">
@@ -1374,6 +1492,62 @@
               <p class="hint" data-t-html="sync.scanHint"></p>
             </div>
           </fieldset>
+        </section>
+
+        <!-- Joining from another device, a screen of its own, not one of the
+             steps (welcome.js; the owner, 2026-11-08): the words and
+             settings come from there, so nothing else is chosen; once joined,
+             the last screen follows, for keeping the words. -->
+        <section id="welcome-join-screen" hidden>
+          <h2 data-t="welcome.joinHeading"></h2>
+          <p data-t="welcome.joinAbout"></p>
+          <!-- In Safari outside the Home Screen or the Dock (the owner,
+               2026-11-08): the app put there keeps its words apart from
+               Safari's, so it is added first and synced there; joining in
+               Safari itself only behind "Sync in Safari anyway" (welcome.js). -->
+          <div id="welcome-join-safari" hidden>
+            <div id="welcome-join-home-screen">
+              <p data-t-html="welcome.joinSafariPhone"></p>
+              <ol class="welcome-steps">
+                <li data-t="welcome.tapShareIfYou"></li>
+                <li data-t="welcome.tapAddToHome"></li>
+                <li data-t-html="welcome.joinOpenFromHome"></li>
+              </ol>
+            </div>
+            <div id="welcome-join-dock">
+              <p data-t-html="welcome.joinSafariMac"></p>
+              <ol class="welcome-steps">
+                <li data-t="welcome.inTheMenuBar"></li>
+                <li data-t="welcome.clickAdd"></li>
+                <li data-t-html="welcome.joinOpenFromDock"></li>
+              </ol>
+            </div>
+            <p><button id="welcome-join-anyway" class="link-button" type="button" data-t="welcome.joinInSafariAnyway"></button></p>
+          </div>
+          <div id="welcome-join-parts">
+            <form id="welcome-join-form" class="sync-join">
+              <p id="welcome-from-link" class="hint sync-problem" hidden data-t="sync.fromLink"></p>
+              <label for="welcome-code-input" data-t="sync.codeLabel"></label>
+              <input id="welcome-code-input" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" />
+              <button id="welcome-join-submit" class="small" type="submit" data-t="sync.join"></button>
+              <button id="welcome-scan-button" class="small" type="button" data-t="scan.button"></button>
+              <p id="welcome-join-note" class="hint" role="status" hidden></p>
+            </form>
+            <!-- "Self-hosting?": another sync server, before joining
+                 (syncServerChoice.js; the owner, 2026-11-08). A form of its
+                 own, as forms can't be inside one another. -->
+            <details id="welcome-join-server-fold" class="welcome-more">
+              <summary id="welcome-join-server-summary" data-t="sync.selfHosting"></summary>
+              <form id="welcome-join-server-form" class="sync-join">
+                <label for="welcome-join-server-input" data-t="sync.serverLabel"></label>
+                <input id="welcome-join-server-input" type="text" inputmode="url" autocomplete="off" spellcheck="false" />
+                <button id="welcome-join-server-use" class="small" type="submit" data-t="sync.serverUse"></button>
+                <button id="welcome-join-server-usual" class="small" type="button" data-t="sync.serverUsual"></button>
+                <p id="welcome-join-server-note" class="hint" role="status" hidden></p>
+              </form>
+              <p class="hint" data-t-html="sync.serverHint"></p>
+            </details>
+          </div>
         </section>
 
         <!-- Back and Next, held at the panel's bottom edge while a screen
@@ -1468,6 +1642,32 @@
           <label><input type="checkbox" data-card-type="pinyin" /> <span data-t="settings.cardTypePinyin"></span></label>
           <label><input type="checkbox" data-card-type="tone" /> <span data-t="settings.cardTypeTone"></span></label>
           <label><input type="checkbox" data-card-type="writing" /> <span data-t="settings.cardTypeWriting"></span></label>
+        </fieldset>
+
+        <!-- Reading the script the cards are not in, without writing it
+             (otherScript.js). The legend names that script, so it is filled
+             in by settings.js when the Script setting changes. -->
+        <fieldset class="setting">
+          <legend id="other-script-legend"></legend>
+          <div class="setting">
+            <span>
+              <label for="other-script-select" data-t="settings.otherScriptWhich"></label>
+              <button class="help-button" type="button" data-t-aria-label="settings.whatDoesThisDo" aria-expanded="false" aria-controls="other-script-hint">?</button>
+            </span>
+            <select id="other-script-select">
+              <option value="off" data-t="settings.otherScriptOff"></option>
+              <option value="different" data-t="settings.otherScriptDifferent"></option>
+              <option value="all" data-t="settings.otherScriptAll"></option>
+            </select>
+            <p id="other-script-hint" class="hint" hidden></p>
+          </div>
+          <!-- Hidden while the choice above is Off. -->
+          <div id="other-script-types">
+            <label><input type="checkbox" data-other-script-type="meaning" /> <span data-t="settings.otherScriptMeaning"></span></label>
+            <label><input type="checkbox" data-other-script-type="pinyin" /> <span data-t="settings.otherScriptPinyin"></span></label>
+            <label><input type="checkbox" data-other-script-type="tone" /> <span data-t="settings.otherScriptTone"></span></label>
+            <label><input type="checkbox" data-other-script-type="writing" /> <span data-t="settings.otherScriptWriting"></span></label>
+          </div>
         </fieldset>
 
         <fieldset class="setting">
@@ -1692,7 +1892,7 @@
               <button id="sync-scan-button" class="small" type="button" data-t="scan.button"></button>
               <p id="sync-join-error" class="hint sync-problem" role="alert" hidden></p>
             </form>
-            <!-- Which sync server, and choosing another (syncPanel.js): folded away, few need it. -->
+            <!-- Which sync server, and choosing another (syncServerChoice.js): folded away, few need it. -->
             <details id="sync-server-fold" class="welcome-more">
               <summary id="sync-server-summary"></summary>
               <form id="sync-server-form" class="sync-join">
@@ -1812,6 +2012,12 @@
           <p id="storage-readout" class="hint" role="status"></p>
           <button id="storage-readout-refresh" class="small" type="button" data-t="testing.checkAgain"></button>
           <button id="storage-readout-ask" class="small" type="button" data-t="testing.askNow"></button>
+        </div>
+        <div class="setting">
+          <span data-t="testing.syncInvite"></span>
+          <p class="hint" data-t="testing.syncInviteHint"></p>
+          <button id="sync-invite-show" class="small" type="button" data-t="testing.syncInviteShow"></button>
+          <p id="sync-invite-show-note" class="hint" role="status"></p>
         </div>
         <!-- Only where the group was shown by tapping the version line (testerSettings.js). -->
         <div class="setting" id="tester-settings-hide-row" hidden>

@@ -14,7 +14,7 @@
 
 import HanziWriter from 'hanzi-writer';
 import { loadCharData } from './charData.js';
-import { isShortcutStroke, joinedLine, grassTopsOf } from './shortcuts.js';
+import { isShortcutStroke, joinedLine, grassTopsOf, chuiOf } from './shortcuts.js';
 import {
   fitFrame,
   applyFrame,
@@ -25,6 +25,7 @@ import {
   strokeLeavesRoom,
   combineFrames,
   NO_FRAME,
+  MIN_SCALE,
 } from './frame.js';
 import { toPoints, resample, averageDistance } from './lines.js';
 import { themeColor } from './theme.js';
@@ -796,6 +797,14 @@ export function createQuiz(target, size, handlers) {
       return null;
     }
     const withSize = fitFrame(pairs);
+    // At the smallest size, the fit wanted smaller still (fitFrame stops
+    // there): the stroke is not taken for one in a character that tiny. A
+    // wrong stroke was so (the owner, 2026-11-08); judging it at the
+    // smallest size instead would let more pass, not fewer, since less is
+    // allowed the smaller the character.
+    if (withSize.scale <= MIN_SCALE) {
+      return null;
+    }
     // What fitsStroke allows is measured for a full-size character. In a
     // small one the strokes lie closer together, so less is allowed, or a
     // neighboring stroke of the same shape would pass too.
@@ -827,11 +836,13 @@ export function createQuiz(target, size, handlers) {
   // strokeMatch.js), which is then the shape returned. Otherwise null.
   function otherShapeFor(stroke) {
     const stored = baseData.altShapes?.[sequence[stroke.strokeNum]];
-    if (!stored) {
+    // The branch of 匕 may also be written right to left (reversedShapes).
+    const reversed = baseData.reversedShapes?.[sequence[stroke.strokeNum]] ?? [];
+    if (!stored && reversed.length === 0) {
       return null;
     }
     const points = stroke.drawnPath.points;
-    for (const shape of [stored, ...steepDotsOf(stored)]) {
+    for (const shape of [...(stored ? [stored, ...steepDotsOf(stored)] : []), ...reversed]) {
       const inFrame = moved(toPoints(shape), frame).map((point) => [point.x, point.y]);
       // In a small character the strokes lie closer together, so less is
       // allowed (as in isExpectedStrokeAtAnotherSize).
@@ -975,12 +986,21 @@ export function createQuiz(target, size, handlers) {
     const expected = sequence[stroke.strokeNum];
     const written = new Set(sequence.slice(0, stroke.strokeNum));
     const top = grassTops.find(
-      (at) => (expected === at || expected === at + 1) && !written.has(at + 1) && !written.has(at + 2),
+      (at) =>
+        (expected === at || expected === at + 1 || (expected === at - 1 && isChuiTop(at))) &&
+        !written.has(at + 1) &&
+        !written.has(at + 2),
     );
     if (top === undefined) {
       return null;
     }
     return levelFits(top, stroke.drawnPath.points, false) ? top : null;
+  }
+
+  // True if the 艹 beginning at `top` is the middle of a 垂 (its short strokes
+  // and halves), whose 丨 comes just before it in the data.
+  function isChuiTop(top) {
+    return chuiOf(baseData).some((chui) => !chui.whole && chui.at + 3 === top);
   }
 
   // True if `points` fit the level stroke of the 艹 beginning at `top`: both
@@ -1028,11 +1048,14 @@ export function createQuiz(target, size, handlers) {
   // both halves count as written, and what is left of the 艹 comes after.
   function acceptGrassLevel(stroke, top, totalStrokes) {
     const position = stroke.strokeNum;
+    // Written where a 垂's 丨 is expected, the 丨 is left till after the next
+    // level stroke (the second order of 垂, withChuiUprightLast).
+    const upright = sequence[position] === top - 1;
+    const after = upright ? [top - 1, top, top + 1, top + 2, top + 3, top + 4] : [top + 1, top + 2];
     sequence = [
       ...sequence.slice(0, position),
-      top + 1,
-      top + 2,
-      ...sequence.slice(position).filter((strokeNum) => strokeNum !== top + 1 && strokeNum !== top + 2),
+      ...(upright ? [top + 1, top + 2, top, top + 3, top + 4, top - 1] : [top + 1, top + 2]),
+      ...sequence.slice(position).filter((strokeNum) => !after.includes(strokeNum)),
     ];
     grassJoined.push(top);
     noteAccepted(position, [top + 1, top + 2], stroke.drawnPath.points);
@@ -1291,6 +1314,8 @@ export function createQuiz(target, size, handlers) {
   // stroke data loads, or it flashed up as the next card came (the owner,
   // 2026-10-24). start() puts back what the new character needs.
   let blanked = false;
+  // How many times showCharacter has been called: only the latest is shown.
+  let charsAsked = 0;
   function blank() {
     blanked = true;
     clearTimeout(afterAnimationTimer);
@@ -1517,9 +1542,15 @@ export function createQuiz(target, size, handlers) {
         completed = true;
         let order = null;
         if (baseData.altOrder) {
-          // (The big set's 忄 has the Taiwan order second: inTaiwanOrder.)
+          // (The big set's 忄 has the Taiwan order second: inTaiwanOrder.
+          // A 方 or 垂 alone has its second order only there: withFangInEitherOrder,
+          // withChuiUprightLast.)
           const standard = isStandardOrder(sequenceWithoutGrassJoins());
-          order = standard !== Boolean(baseData.altOrderIsTaiwan) ? 'moe' : 'mainland';
+          if (baseData.altOrderIsFang) {
+            order = standard ? 'moe' : 'other';
+          } else {
+            order = standard !== Boolean(baseData.altOrderIsTaiwan) ? 'moe' : 'mainland';
+          }
         }
         showDemo(sequence.length); // nothing left to show
         const passed = handlers.onComplete({ totalMistakes: mistakes, hintShown, order });
@@ -1534,10 +1565,18 @@ export function createQuiz(target, size, handlers) {
     // 'traditional' or 'simplified' and decides which form is drawn.
     // `useRawInput` chooses between keeping your own strokes on screen
     // (true) and snapping to the printed strokes (false). Returns false if
-    // there is no stroke data for the character.
+    // there is no stroke data for the character, and null if another
+    // character was asked for while its data loaded (that one is shown).
     async showCharacter(newChar, script, useRawInput) {
       blank();
+      const asked = ++charsAsked;
       const data = await loadCharData(newChar, script);
+      // Two asked for close together (a deck chosen as the next card came
+      // up): whichever data arrived last used to win, so the card could ask
+      // for one word while the area quizzed another's character.
+      if (asked !== charsAsked) {
+        return null;
+      }
       if (!data) {
         return false;
       }

@@ -163,6 +163,8 @@ export function createWordFlow(elements) {
   // The word being written, as a list of characters, and where we are in it.
   let chars = [];
   let position = 0;
+  // How many times start has been called: only the latest word is written.
+  let wordsAsked = 0;
   // True once the current character has been completed.
   let charDone = false;
 
@@ -175,7 +177,8 @@ export function createWordFlow(elements) {
   let suggestedPerChar = []; // the verdict the app proposed (true = passed)
   let passedPerChar = []; // the verdict that stands (true = passed)
   let orderPerChar = []; // 'moe' or 'mainland' where a character has two
-  //                        accepted stroke orders, otherwise null
+  //                        accepted stroke orders ('other' for a 方 with its
+  //                        ノ before its ㇆), otherwise null
   let skippedPerChar = []; // true where the character was skipped, not written
   let finishedPerChar = []; // true once the character has been written or skipped
   let drawingPerChar = []; // a copy of the raw input as each character was
@@ -832,7 +835,8 @@ export function createWordFlow(elements) {
 
   return {
     // Begins writing `text`. Returns false if none of its characters have
-    // stroke data, in which case nothing changes.
+    // stroke data, in which case nothing changes, and null if start was
+    // called again while its data loaded (the later word is written).
     //
     // newOptions:
     //   script:        'traditional' or 'simplified'; decides which printed
@@ -891,6 +895,7 @@ export function createWordFlow(elements) {
       const typed = Array.from(text).filter((char) => char.trim() !== '');
       // Nothing of the word before shows while this one loads.
       quiz.blank();
+      const asked = ++wordsAsked;
 
       // The outline is set now, before the stroke data has loaded: a tap on
       // "Hide outline" while it loads (a slow tablet) would otherwise be
@@ -903,6 +908,11 @@ export function createWordFlow(elements) {
 
       // Find out which characters have stroke data, loading it at the same time.
       const data = await Promise.all(typed.map((char) => loadCharData(char, newOptions.script)));
+      // Another word was asked for meanwhile (two cards came up close
+      // together): that one is shown, and this one leaves everything alone.
+      if (asked !== wordsAsked) {
+        return null;
+      }
       const usable = typed.filter((char, index) => data[index] !== null);
       // Punctuation (，。？) is never written: left out without a word.
       const skipped = typed.filter((char, index) => data[index] === null && !/\p{P}/u.test(char));
@@ -935,6 +945,17 @@ export function createWordFlow(elements) {
       drawingPerChar = [];
       await showCurrentCharacter();
       return true;
+    },
+
+    // Whether any character of `text` has stroke data in `script`, so that a
+    // card can be passed over before it is shown (Review). The writing area
+    // is emptied meanwhile, as start() does; the data loaded is kept, so
+    // start() then has it at once.
+    async canWrite(text, script) {
+      quiz.blank();
+      const typed = Array.from(text).filter((char) => char.trim() !== '');
+      const data = await Promise.all(typed.map((char) => loadCharData(char, script)));
+      return data.some((charData) => charData !== null);
     },
 
     // Each character written, with a copy of your strokes on it as it was

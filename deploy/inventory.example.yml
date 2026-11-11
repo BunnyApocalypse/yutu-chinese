@@ -10,6 +10,10 @@ all:
       # (an A record, and AAAA for IPv6), for which Caddy gets a
       # certificate by itself.
       sync_domain: sync.example.org
+      # Optional: earlier names it should still answer to, if it ever gets a
+      # new one (apps already out there keep the name they were built with).
+      # sync_extra_domains:
+      #   - old-sync.example.org
       # The sites whose pages may call the server: where your copy of the
       # app is served from, without a path.
       sync_allowed_origins:
@@ -17,3 +21,5 @@ all:
       # Optional: a Healthchecks.io (or self-hosted Healthchecks) ping URL,
       # which emails you when the server stops answering or its disk fills.
       # healthcheck_url: https://hc-ping.com/your-uuid
+      # Optional: a second ping URL, red when a limit was hit (README.md).
+      # healthcheck_limits_url: https://hc-ping.com/another-uuid

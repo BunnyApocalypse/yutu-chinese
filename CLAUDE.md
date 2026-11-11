@@ -43,7 +43,7 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - Both first run `scripts/copy-char-data.js` (`predev`/`prebuild`), which copies stroke data into `public/` if missing.
 - `npm test`: unit tests in `tests/` (Node's test runner) for the plain-calculation code and the sync server; nothing touching the page or IndexedDB.
 - `npm run sync-server`: the sync server on this computer, http://127.0.0.1:8787 (`server/README.md`).
-- The real sync server, `yutu.bunnyapocalypse.space`: Ansible playbooks in `deploy/` (`cd deploy`, then `ansible-playbook status.yml`, `deploy.yml`, `update.yml`; `deploy/README.md`).
+- The real sync server, `sync.yutuchinese.com` (also `yutu.bunnyapocalypse.space`, its first name, still served): Ansible playbooks in `deploy/` (`cd deploy`, then `ansible-playbook status.yml`, `deploy.yml`, `update.yml`; `deploy/README.md`).
 - `npm run test:browser`: the real app in several headless Chromium browsers at once, about four minutes (`tests/browser/CLAUDE.md`). **Don't change files while it runs**: the dev server reloads the pages and tests fail.
 
 ## Read before working on an area
@@ -56,7 +56,8 @@ Each area's file in `docs/` (index `docs/README.md`) has the names in the code, 
 - Importing from Anki (.apkg, .colpkg), imported schedules: `docs/anki.md`
 - Importing from Skritter (the .zip its support sends): `docs/skritter.md`
 - `changedAt`, removal marks, `formerIds`, combining backups: `docs/merging.md`
-- Syncing between devices (being built), the sync server: `docs/sync.md`
+- Syncing between devices, the sync server: `docs/sync.md`
+- Dependencies, updates, Dependabot, the SBOM, the deploy's actions: `docs/supply-chain.md`
 - The word page, sentences, sound: `docs/word-page.md`
 - Writing a character (raw input, shortcuts, the frame, stroke orders, gestures): `docs/writing.md`
 - **Before touching the study area, `src/quiz.js`, `src/wordFlow.js`, Hanzi Writer, or anything that changes heights on the review screen: `docs/pitfalls.md`**
@@ -74,8 +75,8 @@ Each area's file in `docs/` (index `docs/README.md`) has the names in the code, 
 - **IDs are the same on every device.** A word's ID is `<traditional>|<pinyin>` (a sentence `<traditional>|sentence`, a radical `<traditional>|radical`); review IDs are random (`randomId()` in `src/db.js`; `crypto.randomUUID()` fails on the LAN address), except reviews brought over from Anki or Skritter, named after their own (`anki-…`, `docs/anki.md`; `skritter-…`, `docs/skritter.md`) so a second import adds nothing. Never auto-incrementing keys.
 - **Every review is logged and never deleted**, and never changed except when corrected in the same sitting of Review (looking back, `docs/cards.md`); cards can be rebuilt from reviews (`replay` in `src/scheduler.js`). Removing a word deletes its cards, never its reviews, and leaves a mark in `removed`.
 - **`changedAt` is stamped by `putAll` in `src/db.js`, never by callers**; a change the app makes by itself to old records passes `{ stamp: false }`. Compare records without it.
-- **The word's pop-up panel rebuilds the word from its form**, so fields not in the form are carried over by hand: `decks`, `formerIds`, `learnedAt`, `suspended`, `startedOverAt`, `importedAt`. A new such field must be added there.
-- **Changing the store layout** means raising `DATABASE_VERSION` in `src/db.js`, handling existing databases in `onupgradeneeded` by `oldVersion`, and usually raising the backup version (the database at 3, the backup at 2; old backups must still be read). Testers' data is always carried over.
+- **The word's pop-up panel rebuilds the word from its form**, so fields not in the form are carried over by hand: `decks`, `formerIds`, `learnedAt`, `suspended`, `startedOverAt`, `importedAt`, `formsLearnedAt`. A new such field must be added there.
+- **Changing the store layout** means raising `DATABASE_VERSION` in `src/db.js`, handling existing databases in `onupgradeneeded` by `oldVersion`, and usually raising the backup version (the database at 4, the backup at 2; old backups must still be read). Testers' data is always carried over.
 - **A setting that belongs to the device** goes in `DEVICE_SETTINGS` in `src/merge.js`, or combining backups takes it from the other device.
 - **A word's script comes from `scriptFor(word, settings)`** (`src/words.js`), never `settings.script`. Card IDs come from `cardIdFor` / `allCardIds` (`src/session.js`), never built by hand.
 - **`word.pinyin` may be empty or not syllables** (sentences, radicals); code reading it must cope.
@@ -90,11 +91,12 @@ Each area's file in `docs/` (index `docs/README.md`) has the names in the code, 
 
 ## Deploying
 
-- **Stable** from the `stable` branch at https://bunnyapocalypse.github.io/yutu-chinese/ (testers, the owner's data); **test** from `main` at `.../yutu-chinese/test/`. Pushing `main` publishes the test copy. The old `.../hanzi-trainer/` forwards from a repository of its own (`redirect/`).
+- **The app is at https://yutuchinese.com** (the move, 2026-11-10; `docs/offline.md`): **stable** from the `stable` branch at `/app/` (testers, the owner's data), **test** from `main` at `/app/test/`, published for now by `BunnyApocalypse/yutuchinese-site` (`site-repo/`), started by hand. **This repository publishes the moving page** at the old address, https://bunnyapocalypse.github.io/yutu-chinese/ (and `test/`), on a push to `main` that changes a file it is built from (the `paths` list in `.github/workflows/deploy.yml`; the owner, 2026-11-10), or by hand. Once the testers have moved, this repository publishes the app at yutuchinese.com itself again (phase 3). The old `.../hanzi-trainer/` forwards from a repository of its own (`redirect/`), deleted in phase 3.
 - **Never push unless the owner has said to** (2026-10-15): no branch, not at the end of a session or a background job. Commit freely; say what is committed and not pushed. **Except** (2026-10-19): right after a push the owner asked for, when they ask to clean up or hand over, commits of handover notes and other docs only (nothing in the app) are pushed without asking; say so.
-- **To release:** ask the owner, write the entry at the top of `src/changes.js` (the "What's new" pop-up: what a learner will notice, a few lines), then `git push origin main:stable` and `gh workflow run deploy.yml --ref main` (a run started by the push to `stable` is refused by the environment's rules).
+- **Always hand over before pushing** (the owner, 2026-11-08): the handover at the top of `docs/history.md` is written and committed before the push, so it goes up with the work.
+- **To release:** ask the owner, write the entry at the top of `src/changes.js` (the "What's new" pop-up: what a learner will notice, a few lines), then `git push origin main:stable`, `git push origin main`, and `gh workflow run deploy.yml -R BunnyApocalypse/yutuchinese-site`, which builds both copies of the app from their branches. A change to the app reaches the test copy only by that last command too.
 - **No need to watch a deploy run** after pushing (the owner, 2026-10-19): push and move on, unless the change could affect the build itself (`package.json`, `vite.config.js`, `scripts/`, the workflow, the service worker or offline packs).
-- If a deploy fails with "Fetching artifact metadata failed", don't re-run it; start a fresh run with the command above.
+- If a deploy fails with "Fetching artifact metadata failed" or hangs at Pages ("Timeout reached"), don't re-run it; start a fresh run (`gh workflow run deploy.yml`, with `-R BunnyApocalypse/yutuchinese-site` for the app).
 - The repository is `BunnyApocalypse/yutu-chinese`, with capitals. Never push the app to `BunnyApocalypse/hanzi-trainer` (only the forwarding site).
 
 ## Standing facts
@@ -102,5 +104,5 @@ Each area's file in `docs/` (index `docs/README.md`) has the names in the code, 
 - **Start with the handover at the top of `docs/history.md`**; the roadmap (agreed 2026-10-18) follows it.
 - **The name is 玉兔中文** (Yùtù Zhōngwén, "Jade Rabbit Chinese"; the owner, 2026-10-15); "Yutu Chinese" where Chinese can't be marked with `lang` (plain text, file names); the browser tab and the home-screen label are "玉兔 Yutu" (`docs/goals.md`). The database (`hanzi-trainer`) and backup format (`hanzi-trainer-backup`) keep the old name for good.
 - **The owner studies in the app for good** (2026-10-26), with their Skritter history imported (`exports/`, git-ignored; `docs/skritter.md`).
-- **The owner has not tried** combining backups between real devices: ask how it went before building further on it. (Sentences: tried and liked, 2026-11-04; leeches: tried, 2026-11-06.)
+- **The owner has not tried** combining backups between real devices: ask how it went before building further on it. (Sentences: tried and liked, 2026-11-04; leeches: tried, 2026-11-06; syncing between their devices: tested, 2026-11-09.)
 - `tests/words.tsv` has 109 test words; the app itself starts with none.

@@ -27,23 +27,56 @@
 // which picture to show ('happy' for a streak going on, 'fresh' for a new
 // start after a broken one).
 //
-// Which day it was last shown is kept in localStorage, not in the database:
-// it belongs to the device, like "What's new" (whatsNew.js). The test copy
-// keeps its own. Never shown before means this is the first, explaining one.
+// Which day it was last shown is a setting (`streakShown`), synced, so that
+// a screen seen on one device doesn't come again the same day on another,
+// and the explaining one comes once (the owner, 2026-11-08). Kept in memory
+// for the questions asked while studying, read at start and after a sync
+// (loadStreakShown). Before, it was in localStorage, which a device carries
+// over the first time. Never shown before means this is the first,
+// explaining one.
 
 /* global __CHANNEL__ */
 
+import { getSetting, setSetting } from './db.js';
 import { closeOnTapBeside } from './dialogs.js';
 import { t } from './text.js';
 
-const SHOWN_KEY = __CHANNEL__ ? `streak-shown-${__CHANNEL__}` : 'streak-shown';
-// The day the pill was last shown, kept the same way: in memory only, a
-// reload brought it back the same day (the owner saw it twice, 2026-10-24).
+// Where the screen's day was kept before (the test copy apart).
+const OLD_SHOWN_KEY = __CHANNEL__ ? `streak-shown-${__CHANNEL__}` : 'streak-shown';
+// The day the pill was last shown, kept on the device in localStorage: in
+// memory only, a reload brought it back the same day (the owner saw it
+// twice, 2026-10-24).
 const PILL_KEY = __CHANNEL__ ? `streak-pill-shown-${__CHANNEL__}` : 'streak-pill-shown';
 
 const byId = (id) => document.getElementById(id);
 
-function readShown(key = SHOWN_KEY) {
+// The day the screen was last shown, or null.
+let shownDay = null;
+
+// Reads it from the database, at start and after a sync brought changes.
+export async function loadStreakShown() {
+  shownDay = await getSetting('streakShown', null);
+  if (shownDay === null) {
+    const old = readPill(OLD_SHOWN_KEY);
+    if (old !== null) {
+      shownDay = old;
+      await setSetting('streakShown', old);
+      try {
+        localStorage.removeItem(OLD_SHOWN_KEY);
+      } catch {
+        // Refused: it is read once more next time, to the same effect.
+      }
+    }
+  }
+}
+
+function markScreenShown(dayKey) {
+  shownDay = dayKey;
+  // Not waited for: the screen is up already.
+  setSetting('streakShown', dayKey).catch(() => {});
+}
+
+function readPill(key = PILL_KEY) {
   try {
     return localStorage.getItem(key);
   } catch {
@@ -52,9 +85,9 @@ function readShown(key = SHOWN_KEY) {
   }
 }
 
-function markShown(dayKey, key = SHOWN_KEY) {
+function markPillShown(dayKey) {
   try {
-    localStorage.setItem(key, dayKey);
+    localStorage.setItem(PILL_KEY, dayKey);
   } catch {
     // As above: it may come again today.
   }
@@ -168,10 +201,10 @@ export function createStreakScreen(turnOff) {
   });
 
   const screen = {
-    // True before the first streak screen on this device (the one that
+    // True before the first streak screen (the one that
     // explains streaks, shown at once).
     isFirst() {
-      return readShown() === null;
+      return shownDay === null;
     },
 
     // streak: as streakAt gives it; dayKey: today's study day (studyDayKey);
@@ -180,7 +213,7 @@ export function createStreakScreen(turnOff) {
     // Shown only if today counts and it hasn't been shown today, and not over
     // another pop-up (it waits for the next pause). True if it was shown.
     showIfNew(streak, dayKey, goal, then = null) {
-      const shown = readShown();
+      const shown = shownDay;
       if (!streak.todayDone || shown === dayKey || document.querySelector('dialog[open]')) {
         return false;
       }
@@ -217,7 +250,7 @@ export function createStreakScreen(turnOff) {
       dialog.showModal();
       throwSparkles(sparkles);
       // Marked as soon as it is shown, so it never comes twice in a day.
-      markShown(dayKey);
+      markScreenShown(dayKey);
       return true;
     },
 
@@ -225,10 +258,10 @@ export function createStreakScreen(turnOff) {
     // `role="status"` box, so screen readers say it without moving there,
     // and it never takes the keyboard's place.
     showPill(streak, dayKey, goal) {
-      if (!streak.todayDone || readShown(PILL_KEY) === dayKey || readShown() === dayKey) {
+      if (!streak.todayDone || readPill() === dayKey || shownDay === dayKey) {
         return;
       }
-      markShown(dayKey, PILL_KEY);
+      markPillShown(dayKey);
       pillStreak = [streak, dayKey, goal];
       pillText.textContent = t('streak.pill', { count: streak.current });
       // Shown afresh, so that its animation starts from the beginning.

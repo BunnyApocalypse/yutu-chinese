@@ -1,0 +1,12 @@
+# Caddy's updates, weekly. Caddy comes from its COPR repository, whose
+# updates are not marked "security", so dnf-automatic (security updates
+# only) leaves them out. Restarted only if it was updated. Written by
+# Ansible (deploy/setup.yml).
+#
+# ($$ is systemd's way of writing a plain $ for the shell.)
+[Unit]
+Description=Update Caddy
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'before=$$(rpm -q caddy); dnf -y -q upgrade caddy || exit 1; [ "$$(rpm -q caddy)" = "$$before" ] || systemctl try-restart caddy'

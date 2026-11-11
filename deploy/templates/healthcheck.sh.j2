@@ -19,5 +19,26 @@ if [ "$ok" = 1 ]; then
 else
   curl -fsS --max-time 10 --retry 3 {{ healthcheck_url }}/fail >/dev/null
 fi
+{% if healthcheck_limits_url | length > 0 %}
+
+# The limits, on a check of their own: the sync server's LIMIT lines since
+# the last look (journalctl keeps its place in the cursor file), and how
+# full the server is. Sent without the addresses ("from …"): those stay in
+# the server's own log, kept at most 14 days, as the privacy page says.
+limits=$(journalctl -u yutu-sync -o cat --no-pager --grep '^LIMIT ' \
+  --cursor-file=/var/lib/yutu-healthcheck/cursor | sed 's/ from .*//')
+holds=$(du -sb {{ sync_data_dir }} | cut -f1)
+percent=$((holds * 100 / ({{ sync_max_total_mb }} * 1024 * 1024)))
+if [ "$percent" -ge {{ sync_warn_percent }} ]; then
+  limits="$limits
+ROOM the server holds ${percent}% of the most it may (new accounts stop at {{ sync_new_accounts_until_percent }}%)"
+fi
+if [ -n "$limits" ]; then
+  printf '%s\n' "$limits" | head -c 10000 | \
+    curl -fsS --max-time 10 --retry 3 --data-binary @- {{ healthcheck_limits_url }}/fail >/dev/null
+else
+  curl -fsS --max-time 10 --retry 3 {{ healthcheck_limits_url }} >/dev/null
+fi
+{% endif %}
 # Failed in the journal too.
 [ "$ok" = 1 ]

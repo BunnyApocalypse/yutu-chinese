@@ -17,7 +17,7 @@
 
 import { AGAIN } from './scheduler.js';
 import { studyByDay, studyDayKey, previousDayKey } from './streak.js';
-import { cardIdFor } from './session.js';
+import { cardIdFor, otherScriptCardId } from './session.js';
 import { isSentence } from './sentences.js';
 import { isRadical } from './radicals.js';
 
@@ -61,18 +61,27 @@ export function cardStage(card) {
 //   scriptOf:    (word) → 'traditional' or 'simplified'
 // Returns { rows: [{ type, counts, total }], all: { counts, total } },
 // counts being { new, learning, young, mature }.
-export function cardStages(words, cards, { types, hasCardType, scriptOf }) {
+// otherCardsOf(word): the word's cards in the other script, as for
+// planSession ({ script, types } or null, review.js): counted in their
+// kind's row too ("Also read simplified", otherScript.js).
+export function cardStages(words, cards, { types, hasCardType, scriptOf, otherCardsOf = () => null }) {
   const empty = () => Object.fromEntries(STAGES.map((stage) => [stage, 0]));
   const all = empty();
   const rows = types.map((type) => {
     const counts = empty();
-    for (const word of words) {
-      if (!hasCardType(word, type)) {
-        continue;
-      }
-      const stage = cardStage(cards.get(cardIdFor(word, type, scriptOf(word))));
+    const add = (card) => {
+      const stage = cardStage(card);
       counts[stage] += 1;
       all[stage] += 1;
+    };
+    for (const word of words) {
+      if (hasCardType(word, type)) {
+        add(cards.get(cardIdFor(word, type, scriptOf(word))));
+      }
+      const other = otherCardsOf(word);
+      if (other?.types.includes(type)) {
+        add(cards.get(otherScriptCardId(word, type, other.script)));
+      }
     }
     return { type, counts, total: sum(Object.values(counts)) };
   });

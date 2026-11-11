@@ -8,10 +8,11 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { startApp, startBrowsers, tap, type, waitUntil, openSettings, textOf, ANSWER_YES } from './harness.js';
+import { startApp, startBrowsers, tap, type, waitUntil, openSettings, textOf, reloadApp, addTestWords, ANSWER_YES } from './harness.js';
 import { createSyncServer } from '../../server/server.js';
 import qrcode from 'qrcode-generator';
 
@@ -141,6 +142,13 @@ describe('sync in Settings', { concurrency: false }, () => {
     assert.ok(await page.evaluate(`document.getElementById('sync-saved-button').hidden`));
     await tap(page, 'sync-code-hide');
     await waitUntil(page, shown('sync-on'), 'sync on again');
+    // Closing Settings hides it too.
+    await tap(page, 'sync-show-code-button');
+    await waitUntil(page, shown('sync-code-step'), 'the code again');
+    await page.evaluate(`document.getElementById('settings-panel').close()`);
+    await openSettings(page, 'settings-data');
+    await waitUntil(page, shown('sync-on'), 'sync on after closing Settings');
+    assert.equal(await textOf(page, 'sync-code'), '');
   });
 
   it('turns sync off, keeping the words and forgetting the code', async () => {
@@ -273,8 +281,12 @@ describe('sync in the introduction', { concurrency: false }, () => {
     await click(page, 'input[name="welcome-start"][value=""]');
     await tap(page, 'welcome-next');
     assert.ok(await page.evaluate(shown('welcome-sync')));
-    // "Not now" is chosen at first; the screen finishes as before.
-    assert.equal(await page.evaluate(`document.getElementById('welcome-next').disabled`), false);
+    // Sync is chosen at first (the owner, 2026-11-09), its code shown at once.
+    assert.equal(await page.evaluate(`document.querySelector('input[name="welcome-sync"]:checked').value`), 'on');
+    await waitUntil(page, `document.getElementById('welcome-code').textContent !== ''`, 'the code');
+    // "Just this device for now" finishes as before; back to sync.
+    await click(page, 'input[name="welcome-sync"][value=""]');
+    await waitUntil(page, `!document.getElementById('welcome-next').disabled`, 'the button to finish');
     await click(page, 'input[name="welcome-sync"][value="on"]');
     await waitUntil(page, shown('welcome-sync-code'), 'the code');
     code = await textOf(page, 'welcome-code');
@@ -289,19 +301,51 @@ describe('sync in the introduction', { concurrency: false }, () => {
     assert.equal((await filesOnServer(folder)).filter((name) => name.startsWith('batch-')).length, 1);
   });
 
-  it('joins from the first screen, skipping the rest and taking the other device\'s settings', async () => {
-    const page = pages[1];
+  it('joins on a screen of its own, says what came, takes the other device\'s settings and still asks to keep the words', async () => {
+    // The first device chooses the dark look, has seen a tip and the streak
+    // screen, and sends it all when put away.
+    const [first, page] = pages;
+    const batches = async () => (await filesOnServer(folder)).filter((name) => name.startsWith('batch-')).length;
+    const before = await batches();
+    await first.evaluate(`import('/src/db.js').then(async (db) => {
+      await db.setSetting('theme', 'dark');
+      await db.setSetting('tipsSeen', ['review']);
+      await db.setSetting('streakShown', '2026-11-08');
+    })`);
+    await first.evaluate(`Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+      document.dispatchEvent(new Event('visibilitychange'))`);
+    await waitFor(async () => (await batches()) > before, 'the look sent');
+
     await tap(page, 'welcome-join-button');
+    // The join screen: no steps, no Next or Skip; Back goes back.
+    assert.ok(await page.evaluate(shown('welcome-join-screen')));
+    assert.equal(await page.evaluate(shown('welcome-next')), false);
+    assert.equal(await page.evaluate(shown('welcome-skip')), false);
+    assert.equal(await page.evaluate(shown('welcome-progress')), false);
+    await tap(page, 'welcome-back');
+    assert.equal(await page.evaluate(shown('welcome-join-screen')), false);
+    assert.ok(await page.evaluate(shown('welcome-next')));
+    await tap(page, 'welcome-join-button');
+
     await type(page, 'welcome-code-input', code);
-    await page.evaluate(`window.loadedBefore = true; document.getElementById('welcome-join-form').requestSubmit()`);
-    // The app starts again with what came (the introduction not again).
-    await waitFor(
-      () => page.evaluate(`!window.loadedBefore && !document.querySelector('main').classList.contains('starting')`),
-      'the app to start again',
-    );
-    assert.equal(await page.evaluate(`document.getElementById('welcome').open`), false);
+    await page.evaluate(`document.getElementById('welcome-join-form').requestSubmit()`);
+    await waitUntil(page, shown('welcome-joined'), 'what came', 20000);
+    assert.match(await textOf(page, 'welcome-joined-details'), /0 words came from your other device\..*settings came along too.*Syncing through 127\.0\.0\.1/s);
+    // The last screen's lines on keeping the words, as synced; no sync choice.
+    assert.equal(await textOf(page, 'welcome-keep-heading'), 'Keep your words on this device');
+    assert.equal(await page.evaluate(shown('welcome-sync')), false);
+    assert.equal(await page.evaluate(shown('welcome-back')), false);
+    // The other device's settings, in effect already: the script and the look.
     const script = await page.evaluate(`import('/src/db.js').then((db) => db.getSetting('script', null))`);
     assert.equal(script, 'traditional');
+    assert.equal(await page.evaluate('document.documentElement.dataset.theme'), 'dark');
+    const seen = await page.evaluate(`import('/src/db.js').then(async (db) => [await db.getSetting('tipsSeen', []), await db.getSetting('streakShown', null)])`);
+    assert.deepEqual(seen, [['review'], '2026-11-08']);
+    await tap(page, 'welcome-next');
+    await waitUntil(page, `!document.getElementById('welcome').open`, 'the introduction to close');
+    // Closing kept the look that came, not the one of the screens.
+    assert.equal(await page.evaluate('document.documentElement.dataset.theme'), 'dark');
+    assert.equal(await page.evaluate(`import('/src/db.js').then((db) => db.getSetting('welcomeDone', false))`), true);
   });
 
   it('opened from the link in the QR code, puts the code in the box to confirm, and out of the address', async () => {
@@ -310,14 +354,159 @@ describe('sync in the introduction', { concurrency: false }, () => {
     // the page already open.)
     await page.send('Page.navigate', { url: `${app.url}?link#sync=${code}` });
     await waitFor(
-      () => page.evaluate(`document.getElementById('welcome')?.open && !document.getElementById('welcome-join-form').hidden`),
-      'the code box',
+      () => page.evaluate(`document.getElementById('welcome')?.open && !document.getElementById('welcome-join-screen').hidden`),
+      'the join screen',
     );
     assert.equal(await page.evaluate(`document.getElementById('welcome-code-input').value`), code);
     assert.ok(await page.evaluate(shown('welcome-from-link')));
     assert.equal(await page.evaluate('window.location.hash'), '');
     // Nothing joined by itself.
     assert.equal(await page.evaluate(`import('/src/db.js').then((db) => db.getSyncValue('code', null))`), null);
+    // "Self-hosting?" is under the code box, folded away.
+    assert.ok(await page.evaluate(shown('welcome-join-server-fold')));
+    assert.equal(await textOf(page, 'welcome-join-server-summary'), 'Self-hosting?');
+    assert.equal(await page.evaluate(`document.getElementById('welcome-join-server-fold').open`), false);
+  });
+
+  it('opened from a link that names a sync server of one\'s own, chooses it once it answers', async () => {
+    const page = pages[2];
+    const address = `http://127.0.0.1:${server.address().port}`;
+    await page.evaluate(`import('/src/db.js').then((db) => db.setSyncValue('server', null))`);
+    await page.send('Page.navigate', { url: `${app.url}?link2#sync=${code}&server=${encodeURIComponent(address)}` });
+    await waitFor(
+      () => page.evaluate(`import('/src/db.js').then((db) => db.getSyncValue('server', null)).then((chosen) => chosen === '${address}')`),
+      'the server chosen',
+    );
+    assert.equal(await page.evaluate(`document.getElementById('welcome-code-input').value`), code);
+    assert.equal(await page.evaluate(`document.getElementById('welcome-join-server-fold').open`), true);
+    assert.match(await textOf(page, 'welcome-join-server-note'), /will use 127\.0\.0\.1/);
+    assert.equal(await page.evaluate(`import('/src/db.js').then((db) => db.getSyncValue('code', null))`), null);
+  });
+
+  it('in an iPhone\'s Safari, says to add the app to the Home Screen and sync there, the code box behind "anyway"', async () => {
+    const page = pages[2];
+    await page.send('Emulation.setUserAgentOverride', {
+      userAgent:
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+    });
+    await page.send('Page.reload', {});
+    // The introduction again, with this browser's plan for keeping the words.
+    await waitFor(
+      () => page.evaluate(`document.getElementById('welcome')?.open && !document.getElementById('welcome-keep-home-screen').hidden`),
+      'the introduction in Safari',
+    );
+    await tap(page, 'welcome-join-button');
+    assert.ok(await page.evaluate(shown('welcome-join-safari')));
+    assert.ok(await page.evaluate(shown('welcome-join-home-screen')));
+    assert.equal(await page.evaluate(shown('welcome-join-dock')), false);
+    assert.match(await textOf(page, 'welcome-join-safari'), /add it to your Home Screen first, and sync there/);
+    assert.equal(await page.evaluate(shown('welcome-join-parts')), false);
+    await tap(page, 'welcome-join-anyway');
+    assert.ok(await page.evaluate(shown('welcome-join-parts')));
+    assert.equal(await page.evaluate(shown('welcome-join-anyway')), false);
+    await page.send('Emulation.setUserAgentOverride', { userAgent: '' });
+  });
+});
+
+// While syncing: no reminder to export a backup, and a red dot instead
+// when syncing has been failing for days (main.js, syncIsLate).
+describe('reminders while syncing', { concurrency: false }, () => {
+  let app;
+  let browsers;
+  let page;
+  let server;
+  let pausedServer;
+  let folder;
+
+  const dot = `document.getElementById('menu-button').classList.contains('reminder')`;
+  const day = 24 * 60 * 60 * 1000;
+
+  before(async () => {
+    app = await startApp();
+    folder = await fs.mkdtemp(path.join(os.tmpdir(), 'yutu-sync-reminders-'));
+    const origins = [new URL(app.url).origin];
+    server = await createSyncServer({ dataDir: path.join(folder, 'running'), log: false, allowedOrigins: origins });
+    pausedServer = await createSyncServer({ dataDir: path.join(folder, 'paused'), log: false, allowedOrigins: origins, paused: true });
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    await new Promise((resolve) => pausedServer.listen(0, '127.0.0.1', resolve));
+    browsers = await startBrowsers(app.url, 1);
+    await browsers.use(async (thePage) => {
+      page = thePage;
+    });
+    await page.evaluate(`import('/src/db.js').then((db) => db.setSyncValue('server', 'http://127.0.0.1:${server.address().port}'))`);
+    await page.evaluate(ANSWER_YES);
+  });
+
+  after(async () => {
+    const errors = browsers?.errors() ?? [];
+    browsers?.close();
+    await app?.close();
+    await new Promise((resolve) => server?.close(resolve));
+    await new Promise((resolve) => pausedServer?.close(resolve));
+    await fs.rm(folder, { recursive: true, force: true });
+    assert.deepEqual(errors, [], 'the page threw errors');
+  });
+
+  it('no longer reminds of a backup once sync is on', async () => {
+    // Words, and a card first studied two days ago with no backup: the
+    // reminder (as in tabs.browser.js).
+    await addTestWords(page);
+    await page.evaluate(`import('/src/db.js').then((db) => db.putAll('cards', [${JSON.stringify({
+      id: 'test|card#meaning', wordId: 'test|card', type: 'meaning', due: Date.now(), firstReviewedAt: Date.now() - 2 * day, fsrsState: null,
+    })}]))`);
+    await reloadApp(page);
+    await page.evaluate(ANSWER_YES);
+    await waitUntil(page, dot, 'the backup reminder');
+    await openSettings(page, 'settings-data');
+    assert.ok(await page.evaluate(shown('backup-reminder-button')));
+    await tap(page, 'sync-on-button');
+    await waitUntil(page, shown('sync-saved-button'), 'the code');
+    await tap(page, 'sync-saved-button');
+    await waitUntil(page, `document.getElementById('sync-status').textContent.startsWith('Last synced')`, 'the first sync');
+    await waitUntil(page, `!${dot}`, 'the dot gone');
+    assert.equal(await page.evaluate(`document.getElementById('backup-reminder-button').hidden`), true);
+    assert.equal(await page.evaluate(`document.getElementById('backup-due-line').hidden`), true);
+    assert.doesNotMatch(await textOf(page, 'backup-status'), /Time to export/);
+  });
+
+  it('says so with a dot when syncing has been failing for days', async () => {
+    // The server paused, and the last sync that worked four days ago.
+    await page.evaluate(`import('/src/db.js').then(async (db) => {
+      await db.setSyncValue('server', 'http://127.0.0.1:${pausedServer.address().port}');
+      await db.setSyncValue('lastWorkedAt', Date.now() - 4 * ${day});
+    })`);
+    await reloadApp(page);
+    await page.evaluate(ANSWER_YES);
+    await waitUntil(page, dot, 'the dot', 15000);
+    assert.equal(await page.evaluate(`document.getElementById('sync-late-line').hidden`), false);
+    assert.equal(await page.evaluate(`document.getElementById('backup-due-line').hidden`), true);
+    assert.match(await page.evaluate(`document.getElementById('menu-button').title`), /syncing isn’t working/);
+    // And a pop-up, saying since when and why; "Open sync settings" goes there.
+    await waitUntil(page, `document.getElementById('sync-late-dialog').open`, 'the pop-up');
+    assert.match(await textOf(page, 'sync-late-detail'), /^Nothing has synced since .*paused on the server/);
+    await tap(page, 'sync-late-open');
+    await waitUntil(page, shown('sync-setting'), 'the sync settings');
+    assert.equal(await page.evaluate(`document.getElementById('sync-late-dialog').open`), false);
+    assert.match(await textOf(page, 'sync-status'), /^Syncing hasn’t worked since/);
+  });
+
+  it('after "Not now", the pop-up waits until the next day; the dot stays', async () => {
+    await page.evaluate(`import('/src/db.js').then((db) => db.setSyncValue('lateSnoozedUntil', 0))`);
+    await reloadApp(page);
+    await page.evaluate(ANSWER_YES);
+    await waitUntil(page, `document.getElementById('sync-late-dialog').open`, 'the pop-up', 15000);
+    await tap(page, 'sync-late-later');
+    await waitUntil(page, `!document.getElementById('sync-late-dialog').open`, 'it to close');
+    // (Saved just after it closes.)
+    await waitFor(
+      () => page.evaluate(`import('/src/db.js').then((db) => db.getSyncValue('lateSnoozedUntil', 0)).then((until) => until > Date.now() + 23 * 60 * 60 * 1000)`),
+      'put away until tomorrow',
+    );
+    await reloadApp(page);
+    await page.evaluate(ANSWER_YES);
+    await waitUntil(page, dot, 'the dot', 15000);
+    await waitUntil(page, `document.getElementById('sync-status').textContent.includes('paused')`, 'the failed sync', 15000);
+    assert.equal(await page.evaluate(`document.getElementById('sync-late-dialog').open`), false);
   });
 });
 
@@ -394,8 +583,60 @@ describe('syncing by itself', { concurrency: false }, () => {
     await waitFor(async () => (await newWordsOn(b)) === '17', 'B to show it');
   });
 
+  it('sends a change at the end of a Review or Learn session, without waiting', async () => {
+    for (const end of ['reviewDone', 'learned']) {
+      const before = await batchesOnServer();
+      await setNewWords(a, end === 'reviewDone' ? 19 : 21);
+      // The setting is saved, and noted in the outbox, a moment later.
+      await waitFor(
+        () => a.evaluate(`import('/src/db.js').then(async (db) => (await db.readOutbox()).entries.length > 0)`),
+        'the change in the outbox',
+      );
+      // As review.js announces the end of Review and of today's words in Learn.
+      await a.evaluate(`document.dispatchEvent(new CustomEvent('screen-shown', { detail: '${end}' }))`);
+      // Well before the 30 seconds after a change.
+      await waitFor(async () => (await batchesOnServer()) > before, `A's change sent at '${end}'`, 10000);
+    }
+  });
+
+  it('takes changes in when the window is chosen again, at most once a minute', async () => {
+    const before = await batchesOnServer();
+    await setNewWords(a, 25);
+    await setVisibility(a, 'hidden');
+    await waitFor(async () => (await batchesOnServer()) > before, 'A\'s change sent');
+    // B synced on being shown a moment ago: a focus now is too soon.
+    await b.evaluate(`window.dispatchEvent(new Event('focus'))`);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    assert.notEqual(await newWordsOn(b), '25');
+    // Two minutes later (B's clock moved on), a desktop window clicked again.
+    await b.evaluate(`window.realNow = Date.now; Date.now = () => window.realNow() + 2 * 60 * 1000;
+      window.dispatchEvent(new Event('focus'))`);
+    try {
+      await waitFor(async () => (await newWordsOn(b)) === '25', 'B to take it in on focus');
+    } finally {
+      await b.evaluate(`Date.now = window.realNow`);
+    }
+  });
+
+  it('says on the end of Review when it last synced, and Sync now takes changes in', async () => {
+    const before = await batchesOnServer();
+    await setNewWords(a, 27);
+    await setVisibility(a, 'hidden');
+    await waitFor(async () => (await batchesOnServer()) > before, 'A\'s change sent');
+    await tap(b, 'review-tab');
+    await waitUntil(b, `!document.getElementById('done-panel').hidden`, 'the end of Review');
+    await waitUntil(b, `/^Synced/.test(document.querySelector('#done-panel .sync-note-text').textContent)`, 'the line on syncing');
+    await b.evaluate(`document.querySelector('#done-panel .sync-note button').click()`);
+    // Said at once, and for a moment at least, so the tap is seen to work.
+    assert.equal(await b.evaluate(`document.querySelector('#done-panel .sync-note-text').textContent`), 'Syncing…');
+    await waitFor(async () => (await newWordsOn(b)) === '27', 'B to take it in with Sync now');
+    await waitUntil(b, `document.querySelector('#done-panel .sync-note-text').textContent === 'Synced just now.'`, 'Synced just now');
+    await openSettings(b, 'settings-studying');
+  });
+
   it('takes nothing in while a character is being written on that device', async () => {
     const before = await batchesOnServer();
+    const was = await newWordsOn(b);
     await setNewWords(a, 23);
     await setVisibility(a, 'hidden');
     await waitFor(async () => (await batchesOnServer()) > before, 'A\'s change sent');
@@ -403,9 +644,224 @@ describe('syncing by itself', { concurrency: false }, () => {
     await b.evaluate(`document.getElementById('writing-area').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, isPrimary: true }))`);
     await setVisibility(b, 'visible');
     await new Promise((resolve) => setTimeout(resolve, 2500));
-    assert.equal(await newWordsOn(b), '17');
+    assert.equal(await newWordsOn(b), was);
     // The finger lifts; a few seconds later the change comes.
     await b.evaluate(`window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, isPrimary: true }))`);
     await waitFor(async () => (await newWordsOn(b)) === '23', 'B to take it in after the stroke');
+  });
+});
+
+// Review on screen while a sync brings cards due (the owner, 2026-11-08: the
+// phone said "2443 cards to review" after Sync now on that screen, and the
+// right number only after a reload). review.showSynced() works the counts
+// out again when no card is up.
+describe('Review after a sync', { concurrency: false }, () => {
+  let app;
+  let browsers;
+  let server;
+  let folder;
+  let a;
+  let b;
+
+  const DAY = 24 * 60 * 60 * 1000;
+  // 35 of the test words, learned long ago, with a meaning card each: A has
+  // 30 from the start, and the other 5 come later.
+  const words = readFileSync('tests/words.tsv', 'utf8')
+    .split('\n')
+    .filter((line) => line.trim() !== '')
+    .slice(0, 35)
+    .map((line, order) => {
+      const [simplified, traditional, pinyin, definition] = line.split('\t');
+      return { id: `${traditional}|${pinyin}`, traditional, simplified, pinyin, definition, order };
+    });
+  const card = (word, dueIn) => {
+    const now = Date.now();
+    return {
+      id: `${word.id}#meaning`,
+      wordId: word.id,
+      type: 'meaning',
+      due: now + dueIn,
+      firstReviewedAt: now - 100 * DAY,
+      lastReviewedAt: now - 10 * DAY,
+      fsrsState: {
+        due: new Date(now + dueIn).toISOString(),
+        stability: 10,
+        difficulty: 5,
+        elapsed_days: 10,
+        scheduled_days: 10,
+        learning_steps: 0,
+        reps: 5,
+        lapses: 0,
+        state: 2,
+        last_review: new Date(now - 10 * DAY).toISOString(),
+      },
+    };
+  };
+  // Puts these words on A, each with its card due a day ago and the review
+  // that made it (cards are worked out from the reviews when they are taken
+  // in on another device: docs/merging.md).
+  const learnOnA = (some) =>
+    a.evaluate(`import('/src/db.js').then(async (db) => {
+      await db.putAll('words', ${JSON.stringify(some)});
+      await db.putAll('cards', ${JSON.stringify(some.map((word) => card(word, -DAY)))});
+      await db.putAll('reviews', ${JSON.stringify(
+        some.map((word, index) => ({
+          id: `review-${index}-${word.order}`,
+          cardId: `${word.id}#meaning`,
+          wordId: word.id,
+          type: 'meaning',
+          time: Date.now() - 10 * DAY,
+          grade: 3,
+          script: 'traditional',
+        })),
+      )});
+    })`);
+  const startCount = () => b.evaluate(`Number(document.getElementById('review-start-count').textContent.match(/\\d+/)?.[0] ?? 0)`);
+
+  before(async () => {
+    app = await startApp();
+    folder = await fs.mkdtemp(path.join(os.tmpdir(), 'yutu-sync-review-'));
+    server = await createSyncServer({ dataDir: folder, log: false, allowedOrigins: [new URL(app.url).origin] });
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    browsers = await startBrowsers(app.url, 2);
+    await browsers.use((first) => browsers.use((second) => {
+      a = first;
+      b = second;
+    }));
+    for (const page of [a, b]) {
+      await page.evaluate(`import('/src/db.js').then((db) => db.setSyncValue('server', 'http://127.0.0.1:${server.address().port}'))`);
+    }
+    await learnOnA(words.slice(0, 30));
+    await reloadApp(a);
+    // A turns sync on, B joins with A's code.
+    await openSettings(a, 'settings-data');
+    await tap(a, 'sync-on-button');
+    await waitUntil(a, shown('sync-code-step'), 'the code');
+    const code = await textOf(a, 'sync-code');
+    await tap(a, 'sync-saved-button');
+    await waitUntil(a, `document.getElementById('sync-status').textContent.startsWith('Last synced')`, 'the first sync');
+    await openSettings(b, 'settings-data');
+    await tap(b, 'sync-join-button');
+    await type(b, 'sync-code-input', code);
+    await b.evaluate(`window.loadedBefore = true; document.getElementById('sync-join-form').requestSubmit()`);
+    await waitFor(() => b.evaluate(`!window.loadedBefore && !document.querySelector('main').classList.contains('starting')`), 'B to start again');
+  });
+
+  after(async () => {
+    const errors = browsers?.errors() ?? [];
+    browsers?.close();
+    await app?.close();
+    await new Promise((resolve) => server?.close(resolve));
+    await fs.rm(folder, { recursive: true, force: true });
+    assert.deepEqual(errors, [], 'the page threw errors');
+  });
+
+  it('counts the cards again on the start of Review after Sync now there', async () => {
+    // Review asks how many cards first (the harness turns that off).
+    await b.evaluate(`(() => {
+      const box = document.getElementById('review-start-checkbox');
+      box.checked = true;
+      box.dispatchEvent(new Event('change', { bubbles: true }));
+    })()`);
+    await waitFor(
+      () => b.evaluate(`import('/src/db.js').then(async (db) => (await db.getAll('settings')).some((s) => s.key === 'reviewStart' && s.value === true))`),
+      'the setting saved',
+    );
+    await reloadApp(b);
+    await b.evaluate(ANSWER_YES);
+    // The due cards, and the words' other kinds of card, new.
+    await waitUntil(b, `!document.getElementById('review-start').hidden`, 'B asking how many', 15000);
+    const asked = await startCount();
+    assert.ok(asked >= 30, `${asked} cards`);
+    // A learns five more words, and syncs.
+    await learnOnA(words.slice(30));
+    await tap(a, 'sync-now-button');
+    await waitFor(() => a.evaluate(`import('/src/db.js').then(async (db) => (await db.getAll('outbox')).length === 0)`), 'A to send them');
+    // B taps Sync now under the question, and stays on it: the question
+    // counts them.
+    await waitUntil(b, `!document.querySelector('#review-start .sync-note button').disabled`, 'B\'s Sync now');
+    await b.evaluate(`document.querySelector('#review-start .sync-note button').click()`);
+    await waitFor(async () => (await startCount()) > asked, 'B to count the five words', 15000);
+    assert.ok(await b.evaluate(`!document.getElementById('review-start').hidden`));
+  });
+});
+
+// Sync offered once to someone already using the app (syncInvite.js): a
+// device that finished the introduction with sync off, starting again.
+describe('the sync offer', { concurrency: false }, () => {
+  let app;
+  let browsers;
+  let server;
+  let folder;
+  let page;
+  const offerOpen = `document.getElementById('sync-invite-dialog').open`;
+
+  before(async () => {
+    app = await startApp();
+    folder = await fs.mkdtemp(path.join(os.tmpdir(), 'yutu-sync-offer-'));
+    server = await createSyncServer({ dataDir: folder, log: false, allowedOrigins: [new URL(app.url).origin] });
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    browsers = await startBrowsers(app.url, 1);
+    await browsers.use(async (thePage) => {
+      page = thePage;
+    });
+    // The first start was a first use: no offer, and marked as shown.
+    assert.equal(await page.evaluate(offerOpen), false);
+    await page.evaluate(`(async () => {
+      const db = await import('/src/db.js');
+      await db.setSyncValue('server', 'http://127.0.0.1:${server.address().port}');
+      await db.setSetting('welcomeDone', true);
+      for (const key of Object.keys(localStorage)) {
+        if (key.startsWith('sync-invite-shown')) localStorage.removeItem(key);
+      }
+    })()`);
+  });
+
+  after(async () => {
+    const errors = browsers?.errors() ?? [];
+    browsers?.close();
+    await app?.close();
+    await new Promise((resolve) => server?.close(resolve));
+    await fs.rm(folder, { recursive: true, force: true });
+    assert.deepEqual(errors, [], 'the page threw errors');
+  });
+
+  it('opens once at start, and not again after "Not now"', async () => {
+    await reloadApp(page);
+    await waitUntil(page, offerOpen, 'the offer');
+    assert.equal(await textOf(page, '#sync-invite-start h2'), 'New: sync between devices');
+    await tap(page, 'sync-invite-not-now');
+    assert.equal(await page.evaluate(offerOpen), false);
+    await reloadApp(page);
+    // (What's new and the rest have had time to open by now.)
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    assert.equal(await page.evaluate(offerOpen), false);
+  });
+
+  it('can be shown again from For testing, and turns sync on with a new code', async () => {
+    await openSettings(page, 'settings-testing');
+    await tap(page, 'sync-invite-show');
+    await waitUntil(page, offerOpen, 'the offer');
+    await tap(page, 'sync-invite-have-code');
+    // A code that isn't one is said so.
+    await type(page, 'sync-invite-code-input', 'ABCD');
+    await page.evaluate(`document.getElementById('sync-invite-join').requestSubmit()`);
+    await waitUntil(page, shown('sync-invite-join-error'), 'the mistake');
+    assert.equal(await textOf(page, 'sync-invite-join-error'), 'A sync code has 32 letters and digits.');
+    await page.evaluate(`document.querySelector('#sync-invite-join .sync-invite-back').click()`);
+    await tap(page, 'sync-invite-turn-on');
+    await waitUntil(page, `document.getElementById('sync-invite-code').textContent !== ''`, 'the code');
+    assert.equal(await page.evaluate(`document.querySelectorAll('#sync-invite-qr svg path').length`), 1);
+    // Nothing sent before the code is saved.
+    assert.deepEqual(await filesOnServer(folder), []);
+    await tap(page, 'sync-invite-saved');
+    await waitUntil(page, `document.getElementById('sync-invite-status').textContent === 'All your words and progress are synced.'`, 'synced', 15000);
+    assert.ok((await filesOnServer(folder)).some((name) => name.startsWith('batch-')));
+    await tap(page, 'sync-invite-done');
+    assert.equal(await page.evaluate(offerOpen), false);
+    // With sync on, For testing says so instead of offering it.
+    await tap(page, 'sync-invite-show');
+    assert.match(await textOf(page, 'sync-invite-show-note'), /^Sync is on on this device/);
+    assert.equal(await page.evaluate(offerOpen), false);
   });
 });

@@ -32,6 +32,7 @@
 - `src/decksPanel.js`: the decks in the Decks tab: the front page and a deck's page (the line saying where you are, the decks inside, adding one) and Deck settings (rename, move, daily goal, delete). Set up by `src/wordsPanel.js`. Also `fillDeckSelect`, which the other lists of decks to choose from are filled with.
 - `src/deckChooser.js`: choosing a deck: a panel with the decks in a tree that folds, opened for the deck studied in Review and Learn (the top of the screen or the card's top line) and, standing in for a drop-down list, wherever else a deck is chosen (`deckButtonFor`).
 - `src/offline.js`, `src/serviceWorker.js`, `scripts/build-offline.js`, `public/manifest.webmanifest`, `.github/workflows/deploy.yml`: offline use and deployment (`docs/offline.md`).
+- `move.html`, `src/move.js`, `src/moveServiceWorker.js`, `vite.move.config.js`, `scripts/finish-move.js` (`npm run build:move`): the moving page at the old address; `src/moveIn.js`: the app taking the words in at the new one (`docs/offline.md`, "The move to yutuchinese.com").
 - `src/welcome.js`, `src/storageAdvice.js`: the introduction shown on first use, and what it says about long-term storage in each browser (`docs/interface.md`).
 - `src/dialogs.js`: pop-up panels that close with a tap beside them.
 - `src/basics.js`, `src/basicsSounds.js`: "Basics of Chinese", five screens for someone new to Chinese, and the recordings it plays (`docs/interface.md`).
@@ -63,10 +64,15 @@
 - `src/syncControl.js`: syncing in the app: turning it on and off, syncing, its status (`docs/sync.md`).
 - `src/syncCodeView.js`: showing and keeping a sync code (its QR code, Copy, Save as file, Print), the link with a code, what to say when syncing goes wrong.
 - `src/syncWorker.js`: syncing on a second thread (a Web Worker), asked by `syncControl.js`, telling its progress.
-- `src/syncTiming.js`: when syncing happens by itself: sending soon after changes and when the app is put away, a whole sync on opening, on coming back and after failures, never while writing.
+- `src/syncTiming.js`: when syncing happens by itself: sending soon after changes, at the end of a Review or Learn session and when the app is put away, a whole sync on opening, on coming back, on the window chosen again and after failures, never while writing; and when syncing has been failing too long (`syncIsLate`).
 - `src/syncScan.js`: scanning a sync code's QR code with the camera, with jsQR (`docs/sync.md`).
 - `src/syncPanel.js`: Settings › Sync between devices: the code, turning sync on, its status and buttons.
+- `src/syncInvite.js`: sync offered once, in a pop-up at start, to someone already using the app (`docs/sync.md`).
 - `src/syncServer.js`: the sync server as syncing's storage: list, read, save, remove as requests, failures as a `reason` (`docs/sync.md`).
+- `src/syncServerChoice.js`: choosing another sync server, folded away in Settings and under "Self-hosting?" in the introduction (`docs/sync.md`).
+- `src/syncLateMessage.js`: the pop-up when syncing has been failing too long, put away for a day by "Not now" (`docs/sync.md`).
+- `src/syncNote.js`: "Synced 2 minutes ago. Sync now" at the foot of the start and end of Review and the end of Learn, while sync is on.
+- `scripts/sbom.js`, `.github/dependabot.yml`: the bill of materials written with every build (`dist/sbom.cdx.json`), and Dependabot's weekly updates (`docs/supply-chain.md`).
 - `deploy/`: Ansible playbooks for the sync server (`setup.yml`, `deploy.yml`, `update.yml`, `status.yml`), their templates and settings (`group_vars/all.yml`), the owner's server (`inventory.yml`) and an example for others; `deploy/README.md`.
 - `server/server.js`: the sync server, plain Node with no dependencies; `server/README.md` (running it, its settings), `server/package.json`.
 - `src/syncCode.js`: the sync code (made, typed in, checked) and the keys and encryption it gives, with WebCrypto (`docs/sync.md`).
@@ -86,9 +92,10 @@
 - `scripts/copy-char-data.js`: fills the two git-ignored stroke data folders, naming files by Unicode number (`學.json` becomes `5b78.json`): `public/char-data/` from `node_modules/hanzi-writer-data/` (about 9,500 characters) and `public/char-data-tw/` from `data/animcjk/graphicsZhHant.txt` (1,013 characters, plus an `index.json` listing them and recording `TAIWAN_SET_VERSION`; raise that number whenever the script changes what it writes, or existing copies will not be regenerated).
 - `scripts/strokeOrder.js`: finds a character's second stroke order by comparing the two data sets. Used by the copy script.
 - `redirect/`: the forwarding site published at the old address, `.../hanzi-trainer/`, from a repository of its own (see its README and "The old address" in `docs/offline.md`).
+- `site-repo/`: the README and workflow of `BunnyApocalypse/yutuchinese-site`, which publishes the app at yutuchinese.com during the move (`docs/offline.md`, "The move to yutuchinese.com").
 - `scripts/anki-study-data.py`, `scripts/check-anki-import.js`: for trying the Anki import on real shared decks (`docs/anki.md`): the first gives them made-up learners' histories with Anki's own Python package, the second shows what the import makes of a file (both run by hand; the decks are in the git-ignored `local/anki-decks/`, `local/README.md`).
 - `scripts/ux-atlas.js`: the screenshot atlas and layout report, every screen at four sizes in both looks, into `local/ux-atlas/` (run by hand; see `docs/ux-review.md`).
-- `scripts/icon.html`, `scripts/make-icons.js`: the app's icon as an SVG, and the script that draws it into `public/icons/` (run by hand; see "Icons" in `docs/offline.md`).
+- `scripts/icon.html`, `scripts/make-icons.js`, `data/icon/`: the app's icon as an SVG, the script that draws it into `public/icons/` (run by hand), and the calligraphy and photos it is made of, each under its own license (see "Icons" in `docs/offline.md`).
 - `scripts/build-tone-table.js`, `data/cedict/`: the tone table extracted from CC-CEDICT (run by hand; `docs/words.md`).
 - `scripts/convert-notes.js`: writes each learning note in the other script and lists those it can't be sure of (run by hand after adding notes; `data/notes/README.md`).
 - `scripts/build-word-lists.js`, `data/wordlists/`: the ready-made word lists (run by hand, uses the internet; `docs/word-lists.md`).

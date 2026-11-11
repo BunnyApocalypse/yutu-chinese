@@ -132,9 +132,11 @@ export function scriptFor(word, settings) {
 // of the deck (see scriptFor), so that a simplified word among traditional
 // ones is not taken for the traditional form: "simp. 简体" or "trad. 繁體".
 // '' for every other word, and for one written the same in both scripts.
-export function scriptFlagFor(word, settings) {
-  const script = scriptFor(word, settings);
-  if (script === settings.script || word.traditional === word.simplified) {
+// `script`: the script the card shows, when it is not the word's own (a
+// card in the other script, otherScript.js), which always has the note.
+export function scriptFlagFor(word, settings, script = scriptFor(word, settings)) {
+  const ownScript = script === scriptFor(word, settings);
+  if ((ownScript && script === settings.script) || word.traditional === word.simplified) {
     return '';
   }
   return t(script === 'simplified' ? 'check.flagSimplified' : 'check.flagTraditional');

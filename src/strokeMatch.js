@@ -22,7 +22,7 @@ const MAX_LENGTH_RATIO = 2;
 // says how big the character will be, and a character written at half size
 // has a first stroke half as long. The lower limit sits a little under the
 // smallest size that is followed (MIN_SCALE in frame.js).
-const MIN_LENGTH_RATIO_FIRST_STROKE = 0.35;
+const MIN_LENGTH_RATIO_FIRST_STROKE = 0.45;
 
 // How different the shapes may be once position and size are taken away
 // (see shapeOf in lines.js). Not multiplied by leniency.
