@@ -52,3 +52,16 @@ The trial of the "From the sources" check on learning notes (`docs/history.md`, 
 ## wikipedia-dynasties/
 
 English Wikipedia's articles on the Chinese dynasties and periods of the 朝代歌 (Xia to Qing, the Three Kingdoms' states, Yinxu, the Grand Canal, "Dynasties of China"), as plain text, fetched once on 2026-11-05 so the Opus judge of `study-aids/batch-20` could check the dynasty notes' history claims (the owner: Wikipedia, for these dynasty facts only). Source: `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&redirects=1&format=json&formatversion=2&titles=<title>`, one request per article, paced for the API's rate limit. CC BY-SA 4.0; used for checking, nothing copied into notes.
+
+## logo/ (icon drafts, 2026-11-10)
+
+- `logo-original.png`: the commissioned 兔 (three versions), copied from the owner's Downloads; `tu-1..3.png` cut from it.
+- `paper.jpg`: cropped from "Old paper2.jpg", Wikimedia Commons, public domain (https://commons.wikimedia.org/wiki/File:Old_paper2.jpg; originally The Digital Yard Sale's free textures). Fetched through the Commons API at 1280px.
+- `styles.html`: draft icon styles A/B/C (`?style=a&size=512`), drawn with headless Chromium.
+- `washi.jpg`: a 250px square of the cream sheet in "Washi(Sugihara paper).JPG", Wikimedia Commons, by Tomomarusan, CC BY 2.5 (https://commons.wikimedia.org/wiki/File:Washi(Sugihara_paper).JPG), enlarged to 512 and brightened 12%. Full photo in `paper-candidates/washi-full.jpg`.
+- `moon.html`: the moon icon with real paper, no glow (`?paper=old|washi&turn=180&size=512`); `moon-compare.png` compares them with the current icon.
+- `sky-ink.jpg`: the inside of "Ink-stain-texture-15.jpg", Wikimedia Commons, by designshard, CC BY 2.0 (https://commons.wikimedia.org/wiki/File:Ink-stain-texture-15.jpg), a white spot patched, lightness mapped onto the night greens. Full photo in `ink-candidates/`.
+- `dot-1..3.png`: the dot stroke (丶) cut from each 兔, used small as stars.
+- `moon.html` now also takes `tu=1|2|3`, `sky=ink`, `stars=dots`, `rough=1`; `bg-compare.png` shows them.
+- `speck-1..4.png`: four tiny real ink specks from the calligrapher's sheet, used as stars (`starstyle=specks`); `moon.html` also takes `layout=c` and `starstyle=mixed|aligned|specks`; `starstyle-compare.png` shows them.
+- The commissioned 兔 (`logo-original.png`): by the calligrapher 南蠻大熊, licensed CC BY 4.0 (the owner, 2026-11-10). Credit them by that name.
