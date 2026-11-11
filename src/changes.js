@@ -13,6 +13,18 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-11',
+    items: [
+      'A new icon: 兔 written by the calligrapher 南蠻大熊, on a moon of handmade paper in an ink-wash night sky. The browser tab shows the moon alone.',
+    ],
+    it: [
+      'Una nuova icona: 兔 scritto dal calligrafo 南蠻大熊, su una luna di carta fatta a mano in un cielo notturno d’inchiostro. La scheda del browser mostra solo la luna.',
+    ],
+    de: [
+      'Ein neues Symbol: 兔, geschrieben vom Kalligraphen 南蠻大熊, auf einem Mond aus handgeschöpftem Papier in einem Nachthimmel aus Tusche. Der Browser-Tab zeigt nur den Mond.',
+    ],
+  },
+  {
     id: '2026-11-10-4',
     items: [
       '垂 (in 睡, 郵, 錘) can be written with its long 丨 after the levels: the middle level stroke, the two short strokes, the next level stroke, then the 丨.',

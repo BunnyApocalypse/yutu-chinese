@@ -43,11 +43,12 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Tests to watch:** `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
 
-**Handover from the session of 2026-11-11 (the calligrapher's 兔 as the icon; branch `worktree-calligraphy-icon`, not merged, not pushed).**
+**Handover from the session of 2026-11-11 (the calligrapher's 兔 as the icon; released to `stable` with the "What's new" entry `2026-11-11`).**
 
 - **Built** (`docs/offline.md`, "Icons"): the icon redrawn from real pictures in `data/icon/` (README with sources and licenses): the left 兔 of the sheet by the calligrapher 南蠻大熊 (CC BY 4.0) in solid jade, on a moon of washi (Tomomarusan, CC BY 2.5) with the grid's cross, in an ink-wash night sky (designshard, CC BY 2.0) with five specks of the calligrapher's ink as stars; no glow. All five pictures redrawn by `node scripts/make-icons.js`, plus a new `favicon.png` for the browser tab (the moon alone, see-through around it). One line more in "Credits and licenses" (`credits.appIcon`, English, Italian, German). The owner chose every part from drafts in `local/logo/` (2026-11-10 and 11).
 - **Tests:** 425 unit tests; a full browser run, 289 of 289 and the grid 426 (25 skipped), none failed. Pictures of the looks' samples and the credits in the app: `local/logo/app-check.png`.
-- **To do when released:** `site-repo/deploy.yml` (yutuchinese.com's top page) still points the tab icon at `app/icons/icon-192.png`; once `stable` has `favicon.png`, it can point there. **To check on devices:** the icon on a home screen (iPhone, Android), and the tab icon in a light and a dark tab bar.
+- **Released** as "What's new" `2026-11-11` (`stable` and `main` pushed, `yutuchinese-site`'s deploy started), on the owner's word.
+- **To do now it is released:** `site-repo/deploy.yml` (yutuchinese.com's top page) still points the tab icon at `app/icons/icon-192.png`; once `stable` has `favicon.png`, it can point there. **To check on devices:** the icon on a home screen (iPhone, Android), and the tab icon in a light and a dark tab bar.
 
 **Handover from the session of 2026-11-10 (two stroke variants from the owner: 睡 and 北).**
 
