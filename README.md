@@ -4,7 +4,7 @@
 
 A free app for learning to write Chinese characters, and to read, pronounce and understand the words they make. It runs in the browser, needs no account, and works offline.
 
-**Use it at https://bunnyapocalypse.github.io/yutu-chinese/**
+**Use it at https://yutuchinese.com/app/**
 
 On a phone or tablet, choose "Install app" or "Add to Home Screen" from the browser's menu. The interface is in English, Italian and German.
 
@@ -51,9 +51,9 @@ Light, dark, or following the device, and the OpenDyslexic font as an option.
 
 ## Your data
 
-**Everything is stored on your device.** There is no account, and nobody but you can read your words or your progress.
+**Your words live on your device**, and the app works without the internet. There is no account, and nobody but you can read your words or your progress.
 
-- **Sync between devices** (optional): turn it on in Settings, save the sync code, and enter or scan it on your other devices. Everything is encrypted on the device before it is sent. You can run your own sync server (below).
+- **Sync between devices:** offered in the introduction (and in Settings), with a sync code to save and then enter or scan on your other devices. Everything is encrypted on the device before it is sent, so our server only ever holds files it cannot read. You can say no, or run your own sync server (below).
 - **Backups:** Export backup saves everything as one file; Import backup loads it on any device.
 - **Keep your sync code somewhere safe.** Without it, nobody can open your synced data, us included.
 
@@ -72,7 +72,7 @@ Syncing goes through our server by default, but anyone can run one: for themselv
 The playbooks in `deploy/` set up a fresh machine from your own computer over SSH, the same way as ours: key-only SSH logins, a firewall, security updates by themselves, the program as a locked-down service, Caddy for HTTPS with certificates it renews by itself, the log kept at most 14 days, and an optional watch that emails you. In short:
 
 1. Install Ansible on your computer (on Fedora: `sudo dnf install ansible`).
-2. `cd deploy`, then `cp inventory.example.yml inventory.yml`, and fill in the machine's address, your domain name, and the site the app is opened from (`https://bunnyapocalypse.github.io` for ours).
+2. `cd deploy`, then `cp inventory.example.yml inventory.yml`, and fill in the machine's address, your domain name, and the site the app is opened from (`https://yutuchinese.com` for ours).
 3. The first run, as root: `ansible-playbook setup.yml -e ansible_user=root`. From then on the playbooks log in as an admin account of their own.
 4. Later: `deploy.yml` after changing the program or a setting, `update.yml` monthly, `status.yml` to see how it is doing.
 
@@ -82,7 +82,7 @@ The full steps, every setting, and the watch: `deploy/README.md`.
 
 1. Install **Node.js 22** or newer, and copy `server/server.js` and `server/package.json` to the machine.
 2. Run it as an account of its own with your system's service manager. Ours, for systemd, with the settings that keep the program from touching anything but its own folder, is `deploy/templates/yutu-sync.service.j2`.
-3. Give it its settings in the environment (every one: `server/README.md`). At least `DATA_DIR` (where the files go), `ALLOWED_ORIGINS` (the site the app is opened from, `https://bunnyapocalypse.github.io` for ours) and `TRUST_PROXY=1`. It listens on `127.0.0.1:8787` only.
+3. Give it its settings in the environment (every one: `server/README.md`). At least `DATA_DIR` (where the files go), `ALLOWED_ORIGINS` (the site the app is opened from, `https://yutuchinese.com` for ours) and `TRUST_PROXY=1`. It listens on `127.0.0.1:8787` only.
 4. Put an HTTPS server in front of it, passing requests on to `127.0.0.1:8787` and **replacing** any `X-Forwarded-For` header the learner sent with their real address (Caddy does both by itself; ours is `deploy/templates/Caddyfile.j2`, four lines). Let it accept request bodies of 65 MB.
 5. Check: `https://<your domain>/v1/health` answers `ok`.
 
@@ -119,7 +119,7 @@ The browser tests need Chromium or Chrome. On a phone on the same Wi-Fi, open th
 
 It is plain JavaScript built with [Vite](https://vite.dev/), with [Hanzi Writer](https://hanziwriter.org/) for showing and grading strokes. The design notes are in `docs/` (start at `docs/README.md`).
 
-Pushing `main` publishes a test copy at https://bunnyapocalypse.github.io/yutu-chinese/test/; the `stable` branch is the main one.
+The `stable` branch is the app at https://yutuchinese.com/app/, and `main` a test copy at https://yutuchinese.com/app/test/.
 
 ## License and credits
 
