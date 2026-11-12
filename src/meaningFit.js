@@ -92,8 +92,14 @@ export function fitMeaning(element) {
   }
 
   let cut = false;
-  // A sentence's writing card has its own layout (style.css, .with-sentence).
-  if (!element.classList.contains('with-sentence')) {
+  // A sentence's writing card has its own layout (style.css, .with-sentence):
+  // fitSentenceMeaning, which may also use the room that moves the card down.
+  let used = room;
+  if (element.classList.contains('with-sentence')) {
+    const offset = focused ? parseFloat(getComputedStyle(root).getPropertyValue('--card-offset')) || 0 : 0;
+    cut = fitSentenceMeaning(element, room + offset);
+    used = room + offset;
+  } else {
     for (const size of SIZES) {
       element.style.setProperty('--meaning-size', size);
       const lineHeight = parseFloat(getComputedStyle(element).fontSize) * LINE_HEIGHT;
@@ -112,7 +118,57 @@ export function fitMeaning(element) {
     cut = cut || (element.textContent !== '' && !fits(element));
   }
   // Measured exactly (offsetHeight is rounded), or the card moved by a pixel
-  // from one meaning to the next.
-  root.style.setProperty('--meaning-unused', `${Math.max(0, room - element.getBoundingClientRect().height)}px`);
+  // from one meaning to the next. A sentence's card may take some of the
+  // room that moves the card down (--card-offset): then this is below zero,
+  // and the margin above shrinks by as much, so the area stays where it is.
+  const unused = Math.max(room - used, room - element.getBoundingClientRect().height);
+  root.style.setProperty('--meaning-unused', `${unused}px`);
   return cut;
+}
+
+// The text sizes tried for a sentence's meaning: the size it always had,
+// then the body text's (the owner chose this, 2026-11-12, so that a
+// sentence's English is cut off less often).
+const SENTENCE_SIZES = ['var(--size-title)', 'var(--size-body)'];
+// Its line's height, as a share of the text's size (style.css, .with-sentence .prompt-text).
+const SENTENCE_LINE_HEIGHT = 1.3;
+
+// A sentence's writing card: the meaning (`.prompt-text`) above the sentence
+// with its gap, which is never cut off, being what is asked (review.js). The
+// two together get `budget`: the meaning's own room and, while a card is up,
+// the room that would move the card down. The meaning takes as many lines as
+// the sentence leaves in it, at least one, at the first size where it fits
+// whole; at the smaller size it is no longer bold. Returns true if it is
+// still cut off (a tap shows it all, clamp.js).
+function fitSentenceMeaning(element, budget) {
+  const text = element.querySelector('.prompt-text');
+  element.classList.remove('smaller-meaning');
+  if (!text) {
+    return false;
+  }
+  let lines = 1;
+  let needed = 1;
+  for (const [index, size] of SENTENCE_SIZES.entries()) {
+    element.style.setProperty('--meaning-size', size);
+    element.classList.toggle('smaller-meaning', index > 0);
+    const lineHeight = parseFloat(getComputedStyle(text).fontSize) * SENTENCE_LINE_HEIGHT;
+    // How tall the card's top is with one line of meaning, and how many
+    // lines the meaning needs in full.
+    element.style.setProperty('--meaning-lines', '1');
+    const left = budget - element.getBoundingClientRect().height;
+    element.style.setProperty('--meaning-lines', '99');
+    needed = Math.round(text.getBoundingClientRect().height / lineHeight);
+    lines = Math.max(1, 1 + Math.floor((left + 0.5) / lineHeight));
+    // Fits whole, or with no more room at the smaller size, better to keep
+    // the usual size and cut it there.
+    if (needed <= lines) {
+      break;
+    }
+    if (index === SENTENCE_SIZES.length - 1 && lines === 1) {
+      element.style.setProperty('--meaning-size', SENTENCE_SIZES[0]);
+      element.classList.remove('smaller-meaning');
+    }
+  }
+  element.style.setProperty('--meaning-lines', String(Math.min(lines, needed)));
+  return needed > lines;
 }

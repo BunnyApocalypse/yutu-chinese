@@ -227,9 +227,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
 
   // The meaning above a writing card; for a sentence, with the sentence
   // (its gap, or once answered all of it) on a line of its own under it.
-  // The meaning is cut off after one line, a tap showing it all (clamp.js,
-  // `data-clamp`); the sentence never is, being what is asked (the owner,
-  // 2026-10-21: where the meaning took two lines, the gap was cut off).
+  // The meaning takes the lines the room leaves (meaningFit.js), else is
+  // cut off, a tap showing it all (clamp.js, `data-clamp`); the sentence
+  // never is, being what is asked (the owner, 2026-10-21: where the meaning
+  // took two lines, the gap was cut off).
   // Chinese in the meaning is left out, as it can be taken for the answer
   // (meaningWithoutChinese).
   function showMeaning(word, sentence, script) {

@@ -1126,8 +1126,9 @@ main.focused #prompt-meaning:not(.with-sentence) {
   white-space: pre-line;
 }
 
-/* A sentence's writing card (showMeaning in review.js): the meaning cut off
-   after one line, the sentence under it in full. */
+/* A sentence's writing card (showMeaning in review.js): the meaning on as
+   many lines as the room leaves, a size smaller and not bold if that helps
+   (meaningFit.js), else cut off; the sentence under it in full. */
 #prompt-meaning.with-sentence {
   display: block;
   max-height: none;
@@ -1139,10 +1140,15 @@ main.focused #prompt-meaning:not(.with-sentence) {
 #prompt-meaning.with-sentence .prompt-text {
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
+  -webkit-line-clamp: var(--meaning-lines, 1);
   overflow: hidden;
+  font-size: var(--meaning-size, var(--size-title));
   line-height: 1.3;
-  max-height: 1.3em;
+  max-height: calc(1.3em * var(--meaning-lines, 1));
+}
+
+#prompt-meaning.with-sentence.smaller-meaning .prompt-text {
+  font-weight: 400;
 }
 
 .cloze-sentence {

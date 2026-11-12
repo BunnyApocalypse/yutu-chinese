@@ -21,6 +21,22 @@ const LONGEST = [
   'good; appropriate; proper; all right!; (before a verb) easy to; (before a verb) good to; (before an adjective for exclamatory effect) so; (verb complement indicating completion); (of two people) close; on intimate terms; (after a form of address) hello',
 ];
 const WORDS = [SHORT, LONG, LONGEST];
+// A sentence whose English took more than its one line on a writing card
+// (the owner, 2026-11-12), and whose Chinese, on a phone, wraps.
+const SENTENCE = ['我昨天在圖書館看了一本很有意思的書。', '', 'Yesterday I read a very interesting book at the library.'];
+const sentenceRecord = ([char, pinyin, definition]) => ({
+  id: `${char}|sentence`,
+  kind: 'sentence',
+  traditional: char,
+  simplified: char,
+  pinyin,
+  definition,
+  cloze: { traditional: '圖書館', simplified: '圖書館' },
+  order: 0,
+  addedAt: 1,
+  learnedAt: 1,
+});
+const idOf = ([char, pinyin]) => (pinyin === '' ? `${char}|sentence` : `${char}|${pinyin}`);
 
 // One browser, and the steps in order.
 describe('the meaning above a writing card', { concurrency: false }, () => {
@@ -72,9 +88,9 @@ describe('the meaning above a writing card', { concurrency: false }, () => {
   // Only this word's writing card due, and Review started again with it
   // showing. Returns where the writing area's top is and how many lines the
   // meaning takes.
-  async function showCard([char, pinyin]) {
-    const id = `${char}|${pinyin}`;
-    const cards = WORDS.map(([c, p]) => card(`${c}|${p}`, `${c}|${p}` === id ? -DAY : 30 * DAY));
+  async function showCard(word) {
+    const id = idOf(word);
+    const cards = [...WORDS, SENTENCE].map((other) => card(idOf(other), idOf(other) === id ? -DAY : 30 * DAY));
     await inDatabase(`for (const card of ${JSON.stringify(cards)}) stores.cards.put(card);`);
     await reloadApp(page);
     await waitUntil(
@@ -84,7 +100,9 @@ describe('the meaning above a writing card', { concurrency: false }, () => {
     );
     return page.evaluate(`(() => {
       const meaning = document.getElementById('prompt-meaning');
+      const text = meaning.querySelector('.prompt-text');
       return {
+        sentenceLines: text ? Math.round(text.getBoundingClientRect().height / parseFloat(getComputedStyle(text).lineHeight)) : 0,
         top: Math.round(document.getElementById('writing-area').getBoundingClientRect().top),
         lines: Math.round(meaning.clientHeight / parseFloat(getComputedStyle(meaning).lineHeight)),
         shown: [...meaning.querySelectorAll('.sense')].filter((sense) => !sense.hidden).map((sense) => sense.textContent).join(''),
@@ -106,6 +124,7 @@ describe('the meaning above a writing card', { concurrency: false }, () => {
       for (const [char, pinyin, definition] of ${JSON.stringify(WORDS)}) {
         stores.words.put({ id: char + '|' + pinyin, traditional: char, simplified: char, pinyin, definition, order: 0, addedAt: 1, learnedAt: 1 });
       }
+      stores.words.put(${JSON.stringify(sentenceRecord(SENTENCE))});
       stores.settings.put({ key: 'enabledTypes', value: ['writing'] });
     `);
   });
@@ -139,5 +158,13 @@ describe('the meaning above a writing card', { concurrency: false }, () => {
     await page.evaluate(`document.getElementById('prompt-meaning').click()`);
     await waitUntil(page, `document.getElementById('confirm-dialog').open`, 'the whole meaning');
     assert.equal(await page.evaluate(`document.getElementById('confirm-detail').textContent`), LONGEST[2]);
+  });
+
+  it("gives a sentence's English more lines, the writing area staying in place", async () => {
+    const short = await showCard(SHORT);
+    const sentence = await showCard(SENTENCE);
+    assert.equal(sentence.sentenceLines, 2);
+    assert.equal(sentence.hasMore, false);
+    assert.equal(sentence.top, short.top);
   });
 });
