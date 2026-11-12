@@ -8,6 +8,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Waiting on the owner** (tried on a real device, or a question to answer):
 
+- **The bars around the installed app** (2026-11-12; `docs/interface.md`, "Dark mode"): on the test copy, installed in Firefox on the tablet: is the bottom bar the page's color now, and is anything hidden under either bar?
 - **Remind the owner on or after 2026-12-07: ts-fsrs 6** (the owner, 2026-11-09): time to look again at updating it ("Near-term" below has the checklist).
 - **Reading the other script** (2026-11-09; `docs/cards.md`, "Reading the other script"): not tried yet. Switch on Settings › Chinese › "Also read simplified", learn a few forms from Learn's deck chooser, review "简体字 cards", the fold-out "简体字 form" on a word's page, and Words › Show › "Studied simplified forms".
 - **方 with its ノ before its ㇆** (2026-11-09; `docs/writing.md`): not tried yet.
@@ -41,6 +42,13 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - A German tester to find. The Italian and German texts Claude wrote since the Italian tester's check are unchecked.
 
 **Tests to watch:** `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
+
+**Handover from the session of 2026-11-12 (the white bars around the installed app; on the test copy, not on `stable`).**
+
+- **Asked by the owner** (2026-11-12, a screenshot of the installed app in Firefox on the tablet, dark look): a light bar at the top, a white one at the bottom. The top one is the manifest's `theme_color` (#f1e9d4; Firefox seems not to follow the `theme-color` the app sets); the bottom one is Android's navigation bar, filled by the browser.
+- **Built** (`docs/interface.md`, "Dark mode"): `viewport-fit=cover` in `index.html`, the body padded by `env(safe-area-inset-…)`, so the page's own background can reach under the bars. Looked normal to the owner in a Firefox tab from the dev server (not installable there). No tests run (the padding is 0 in the test browsers).
+- **The top bar is left as it is**: the owner would like each look's bars in its own colors, not dark bars in the light look, and the manifest holds one color.
+- **Pushed to `main`** and `yutuchinese-site`'s deploy started, with the owner's yes. No "What's new" entry.
 
 **Handover from the third session of 2026-11-11 (Taiwan forms in the HSK lists; on the test copy, not on `stable`).**
 
