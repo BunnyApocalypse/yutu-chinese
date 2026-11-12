@@ -6,23 +6,17 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **As of 2026-11-10:** `main` and `stable` are the same (released with the "What's new" entry `2026-11-10`). Syncing is built, released and tested by the owner between their own devices. How each thing was built is in its area's file. **Each session adds its handover just below this list** (what was built, tests, what is open); the next cleanup folds them back into the list.
 
+**Answered by the owner on 2026-11-12** (taken off the list below): tried and good: reading the other script; 方, 睡 and 北, 郵's 艹 in three strokes ("feels good"); Review's deck chooser (no flash any more); the icon ("looks good"); the smallest size for writing ("feels better now"). `update.yml` run on the sync server. No reminder of the sync code (`docs/sync.md`). The README already gives https://yutuchinese.com/app/ (`80e9d24`). No major layout changes before strangers arrive. The move's follow-ups dropped (trying it from the tablet's installed app and an iPhone Home Screen app). Removing the unstudied one of a word's two spellings: the owner has no device to try it on, so it rests on its browser test.
+
 **Waiting on the owner** (tried on a real device, or a question to answer):
 
 - **The bars around the installed app** (2026-11-12; `docs/interface.md`, "Dark mode"): on the test copy, installed in Firefox on the tablet: is the bottom bar the page's color now, and is anything hidden under either bar?
 - **Remind the owner on or after 2026-12-07: ts-fsrs 6** (the owner, 2026-11-09): time to look again at updating it ("Near-term" below has the checklist).
-- **Reading the other script** (2026-11-09; `docs/cards.md`, "Reading the other script"): not tried yet. Switch on Settings › Chinese › "Also read simplified", learn a few forms from Learn's deck chooser, review "简体字 cards", the fold-out "简体字 form" on a word's page, and Words › Show › "Studied simplified forms".
 - **聰 and 總 with the inside of 囪 like a 夕, and 流 (充, 育) with the dot on top written steeply down** (2026-11-12; `docs/writing.md`): on the test copy, not tried yet.
 - **A sentence's English on its writing card on more lines** (2026-11-12; `docs/pitfalls.md`, "the meaning has a fixed room"): two lines on a phone with height to spare (a size smaller, not bold, when that helps), the writing area the same size and in the same place; small phones, the tablet upright and two columns keep one line and the tap. On the test copy, not tried yet: does it look right on the owner's phone? Possible next step: the side column's spare height with the tablet held sideways.
-- **方 with its ノ before its ㇆** (2026-11-09; `docs/writing.md`): not tried yet.
-- **垂 with its 丨 after the levels (睡) and 匕's branch right to left (北)** (2026-11-10; `docs/writing.md`): on the test copy, not tried yet.
-- **Choosing a deck in Review** (2026-11-08): does a wrong card still flash before the real one? And are the card flash and the new-device pop-up gone after two restarts (both fixed on `stable` 2026-11-09)?
-- **The smallest size for writing** (0.55 of the box, 2026-11-08; `docs/writing.md`): is a character written properly ever refused for being small? A raw input recording if so.
-- **郵 with 艹 in three strokes** (2026-11-02): does it feel right in use?
 - **Learn's words as one sitting** (2026-10-31): how it feels. On a tablet held sideways the pill is centered on the screen, not the side column.
 - **子 written with the top and hook joined** (2026-10-30): the owner finds it hard to get accepted; a raw input recording from the tablet before changing anything (`local/strictness/README.md`).
 - **The testing list** (roadmap, item 9): Safari and Firefox data safety, "Keep my words safe" in Chrome, combining backups between two real devices.
-- **The sync server** has the review's fixes (`01e0985`; checked 2026-11-09 with `deploy.yml --check`, nothing to change). 7 system updates were waiting then: `ansible-playbook update.yml` when convenient.
-- **Sync, decisions left** (`docs/sync.md`, "Decisions for the owner"): a reminder to keep the sync code safe now and then, or none.
 
 **Not built, known:**
 
@@ -54,7 +48,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Handover from the third session of 2026-11-11 (Taiwan forms in the HSK lists; on the test copy, not on `stable`).**
 
-- **Talked through with the owner** (2026-11-11): what is left before posting the app to online communities. The owner has since tried Firefox and the move; left from that list: the README still links the old address, Safari's data safety on Apple devices, any layout changes before strangers arrive.
+- **Talked through with the owner** (2026-11-11): what is left before posting the app to online communities. The owner has since tried Firefox and the move; left from that list: Safari's data safety on Apple devices (the README already had the new address; no major layout changes, the owner, 2026-11-12).
 - **Built** (`docs/word-lists.md`, "Reading fixes"): `data/wordlists/form-fixes.tsv`, 24 traditional forms put right in both HSK lists (旾 → 春, 胷 → 胸, 咨詢 → 諮詢, 奇跡 → 奇蹟, 賬戶 → 帳戶…), which also takes 13 words listed twice out of HSK 3.0 (那裡 and 那裏 in level 1: 512 words now 509, the introduction's text in three languages too). Lists rebuilt (only these lines changed); devices that added such a word have it renamed at start-up; the notes' traditional columns follow. **A device that has both spellings keeps both** (anyone who added HSK 3.0 level 1 before): to decide whether to build merging.
 - **Tests:** 431 unit tests (6 new; the real-file check fails on the old lists); a full browser run, 291 of 291 and the grid 426 (25 skipped), none failed.
 - **Not tried by the owner.** The renaming at start-up has no browser test of its own.
@@ -75,7 +69,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - **Built** (`docs/offline.md`, "Icons"): the icon redrawn from real pictures in `data/icon/` (README with sources and licenses): the left 兔 of the sheet by the calligrapher 南蠻大熊 (CC BY 4.0) in solid jade, on a moon of washi (Tomomarusan, CC BY 2.5) with the grid's cross, in an ink-wash night sky (designshard, CC BY 2.0) with five specks of the calligrapher's ink as stars; no glow. All five pictures redrawn by `node scripts/make-icons.js`, plus a new `favicon.png` for the browser tab (the moon alone, see-through around it). One line more in "Credits and licenses" (`credits.appIcon`, English, Italian, German). The owner chose every part from drafts in `local/logo/` (2026-11-10 and 11).
 - **Tests:** 425 unit tests; a full browser run, 289 of 289 and the grid 426 (25 skipped), none failed. Pictures of the looks' samples and the credits in the app: `local/logo/app-check.png`.
 - **Released** as "What's new" `2026-11-11` (`stable` and `main` pushed, `yutuchinese-site`'s deploy started), on the owner's word.
-- **yutuchinese.com's top page** points its tab icon at `app/icons/favicon.png` too (`site-repo/deploy.yml`, copied to `yutuchinese-site`). **To check on devices:** the icon on a home screen (iPhone, Android), and the tab icon in a light and a dark tab bar.
+- **yutuchinese.com's top page** points its tab icon at `app/icons/favicon.png` too (`site-repo/deploy.yml`, copied to `yutuchinese-site`). **Checked on the owner's devices** (2026-11-12): "looks good".
 
 **Handover from the session of 2026-11-10 (two stroke variants from the owner: 睡 and 北).**
 
@@ -99,7 +93,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - **Built, not released:** the moving page and the app taking words in (`move.html`, `src/move.js`, `src/moveIn.js`, `src/moveServiceWorker.js`, `npm run build:move`), texts in English, Italian and German (Claude's, unchecked); the deploy workflow builds with `sync.yutuchinese.com`. `npm test` now runs `tests/*.test.js` only (a built `test/` folder was taken for tests).
 - **Tried by the owner** on the two Wi-Fi test servers (`:5284` old, `:5283` new): bringing their own history over takes a while, so it now shows its progress in both windows. Also since: a window opened for the move with no way back says so instead of starting empty; installed apps are told to install again.
 - **Tests:** 423 unit tests; `move.browser.js` 3 of 3, four runs in a row; the full browser run passed before the last three changes (283 of 283, grid 384, none failed), not run again since.
-- **Next:** the switch-over (`docs/offline.md`, steps 1 to 6), with the owner; right after it, the owner tries the move on their Android tablet's installed app (not known whether the window way works from it, `docs/offline.md`) and on an iPhone Home Screen app, before testers are told.
+- **Next:** the switch-over (`docs/offline.md`, steps 1 to 6), with the owner; the owner's tries from the Android tablet's installed app and an iPhone Home Screen app were dropped (the owner, 2026-11-12).
 
 **Handover from the session of 2026-11-10 (the deploy: longer wait, one run per release, none for notes).**
 

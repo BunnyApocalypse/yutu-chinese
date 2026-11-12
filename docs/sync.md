@@ -83,7 +83,7 @@ The sync code is the only key, so it is also how a learner gets everything back 
   - a line suggesting a password manager;
   - "I've saved it" to go on: a confirmation, not a test.
 - **"Show sync code"** in Settings, on any paired device, behind a tap saying that anyone with the code can read and delete the synced data. So a lost copy of the code doesn't matter while one device is left.
-- **A reminder now and then** ("Do you still have your sync code?") only if wanted, with an off switch like every nudge.
+- **No reminder now and then** ("Do you still have your sync code?"; the owner, 2026-11-12): "I've saved it" when the code is first shown is enough.
 - **A code that got out:** "Change sync code" in Settings deletes the files under the old code, sends a snapshot under a new one (shown and saved as above), and the other devices pair again. The old code then opens nothing.
 - **Not covered by the code:** the storage itself going (our server stopped, the Drive files deleted, the Google account lost). Export backup stays in Settings as the copy that depends on nobody, and the privacy page says so.
 
@@ -222,5 +222,5 @@ One step at a time, each agreed before it starts:
 ## Decisions for the owner
 
 - **Host: Hetzner** (the owner, 2026-11-07, over OVHcloud, Infomaniak and Netcup: hourly billing, no contract): ARM, Germany, AlmaLinux 10, €7.13 a month with VAT; **domain: `yutu.bunnyapocalypse.space`**. Running (above).
-- **A reminder of the sync code** now and then, or none.
+- **A reminder of the sync code: none** (the owner, 2026-11-12; learners already confirm they saved it when it is first shown).
 - **The numbers:** 30 seconds after the last change, the cap between sends, the snapshot size.
