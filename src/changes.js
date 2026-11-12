@@ -13,6 +13,24 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-12',
+    items: [
+      'The inside of 囪 in 聰 and 總 can be written like a 夕.',
+      'The dot on top of 充, 流 and 育, written on its own, is now accepted when it goes steeply down.',
+      'On a phone with room to spare, a sentence’s meaning on its writing card takes two lines instead of being cut after one.',
+    ],
+    it: [
+      'L’interno di 囪 in 聰 e 總 si può scrivere come un 夕.',
+      'Il punto in cima a 充, 流 e 育, scritto da solo, ora è accettato anche quando scende ripido.',
+      'Su un telefono con spazio in più, il significato di una frase sulla sua carta di scrittura occupa due righe invece di essere tagliato dopo una.',
+    ],
+    de: [
+      'Das Innere von 囪 in 聰 und 總 kann wie ein 夕 geschrieben werden.',
+      'Der Punkt oben auf 充, 流 und 育, einzeln geschrieben, wird jetzt auch steil nach unten angenommen.',
+      'Auf einem Handy mit genug Platz nimmt die Bedeutung eines Satzes auf seiner Schreibkarte zwei Zeilen ein, statt nach einer abgeschnitten zu werden.',
+    ],
+  },
+  {
     id: '2026-11-11-3',
     items: [
       'The HSK lists now use Taiwan’s standard traditional forms (胸, 帳戶, 諮詢, 奇蹟, 身分, 想像…). Words you already added from them are put right by themselves, with your progress kept.',
