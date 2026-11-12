@@ -11,6 +11,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - **The bars around the installed app** (2026-11-12; `docs/interface.md`, "Dark mode"): on the test copy, installed in Firefox on the tablet: is the bottom bar the page's color now, and is anything hidden under either bar?
 - **Remind the owner on or after 2026-12-07: ts-fsrs 6** (the owner, 2026-11-09): time to look again at updating it ("Near-term" below has the checklist).
 - **Reading the other script** (2026-11-09; `docs/cards.md`, "Reading the other script"): not tried yet. Switch on Settings › Chinese › "Also read simplified", learn a few forms from Learn's deck chooser, review "简体字 cards", the fold-out "简体字 form" on a word's page, and Words › Show › "Studied simplified forms".
+- **聰 and 總 with the inside of 囪 like a 夕, and 流 (充, 育) with the dot on top written steeply down** (2026-11-12; `docs/writing.md`): on branch `second-shapes`, not released or pushed. To try once on the test copy.
 - **方 with its ノ before its ㇆** (2026-11-09; `docs/writing.md`): not tried yet.
 - **垂 with its 丨 after the levels (睡) and 匕's branch right to left (北)** (2026-11-10; `docs/writing.md`): on the test copy, not tried yet.
 - **Choosing a deck in Review** (2026-11-08): does a wrong card still flash before the real one? And are the card flash and the new-device pop-up gone after two restarts (both fixed on `stable` 2026-11-09)?

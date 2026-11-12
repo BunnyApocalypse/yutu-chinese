@@ -924,7 +924,7 @@ export function createQuiz(target, size, handlers) {
   // If the stroke is where a form parts ways, written as that form's stroke
   // there, returns { form, shape }: `shape` the stroke's other shape in the
   // form (its altShapes) if it was written in that, else null. Otherwise
-  // null. A first stroke may be anywhere (as firstStrokeAnywhere), and is
+  // null (a dot written steeply down is such a shape). A first stroke may be anywhere (as firstStrokeAnywhere), and is
   // taken for the form only if it is more like that stroke than the data's.
   // So is a stroke Hanzi Writer accepted (`accepted`): leniently, it takes a
   // small dot for the level stroke of the Taiwan form (流 written small).
@@ -947,7 +947,9 @@ export function createQuiz(target, size, handlers) {
     const found = [];
     for (const form of forms.filter((each) => each.from === stroke.strokeNum)) {
       const shape = form.altShapes?.[form.from];
-      for (const [median, isShape] of [[form.medians[form.from], false], ...(shape ? [[shape, true]] : [])]) {
+      // The dot on top of 流 may be written steeply down too (steepDotsOf).
+      const steep = steepDotsOf(form.medians[form.from]).map((median) => [median, true]);
+      for (const [median, isShape] of [[form.medians[form.from], false], ...(shape ? [[shape, true]] : []), ...steep]) {
         const moreLikeIt = unlike(median) < unlike(taiwan);
         if (fits(median) && (firstOfAll ? !fits(taiwan) || moreLikeIt : !accepted || moreLikeIt)) {
           found.push({ form, shape: isShape ? median : null, unlike: unlike(median) });

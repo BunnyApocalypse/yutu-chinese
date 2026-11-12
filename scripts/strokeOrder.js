@@ -105,9 +105,15 @@ const apartBy = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 // Taiwan set, 3 in the big set), a stroke is only paired with the big set's
 // stroke of the same number, so only strokes before the part that differs
 // are looked at (the owner, 2026-11-05: 戶's dot on top refused in 遍).
+//
+// The characters in WINDOW_CHARS are also paired by number, and the turn
+// isn't asked for (see there).
 export function findAlternativeShapes(taiwanEntry, bigSetEntry, fits) {
   const count = taiwanEntry.medians.length;
   const sameCount = bigSetEntry.medians.length === count;
+  if (sameCount && WINDOW_CHARS.includes(taiwanEntry.character)) {
+    return windowShapes(taiwanEntry, bigSetEntry, fits);
+  }
   const middles = (entry) => entry.medians.map((median) => middleOf(resample(toPoints(median))));
   const taiwanMiddles = middles(taiwanEntry);
   const bigSetMiddles = middles(bigSetEntry);
@@ -137,6 +143,33 @@ export function findAlternativeShapes(taiwanEntry, bigSetEntry, fits) {
     }
     shapes[t] = bigSetEntry.medians[b];
   }
+  return Object.keys(shapes).length > 0 ? shapes : null;
+}
+
+// The characters with 囪 (chuāng, a window) in the Taiwan set. Its inside
+// is ノ ノ 丶 crossing like a # in Taiwan's form; the big set writes the
+// second ノ as a ㇇, like the 夕 many write there (the owner, 2026-11-12, in
+// 聰). The general search above misses it twice: the big set's 丶 crosses
+// where the Taiwan ノ has its middle, so the strokes aren't paired, and from
+// start to end the ㇇ points only 15° to 19° away from the ノ. Characters
+// outside the Taiwan set (窗, 蔥) come from the big set, with the ㇇.
+export const WINDOW_CHARS = '總聰';
+
+// For a character in WINDOW_CHARS: each stroke paired with the big set's of
+// the same number (the strokes are the same, in the same order), kept where
+// the app would refuse it and it is not all but another stroke.
+function windowShapes(taiwanEntry, bigSetEntry, fits) {
+  const shapes = {};
+  taiwanEntry.medians.forEach((median, t) => {
+    const points = toPoints(bigSetEntry.medians[t]);
+    const line = resample(points);
+    const likeAnother = taiwanEntry.medians.some(
+      (other, o) => o !== t && averageDistance(line, resample(toPoints(other))) <= SAME_STROKE_DISTANCE,
+    );
+    if (!fits(points, median) && !likeAnother) {
+      shapes[t] = bigSetEntry.medians[t];
+    }
+  });
   return Object.keys(shapes).length > 0 ? shapes : null;
 }
 

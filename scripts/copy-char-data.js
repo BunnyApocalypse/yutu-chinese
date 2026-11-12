@@ -71,7 +71,7 @@ fs.mkdirSync(taiwanTarget, { recursive: true });
 
 // Raise this number whenever this script changes what it writes into the
 // Taiwan set's files. Copies made by an older version are then replaced.
-const TAIWAN_SET_VERSION = 5;
+const TAIWAN_SET_VERSION = 6;
 
 // The same leniency the app grades with (LENIENCY in src/quiz.js).
 const LENIENCY = 1.5;

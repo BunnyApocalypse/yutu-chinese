@@ -25,16 +25,17 @@ import { innerBoxForms } from '../../src/innerBox.js';
 
 // Characters with two accepted stroke orders (the first eleven; 愉's 忄 the
 // big set has only in the mainland order), some with one,
-// some with strokes in a second shape (食房藍雨聽飽遍, also written so, and 食
+// some with strokes in a second shape (食房藍雨聽飽遍聰總, also written so, and 食
 // and 飽 with the dot under 人 steeply down), and some with 艹 (草花藍觀, the
 // 十 十 of 垂 in 郵華, and 薦 from the big set, also written with it in three
 // strokes, 薦 also in the big set's 丨 一 丨 一), and some with a
-// second form (充流育, also written in the big set's), and some with the box
+// second form (充流育, also written in the big set's, its dot also straight
+// down), and some with the box
 // of 骨 (骨體滑, also written in its other orders and shapes; not 髒, whose
 // 9th stroke in its mainland shape was refused at half size, bottom right,
 // with or without this). Half the size is no longer followed (MIN_SCALE in
 // src/frame.js, 2026-11-08): the owner writes at 0.6 of the box and up.
-const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢愉母出長麼這謝子好食房藍雨草花觀聽充流育骨體滑郵華飽薦遍方旁睡北');
+const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢愉母出長麼這謝子好食房藍雨草花觀聽聰總充流育骨體滑郵華飽薦遍方旁睡北');
 
 // Where and how big the character is written, compared with the centered
 // reference: `scale` times the size, moved `dx` to the right and `dy` up, in
@@ -184,6 +185,15 @@ describe('writing grid', { concurrency: BROWSER_COUNT }, () => {
     if (data.altForm) {
       const { medians } = data.altForm;
       ways.push({ label: 'second form', strokeOrder: medians.map((median, index) => index), shapes: { ...medians } });
+      // Its dot on top written straight down (steepDotsOf).
+      const [, straightDown] = steepDotsOf(medians[data.altForm.from]);
+      if (straightDown) {
+        ways.push({
+          label: 'second form, dot straight down',
+          strokeOrder: medians.map((median, index) => index),
+          shapes: { ...medians, [data.altForm.from]: straightDown },
+        });
+      }
     }
     // The box of 骨 written in another way (src/innerBox.js), and with the
     // form's own other shapes.
