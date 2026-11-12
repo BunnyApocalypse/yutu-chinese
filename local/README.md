@@ -69,3 +69,10 @@ English Wikipedia's articles on the Chinese dynasties and periods of the 朝代�
 ## moe-dictionary/ (Taiwan forms check, 2026-11-11)
 
 - `dict-revised.json`: Taiwan's Ministry of Education 重編國語辭典修訂本 as JSON, from g0v/moedict-data (`curl -L -o dict-revised.json.xz https://raw.githubusercontent.com/g0v/moedict-data/master/dict-revised.json.xz`, then `xz -dk`). The text is the ministry's, CC BY-ND 3.0 TW; used to check `data/wordlists/form-fixes.tsv` (which form is a word, which "a variant of" it), nothing copied into the repository.
+
+## FSRS weights fitted to the owner (step 0, 2026-11-12; `docs/cards.md`)
+
+- `node24/`: Node 24.22.3 for Linux, which the optimizer needs (this computer's Node is 22). From nodejs.org, checked against its `SHASUMS256.txt`: `curl -fsSLO https://nodejs.org/dist/latest-v24.x/SHASUMS256.txt`, then the `node-v24…-linux-x64.tar.xz` it names, `sha256sum -c`, `tar xJf`.
+- `fsrs-binding/`: `@open-spaced-repetition/binding` 0.6.1 (BSD-3-Clause), the optimizer, and `ts-fsrs` 6.0.0 for FSRS-7's default weights: `PATH=local/node24/node-v24.22.3-linux-x64/bin:$PATH npm install --ignore-scripts @open-spaced-repetition/binding@0.6.1 ts-fsrs@6.0.0` inside it.
+- `fsrs-browser/`: `fsrs-browser` 6.6.0 (`npm pack fsrs-browser@6.6.0`), only read, never run: it fits FSRS-6 only and needs shared memory.
+- `fsrs-fit/`: `fit.mjs` (fits and scores default and fitted weights, FSRS-6 and FSRS-7, all kinds and each kind; run with `local/node24/node-v24.22.3-linux-x64/bin/node local/fsrs-fit/fit.mjs local/backups/<backup>.json [all|no-skritter-same-day]`), `table.mjs` (the results as a table: `node local/fsrs-fit/table.mjs local/fsrs-fit/results-*.jsonl`), `inspect.mjs` (a check of the optimizer's items), and the results of 2026-11-12.
