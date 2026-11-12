@@ -230,6 +230,14 @@ body {
   font-family: system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
+  /* "viewport-fit=cover" (index.html) lets the page's background reach
+     under the phone's own bars at the top and bottom, rather than the
+     browser filling them with a color of its own (the white bar under an
+     installed app). env(safe-area-inset-…) is how far those bars reach
+     into the page, so nothing but the background goes under them; it is 0
+     where the browser doesn't draw there. */
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+    env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
 }
 
 /* The font chosen in Settings (font.js). Chinese, which OpenDyslexic
