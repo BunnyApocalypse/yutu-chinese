@@ -36,6 +36,11 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Tests to watch:** `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
 
+**Handover from the session of 2026-11-13 (the sync server looked at; SSH without Kerberos; docs and deploy settings only).**
+
+- `status.yml` on the sync server: the program and Caddy running, 4 accounts holding 6.2 MB, disk 7%, no updates waiting, no restart needed, no limits hit today, both names answering.
+- SSH was refused for about 10 minutes ("Not allowed at this time", OpenSSH's `PerSourcePenalties`): Fedora's SSH tries Kerberos (GSSAPI) first, the tries hang, and the server counts them as failed logins. `deploy/ansible.cfg` now sets `ssh_args` with `-o GSSAPIAuthentication=no` (the owner, 2026-11-13); `deploy/README.md` says what to do if it happens. `status.yml` ran through with it at once.
+
 **Handover from the second session of 2026-11-12 (FSRS weights fitted to the owner: step 0 measured; docs only).**
 
 - **Talked through with the owner:** fitting the weights, and whether to move to FSRS-7 first (fitted FSRS-6 weights don't carry over). Measured both on the owner's backup of 2026-11-12 (`docs/cards.md`, "Not built: weights fitted to the learner"): neither FSRS-7 nor fitting is much of a gain yet; the reviews in the app pass at other rates than Skritter's (meaning and pinyin 98%, writing 68%), so the weights worth having are a set per kind fitted on the app's own reviews, in a few months. ts-fsrs 6 on 2026-12-07 stays as planned, keeping FSRS-6. Then the reasons there are to move to FSRS-7, from ts-fsrs's guide and srs-benchmark (written under "ts-fsrs 6 and the FSRS-7 model" below): mostly for new learners and for staying with Anki and ts-fsrs; its better predictions come only with fitting, so the two are decided together.

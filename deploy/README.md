@@ -12,6 +12,8 @@ The owner's server is `sync.yutuchinese.com` (Hetzner, ARM, Germany; `inventory.
 
 Run everything from this folder: `cd deploy`.
 
+**If SSH says "Not allowed at this time"** (or "Connection closed" right away): the server is refusing your computer for a while after connections that never logged in (OpenSSH's `PerSourcePenalties`). Wait about 10 minutes and run the playbook again. `ansible.cfg` turns off Kerberos (GSSAPI) logins, whose hanging tries caused it on the owner's Fedora; when you log in by hand, add `-o GSSAPIAuthentication=no`.
+
 ## The playbooks
 
 | Command | What it does | When |
@@ -45,7 +47,7 @@ Set `healthcheck_url` to a ping URL from [Healthchecks](https://healthchecks.io)
 
 **The limits, on a check of their own:** make a second check in Healthchecks ("Yutu limits", as in the table) and put its ping URL in the same file, as `healthcheck_limits_url: https://hc-ping.com/…`. It goes red, and Healthchecks emails you once, when the server refused something for a limit since the last look, or holds 70% of the most it may (`sync_warn_percent`); green again when a look finds nothing new. Its event log in Healthchecks shows which limits and how often, without addresses.
 
-**Looking into a limit hit:** on the server (`ssh -i ~/.ssh/yutu_sync yutu@<server>`):
+**Looking into a limit hit:** on the server (`ssh -o GSSAPIAuthentication=no -i ~/.ssh/yutu_sync yutu@<server>`):
 
     sudo journalctl -u yutu-sync --grep '^LIMIT ' --since today
 
