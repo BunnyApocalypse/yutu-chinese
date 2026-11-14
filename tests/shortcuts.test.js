@@ -20,6 +20,8 @@ import {
   withFangInEitherOrder,
   chuiOf,
   withChuiUprightLast,
+  bisOf,
+  withBiDotsFirst,
   branchesOf,
   withReversedBranches,
 } from '../src/shortcuts.js';
@@ -396,4 +398,17 @@ test('the branch of 匕 may be written right to left (the owner, 2026-11-10)', (
   assert.ok(plain[0][0] > plain[1][0]);
   assert.ok(tilted[1][1] < plain[1][1]);
   assert.equal(withReversedBranches(taiwanData.get('方')), taiwanData.get('方'));
+});
+
+test('必 gets its last dot before the long ノ, in the big set only', () => {
+  // 瑟 and 毖 have a 必 inside; 謐 and 谧 are 必 beside a radical.
+  const expected = { 宓: 3, 密: 3, 必: 0, 毖: 4, 泌: 3, 瑟: 8, 祕: 4, 秘: 5, 蜜: 3, 謐: 7, 谧: 2, 铋: 5 };
+  for (const [char, at] of Object.entries(expected)) {
+    assert.deepEqual(bisOf(bigSetData(char)), [at], char);
+  }
+  // 密 is written 宀 (3), 必 (4 to 8), 山: the 丶 at 7 comes before the ノ at 6.
+  assert.deepEqual(withBiDotsFirst(bigSetData('密')).altOrder, [0, 1, 2, 3, 4, 5, 7, 6, 8, 9, 10]);
+  // The Taiwan set already writes the dots first: nothing to add.
+  assert.deepEqual(bisOf(taiwanData.get('必')), []);
+  assert.equal(withBiDotsFirst(bigSetData('心')).altOrder, undefined);
 });

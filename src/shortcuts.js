@@ -615,6 +615,66 @@ export function withChuiUprightLast(charData) {
   return { ...charData, altOrder, ...(!charData.altOrder && { altOrderIsFang: true }) };
 }
 
+// ---- 必 with all its dots before the long ノ ----
+//
+// The big set writes 必 (密, 秘, 泌, 蜜…) 丶 ㇃ 丶 ノ 丶, the long ノ before
+// the dot at the right. The Taiwan set writes the dots first and the ノ last,
+// which the owner (2026-11-14, in 密) writes too; but 密 and the rest come
+// from the big set, which has only the first. charData.js adds the order with
+// the last dot before the ノ (withBiDotsFirst).
+//
+// Found by shape, as five strokes in a row: a dot falling left, the ㇃ going
+// right and down, a dot, a long ノ, and a short dot right of where the ノ
+// begins, going down.
+
+const BI_MIN_SWEEP = 450;
+const BI_MAX_DOT = 260;
+
+// The stroke numbers at which a 必 written with the ノ before the last dot
+// begins: [] for most.
+export function bisOf(charData) {
+  const { medians } = charData;
+  const isDot = (median) => distance(startOf(median), endOf(median)) < BI_MAX_DOT && endOf(median).y < startOf(median).y - 40;
+  const found = [];
+  for (let at = 0; at + 4 < medians.length; at++) {
+    const [left, hook, middle, sweep, right] = medians.slice(at, at + 5);
+    if (
+      isDot(left) &&
+      endOf(left).x < startOf(left).x - 20 &&
+      endOf(hook).x > startOf(hook).x + 250 &&
+      isDot(middle) &&
+      isFallingLeft(sweep) &&
+      distance(startOf(sweep), endOf(sweep)) > BI_MIN_SWEEP &&
+      startOf(sweep).x > endOf(middle).x &&
+      isDot(right) &&
+      startOf(right).x > startOf(sweep).x + 50
+    ) {
+      found.push(at);
+    }
+  }
+  return found;
+}
+
+// A copy of `charData` whose second accepted order (`altOrder`) has the last
+// dot of each 必 before the ノ; `charData` itself if it has none. Joins a
+// second order already there as the 方 does, and is marked `altOrderIsFang`
+// (a review says 'other') when there was none.
+export function withBiDotsFirst(charData) {
+  const bis = bisOf(charData);
+  if (bis.length === 0) {
+    return charData;
+  }
+  const altOrder = charData.altOrder ? [...charData.altOrder] : charData.strokes.map((stroke, index) => index);
+  for (const at of bis) {
+    const sweepAt = altOrder.indexOf(at + 3);
+    // Only where the order has the ノ and the dot next to each other.
+    if (altOrder[sweepAt + 1] === at + 4) {
+      [altOrder[sweepAt], altOrder[sweepAt + 1]] = [at + 4, at + 3];
+    }
+  }
+  return { ...charData, altOrder, ...(!charData.altOrder && { altOrderIsFang: true }) };
+}
+
 // ---- The branch of 匕 written right to left ----
 //
 // The Taiwan set writes the first stroke of 匕 (北, 比, 化, 死…) as a short
