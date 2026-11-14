@@ -48,7 +48,7 @@
 // 1024 across, and from about -124 (bottom) to 900 (top) upwards.
 
 import { innerBoxForms } from './innerBox.js';
-import { inTaiwanOrder, withFangInEitherOrder, withChuiUprightLast, withBiDotsFirst, withReversedBranches } from './shortcuts.js';
+import { inTaiwanOrder, withFangInEitherOrder, withChuiUprightLast, withBiDotsFirst, withLaiUprightFirst, withReversedBranches } from './shortcuts.js';
 
 // BASE_URL is the folder the app is served from ("/" during development).
 const BASE = import.meta.env.BASE_URL;
@@ -143,7 +143,8 @@ function withSecondForms(char, data) {
 }
 
 // `data` with the orders and shapes found by shape: the 方 with its ノ first,
-// the 垂 with its 丨 late, the 必 with its dots first, the 匕 with its first stroke written right to left.
+// the 垂 with its 丨 late, the 必 with its dots first, the 來 with its 丨 early,
+// the 匕 with its first stroke written right to left.
 function withMoreWays(data) {
-  return withReversedBranches(withBiDotsFirst(withChuiUprightLast(withFangInEitherOrder(data))));
+  return withReversedBranches(withLaiUprightFirst(withBiDotsFirst(withChuiUprightLast(withFangInEitherOrder(data)))));
 }

@@ -675,6 +675,66 @@ export function withBiDotsFirst(charData) {
   return { ...charData, altOrder, ...(!charData.altOrder && { altOrderIsFang: true }) };
 }
 
+// ---- 來 with its 丨 right after the 一 ----
+//
+// Both sets write 來 (萊, 睞, 淶…) 一, the two 人 (a ノ and a dot each), the
+// long 丨, then the ノ and ㇏ of 木. The owner (2026-11-14, in 來) writes the 丨
+// right after the 一; charData.js adds that as a second order (withLaiUprightFirst).
+// No source found says it is common; the owner asked for it all the same.
+//
+// Found by shape, as eight strokes in a row: a level stroke, a ノ and a dot
+// left of a long 丨, a ノ and a dot right of it, the 丨, a ノ and a ㇏.
+
+const LAI_MIN_UPRIGHT = 500;
+
+// The stroke numbers at which such a 來 begins: [] for most.
+export function laisOf(charData) {
+  const { medians } = charData;
+  const isDot = (median) => endOf(median).x > startOf(median).x && endOf(median).y < startOf(median).y;
+  const found = [];
+  for (let at = 0; at + 7 < medians.length; at++) {
+    const [level, leftSweep, leftDot, rightSweep, rightDot, upright, sweep, press] = medians.slice(at, at + 8);
+    const x = (startOf(upright).x + endOf(upright).x) / 2;
+    if (
+      isLevel(level) &&
+      isUpright(upright) &&
+      startOf(upright).y - endOf(upright).y > LAI_MIN_UPRIGHT &&
+      isFallingLeft(leftSweep) &&
+      isDot(leftDot) &&
+      endOf(leftDot).x < x &&
+      isFallingLeft(rightSweep) &&
+      startOf(rightSweep).x > x &&
+      isDot(rightDot) &&
+      isFallingLeft(sweep) &&
+      isDot(press) &&
+      endOf(press).x > x
+    ) {
+      found.push(at);
+    }
+  }
+  return found;
+}
+
+// A copy of `charData` whose second accepted order (`altOrder`) has each
+// 來's 丨 right after its 一; `charData` itself if it has none. Joins a second
+// order already there as the 方 does, and is marked `altOrderIsFang` (a
+// review says 'other') when there was none.
+export function withLaiUprightFirst(charData) {
+  const lais = laisOf(charData);
+  if (lais.length === 0) {
+    return charData;
+  }
+  const altOrder = charData.altOrder ? [...charData.altOrder] : charData.strokes.map((stroke, index) => index);
+  for (const at of lais) {
+    const from = altOrder.indexOf(at + 1);
+    // Only where the order has the strokes as the data does.
+    if (from !== -1 && [1, 2, 3, 4, 5].every((offset, index) => altOrder[from + index] === at + offset)) {
+      altOrder.splice(from, 5, at + 5, at + 1, at + 2, at + 3, at + 4);
+    }
+  }
+  return { ...charData, altOrder, ...(!charData.altOrder && { altOrderIsFang: true }) };
+}
+
 // ---- The branch of 匕 written right to left ----
 //
 // The Taiwan set writes the first stroke of 匕 (北, 比, 化, 死…) as a short

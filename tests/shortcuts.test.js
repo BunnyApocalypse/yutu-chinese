@@ -21,6 +21,8 @@ import {
   chuiOf,
   withChuiUprightLast,
   bisOf,
+  laisOf,
+  withLaiUprightFirst,
   withBiDotsFirst,
   branchesOf,
   withReversedBranches,
@@ -411,4 +413,14 @@ test('必 gets its last dot before the long ノ, in the big set only', () => {
   // The Taiwan set already writes the dots first: nothing to add.
   assert.deepEqual(bisOf(taiwanData.get('必')), []);
   assert.equal(withBiDotsFirst(bigSetData('心')).altOrder, undefined);
+});
+
+test('來 gets its 丨 right after its 一', () => {
+  assert.deepEqual(laisOf(taiwanData.get('來')), [0]);
+  const expected = { 來: 0, 徠: 3, 棶: 4, 淶: 3, 睞: 5, 萊: 4 };
+  for (const [char, at] of Object.entries(expected)) {
+    assert.deepEqual(laisOf(bigSetData(char)), [at], char);
+  }
+  assert.deepEqual(withLaiUprightFirst(taiwanData.get('來')).altOrder, [0, 5, 1, 2, 3, 4, 6, 7]);
+  assert.equal(withLaiUprightFirst(bigSetData('木')).altOrder, undefined);
 });
