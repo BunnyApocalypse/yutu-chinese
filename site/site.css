@@ -442,6 +442,11 @@ footer p {
     display: block;
     text-align: center;
   }
+  /* The narrowest phones: the top line keeps to the logo and the button
+     (GitHub is in the footer too). */
+  .top nav a.source {
+    display: none;
+  }
 }
 /* The narrowest phones: a smaller logo and button, so the top line fits. */
 @media (max-width: 400px) {
