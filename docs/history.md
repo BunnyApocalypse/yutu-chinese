@@ -36,6 +36,12 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Tests to watch:** `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
 
+**Handover from the session of 2026-11-15 (two more handwriting shortcuts; on the test copy, not on `stable`).**
+
+- **Built** (`src/shortcuts.js`, `docs/writing.md`): 必 accepted with all its dots before the long stroke (密, 秘, 泌…), and 來 accepted with its 丨 right after the 一. Each has unit tests in `tests/shortcuts.test.js`.
+- **Tests:** 434 unit tests pass; no browser run.
+- **Pushed to `main`** and `yutuchinese-site`'s deploy started, the owner's yes (2026-11-15). Not released to `stable`; no "What's new" entry.
+
 **Handover from the session of 2026-11-13 (the sync server looked at; SSH without Kerberos; docs and deploy settings only).**
 
 - `status.yml` on the sync server: the program and Caddy running, 4 accounts holding 6.2 MB, disk 7%, no updates waiting, no restart needed, no limits hit today, both names answering.
