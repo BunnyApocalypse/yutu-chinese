@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Someone who has used the app is sent on to it (src/siteVisit.js, docs/offline.md).
+         "?about" after the address shows this page anyway. It runs here, before
+         anything is drawn, so a returning learner never sees the page flash. -->
+    <script>
+      (function () {
+        var KEY = 'yutu-used';
+        if (/about/.test(location.search) || location.hash === '#about') return;
+        // Never from inside the app's own folder: where there is no app (the
+        // dev server answers every address with this page), going on to
+        // "app/" would only go deeper, for ever.
+        if (/\/app\//.test(location.pathname)) return;
+        function goToApp() {
+          location.replace('app/' + location.search + location.hash);
+        }
+        try {
+          if (localStorage.getItem(KEY)) {
+            goToApp();
+            return;
+          }
+        } catch (e) {
+          return;
+        }
+        // No mark yet: the app may have been used before it left one. Its
+        // database is there if so. The page waits a moment, unseen, for the answer.
+        if (!window.indexedDB || !indexedDB.databases) return;
+        var root = document.documentElement;
+        root.className = 'checking';
+        var timer = setTimeout(function () {
+          root.className = '';
+        }, 400);
+        indexedDB.databases().then(
+          function (list) {
+            clearTimeout(timer);
+            var used = list.some(function (db) {
+              return db.name === 'hanzi-trainer';
+            });
+            if (used) {
+              try {
+                localStorage.setItem(KEY, '1');
+              } catch (e) {}
+              goToApp();
+            } else {
+              root.className = '';
+            }
+          },
+          function () {
+            clearTimeout(timer);
+            root.className = '';
+          }
+        );
+      })();
+    </script>
+    <title>玉兔中文 Yutu Chinese: Chinese vocabulary and writing practice</title>
+    <meta
+      name="description"
+      content="A free, open-source app for learning Chinese vocabulary: four cards for each word (writing, tone, pinyin and meaning), each coming back just before you would forget it. Traditional and simplified, HSK and TOCFL, no account, works offline."
+    />
+    <link rel="canonical" href="https://yutuchinese.com/" />
+    <link rel="icon" href="images/icon-192.png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="images/icon-192.png" />
+    <!-- The app's manifest too: a browser may keep the icon of the site's top
+         page for the app (Firefox on Android did; docs/offline.md). -->
+    <link rel="manifest" href="app/manifest.webmanifest" />
+
+    <!-- How a link to the site looks when shared (chat apps, social sites). -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="玉兔中文 Yutu Chinese" />
+    <meta property="og:title" content="玉兔中文 Yutu Chinese: Chinese vocabulary and writing practice" />
+    <meta
+      property="og:description"
+      content="A free, open-source app for learning Chinese vocabulary: four cards for each word (writing, tone, pinyin and meaning), each coming back just before you would forget it."
+    />
+    <meta property="og:url" content="https://yutuchinese.com/" />
+    <meta property="og:image" content="https://yutuchinese.com/share.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="The 兔 logo beside the name 玉兔中文 Yutu Chinese and the line: Make Chinese words stick, one stroke at a time." />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- What the page is, for search engines and AI tools (schema.org). -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "玉兔中文 Yutu Chinese",
+        "alternateName": "Yutu Chinese",
+        "url": "https://yutuchinese.com/",
+        "image": "https://yutuchinese.com/share.png",
+        "description": "A free, open-source app for learning Chinese vocabulary: four cards for each word (writing, tone, pinyin and meaning), each coming back just before you would forget it. Traditional and simplified, HSK and TOCFL lists, no account, works offline.",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Any device with a modern web browser",
+        "browserRequirements": "Requires JavaScript",
+        "inLanguage": ["en", "it", "de"],
+        "isAccessibleForFree": true,
+        "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "sameAs": ["https://github.com/BunnyApocalypse/yutu-chinese"]
+      }
+    </script>
+    <link rel="stylesheet" href="./site.css" />
+    <!-- After the styles above, so that, where the two tie, the app's page wins. -->
+    <link rel="stylesheet" href="./word-page-sample.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="top">
+        <a class="mark" href="./?about">
+          <img src="images/icon-192.png" alt="" />
+          <span><span lang="zh-Hant-TW">玉兔中文</span> <small>Yutu Chinese</small></span>
+        </a>
+        <nav>
+          <a class="open" href="app/">Open the app</a>
+        </nav>
+      </div>
+
+      <main>
+        <div class="opening">
+          <div>
+            <h1>Make Chinese words stick, one stroke at a time.</h1>
+            <p class="lead">
+              Each word gets four cards: write it, give its tone, recall its pinyin and its meaning.
+              Every card comes back just before you would forget it.
+            </p>
+            <a class="button" href="app/">Open the app</a>
+            <p class="aside">
+              Free and open source (GPL-3.0). No account, no ads, and it works offline, on a phone,
+              tablet or computer.
+            </p>
+          </div>
+
+          <figure class="desk">
+            <div class="square" id="square"></div>
+            <figcaption>
+              <span><b lang="zh-Hant-TW">兔</b> tù, rabbit</span>
+              <span id="status" role="status">Loading</span>
+            </figcaption>
+            <div class="controls">
+              <button type="button" id="watch">Watch it written</button>
+              <button type="button" id="start-over">Start over</button>
+            </div>
+            <p class="aside">
+              Try it: write the character in the square with a finger, stylus or mouse. This is the
+              app's own writing, so it checks each stroke.
+            </p>
+            <p class="failed" id="square-failed" hidden>
+              The practice square couldn't load. <a href="app/">Open the app</a> to write.
+            </p>
+          </figure>
+        </div>
+
+        <section class="row">
+          <h2>How a word sticks</h2>
+          <ol class="steps">
+            <li>
+              <div>
+                <b>Learn it</b>
+                <span>
+                  A new word comes with its meaning, its tone, a recording of a native speaker (for
+                  most words) and a short lesson that shows the strokes one at a time.
+                </span>
+              </div>
+            </li>
+            <li>
+              <div>
+                <b>Write it from memory</b>
+                <span>
+                  Write the characters yourself, and the app checks every stroke. Each word also has
+                  cards for tone, pinyin and meaning, scheduled on their own.
+                </span>
+              </div>
+            </li>
+            <li>
+              <div>
+                <b>Review it when it is due</b>
+                <span>
+                  A spaced-repetition schedule (FSRS) brings each card back as you are about to forget
+                  it. Cards you keep missing are pointed out, so you can give them extra help.
+                </span>
+              </div>
+            </li>
+            <li>
+              <div>
+                <b>See it in use</b>
+                <span>
+                  Each word has a page with its characters taken apart. Common words add example
+                  sentences, learning tips and memory aids, described below.
+                </span>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <section class="row" id="word-pages">
+          <h2>Words, taken apart</h2>
+          <div>
+            <p class="kicker">
+              Common words come with the pieces that help you remember them. This is the app's page
+              for <span lang="zh-Hant-TW">姐姐</span>, "older sister".
+            </p>
+            <figure class="sample">
+              <!-- word-page-sample -->
+            </figure>
+            <dl style="margin-top: 28px">
+              <div>
+                <dt>Characters and their parts</dt>
+                <dd>
+                  A word's page breaks it into characters, and each character into its parts. In
+                  sound-meaning characters the parts are labeled "meaning" and "sound". Tap any part to
+                  open its own page.
+                </dd>
+              </div>
+              <div>
+                <dt>How close the sound part is</dt>
+                <dd>
+                  Under each sound-meaning character, the page says how closely the sound part still
+                  matches its reading: the same, only the tone differs, rhymes, a hint, or changed
+                  since.
+                </dd>
+              </div>
+              <div>
+                <dt>Learning tips and memory aids</dt>
+                <dd>
+                  A short note on how the word is used, and a story for characters that are easy to
+                  forget. They are written with AI and may contain mistakes.
+                </dd>
+              </div>
+              <div>
+                <dt>Example sentences</dt>
+                <dd>
+                  Tap a word in the sentence for its reading, meaning and a recording. Turn the
+                  sentence into cards, to read it or to write the missing word, or switch on a setting
+                  that adds it when you learn the word.
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+
+        <section class="row">
+          <h2>Start from a list, or bring your own words</h2>
+          <dl>
+            <div>
+              <dt>Ready-made lists</dt>
+              <dd>
+                HSK 3.0, HSK 2.0, TOCFL and the 214 radicals. Each level is a deck, with sub-decks
+                that group related words by topic.
+              </dd>
+            </div>
+            <div>
+              <dt>Words of your own</dt>
+              <dd>
+                Add any word from the built-in dictionary, or load a whole list from a file. A word can
+                sit in several decks and keeps one schedule.
+              </dd>
+            </div>
+            <div>
+              <dt>Traditional or simplified</dt>
+              <dd>
+                Both are fully supported. Traditional follows Taiwan's standard forms, and you can
+                study one script, the other, or both. Readings can be shown in pinyin, zhuyin or
+                both, and as mainland, Taiwan or both.
+              </dd>
+            </div>
+            <div>
+              <dt>Your progress</dt>
+              <dd>
+                The Progress tab shows your cards, the days you studied, time spent and words learned
+                over time.
+              </dd>
+            </div>
+            <div>
+              <dt>Streaks, if you like them</dt>
+              <dd>
+                A day counts once you've studied enough, 10 cards or 2 new words by default. The app
+                shows your streak briefly, and you can switch streaks off in Settings.
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="row">
+          <h2>Already studying somewhere else?</h2>
+          <div>
+            <p class="kicker">
+              Bring your Skritter or Anki history with you. Schedules and every review come along, so
+              you carry on where you stopped.
+            </p>
+            <p>
+              Skritter has no export button. Its support sends a .zip on request, and the app reads
+              it. Anki decks (<code>.apkg</code>, <code>.colpkg</code>) import the same way.
+              <a href="import-from-skritter/">Step by step: importing from Skritter</a>.
+            </p>
+          </div>
+        </section>
+
+        <section class="row">
+          <h2>Writing that works the way you write</h2>
+          <dl>
+            <div>
+              <dt>Your handwriting stays on screen</dt>
+              <dd>
+                Your strokes stay as you drew them, or snap to the printed stroke if you prefer.
+                Stylus and tablet work well.
+              </dd>
+            </div>
+            <div>
+              <dt>Grading that isn't fussy</dt>
+              <dd>
+                A small, awkward stroke passes when written reasonably, and common handwriting
+                shortcuts count, so <span class="zh" lang="zh-Hant-TW">子</span> in two strokes is
+                fine. Wrong strokes are refused, and a hint comes after a few misses.
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="row">
+          <h2>Your words stay yours</h2>
+          <div>
+            <p>
+              Everything is stored on your device, and the app works offline. There is no account,
+              and nobody but you can read your words or progress.
+            </p>
+            <p>
+              Sync between devices is optional. Files are encrypted on the device before they are
+              sent, so the server only ever holds what it cannot read. You can also run your own
+              sync server. Backups are a single file that opens on any device.
+            </p>
+          </div>
+        </section>
+
+        <section class="row">
+          <h2>How it looks</h2>
+          <div>
+            <p>Each word has four kinds of card, and a short lesson when it is new.</p>
+            <div class="shots">
+            <figure>
+              <picture>
+                <source media="(prefers-color-scheme: dark)" srcset="images/cards/writing-writing-dark.png" />
+                <img src="images/cards/writing-writing-light.png" width="390" height="844" loading="lazy" alt="The writing card: the meaning and your own handwriting, stroke by stroke. Here the first strokes of 兔 are drawn." />
+              </picture>
+              <figcaption>Writing card, partly written</figcaption>
+            </figure>
+            <figure>
+              <picture>
+                <source media="(prefers-color-scheme: dark)" srcset="images/cards/writing-graded-dark.png" />
+                <img src="images/cards/writing-graded-light.png" width="390" height="844" loading="lazy" alt="The writing card, answered: the printed character under your handwriting, and four grades." />
+              </picture>
+              <figcaption>Writing card, answered</figcaption>
+            </figure>
+            <figure>
+              <picture>
+                <source media="(prefers-color-scheme: dark)" srcset="images/cards/tone-dark.png" />
+                <img src="images/cards/tone-light.png" width="390" height="844" loading="lazy" alt="The tone card: the word's meaning above it, and each character's tone to give by drawing the mark or with the buttons." />
+              </picture>
+              <figcaption>Tone card</figcaption>
+            </figure>
+            <figure>
+              <picture>
+                <source media="(prefers-color-scheme: dark)" srcset="images/cards/pinyin-dark.png" />
+                <img src="images/cards/pinyin-light.png" width="390" height="844" loading="lazy" alt="The pinyin card, answered: the reading, the meaning, a learning note and an example sentence." />
+              </picture>
+              <figcaption>Pinyin card</figcaption>
+            </figure>
+            <figure>
+              <picture>
+                <source media="(prefers-color-scheme: dark)" srcset="images/cards/meaning-dark.png" />
+                <img src="images/cards/meaning-light.png" width="390" height="844" loading="lazy" alt="The meaning card, answered: the meaning, the reading, a learning note and an example sentence." />
+              </picture>
+              <figcaption>Meaning card</figcaption>
+            </figure>
+            <figure>
+              <picture>
+                <source media="(prefers-color-scheme: dark)" srcset="images/cards/lesson-dark.png" />
+                <img src="images/cards/lesson-light.png" width="390" height="844" loading="lazy" alt="A lesson for a new word: write over the strokes shown, one character at a time." />
+              </picture>
+              <figcaption>Lesson</figcaption>
+            </figure>
+            </div>
+          </div>
+        </section>
+
+        <section class="row" id="questions">
+          <h2>Questions</h2>
+          <dl>
+            <div>
+              <dt>Is it free?</dt>
+              <dd>
+                Yes. The app is free and open source under the GPL-3.0. It has no ads and no account.
+              </dd>
+            </div>
+            <div>
+              <dt>Does it work offline?</dt>
+              <dd>
+                Yes. The app saves its stroke data and dictionary in the background (about 14 MB), so
+                once that is done you can study without a connection. Your words are always on your
+                device.
+              </dd>
+            </div>
+            <div>
+              <dt>Do I need an account?</dt>
+              <dd>
+                No. Your words and progress stay on your device. Syncing between devices is optional
+                and encrypted on the device first.
+              </dd>
+            </div>
+            <div>
+              <dt>What if I clear my browser data or lose my device?</dt>
+              <dd>
+                Your words live in your browser, so keep a backup: the app can save everything as one
+                file, and sync keeps a second, encrypted copy. The app reminds you to back up.
+              </dd>
+            </div>
+            <div>
+              <dt>Can I bring my Skritter or Anki history?</dt>
+              <dd>
+                Yes. It imports Anki decks (<code>.apkg</code>, <code>.colpkg</code>) and the .zip that
+                Skritter's support sends on request, with schedules and review history.
+                <a href="import-from-skritter/">How to import from Skritter</a>.
+              </dd>
+            </div>
+            <div>
+              <dt>Traditional or simplified?</dt>
+              <dd>
+                Both. Traditional follows Taiwan's standard forms. You choose a script for each word,
+                or study both.
+              </dd>
+            </div>
+            <div>
+              <dt>What do I study?</dt>
+              <dd>
+                HSK 3.0, HSK 2.0 and TOCFL word lists, the 214 radicals, or your own words. Each word
+                has cards for writing, tone, pinyin and meaning. Common words also have a page with
+                their parts, learning tips and an example sentence.
+              </dd>
+            </div>
+            <div>
+              <dt>Which devices does it run on?</dt>
+              <dd>
+                Any modern browser on a phone, tablet or computer. Choose "Install app" or "Add to
+                Home Screen" in the browser menu and it opens like any other app.
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="row">
+          <h2>Free software, open to everyone</h2>
+          <div>
+            <p>
+              The app is free and its code is open, under the GPL-3.0. You can read it, run it,
+              change it, and report problems or ideas on
+              <a href="https://github.com/BunnyApocalypse/yutu-chinese">GitHub</a>. The interface is
+              currently available in English, Italian and German; to ask for another language, open
+              an issue there.
+            </p>
+            <p><a class="button" href="app/">Open the app</a></p>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <p>
+          <span lang="zh-Hant-TW">玉兔</span>, the Jade Rabbit, lives on the moon. Questions or
+          feedback: <a href="mailto:contact@yutuchinese.com">contact@yutuchinese.com</a>.
+        </p>
+        <p>
+          <b>The logo:</b> the <span lang="zh-Hant-TW">兔</span> and its stars were written for this
+          app by the calligrapher <span lang="zh-Hant-TW">南蠻大熊</span>
+          (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>). The moon is from a
+          <a href="https://commons.wikimedia.org/wiki/File:Washi(Sugihara_paper).JPG">photo of washi paper</a>
+          by Tomomarusan
+          (<a href="https://creativecommons.org/licenses/by/2.5/">CC BY 2.5</a>), and the night sky from a
+          <a href="https://commons.wikimedia.org/wiki/File:Ink-stain-texture-15.jpg">photo of an ink stain</a>
+          by designshard
+          (<a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>). Both photos are from
+          Wikimedia Commons, cut and recolored.
+        </p>
+        <p>
+          The strokes come from
+          <a href="https://github.com/skishore/makemeahanzi">Make Me a Hanzi</a> and
+          <a href="https://github.com/parsimonhi/animCJK">AnimCJK</a> (Arphic Public License), through
+          <a href="https://hanzi-writer.com/">Hanzi Writer</a>. The full credits and licenses for the
+          dictionary, recordings and word lists are under Help in the app.
+        </p>
+        <p>
+          Skritter is a trademark of Inkren Inc. <span lang="zh-Hant-TW">玉兔中文</span> can import the
+          data Skritter sends you, but is not affiliated with or endorsed by Skritter.
+        </p>
+      </footer>
+    </div>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

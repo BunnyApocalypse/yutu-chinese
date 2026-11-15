@@ -1,0 +1,24 @@
+# 玉兔中文 Yutu Chinese
+
+> A free, open-source app for learning Chinese vocabulary: each word gets four cards (writing, tone, pinyin and meaning). It runs in a web browser on a phone, tablet or computer, works offline, and needs no account. Words you study are scheduled with spaced repetition (FSRS) so they come back just before you would forget them.
+
+Everything stays on the learner's device. Syncing between devices is optional and encrypted on the device before it is sent. The code is licensed under GPL-3.0.
+
+## What it does
+
+- Teaches writing: the learner writes each character by hand (finger, stylus or mouse) and the app checks every stroke. Common handwriting shortcuts are accepted, and small awkward strokes pass when written reasonably.
+- Four cards per word: writing, tone, pinyin and meaning, each scheduled on its own.
+- Traditional (Taiwan-standard forms) and simplified characters, both fully supported.
+- Ready-made lists: HSK 3.0, HSK 2.0, TOCFL and the 214 Kangxi radicals; learners can add their own words and organize them in decks.
+- A page for each word shows its characters and their parts (labeled meaning or sound, with how far the sound part still helps), and recordings of native speakers. Common words also have a learning note, a memory aid for hard characters, and an example sentence, in both scripts. Notes and memory aids are written with AI, may contain mistakes, and are labeled with how they were checked; only some have been read by a native speaker.
+- Imports history from Anki (.apkg, .colpkg) and from Skritter (the .zip its support sends on request), with schedules and review history.
+- Progress tab (cards, days studied, time spent, words learned) and optional streaks that can be switched off in Settings. Readings can be shown in pinyin, zhuyin or both.
+- Words are stored in the browser; backups are one file, and optional sync keeps an encrypted copy.
+- Interface currently available in English, Italian and German. New languages can be requested by opening an issue on GitHub.
+
+## Links
+
+- [Open the app](https://yutuchinese.com/app/): the app itself, free, no sign-up
+- [Home page](https://yutuchinese.com/): what it is and answers to common questions
+- [Import from Skritter](https://yutuchinese.com/import-from-skritter/): how to ask Skritter for your data and import the .zip, keeping words, schedules and review history
+- [Source code and issues](https://github.com/BunnyApocalypse/yutu-chinese): GPL-3.0, with a README describing every feature

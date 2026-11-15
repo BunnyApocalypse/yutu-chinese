@@ -6,7 +6,7 @@ This repository only publishes the app at the new address while its own reposito
 
 ## How it is published
 
-`.github/workflows/deploy.yml` builds the app's `stable` branch into `app/`, its `main` into `app/test/`, puts a page forwarding to `app/` at the top, and publishes it with GitHub Pages (Settings › Pages: source GitHub Actions, custom domain `yutuchinese.com`). Started by hand after a change to the app:
+`.github/workflows/deploy.yml` builds the app's `stable` branch into `app/`, its `main` into `app/test/`, puts the page about the app (`site/` in the app's repository, built by `npm run build:site` from `stable`) at the top, and publishes it with GitHub Pages (Settings › Pages: source GitHub Actions, custom domain `yutuchinese.com`). Started by hand after a change to the app:
 
     gh workflow run deploy.yml -R BunnyApocalypse/yutuchinese-site
 

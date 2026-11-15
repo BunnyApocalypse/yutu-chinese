@@ -1,0 +1,5 @@
+# The app's test copy is for the developer; everything else is open.
+User-agent: *
+Disallow: /app/test/
+
+Sitemap: https://yutuchinese.com/sitemap.xml

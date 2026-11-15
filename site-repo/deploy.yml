@@ -1,7 +1,9 @@
 # Publishes the app at https://yutuchinese.com, for as long as the app's own
 # repository (BunnyApocalypse/yutu-chinese) still publishes at its old
-# address: the stable copy at /app/, the test copy at /app/test/, and a page
-# forwarding to /app/ at the top. Lives in BunnyApocalypse/yutuchinese-site
+# address: the stable copy at /app/, the test copy at /app/test/, and the page
+# about the app at the top (site/ in the app's repository, built by
+# `npm run build:site`; it sends anyone who has used the app on to /app/).
+# Lives in BunnyApocalypse/yutuchinese-site
 # as .github/workflows/deploy.yml; kept in the app's repository as
 # site-repo/deploy.yml (site-repo/README.md; docs/offline.md, "The move to
 # yutuchinese.com"). Deleted once the app's repository publishes there itself.
@@ -73,36 +75,23 @@ jobs:
           npm test
           npm run build
 
+      # The page about the app and the guide to importing from Skritter, with
+      # their robots.txt, sitemap.xml and llms.txt: built from the stable
+      # branch, as the app is (docs/offline.md, "The page about the app").
+      - name: Build the page about the app
+        working-directory: stable
+        run: npm run build:site
+
       # The site: the stable copy at app/, the test copy at app/test/, and at
-      # the top a page sending everyone on to app/ until a page about the app
-      # is written (GitHub Pages has no redirects of its own; nothing here is
-      # kept by the browser, so that page can simply replace it).
+      # the top the page about the app, whose files go beside app/.
       - name: Put the site together
         run: |
           mkdir site
           mv stable/dist site/app
           mv test/dist site/app/test
-          cat > site/index.html <<'EOF'
-          <!doctype html>
-          <html lang="zh-Hant-TW">
-            <head>
-              <meta charset="UTF-8" />
-              <meta name="viewport" content="width=device-width, initial-scale=1" />
-              <title>玉兔 Yutu</title>
-              <!-- The app's icon and manifest here too: a browser may keep
-                   the icon of the site's top page for every page of it
-                   (Firefox on Android gave the app the default icon). -->
-              <link rel="icon" href="app/icons/favicon.png" sizes="64x64" />
-              <link rel="apple-touch-icon" href="app/icons/icon-192.png" />
-              <link rel="manifest" href="app/manifest.webmanifest" />
-              <meta http-equiv="refresh" content="0; url=app/" />
-              <script>location.replace('app/' + location.search + location.hash);</script>
-            </head>
-            <body>
-              <p><a href="app/">玉兔中文</a></p>
-            </body>
-          </html>
-          EOF
+          cp -a stable/dist-site/. site/
+          # Fail here, not live, if a part is missing.
+          test -f site/index.html -a -f site/import-from-skritter/index.html -a -f site/app/index.html
 
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:

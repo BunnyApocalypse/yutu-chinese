@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      /* The picture shown when a link to the site is pasted into a chat or a
+         post (a "share image", 1200 by 630). Drawn by
+         scripts/make-share-image.js; the colors are the app's dark look. */
+      html, body { margin: 0; }
+      body {
+        width: 1200px;
+        height: 630px;
+        background: #1d2120;
+        color: #f1e9d4;
+        font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Songti TC', 'Noto Serif CJK TC', 'Noto Serif TC', serif;
+        display: flex;
+        align-items: center;
+        gap: 72px;
+        padding: 0 88px;
+        box-sizing: border-box;
+      }
+      img {
+        width: 400px;
+        height: 400px;
+        border-radius: 72px;
+        flex: none;
+      }
+      .name { font-size: 96px; line-height: 1; margin: 0 0 8px; font-weight: 600; }
+      .latin { font-family: system-ui, 'Noto Sans', sans-serif; font-size: 34px; color: #b7b19b; margin: 0 0 40px; }
+      .line { font-size: 52px; line-height: 1.2; margin: 0 0 28px; font-weight: 600; text-wrap: balance; }
+      .small { font-family: system-ui, 'Noto Sans', sans-serif; font-size: 30px; color: #7fc4a0; margin: 0; }
+    </style>
+  </head>
+  <body>
+    <img src="../public/icons/icon-512.png" alt="" />
+    <div>
+      <p class="name">玉兔中文</p>
+      <p class="latin">Yutu Chinese</p>
+      <p class="line">Make Chinese words stick, one stroke at a time.</p>
+      <p class="small">Free and open source. yutuchinese.com</p>
+    </div>
+  </body>
+</html>
