@@ -27,7 +27,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - The TOCFL notes' simplified versions may keep older mainland forms; the mainland words added for the other side are unchecked (least sure 小測, 劫匪, 升艙, 鬧市); the six sentences for the Taiwanese reader (`local/notes-writing/ask.md`) and the `ask` marks are not on a reader's page yet.
 - The mainland reader's general page: the next batch starts at #81.
 - Taiwan forms of parts in tips (房's tip names 户); 8 declined radicals and variants for `radicals.tsv` (氺 镸 旡 爫 攴 彑 襾 阜).
-- The old notes' rework (`local/old-notes/`): last noted next step (2026-11-06), the last 24 of HSK 3.0 level 5 with level 1 (`gather.mjs hsk-3.0-5.tsv … 24 1 --in-order`, then `hsk-3.0-1.tsv`).
+- The old notes' rework (`local/old-notes/`): see the handover of 2026-11-15 (what is left: the radicals, the last of TOCFL level 3, TOCFL level 4).
 
 **Testers:**
 
@@ -35,6 +35,12 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - A German tester to find. The Italian and German texts Claude wrote since the Italian tester's check are unchecked.
 
 **Tests to watch:** `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
+
+**Handover from the second session of 2026-11-15 (578 old notes reworked, both scripts; released to `stable`).**
+
+- **Old notes reworked:** 578 notes (`local/old-notes/rework-38` to `-44`, `local/old-notes/README.md`): the last 165 of HSK 3.0 level 1, all of TOCFL Novice, level 1 and level 2, and the first 200 of TOCFL level 3. Written by Sonnet writers, judged by Opus, sent back once, read by hand; `judged`, in both scripts (`convert-notes.js` listed 29, settled in `local/note-scripts/settle-old-13.mjs`). The owner did not look at a sample first; their rule on examples: an example sentence must show how the word is used, never how to write the character. `ask` marks (Taiwan/mainland points: 公分/公克, 机车, 百货公司, 水饺, 煮饭, 感冒, 功课…) are for a native reader to see. No entry in "What's new" (the owner, 2026-11-01).
+- **Left to rework** (no check tag): 164 radical notes (no example sentences, another kind), 94 of `tocfl-3.tsv`, 1,135 of `tocfl-4.tsv`. Next: `gather.mjs tocfl-3.tsv … 94 2 --in-order`, then `tocfl-4.tsv`; the writers' prompt `local/old-notes/prompt-writer.md` has rule 13 (examples; bound characters get their compound with the pinyin split after the headword).
+- **Tests:** 434 unit tests pass; no browser run.
 
 **Handover from the session of 2026-11-15 (two more handwriting shortcuts; 300 old notes reworked; released to `stable`).**
 
