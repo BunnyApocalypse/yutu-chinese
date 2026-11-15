@@ -26,6 +26,7 @@
 - **The two big files** (the notes and `data/makemeahanzi/dictionary.txt`, 2.5 MB) are fetched when a page is first opened and saved offline with the dictionary (`scripts/build-offline.js` saves `.tsv` and `.txt` assets).
 - **The buttons work before the contents are there** (`start`), which the browser tests rely on; `data-shown` says what the filled page is about.
 - **Not built:** statistics on the page; a character's stroke order; words that contain a character.
+- **The page about the app shows a copy of this page** (`site/word-page-sample.html` and `.css`, the word 姐姐; `docs/offline.md`, "The page about the app"). It does not follow the app by itself: after changing the word page, its markup or its styles, run `node scripts/make-word-page-sample.js` and look at the result with `npm run dev:site` (`#word-pages`).
 
 ## Sentences
 

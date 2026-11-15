@@ -309,6 +309,7 @@ export default {
   'settings.introductionAgain': 'Einführung noch einmal zeigen',
   'settings.whatsNew': 'Neuigkeiten',
   'settings.sendFeedback': 'Feedback senden',
+  'settings.aboutSite': 'Über die App (Website)',
   'settings.credits': 'Danksagungen und Lizenzen',
   'settings.tips': 'Beim ersten Öffnen jedes Bildschirms einen Tipp zeigen',
   'settings.tipsAgain': 'Alle Tipps wieder zeigen',

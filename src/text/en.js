@@ -317,6 +317,7 @@ export default {
   'settings.introductionAgain': 'Show the introduction again',
   'settings.whatsNew': "What's new",
   'settings.sendFeedback': 'Send feedback',
+  'settings.aboutSite': 'About the app (website)',
   'settings.credits': 'Credits and licenses',
   'settings.tips': 'Show a tip the first time each screen is opened',
   'settings.tipsAgain': 'Show all tips again',

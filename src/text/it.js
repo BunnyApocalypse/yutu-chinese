@@ -309,6 +309,7 @@ export default {
   'settings.introductionAgain': 'Mostra di nuovo l\'introduzione',
   'settings.whatsNew': 'Novità',
   'settings.sendFeedback': 'Invia un commento',
+  'settings.aboutSite': "Informazioni sull'app (sito web)",
   'settings.credits': 'Crediti e licenze',
   'settings.tips': 'Mostra un consiglio la prima volta che si apre ogni schermata',
   'settings.tipsAgain': 'Mostra di nuovo tutti i consigli',

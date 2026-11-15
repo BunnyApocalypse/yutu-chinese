@@ -49,6 +49,7 @@ import { openedToMoveIn, moveIn } from './moveIn.js';
 import { startSyncTiming, syncIsLate } from './syncTiming.js';
 import { createSyncLateMessage } from './syncLateMessage.js';
 import { applyText, t, formatList, formatNumber } from './text.js';
+import { noteAppUsed, ABOUT_ADDRESS } from './siteVisit.js';
 
 // The page's own text, in the learner's language (src/text.js), before
 // anything else is set up.
@@ -149,6 +150,12 @@ watchForErrors({
 });
 showVersion();
 
+// The page about the app sends anyone who has used the app on to it (siteVisit.js).
+noteAppUsed();
+// "About the app", under "Help, feedback and licenses" in Settings: the page
+// about the app, shown even to someone who uses the app.
+byId('about-site-button').addEventListener('click', () => window.open(ABOUT_ADDRESS, '_blank', 'noopener'));
+
 // "Credits and licenses", under "Help, feedback and licenses" in Settings.
 byId('credits-button').addEventListener('click', () => byId('credits-dialog').showModal());
 byId('credits-close').addEventListener('click', () => byId('credits-dialog').close());
@@ -178,6 +185,21 @@ byId('whats-new-button').addEventListener('click', whatsNew.openAll);
 // again when the room changes (the screen turned) or a font arrives.
 const refitMeaning = clampWithPopup(byId('prompt-meaning'), (text) => tell(t('main.meaning'), text), { fit: fitMeaning });
 document.fonts?.addEventListener('loadingdone', () => refitMeaning());
+// The meaning's room depends on whether a card is up (main.focused,
+// meaningFit.js), and the line is only measured again when its text changes.
+// A meaning card has no meaning above it: the line is empty before and
+// after, nothing changed, and the card sat 50 to 75px higher than the others
+// until some other card had set the number right. So it is measured whenever
+// a card comes up or goes away.
+const mainElement = document.querySelector('main');
+let cardWasUp = mainElement.classList.contains('focused');
+new MutationObserver(() => {
+  const cardIsUp = mainElement.classList.contains('focused');
+  if (cardIsUp !== cardWasUp) {
+    cardWasUp = cardIsUp;
+    refitMeaning();
+  }
+}).observe(mainElement, { attributes: true, attributeFilter: ['class'] });
 
 // ---- Modes ----
 

@@ -61,12 +61,12 @@ describe('the meaning above a writing card', { concurrency: false }, () => {
     })`);
 
   // A writing card learned long ago, due in `dueIn` milliseconds.
-  const card = (wordId, dueIn) => {
+  const card = (wordId, dueIn, type = 'writing') => {
     const now = Date.now();
     return {
-      id: `${wordId}#writing`,
+      id: `${wordId}#${type}`,
       wordId,
-      type: 'writing',
+      type,
       due: now + dueIn,
       firstReviewedAt: now - 100 * DAY,
       lastReviewedAt: now - 10 * DAY,
@@ -136,6 +136,34 @@ describe('the meaning above a writing card', { concurrency: false }, () => {
     assert.deepEqual(errors, [], 'the page threw errors');
   });
 
+  // A meaning card of SHORT due, everything else later, and Review started
+  // again with it showing.
+  async function showMeaningCard() {
+    const id = idOf(SHORT);
+    const writing = [...WORDS, SENTENCE].map((other) => card(idOf(other), 30 * DAY));
+    await inDatabase(`
+      for (const card of ${JSON.stringify(writing)}) stores.cards.put(card);
+      stores.cards.put(${JSON.stringify(card(id, -DAY, 'meaning'))});
+    `);
+    await reloadApp(page);
+    await waitUntil(
+      page,
+      `!document.getElementById('card-face').hidden && document.getElementById('card-face').textContent.length > 0 && document.getElementById('prompt-meaning').textContent === ''`,
+      'a meaning card',
+    );
+  }
+
+  // docs/pitfalls.md: the card sits at the same height whatever its kind. A
+  // meaning card has no meaning above it, so nothing set the room for that
+  // line when it was the first card (the number was left at its start-up 0),
+  // and its card sat 75px higher on a 390×844 phone.
+  it('puts a meaning card where a writing card is, even as the first card', async () => {
+    const writingTop = (await showCard(SHORT)).top;
+    await showMeaningCard();
+    const faceTop = await page.evaluate(`Math.round(document.getElementById('card-face').getBoundingClientRect().top)`);
+    assert.equal(faceTop, writingTop);
+  });
+
   it('gives a long meaning more lines, the writing area staying in place', async () => {
     const short = await showCard(SHORT);
     const long = await showCard(LONG);
@@ -166,5 +194,26 @@ describe('the meaning above a writing card', { concurrency: false }, () => {
     assert.equal(sentence.sentenceLines, 2);
     assert.equal(sentence.hasMore, false);
     assert.equal(sentence.top, short.top);
+  });
+
+  // The room it now keeps above the card must not push the grades off a short
+  // phone (docs/pitfalls.md: 360×640 has no room to spare).
+  it('keeps a meaning card and its grades on screen on a 360×640 phone', async () => {
+    await page.send('Emulation.setDeviceMetricsOverride', { width: 360, height: 640, deviceScaleFactor: 1, mobile: true });
+    try {
+      await showMeaningCard();
+      await page.evaluate(`document.getElementById('card-face').dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))`);
+      await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
+      const { gradesBottom, faceBottom, scrolls } = await page.evaluate(`({
+        gradesBottom: Math.round(document.getElementById('grade-row').getBoundingClientRect().bottom),
+        faceBottom: Math.round(document.getElementById('card-face').getBoundingClientRect().bottom),
+        scrolls: document.documentElement.scrollHeight > innerHeight + 1,
+      })`);
+      assert.ok(gradesBottom <= 640, `the grades end at ${gradesBottom}, below the 640px screen`);
+      assert.ok(faceBottom < gradesBottom, 'the card is above its grades');
+      assert.equal(scrolls, false, 'the page scrolls');
+    } finally {
+      await page.send('Emulation.setDeviceMetricsOverride', { width: 393, height: 800, deviceScaleFactor: 1, mobile: true });
+    }
   });
 });

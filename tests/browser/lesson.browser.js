@@ -109,7 +109,7 @@ describe('learning new words', { concurrency: false }, () => {
   it('starts with a look at the word and its learning tip, then its tones as practice', async () => {
     // The word, its reading and meaning, and once the notes are there, its tip.
     await waitUntil(page, `document.querySelector('#card-face .face-tip')`, 'the tip');
-    assert.match(await textOf(page, 'card-face'), /^大dàbig"Big"\./);
+    assert.match(await textOf(page, 'card-face'), /^大dàbigIt also gives and asks age/);
     // The note's link takes the place of "About" beside "I know this word"
     // (the owner, 2026-11-06), which comes back at the next step.
     assert.equal(await isShown(page, 'lesson-about-button'), false);

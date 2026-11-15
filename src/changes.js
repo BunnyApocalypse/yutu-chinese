@@ -13,6 +13,21 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-15-2',
+    items: [
+      'A meaning card now sits at the same height as the other kinds of card, even when it is the first one.',
+      'Under Help in Settings, "About the app (website)" opens the new page about 玉兔中文 at yutuchinese.com.',
+    ],
+    it: [
+      'La carta del significato ora sta alla stessa altezza delle altre carte, anche quando è la prima.',
+      'In Impostazioni, sotto Aiuto, «Informazioni sull\'app (sito web)» apre la nuova pagina su 玉兔中文 su yutuchinese.com.',
+    ],
+    de: [
+      'Eine Bedeutungskarte steht jetzt in gleicher Höhe wie die anderen Karten, auch wenn sie die erste ist.',
+      'In den Einstellungen öffnet unter Hilfe „Über die App (Website)“ die neue Seite über 玉兔中文 auf yutuchinese.com.',
+    ],
+  },
+  {
     id: '2026-11-15',
     items: [
       '必 (and 密, 秘, 泌…) is accepted with all its dots written before the long stroke.',

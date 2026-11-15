@@ -51,17 +51,17 @@ describe('the word page', { concurrency: false }, () => {
     assert.equal(await textOf(page, '#word-page-body .page-meaning'), 'we; us');
     assert.deepEqual(await page.evaluate(texts('.chip')), ['Chinese 中文']);
     // The note, and the sentence in both scripts, word by word.
-    assert.match(await textOf(page, '#word-page-body .page-note'), /^"We" or "us"/);
+    assert.match(await textOf(page, '#word-page-body .page-note'), /^It can leave the listener out, while 咱們 always includes them/);
     assert.deepEqual(await page.evaluate(texts('.sentence-word')), ['我們', '是', '同學', '我们', '是', '同学']);
     // Shown in both scripts, each line says which it is.
     assert.deepEqual(await page.evaluate(texts('.sentence-script')), ['trad.', 'simp.']);
     assert.equal(await textOf(page, '#word-page-body .page-english'), 'We are classmates.');
-    // Nobody has checked this note: the box beside its heading says AI, and
-    // a tap on it says what that means.
+    // No person has checked this note (a second AI model read it): the box
+    // beside its heading says AI, and a tap on it says what that means.
     assert.equal(await textOf(page, '#word-page-body .note-badge'), 'AI');
     assert.equal(await page.evaluate(`document.querySelector('#word-page-body .note-badge-text').hidden`), true);
     await page.evaluate(`document.querySelector('#word-page-body .note-badge').click()`);
-    assert.match(await textOf(page, '#word-page-body .note-badge-text'), /^This learning tip and its example sentence were written by an AI model and have not been checked/);
+    assert.match(await textOf(page, '#word-page-body .note-badge-text'), /^Written by an AI model\. What it says about how its characters were built or where they came from was found in Wiktionary or CC-CEDICT; the rest, with the example sentence, was read by a second AI model\. No person has checked it/);
     // Each character with its parts; 們 has one for the meaning and one for the sound.
     assert.deepEqual(await page.evaluate(texts('.character-big')), ['我', '們']);
     assert.deepEqual(await page.evaluate(texts('.part.meaning, .part.sound')), ['亻meaning', '門sound']);
@@ -122,7 +122,7 @@ describe('the word page', { concurrency: false }, () => {
     await waitUntil(page, `document.querySelectorAll('#word-page-body .note-word').length > 0`, 'the note\'s words');
     assert.deepEqual(
       await page.evaluate(texts('.note-word')),
-      ['我', '們', '的', '我們', '的', '老師'],
+      ['咱們', '我們', '的', '我們', '的', '老師', '我'],
     );
     assert.equal(await page.evaluate(`document.querySelector('#word-page-body .note-word').lang`), 'zh-Hant-TW');
     await page.evaluate(`document.querySelectorAll('#word-page-body .note-word')[2].click()`);
@@ -263,7 +263,7 @@ describe('the word page', { concurrency: false }, () => {
     await waitUntil(page, `document.querySelectorAll('#word-list li').length === 1`, 'the word');
     await page.evaluate(`document.querySelector('#word-list li button').click()`);
     await waitUntil(page, `${shown('我們|wo3men5')} && document.querySelectorAll('#word-page-body .note-word').length > 0`, 'the note\'s words');
-    assert.deepEqual(await page.evaluate(texts('.note-word')), ['我', '们', '的', '我们', '的', '老师']);
+    assert.deepEqual(await page.evaluate(texts('.note-word')), ['咱们', '我们', '的', '我们', '的', '老师', '我']);
     assert.equal(await page.evaluate(`document.querySelector('#word-page-body .note-word').lang`), 'zh-Hans-CN');
   });
 });

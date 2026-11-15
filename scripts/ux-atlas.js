@@ -22,6 +22,12 @@
 // README=1 also adds 兔子 (the same in both scripts), first to learn and the
 // writing card in Review, for the README's pictures: docs/images/
 // writing-light.png and writing-dark.png are 16-review-writing-grades.
+// CARD_WORD=姐姐 makes the meaning, pinyin and tone cards pictured that word's
+// (a word of tests/words.tsv, by its traditional characters), instead of the
+// first card due: for the pictures on the page about the app.
+// CARD_GEOMETRY=1 prints, for each kind of card in Review, where the rows
+// above the card are and the layout's numbers (--card-offset, --meaning-unused),
+// to find out why a card sits higher or lower than another.
 // To compare a change in the looks before making it: TRY_CSS adds a few
 // lines of style to every screen, and OUT puts the pictures elsewhere, e.g.
 //   SIZES=phone OUT=local/ux-atlas-blue TRY_CSS=':root{--quiet-text:var(--accent)}' node scripts/ux-atlas.js
@@ -228,6 +234,21 @@ async function walk(page, sizeName, size, shots) {
   }
   await reloadApp(page);
 
+  // For CARD_GEOMETRY: the rows above the card and the layout's numbers.
+  const geometry = () =>
+    page.evaluate(`JSON.stringify((() => {
+      const root = getComputedStyle(document.documentElement);
+      const vars = Object.fromEntries(['--card-offset', '--meaning-extra', '--meaning-unused'].map((name) => [name, root.getPropertyValue(name).trim()]));
+      const rect = (id) => {
+        const element = document.getElementById(id);
+        if (!element) return null;
+        const box = element.getBoundingClientRect();
+        return { top: Math.round(box.top), height: Math.round(box.height), display: getComputedStyle(element).display, hidden: element.hidden || undefined, text: element.textContent.slice(0, 12) };
+      };
+      const row = document.querySelector('main.focused .type-row');
+      return { vars, typeRowMarginBottom: row ? getComputedStyle(row).marginBottom : null, meaning: rect('prompt-meaning'), pinyin: rect('prompt-pinyin'), wordRow: rect('word-row'), statusRow: rect('status-row'), face: rect('card-face') };
+    })())`);
+
   // Takes the screen as it is now: measured once, pictured in both looks.
   async function shoot(key, title) {
     if (process.env.TRY_CSS) {
@@ -301,7 +322,9 @@ async function walk(page, sizeName, size, shots) {
       await pasteList(page, `${w.simplified}\t${w.traditional}\t${w.pinyin}\t${w.definition}\n`);
       await tap(page, 'add-list-button');
       await waitUntil(page, `document.getElementById('word-count').textContent === '${TEST_WORDS.length}'`, 'the README word');
-      // Learn takes words by their `order`: before all the others.
+      // Learn takes words by their `order`: before all the others. With
+      // CARD_WORD, that word comes second, so that it has cards (they are
+      // made for the words learned or marked known, not for all).
       await page.evaluate(`new Promise((resolve, reject) => {
         const opening = indexedDB.open('hanzi-trainer');
         opening.onsuccess = () => {
@@ -311,7 +334,10 @@ async function walk(page, sizeName, size, shots) {
             const words = event.target.result;
             const first = Math.min(...words.map((word) => word.order));
             const word = words.find((word) => word.traditional === '${w.traditional}');
-            store.put({ ...word, order: first - 1 });
+            const cardWord = ${JSON.stringify(process.env.CARD_WORD || '')};
+            const second = cardWord && words.find((other) => other.traditional === cardWord);
+            store.put({ ...word, order: first - 2 });
+            if (second) store.put({ ...second, order: first - 1 });
           };
           tx.oncomplete = resolve;
           tx.onerror = () => reject(tx.error);
@@ -450,6 +476,8 @@ async function walk(page, sizeName, size, shots) {
   // due, since Review shows one card of a word at a time and meaning cards
   // come first (until 2026-10-17 eight cards in a row showed only those).
   for (const type of ['meaning', 'pinyin', 'tone', 'writing']) {
+    // The word whose card is shown, by its traditional characters; '' for any.
+    const only = type === 'writing' ? (process.env.README ? README_WORD.traditional : '') : process.env.CARD_WORD || '';
     await step(`Review, a ${type} card`, async () => {
       await page.evaluate(`new Promise((resolve, reject) => {
         const opening = indexedDB.open('hanzi-trainer');
@@ -458,8 +486,9 @@ async function walk(page, sizeName, size, shots) {
           const store = tx.objectStore('cards');
           store.getAll().onsuccess = (event) => {
             for (const card of event.target.result) {
-              // With README=1, the writing card shown is the README word's.
-              const shown = card.type === '${type}' && (${type === 'writing' && Boolean(process.env.README)} ? card.id.startsWith('${README_WORD.traditional}|') : true);
+              // With README=1, the writing card shown is the README word's;
+              // with CARD_WORD, the other kinds' are that word's.
+              const shown = card.type === '${type}' && (${JSON.stringify(only)} ? card.id.startsWith(${JSON.stringify(only + '|')}) : true);
               const due = shown ? 0 : Date.now() + 365 * 86400000;
               store.put({ ...card, due, lastReviewedAt: 1 });
             }
@@ -473,6 +502,7 @@ async function walk(page, sizeName, size, shots) {
       await waitUntil(page, `!document.getElementById('study-area').hidden && document.getElementById('card-type').textContent !== ''`, 'a card');
       const kind = (await page.evaluate(`document.getElementById('card-type').textContent`)).trim();
       await shoot(`16-review-${type}`, `Review: ${kind}`);
+      if (process.env.CARD_GEOMETRY) log(`GEOMETRY ${type} question ${await geometry()}`);
       // The answer: the word written, a tone given, or a tap on the card.
       if (type === 'writing') {
         await writeWord(await currentWord(), async (index, strokeIndex) => {
@@ -488,6 +518,7 @@ async function walk(page, sizeName, size, shots) {
       }
       await waitUntil(page, `!document.getElementById('grade-row').hidden`, 'the grades');
       await shoot(`16-review-${type}-grades`, `Review: ${kind}, answered, with the grades`);
+      if (process.env.CARD_GEOMETRY) log(`GEOMETRY ${type} answered ${await geometry()}`);
       if (type === 'writing') {
         // Practicing it again: the tools come back under the grades.
         await tap(page, 'practice-again-button');
