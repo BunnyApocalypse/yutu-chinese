@@ -35,6 +35,7 @@ import readingFixesText from '../data/wordlists/reading-fixes.tsv?raw';
 import formFixesText from '../data/wordlists/form-fixes.tsv?raw';
 import dictionaryUrl from '../data/cedict/dictionary.tsv?url';
 import { closeOnTapBeside } from './dialogs.js';
+import { setUpBackButton } from './backButton.js';
 import { createFeedback } from './feedback.js';
 import { createWhatsNew } from './whatsNew.js';
 import { createStreakScreen, loadStreakShown } from './streakScreen.js';
@@ -1430,6 +1431,10 @@ async function startUp() {
     audioButton: byId('save-audio-button'),
   });
 }
+
+// The phone's Back closes the open pop-up panel and never leaves the app
+// (backButton.js).
+setUpBackButton();
 
 // Once the first screen is ready, "Loading…" goes and the page is shown
 // (main.starting in index.html). Also if starting fails partway: errors.js
