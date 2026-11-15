@@ -13,6 +13,21 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-15',
+    items: [
+      '必 (and 密, 秘, 泌…) is accepted with all its dots written before the long stroke.',
+      '來 is accepted with its 丨 written right after the 一.',
+    ],
+    it: [
+      '必 (e 密, 秘, 泌…) è accettato con tutti i suoi punti scritti prima del tratto lungo.',
+      '來 è accettato con il suo 丨 scritto subito dopo il 一.',
+    ],
+    de: [
+      '必 (und 密, 秘, 泌…) wird mit allen Punkten vor dem langen Strich angenommen.',
+      '來 wird mit seinem 丨 direkt nach dem 一 angenommen.',
+    ],
+  },
+  {
     id: '2026-11-12',
     items: [
       'The inside of 囪 in 聰 and 總 can be written like a 夕.',

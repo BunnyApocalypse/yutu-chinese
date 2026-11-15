@@ -36,11 +36,12 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Tests to watch:** `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
 
-**Handover from the session of 2026-11-15 (two more handwriting shortcuts; on the test copy, not on `stable`).**
+**Handover from the session of 2026-11-15 (two more handwriting shortcuts; 300 old notes reworked; released to `stable`).**
 
 - **Built** (`src/shortcuts.js`, `docs/writing.md`): 必 accepted with all its dots before the long stroke (密, 秘, 泌…), and 來 accepted with its 丨 right after the 一. Each has unit tests in `tests/shortcuts.test.js`.
 - **Tests:** 434 unit tests pass; no browser run.
-- **Pushed to `main`** and `yutuchinese-site`'s deploy started, the owner's yes (2026-11-15). Not released to `stable`; no "What's new" entry.
+- **Old notes reworked:** 300 notes of HSK 3.0 levels 5 and 1 (`local/old-notes/rework-8` to `-10`, `local/old-notes/README.md`), judged, in both scripts; 165 untagged notes are left in `hsk-3.0-1.tsv`. `ask` marks (Taiwan/mainland points: light tones, 早饭/午饭, 男生, 钱包's 皮夹, 一听/一罐, 儿 endings) are for a native reader to see; no entry in "What's new" for them (the owner, 2026-11-01).
+- **Released to `stable` and the test copy** (the owner's yes, 2026-11-15) with the "What's new" entry `2026-11-15` (the 必 and 來 shortcuts; the Italian and German are Claude's, unchecked). Tests: 434 unit tests; no browser run.
 
 **Handover from the session of 2026-11-13 (the sync server looked at; SSH without Kerberos; docs and deploy settings only).**
 
