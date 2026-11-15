@@ -6,6 +6,8 @@ A free app for learning to write Chinese characters, and to read, pronounce and 
 
 **Use it at https://yutuchinese.com/app/**
 
+More about the app, and a guide to bringing your Skritter history over: https://yutuchinese.com
+
 On a phone or tablet, choose "Install app" or "Add to Home Screen" from the browser's menu. The interface is in English, Italian and German.
 
 <p>
