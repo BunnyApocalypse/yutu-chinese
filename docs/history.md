@@ -12,6 +12,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Waiting on the owner** (tried on a real device, or a question to answer):
 
+- **Remind the owner on or after 2026-11-17: look at the search tools** (the owner, 2026-11-15, who submitted `https://yutuchinese.com/sitemap.xml` to Google Search Console and Bing Webmaster Tools, verified by a DNS TXT record at Cloudflare that must stay): in Search Console, Sitemaps (status, 2 URLs found) and Pages (how many indexed; "Crawled, currently not indexed" is common for a new site and not an error); in Bing, Sitemaps and the site scan; a search for `site:yutuchinese.com`. Then the next steps in the conversation of that day: links to the site (the GitHub repository's website field and topics, the README, AlternativeTo, the posts in the plan), a short demo clip, trying the Skritter page's steps with a real export.
 - **Remind the owner on or after 2026-12-07: ts-fsrs 6** (the owner, 2026-11-09): time to look again at updating it ("Near-term" below has the checklist).
 - **A sentence's English on its writing card on more lines** (2026-11-12; `docs/pitfalls.md`, "the meaning has a fixed room"): two lines on a phone with height to spare (a size smaller, not bold, when that helps), the writing area the same size and in the same place; small phones, the tablet upright and two columns keep one line and the tap. Released 2026-11-12. **Seen by the owner on the tablet upright** (2026-11-12): one line and cut, as built (no room there without a smaller area); still to see on the owner's phone.
 
