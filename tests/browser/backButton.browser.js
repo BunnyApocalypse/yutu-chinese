@@ -7,7 +7,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, waitUntil, openSettings } from './harness.js';
+import { startApp, startBrowsers, tap, waitUntil, openSettings, reloadApp } from './harness.js';
 
 const isOpen = (page, id) => page.evaluate(`document.getElementById(${JSON.stringify(id)}).open`);
 const stillHere = (page) => page.evaluate(`window.__stayed === true && document.getElementById('menu-button') !== null`);
@@ -35,6 +35,8 @@ describe('the Back button', { concurrency: false }, () => {
     for (const type of ['mousePressed', 'mouseReleased']) {
       await page.send('Input.dispatchMouseEvent', { type, x: 3, y: 3, button: 'left', clickCount: 1 });
     }
+    // The guard is added a moment after the tap.
+    await new Promise((resolve) => setTimeout(resolve, 500));
   });
 
   after(async () => {
@@ -81,5 +83,36 @@ describe('the Back button', { concurrency: false }, () => {
     // Back twice more still has to find the app there.
     await back(page);
     assert.equal(await stillHere(page), true, 'the app was left after the panels');
+  });
+
+  // Firefox's Back passes over a panel's place when nothing was touched on it,
+  // so one Back can go two places down. One Back must still close only one
+  // panel, and the app must still have its guard afterwards.
+  it('closes one panel for one Back even when the browser skips a place', async () => {
+    await page.evaluate(`document.getElementById('credits-dialog').showModal()`);
+    await page.evaluate(`document.getElementById('feedback-dialog').showModal()`);
+    await waitUntil(page, `document.getElementById('feedback-dialog').open`, 'both panels open');
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    await page.evaluate(`history.go(-2)`);
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    assert.equal(await isOpen(page, 'feedback-dialog'), false, 'the top panel is still open');
+    assert.equal(await isOpen(page, 'credits-dialog'), true, 'the lower panel was closed too');
+    await back(page);
+    assert.equal(await isOpen(page, 'credits-dialog'), false, 'the lower panel is still open');
+    assert.equal(await stillHere(page), true, 'the app was left');
+    await back(page);
+    assert.equal(await stillHere(page), true, 'the app was left at the front screen');
+  });
+
+  // After a reload the browser still has the app's places from before; a panel
+  // opening and closing before any tap must not step down from them.
+  it('does not leave the app when a panel opens after a reload, before any tap', async () => {
+    await reloadApp(page);
+    await page.evaluate(`window.__stayed = true`);
+    await page.evaluate(`document.getElementById('credits-dialog').showModal()`);
+    await waitUntil(page, `document.getElementById('credits-dialog').open`, 'the panel open');
+    await page.evaluate(`document.getElementById('credits-dialog').close()`);
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    assert.equal(await stillHere(page), true, 'the app was left');
   });
 });
