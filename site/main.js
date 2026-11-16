@@ -193,7 +193,12 @@ function setUpSample(sample) {
 
   sample.addEventListener('click', (event) => {
     const control = event.target.closest('button');
-    if (!control || bubble.contains(control)) return;
+    if (bubble.contains(event.target)) return;
+    // A tap on the card away from any button puts the bubble away too.
+    if (!control) {
+      hide();
+      return;
+    }
     if (control.classList.contains('note-badge')) {
       // As in the app: the box opens and closes its line of explanation.
       const text = document.getElementById(control.getAttribute('aria-controls'));
