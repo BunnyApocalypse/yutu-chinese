@@ -38,6 +38,12 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Tests to watch:** `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
 
+**Handover from the session of 2026-11-16 (the site's sample bubble closes on a tap inside the card; released to `stable`).**
+
+- **Fixed** (`site/main.js`, `setUpSample`; `docs/offline.md`): on the page about the app, the "In the app, this…" bubble stayed open when the owner tapped the 姐姐 card away from a button (only taps outside the card closed it). Now a tap on the card away from a button closes it too; the bubble itself and its "Open the app" link still keep it open.
+- **Tests:** none run (a site script, no unit or browser test covers it); `node --check` only. Not yet looked at by the owner on the live site.
+- **Released** to `stable` and `main` and `yutuchinese-site`'s deploy started, on the owner's word. No "What's new" entry (the app did not change).
+
 **Handover from the third session of 2026-11-15 (the page about the app at yutuchinese.com; a meaning card's height; released to `stable`).**
 
 - **Built** (`docs/offline.md`, "The page about the app"; written with the owner, a long conversation): the page at the site's top and its second page, "Import from Skritter" (`site/`, `npm run build:site`, `vite.site.config.js`), in the app's colors; the real writing code in a practice square (`src/quiz.js` bundled); the app's own word page as markup and styles (`scripts/make-word-page-sample.js`, "Words, taken apart"; the "AI" boxes work, taps that only work in the app answer with a bubble); the app's card pictures in a sideways row (`scripts/copy-card-pictures.js`, two atlas runs); a share picture (`scripts/make-share-image.js`); search and sharing tags, `robots.txt`, `sitemap.xml`, `llms.txt`. **Returning learners go straight to the app** (the app leaves `yutu-used` in `localStorage`, `src/siteVisit.js`; the page also looks for the database; `?about` shows the page; the Help button "About the app (website)"). Headline "Make Chinese words stick, one stroke at a time."; the opening line names the four cards. A read-over changed the copy before release (listed in the docs).
