@@ -368,6 +368,10 @@ describe('learning new words', { concurrency: false }, () => {
     assert.equal(await isShown(page, 'storage-message'), false);
     await tap(page, 'learn-next-button');
     await waitUntil(page, `${stepIs('step 1 of 5')} && document.getElementById('card-face').textContent.startsWith('上')`, 'the third word');
+    // The summary's rows put away come back: the strip of today's words is
+    // there again, and the card in its usual place.
+    assert.equal(await page.evaluate(`document.querySelector('main').classList.contains('learn-summary')`), false);
+    assert.ok(await page.evaluate(`document.getElementById('learn-strip').offsetHeight > 0`), 'the strip is on screen');
   });
 
   it('teaches a writing card that is new in Review too, unless switched off', { timeout: 60000 }, async () => {

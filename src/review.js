@@ -2263,6 +2263,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     current = { word, type: 'writing', card: null, learning: true };
     stopwatch.start();
     setFocus(true);
+    // After "Learn 5 more", the summary's class would keep the rows above
+    // the card put away: no strip of today's words, and the card too high.
+    page.classList.remove('learn-summary');
     lesson = { steps: stepsFor(word, true), index: 0 };
     donePanel.hidden = true;
     studyArea.hidden = false;
@@ -2723,6 +2726,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     formsLesson = { item, steps, index: 0, shown: false };
     stopwatch.start();
     setFocus(true);
+    // As in startNextWord, after "Learn 5 more forms".
+    page.classList.remove('learn-summary');
     donePanel.hidden = true;
     studyArea.hidden = false;
     showScriptFlag(null);
