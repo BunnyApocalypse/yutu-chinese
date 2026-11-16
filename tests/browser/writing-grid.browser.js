@@ -262,6 +262,49 @@ describe('writing grid', { concurrency: BROWSER_COUNT }, () => {
     }
   }
 
+  // The mainland standard's order for characters the audit of 2026-11-16 found
+  // refused, which the owner called real. Written out here by hand, not taken
+  // from src/shortcuts.js or src/standardOrders.js, so that this fails without
+  // them: before them, each was refused at the first stroke that differs.
+  // `swapped(n, a)` is n strokes in order with strokes a and a + 1 changed.
+  const swapped = (count, a) => {
+    const order = Array.from({ length: count }, (value, index) => index);
+    [order[a], order[a + 1]] = [order[a + 1], order[a]];
+    return order;
+  };
+  const STANDARD_ORDERS = {
+    冉: swapped(5, 2), // the 丨 before the short 一; a whole 冉
+    髯: swapped(15, 12), // a 冉 under another part
+    媾: swapped(13, 10), // the 冓 of 媾, narrower
+    聃: swapped(11, 8), // a 冉 beside a 耳
+    觏: swapped(14, 7),
+    構: swapped(14, 11), // traditional, from the big set
+    衮: swapped(10, 2),
+    虐: swapped(9, 7),
+    盖: swapped(11, 4),
+    芈: swapped(7, 0),
+    陧: swapped(9, 6),
+    尨: [0, 1, 2, 4, 5, 6, 3], // the dot after the 彡
+  };
+  for (const [char, strokeOrder] of Object.entries(STANDARD_ORDERS)) {
+    const { medians } = loadStrokeData(char);
+    for (const positionName of FEWER_POSITIONS) {
+      const position = POSITIONS[positionName];
+      const name = `${char} in the mainland standard's order, ${positionName}`;
+      if (!canBeWritten(medians, position)) {
+        tally[positionName].skipped += 1;
+        it.skip(name);
+        continue;
+      }
+      it(name, { timeout: 120000 }, async () => {
+        const result = await browsers.use((page) => writeChar(page, char, strokeOrder, position, makeRandom(name)));
+        const passed = result.status === 'No mistakes';
+        tally[positionName][passed ? 'passed' : 'failed'] += 1;
+        assert.equal(result.status, 'No mistakes', `stroke ${result.strokesDrawn} of ${strokeOrder.length} was not accepted`);
+      });
+    }
+  }
+
   // A character begun so big that the rest of it would land beyond the
   // writing area: the strokes so far shrink to make room (a tester, twice,
   // 2026-10-17). Its left part is written 1.5 times the size, so big that

@@ -15,7 +15,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
-import { inTaiwanOrder, withFangInEitherOrder, withChuiUprightLast, withReversedBranches } from '../../src/shortcuts.js';
+import { inTaiwanOrder, withFangInEitherOrder, withChuiUprightLast, withRanUprightFirst, withReversedBranches } from '../../src/shortcuts.js';
+import { withListedOrder } from '../../src/standardOrders.js';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -702,7 +703,10 @@ export function loadStrokeData(char) {
     if (fs.existsSync(file)) {
       const data = JSON.parse(fs.readFileSync(file, 'utf8'));
       // As src/charData.js hands it over when writing traditional.
-      return withReversedBranches(withChuiUprightLast(withFangInEitherOrder(folder === 'public/char-data' ? inTaiwanOrder(data) : data)));
+      const found = withReversedBranches(
+        withRanUprightFirst(withChuiUprightLast(withFangInEitherOrder(folder === 'public/char-data' ? inTaiwanOrder(data) : data))),
+      );
+      return withListedOrder(char, found);
     }
   }
   throw new Error(`No stroke data for ${char}. Run "node scripts/copy-char-data.js" first.`);

@@ -735,6 +735,85 @@ export function withLaiUprightFirst(charData) {
   return { ...charData, altOrder, ...(!charData.altOrder && { altOrderIsFang: true }) };
 }
 
+// ---- 冉 with its 丨 before its short 一 ----
+//
+// Both sets write the 冉 of 冉, 苒, 髯, 聃, 蚺 and the 冓 of 媾, 篝, 耩, 鞲, 觏
+// (and in traditional 構, 溝, 講, 購, 遘, 稱) 丨, ㇆, the short 一 inside, the 丨
+// through it, the long 一 below. The mainland standard writes the 丨 before the
+// short 一, as the table of it by zispace/data-strokes (GF 0023-2020) lists for
+// each of these (not checked in the ministry's own document), and the big set's
+// own 再 does too (the Taiwan set's second order for it). The owner (2026-11-16,
+// from the audit of the stroke orders) said everything with a 冉 is real;
+// charData.js adds the order as a second one (withRanUprightFirst).
+//
+// Found by shape, as five strokes in a row: a 丨; a ㇆ from its top going right
+// and down; a short 一 inside it; a 丨 through that, rising above the ㇆; and a
+// long 一 under all of it, from the 丨's side on. Every distance is measured
+// against the first 丨's length, so a 冓 beside another part (narrower) is found
+// as well as a whole 冉.
+
+// The first 丨 is at least this long (the data's units; the box is 1024).
+const RAN_MIN_UPRIGHT = 250;
+
+// The stroke numbers at which such a 冉 begins: [] for most.
+export function ransOf(charData) {
+  const { medians } = charData;
+  const rightmost = (median) => Math.max(...median.map(([x]) => x));
+  const found = [];
+  for (let at = 0; at + 4 < medians.length; at++) {
+    const [left, frame, level, upright, bottom] = medians.slice(at, at + 5);
+    const unit = distance(startOf(left), endOf(left));
+    if (
+      isUpright(left) &&
+      unit > RAN_MIN_UPRIGHT &&
+      // The ㇆: from the top of the 丨, goes right, then down.
+      startOf(frame).x >= startOf(left).x - 0.05 * unit &&
+      Math.abs(startOf(frame).y - startOf(left).y) < 0.2 * unit &&
+      rightmost(frame) > startOf(frame).x + 0.5 * unit &&
+      endOf(frame).y < startOf(frame).y - 0.5 * unit &&
+      // The short 一, inside the ㇆.
+      isLevel(level) &&
+      distance(startOf(level), endOf(level)) < 0.9 * unit &&
+      startOf(level).x > startOf(left).x + 0.1 * unit &&
+      endOf(level).x < rightmost(frame) &&
+      // The 丨 through it, rising above the ㇆.
+      isUpright(upright) &&
+      startOf(upright).y > startOf(frame).y + 0.1 * unit &&
+      startOf(upright).x > startOf(level).x &&
+      startOf(upright).x < endOf(level).x &&
+      endOf(upright).y < startOf(level).y - 0.1 * unit &&
+      // The long 一 under it, beginning at the first 丨 and going past the short 一.
+      isLevel(bottom) &&
+      distance(startOf(bottom), endOf(bottom)) > 0.8 * unit &&
+      startOf(bottom).x < startOf(left).x + 0.05 * unit &&
+      endOf(bottom).x > endOf(level).x
+    ) {
+      found.push(at);
+    }
+  }
+  return found;
+}
+
+// A copy of `charData` whose second accepted order (`altOrder`) has the 丨 of
+// each 冉 before its short 一; `charData` itself if it has none. Joins a second
+// order already there as the 方 does (the Taiwan set's 再 has it already), and
+// is marked `altOrderIsFang` (a review says 'other') when there was none.
+export function withRanUprightFirst(charData) {
+  const rans = ransOf(charData);
+  if (rans.length === 0) {
+    return charData;
+  }
+  const altOrder = charData.altOrder ? [...charData.altOrder] : charData.strokes.map((stroke, index) => index);
+  for (const at of rans) {
+    const levelAt = altOrder.indexOf(at + 2);
+    // Only where the order has the short 一 and the 丨 next to each other, in that order.
+    if (levelAt !== -1 && altOrder[levelAt + 1] === at + 3) {
+      [altOrder[levelAt], altOrder[levelAt + 1]] = [at + 3, at + 2];
+    }
+  }
+  return { ...charData, altOrder, ...(!charData.altOrder && { altOrderIsFang: true }) };
+}
+
 // ---- The branch of 匕 written right to left ----
 //
 // The Taiwan set writes the first stroke of 匕 (北, 比, 化, 死…) as a short

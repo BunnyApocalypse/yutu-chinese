@@ -48,7 +48,8 @@
 // 1024 across, and from about -124 (bottom) to 900 (top) upwards.
 
 import { innerBoxForms } from './innerBox.js';
-import { inTaiwanOrder, withFangInEitherOrder, withChuiUprightLast, withBiDotsFirst, withLaiUprightFirst, withReversedBranches } from './shortcuts.js';
+import { inTaiwanOrder, withFangInEitherOrder, withChuiUprightLast, withBiDotsFirst, withLaiUprightFirst, withRanUprightFirst, withReversedBranches } from './shortcuts.js';
+import { withListedOrder } from './standardOrders.js';
 
 // BASE_URL is the folder the app is served from ("/" during development).
 const BASE = import.meta.env.BASE_URL;
@@ -117,10 +118,10 @@ export async function loadCharData(char, script) {
       const bigSetData = await fetchCharFile('char-data', char);
       data = bigSetData && inTaiwanOrder(bigSetData);
     }
-    return data && withSecondForms(char, withMoreWays(data));
+    return data && withSecondForms(char, withMoreWays(data, char));
   }
   const data = await fetchCharFile('char-data', char);
-  return data && withMoreWays(data);
+  return data && withMoreWays(data, char);
 }
 
 // The Chinese characters of `text` with no stroke data in `script` (a rare
@@ -144,7 +145,12 @@ function withSecondForms(char, data) {
 
 // `data` with the orders and shapes found by shape: the 方 with its ノ first,
 // the 垂 with its 丨 late, the 必 with its dots first, the 來 with its 丨 early,
-// the 匕 with its first stroke written right to left.
-function withMoreWays(data) {
-  return withReversedBranches(withLaiUprightFirst(withBiDotsFirst(withChuiUprightLast(withFangInEitherOrder(data)))));
+// the 冉 with its 丨 before its short 一, the 匕 with its first stroke written
+// right to left; and the few characters whose second order is listed by hand
+// (standardOrders.js), last, since a listed order is only used where none is yet.
+function withMoreWays(data, char) {
+  const found = withReversedBranches(
+    withRanUprightFirst(withLaiUprightFirst(withBiDotsFirst(withChuiUprightLast(withFangInEitherOrder(data))))),
+  );
+  return withListedOrder(char, found);
 }

@@ -24,6 +24,8 @@ import {
   laisOf,
   withLaiUprightFirst,
   withBiDotsFirst,
+  ransOf,
+  withRanUprightFirst,
   branchesOf,
   withReversedBranches,
 } from '../src/shortcuts.js';
@@ -423,4 +425,40 @@ test('來 gets its 丨 right after its 一', () => {
   }
   assert.deepEqual(withLaiUprightFirst(taiwanData.get('來')).altOrder, [0, 5, 1, 2, 3, 4, 6, 7]);
   assert.equal(withLaiUprightFirst(bigSetData('木')).altOrder, undefined);
+});
+
+test('冉 gets its 丨 before its short 一, and nothing else is taken for one', () => {
+  // Every character of both sets with a 冉 (or the 冓 beside another part, in 媾 篝
+  // 耩 鞲 觏), and where it begins. The scan over everything is what keeps the rule
+  // narrow: a looser one also found the 土 of other characters.
+  const expectedBig = {
+    冉: 0, 冓: 5, 媾: 8, 構: 9, 溝: 8, 爯: 4, 稱: 9, 篝: 11, 耩: 11, 聃: 6,
+    苒: 3, 蚺: 6, 觏: 5, 講: 12, 購: 12, 遘: 5, 鞲: 14, 髯: 10,
+  };
+  const foundBig = {};
+  for (const file of fs.readdirSync('node_modules/hanzi-writer-data')) {
+    if (!file.endsWith('.json') || file === 'package.json') continue;
+    const found = ransOf(JSON.parse(fs.readFileSync(`node_modules/hanzi-writer-data/${file}`, 'utf8')));
+    if (found.length > 0) foundBig[file.slice(0, -5)] = found.length === 1 ? found[0] : found;
+  }
+  assert.deepEqual(foundBig, expectedBig);
+
+  // The Taiwan set has the 冉 of 再 (which already has the order, below) and in 稱, 講.
+  const foundTaiwan = {};
+  for (const [char, data] of taiwanData) {
+    const found = ransOf(data);
+    if (found.length > 0) foundTaiwan[char] = found.length === 1 ? found[0] : found;
+  }
+  assert.deepEqual(foundTaiwan, { 再: 1, 稱: 9, 講: 12 });
+
+  // The short 一 and the 丨 change places in the second order; nothing else does.
+  assert.deepEqual(withRanUprightFirst(bigSetData('冉')).altOrder, [0, 1, 3, 2, 4]);
+  assert.deepEqual(withRanUprightFirst(bigSetData('苒')).altOrder, [0, 1, 2, 3, 4, 6, 5, 7]);
+  assert.deepEqual(withRanUprightFirst(bigSetData('觏')).altOrder, [0, 1, 2, 3, 4, 5, 6, 8, 7, 9, 10, 11, 12, 13]);
+  assert.equal(withRanUprightFirst(bigSetData('冉')).altOrderIsFang, true);
+  // 再's second order has the 丨 before the 一 already: kept as it is, not swapped back.
+  assert.deepEqual(withRanUprightFirst(taiwanData.get('再')).altOrder, [0, 1, 2, 4, 3, 5]);
+  // 土 and 木 are written 一 丨 ... too, but have no ㇆ around them.
+  assert.equal(withRanUprightFirst(bigSetData('土')).altOrder, undefined);
+  assert.equal(withRanUprightFirst(bigSetData('木')).altOrder, undefined);
 });
