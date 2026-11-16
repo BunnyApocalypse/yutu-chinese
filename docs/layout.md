@@ -85,6 +85,7 @@
 - `tests/words.tsv`: 109 common words, hand-written, for the tests only. The app itself starts with no words. Browser tests that need words add it through the Decks tab (`addTestWords` in the harness).
 - `src/charData.js`: the only place stroke data is loaded from. `loadCharData(char, script)` returns `null` when a character has no data. For `'traditional'` it uses the Taiwan set where that has the character and the big set otherwise; for `'simplified'` only the big set.
 - `src/shortcuts.js`: recognizes handwriting shortcuts (two textbook strokes written as one). Plain calculation, no page or Hanzi Writer.
+- `src/standardOrders.js`: the few characters whose second stroke order (the mainland standard's) is listed by hand, `withListedOrder` (`docs/writing.md`, "Two accepted stroke orders"). Plain calculation.
 - `src/gestures.js`: tells a long hold or a swipe up on the writing area from a stroke (acted on in `src/quiz.js`). Plain calculation.
 - `src/strokeMatch.js`: judges whether a drawn stroke fits a given textbook stroke, and keeps track of two stroke orders. Plain calculation.
 - `src/innerBox.js`: the box at the top of 骨 written in either order or as two strokes: finds it in a character's stroke data and builds the second forms for it. Plain calculation.
@@ -104,7 +105,7 @@
 - `scripts/convert-notes.js`: writes each learning note in the other script and lists those it can't be sure of (run by hand after adding notes; `data/notes/README.md`).
 - `scripts/build-word-lists.js`, `data/wordlists/`: the ready-made word lists (run by hand, uses the internet; `docs/word-lists.md`).
 - `data/animcjk/`: the animCJK traditional stroke data, copied unchanged from that project at a pinned commit. Its README records the source, license and how to update. This is vendored data, not an npm dependency.
-- `tests/logic.test.js`, `tests/shortcuts.test.js`, `tests/strokeOrder.test.js`, `tests/innerBox.test.js`, `tests/toneMark.test.js`, `tests/frame.test.js`, `tests/storageAdvice.test.js`: tests for the plain-calculation code.
+- `tests/logic.test.js`, `tests/shortcuts.test.js`, `tests/standardOrders.test.js`, `tests/strokeOrder.test.js`, `tests/innerBox.test.js`, `tests/toneMark.test.js`, `tests/frame.test.js`, `tests/storageAdvice.test.js`: tests for the plain-calculation code.
 - `scripts/missing-text.js`, `tests/text.test.js`, `tests/browser/text.browser.js`: what a translation lacks (run by hand), and the checks on the interface's text and the test language.
 - `tests/browser/harness.js`: what the browser tests share: serving the app, starting the browsers, drawing strokes, reading the status line.
 - `tests/browser/writing-grid.browser.js`: writes 15 characters in both stroke orders at seven positions and sizes.
