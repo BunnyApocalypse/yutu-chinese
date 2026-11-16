@@ -39,6 +39,12 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Tests to watch:** `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
 
+**Handover from the fifth session of 2026-11-16 (a sentence and its gap word bunched up in Review; released to `stable`, "What's new" `2026-11-16-3`).**
+
+- **The bug** (the owner, 2026-11-16): with "Add a word's example sentence when I learn it" on, the word's cards and the sentence's came up one after the other. The 3-minute gap between a word's cards (`SIBLING_GAP_MS`) didn't reach the sentence, a word record of its own. Now `relatedWords` in `src/session.js` links a sentence to the word in its `cloze` (by its characters, any reading), and `planSession` holds either back after the other's review (`docs/cards.md`, `docs/word-page.md`). They can still meet in the same sitting with few cards; holding the sentence until the next study day was offered to the owner as an alternative, not built.
+- **Tests:** a unit test in `tests/logic.test.js` ("a sentence and the word in its gap hold each other back too"). No browser run (`exampleSentences.browser.js` not run). The entry's Italian and German are Claude's, unchecked.
+- **Release:** pushed to `stable` and `main` at the owner's word, and the site's deploy started.
+
 **Handover from the fourth session of 2026-11-16 ("Learn 5 more" lost the strip of today's words; released to `stable`, "What's new" `2026-11-16-2`).**
 
 - **The bug** (the owner, 2026-11-16): after "Learn 5 more" the strip of today's words was gone and the card sat too high. The summary's `main.learn-summary`, which puts away the rows above the card, was never taken off when the next sitting began. Now `startNextWord` and `showNextForm` (`src/review.js`) remove it, so "Learn 5 more forms" is mended too (`docs/cards.md`).

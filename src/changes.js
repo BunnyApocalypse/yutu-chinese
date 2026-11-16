@@ -13,6 +13,18 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-16-3',
+    items: [
+      "A word's example sentence no longer comes up in Review right after the word itself: the two are kept a few minutes apart.",
+    ],
+    it: [
+      "La frase d'esempio di una parola non compare più in Ripasso subito dopo la parola stessa: le due restano a qualche minuto di distanza.",
+    ],
+    de: [
+      'Der Beispielsatz eines Wortes kommt in der Wiederholung nicht mehr direkt nach dem Wort selbst: Die beiden bleiben ein paar Minuten auseinander.',
+    ],
+  },
+  {
     id: '2026-11-16-2',
     items: [
       'After "Learn 5 more", the boxes of today\'s words are back at the top and the card sits in its usual place.',
