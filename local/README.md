@@ -70,6 +70,17 @@ English Wikipedia's articles on the Chinese dynasties and periods of the 朝代�
 
 - `dict-revised.json`: Taiwan's Ministry of Education 重編國語辭典修訂本 as JSON, from g0v/moedict-data (`curl -L -o dict-revised.json.xz https://raw.githubusercontent.com/g0v/moedict-data/master/dict-revised.json.xz`, then `xz -dk`). The text is the ministry's, CC BY-ND 3.0 TW; used to check `data/wordlists/form-fixes.tsv` (which form is a word, which "a variant of" it), nothing copied into the repository.
 
+## stroke-sources/ (stroke-order audit, fetched 2026-11-16)
+
+Other projects' stroke orders, fetched once to compare against our stroke data (Hanzi Writer's, from Make Me a Hanzi and AnimCJK) and to seed the list of natural alternate orders for the audit. Development only: nothing here is shipped, copied into the app, or committed (the owner, 2026-11-16, "download everything").
+
+- `unihan/Unihan.zip`: Unicode's Unihan database, stroke counts (`kTotalStrokes`) and radical-stroke data only; it has no stroke order and no per-region counts. Unicode License v3. `curl -fsSL -o local/stroke-sources/unihan/Unihan.zip https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip`
+- `kanjivg/kanjivg-20260714-main.zip`: KanjiVG release r20260714, one SVG per kanji with stroke order and stroke types. **Japanese** orders, so a difference from ours may be the Japanese standard, not a variant. Copyright Ulrich Apel, CC BY-SA 3.0. `curl -fsSL -o local/stroke-sources/kanjivg/kanjivg-20260714-main.zip https://github.com/KanjiVG/kanjivg/releases/download/r20260714/kanjivg-20260714-main.zip`
+- `zispace-data-strokes/`: github.com/zispace/data-strokes, the mainland standard GF 0023-2020 as SVG. **No license stated**, so it only ever stays here. `git clone --depth 1 https://github.com/zispace/data-strokes local/stroke-sources/zispace-data-strokes` (3.9 GB on disk: 8,105 SVGs, one per character of the 通用规范汉字表, with `chars.tsv` giving each character's stroke count and a `sequence` column)
+- `moe-stroke-order/`: from Taiwan's 國字標準字體筆順學習網 (stroke-order.learningweb.moe.edu.tw), the downloads on its 教學資源 page: `4808.pdf` (the list of the ministry's 4,808 common characters; it has no stroke order) and `6063png.zip` (全字筆順提示: 6,063 small PNGs, one per character, the stroke order as a picture; the only Taiwan stroke-order material here, for looking at by eye, not for reading by a script). The site's CSV of links to its animations held no stroke data and was deleted. The site is for non-commercial use, its animations CC BY-NC-ND 3.0 Taiwan, and other uses need written permission from the ministry; never copy any of it into the app.
+- `commons/`: the Wikimedia Commons CJK stroke order project's file lists (names only, no images): `tbw.json` (Taiwan black-and-white, 10), `torder.json` (Taiwan animations, 7), `jbw.json` (Japan, 102). Each file is one where that standard's order differs from the mainland one (the page says overlaps are redirects). Fetched with the MediaWiki API, `action=query&list=categorymembers&cmtitle=Category:<Tbw.png|Torder.gif|Jbw.png>_stroke_order_images&cmtype=file&format=json`.
+- The MOE dictionary is not here: it is in `moe-dictionary/` above.
+
 ## FSRS weights fitted to the owner (step 0, 2026-11-12; `docs/cards.md`)
 
 - `node24/`: Node 24.22.3 for Linux, which the optimizer needs (this computer's Node is 22). From nodejs.org, checked against its `SHASUMS256.txt`: `curl -fsSLO https://nodejs.org/dist/latest-v24.x/SHASUMS256.txt`, then the `node-v24…-linux-x64.tar.xz` it names, `sha256sum -c`, `tar xJf`.
