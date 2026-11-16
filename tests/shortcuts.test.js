@@ -458,6 +458,12 @@ test('冉 gets its 丨 before its short 一, and nothing else is taken for one',
   assert.equal(withRanUprightFirst(bigSetData('冉')).altOrderIsFang, true);
   // 再's second order has the 丨 before the 一 already: kept as it is, not swapped back.
   assert.deepEqual(withRanUprightFirst(taiwanData.get('再')).altOrder, [0, 1, 2, 4, 3, 5]);
+  // The traditional path gives the same (inTaiwanOrder first, as src/charData.js does):
+  // it renumbers the 艹 of 苒, and the 冉 after it is still found and swapped.
+  assert.deepEqual(
+    withRanUprightFirst(withFangInEitherOrder(inTaiwanOrder(bigSetData('苒')))).altOrder,
+    [0, 1, 2, 3, 4, 6, 5, 7],
+  );
   // 土 and 木 are written 一 丨 ... too, but have no ㇆ around them.
   assert.equal(withRanUprightFirst(bigSetData('土')).altOrder, undefined);
   assert.equal(withRanUprightFirst(bigSetData('木')).altOrder, undefined);

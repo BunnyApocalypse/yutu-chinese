@@ -741,10 +741,12 @@ export function withLaiUprightFirst(charData) {
 // (and in traditional 構, 溝, 講, 購, 遘, 稱) 丨, ㇆, the short 一 inside, the 丨
 // through it, the long 一 below. The mainland standard writes the 丨 before the
 // short 一, as the table of it by zispace/data-strokes (GF 0023-2020) lists for
-// each of these (not checked in the ministry's own document), and the big set's
-// own 再 does too (the Taiwan set's second order for it). The owner (2026-11-16,
-// from the audit of the stroke orders) said everything with a 冉 is real;
-// charData.js adds the order as a second one (withRanUprightFirst).
+// 冉 苒 髯 聃 蚺 媾 篝 耩 鞲 觏 遘 and 再 (not checked in the ministry's own
+// document). 構 溝 講 購 稱 爯 冓 are not in that table: they have the same shape,
+// and are covered because the owner (2026-11-16, from the audit of the stroke
+// orders) said everything with a 冉 is real, not because a source was checked.
+// The Taiwan set's 再 has the order as its second one already. charData.js adds
+// the order as a second one (withRanUprightFirst).
 //
 // Found by shape, as five strokes in a row: a 丨; a ㇆ from its top going right
 // and down; a short 一 inside it; a 丨 through that, rising above the ㇆; and a
