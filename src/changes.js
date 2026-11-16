@@ -13,6 +13,24 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-16',
+    items: [
+      'In a browser tab, the Back button now closes an open pop-up instead of leaving the app.',
+      '冉 (and 苒, 聃, 講, 構…) is accepted with its long 丨 written before the short 一 inside it.',
+      '虐 and a few more characters are accepted in the stroke order of the mainland standard as well.',
+    ],
+    it: [
+      'In una scheda del browser, il pulsante Indietro ora chiude una finestra aperta invece di uscire dall\'app.',
+      '冉 (e 苒, 聃, 講, 構…) è accettato con il suo 丨 lungo scritto prima del 一 corto al suo interno.',
+      '虐 e pochi altri caratteri sono accettati anche nell\'ordine dei tratti dello standard della Cina continentale.',
+    ],
+    de: [
+      'In einem Browser-Tab schließt die Zurück-Taste jetzt ein geöffnetes Fenster, statt die App zu verlassen.',
+      '冉 (und 苒, 聃, 講, 構…) wird akzeptiert, wenn sein langer Strich 丨 vor dem kurzen 一 darin geschrieben wird.',
+      '虐 und ein paar weitere Zeichen werden auch in der Strichfolge des Standards der Volksrepublik China akzeptiert.',
+    ],
+  },
+  {
     id: '2026-11-15-2',
     items: [
       'A meaning card now sits at the same height as the other kinds of card, even when it is the first one.',
