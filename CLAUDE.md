@@ -46,6 +46,28 @@ The owner reads Python and JavaScript comfortably but is not a developer.
 - The real sync server, `sync.yutuchinese.com` (also `yutu.bunnyapocalypse.space`, its first name, still served): Ansible playbooks in `deploy/` (`cd deploy`, then `ansible-playbook status.yml`, `deploy.yml`, `update.yml`; `deploy/README.md`).
 - `npm run test:browser`: the real app in several headless Chromium browsers at once, about four minutes (`tests/browser/CLAUDE.md`). **Don't change files while it runs**: the dev server reloads the pages and tests fail.
 
+## Process safety
+
+- **Never use `pkill -f`, `killall`, or any pattern that can match your own shell or Claude.** Find the process with `pgrep -a` or `lsof -i :<port>` and kill that PID only.
+- If a test run prints nothing for 2 minutes, stop it and investigate; don't keep waiting on a hung or stale run (the port may be taken by a parallel session).
+- After an Edit, don't assume it applied before re-running tests; a silently failed edit makes the rerun meaningless.
+
+## Worktrees
+
+- `git fetch` first and base a new worktree on `origin/main` unless told otherwise; pull in the latest main before the full test run.
+- Run git commands from inside the worktree directory.
+- Avoid heredocs and long compound Bash commands (the worktree check blocks them); write a script to a file and run it, or use Edit/Write.
+
+## Environment and verification
+
+- **The owner uses the app as an installed Firefox PWA on Android (phone and tablet), and in the Firefox browser on the computer** (no installed desktop PWA). Not Chrome, and not the Capacitor app (not built yet). Research Firefox behavior first.
+- Headless Chromium tests do **not** verify Firefox or PWA behavior (back button, edge-to-edge bars, installed-app quirks). After a fix, say what you verified and how, and list what the owner still has to check on the device.
+- Never claim something was checked against a source (the Taiwan MOE dictionary, Hanzi Writer's data) unless you checked it in this session; say "not checked" otherwise.
+
+## Content notes
+
+- In content work, "examples" means example sentences using the word. A sentence that only describes how to write the character is not an example.
+
 ## Read before working on an area
 
 Each area's file in `docs/` (index `docs/README.md`) has the names in the code, the owner's decisions with dates, and what is not built. Read it before changing that area.
@@ -95,6 +117,8 @@ Each area's file in `docs/` (index `docs/README.md`) has the names in the code, 
 - **Never push unless the owner has said to** (2026-10-15): no branch, not at the end of a session or a background job. Commit freely; say what is committed and not pushed. **Except** (2026-10-19): right after a push the owner asked for, when they ask to clean up or hand over, commits of handover notes and other docs only (nothing in the app) are pushed without asking; say so.
 - **Always hand over before pushing** (the owner, 2026-11-08): the handover at the top of `docs/history.md` is written and committed before the push, so it goes up with the work.
 - **To release:** ask the owner, write the entry at the top of `src/changes.js` (the "What's new" pop-up: what a learner will notice, a few lines), then `git push origin main:stable`, `git push origin main`, and `gh workflow run deploy.yml -R BunnyApocalypse/yutuchinese-site`, which builds both copies of the app from their branches. A change to the app reaches the test copy only by that last command too.
+- **Releases:** "test" is the test copy, "stable" the app. A release to stable needs its What's New entry. After a stable release, check whether the test copy needs redeploying too.
+- When you do watch a deploy, get the real run ID from `gh run list` (never guess one), and report it done only after `gh run watch <id>` succeeds. A Pages failure at "syncing_files" or the publish step is usually a Pages stall, not the code: start a fresh run.
 - **No need to watch a deploy run** after pushing (the owner, 2026-10-19): push and move on, unless the change could affect the build itself (`package.json`, `vite.config.js`, `scripts/`, the workflow, the service worker or offline packs).
 - If a deploy fails with "Fetching artifact metadata failed" or hangs at Pages ("Timeout reached"), don't re-run it; start a fresh run (`gh workflow run deploy.yml`, with `-R BunnyApocalypse/yutuchinese-site` for the app).
 - The repository is `BunnyApocalypse/yutu-chinese`, with capitals. Never push the app to `BunnyApocalypse/hanzi-trainer` (only the forwarding site).
