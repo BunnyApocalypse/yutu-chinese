@@ -39,6 +39,13 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Tests to watch:** `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
 
+**Handover from the second session of 2026-11-16 (the usage insights: CLAUDE.md rules, the browser tests' watchdog; docs and tests only, branch `worktree-claude-md-insights`, not merged to `main`).**
+
+- **CLAUDE.md** gained "Process safety" (no `pkill -f`; stop a run silent for 2 minutes), "Worktrees", "Environment and verification" (the owner uses Firefox's installed PWA on Android and Firefox in the browser on the computer; headless Chromium does not verify Firefox or the installed app; say what was and was not checked), "Content notes", and two release lines in "Deploying" (real run IDs only; a Pages stall means a fresh run).
+- **Browser tests** (`tests/browser/run.js`, `harness.js`, `tests/browser/CLAUDE.md`): a hung run is stopped after 3 minutes with no output or 20 in all; each worktree has its own ports; `npm run test:browser:tablet` slows the processor 4 times. Checked on `tips.browser.js` (normal and tablet) and a forced stop on `review.browser.js`; no full run, no unit tests.
+- **Decided by the owner:** no Firefox tests and no speed-check script (the reasons are in `tests/browser/CLAUDE.md`).
+- **Not released:** no app change, no "What's new" entry.
+
 **Handover from the session of 2026-11-16 (the site's sample bubble closes on a tap inside the card; released to `stable`).**
 
 - **Fixed** (`site/main.js`, `setUpSample`; `docs/offline.md`): on the page about the app, the "In the app, this…" bubble stayed open when the owner tapped the 姐姐 card away from a button (only taps outside the card closed it). Now a tap on the card away from a button closes it too; the bubble itself and its "Open the app" link still keep it open.
