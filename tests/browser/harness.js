@@ -24,6 +24,19 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 export const BROWSER_COUNT =
   Number(process.env.BROWSERS) || Math.max(1, Math.floor(os.availableParallelism() / 2));
 
+// Ports for the tests' servers. Each git worktree gets its own pair, worked
+// out from its folder, so tests running in two worktrees at once (parallel
+// Claude jobs) don't wait on or talk to each other's server.
+// PORT_OFFSET=n sets it by hand.
+const FOLDER_HASH = [...process.cwd()].reduce((sum, letter) => (sum * 31 + letter.charCodeAt(0)) % 1000, 0);
+const PORT_OFFSET = process.env.PORT_OFFSET === undefined ? FOLDER_HASH : Number(process.env.PORT_OFFSET);
+const DEV_PORT = 5273 + PORT_OFFSET;
+const BUILT_PORT = 4273 + PORT_OFFSET;
+
+// THROTTLE=4 slows every page's processor 4 times, to stand in for a tablet
+// (`npm run test:browser:tablet`). The default, 1, is full speed.
+const THROTTLE = Number(process.env.THROTTLE) || 1;
+
 // The size of a phone screen, so the page is laid out as it is on the phone.
 const SCREEN = { width: 393, height: 800 };
 
@@ -36,7 +49,7 @@ export async function startApp() {
   const server = await createServer({
     // Only this computer needs to reach it (vite.config.js opens the usual
     // dev server to the LAN for the phone).
-    server: { host: '127.0.0.1', port: 5273 },
+    server: { host: '127.0.0.1', port: DEV_PORT },
     logLevel: 'error',
   });
   await server.listen();
@@ -74,9 +87,9 @@ export async function startBuiltApp() {
     response.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'text/plain; charset=utf-8' });
     fs.createReadStream(file).pipe(response);
   });
-  await new Promise((resolve) => server.listen(4273, '127.0.0.1', resolve));
+  await new Promise((resolve) => server.listen(BUILT_PORT, '127.0.0.1', resolve));
   return {
-    url: `http://127.0.0.1:4273${FOLDER}`,
+    url: `http://127.0.0.1:${BUILT_PORT}${FOLDER}`,
     close() {
       // Also drops the connections browsers keep open for later requests.
       server.closeAllConnections();
@@ -243,6 +256,9 @@ async function launchBrowser() {
   // Files the app saves go into the browser's own folder (see above).
   await send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: downloads });
   await send('Emulation.setDeviceMetricsOverride', { ...SCREEN, deviceScaleFactor: 1, mobile: true });
+  if (THROTTLE > 1) {
+    await send('Emulation.setCPUThrottlingRate', { rate: THROTTLE });
+  }
 
   return {
     send,

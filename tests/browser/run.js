@@ -14,6 +14,15 @@
 //   BROWSERS       how many browsers the writing grid shares (harness.js)
 // Either can be set by hand: TEST_FILES=2 BROWSERS=3 npm run test:browser
 //
+// A run that hangs is stopped instead of waited on (the 2026-11 insights: runs
+// hung for over ten minutes): after IDLE_MINUTES (default 3) with no output
+// from any test, or MAX_MINUTES (default 20) in all, everything is stopped
+// and the run fails with a message. Only the processes started here are
+// stopped, by their group, never by name.
+//
+// THROTTLE=4 slows the processor of every browser 4 times, for tablet speed:
+//   npm run test:browser:tablet
+//
 // File names given after the command run only those:
 //   npm run test:browser -- tests/browser/tips.browser.js
 
@@ -60,18 +69,54 @@ const others = files.filter((file) => !isGrid(file));
 
 // Runs Node's test runner on `list`; resolves with its exit code and, when
 // `hold` is set, its report.
+const IDLE_MS = (Number(process.env.IDLE_MINUTES) || 3) * 60_000;
+const MAX_MS = (Number(process.env.MAX_MINUTES) || 20) * 60_000;
+const startedAt = Date.now();
+let lastOutputAt = Date.now();
+const children = new Set();
+let stoppedBecause = '';
+
+function stopEverything(reason) {
+  stoppedBecause = reason;
+  for (const child of children) {
+    try {
+      process.kill(-child.pid, 'SIGTERM'); // the whole group
+    } catch {}
+  }
+}
+setInterval(() => {
+  if (Date.now() - lastOutputAt > IDLE_MS) {
+    stopEverything(`no output for ${IDLE_MS / 60_000} minutes (a test is hung, or another run holds a port; IDLE_MINUTES=n allows longer)`);
+  } else if (Date.now() - startedAt > MAX_MS) {
+    stopEverything(`over ${MAX_MS / 60_000} minutes in all (MAX_MINUTES=n allows longer)`);
+  }
+}, 5000).unref();
+
 function runTests(list, concurrency, hold) {
   return new Promise((resolve) => {
+    // Output always comes through here, so that it counts as a sign of life.
     const run = spawn(process.execPath, ['--test', `--test-concurrency=${concurrency}`, ...list], {
-      stdio: hold ? ['ignore', 'pipe', 'pipe'] : 'inherit',
+      stdio: ['ignore', 'pipe', 'pipe'],
       env,
+      detached: true,
     });
+    children.add(run);
     let report = '';
-    if (hold) {
-      run.stdout.on('data', (chunk) => (report += chunk));
-      run.stderr.on('data', (chunk) => (report += chunk));
-    }
-    run.on('exit', (code) => resolve({ code: code ?? 1, report }));
+    const take = (stream, out) =>
+      stream.on('data', (chunk) => {
+        lastOutputAt = Date.now();
+        if (hold) {
+          report += chunk;
+        } else {
+          out.write(chunk);
+        }
+      });
+    take(run.stdout, process.stdout);
+    take(run.stderr, process.stderr);
+    run.on('exit', (code) => {
+      children.delete(run);
+      resolve({ code: code ?? 1, report });
+    });
   });
 }
 
@@ -86,4 +131,7 @@ const results = await Promise.all(runs);
 for (const { report } of results) {
   process.stdout.write(report);
 }
-process.exit(Math.max(...results.map(({ code }) => code)));
+if (stoppedBecause) {
+  console.error(`\nStopped: ${stoppedBecause}.`);
+}
+process.exit(stoppedBecause ? 1 : Math.max(...results.map(({ code }) => code)));

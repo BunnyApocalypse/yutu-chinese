@@ -20,6 +20,7 @@
     "test": "node --test 'tests/*.test.js'",
     "pretest:browser": "node scripts/copy-char-data.js && node scripts/copy-audio.js",
     "test:browser": "node tests/browser/run.js",
+    "test:browser:tablet": "THROTTLE=4 node tests/browser/run.js",
     "sync-server": "ALLOWED_ORIGINS=http://localhost:5173,http://localhost:4173 DATA_DIR=local/sync-data node server/server.js"
   },
   "dependencies": {
