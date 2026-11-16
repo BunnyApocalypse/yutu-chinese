@@ -39,6 +39,12 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Tests to watch:** `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
 
+**Handover from the fourth session of 2026-11-16 ("Learn 5 more" lost the strip of today's words; released to `stable`, "What's new" `2026-11-16-2`).**
+
+- **The bug** (the owner, 2026-11-16): after "Learn 5 more" the strip of today's words was gone and the card sat too high. The summary's `main.learn-summary`, which puts away the rows above the card, was never taken off when the next sitting began. Now `startNextWord` and `showNextForm` (`src/review.js`) remove it, so "Learn 5 more forms" is mended too (`docs/cards.md`).
+- **Tests:** `lesson.browser.js`'s summary test now checks the strip is on screen after "Learn 1 more" (fails without the fix); `lesson.browser.js` and `otherScript.browser.js` pass (23). No full browser run. The forms path has no test of its own. The entry's Italian and German are Claude's, unchecked.
+- **Release:** pushed to `stable` and `main` at the owner's word, and the site's deploy started.
+
 **Handover from the third session of 2026-11-16 (the stroke-order audit: more accepted orders; released to `stable` with the Back button, "What's new" `2026-11-16`).**
 
 - **The audit** (`docs/writing.md`, "Two accepted stroke orders"; `scripts/audit-stroke-order.js`, `audit-order-triage.js`, `audit-replay.js`, `audit-pictures.js`, `strokeClasses.js`; the sources in `local/stroke-sources/`, `local/README.md`): every stroke of the big set sorted into the mainland standard's five classes (zispace's table of GF 0023-2020; not checked in the ministry's own document), 38 characters with the same strokes in another sequence, each written in the real app (all refused) and drawn in both orders; the owner judged each by picture: 19 real, 19 mistakes of the sorting. Sources looked at and not useful for Taiwan order: Wikimedia Commons' CJK stroke order project (images only; its Taiwan lists name 10 characters), Taiwan's own stroke-order site (images and animations, non-commercial terms; deleted), KanjiVG (Japanese), Unihan (counts only).

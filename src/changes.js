@@ -13,6 +13,18 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-16-2',
+    items: [
+      'After "Learn 5 more", the boxes of today\'s words are back at the top and the card sits in its usual place.',
+    ],
+    it: [
+      'Dopo "Imparane altre 5", le caselle delle parole di oggi tornano in alto e la carta sta al solito posto.',
+    ],
+    de: [
+      'Nach "Noch 5 lernen" sind die Kästchen der heutigen Wörter wieder oben, und die Karte steht an ihrem gewohnten Platz.',
+    ],
+  },
+  {
     id: '2026-11-16',
     items: [
       'In a browser tab, the Back button now closes an open pop-up instead of leaving the app.',
