@@ -22,7 +22,8 @@ export const DEFAULT_NEW_WORDS_PER_DAY = 5;
 
 // Cards of the same word give each other's answers away: a writing card ends
 // by showing the pinyin, and the other three show the characters. So after
-// any card of a word is reviewed, the word's other cards wait this long.
+// any card of a word is reviewed, the word's other cards wait this long. So
+// do a sentence's and the word in its gap (relatedWords).
 export const SIBLING_GAP_MS = 3 * 60 * 1000;
 
 export function cardId(wordId, type) {
@@ -181,6 +182,33 @@ export function startingTypeFirst(word, types) {
   return [...types.slice(start), ...types.slice(0, start)];
 }
 
+// Words whose cards give each other's answers away although they are not one
+// word: a sentence and the word it asks for in its gap (its `cloze`), such as
+// an example sentence added with its word (addExampleSentences). Both start
+// when the word is learned and go through the same first steps, so without
+// this they came up one right after the other (the owner, 2026-11-16).
+// Returns a Map from a word's ID to the IDs of those related to it, both
+// ways; the gap word is found by its characters, in any reading.
+export function relatedWords(words) {
+  const byCharacters = new Map();
+  for (const word of words) {
+    if (word.kind !== 'sentence') {
+      byCharacters.set(word.traditional, [...(byCharacters.get(word.traditional) ?? []), word.id]);
+    }
+  }
+  const related = new Map();
+  const link = (from, to) => related.set(from, [...(related.get(from) ?? []), to]);
+  for (const word of words) {
+    if (word.kind === 'sentence' && word.cloze) {
+      for (const id of byCharacters.get(word.cloze.traditional) ?? []) {
+        link(word.id, id);
+        link(id, word.id);
+      }
+    }
+  }
+  return related;
+}
+
 export function planSession(words, cards, now, options) {
   const {
     newWordsPerDay,
@@ -227,12 +255,31 @@ export function planSession(words, cards, now, options) {
     }
   };
 
+  // All of each word's studied cards, including types now switched off:
+  // they still count for when the word was introduced and last seen.
+  // That goes for cards in the other script too.
+  const studiedOf = new Map(words.map((word) => [word.id, allCardIds(word).map((id) => cards.get(id)).filter(Boolean)]));
+  // A sentence and the word in its gap hold each other back too
+  // (relatedWords): when either was last reviewed, by the other's ID.
+  const related = relatedWords(words);
+  const relatedSeenOf = (word) => {
+    const seen = (related.get(word.id) ?? []).flatMap((id) => studiedOf.get(id).map(lastReviewOf));
+    return seen.length > 0 ? Math.max(...seen) : null;
+  };
+
   const inListOrder = [...words].sort((a, b) => a.order - b.order);
   for (const word of inListOrder) {
-    // All of the word's studied cards, including types now switched off:
-    // they still count for when the word was introduced and last seen.
-    // That goes for cards in the other script too.
-    const studied = allCardIds(word).map((id) => cards.get(id)).filter(Boolean);
+    const studied = studiedOf.get(word.id);
+    const relatedSeen = relatedSeenOf(word);
+    // How long a card is held back after its word's other cards (and a
+    // related sentence's or word's) were reviewed.
+    const holdUntil = (card) => {
+      const seen = studied.filter((other) => other !== card).map(lastReviewOf);
+      if (relatedSeen !== null) {
+        seen.push(relatedSeen);
+      }
+      return seen.length > 0 ? Math.max(...seen) + SIBLING_GAP_MS : 0;
+    };
     reviewedToday += studied.filter((card) => lastReviewOf(card) >= dayStart).length;
     const wanted = startingTypeFirst(word, types.filter((type) => hasCardType(word, type)));
     const script = scriptOf(word);
@@ -271,9 +318,7 @@ export function planSession(words, cards, now, options) {
     for (const type of wanted) {
       const card = cardOf(type);
       // The word's other cards hold this one back for a while after a review.
-      const siblings = studied.filter((other) => other !== card);
-      const heldUntil =
-        siblings.length > 0 ? Math.max(...siblings.map(lastReviewOf)) + SIBLING_GAP_MS : 0;
+      const heldUntil = holdUntil(card);
 
       if (card) {
         const availableAt = Math.max(card.due, heldUntil);
@@ -312,9 +357,7 @@ export function planSession(words, cards, now, options) {
     const other = otherCardsOf(word);
     for (const type of other?.types ?? []) {
       const card = cards.get(otherScriptCardId(word, type, other.script));
-      const siblings = studied.filter((each) => each !== card);
-      const heldUntil =
-        siblings.length > 0 ? Math.max(...siblings.map(lastReviewOf)) + SIBLING_GAP_MS : 0;
+      const heldUntil = holdUntil(card);
       const entry = { word, type, card: card ?? null, script: other.script, other: true };
       if (card) {
         const availableAt = Math.max(card.due, heldUntil);

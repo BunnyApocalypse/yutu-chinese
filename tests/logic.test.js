@@ -316,6 +316,40 @@ test('a due card waits while another card of its word was just reviewed', () => 
   assert.equal(planSession(makeWords(1), own, now, { ...ALL_TYPES, enabledTypes: ['meaning'] }).dueCount, 1);
 });
 
+test('a sentence and the word in its gap hold each other back too', () => {
+  const now = at('2026-11-16T10:00:00');
+  const old = now - 3 * DAY;
+  const word = { id: '我們|wo3men5', traditional: '我們', simplified: '我们', order: 0, learnedAt: old };
+  const sentence = {
+    id: '我們是學生。|sentence',
+    kind: 'sentence',
+    traditional: '我們是學生。',
+    simplified: '我们是学生。',
+    cloze: { traditional: '我們', simplified: '我们' },
+    order: 1,
+    learnedAt: old,
+  };
+  const other = { ...sentence, id: '他是老師。|sentence', traditional: '他是老師。', cloze: { traditional: '他', simplified: '他' } };
+  const options = { ...ALL_TYPES, enabledTypes: ['meaning'] };
+  // The word was just reviewed: its sentence waits, another sentence doesn't.
+  const cards = new Map([
+    studied(word.id, 'meaning', { due: now + DAY, first: old, last: now - MINUTE }),
+    studied(sentence.id, 'meaning', { due: now - MINUTE, first: old }),
+    studied(other.id, 'meaning', { due: now - MINUTE, first: old }),
+  ]);
+  const plan = planSession([word, sentence, other], cards, now, options);
+  assert.equal(plan.dueCount, 1);
+  assert.equal(plan.next.word.id, other.id);
+  assert.equal(planSession([word, sentence], cards, now, options).nextDueAt, now - MINUTE + SIBLING_GAP_MS);
+  // And the other way round.
+  const back = new Map([
+    studied(word.id, 'meaning', { due: now - MINUTE, first: old }),
+    studied(sentence.id, 'meaning', { due: now + DAY, first: old, last: now - MINUTE }),
+  ]);
+  assert.equal(planSession([word, sentence], back, now, options).dueCount, 0);
+  assert.equal(planSession([word, sentence], back, now + 3 * MINUTE, options).dueCount, 1);
+});
+
 test('words that only have writing cards get their other cards as new', () => {
   const now = at('2026-10-12T10:00:00');
   const old = now - 3 * DAY;
