@@ -39,7 +39,12 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Tests to watch:** `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
 
-**Handover from the second session of 2026-11-17 (394 old notes reworked; committed on `worktree-old-notes-rework-45`, not pushed).**
+**Handover from the third session of 2026-11-17 (cleanup; Vite 8.3.6 merged to `main`, not released).**
+
+- **Cleanup:** every leftover worktree and its branch removed (all clean, all their commits already in `main` or `stable`); ignored files found only in them moved to the main checkout's `local/` (`audit/`, `stroke-sources/`, `sentence-lines/`, `measure-sentence.js`, seven HSK source files in `word-list-sources/`). Old branches deleted here and on GitHub (`review-server`, `server-hardening`, `worktree-anki-study-data`, `worktree-claude-md-insights`).
+- **Vite 8.3.5 → 8.3.6** (Dependabot's pull request 4, the owner's word): bug fixes only, no new package in the lock file, nothing odd in `npm diff`. `npm audit signatures` verified; 438 unit tests, the browser suite (470 pass, 27 skipped) and `npm run build` pass. `npm audit` reports `picomatch`'s ReDoS (GHSA-fc5q-39xc-vjpf) through Vite: every version, development only, the same before the update; nothing to do until Vite takes a fixed `picomatch`. On `main`, not deployed to the test copy (the owner: no deploy yet); it goes up with the next deploy.
+
+**Handover from the second session of 2026-11-17 (394 old notes reworked; on `main`, pushed).**
 
 - **Old notes reworked:** 394 notes (`local/old-notes/rework-45` to `-48`, `local/old-notes/README.md`): the last 94 of TOCFL level 3 and the first 300 of TOCFL level 4 (哎呀 to 罐头). Written by Sonnet writers, judged by Opus, sent back once, read by hand; `judged`, in both scripts (`convert-notes.js` listed 19, settled in `local/note-scripts/settle-old-14.mjs`). The owner did not look at a sample first. `ask` marks (28: 原子笔/圆珠笔, 顾店, 民国's years, 丙肝/C肝, 吊点滴, 补习班/辅导班, 打电动, 倒楣/倒霉, 对岸, 干部…) are for a native reader to see. 棒子's note warns that it is a mainland slur for Koreans. No entry in "What's new" (the owner, 2026-11-01).
 - **Tests:** 438 unit tests pass; no browser run (only TOCFL notes changed; no test names their files, but a browser test that shows one of these words' notes would catch a changed wording, as the 大 and 我們 tests did).
