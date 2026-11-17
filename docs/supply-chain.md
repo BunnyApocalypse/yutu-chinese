@@ -71,6 +71,10 @@ Before merging one:
 - In **Vite or its tools** only: these run on the development computer, not in the app. Taken with the next weekly round, unless the alert is about the dev server, which `npm run dev` makes reachable on the Wi-Fi: then right away.
 - In code the app doesn't use: with the next weekly round, saying so in the pull request.
 
+**Known alerts, not fixable yet** (check each when Dependabot proposes a Vite update, and at least monthly: `npm audit`, then `npm view <package> versions` for a fixed release):
+
+- **`picomatch` ≤ 4.0.7, ReDoS** ([GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf), "high", published 2026-10-19; found 2026-11-17). Picomatch turns file patterns ("globs") into regular expressions; a pattern like `+(*)` makes matching a crafted name take so long that Node freezes. It comes in only through Vite (and its `tinyglobby`), on the development computer and in the build: **not in the app** (not in the SBOM, nothing in `dist/`). **Doesn't affect us:** the danger is in the *pattern*, and every pattern is written by us (`vite.config.js`'s `watch.ignored`, `import.meta.glob` in `src/wordPage.js`) or fixed inside Vite, none of the `+(…)` kind; a request to the dev server only supplies the name being matched, never a pattern. No fixed `picomatch` exists yet (4.0.7 is the newest); GitHub shows no Dependabot alert for it, only `npm audit` does. **Done when** a fixed `picomatch` is out and `npm audit` is clean after the next lockfile update (Vite's range `^4.0.7` takes it by itself); then remove this entry.
+
 ## When a dependency goes wrong
 
 **A compromised release** (found out by an alert, the news, or a strange diff):
