@@ -1720,10 +1720,10 @@ export default {
   'basics.hearM4': 'Hear mà',
   'basics.hearMMa': 'Hear māma',
   // Pinyin screen: a link to a deck of sound drills; and the screen of tips.
-  'basics.moreSoundPractice': 'Want more practice with these sounds? The free Anki deck <a href="https://ankiweb.net/shared/info/854183352" target="_blank" rel="noopener">Pinyin Beginners</a> drills syllables, each with recordings by native speakers.',
+  'basics.moreSoundPractice': 'Want more practice with these sounds? The free Anki deck <a href="https://ankiweb.net/shared/info/854183352" target="_blank" rel="noopener">Pinyin Beginners</a> drills syllables, each with recordings by native speakers, and has diagrams of where your tongue goes.',
   'basics.tipsForLearning': 'Tips for learning',
   'basics.tipCareful': "<b>Be careful with sounds from the start.</b> A mistake you repeat at the beginning becomes a habit that is hard to undo. You don't need to sound perfect, though: how far to push is up to you.",
-  'basics.tipAloud': '<b>Say it out loud.</b> Read aloud, and if you can, ask someone who speaks Chinese to correct you.',
+  'basics.tipAloud': '<b>Listen, then say it out loud.</b> Play the recordings, and listen to Chinese whenever you can: music, videos, podcasts. Read aloud too, and if you can, ask someone who speaks Chinese to correct you.',
   'basics.tipSteady': '<b>Keep it steady.</b> Being consistent matters more than how long each session is. Keep a reason for learning in sight, be brave enough to sound silly and make mistakes, and be patient with yourself.',
   'basics.tipLookAround': '<b>Look around.</b> Free videos for beginner grammar and short graded stories in Chinese are easy to find online. This app is for characters; a textbook or a teacher can cover grammar.',
 

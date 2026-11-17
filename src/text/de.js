@@ -1699,10 +1699,10 @@ export default {
   'basics.hearM3': 'mǎ anhören',
   'basics.hearM4': 'mà anhören',
   'basics.hearMMa': 'māma anhören',
-  'basics.moreSoundPractice': 'Mehr Übung mit diesen Lauten? Das kostenlose Anki-Deck <a href="https://ankiweb.net/shared/info/854183352" target="_blank" rel="noopener">Pinyin Beginners</a> übt Silben, jede mit Aufnahmen von Muttersprachlern.',
+  'basics.moreSoundPractice': 'Mehr Übung mit diesen Lauten? Das kostenlose Anki-Deck <a href="https://ankiweb.net/shared/info/854183352" target="_blank" rel="noopener">Pinyin Beginners</a> übt Silben, jede mit Aufnahmen von Muttersprachlern, und hat Schaubilder dazu, wo die Zunge hingehört.',
   'basics.tipsForLearning': 'Tipps zum Lernen',
   'basics.tipCareful': '<b>Achte von Anfang an auf die Laute.</b> Ein Fehler, den du am Anfang wiederholst, wird zur Gewohnheit, die schwer wieder abzulegen ist. Du musst aber nicht perfekt klingen: Wie weit du gehst, entscheidest du.',
-  'basics.tipAloud': '<b>Sprich es laut aus.</b> Lies laut und bitte, wenn möglich, jemanden, der Chinesisch spricht, dich zu korrigieren.',
+  'basics.tipAloud': '<b>Hör zu, dann sprich es laut aus.</b> Hör dir die Aufnahmen an und höre Chinesisch, wann immer du kannst: Musik, Videos, Podcasts. Lies auch laut und bitte, wenn möglich, jemanden, der Chinesisch spricht, dich zu korrigieren.',
   'basics.tipSteady': '<b>Bleib dran.</b> Regelmäßigkeit zählt mehr als die Länge der einzelnen Lerneinheit. Behalte deinen Grund zum Lernen im Blick, hab den Mut, albern zu klingen und Fehler zu machen, und sei geduldig mit dir.',
   'basics.tipLookAround': '<b>Schau dich um.</b> Kostenlose Videos zur Grammatik für Anfänger und kurze Lesegeschichten auf Chinesisch findest du leicht online. Diese App ist für Schriftzeichen; ein Lehrbuch oder eine Lehrkraft kann die Grammatik übernehmen.',
 
