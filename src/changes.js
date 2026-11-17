@@ -13,6 +13,18 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-17',
+    items: [
+      '"Basics of Chinese" has a new last screen with a few tips for learning, and the Pinyin screen links to a free Anki deck for practicing the sounds.',
+    ],
+    it: [
+      'Le «Basi del cinese» hanno una nuova ultima schermata con qualche consiglio per imparare, e la schermata sul pinyin rimanda a un mazzo Anki gratuito per esercitare i suoni.',
+    ],
+    de: [
+      'Die „Grundlagen des Chinesischen“ haben einen neuen letzten Bildschirm mit ein paar Tipps zum Lernen, und der Pinyin-Bildschirm verweist auf ein kostenloses Anki-Deck zum Üben der Laute.',
+    ],
+  },
+  {
     id: '2026-11-16-3',
     items: [
       "A word's example sentence no longer comes up in Review right after the word itself: the two are kept a few minutes apart.",

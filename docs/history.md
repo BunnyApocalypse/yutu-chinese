@@ -39,6 +39,12 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Tests to watch:** `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
 
+**Handover from the session of 2026-11-17 (a tips screen in "Basics of Chinese" and the link to the Pinyin Beginners Anki deck; released to `stable`, "What's new" `2026-11-17`).**
+
+- **What it is** (the owner, 2026-11-17, from tips they gave a friend starting Chinese): a sixth screen, "Tips for learning" (four items, no named channel, site or product), and a link at the end of the Pinyin screen to the free Anki deck (`docs/interface.md`, "Basics of Chinese"). The deck's tongue diagrams are mentioned on the owner's word; its README, which Claude read, does not mention them. Whether the deck imports into the app is not checked.
+- **Tests:** 438 unit tests; `basics`, `accessibility` and `lesson` browser files pass (not the full run). The Italian and German texts are Claude's, unchecked. Not looked at on a device: the new screen's fit on a small phone and the link in Firefox's installed app.
+- **Release:** pushed to `stable` and `main` at the owner's word, and the site's deploy started.
+
 **Handover from the fifth session of 2026-11-16 (a sentence and its gap word bunched up in Review; released to `stable`, "What's new" `2026-11-16-3`).**
 
 - **The bug** (the owner, 2026-11-16): with "Add a word's example sentence when I learn it" on, the word's cards and the sentence's came up one after the other. The 3-minute gap between a word's cards (`SIBLING_GAP_MS`) didn't reach the sentence, a word record of its own. Now `relatedWords` in `src/session.js` links a sentence to the word in its `cloze` (by its characters, any reading), and `planSession` holds either back after the other's review (`docs/cards.md`, `docs/word-page.md`). They can still meet in the same sitting with few cards; holding the sentence until the next study day was offered to the owner as an alternative, not built.
