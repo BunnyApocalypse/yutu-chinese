@@ -41,7 +41,9 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Tests to watch:** `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
 
-**Handover from the fourth session of 2026-11-17 (200 old notes reworked; committed on `worktree-old-notes-rework-49`, not merged or pushed).**
+**Handover from the fourth session of 2026-11-17 (200 old notes reworked; released to `stable` with Vite 8.3.6 and rework-45 to -48, the owner's word, no "What's new" entry).**
+
+- **Release:** everything on `main` pushed to `stable` and `main` at the owner's word, and the site's deploy started. No "What's new" entry: notes (the owner, 2026-11-01) and Vite's bug fixes are nothing a learner notices. The old notes' rework is at 86% (5,050 of 5,849 done; 635 TOCFL level 4 and 164 radical notes left).
 
 - **Old notes reworked:** 200 notes of TOCFL level 4 (`local/old-notes/rework-49` and `-50`, `local/old-notes/README.md`): 官员 to 捡, 尖 to 口红. Two Sonnet writers and one Opus judge a batch, sent back once, read by hand; `judged`, in both scripts (`convert-notes.js` listed 10, settled in `local/note-scripts/settle-old-15.mjs`). 18 `ask` marks (国会 as Taiwan's everyday name for the 立法院, 国中, 国立, 合约/合同, 回教, 昏倒/晕倒, 回电, 监视器/监控, 做家事/做家务, 起立敬礼, 金融卡/银行卡, 捐血/献血, 开动了, 唇蜜/唇彩, 卡通/动画片, 考卷/试卷, 恐怖攻击/恐怖袭击, 觉悟) are for a native reader. The owner did not look at a sample first. Two batches, not four (the owner, for tokens).
 - **Tests:** 438 unit tests pass; no browser run (only TOCFL notes changed).
