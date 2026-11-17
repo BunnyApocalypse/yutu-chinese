@@ -867,7 +867,7 @@
         <button id="feedback-close" class="dialog-close" type="button" data-t-aria-label="common.close" data-t-title="common.close"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18" /></svg></button>
       </dialog>
 
-      <!-- "Basics of Chinese": five short screens for someone who knows no
+      <!-- "Basics of Chinese": six short screens for someone who knows no
            Chinese at all (the owner, 2026-10-21, after tester 3). Opened from
            the menu, Settings › Help, the introduction's first screen, and
            "What are tones?" on a tone card (basics.js).
@@ -899,6 +899,7 @@
             <li><button class="icon-button basics-play" type="button" data-play="s/lv4" data-t-aria-label="basics.hearL"></button><span data-t-html="basics.letterU"></span></li>
           </ul>
           <p class="hint" data-t="basics.afterZCS"></p>
+          <p class="hint" data-t-html="basics.moreSoundPractice"></p>
         </section>
 
         <section data-basics-step="tones" hidden>
@@ -935,6 +936,14 @@
             <dd data-t="basics.seeTheMeaningWrite"></dd>
           </dl>
           <p data-t="basics.newWordsComeIn"></p>
+        </section>
+
+        <section data-basics-step="tips" hidden>
+          <h2 data-t="basics.tipsForLearning"></h2>
+          <p data-t-html="basics.tipCareful"></p>
+          <p data-t-html="basics.tipAloud"></p>
+          <p data-t-html="basics.tipSteady"></p>
+          <p data-t-html="basics.tipLookAround"></p>
         </section>
 
         <div id="basics-bar" class="buttons welcome-bar">

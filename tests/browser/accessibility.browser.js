@@ -218,9 +218,9 @@ describe('accessibility', { concurrency: false }, () => {
   it('Basics of Chinese, each of its screens', async () => {
     await tap(page, 'basics-button');
     await waitUntil(page, `document.getElementById('basics-dialog').open`, 'the basics');
-    for (let step = 1; step <= 5; step += 1) {
+    for (let step = 1; step <= 6; step += 1) {
       await check(`Basics of Chinese, screen ${step}`);
-      if (step < 5) {
+      if (step < 6) {
         await tap(page, 'basics-next');
       }
     }

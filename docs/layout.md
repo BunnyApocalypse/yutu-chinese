@@ -36,7 +36,7 @@
 - `src/welcome.js`, `src/storageAdvice.js`: the introduction shown on first use, and what it says about long-term storage in each browser (`docs/interface.md`).
 - `src/dialogs.js`: pop-up panels that close with a tap beside them.
 - `src/backButton.js`: the Back button closes the open pop-up and never leaves the app.
-- `src/basics.js`, `src/basicsSounds.js`: "Basics of Chinese", five screens for someone new to Chinese, and the recordings it plays (`docs/interface.md`).
+- `src/basics.js`, `src/basicsSounds.js`: "Basics of Chinese", six screens for someone new to Chinese, and the recordings it plays (`docs/interface.md`).
 - `site/` (`index.html`, `import-from-skritter/index.html`, `site.css`, `main.js`, `images/`, `public/`), `vite.site.config.js` (`npm run dev:site`, `npm run build:site`), `src/siteVisit.js`, `scripts/share-image.html`, `scripts/make-share-image.js`, `scripts/make-word-page-sample.js`, `scripts/copy-card-pictures.js`, `site/images/cards/`, `site/word-page-sample.html`, `site/word-page-sample.css`: the page about the app at the site's top, the mark the app leaves so the page sends returning learners on, the share picture, and the app's own page for a word, taken as markup and styles (`docs/offline.md`, "The page about the app").
 - `src/changes.js`, `src/whatsNew.js`, `src/feedback.js`: the list of what changed in each release (a new entry for every release), the "What's new" pop-up, and "Send feedback" (`docs/interface.md`).
 - `src/lang.js`: marks Chinese text, and zhuyin, with its language (`lang`) for screen readers and the regional font.

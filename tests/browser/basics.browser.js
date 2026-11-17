@@ -1,4 +1,4 @@
-// "Basics of Chinese" (basics.js): its five screens, the ways to it, and
+// "Basics of Chinese" (basics.js): its six screens, the ways to it, and
 // its sounds. (The link on a tone card is checked in lesson.browser.js.)
 //
 // Run with: npm run test:browser
@@ -41,7 +41,7 @@ describe('basics of Chinese', { concurrency: false }, () => {
     await tap(page, 'welcome-basics-button');
     await waitUntil(page, basicsOpen, 'the basics');
     assert.equal(await heading(), 'Characters');
-    assert.equal(await textOf(page, 'basics-progress'), '1 of 5');
+    assert.equal(await textOf(page, 'basics-progress'), '1 of 6');
     assert.equal(await isShown(page, 'basics-back'), false);
     await tap(page, 'basics-close');
     assert.equal(await page.evaluate(basicsOpen), false);
@@ -50,24 +50,35 @@ describe('basics of Chinese', { concurrency: false }, () => {
     await tap(page, 'welcome-skip');
   });
 
-  it('goes through its five screens from the menu, and Done closes it', async () => {
+  it('goes through its six screens from the menu, and Done closes it', async () => {
     await tap(page, 'basics-button');
     await waitUntil(page, basicsOpen, 'the basics');
     const headings = [await heading()];
-    for (let step = 2; step <= 5; step += 1) {
+    for (let step = 2; step <= 6; step += 1) {
       await tap(page, 'basics-next');
-      assert.equal(await textOf(page, 'basics-progress'), `${step} of 5`);
+      assert.equal(await textOf(page, 'basics-progress'), `${step} of 6`);
       headings.push(await heading());
     }
-    assert.deepEqual(headings, ['Characters', 'Pinyin', 'Tones', 'Writing', 'Four kinds of card']);
+    assert.deepEqual(headings, ['Characters', 'Pinyin', 'Tones', 'Writing', 'Four kinds of card', 'Tips for learning']);
     assert.equal(await textOf(page, 'basics-next'), 'Done');
     // The tone card's five marks are drawn.
     assert.equal(await page.evaluate(`document.querySelectorAll('#basics-dialog .basics-marks svg').length`), 5);
     await tap(page, 'basics-back');
-    assert.equal(await heading(), 'Writing');
+    assert.equal(await heading(), 'Four kinds of card');
     await tap(page, 'basics-next');
     await tap(page, 'basics-next');
     assert.equal(await page.evaluate(basicsOpen), false);
+  });
+
+  it('links the Anki deck of sounds from the Pinyin screen, opening in a new tab', async () => {
+    await tap(page, 'basics-button');
+    await tap(page, 'basics-next');
+    assert.equal(await heading(), 'Pinyin');
+    const link = await page.evaluate(
+      `(() => { const a = document.querySelector('#basics-dialog [data-basics-step="pinyin"] a'); return a.href + ' ' + a.target + ' ' + a.rel; })()`,
+    );
+    assert.equal(link, 'https://ankiweb.net/shared/info/854183352 _blank noopener');
+    await tap(page, 'basics-close');
   });
 
   it('shows characters in the script being learned, marked as such', async () => {
@@ -95,11 +106,11 @@ describe('basics of Chinese', { concurrency: false }, () => {
     await openSettings(page, 'settings-help');
     await tap(page, 'settings-basics-button');
     await waitUntil(page, basicsOpen, 'the basics');
-    assert.equal(await textOf(page, 'basics-progress'), '1 of 5');
+    assert.equal(await textOf(page, 'basics-progress'), '1 of 6');
     await tap(page, 'basics-next');
     await tap(page, 'basics-next');
     assert.equal(await heading(), 'Tones');
-    assert.equal(await textOf(page, 'basics-progress'), '3 of 5');
+    assert.equal(await textOf(page, 'basics-progress'), '3 of 6');
     await page.evaluate(`document.querySelector('#basics-dialog [data-play="s/ma3"]').click()`);
     await waitUntil(
       page,

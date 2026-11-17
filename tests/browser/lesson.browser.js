@@ -161,7 +161,7 @@ describe('learning new words', { concurrency: false }, () => {
     // (basics.js), and is gone once answered.
     await tap(page, 'tones-link');
     await waitUntil(page, `document.getElementById('basics-dialog').open`, 'the basics');
-    assert.equal(await textOf(page, 'basics-progress'), '3 of 5');
+    assert.equal(await textOf(page, 'basics-progress'), '3 of 6');
     await tap(page, 'basics-close');
     assert.equal(await textOf(page, 'status'), 'Which tone?');
     await page.evaluate(`document.querySelector('#tone-buttons [data-tone="4"]').click()`);

@@ -1,5 +1,6 @@
-// "Basics of Chinese": five short screens for someone who knows no Chinese
-// at all: characters, pinyin, tones, the four kinds of card, and writing
+// "Basics of Chinese": six short screens for someone who knows no Chinese
+// at all: characters, pinyin, tones, writing, the four kinds of card, and
+// tips for learning
 // (the owner, 2026-10-21, after tester 3 found the tone card confusing with
 // almost no Chinese). The screens themselves are in index.html (the
 // "basics-dialog" pop-up). Opened from the menu, Settings › Help, the

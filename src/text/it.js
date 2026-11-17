@@ -1698,6 +1698,12 @@ export default {
   'basics.hearM3': 'Ascolta mǎ',
   'basics.hearM4': 'Ascolta mà',
   'basics.hearMMa': 'Ascolta māma',
+  'basics.moreSoundPractice': 'Vuoi esercitarti di più con questi suoni? Il mazzo Anki gratuito <a href="https://ankiweb.net/shared/info/854183352" target="_blank" rel="noopener">Pinyin Beginners</a> allena le sillabe, ognuna con registrazioni di madrelingua.',
+  'basics.tipsForLearning': 'Consigli per imparare',
+  'basics.tipCareful': '<b>Fai attenzione ai suoni fin dall’inizio.</b> Un errore ripetuto all’inizio diventa un’abitudine difficile da togliere. Non serve parlare in modo perfetto, però: quanto spingerti sta a te.',
+  'basics.tipAloud': '<b>Dillo ad alta voce.</b> Leggi ad alta voce e, se puoi, chiedi a qualcuno che parla cinese di correggerti.',
+  'basics.tipSteady': '<b>Mantieni la costanza.</b> Essere costanti conta più della durata di ogni sessione. Tieni a mente il motivo per cui impari, abbi il coraggio di sembrare buffo e di sbagliare, e sii paziente con te stesso.',
+  'basics.tipLookAround': '<b>Guardati intorno.</b> Online è facile trovare video gratuiti di grammatica per principianti e brevi storie graduate in cinese. Quest’app è per i caratteri; un libro di testo o un insegnante può occuparsi della grammatica.',
 
   // The introduction (index.html)
   'welcome.alreadyUsing': 'Usi già <span lang="zh-Hant-TW">玉兔中文</span> su un altro dispositivo?',
