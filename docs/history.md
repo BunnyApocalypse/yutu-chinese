@@ -32,7 +32,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - The TOCFL notes' simplified versions may keep older mainland forms; the mainland words added for the other side are unchecked (least sure 小測, 劫匪, 升艙, 鬧市); the six sentences for the Taiwanese reader (`local/notes-writing/ask.md`) and the `ask` marks are not on a reader's page yet.
 - The mainland reader's general page: the next batch starts at #81.
 - Taiwan forms of parts in tips (房's tip names 户); 8 declined radicals and variants for `radicals.tsv` (氺 镸 旡 爫 攴 彑 襾 阜).
-- The old notes' rework (`local/old-notes/`): see the handover of 2026-11-17 (rework-45 to -48; what is left: the radicals, 835 notes of TOCFL level 4).
+- The old notes' rework (`local/old-notes/`): see the handover of the fourth session of 2026-11-17 (rework-49 and -50; what is left: the radicals, 635 notes of TOCFL level 4).
 
 **Testers:**
 
@@ -40,6 +40,13 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - A German tester to find. The Italian and German texts Claude wrote since the Italian tester's check are unchecked.
 
 **Tests to watch:** `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
+
+**Handover from the fourth session of 2026-11-17 (200 old notes reworked; committed on `worktree-old-notes-rework-49`, not merged or pushed).**
+
+- **Old notes reworked:** 200 notes of TOCFL level 4 (`local/old-notes/rework-49` and `-50`, `local/old-notes/README.md`): 官员 to 捡, 尖 to 口红. Two Sonnet writers and one Opus judge a batch, sent back once, read by hand; `judged`, in both scripts (`convert-notes.js` listed 10, settled in `local/note-scripts/settle-old-15.mjs`). 18 `ask` marks (国会 as Taiwan's everyday name for the 立法院, 国中, 国立, 合约/合同, 回教, 昏倒/晕倒, 回电, 监视器/监控, 做家事/做家务, 起立敬礼, 金融卡/银行卡, 捐血/献血, 开动了, 唇蜜/唇彩, 卡通/动画片, 考卷/试卷, 恐怖攻击/恐怖袭击, 觉悟) are for a native reader. The owner did not look at a sample first. Two batches, not four (the owner, for tokens).
+- **Tests:** 438 unit tests pass; no browser run (only TOCFL notes changed).
+- **Left to rework:** 635 of `tocfl-4.tsv` (next: `gather.mjs tocfl-4.tsv … 100 2 --in-order --skip=0`), then the 164 radical notes.
+- **Pitfall:** `local/note-scripts/apply.mjs` finds `data/notes/` from its own real path, so from a worktree with `local/` linked in it writes the main checkout's notes; run it with `node --preserve-symlinks --preserve-symlinks-main`. It happened once this session; the main checkout's `tocfl-4.tsv` was restored from `aacd0af` (checked with `cmp`).
 
 **Handover from the third session of 2026-11-17 (cleanup; Vite 8.3.6 merged to `main`, not released).**
 
@@ -50,7 +57,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 - **Old notes reworked:** 394 notes (`local/old-notes/rework-45` to `-48`, `local/old-notes/README.md`): the last 94 of TOCFL level 3 and the first 300 of TOCFL level 4 (哎呀 to 罐头). Written by Sonnet writers, judged by Opus, sent back once, read by hand; `judged`, in both scripts (`convert-notes.js` listed 19, settled in `local/note-scripts/settle-old-14.mjs`). The owner did not look at a sample first. `ask` marks (28: 原子笔/圆珠笔, 顾店, 民国's years, 丙肝/C肝, 吊点滴, 补习班/辅导班, 打电动, 倒楣/倒霉, 对岸, 干部…) are for a native reader to see. 棒子's note warns that it is a mainland slur for Koreans. No entry in "What's new" (the owner, 2026-11-01).
 - **Tests:** 438 unit tests pass; no browser run (only TOCFL notes changed; no test names their files, but a browser test that shows one of these words' notes would catch a changed wording, as the 大 and 我們 tests did).
-- **Left to rework** (no check tag): 835 of `tocfl-4.tsv` (next: `gather.mjs tocfl-4.tsv … 100 2 --in-order --skip=0`, as many batches as wanted), then the 164 radical notes (no example sentences, another kind).
+- **Left to rework** (no check tag): 835 of `tocfl-4.tsv` at the time (635 after rework-49 and -50, above), then the 164 radical notes (no example sentences, another kind).
 
 **Handover from the session of 2026-11-17 (a tips screen in "Basics of Chinese" and the link to the Pinyin Beginners Anki deck; released to `stable`, "What's new" `2026-11-17`).**
 
