@@ -16,6 +16,7 @@ import {
   parsePartKeyChecks,
   checked,
 } from '../src/scriptKeys.js';
+import { partKeyPairs } from '../scripts/partKeyPairs.js';
 
 const characters = parseCharacters(fs.readFileSync('data/makemeahanzi/dictionary.txt', 'utf8'));
 const changes = (traditional, simplified) => partChanges(traditional, simplified, characters);
@@ -115,8 +116,9 @@ test('a key found in one character only: 聿 → 一 is no part change, 畫 chan
   // The owner found the card for 畫 saying 聿 is written 一 in every
   // character (2026-11-20); 律 keeps 聿 and 筆 → 笔 makes it 毛.
   const found = checkPartKeys([['畫', '画'], ['律', '律'], ['筆', '笔'], ['書', '书']], characters);
-  assert.equal(found.get('聿→一').verdict, 'once');
-  assert.deepEqual(found.get('聿→一').kept, ['律']);
+  assert.equal(found.get('聿→一').simplified.verdict, 'once');
+  assert.equal(found.get('聿→一').traditional.verdict, 'once');
+  assert.deepEqual(found.get('聿→一').simplified.kept, ['律']);
   assert.deepEqual(checkedChanges('畫', '画'), [{ from: '畫', to: '画', kind: 'whole' }]);
 });
 
@@ -141,11 +143,35 @@ test('a character changed as a whole keeps its other changes', () => {
 });
 
 test('a key true of only some characters with the part says so', () => {
-  // 堇 → 又 in 漢 and 難, but 勤 keeps 堇.
-  assert.deepEqual(checkedChanges('漢', '汉'), [{ from: '堇', to: '又', kind: 'part', some: true }]);
-  // 爭 → 争 everywhere.
+  // 堇 → 又 in 漢 and 難, but 勤 keeps 堇; and 又 is in many characters
+  // in both scripts.
+  assert.deepEqual(checkedChanges('漢', '汉'), [
+    { from: '堇', to: '又', kind: 'part', partialIn: ['simplified', 'traditional'] },
+  ]);
+  // 爭 → 争 everywhere, both ways.
   const [, part] = checkedChanges('淨', '净');
   assert.deepEqual(part, { from: '爭', to: '争', kind: 'part' });
+});
+
+test('each way is checked on its own: every 雲 becomes 云, but not every 云 was 雲', () => {
+  // 云 "to say" is written 云 in both, and 层 is 層.
+  const found = checkPartKeys([['雲', '云'], ['曇', '昙'], ['云', '云'], ['層', '层']], characters);
+  assert.equal(found.get('雲→云').simplified.verdict, 'everywhere');
+  assert.equal(found.get('雲→云').traditional.verdict, 'some');
+  assert.deepEqual(checkedChanges('曇', '昙'), [{ from: '雲', to: '云', kind: 'part', partialIn: ['traditional'] }]);
+});
+
+test('rare characters, and characters built from the other script by mistake, count for nothing', () => {
+  const pairs = [['爭', '争'], ['淨', '净'], ['掙', '挣'], ['錚', '铮'], ['廥', '廥'], ['會', '会'], ['繪', '绘']];
+  // Make Me a Hanzi builds 錚 from the simplified 争, so it seems to keep it.
+  const plain = checkPartKeys(pairs, characters);
+  assert.equal(plain.get('爭→争').traditional.verdict, 'some');
+  // 廥 keeps 會, but nobody writes it.
+  assert.equal(plain.get('會→会').simplified.verdict, 'some');
+  const options = { isCommon: (traditional) => traditional !== '廥', isTaiwanForm: (character) => character !== '争' };
+  const found = checkPartKeys(pairs, characters, options);
+  assert.equal(found.get('爭→争').traditional.verdict, 'everywhere');
+  assert.equal(found.get('會→会').simplified.verdict, 'everywhere');
 });
 
 test('a character that is a part of another is checked on its own too', () => {
@@ -167,19 +193,10 @@ test('a table of changes with checks gives the same as changesOfPairs with them'
 });
 
 test('data/script-keys/part-keys.tsv is up to date (else: node scripts/build-part-keys.js)', () => {
-  const pairs = [];
-  const seen = new Set();
-  for (const line of fs.readFileSync('data/cedict/dictionary.tsv', 'utf8').split('\n')) {
-    const [traditional, simplified] = line.split('\t');
-    const s = simplified || traditional;
-    if (!line.startsWith('#') && traditional && [...traditional].length === 1 && [...s].length === 1 && !seen.has(traditional + s)) {
-      seen.add(traditional + s);
-      pairs.push([traditional, s]);
-    }
-  }
-  const fresh = checkPartKeys(pairs, characters);
+  const { pairs, isCommon, isTaiwanForm } = partKeyPairs((path) => fs.readFileSync(path, 'utf8'));
+  const fresh = checkPartKeys(pairs, characters, { isCommon, isTaiwanForm });
   assert.equal(fresh.size, checks.size);
-  for (const [key, { verdict }] of fresh) {
-    assert.equal(checks.get(key), verdict, key);
+  for (const [key, { simplified, traditional }] of fresh) {
+    assert.deepEqual(checks.get(key), { simplified: simplified.verdict, traditional: traditional.verdict }, key);
   }
 });

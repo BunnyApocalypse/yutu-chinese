@@ -13,7 +13,7 @@
 - `src/words.js`: the plain calculation behind the Decks tab: checking a typed word, reading a TSV or CSV list, working out which words are new, searching.
 - `src/dictionary.js`: looks a word up in the dictionary, by its characters or its pinyin, and proposes a meaning. Plain calculation.
 - `scripts/build-dictionary.js`, `data/cedict/dictionary.tsv`: the dictionary made from CC-CEDICT (run by hand, uses the internet, like the tone table script). About 124,000 entries, 8.4 MB.
-- `scripts/build-preferred-forms.js`, `data/cedict/preferred-forms.tsv`: Taiwan's traditional form for words the dictionary writes several ways (run by hand after the dictionary is rebuilt; `docs/words.md`). `scripts/build-part-keys.js`, `data/script-keys/part-keys.tsv`: each part change between the scripts checked against every one-character entry of CC-CEDICT (run by hand after either source is updated; a unit test fails while the file is out of date; `docs/cards.md`, "Reading the other script"). `scripts/audit-script-forms.js`: read-only audit of the other-script lookup and the keys of `src/scriptKeys.js`, into `local/audit/`.
+- `scripts/build-preferred-forms.js`, `data/cedict/preferred-forms.tsv`: Taiwan's traditional form for words the dictionary writes several ways (run by hand after the dictionary is rebuilt; `docs/words.md`). `scripts/build-part-keys.js` (with `scripts/partKeyPairs.js`, which characters), `data/script-keys/part-keys.tsv`: each part change between the scripts checked both ways against CC-CEDICT's characters in Taiwan's standard forms (run by hand after a source is updated; a unit test fails while the file is out of date; `docs/cards.md`, "Reading the other script"). `scripts/audit-script-forms.js`: read-only audit of the other-script lookup and the keys of `src/scriptKeys.js`, into `local/audit/`.
 - `src/review.js`: Review and Learn. Picks the next card or the next word to learn, hands it to the code for its kind, runs the lesson, shows the grade buttons, saves the result.
 - `src/recallCard.js`: meaning and pinyin cards (see the word, tap to reveal, grade yourself).
 - `src/toneFlow.js`: tone cards (one tone per character, by button or drawn mark, checked automatically).
@@ -60,6 +60,7 @@
 - `src/speechPlan.js`, `src/speech.js`: speaking a word (`docs/word-page.md`): which recordings to play, as plain calculation, and playing them.
 - `scripts/copy-audio.js`, `data/audio-cmn/`: the recordings, and the script that puts them in the git-ignored `public/audio/` under plain file names with an `index.json` listing them.
 - `data/makemeahanzi/`: how each character is built (parts, radical, meaning part and sound part), LGPL-3.0; used by the word page.
+- `data/unihan/`: which characters are standard in Taiwan (CNS 11643 planes 1 and 2) and on the mainland (通用规范汉字表), from Unicode's Unihan, Unicode License v3; written by `scripts/build-character-sets.js`, read only by `scripts/build-part-keys.js`.
 - `src/cardManager.js`, `src/cardsPanel.js`: managing cards by hand (`docs/cards.md`): the plain calculation, and its page side in the Decks tab.
 - `src/leeches.js`: which cards are leeches, suspended cards, and the two leech exports (`docs/cards.md`). Plain calculation.
 - `src/merge.js`: combines what is on the device with a backup from another device (`docs/merging.md`). Plain calculation.

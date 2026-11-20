@@ -277,30 +277,52 @@ export function createChangeTable(characters, checks = null) {
 //     found in that one character only;
 //   - the change is real but not everywhere (堇 → 又 in 漢 難 艱, but 勤
 //     keeps 堇).
+// The claim is made both ways: a learner of traditional reads "爭 is
+// written 争 in simplified, in every character that has it", a learner of
+// simplified "争 is written 爭 in traditional, …", and the two are not
+// equally true (the owner, 2026-11-20): every 雲 becomes 云, but 云 in
+// 层 and 坛 comes from 層 and 壇. So each key has a verdict for each:
+// `simplified` for the claim "in simplified", `traditional` for the claim
+// "in traditional".
+//
 // checkPartKeys looks at every pair of a whole dictionary (CC-CEDICT's
-// one-character entries, those written alike too; scripts/build-part-keys.js
-// writes the result to data/script-keys/) and gives each key a verdict:
-//   'once':       found in one character only: a change of that character
-//                 alone (時's 寺 → 寸), or, if more of it changed, the
-//                 character redrawn as a whole ("畫 is written 画"); see
-//                 `checked`
-//   'some':       found in several, but the part is kept in others (律) or
-//                 changes another way (筆): the card says "in some
-//                 characters"
+// one-character entries in Taiwan's standard forms, those written alike
+// too; scripts/build-part-keys.js writes the result to data/script-keys/)
+// and gives each key, each way, a verdict:
+//   'once':       found in one character only (the same both ways): a
+//                 change of that character alone (時's 寺 → 寸), or, if
+//                 more of it changed, the character redrawn as a whole
+//                 ("畫 is written 画"); see `checked`
+//   'some':       found in several, but a character in common use keeps
+//                 the part (律 keeps 聿; 层 has 云 from 曾) or changes it
+//                 another way (筆): the card says "in some characters"
 //   'everywhere': wherever the part is, it changes this way (爭 → 争)
-// Checked are the changes whose card makes the claim: `part`, and the
-// `small` ones learned. A part inside a character that changes as a whole
-// or by a bigger part (書 → 书) counts neither way.
+// A rare character doesn't count against a key (廥 keeps 會, but nobody
+// writes it): `isCommon(traditional, simplified)` says which do. Checked are
+// the changes whose card makes the claim: `part`, and the `small` ones
+// learned. A part inside a character that changes as a whole or by a
+// bigger part (書 → 书) counts neither way.
 
 const isClaimed = (change) => change.kind === 'part' || (change.kind === 'small' && needsLearning(change));
 
+const SCRIPTS = ['simplified', 'traditional'];
+
 // pairs: [traditional, simplified], every character of a dictionary, those
 // written alike as well. Returns a Map from key to
-//   { verdict, found, kept, other }
-// `found`: the pairs ("繁简") with the key; `kept`: those keeping the part
-// (a character written alike, or "繁简"); `other`: those changing it another
-// way ("筆笔→毛").
-export function checkPartKeys(pairs, characters) {
+//   { found, simplified: { verdict, kept, other }, traditional: { … } }
+// `found`: the pairs ("繁简") with the key; for each claim, `kept`: the
+// common characters keeping the part (a character written alike, or
+// "繁简"), and `other`: those changing it another way ("筆笔→毛" for the
+// claim in simplified, "层層←曾" for the one in traditional).
+//
+// options: isCommon(traditional, simplified): whether a pair counts against
+//            a key (every pair if not given)
+//          isTaiwanForm(character): whether a character is one of Taiwan's
+//            standard forms; a traditional character said to have a part
+//            that is not (Make Me a Hanzi builds 錚 from the simplified 争,
+//            where it should be 爭) is a mistake of the data, and doesn't
+//            count as keeping the part (every character is, if not given)
+export function checkPartKeys(pairs, characters, { isCommon = () => true, isTaiwanForm = () => true } = {}) {
   const changes = changesOfPairs(pairs, characters);
   const parts = new Map();
   const partsOf = (character) => {
@@ -339,43 +361,67 @@ export function checkPartKeys(pairs, characters) {
       }
     }
   }
-  const result = new Map();
-  for (const [key, { change, found }] of keys) {
+  const common = pairs.filter(([traditional, simplified]) => isCommon(traditional, simplified));
+  // The common characters against one claim. `has`: the side the claim is
+  // about ('simplified': the traditional character has the part `from`;
+  // 'traditional': the simplified character has `to`); `part`: that part.
+  const against = (change, found, script) => {
     const kept = [];
     const other = [];
-    for (const [traditional, simplified] of pairs) {
-      const pair = traditional + simplified;
-      if (found.has(pair) || !partsOf(traditional).has(change.from)) {
+    const [part, own, otherSide] = script === 'simplified' ? [change.from, 0, 1] : [change.to, 1, 0];
+    for (const forms of common) {
+      const pair = forms[0] + forms[1];
+      if (found.has(pair) || !partsOf(forms[own]).has(part)) {
         continue;
       }
-      if (traditional === simplified) {
-        kept.push(traditional);
-      } else if (partsOf(simplified).has(change.from)) {
-        kept.push(pair);
-      } else {
-        const elsewhere = changes.get(pair).find((each) => each.from === change.from && each.to !== change.to);
+      // A traditional form "having" a part that is no traditional form
+      // itself: a mistake of the data (錚 built from 争).
+      const mistaken = script === 'traditional' && isCharacter(part) && [...part].length === 1 && !isTaiwanForm(part);
+      if (forms[0] === forms[1]) {
+        if (!mistaken) {
+          kept.push(forms[0]);
+        }
+      } else if (partsOf(forms[otherSide]).has(part)) {
+        if (!mistaken) {
+          kept.push(pair);
+        }
+      } else if (script === 'simplified') {
+        const elsewhere = changes.get(pair).find((each) => each.from === part && each.to !== change.to);
         if (elsewhere) {
           other.push(`${pair}→${elsewhere.to}`);
+        }
+      } else {
+        const elsewhere = changes.get(pair).find((each) => each.to === part && each.from !== change.from);
+        if (elsewhere) {
+          other.push(`${forms[1]}${forms[0]}←${elsewhere.from}`);
         }
       }
     }
     const verdict = found.size === 1 ? 'once' : kept.length > 0 || other.length > 0 ? 'some' : 'everywhere';
-    result.set(key, { verdict, found: [...found], kept, other });
+    return { verdict, kept, other };
+  };
+  const result = new Map();
+  for (const [key, { change, found }] of keys) {
+    result.set(key, {
+      found: [...found],
+      simplified: against(change, found, 'simplified'),
+      traditional: against(change, found, 'traditional'),
+    });
   }
   return result;
 }
 
-// A Map from key to verdict, from the file scripts/build-part-keys.js
-// writes (key, verdict, then counts and examples, tab-separated; "#" begins
-// a comment).
+// A Map from key to { simplified, traditional }, the verdict of each claim,
+// from the file scripts/build-part-keys.js writes (key, the two verdicts,
+// then counts and examples, tab-separated; "#" begins a comment).
 export function parsePartKeyChecks(text) {
   const checks = new Map();
   for (const line of text.split('\n')) {
     if (line.startsWith('#') || line.trim() === '') {
       continue;
     }
-    const [key, verdict] = line.split('\t');
-    checks.set(key, verdict);
+    const [key, simplified, traditional] = line.split('\t');
+    checks.set(key, { simplified, traditional });
   }
   return checks;
 }
@@ -389,22 +435,30 @@ export function parsePartKeyChecks(text) {
 //     character was redrawn) is taken out, and the character changes as a
 //     whole, that change first, before its others (a radical form, or a
 //     part changed in other characters too, as 變's 䜌 → 亦);
-//   - a claimed change not checked 'everywhere' gets `some: true`, its card
-//     saying "in some characters"; so does a key the file lacks (a
-//     character missing from the dictionary it was made from), unchecked.
+//   - a claimed change not 'everywhere' in a script gets that script in
+//     `partialIn` (['traditional'] for 雲 → 云: true in simplified, but not
+//     the other way), its card in that script saying "in some
+//     characters"; a key the file lacks (a character missing from the
+//     dictionary it was made from) has both, unchecked.
 // Without `checks`, the changes as they are.
 export function checked(traditional, simplified, changes, checks) {
   if (!checks) {
     return changes;
   }
-  const verdictOf = (change) => checks.get(keyOf(change)) ?? 'some';
-  const once = changes.filter((change) => isClaimed(change) && verdictOf(change) === 'once');
+  const unchecked = { simplified: 'some', traditional: 'some' };
+  const verdictsOf = (change) => checks.get(keyOf(change)) ?? unchecked;
+  const once = changes.filter((change) => isClaimed(change) && verdictsOf(change).simplified === 'once');
   const notRadical = changes.filter((change) => change.kind !== 'radical');
   if (once.length === 1 && notRadical.length === 1) {
     return changes.map((change) => (change === once[0] ? { ...change, only: true } : change));
   }
-  const rest = changes
-    .filter((change) => !once.includes(change))
-    .map((change) => (isClaimed(change) && verdictOf(change) !== 'everywhere' ? { ...change, some: true } : change));
+  const withPartial = (change) => {
+    if (!isClaimed(change)) {
+      return change;
+    }
+    const partialIn = SCRIPTS.filter((script) => verdictsOf(change)[script] !== 'everywhere');
+    return partialIn.length > 0 ? { ...change, partialIn } : change;
+  };
+  const rest = changes.filter((change) => !once.includes(change)).map(withPartial);
   return once.length > 0 ? [{ from: traditional, to: simplified, kind: 'whole' }, ...rest] : rest;
 }

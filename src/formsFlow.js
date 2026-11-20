@@ -115,19 +115,17 @@ function fillChange(target, key, shown, view, values = {}) {
 // The line saying what a change is.
 function explanation(change, shown, view) {
   const line = element('p', 'face-tip-text');
-  // A change not true of every character with the part says so: `some`
-  // (in some characters) or `only` (in this one), from the check against
-  // the whole dictionary (checked in scriptKeys.js).
+  // A change not true of every character with the part says so: in some
+  // characters (`partialIn` has the script read, the claim being made that
+  // way) or in this one only (`only`), from the check against the whole
+  // dictionary (checked in scriptKeys.js).
+  const some = change.partialIn?.includes(view.other);
   let key = EXPLAIN[change.kind];
   if (shown.inside) {
-    key = change.only
-      ? 'learnForms.explainInsideOnly'
-      : change.some
-        ? 'learnForms.explainInsideSome'
-        : 'learnForms.explainInside';
+    key = change.only ? 'learnForms.explainInsideOnly' : some ? 'learnForms.explainInsideSome' : 'learnForms.explainInside';
   } else if (change.only) {
     key = 'learnForms.explainPartOnly';
-  } else if (change.some) {
+  } else if (some) {
     key = 'learnForms.explainPartSome';
   }
   fillChange(line, key, shown, view);
