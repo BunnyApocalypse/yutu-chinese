@@ -9,6 +9,8 @@ import { parseReadyList, tidyPinyin } from './words.js';
 // "?url" makes Vite hand us the file's address instead of its contents, so
 // the dictionary stays a separate file that is only fetched when needed.
 import dictionaryUrl from '../data/cedict/dictionary.tsv?url';
+// Small (the words written several ways), so it goes in with the code.
+import preferredFormsText from '../data/cedict/preferred-forms.tsv?raw';
 // The ready-made lists are separate files in the same way (data/wordlists/).
 import hsk3Url from '../data/wordlists/hsk/hsk-3.0.tsv?url';
 import hsk2Url from '../data/wordlists/hsk/hsk-2.0.tsv?url';
@@ -75,7 +77,7 @@ export function createDictionaryLoader(onReady) {
       dictionaryLoading = fetch(dictionaryUrl)
         .then((response) => response.text())
         .then((text) => {
-          dictionary = readDictionary(text);
+          dictionary = readDictionary(text, preferredFormsText);
           onReady();
           loadUsualReadings();
         })

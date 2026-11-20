@@ -71,7 +71,14 @@ function isSpecialist(meaning) {
 // characters, traditional or simplified, to its lines in the file. The lines
 // are only taken apart when a word is looked up (see lookUp), which keeps
 // this quick and light for a file this size.
-export function readDictionary(text) {
+//
+// preferredText (optional): data/cedict/preferred-forms.tsv. Where a word is
+// written several ways in traditional (岁 is 歲 and the rare variant 嵗), the
+// form named there is put first, so that the lookup of the other script
+// (otherScriptForm) and every list of entries start with Taiwan's form. A
+// form the dictionary lacks altogether (帳戶, where it has only 賬戶) is added
+// as an entry of its own, a copy of the one it replaces.
+export function readDictionary(text, preferredText = '') {
   const linesByWord = new Map();
   const note = (word, line) => {
     const lines = linesByWord.get(word);
@@ -93,7 +100,41 @@ export function readDictionary(text) {
       note(line.slice(firstTab + 1, secondTab), line);
     }
   }
+  putPreferredFirst(linesByWord, preferredText);
   return linesByWord;
+}
+
+// Moves the preferred form's line of each word to the front of its lists
+// (see readDictionary).
+function putPreferredFirst(linesByWord, preferredText) {
+  for (const row of preferredText.split('\n')) {
+    if (row === '' || row.startsWith('#')) {
+      continue;
+    }
+    const [simplified, pinyin, traditional] = row.split('\t');
+    const own = (linesByWord.get(simplified) || []).filter((line) => line.split('\t')[2] === pinyin);
+    // The entry written this way, with the same simplified form. If there
+    // is none, a copy of the first with this traditional form.
+    const isIt = (line) => {
+      const [lineTraditional, lineSimplified] = line.split('\t');
+      return lineTraditional === traditional && (lineSimplified || lineTraditional) === simplified;
+    };
+    let chosen = own.find(isIt);
+    if (!chosen) {
+      if (own.length === 0) {
+        continue;
+      }
+      const columns = own[0].split('\t');
+      columns[0] = traditional;
+      columns[1] = traditional === simplified ? '' : simplified;
+      chosen = columns.join('\t');
+    }
+    for (const word of new Set([simplified, traditional])) {
+      const lines = (linesByWord.get(word) || []).filter((line) => line !== chosen);
+      // The word's own lines first, but a name still comes after (lookUp sorts those).
+      linesByWord.set(word, [chosen, ...lines]);
+    }
+  }
 }
 
 // The meaning proposed for the card, from an entry's list of meanings. It is

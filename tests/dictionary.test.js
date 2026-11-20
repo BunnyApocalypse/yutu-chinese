@@ -364,3 +364,85 @@ test('a writing card keeps a radical\'s full form in the meaning', () => {
   // And other forms, which would give the answer away.
   assert.equal(meaningWithoutChinese('erhua form of 一點'), 'erhua form of …');
 });
+
+// ---------------------------------------------------------------------------
+// Taiwan's form first (data/cedict/preferred-forms.tsv, scripts/build-preferred-forms.js)
+
+const preferredText = fs.readFileSync('data/cedict/preferred-forms.tsv', 'utf8');
+
+test('a word written several ways in traditional is given Taiwan\'s form, not a rare variant', () => {
+  const dictionary = readDictionary(realText, preferredText);
+  const trad = (simplified, pinyin) => otherScriptForm(lookUp(dictionary, simplified), 'simplified', simplified, pinyin);
+  // Without the table these came out as the variants 嵗, 葯, 乹, 咊 and 咲 (the file's first entry).
+  assert.equal(trad('岁', 'sui4'), '歲');
+  assert.equal(trad('药', 'yao4'), '藥');
+  assert.equal(trad('干', 'gan1'), '乾');
+  assert.equal(trad('和', 'he2'), '和');
+  assert.equal(trad('笑', 'xiao4'), '笑');
+  assert.equal(trad('从', 'cong2'), '從');
+  // The ministry writes 里 as 裡 where it means "inside", not 裏.
+  assert.equal(trad('里', 'li3'), '裡');
+  assert.equal(trad('这里', 'zhe4li3'), '這裡');
+  // Taiwan's 帳 for accounts: the dictionary has only 賬戶, so the form is added (form-fixes.tsv).
+  assert.equal(trad('账户', 'zhang4hu4'), '帳戶');
+  // The other direction is unchanged.
+  const simp = (traditional, pinyin) => otherScriptForm(lookUp(dictionary, traditional), 'traditional', traditional, pinyin);
+  assert.equal(simp('歲', 'sui4'), '岁');
+  assert.equal(simp('帳戶', 'zhang4hu4'), '账户');
+});
+
+test('without the table the dictionary keeps its own order', () => {
+  const dictionary = readDictionary(realText);
+  assert.equal(otherScriptForm(lookUp(dictionary, '岁'), 'simplified', '岁', 'sui4'), '嵗');
+});
+
+test('a word with a form of its own for another reading keeps the other reading\'s form', () => {
+  // 发 is 發 fā and 髮 fà: the table only decides between forms of one reading.
+  const dictionary = readDictionary(realText, preferredText);
+  assert.equal(otherScriptForm(lookUp(dictionary, '发'), 'simplified', '发', 'fa1'), '發');
+  assert.equal(otherScriptForm(lookUp(dictionary, '发'), 'simplified', '发', 'fa4'), '髮');
+});
+
+test('every form in the table is in the dictionary, or is a correction made by hand', () => {
+  const dictionary = readDictionary(realText);
+  const rows = preferredText.split('\n').filter((line) => line !== '' && !line.startsWith('#'));
+  assert.ok(rows.length > 500, `only ${rows.length} words`);
+  for (const row of rows) {
+    const [simplified, pinyin, traditional, source, extra] = row.split('\t');
+    assert.equal(extra, undefined, row);
+    assert.ok(['fix', 'moe', 'tocfl', 'hsk'].includes(source), row);
+    if (source !== 'fix') {
+      const found = lookUp(dictionary, simplified).some((entry) => entry.traditional === traditional && entry.pinyin === pinyin);
+      assert.ok(found, `no entry for ${row}`);
+    }
+  }
+});
+
+test('the HSK and TOCFL lists agree with the lookup wherever they have a word in one form only', () => {
+  // The lists' own forms were corrected by hand to Taiwan's; a word they have in a single
+  // form has to come out of the lookup the same way, in both directions.
+  const dictionary = readDictionary(realText, preferredText);
+  const forms = new Map(); // "simplified|reading" → Set of traditional forms, over all the lists
+  for (const file of ['hsk/hsk-2.0.tsv', 'hsk/hsk-3.0.tsv', 'tocfl/tocfl.tsv']) {
+    for (const line of fs.readFileSync(`data/wordlists/${file}`, 'utf8').split('\n')) {
+      if (line === '' || line.startsWith('#')) continue;
+      const [, simplified, traditional, pinyin] = line.split('\t');
+      const key = `${simplified}|${pinyin}`;
+      forms.set(key, (forms.get(key) ?? new Set()).add(traditional));
+    }
+  }
+  const disagreements = [];
+  for (const [key, set] of forms) {
+    if (set.size !== 1) continue;
+    const [simplified, pinyin] = key.split('|');
+    const traditional = [...set][0];
+    if (simplified === traditional) continue;
+    const got = otherScriptForm(lookUp(dictionary, simplified), 'simplified', simplified, pinyin);
+    if (got !== traditional && lookUp(dictionary, simplified).length > 0) {
+      disagreements.push(`${simplified} ${pinyin}: list ${traditional}, lookup ${got}`);
+    }
+  }
+  // Four remain where a list and the lookup differ (found 2026-11-20); they are not to grow
+  // unnoticed.
+  assert.ok(disagreements.length <= 4, `${disagreements.length} words differ:\n${disagreements.slice(0, 20).join('\n')}`);
+});

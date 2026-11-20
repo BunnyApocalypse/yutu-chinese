@@ -23,6 +23,10 @@ It is the dictionary itself in a plainer form, one entry per line with tabs betw
 
 The app looks words up in it when a word is added in the Words tab.
 
+## `preferred-forms.tsv`
+
+Built by `scripts/build-preferred-forms.js`: for each word the dictionary writes several ways in traditional, the form Taiwan uses (columns: simplified, reading, traditional, source). The choices were made with the Ministry of Education's dictionary (only the choice is kept, never its text), the TOCFL and HSK lists, and `data/wordlists/form-fixes.tsv`. Run it after rebuilding `dictionary.tsv`.
+
 ## License
 
 CC-CEDICT is licensed under the [Creative Commons Attribution-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-sa/4.0/). Both files are adapted from it and are under the same license, not under the GPL that covers the app's code.
