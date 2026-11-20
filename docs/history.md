@@ -32,7 +32,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - The TOCFL notes' simplified versions may keep older mainland forms; the mainland words added for the other side are unchecked (least sure 小測, 劫匪, 升艙, 鬧市); the six sentences for the Taiwanese reader (`local/notes-writing/ask.md`) and the `ask` marks are not on a reader's page yet.
 - The mainland reader's general page: the next batch starts at #81.
 - Taiwan forms of parts in tips (房's tip names 户); 8 declined radicals and variants for `radicals.tsv` (氺 镸 旡 爫 攴 彑 襾 阜).
-- The old notes' rework (`local/old-notes/`): see the handover of the second session of 2026-11-20 (rework-51 to -54; what is left: 235 notes of TOCFL level 4, then the radicals).
+- The old notes' rework (`local/old-notes/`): every word note is done; the 164 radical notes are left (see the handover of the third session of 2026-11-20).
 
 **Testers:**
 
@@ -40,6 +40,14 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - A German tester to find. The Italian and German texts Claude wrote since the Italian tester's check are unchecked.
 
 **Tests to watch:** `sync.browser.js`'s "sends everything after Import backup…" ("the app did not load again") and two writing grid runs (愉, 薦) failed once in a full run and passed alone (2026-11-20); `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
+
+**Handover from the third session of 2026-11-20 (the last 235 word notes reworked; the radical notes' tooling and a trial of 20; on the branch `worktree-old-notes-rework-51`, committed, not pushed).**
+
+- **Old notes reworked:** the last 235 of TOCFL level 4 (`local/old-notes/rework-55` to `-57`, 相 to 足以); five Sonnet writers, three Opus judges, sent back once, read by hand, every reading-flagged note read against both dictionaries. Hand edits (`settle-hand.cjs` in 55, 56, 57): 作客 (做客 the more common form; the judge's unchecked mainland claim cut), 晓得's `ask` off (regional), 帐单's remark on 账单 dropped, 媳妇's "wife only in dialects" dropped (Taiwan's dictionary gives wife to xífù), 心脏's remark on simplified 脏 dropped. `convert-notes.js` listed 7, settled in `local/old-notes/settle-old-19.mjs` (制|zhi4 is 製 in the TOCFL list, so 製 throughout; 讚同; 一隻眼). **Every word note is now reworked**; only the 164 radical notes are untagged.
+- **Radical notes** (`local/old-notes/radicals-plan.md`, agreed by the owner 2026-11-20: form and place, the clue with 3 to 5 list characters, look-alikes, an origin picture only with a quote; a trial of 20 first). Built in the worktree's `local/old-notes/`: `radicals.mjs`, `gather-radicals.mjs`, `check-radicals.mjs` (examples must have the radical in both scripts: the judge found 凉 → 涼, 东 → 東, 乐 → 樂, 厅 → 廳 and others), `prompt-writer-radicals.md`; `apply.mjs` takes a note with no example (a real copy there now, the main checkout's linked one lacks it). **The trial, `rework-58/`** (氵 冫 礻 衤 阝 ⺼ 一 丿 言 讠 亻 彳 宀 冖 攵 夂 曰 广 疒 厂), judged and sent back once: `rework-58/sample.md` for the owner to read. Not applied.
+- **Tests:** 443 unit tests pass; no browser run (only TOCFL notes changed).
+- **Next:** the owner's look at the radical trial, then the other 144 (`gather-radicals.mjs <dir> 72 2 --skip=…`, two batches; `--skip` counts untagged notes, so gather after the trial is applied or pass its 20 over by hand). The `local/` changes live only in this worktree: copy them to the main checkout's `local/old-notes/` before removing it.
+- **Lesson:** the token window ran out a few minutes before its reset with six writers just started (the owner at 87%); the writers stopped and resumed by message after the reset without losing work.
 
 **Handover from the second session of 2026-11-20 (400 old notes reworked, both dictionaries in the note pipelines, a clearer explanation of a checked tip; released to `stable` and `main` at the owner's word, "What's new" `2026-11-20-2`, the site's deploy started).**
 
