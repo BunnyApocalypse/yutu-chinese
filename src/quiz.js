@@ -142,6 +142,7 @@ const PADDING_SHARE = 0.06;
 // to begin.
 export function createQuiz(target, size, handlers) {
   const penWidth = Math.max(4, size / 40);
+  rawInputLog.watchContacts(target);
 
   // One Hanzi Writer is created for the first character and then reused for
   // every later one. Each Hanzi Writer attaches its own touch listeners to the

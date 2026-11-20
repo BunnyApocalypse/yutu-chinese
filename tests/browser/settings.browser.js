@@ -597,6 +597,18 @@ describe('settings', { concurrency: false }, () => {
     assert.equal(written.mistakes, 1);
     assert.equal(written.leniency, 1.8);
     assert.ok(written.strokes[1].points.length > 2);
+    assert.equal(file.version, 2);
+    // Every touch as the browser reported it: here a mouse, lifted each time.
+    assert.equal(written.contacts.length, 4);
+    for (const contact of written.contacts) {
+      assert.equal(contact.type, 'mouse');
+      assert.equal(contact.end, 'up');
+      assert.equal(contact.others, 0);
+      assert.equal(contact.under, undefined);
+      assert.ok(contact.from.length === 2 && contact.to.length === 2);
+    }
+    assert.ok(written.writingAreasMade >= 1);
+    assert.ok(written.screen.width > 0 && written.areaAt.length === 2);
     // Cleared, and switched off again.
     await page.evaluate(ANSWER_YES);
     await tap(page, 'raw-input-clear');
