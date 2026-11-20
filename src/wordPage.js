@@ -311,8 +311,8 @@ export function createWordPage({
   // note (the owner, 2026-10-25; data/notes/README.md): ✓ only when a
   // native speaker has read it; AI in a solid box when an AI model checked
   // it (`judged`: every fact on how characters were built, came about or
-  // are read backed by a quote from Wiktionary, CC-CEDICT or Taiwan's
-  // Ministry of Education dictionary and confirmed by a second AI model,
+  // are read found in Wiktionary, CC-CEDICT or Taiwan's Ministry of
+  // Education dictionary and checked against it by a second AI model,
   // which also read the rest for mistakes; with `wikipedia` too, its
   // history also checked against Wikipedia: the dynasty names, the owner,
   // 2026-11-05; or the older `sources` check); AI in a dashed box when
