@@ -1,6 +1,6 @@
 # 玉兔中文 Yutu Chinese
 
-> A free, open-source app for learning Chinese vocabulary: each word gets four cards (writing, tone, pinyin and meaning). It runs in a web browser on a phone, tablet or computer, works offline, and needs no account. Words you study are scheduled with spaced repetition (FSRS) so they come back just before you would forget them.
+> A free, open-source app for learning Chinese vocabulary: each word gets four cards (writing, tone, pinyin and meaning). It runs in any modern web browser on a phone, tablet or computer, can be installed from the browser menu ("Install app" or "Add to Home Screen") so it opens like any other app, works offline, and needs no account. Words you study are scheduled with spaced repetition (FSRS) so they come back just before you would forget them.
 
 Everything stays on the learner's device. Syncing between devices is optional and encrypted on the device before it is sent. The code is licensed under GPL-3.0.
 
@@ -22,3 +22,11 @@ Everything stays on the learner's device. Syncing between devices is optional an
 - [Home page](https://yutuchinese.com/): what it is and answers to common questions
 - [Import from Skritter](https://yutuchinese.com/import-from-skritter/): how to ask Skritter for your data and import the .zip, keeping words, schedules and review history
 - [Source code and issues](https://github.com/BunnyApocalypse/yutu-chinese): GPL-3.0, with a README describing every feature
+
+## Optional
+
+- [Goals](https://github.com/BunnyApocalypse/yutu-chinese/blob/main/docs/goals.md): who the app is for and where it is heading
+- [Cards and scheduling](https://github.com/BunnyApocalypse/yutu-chinese/blob/main/docs/cards.md): the four cards, FSRS, review and learn
+- [Writing a character](https://github.com/BunnyApocalypse/yutu-chinese/blob/main/docs/writing.md): handwriting input, shortcuts and grading
+- [Syncing between devices](https://github.com/BunnyApocalypse/yutu-chinese/blob/main/docs/sync.md): how optional encrypted sync works
+- [Importing from Anki](https://github.com/BunnyApocalypse/yutu-chinese/blob/main/docs/anki.md): what comes over from .apkg and .colpkg files
