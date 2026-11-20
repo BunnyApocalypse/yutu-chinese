@@ -34,3 +34,5 @@ Read before writing or checking notes in this folder. The file format, the tags 
 - They put Taiwan's usual form in a traditional sentence instead of the list's (報導 for 報道), which breaks the link to the word.
 - The word must stand alone in the example's pinyin (a particle split off, "wàng zhe"); a single character may be shown inside a compound (大象). The rule can push a writer into a stilted sentence; a set phrase fixes it.
 - Writers running side by side must not share script names in the scratchpad.
+- One writer split every other word of the example's pinyin syllable by syllable ("Wǒ men yào bǎo hù") to keep the headword alone; the check lets it through, so scan the pinyin after a run (batches 21 to 24).
+- A tip can name only a character's listed parts, so one whose real top or streamer is not listed (鉴, 旋's 𠂉) can't say what to write: decline it rather than misname a part.
