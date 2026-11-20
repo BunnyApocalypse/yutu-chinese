@@ -32,7 +32,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - The TOCFL notes' simplified versions may keep older mainland forms; the mainland words added for the other side are unchecked (least sure 小測, 劫匪, 升艙, 鬧市); the six sentences for the Taiwanese reader (`local/notes-writing/ask.md`) and the `ask` marks are not on a reader's page yet.
 - The mainland reader's general page: the next batch starts at #81.
 - Taiwan forms of parts in tips (房's tip names 户); 8 declined radicals and variants for `radicals.tsv` (氺 镸 旡 爫 攴 彑 襾 阜).
-- The old notes' rework (`local/old-notes/`): see the handover of the fourth session of 2026-11-17 (rework-49 and -50; what is left: the radicals, 635 notes of TOCFL level 4).
+- The old notes' rework (`local/old-notes/`): see the handover of the second session of 2026-11-20 (rework-51 to -54; what is left: 235 notes of TOCFL level 4, then the radicals).
 
 **Testers:**
 
@@ -40,6 +40,13 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - A German tester to find. The Italian and German texts Claude wrote since the Italian tester's check are unchecked.
 
 **Tests to watch:** `sync.browser.js`'s "sends everything after Import backup…" ("the app did not load again") and two writing grid runs (愉, 薦) failed once in a full run and passed alone (2026-11-20); `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
+
+**Handover from the second session of 2026-11-20 (400 old notes reworked; committed on the branch `worktree-old-notes-rework-51`, not merged, not pushed).**
+
+- **Old notes reworked:** 400 notes of TOCFL level 4 (`local/old-notes/rework-51` to `-54`, `local/old-notes/README.md`): 口气 to 现成. Four batches (the owner, "run 4 more"); eight Sonnet writers, four Opus judges, sent back once, read by hand. 147 characters on average, 7 example only, 34 `ask` sentences (for a native reader, as before). `convert-notes.js` listed 22, settled in `local/note-scripts/settle-old-16.mjs`. The owner did not look at a sample first. The rework is at 93% (5,450 of 5,849).
+- **Tests:** 443 unit tests pass; no browser run (only TOCFL notes changed).
+- **Left to rework:** 235 of `tocfl-4.tsv` (next: `gather.mjs tocfl-4.tsv … 100 2 --in-order --skip=0`), then the 164 radical notes.
+- **Noticed, not fixed:** 后院's traditional note (`tocfl-4.tsv`, reworked earlier) writes 后院 for 後院.
 
 **Handover from the session of 2026-11-20 (the other-script lookup gives Taiwan's form; released to `stable` and `main` at the owner's word, "What's new" `2026-11-20`).**
 
