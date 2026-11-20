@@ -13,6 +13,24 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-20-4',
+    items: [
+      'Learning the other script\'s forms is more accurate: a card no longer says a part changes "in every character" when it doesn\'t. 畫 → 画 is now taught as a whole character, not as "聿 becomes 一".',
+      'A change found in only some characters, or in this one only, now says so, checked separately for learners of traditional and of simplified.',
+      'On a sentence card, a word that appears twice in the sentence is now a gap both times (聞 in its example sentence).',
+    ],
+    it: [
+      'Imparare le forme dell\'altra scrittura è più preciso: una carta non dice più che una parte cambia «in ogni carattere» quando non è vero. 畫 → 画 ora si impara come carattere intero, non come «聿 diventa 一».',
+      'Un cambiamento presente solo in alcuni caratteri, o solo in questo, ora lo dice, verificato a parte per chi studia il tradizionale e per chi studia il semplificato.',
+      'In una carta di frase, una parola che compare due volte nella frase ora è uno spazio vuoto tutte e due le volte (聞 nella sua frase di esempio).',
+    ],
+    de: [
+      'Das Lernen der Formen der anderen Schrift ist genauer: Eine Karte sagt nicht mehr, ein Teil ändere sich „in jedem Zeichen“, wenn das nicht stimmt. 畫 → 画 wird jetzt als ganzes Zeichen gelernt, nicht als „聿 wird zu 一“.',
+      'Eine Änderung, die es nur in manchen Zeichen oder nur in diesem gibt, sagt das jetzt, getrennt geprüft für Lernende der traditionellen und der vereinfachten Schrift.',
+      'Auf einer Satzkarte ist ein Wort, das zweimal im Satz vorkommt, jetzt beide Male eine Lücke (聞 in seinem Beispielsatz).',
+    ],
+  },
+  {
     id: '2026-11-20-3',
     items: [
       'The learning tips for the last 235 words of TOCFL level 4 have been rewritten and checked, so every word now has a checked tip.',
