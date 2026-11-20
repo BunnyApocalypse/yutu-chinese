@@ -150,6 +150,25 @@ function swapped(fromTree, toTree) {
   return fromTree.parts.length === 2 && a !== b && written(a) === written(d) && written(b) === written(c);
 }
 
+// Every part found in a character, written out as keyOf writes a change's
+// side (爭, or ⿱？工), split as far as compare splits: the character itself,
+// its parts, their parts, and so on, DEEPEST levels down.
+export function occurrences(character, characters) {
+  const found = new Set();
+  function walk(part, depth) {
+    found.add(written(part));
+    if (depth >= DEEPEST) {
+      return;
+    }
+    const tree = split(part, characters);
+    if (typeof tree !== 'string') {
+      tree.parts.forEach((child) => walk(child, depth + 1));
+    }
+  }
+  walk(character, 0);
+  return found;
+}
+
 // The name of a change, the same for every character it is found in.
 export function keyOf(change) {
   return `${change.from}→${change.to}`;
@@ -179,11 +198,12 @@ export function needsLearning(change) {
 // The changes of many characters at once, as a Map from "繁简" (the two forms
 // written together) to the list partChanges gives, except that a character
 // which is itself a part changed in another (賣, a part of 讀) has that one
-// change: it is where the key is first met.
-export function changesOfPairs(pairs, characters) {
+// change: it is where the key is first met. With `checks` (a Map from key
+// to verdict, parsePartKeyChecks), each list is as `checked` gives it.
+export function changesOfPairs(pairs, characters, checks = null) {
   const changes = new Map(pairs.map(([traditional, simplified]) => [
     traditional + simplified,
-    partChanges(traditional, simplified, characters),
+    checked(traditional, simplified, partChanges(traditional, simplified, characters), checks),
   ]));
   const partKeys = new Set();
   for (const list of changes.values()) {
@@ -195,10 +215,16 @@ export function changesOfPairs(pairs, characters) {
   }
   for (const [traditional, simplified] of pairs) {
     if (partKeys.has(`${traditional}→${simplified}`)) {
-      changes.set(traditional + simplified, [{ from: traditional, to: simplified, kind: 'part' }]);
+      changes.set(traditional + simplified, selfChange(traditional, simplified, checks));
     }
   }
   return changes;
+}
+
+// The one change of a character that is itself a part changed in another
+// (賣 → 卖), checked like any other.
+function selfChange(traditional, simplified, checks) {
+  return checked(traditional, simplified, [{ from: traditional, to: simplified, kind: 'part' }], checks);
 }
 
 // The same for characters met as they come (the app's words, and the
@@ -206,13 +232,15 @@ export function changesOfPairs(pairs, characters) {
 // changesOf(traditional, simplified) gives a pair's changes, each worked
 // out once. A character which is a part changed in any pair taken in so far
 // has that one change, as in changesOfPairs, so take everything in first.
-export function createChangeTable(characters) {
+// `checks` as for changesOfPairs.
+export function createChangeTable(characters, checks = null) {
   const known = new Map();
+  const selves = new Map();
   const partKeys = new Set();
   const own = (traditional, simplified) => {
     const pair = traditional + simplified;
     if (!known.has(pair)) {
-      known.set(pair, partChanges(traditional, simplified, characters));
+      known.set(pair, checked(traditional, simplified, partChanges(traditional, simplified, characters), checks));
     }
     return known.get(pair);
   };
@@ -227,10 +255,156 @@ export function createChangeTable(characters) {
       }
     },
     changesOf(traditional, simplified) {
+      const pair = traditional + simplified;
       if (partKeys.has(`${traditional}→${simplified}`)) {
-        return [{ from: traditional, to: simplified, kind: 'part' }];
+        if (!selves.has(pair)) {
+          selves.set(pair, selfChange(traditional, simplified, checks));
+        }
+        return selves.get(pair);
       }
       return own(traditional, simplified);
     },
   };
+}
+
+// --- Checking part keys against the whole dictionary ----------------------
+//
+// A part change's card says the part "is written … in every character that
+// has it". The owner found that untrue of 畫 → 画 (2026-11-20): 聿 → 一
+// there, but 律 keeps 聿 and 筆 → 笔 makes it 毛. It goes wrong two ways:
+//   - the two forms happen to split alike, so a character redrawn as a whole
+//     looks like a part change (畫's 聿 → 一, 東's 木 → 七): such a key is
+//     found in that one character only;
+//   - the change is real but not everywhere (堇 → 又 in 漢 難 艱, but 勤
+//     keeps 堇).
+// checkPartKeys looks at every pair of a whole dictionary (CC-CEDICT's
+// one-character entries, those written alike too; scripts/build-part-keys.js
+// writes the result to data/script-keys/) and gives each key a verdict:
+//   'once':       found in one character only: a change of that character
+//                 alone (時's 寺 → 寸), or, if more of it changed, the
+//                 character redrawn as a whole ("畫 is written 画"); see
+//                 `checked`
+//   'some':       found in several, but the part is kept in others (律) or
+//                 changes another way (筆): the card says "in some
+//                 characters"
+//   'everywhere': wherever the part is, it changes this way (爭 → 争)
+// Checked are the changes whose card makes the claim: `part`, and the
+// `small` ones learned. A part inside a character that changes as a whole
+// or by a bigger part (書 → 书) counts neither way.
+
+const isClaimed = (change) => change.kind === 'part' || (change.kind === 'small' && needsLearning(change));
+
+// pairs: [traditional, simplified], every character of a dictionary, those
+// written alike as well. Returns a Map from key to
+//   { verdict, found, kept, other }
+// `found`: the pairs ("繁简") with the key; `kept`: those keeping the part
+// (a character written alike, or "繁简"); `other`: those changing it another
+// way ("筆笔→毛").
+export function checkPartKeys(pairs, characters) {
+  const changes = changesOfPairs(pairs, characters);
+  const parts = new Map();
+  const partsOf = (character) => {
+    if (!parts.has(character)) {
+      parts.set(character, occurrences(character, characters));
+    }
+    return parts.get(character);
+  };
+  const keys = new Map();
+  const add = (change, pair) => {
+    const key = keyOf(change);
+    if (!keys.has(key)) {
+      keys.set(key, { change, found: new Set() });
+    }
+    keys.get(key).found.add(pair);
+  };
+  for (const [traditional, simplified] of pairs) {
+    for (const change of changes.get(traditional + simplified)) {
+      if (isClaimed(change)) {
+        add(change, traditional + simplified);
+      }
+    }
+  }
+  // A character that is itself a part changed in another (東, in 凍) has
+  // that one change here, but in the app, before any character with it is
+  // met, its own split (東's 木 → 七). Those keys get a verdict too, from
+  // such characters alone.
+  const keysFound = new Set(keys.keys());
+  for (const [traditional, simplified] of pairs) {
+    const [only] = changes.get(traditional + simplified);
+    if (only?.from === traditional && only.to === simplified && only.kind === 'part') {
+      for (const change of partChanges(traditional, simplified, characters)) {
+        if (isClaimed(change) && !keysFound.has(keyOf(change))) {
+          add(change, traditional + simplified);
+        }
+      }
+    }
+  }
+  const result = new Map();
+  for (const [key, { change, found }] of keys) {
+    const kept = [];
+    const other = [];
+    for (const [traditional, simplified] of pairs) {
+      const pair = traditional + simplified;
+      if (found.has(pair) || !partsOf(traditional).has(change.from)) {
+        continue;
+      }
+      if (traditional === simplified) {
+        kept.push(traditional);
+      } else if (partsOf(simplified).has(change.from)) {
+        kept.push(pair);
+      } else {
+        const elsewhere = changes.get(pair).find((each) => each.from === change.from && each.to !== change.to);
+        if (elsewhere) {
+          other.push(`${pair}→${elsewhere.to}`);
+        }
+      }
+    }
+    const verdict = found.size === 1 ? 'once' : kept.length > 0 || other.length > 0 ? 'some' : 'everywhere';
+    result.set(key, { verdict, found: [...found], kept, other });
+  }
+  return result;
+}
+
+// A Map from key to verdict, from the file scripts/build-part-keys.js
+// writes (key, verdict, then counts and examples, tab-separated; "#" begins
+// a comment).
+export function parsePartKeyChecks(text) {
+  const checks = new Map();
+  for (const line of text.split('\n')) {
+    if (line.startsWith('#') || line.trim() === '') {
+      continue;
+    }
+    const [key, verdict] = line.split('\t');
+    checks.set(key, verdict);
+  }
+  return checks;
+}
+
+// A pair's changes with the verdicts applied:
+//   - a key found 'once' that is the character's only change, a radical
+//     form on its side apart (時's 寺 → 寸, 線's 泉 → 戋), is kept with
+//     `only: true`: a real change, of this character only, its card saying
+//     so;
+//   - any other key found 'once' (畫's 聿 → 一 beside 田 → 凵田: the whole
+//     character was redrawn) is taken out, and the character changes as a
+//     whole, that change first, before its others (a radical form, or a
+//     part changed in other characters too, as 變's 䜌 → 亦);
+//   - a claimed change not checked 'everywhere' gets `some: true`, its card
+//     saying "in some characters"; so does a key the file lacks (a
+//     character missing from the dictionary it was made from), unchecked.
+// Without `checks`, the changes as they are.
+export function checked(traditional, simplified, changes, checks) {
+  if (!checks) {
+    return changes;
+  }
+  const verdictOf = (change) => checks.get(keyOf(change)) ?? 'some';
+  const once = changes.filter((change) => isClaimed(change) && verdictOf(change) === 'once');
+  const notRadical = changes.filter((change) => change.kind !== 'radical');
+  if (once.length === 1 && notRadical.length === 1) {
+    return changes.map((change) => (change === once[0] ? { ...change, only: true } : change));
+  }
+  const rest = changes
+    .filter((change) => !once.includes(change))
+    .map((change) => (isClaimed(change) && verdictOf(change) !== 'everywhere' ? { ...change, some: true } : change));
+  return once.length > 0 ? [{ from: traditional, to: simplified, kind: 'whole' }, ...rest] : rest;
 }

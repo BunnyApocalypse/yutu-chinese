@@ -669,6 +669,13 @@ export default {
   'learnForms.explainPart': '{before} is written {after} {inScript}, in every character that has it.',
   'learnForms.explainWhole': '{before} is written {after} {inScript}.',
   'learnForms.explainInside': 'Part of {before} is written differently {inScript}, as in {after}. It changes the same way in every character that has it.',
+  // The same two for a change found in several characters but not in every
+  // one with the part (堇 → 又 in 漢 and 難, but 勤 keeps 堇).
+  'learnForms.explainPartSome': '{before} is written {after} {inScript} in some characters, not in all of them.',
+  'learnForms.explainInsideSome': 'Part of {before} is written differently {inScript}, as in {after}. Some other characters change the same way, but not all.',
+  // And for a change found in this one character only (時: 寺 → 寸).
+  'learnForms.explainPartOnly': 'Here {before} is written {after} {inScript}. Other characters with it don\'t change this way.',
+  'learnForms.explainInsideOnly': 'Part of {before} is written differently {inScript}, as in {after}. No other character changes this way.',
   'learnForms.ownForm': '{before} {inOwnScript}',
   'learnForms.nothingNew': 'Nothing new here: you know its changes from your other words.',
   'learnForms.inYourWords': 'In your words',
@@ -1259,7 +1266,7 @@ export default {
   'credits.readingAnkiFilesSql': '<b>Reading Anki files:</b> <a href="https://github.com/sql-js/sql.js" target="_blank" rel="noopener">sql.js</a> (SQLite in the browser), MIT License; <a href="https://github.com/101arrowz/fzstd" target="_blank" rel="noopener">fzstd</a> by Arjun Barrett, MIT License. SQLite itself is in the public domain.',
   'credits.dictionaryAndTonesCc': '<b>Dictionary and tones:</b> <a href="https://cc-cedict.org" target="_blank" rel="noopener">CC-CEDICT</a>. Creative Commons Attribution-ShareAlike 4.0.',
   'credits.recordingsAudioCmnSyllables': '<b>Recordings:</b> <a href="https://github.com/hugolpz/audio-cmn" target="_blank" rel="noopener">audio-cmn</a>: syllables spoken by Chen Wang, words spoken by Yue Tan (Shtooka project), collected by Hugo Lopez. Creative Commons Attribution-ShareAlike.',
-  'credits.howCharactersAreBuilt': '<b>How characters are built:</b> the dictionary of Make Me a Hanzi (from Unihan and CJKlib). GNU Lesser General Public License.',
+  'credits.howCharactersAreBuilt': '<b>How characters are built:</b> the dictionary of Make Me a Hanzi (from Unihan and CJKlib). GNU Lesser General Public License. With CC-CEDICT, it also gives which parts change between traditional and simplified.',
   'credits.learningTipsAndExample': '<b>Learning tips and example sentences:</b> written for this app by an AI model (Anthropic\'s Claude), drawing on <a href="https://en.wiktionary.org" target="_blank" rel="noopener">Wiktionary</a> for the origins of characters. Creative Commons Attribution-ShareAlike 4.0. No fluent speaker has checked them line by line: they may be wrong. Some have been read by a native speaker, or had what they say about their characters checked against Wiktionary, Make Me a Hanzi and CC-CEDICT, and those on Chinese dynasties had their history checked against <a href="https://en.wikipedia.org" target="_blank" rel="noopener">Wikipedia</a>: the box beside a tip says which.',
   'credits.taiwanReadings': '<b>Taiwan readings in learning tips:</b> checked against Taiwan\'s Ministry of Education dictionary, the <a href="https://dict.revised.moe.edu.tw" target="_blank" rel="noopener"><span lang="zh-Hant-TW">重編國語辭典修訂本</span></a>. A tip may say how a word is read in Taiwan; none of the dictionary\'s text is used.',
   'credits.characterTips': '<b>“How to remember it” for characters:</b> written for this app by an AI model (Anthropic\'s Claude) from the parts in Make Me a Hanzi, with <a href="https://en.wiktionary.org" target="_blank" rel="noopener">Wiktionary</a> for where a character came from. Creative Commons Attribution-ShareAlike 4.0. No person has checked them: they may be wrong.',

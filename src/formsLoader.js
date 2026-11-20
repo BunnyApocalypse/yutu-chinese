@@ -6,8 +6,11 @@
 // they are needed, once; nothing from the internet.
 
 import { parseCharacters } from './characters.js';
-import { createChangeTable } from './scriptKeys.js';
+import { createChangeTable, parsePartKeyChecks } from './scriptKeys.js';
 import charactersUrl from '../data/makemeahanzi/dictionary.txt?url';
+// Each part change checked against the whole dictionary
+// (scripts/build-part-keys.js; checkPartKeys in scriptKeys.js).
+import partKeysUrl from '../data/script-keys/part-keys.tsv?url';
 import hsk3Url from '../data/wordlists/hsk/hsk-3.0.tsv?url';
 import tocflUrl from '../data/wordlists/tocfl/tocfl.tsv?url';
 
@@ -51,9 +54,12 @@ let loading = null;
 export function loadForms() {
   loading =
     loading ||
-    Promise.all([fetchText(charactersUrl), fetchText(hsk3Url), fetchText(tocflUrl)]).then(
-      ([charactersText, hsk, tocfl]) => {
-        const table = createChangeTable(parseCharacters(charactersText));
+    Promise.all([fetchText(charactersUrl), fetchText(hsk3Url), fetchText(tocflUrl), fetchText(partKeysUrl)]).then(
+      ([charactersText, hsk, tocfl, partKeysText]) => {
+        // Without the checks file (it couldn't be read), the changes as
+        // worked out, unchecked.
+        const checks = partKeysText ? parsePartKeyChecks(partKeysText) : null;
+        const table = createChangeTable(parseCharacters(charactersText), checks);
         const morePairs = [...listPairs(hsk), ...listPairs(tocfl)];
         table.add(morePairs);
         return { table, morePairs };

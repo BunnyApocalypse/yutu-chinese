@@ -21,7 +21,7 @@
 import fs from 'node:fs';
 import { readDictionary, lookUp, otherScriptForm } from '../src/dictionary.js';
 import { parseCharacters } from '../src/characters.js';
-import { createChangeTable, keyOf, needsLearning } from '../src/scriptKeys.js';
+import { createChangeTable, keyOf, needsLearning, parsePartKeyChecks } from '../src/scriptKeys.js';
 
 const outputFolder = 'local/audit';
 fs.mkdirSync(outputFolder, { recursive: true });
@@ -144,7 +144,9 @@ for (const word of all) {
   });
 }
 
-const table = createChangeTable(characters);
+// With the checks against the whole dictionary applied, as in the app
+// (data/script-keys/, scripts/build-part-keys.js).
+const table = createChangeTable(characters, parsePartKeyChecks(fs.readFileSync('data/script-keys/part-keys.tsv', 'utf8')));
 table.add([...pairs.values()].map((pair) => [pair.traditional, pair.simplified]));
 
 // All the parts in a character, all the way down (the dictionary's decomposition, which
