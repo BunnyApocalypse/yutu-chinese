@@ -13,6 +13,21 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-20-3',
+    items: [
+      'The learning tips for the last 235 words of TOCFL level 4 have been rewritten and checked, so every word now has a checked tip.',
+      'Every radical has a new tip too: where it sits in a character, what it hints at, with characters you will meet, and which look-alikes to tell it from (冫 and 氵, 礻 and 衤).',
+    ],
+    it: [
+      'I consigli di studio delle ultime 235 parole del livello 4 del TOCFL sono stati riscritti e controllati: ora ogni parola ha un consiglio controllato.',
+      'Anche ogni radicale ha un nuovo consiglio: dove si trova nel carattere, che cosa suggerisce, con caratteri che incontrerai, e da quali radicali simili distinguerlo (冫 e 氵, 礻 e 衤).',
+    ],
+    de: [
+      'Die Lerntipps für die letzten 235 Wörter der TOCFL-Stufe 4 wurden neu geschrieben und geprüft: Jetzt hat jedes Wort einen geprüften Tipp.',
+      'Auch jedes Radikal hat einen neuen Tipp: wo es im Zeichen steht, worauf es hinweist, mit Zeichen, denen du begegnen wirst, und von welchen ähnlichen Radikalen man es unterscheidet (冫 und 氵, 礻 und 衤).',
+    ],
+  },
+  {
     id: '2026-11-20-2',
     items: [
       'Learning tips for 400 more words of TOCFL level 4 have been rewritten and checked, and a few now say how a word is read in Taiwan (頗 is pǒ there).',
