@@ -56,12 +56,12 @@ describe('the word page', { concurrency: false }, () => {
     // Shown in both scripts, each line says which it is.
     assert.deepEqual(await page.evaluate(texts('.sentence-script')), ['trad.', 'simp.']);
     assert.equal(await textOf(page, '#word-page-body .page-english'), 'We are classmates.');
-    // No person has checked this note (a second AI model read it): the box
-    // beside its heading says AI, and a tap on it says what that means.
+    // No person has checked this note (a second AI model checked it): the
+    // box beside its heading says AI, and a tap on it says what that means.
     assert.equal(await textOf(page, '#word-page-body .note-badge'), 'AI');
     assert.equal(await page.evaluate(`document.querySelector('#word-page-body .note-badge-text').hidden`), true);
     await page.evaluate(`document.querySelector('#word-page-body .note-badge').click()`);
-    assert.match(await textOf(page, '#word-page-body .note-badge-text'), /^Written by an AI model\. What it says about how its characters were built or where they came from was found in Wiktionary or CC-CEDICT; the rest, with the example sentence, was read by a second AI model\. No person has checked it/);
+    assert.match(await textOf(page, '#word-page-body .note-badge-text'), /^This tip was written by an AI model and then checked by a second, separate one\. Every fact about the characters .* had to be found in Wiktionary, CC-CEDICT or Taiwan's Ministry of Education dictionary, .* No person has checked it/);
     // Each character with its parts; 們 has one for the meaning and one for the sound.
     assert.deepEqual(await page.evaluate(texts('.character-big')), ['我', '們']);
     assert.deepEqual(await page.evaluate(texts('.part.meaning, .part.sound')), ['亻meaning', '門sound']);

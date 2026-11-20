@@ -13,6 +13,21 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-20-2',
+    items: [
+      'Learning tips for 400 more words of TOCFL level 4 have been rewritten and checked, and a few now say how a word is read in Taiwan (頗 is pǒ there).',
+      'Tap the AI box beside "Learning tips" and it now says plainly what was checked, and how.',
+    ],
+    it: [
+      'I consigli di studio di altre 400 parole del livello 4 del TOCFL sono stati riscritti e controllati, e alcuni ora dicono come si legge una parola a Taiwan (頗 lì si legge pǒ).',
+      'Tocca il riquadro IA accanto a «Consigli di studio»: ora dice chiaramente che cosa è stato controllato, e come.',
+    ],
+    de: [
+      'Die Lerntipps für 400 weitere Wörter der TOCFL-Stufe 4 wurden neu geschrieben und geprüft, und einige sagen jetzt, wie ein Wort in Taiwan gelesen wird (頗 dort pǒ).',
+      'Tippe auf das KI-Kästchen neben „Lerntipps“: Es sagt jetzt klar, was geprüft wurde und wie.',
+    ],
+  },
+  {
     id: '2026-11-20',
     items: [
       'When you add a word in one script only, the other script now gets the form Taiwan uses: 岁 gives 歲 (not the rare 嵗), 里 gives 裡, and 账户 gives 帳戶.',
