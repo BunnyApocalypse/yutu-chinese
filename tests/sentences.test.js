@@ -60,6 +60,10 @@ test('a sentence\'s writing card asks for its cloze word or for all of it', () =
   // Without a cloze word there is only the whole sentence to write.
   const { cloze, ...plain } = record;
   assert.deepEqual(sentenceWriting(plain, 'traditional', 'word'), { text: '我們是同學。', prompt: null });
+  // A word that stands twice in the sentence is a gap at both places, and
+  // still written once.
+  const twice = { ...record, traditional: '百聞不如一見，聞了才知道。', cloze: { traditional: '聞', simplified: '闻' } };
+  assert.deepEqual(sentenceWriting(twice, 'traditional', 'word'), { text: '聞', prompt: '百＿不如一見，＿了才知道。' });
 });
 
 test('the word to fill in is found in the other script by its place', () => {

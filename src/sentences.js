@@ -102,13 +102,15 @@ export function clozeInBoth(own, other, clozeOwn) {
 //   text:   the characters to write: the cloze word, or the whole sentence
 //           (the writing flow leaves out what is not a character)
 //   prompt: for the cloze word, the sentence with a gap where the word
-//           goes ("我们是＿＿。"); null when the whole sentence is written
+//           goes ("我们是＿＿。"), at each place it stands (the owner,
+//           2026-11-20: 聞's example has 聞 twice); null when the whole
+//           sentence is written
 export function sentenceWriting(word, script, mode) {
   const sentence = word[script];
   const cloze = word.cloze && word.cloze[script];
   if (mode === 'word' && cloze && sentence.includes(cloze)) {
     const gap = '＿'.repeat(Array.from(cloze).length);
-    return { text: cloze, prompt: sentence.replace(cloze, gap) };
+    return { text: cloze, prompt: sentence.replaceAll(cloze, gap) };
   }
   return { text: sentence, prompt: null };
 }
