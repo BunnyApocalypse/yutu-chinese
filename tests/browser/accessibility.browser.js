@@ -125,9 +125,11 @@ const CHECK = `(() => {
       width -= Math.min(0, parseFloat(layer.left) || 0) + Math.min(0, parseFloat(layer.right) || 0);
     }
     // A word inside a line of text may be as narrow as the word: the
-    // guidelines leave targets inside a sentence out.
+    // guidelines leave targets inside a sentence out. A link in a line of
+    // text (the credits) is as tall as the line, and left out altogether.
     const inSentence = element.matches('.note-word, .sentence-word');
-    if (Math.round(height) < 24 || (!inSentence && Math.round(width) < 24)) {
+    const inLine = element.matches('.credits a');
+    if (!inLine && (Math.round(height) < 24 || (!inSentence && Math.round(width) < 24))) {
       failures.push('too small to tap (' + Math.round(width) + 'x' + Math.round(height) + '): ' + describe(element));
     }
     // A name for screen readers: its text, a label, or aria-label.
@@ -203,6 +205,19 @@ describe('accessibility', { concurrency: false }, () => {
       await check(`adding to a deck, ${form}`);
     }
     await tap(page, 'add-close');
+  });
+
+  // The credits: links and Chinese names (the TOCFL list, the Taiwan
+  // dictionary, the calligrapher) marked as Chinese and readable.
+  it('Credits and licenses', async () => {
+    await tap(page, 'credits-button');
+    await waitUntil(page, `document.getElementById('credits-dialog').open`, 'the credits');
+    try {
+      await check('Credits and licenses');
+    } finally {
+      // Closed even when the check fails, or the tests after it fail behind it.
+      await tap(page, 'credits-close');
+    }
   });
 
   it('the menu', async () => {
