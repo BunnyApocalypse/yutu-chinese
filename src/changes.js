@@ -13,6 +13,18 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-20',
+    items: [
+      'When you add a word in one script only, the other script now gets the form Taiwan uses: 岁 gives 歲 (not the rare 嵗), 里 gives 裡, and 账户 gives 帳戶.',
+    ],
+    it: [
+      "Quando aggiungi una parola in una sola scrittura, l'altra scrittura riceve ora la forma usata a Taiwan: 岁 dà 歲 (non il raro 嵗), 里 dà 裡 e 账户 dà 帳戶.",
+    ],
+    de: [
+      'Wenn du ein Wort nur in einer Schrift hinzufügst, bekommt die andere Schrift jetzt die in Taiwan übliche Form: 岁 ergibt 歲 (nicht das seltene 嵗), 里 ergibt 裡 und 账户 ergibt 帳戶.',
+    ],
+  },
+  {
     id: '2026-11-17',
     items: [
       '"Basics of Chinese" has a new last screen with a few tips for learning, and the Pinyin screen links to a free Anki deck for practicing the sounds.',
