@@ -46,7 +46,8 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - **Old notes reworked:** 400 notes of TOCFL level 4 (`local/old-notes/rework-51` to `-54`, `local/old-notes/README.md`): 口气 to 现成. Four batches (the owner, "run 4 more"); eight Sonnet writers, four Opus judges, sent back once, read by hand. 147 characters on average, 7 example only, 34 `ask` sentences (for a native reader, as before). `convert-notes.js` listed 22, settled in `local/note-scripts/settle-old-16.mjs`. The owner did not look at a sample first. The rework is at 93% (5,450 of 5,849).
 - **Tests:** 443 unit tests pass; no browser run (only TOCFL notes changed).
 - **Left to rework:** 235 of `tocfl-4.tsv` (next: `gather.mjs tocfl-4.tsv … 100 2 --in-order --skip=0`), then the 164 radical notes.
-- **Noticed, not fixed:** 后院's traditional note (`tocfl-4.tsv`, reworked earlier) writes 后院 for 後院.
+- **Fixed after, by hand** (`local/note-scripts/settle-old-17.mjs`): 片子|pian4zi5 is the film again (the rework had made it "a thin piece", from CC-CEDICT, which gives piàn zi only that sense; Taiwan's Ministry of Education dictionary, read locally this session, gives piàn zi 電影, "這部片子很感人"), with the card's piànzi in the example. 后院's traditional note (from an earlier rework) had 后 for 後.
+- **Lesson:** for a TOCFL card, check a reading-dependent sense in the Ministry of Education dictionary (`local/moe-dictionary/`), not only CC-CEDICT, before telling a writer which sense goes with a reading.
 
 **Handover from the session of 2026-11-20 (the other-script lookup gives Taiwan's form; released to `stable` and `main` at the owner's word, "What's new" `2026-11-20`).**
 
