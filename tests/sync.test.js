@@ -536,7 +536,8 @@ test('a whole history: progress told, packed once, and taken in on an empty devi
   assert.deepEqual(phases, ['pack', 'upload']);
   phases.length = 0;
   assert.equal((await syncA()).snapshotMade, true);
-  assert.deepEqual(phases, ['pack', 'upload']);
+  // Then the batch the snapshot covers deleted.
+  assert.deepEqual(phases, ['pack', 'upload', 'tidy']);
   // A new device joins from the snapshot: opened and saved, never combined.
   const c = memoryDevice();
   const told = [];
@@ -545,4 +546,35 @@ test('a whole history: progress told, packed once, and taken in on an empty devi
   assert.deepEqual([...new Set(told.map((progress) => progress.phase))], ['open', 'save']);
   assert.equal(told.at(-1).done, told.at(-1).total);
   assert.deepEqual(learnersData(c.data()), learnersData(a.data()));
+});
+
+test('after a whole history, the batches newer than its snapshot are told too, and only then', async () => {
+  const { mine } = twoDevices();
+  const storage = memoryStorage();
+  const a = memoryDevice(mine, { before: true });
+  await createSync({ local: a, storage, key }).syncNow();
+  assert.equal((await createSync({ local: a, storage, key, snapshotAfterBytes: 1 }).syncNow()).snapshotMade, true);
+  const syncA = createSync({ local: a, storage, key }).syncNow;
+  a.save('words', [word('茶', 'cha2', { day: 20 })]);
+  await syncA();
+  a.save('words', [word('水', 'shui3', { day: 21 })]);
+  await syncA();
+  // A new device: the snapshot, then A's two batches since, counted, so
+  // that the line doesn't stay on the last record saved.
+  const c = memoryDevice();
+  const told = [];
+  const syncC = createSync({ local: c, storage, key, onProgress: (progress) => told.push(progress) }).syncNow;
+  assert.equal((await syncC()).takenIn, 2);
+  assert.deepEqual([...new Set(told.map((progress) => progress.phase))], ['open', 'save', 'batches']);
+  assert.deepEqual(
+    told.filter((progress) => progress.phase === 'batches'),
+    [{ phase: 'batches', done: 0, total: 2 }, { phase: 'batches', done: 1, total: 2 }],
+  );
+  assert.deepEqual(learnersData(c.data()), learnersData(a.data()));
+  // An everyday sync after: a batch taken in without a line.
+  told.length = 0;
+  a.save('words', [word('火', 'huo3', { day: 22 })]);
+  await syncA();
+  assert.equal((await syncC()).takenIn, 1);
+  assert.deepEqual(told, []);
 });

@@ -4888,8 +4888,10 @@ button.deck-open {
 /* "Reading the file…" and "Importing…" (showWorking in ankiImportForm.js):
    not a warning, so in the text's color, after a ring turning beside it.
    Turning by `transform` keeps it moving while the page is busy. Without
-   motion (the device's setting) the words alone say it. */
-.note.working {
+   motion (the device's setting) the words alone say it. Syncing's status
+   lines too while a sync runs (showSyncLine in syncCodeView.js). */
+.note.working,
+.hint.working {
   display: flex;
   align-items: center;
   gap: var(--space-small);

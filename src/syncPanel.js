@@ -9,7 +9,7 @@
 import { makeCode, readCode } from './syncCode.js';
 import { createServerChoice, hostOf } from './syncServerChoice.js';
 import { closeOnTapBeside } from './dialogs.js';
-import { showCode as fillCode, copyCode, saveCodeFile, printCode, problemText, codeProblemText, progressText } from './syncCodeView.js';
+import { showCode as fillCode, copyCode, saveCodeFile, printCode, problemText, codeProblemText, progressText, showSyncLine } from './syncCodeView.js';
 import { scanForCode } from './syncScan.js';
 import { syncIsLate } from './syncTiming.js';
 import { ask } from './confirm.js';
@@ -82,7 +82,7 @@ export async function createSyncPanel(control) {
       return;
     }
     showPart(status.on ? on : off);
-    byId('sync-status').textContent = statusLine(status, await control.server());
+    showSyncLine(byId('sync-status'), statusLine(status, await control.server()), status.running);
     await serverChoice.refresh();
     byId('sync-now-button').disabled = status.running;
     // The data group's first line says where the words are kept.

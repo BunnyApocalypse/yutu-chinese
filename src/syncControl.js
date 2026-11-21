@@ -213,6 +213,13 @@ export function createSyncControl({ onChanged = async () => {}, onStatus = () =>
           }
         }
         if (result.changed) {
+          // After a long step shown, reading everything afresh takes a
+          // moment too (a whole history): said, so the line doesn't stay
+          // on the last step done.
+          if (status.progress) {
+            status.progress = { phase: 'load' };
+            tell();
+          }
           await onChanged();
         }
       } catch (error) {

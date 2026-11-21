@@ -20,10 +20,16 @@
 //            { phase, done, total }, phase one of 'pack' (making a big file),
 //            'upload' (total: bytes), 'download' (done and total: bytes),
 //            'open', 'merge' (combining with what is here), 'save' (done and
-//            total: records). Only the steps of whole histories are told:
-//            turning sync on, taking in a snapshot or everything, making a
-//            snapshot. (In the app it all runs on a second thread,
-//            syncWorker.js, so the page stays free meanwhile.)
+//            total: records), 'batches' (done and total: the other
+//            devices' batches newer than the snapshot), 'tidy' (deleting
+//            files no longer needed). Only the steps of whole histories are
+//            told: turning sync on, taking in a snapshot or everything,
+//            making a snapshot; once one has been, the shorter steps after
+//            it ('batches', 'tidy') are told too, so that the line never
+//            stays on a step that is already done (the owner, 2026-11-21:
+//            it stood on "Saving: 200,000 of 200,000" for a long time). (In
+//            the app it all runs on a second thread, syncWorker.js, so the
+//            page stays free meanwhile.)
 //
 // The files, all encrypted:
 //
@@ -287,7 +293,8 @@ async function takeInSnapshot(local, storage, key, device, snapshot, taken, repo
 //   'too-new'        a file was made by a newer version of the app, which
 //                    this one can't read: that device's later batches wait
 //                    until this app is updated
-async function takeIn(local, storage, key, device, batches, snapshots, report) {
+// reportMore is told the shorter steps, shown only after a long one (createSync).
+async function takeIn(local, storage, key, device, batches, snapshots, report, reportMore) {
   // The last batch taken in from each device: { device: number }.
   const taken = { ...(await local.getSyncValue('taken', {})) };
   let changed = false;
@@ -339,6 +346,14 @@ async function takeIn(local, storage, key, device, batches, snapshots, report) {
   }
 
   let takenIn = 0;
+  // How many batches wait, for the progress (a device's later ones may
+  // still wait behind a missing one: then the count stops short).
+  let waitingBatches = 0;
+  for (const [other, files] of batches) {
+    if (other !== device) {
+      waitingBatches += files.filter((file) => file.number > (taken[other] ?? 0)).length;
+    }
+  }
   for (const [other, files] of batches) {
     if (other === device) {
       continue;
@@ -348,6 +363,7 @@ async function takeIn(local, storage, key, device, batches, snapshots, report) {
         problems.push({ reason: 'missing-batch', device: other });
         break;
       }
+      reportMore({ phase: 'batches', done: takenIn, total: waitingBatches });
       let batch;
       try {
         const file = await readTelling(storage, name, report);
@@ -448,7 +464,7 @@ const ORPHAN_AFTER_MS = 24 * 60 * 60 * 1000;
 // Only once this device has opened the newest snapshot (made it, or read it
 // through), so that one that can't be opened never costs the files it would
 // replace. A file another device deleted meanwhile is no matter.
-async function tidy(local, storage, key, device, files, snapshots) {
+async function tidy(local, storage, key, device, files, snapshots, reportMore = () => {}) {
   const newest = snapshots.at(-1);
   if (!newest) {
     return;
@@ -461,6 +477,7 @@ async function tidy(local, storage, key, device, files, snapshots) {
   if (covered.length === 0 && older.length === 0 && orphans.length === 0) {
     return;
   }
+  reportMore({ phase: 'tidy' });
   if ((await local.getSyncValue('checkedSnapshot', null)) !== newest.name) {
     let contents;
     try {
@@ -552,7 +569,18 @@ export function createSync({
   let waitingWhole = false;
 
   async function run({ sendOnly = false } = {}) {
-    const report = onProgress;
+    // Whether a long step was told in this sync: then the shorter ones
+    // after it are told too (reportMore), else they are not worth a line.
+    let longStepTold = false;
+    const report = (progress) => {
+      longStepTold = true;
+      onProgress(progress);
+    };
+    const reportMore = (progress) => {
+      if (longStepTold) {
+        onProgress(progress);
+      }
+    };
     let device = await deviceId(local);
     let sending = await send(local, storage, key, device, report);
     let sent = sending?.number ?? null;
@@ -582,7 +610,7 @@ export function createSync({
       files = sortOut(await storage.list());
       startedAfresh = true;
     }
-    const fetched = await takeIn(local, storage, key, device, files.batches, snapshots, report);
+    const fetched = await takeIn(local, storage, key, device, files.batches, snapshots, report, reportMore);
     await local.setSyncValue('joined', true);
     let snapshotMade = false;
     const since = uncovered(snapshots.at(-1), files.batches);
@@ -599,7 +627,7 @@ export function createSync({
       snapshots = [...snapshots, await saveSnapshot(local, storage, key, device, snapshots.at(-1), report)];
       snapshotMade = true;
     }
-    await tidy(local, storage, key, device, files, snapshots);
+    await tidy(local, storage, key, device, files, snapshots, reportMore);
     const { tookWhole, ...told } = fetched;
     return { sent, ...told, snapshotMade, startedAfresh, problems: [...problems, ...fetched.problems] };
   }

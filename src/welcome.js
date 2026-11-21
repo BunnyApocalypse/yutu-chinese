@@ -23,7 +23,7 @@ import { setTheme } from './theme.js';
 import { t } from './text.js';
 import { makeCode, readCode } from './syncCode.js';
 import { scanForCode } from './syncScan.js';
-import { showCode, copyCode, saveCodeFile, printCode, problemText, codeProblemText, progressText } from './syncCodeView.js';
+import { showCode, copyCode, saveCodeFile, printCode, problemText, codeProblemText, progressText, showSyncLine } from './syncCodeView.js';
 import { createServerChoice, hostOf } from './syncServerChoice.js';
 
 const byId = (id) => document.getElementById(id);
@@ -201,10 +201,10 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
     const { code, reason } = await readCode(joinInput.value);
     joinNote.hidden = false;
     if (reason) {
-      joinNote.textContent = codeProblemText(reason);
+      showSyncLine(joinNote, codeProblemText(reason), false);
       return;
     }
-    joinNote.textContent = t('welcome.joining');
+    showSyncLine(joinNote, t('welcome.joining'), true);
     joining = true;
     const controls = [...joinForm.elements, backButton];
     controls.forEach((control) => {
@@ -218,7 +218,7 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
     if (status.problem) {
       // Sync is on all the same and tries again later; the introduction
       // stays, to be skipped or tried again.
-      joinNote.textContent = problemText(status.problem);
+      showSyncLine(joinNote, problemText(status.problem), false);
       return;
     }
     // Joined: the words and settings are here and in effect. Saved now, so
@@ -552,7 +552,7 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
     // progress under the code box.
     showSyncStatus(status) {
       if (joining && status.progress) {
-        joinNote.textContent = progressText(status.progress);
+        showSyncLine(joinNote, progressText(status.progress), true);
       }
     },
     // A code from a link (takeCodeFromLink in syncCodeView.js): on the first

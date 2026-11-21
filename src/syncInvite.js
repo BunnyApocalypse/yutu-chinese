@@ -15,7 +15,7 @@
 /* global __CHANNEL__ */
 
 import { makeCode, readCode } from './syncCode.js';
-import { showCode, copyCode, saveCodeFile, printCode, problemText, codeProblemText, progressText } from './syncCodeView.js';
+import { showCode, copyCode, saveCodeFile, printCode, problemText, codeProblemText, progressText, showSyncLine } from './syncCodeView.js';
 import { scanForCode } from './syncScan.js';
 import { t } from './text.js';
 
@@ -79,14 +79,17 @@ export function createSyncInvite(control) {
       return;
     }
     let line = t('syncInvite.allSynced');
+    let working = false;
     if (turningOn && !status.progress) {
       line = t('sync.syncing');
+      working = true;
     } else if (status.running) {
       line = status.progress ? progressText(status.progress) : t('sync.syncing');
+      working = true;
     } else if (status.problem) {
       line = problemText(status.problem);
     }
-    byId('sync-invite-status').textContent = line;
+    showSyncLine(byId('sync-invite-status'), line, working);
   }
 
   byId('sync-invite-turn-on').addEventListener('click', async () => {

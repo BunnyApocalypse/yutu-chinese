@@ -161,9 +161,31 @@ export function progressText({ phase, done = 0, total = 0 }) {
       return t('sync.progress.merge');
     case 'save':
       return t('sync.progress.save', { done: formatNumber(done), total: formatNumber(total) });
+    case 'batches':
+      return t('sync.progress.batches', { done: formatNumber(done), total: formatNumber(total) });
+    case 'tidy':
+      return t('sync.progress.tidy');
+    case 'load':
+      return t('sync.progress.load');
     default:
       return t('sync.syncing');
   }
+}
+
+// Puts a line of syncing's status in its place; `working` (a sync under
+// way) adds the turning ring before it, as Import backup shows it
+// (.working-sign in style.css), so that the line visibly moves even while a
+// step takes a while without its numbers changing.
+export function showSyncLine(element, text, working) {
+  element.classList.toggle('working', working);
+  if (!working) {
+    element.textContent = text;
+    return;
+  }
+  const sign = document.createElement('span');
+  sign.className = 'working-sign';
+  sign.setAttribute('aria-hidden', 'true');
+  element.replaceChildren(sign, text);
 }
 
 // What to say for each `reason` syncing gives (sync.js, syncServer.js).
