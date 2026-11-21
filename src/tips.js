@@ -303,8 +303,12 @@ export function createTips() {
       }
     },
     // Every tip is shown again, each the next time it comes up.
+    // The time it was pressed travels with syncing, so that the tips seen on
+    // another device before then are left out when combining (merge.js,
+    // combineTipsSeen) instead of coming back here.
     async showAgain() {
       seen = new Set();
+      await setSetting('tipsShownAgainAt', Date.now());
       await setSetting('tipsSeen', []);
       await this.setOn(true);
     },

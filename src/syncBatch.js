@@ -21,7 +21,7 @@
 // What comes out is compared with the slice to give what to save and what to
 // delete.
 
-import { mergeBackups, DEVICE_SETTINGS } from './merge.js';
+import { mergeBackups, combineTipsSeen, tipsShownAgainAt, DEVICE_SETTINGS } from './merge.js';
 
 export const BATCH_FORMAT = 1;
 
@@ -160,9 +160,16 @@ export function wholeAsChanges(data, mySettings) {
   const mine = new Map(mySettings.map((setting) => [setting.key, setting]));
   const settings = (data.settings || []).filter(
     (setting) =>
+      setting.key !== 'tipsSeen' &&
       !DEVICE_SETTINGS.includes(setting.key) &&
       (!mine.has(setting.key) || (setting.changedAt || 0) > (mine.get(setting.key).changedAt || 0)),
   );
+  // The tips seen are combined, as mergeBackups does (combineTipsSeen).
+  const theirTips = (data.settings || []).find((setting) => setting.key === 'tipsSeen');
+  const tipsSeen = combineTipsSeen(mine.get('tipsSeen'), theirTips, tipsShownAgainAt(mySettings, data.settings || []));
+  if (tipsSeen && tipsSeen !== mine.get('tipsSeen')) {
+    settings.push(tipsSeen);
+  }
   if (settings.length > 0) {
     put.settings = settings;
   }

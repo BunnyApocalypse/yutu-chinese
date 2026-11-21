@@ -171,3 +171,13 @@ test('a whole history taken in on an empty device as it is gives what combining 
   // new-words setting were saved later.
   assert.equal(changes.put.settings, undefined);
 });
+
+test("a whole history taken in combines the tips seen with this device's", async () => {
+  const { wholeAsChanges } = await import('../src/syncBatch.js');
+  const mySettings = [{ key: 'tipsSeen', value: ['ready'], changedAt: START + 9 * DAY }];
+  const data = { settings: [{ key: 'tipsSeen', value: ['grades', 'decks'], changedAt: START }] };
+  const { put } = wholeAsChanges(data, mySettings);
+  assert.deepEqual([...put.settings[0].value].sort(), ['decks', 'grades', 'ready']);
+  // Nothing new: nothing to save.
+  assert.equal(wholeAsChanges({ settings: [{ ...data.settings[0], value: ['ready'] }] }, mySettings).put.settings, undefined);
+});

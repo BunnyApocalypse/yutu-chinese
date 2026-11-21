@@ -376,6 +376,33 @@ test('settings that belong to the device stay as they are on it', () => {
   assert.deepEqual(mergeBackups(mine, older).data.decks, []);
 });
 
+test('the tips seen on both devices are combined, unless shown again since', () => {
+  const tips = (setting) => setting.key === 'tipsSeen';
+  const seenAfter = (mine, theirs) =>
+    [...mergeBackups(device({ settings: mine }), device({ settings: theirs })).data.settings.find(tips).value].sort();
+
+  // A new device's first tip, saved later, doesn't take the place of the
+  // old device's list (2026-11-21).
+  const old = [{ key: 'tipsSeen', value: ['grades', 'gestures', 'decks'], changedAt: START }];
+  const fresh = [{ key: 'tipsSeen', value: ['ready'], changedAt: START + 5 * DAY }];
+  assert.deepEqual(seenAfter(old, fresh), ['decks', 'gestures', 'grades', 'ready']);
+  assert.deepEqual(seenAfter(fresh, old), ['decks', 'gestures', 'grades', 'ready']);
+
+  // Nothing new: this device's record is kept as it is.
+  const mine = device({ settings: old });
+  const same = mergeBackups(mine, device({ settings: [{ ...old[0], value: ['grades'], changedAt: START + DAY }] }));
+  assert.equal(same.data.settings.find(tips), old[0]);
+
+  // "Show all tips again" pressed on the new device: the old device's list,
+  // saved before then, is left out; a tip seen since is kept.
+  const shownAgain = [
+    { key: 'tipsShownAgainAt', value: START + 3 * DAY, changedAt: START + 3 * DAY },
+    { key: 'tipsSeen', value: ['ready'], changedAt: START + 5 * DAY },
+  ];
+  assert.deepEqual(seenAfter(old, shownAgain), ['ready']);
+  assert.deepEqual(seenAfter(shownAgain, old), ['ready']);
+});
+
 test('a deck deleted on one device stays deleted, unless it was changed after that', () => {
   const deck = (id, day) => ({ id, name: id, parentId: null, order: 0, changedAt: START + day * DAY });
   const mine = device({ decks: [deck('chinese', 0), deck('animals', 1), deck('food', 8)] });

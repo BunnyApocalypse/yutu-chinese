@@ -63,6 +63,39 @@ export const DEVICE_SETTINGS = [
 
 const changedAt = (record) => (record && record.changedAt) || 0;
 
+// The tips already seen (`tipsSeen`, tips.js) are combined, not taken from
+// whichever device saved them later: a new device's first tip saved a list of
+// one, newer than the old device's long list, and every other tip came back
+// on the old device (2026-11-21). A list saved before "Show all tips again"
+// was pressed on either device (`tipsShownAgainAt`, a time) is left out, so
+// that pressing it isn't undone by the other device's list.
+//
+// mine, theirs: each side's `tipsSeen` setting record, or undefined
+// shownAgainAt: the later of the two sides' `tipsShownAgainAt`, or 0
+//
+// Returns the record to keep: `mine` itself when nothing changes for it.
+export function combineTipsSeen(mine, theirs, shownAgainAt) {
+  if (!mine || !theirs) {
+    return mine || theirs;
+  }
+  const counted = [mine, theirs].filter((record) => changedAt(record) >= shownAgainAt);
+  if (counted.length === 0) {
+    return later(mine, theirs);
+  }
+  const seen = new Set(counted.flatMap((record) => (Array.isArray(record.value) ? record.value : [])));
+  const mineValue = Array.isArray(mine.value) ? mine.value : [];
+  if (counted.includes(mine) && seen.size === new Set(mineValue).size) {
+    return mine;
+  }
+  return { ...later(mine, theirs), value: [...seen], changedAt: Math.max(changedAt(mine), changedAt(theirs)) };
+}
+
+// The later of the two sides' `tipsShownAgainAt` (a list of setting records each).
+export function tipsShownAgainAt(...sides) {
+  const times = sides.flat().filter((setting) => setting.key === 'tipsShownAgainAt').map((setting) => setting.value || 0);
+  return Math.max(0, ...times);
+}
+
 // When a review's grade was last corrected; 0 if never.
 const corrected = (review) => review.correctedAt || 0;
 
@@ -388,15 +421,22 @@ export function mergeBackups(mine, theirs, { summarize: wanted = true } = {}) {
   // (scriptCards.js) may come in unfiled; without the note that it was done
   // here, the app does it again when it next starts.
   const theirsAreFiled = of(theirs, 'settings').some((setting) => setting.key === 'cardsFiledByScript' && setting.value);
+  const mineShared = of(mine, 'settings').filter((setting) => !isDevices(setting));
+  const theirsShared = of(theirs, 'settings').filter((setting) => !isDevices(setting));
+  const sharedSettings = laterOfEach(mineShared, theirsShared, 'key');
+  const tipsSeen = combineTipsSeen(
+    mineShared.find((setting) => setting.key === 'tipsSeen'),
+    theirsShared.find((setting) => setting.key === 'tipsSeen'),
+    tipsShownAgainAt(mineShared, theirsShared),
+  );
+  if (tipsSeen) {
+    sharedSettings.set('tipsSeen', tipsSeen);
+  }
   const settings = [
     ...of(mine, 'settings').filter(
       (setting) => isDevices(setting) && (theirsAreFiled || setting.key !== 'cardsFiledByScript'),
     ),
-    ...laterOfEach(
-      of(mine, 'settings').filter((setting) => !isDevices(setting)),
-      of(theirs, 'settings').filter((setting) => !isDevices(setting)),
-      'key',
-    ).values(),
+    ...sharedSettings.values(),
   ];
 
   const data = {
