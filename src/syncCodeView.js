@@ -176,16 +176,28 @@ export function progressText({ phase, done = 0, total = 0 }) {
 // way) adds the turning ring before it, as Import backup shows it
 // (.working-sign in style.css), so that the line visibly moves even while a
 // step takes a while without its numbers changing.
+// The ring already there is kept and only the words after it change: a
+// new ring would start turning from the top again at every update, which
+// looks like a jump (the owner, 2026-11-21).
 export function showSyncLine(element, text, working) {
   element.classList.toggle('working', working);
   if (!working) {
     element.textContent = text;
     return;
   }
-  const sign = document.createElement('span');
-  sign.className = 'working-sign';
-  sign.setAttribute('aria-hidden', 'true');
-  element.replaceChildren(sign, text);
+  const sign = element.querySelector('.working-sign');
+  const words = element.querySelector('.working-words');
+  if (sign && words) {
+    words.textContent = text;
+    return;
+  }
+  const newSign = document.createElement('span');
+  newSign.className = 'working-sign';
+  newSign.setAttribute('aria-hidden', 'true');
+  const newWords = document.createElement('span');
+  newWords.className = 'working-words';
+  newWords.textContent = text;
+  element.replaceChildren(newSign, newWords);
 }
 
 // What to say for each `reason` syncing gives (sync.js, syncServer.js).
