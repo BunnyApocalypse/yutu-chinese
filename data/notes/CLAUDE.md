@@ -36,3 +36,5 @@ Read before writing or checking notes in this folder. The file format, the tags 
 - Writers running side by side must not share script names in the scratchpad.
 - One writer split every other word of the example's pinyin syllable by syllable ("Wǒ men yào bǎo hù") to keep the headword alone; the check lets it through, so scan the pinyin after a run (batches 21 to 24).
 - A tip can name only a character's listed parts, so one whose real top or streamer is not listed (鉴, 旋's 𠂉) can't say what to write: decline it rather than misname a part.
+- **From a worktree, make `local/study-aids` a real folder, not a link** (the owner, 2026-11-21): writing or copying through a link to the main checkout's `local/` asks the owner's permission every time. Copy the folder in, link only the rest of `local/`, and copy the new batches back once at the end (`local/study-aids/README.md`, "Running from a worktree without permission prompts").
+- The check asks about any yì or yí in the example's pinyin when the sentence has 一 or 不, so a word with its own yì (不可思议, 意见) sets it off: a false alarm, not a reason to rewrite the example.
