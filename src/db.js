@@ -626,15 +626,33 @@ export function takeOffOutbox(entries) {
   });
 }
 
-// The part of this device's data that taking in a batch about these words
-// needs (see applyBatch in syncBatch.js): every word, deck, setting and
-// removal mark (a few thousand small records), and the reviews and cards of
-// these words only. Card IDs begin with "<word ID>#".
-export async function readSlice(wordIds) {
-  const slice = {};
-  for (const storeName of ['words', 'decks', 'settings', 'removed']) {
-    slice[storeName] = await getAll(storeName);
+// The stores every batch taken in needs whole (readSlice): every word,
+// deck, setting and removal mark, a few thousand small records.
+const SHARED = ['words', 'decks', 'settings', 'removed'];
+export async function readShared() {
+  const shared = {};
+  for (const storeName of SHARED) {
+    shared[storeName] = await getAll(storeName);
   }
+  return shared;
+}
+
+// What the outbox holds now, as one string: it changes whenever the page
+// notes a change (each entry gets a new token), so that taking in batches
+// one after another can tell that what it read before is out of date
+// (takeIn in sync.js). Small: the changes since the last batch sent.
+export async function outboxMark() {
+  const entries = await getAll('outbox');
+  return entries.map((entry) => `${entry.key} ${entry.token}`).join('\n');
+}
+
+// The part of this device's data that taking in a batch about these words
+// needs (see applyBatch in syncBatch.js): the stores of readShared, and the
+// reviews and cards of these words only. Card IDs begin with "<word ID>#".
+// shared: what readShared gave, when it is known to be up to date (takeIn
+// in sync.js reads it once for many batches); else it is read here.
+export async function readSlice(wordIds, shared = null) {
+  const slice = { ...(shared || (await readShared())) };
   const requests = await transaction(['reviews', 'cards'], 'readonly', (tx) =>
     [...wordIds].map((wordId) => ({
       reviews: tx.objectStore('reviews').index('wordId').getAll(wordId),

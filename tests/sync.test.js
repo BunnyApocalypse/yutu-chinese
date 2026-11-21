@@ -548,6 +548,46 @@ test('a whole history: progress told, packed once, and taken in on an empty devi
   assert.deepEqual(learnersData(c.data()), learnersData(a.data()));
 });
 
+test('many batches: the words read once, and again only after the learner changed something', async () => {
+  const { a, syncA, syncOf } = setUp();
+  await syncA();
+  const c = memoryDevice();
+  const syncC = syncOf(c);
+  await syncC();
+  // Three changes to one word from A, then C takes them in one sync.
+  for (const day of [20, 21, 22]) {
+    a.save('words', [word('茶', 'cha2', { day, definition: `tea ${day}` })]);
+    await syncA();
+  }
+  let reads = 0;
+  const readShared = c.readShared;
+  c.readShared = () => {
+    reads++;
+    return readShared();
+  };
+  assert.equal((await syncC()).takenIn, 3);
+  assert.equal(reads, 1);
+  assert.equal(c.data().words.find((w) => w.id === '茶|cha2').definition, 'tea 22');
+  // Again, the learner changing the word on C after the first batch is
+  // saved: read afresh, so the newer change stays.
+  for (const day of [23, 24, 25]) {
+    a.save('words', [word('茶', 'cha2', { day, definition: `tea ${day}` })]);
+    await syncA();
+  }
+  reads = 0;
+  const saveTakenIn = c.saveTakenIn;
+  let saves = 0;
+  c.saveTakenIn = async (...args) => {
+    await saveTakenIn(...args);
+    if (++saves === 1) {
+      c.save('words', [word('茶', 'cha2', { day: 30, definition: 'tea here' })]);
+    }
+  };
+  assert.equal((await syncC()).takenIn, 3);
+  assert.equal(reads, 2);
+  assert.equal(c.data().words.find((w) => w.id === '茶|cha2').definition, 'tea here');
+});
+
 test('after a whole history, the batches newer than its snapshot are told too, and only then', async () => {
   const { mine } = twoDevices();
   const storage = memoryStorage();

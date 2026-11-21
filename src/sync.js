@@ -5,8 +5,9 @@
 // Three things are handed in, so that the tests can use stand-ins:
 //
 //   local    this device's data: in the app, db.js itself (getSyncValue,
-//            setSyncValue, readOutbox, takeOffOutbox, getAll, countAll,
-//            readSlice, readEverything, saveTakenIn, sendEverything)
+//            setSyncValue, readOutbox, takeOffOutbox, outboxMark, getAll,
+//            countAll, readShared, readSlice, readEverything, saveTakenIn,
+//            sendEverything)
 //   storage  where the files are kept, shared by all the devices:
 //              list()             every file, as [{ name, size }]
 //              read(name, onBytes)  a file's bytes (a Uint8Array);
@@ -354,64 +355,127 @@ async function takeIn(local, storage, key, device, batches, snapshots, report, r
       waitingBatches += files.filter((file) => file.number > (taken[other] ?? 0)).length;
     }
   }
+  // The batches to read, in order: each device's in turn.
+  const queue = [];
   for (const [other, files] of batches) {
-    if (other === device) {
-      continue;
-    }
-    for (const { name, number } of files.filter((file) => file.number > (taken[other] ?? 0))) {
-      if (number !== (taken[other] ?? 0) + 1) {
-        problems.push({ reason: 'missing-batch', device: other });
-        break;
-      }
-      reportMore({ phase: 'batches', done: takenIn, total: waitingBatches });
-      let batch;
-      try {
-        const file = await readTelling(storage, name, report);
-        if (file.length >= TELL_DOWNLOADS_FROM) {
-          report({ phase: 'open' });
-        }
-        batch = await decodeFile(file, key, name);
-      } catch (error) {
-        // Deleted since the listing, covered by a snapshot: the next sync
-        // takes that in.
-        if (error.reason === 'not-found') {
-          problems.push({ reason: 'missing-batch', device: other });
-          break;
-        }
-        if (!CANNOT_TAKE_IN.includes(error.reason)) {
-          throw error;
-        }
-        problems.push({ reason: error.reason, device: other });
-        break;
-      }
-      if (batch.format > BATCH_FORMAT) {
-        problems.push({ reason: 'too-new', device: other });
-        break;
-      }
-      if (batch.format !== BATCH_FORMAT || batch.device !== other || batch.number !== number) {
-        problems.push({ reason: 'bad-batch', device: other });
-        break;
-      }
-      // A batch of everything a device had (sync turned on there) is a whole
-      // history; any other, the words it touches.
-      let changes;
-      if (batch.everything) {
-        changes = await takeInWhole(local, batch, report);
-        tookWhole = true;
-      } else {
-        const slice = await local.readSlice(wordsTouched(batch, await local.getAll('words')));
-        changes = applyBatch(slice, batch);
-        await local.saveTakenIn(changes, undefined, { before: slice });
-      }
-      changed ||= Object.keys(changes.put).length > 0 || Object.keys(changes.remove).length > 0;
-      // Noted after each batch, so that one taken in is not taken in again
-      // if the next fails.
-      taken[other] = number;
-      await local.setSyncValue('taken', { ...taken });
-      takenIn++;
+    if (other !== device) {
+      queue.push(...files.filter((file) => file.number > (taken[other] ?? 0)).map((file) => ({ ...file, other })));
     }
   }
+  // Each batch's file starts downloading while the one before it is taken
+  // in, so that the device doesn't wait on the network between them (the
+  // owner, 2026-11-21: a new device may have 200 to take in after its
+  // snapshot). A failed download is kept as it failed (`error`), to be
+  // dealt with in its turn; one never reached (its device stopped by a
+  // problem) is let go.
+  const download = (file) =>
+    readTelling(storage, file.name, report).then(
+      (bytes) => ({ bytes }),
+      (error) => ({ error }),
+    );
+  // The words, decks, settings and removal marks, as the batches need them
+  // (readSlice): read once and kept up to date with what each batch saves,
+  // rather than read again for every batch. Read afresh whenever the
+  // outbox changed meanwhile (outboxMark), since then the page saved
+  // something (the learner studying while it syncs).
+  let shared = null;
+  let sharedMark = null;
+  const stopped = new Set();
+  let nextDownload = queue.length > 0 ? download(queue[0]) : null;
+  for (let index = 0; index < queue.length; index++) {
+    const { name, number, other } = queue[index];
+    const downloading = nextDownload;
+    nextDownload = index + 1 < queue.length ? download(queue[index + 1]) : null;
+    if (stopped.has(other)) {
+      continue;
+    }
+    // (A device's later batches wait behind a problem with one of its own.)
+    const stop = (reason) => {
+      problems.push({ reason, device: other });
+      stopped.add(other);
+    };
+    if (number !== (taken[other] ?? 0) + 1) {
+      stop('missing-batch');
+      continue;
+    }
+    reportMore({ phase: 'batches', done: takenIn, total: waitingBatches });
+    let batch;
+    try {
+      const { bytes: file, error } = await downloading;
+      if (error) {
+        throw error;
+      }
+      if (file.length >= TELL_DOWNLOADS_FROM) {
+        report({ phase: 'open' });
+      }
+      batch = await decodeFile(file, key, name);
+    } catch (error) {
+      // Deleted since the listing, covered by a snapshot: the next sync
+      // takes that in.
+      if (error.reason === 'not-found') {
+        stop('missing-batch');
+        continue;
+      }
+      if (!CANNOT_TAKE_IN.includes(error.reason)) {
+        throw error;
+      }
+      stop(error.reason);
+      continue;
+    }
+    if (batch.format > BATCH_FORMAT) {
+      stop('too-new');
+      continue;
+    }
+    if (batch.format !== BATCH_FORMAT || batch.device !== other || batch.number !== number) {
+      stop('bad-batch');
+      continue;
+    }
+    // A batch of everything a device had (sync turned on there) is a whole
+    // history; any other, the words it touches.
+    let changes;
+    if (batch.everything) {
+      changes = await takeInWhole(local, batch, report);
+      tookWhole = true;
+      shared = null;
+    } else {
+      const mark = await local.outboxMark();
+      if (!shared || mark !== sharedMark) {
+        shared = await local.readShared();
+        sharedMark = mark;
+      }
+      const slice = await local.readSlice(wordsTouched(batch, shared.words), shared);
+      changes = applyBatch(slice, batch);
+      await local.saveTakenIn(changes, undefined, { before: slice });
+      shared = withChanges(shared, changes);
+    }
+    changed ||= Object.keys(changes.put).length > 0 || Object.keys(changes.remove).length > 0;
+    // Noted after each batch, so that one taken in is not taken in again
+    // if the next fails.
+    taken[other] = number;
+    await local.setSyncValue('taken', { ...taken });
+    takenIn++;
+  }
   return { takenIn, snapshotTakenIn, changed, problems, tookWhole };
+}
+
+// The stores readShared gives, with what a batch saved put in and taken
+// out (saveTakenIn), as new lists. A record the learner changed meanwhile
+// is put in as the batch had it, though it was kept as the learner left
+// it: their change is in the outbox, so the next batch reads afresh.
+function withChanges(shared, { put, remove }) {
+  const result = {};
+  for (const [storeName, records] of Object.entries(shared)) {
+    const keyName = storeName === 'settings' ? 'key' : 'id';
+    const byKey = new Map(records.map((record) => [record[keyName], record]));
+    for (const key of remove[storeName] || []) {
+      byKey.delete(key);
+    }
+    for (const record of put[storeName] || []) {
+      byKey.set(record[keyName], record);
+    }
+    result[storeName] = [...byKey.values()];
+  }
+  return result;
 }
 
 // The batches the newest snapshot doesn't cover: { count, bytes }.

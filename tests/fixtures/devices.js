@@ -203,8 +203,15 @@ export function memoryDevice(initial = {}, { before = false } = {}) {
     async countAll(storeName) {
       return data[storeName].length;
     },
-    async readSlice(wordIds) {
-      return sliceOf(data, wordIds);
+    async readShared() {
+      const { words, decks, settings, removed } = sliceOf(data, new Set());
+      return structuredClone({ words, decks, settings, removed });
+    },
+    async outboxMark() {
+      return [...outbox.values()].map((entry) => `${entry.key} ${entry.token}`).join('\n');
+    },
+    async readSlice(wordIds, shared = null) {
+      return { ...sliceOf(data, wordIds), ...(shared || {}) };
     },
     async readEverything() {
       return structuredClone(data);
