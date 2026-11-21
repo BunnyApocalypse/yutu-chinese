@@ -41,6 +41,12 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 
 **Tests to watch:** `syncSettings.browser.js`'s "after 'Not now', the pop-up waits until the next day" ("Waited in vain for: the pop-up") failed once in a full run and passed alone (2026-11-20, fourth session); `sync.browser.js`'s "sends everything after Import backup…" ("the app did not load again") and two writing grid runs (愉, 薦) failed once in a full run and passed alone (2026-11-20); `cards.browser.js`'s "suspends or starts over the card on screen…" and `gestures.browser.js`'s "shows how a swipe measured…" have each waited in vain in a full run and passed alone (2026-11-08).
 
+**Handover from the third session of 2026-11-21 (tips seen combined when syncing; pushed to `main` and the test copy at the owner's word, not released to `stable`).**
+
+- **Tips came back on the owner's old device after syncing a new one:** `tipsSeen` was taken whole from the device that saved it later, and the new device's first tip made a newer list of one. Now the two lists are combined (`combineTipsSeen` in `src/merge.js`, also in `wholeAsChanges`); "Show all tips again" saves `tipsShownAgainAt`, and a list saved before it is left out (`docs/interface.md`, "Tips"). The old device's lost list can't be brought back: its tips are dismissed once more.
+- **Tests:** 455 unit tests pass (three new). No browser run; not seen in Firefox.
+- **For the owner to try:** once both devices have the test copy, dismiss a tip on one, sync, and see that the other's seen tips stay seen. A device on `stable` still replaces the list until this is released.
+
 **Handover from the second session of 2026-11-21 (sync's progress after "Saving"; pushed to `main` and the test copy at the owner's word, not released to `stable`).**
 
 - **The line no longer stands still after "Saving: N of N records"** (the owner, joining a device: it hung at 200k/200k with nothing moving). After the save, the sync takes in the batches newer than the snapshot, tidies the server and the page reads everything afresh; each is now told ("Taking in your latest changes: 3 of 40…", "Tidying up the server…", "Getting your words ready…"), and the status lines show Import backup's turning ring while a sync runs (`docs/sync.md`, "Progress"). Italian and German are Claude's, unchecked.
