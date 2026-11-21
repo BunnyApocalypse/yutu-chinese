@@ -13,6 +13,24 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-21',
+    items: [
+      'Setting up sync on a new device is quicker: catching up on your latest changes after the download takes a fraction of the time it did.',
+      'While syncing, the line now says each step to the end, with a turning circle, so you can see it is still working.',
+      'Tips you have already seen stay seen on all your devices: starting on a new device no longer brings them all back on the others.',
+    ],
+    it: [
+      'Attivare la sincronizzazione su un nuovo dispositivo è più veloce: dopo il download, recuperare le tue ultime modifiche richiede una frazione del tempo di prima.',
+      'Durante la sincronizzazione, la riga dice ogni passaggio fino alla fine, con un cerchio che gira, così vedi che sta ancora lavorando.',
+      'I consigli che hai già visto restano visti su tutti i tuoi dispositivi: iniziare su un nuovo dispositivo non li fa più ricomparire tutti sugli altri.',
+    ],
+    de: [
+      'Die Synchronisierung auf einem neuen Gerät einzurichten geht schneller: Das Übernehmen deiner neuesten Änderungen nach dem Herunterladen dauert nur noch einen Bruchteil der Zeit.',
+      'Während der Synchronisierung nennt die Zeile jetzt jeden Schritt bis zum Ende, mit einem drehenden Kreis, damit du siehst, dass es noch arbeitet.',
+      'Tipps, die du schon gesehen hast, bleiben auf allen deinen Geräten gesehen: Der Start auf einem neuen Gerät bringt sie auf den anderen nicht mehr alle zurück.',
+    ],
+  },
+  {
     id: '2026-11-20-4',
     items: [
       'Learning the other script\'s forms is more accurate: a card no longer says a part changes "in every character" when it doesn\'t. 畫 → 画 is now taught as a whole character, not as "聿 becomes 一".',

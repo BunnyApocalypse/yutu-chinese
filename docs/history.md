@@ -47,7 +47,7 @@ The latest handover, the roadmap, and what the testing sessions taught. Trimmed 
 - **Tests:** 455 unit tests pass (three new). No browser run; not seen in Firefox.
 - **For the owner to try:** once both devices have the test copy, dismiss a tip on one, sync, and see that the other's seen tips stay seen. A device on `stable` still replaces the list until this is released.
 
-**Handover from the second session of 2026-11-21 (sync's progress after "Saving"; pushed to `main` and the test copy at the owner's word, not released to `stable`).**
+**Handover from the second session of 2026-11-21 (sync's progress after "Saving", faster catching up; tried on the test copy by the owner, "everything is good", then released to `stable` and `main` at their word with "What's new" `2026-11-21`, which also covers another session's tips seen combined when syncing; the site's deploy started).** The entry's Italian and German are Claude's, unchecked.
 
 - **The line no longer stands still after "Saving: N of N records"** (the owner, joining a device: it hung at 200k/200k with nothing moving). After the save, the sync takes in the batches newer than the snapshot, tidies the server and the page reads everything afresh; each is now told ("Taking in your latest changes: 3 of 40…", "Tidying up the server…", "Getting your words ready…"), and the status lines show Import backup's turning ring while a sync runs (`docs/sync.md`, "Progress"). Italian and German are Claude's, unchecked.
 - **Tests:** 453 unit tests pass (one new); `sync`, `syncSettings` and `accessibility` browser files pass (46). Not seen in Firefox.
