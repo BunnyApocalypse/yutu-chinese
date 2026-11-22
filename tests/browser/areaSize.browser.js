@@ -128,19 +128,31 @@ describe('the writing area on a short phone', { concurrency: false }, () => {
     await waitUntil(page, `!document.getElementById('lesson-next-button').hidden`, 'Next step');
     await tap(page, 'lesson-next-button');
     await waitUntil(page, `!document.getElementById('lesson-about-button').hidden`, 'About in the lesson');
-    const notes = ['lessonMeet', 'lessonTone', 'lessonTrace', 'lessonOutline', 'lessonLearnTest'];
+    // Each note with the skip button's label at its step: a sentence's
+    // lesson says "I know this sentence".
+    const notes = [
+      ['lessonMeet', 'skipLessonButton'],
+      ['lessonTone', 'skipLessonButton'],
+      ['lessonTrace', 'skipLessonButton'],
+      ['lessonOutline', 'skipLessonButton'],
+      ['lessonLearnTest', 'skipLessonButton'],
+      ['lessonMeetSentence', 'skipSentenceButton'],
+      ['lessonRead', 'skipSentenceButton'],
+      ['lessonOutline', 'skipSentenceButton'],
+      ['lessonLearnTest', 'skipSentenceButton'],
+    ];
     for (const [language, text] of Object.entries({ english, italian, german })) {
-      for (const note of notes) {
+      for (const [note, skip] of notes) {
         const lines = await page.evaluate(`(() => {
           document.getElementById('lesson-note').textContent = ${JSON.stringify(text[`review.${note}`])};
-          document.getElementById('skip-lesson-button').textContent = ${JSON.stringify(text['review.skipLessonButton'])};
+          document.getElementById('skip-lesson-button').textContent = ${JSON.stringify(text[`review.${skip}`])};
           document.getElementById('lesson-about-button').textContent = ${JSON.stringify(text['review.aboutWordButton'])};
           const tops = new Set([...document.querySelector('.lesson-row').children]
             .filter((element) => !element.hidden)
             .map((element) => Math.round(element.getBoundingClientRect().top)));
           return tops.size;
         })()`);
-        assert.equal(lines, 1, `${language}: ${note}`);
+        assert.equal(lines, 1, `${language}: ${note} with ${skip}`);
       }
     }
   });

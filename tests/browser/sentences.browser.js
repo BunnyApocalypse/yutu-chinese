@@ -6,7 +6,23 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, type, choose, textOf, waitUntil, openDeckPage, isShown, useAddForm, pasteList } from './harness.js';
+import {
+  startApp,
+  startBrowsers,
+  tap,
+  type,
+  choose,
+  textOf,
+  waitUntil,
+  openDeckPage,
+  openLearn,
+  isShown,
+  useAddForm,
+  pasteList,
+  writingArea,
+  drawStroke,
+  loadStrokeData,
+} from './harness.js';
 
 // Everything in one store of the app's database, read through a connection
 // of the test's own.
@@ -241,14 +257,15 @@ describe('sentences', { concurrency: false }, () => {
     assert.match(await textOf(page, 'list-problems'), /Line 5 .*A sentence needs its meaning\./);
     await tap(page, 'add-list-button');
     await waitUntil(page, `!document.getElementById('list-done').hidden`, 'the list added');
-    assert.match(await textOf(page, 'list-done-text'), /2 sentences added to .*Their cards come up in Review\./);
+    assert.match(await textOf(page, 'list-done-text'), /2 sentences added to .*They wait in Learn\./);
 
     const all = await stored(page, 'words');
     const town = all.find((word) => word.id === '這個老城區保留了很多傳統建築。|sentence');
     assert.equal(town.kind, 'sentence');
     assert.equal(town.simplified, '这个老城区保留了很多传统建筑。');
     assert.deepEqual(town.cloze, { simplified: '保留', traditional: '保留' });
-    assert.equal(typeof town.learnedAt, 'number');
+    // It waits in Learn (the next test).
+    assert.equal(town.learnedAt, undefined);
     const rain = all.find((word) => word.id === '即使下雨，我也會去。|sentence');
     assert.equal(rain.simplified, '即使下雨，我也会去。');
     assert.equal(rain.pinyin, 'Jíshǐ xiàyǔ, wǒ yě huì qù.');
@@ -257,5 +274,107 @@ describe('sentences', { concurrency: false }, () => {
     // The sentences come after the new word in the queue.
     const study = all.find((word) => word.id === '學習|xue2xi2');
     assert.ok(study.order < town.order && town.order < rain.order);
+  });
+
+  it('teaches sentences in Learn, after the word in their gap', { timeout: 60000 }, async () => {
+    const tapFace = () =>
+      page.evaluate(`['pointerdown', 'pointerup', 'click'].forEach((type) => document.getElementById('card-face').dispatchEvent(new PointerEvent(type, { bubbles: true, isPrimary: true })))`);
+    const current = () => textOf(page, '#learn-strip .current .chip-word');
+    const stepOf = (text) => `document.getElementById('card-type').textContent.endsWith(${JSON.stringify(text)})`;
+    // Writes a character in the writing area.
+    const write = async (char) => {
+      await waitUntil(
+        page,
+        `document.getElementById('stroke-count').textContent.startsWith('1/') && !document.getElementById('writing-area').hasAttribute('data-busy')`,
+        `${char} to be writable`,
+      );
+      const area = await writingArea(page);
+      for (const median of loadStrokeData(char).medians) {
+        await drawStroke(page, area, median);
+      }
+    };
+    // On to the next character: Enter, as a tap on the area.
+    const nextCharacter = async () => {
+      for (const type of ['keyDown', 'keyUp']) {
+        await page.send('Input.dispatchKeyEvent', { type, key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
+      }
+    };
+    // "I know this word" (or sentence) on what is up, then the next one.
+    const skip = async (expected) => {
+      await waitUntil(page, `document.querySelector('#learn-strip .current .chip-word')?.textContent === ${JSON.stringify(expected)}`, expected);
+      await tap(page, 'skip-lesson-button');
+    };
+
+    // The gap word's writing card asks for the word.
+    await tap(page, 'settings-button');
+    await choose(page, 'sentence-writing-select', 'word');
+    await tap(page, 'settings-close');
+    // A sentence before the word in its gap.
+    await openDeckPage(page);
+    await pasteList(page, '他们支持我。\tTāmen zhīchí wǒ.\tThey support me.\t支持\n支持\t支持\tzhi1chi2\tto support');
+    await tap(page, 'add-list-button');
+    await waitUntil(page, `!document.getElementById('list-done').hidden`, 'the list added');
+
+    await openLearn(page);
+    await skip('我們');
+    // The sentence added by hand waits in Learn too, as one of the day's words.
+    await waitUntil(page, stepOf('New sentence · step 1 of 4'), 'the sentence\'s first look');
+    assert.equal(await current(), '你們…');
+    assert.equal(await textOf(page, 'lesson-note'), 'A new sentence.');
+    assert.equal(await textOf(page, 'skip-lesson-button'), 'I know this one');
+    assert.match(await textOf(page, 'card-face'), /^你們好嗎？/);
+    await tap(page, 'lesson-next-button');
+    // Read it: the sentence alone, nothing above it; a tap shows the answer.
+    await waitUntil(page, stepOf('step 2 of 4'), 'reading it');
+    assert.equal(await textOf(page, 'lesson-note'), 'Read it, then tap.');
+    assert.equal(await textOf(page, 'prompt-meaning'), '');
+    assert.equal(await isShown(page, 'lesson-next-button'), false);
+    await tapFace();
+    await waitUntil(page, `!document.getElementById('lesson-next-button').hidden`, 'the answer');
+    assert.match(await textOf(page, 'card-face'), /How are you\?/);
+    await tap(page, 'lesson-next-button');
+    // Its gap word over the outline, in the gap of the sentence.
+    await waitUntil(page, stepOf('step 3 of 4'), 'the gap word over its outline');
+    assert.equal(await textOf(page, 'prompt-meaning'), 'How are you?＿＿好嗎？');
+    // Known: its cards are answered Easy.
+    await tap(page, 'skip-lesson-button');
+    await waitUntil(page, `document.querySelector('#learn-strip .current .chip-word')?.textContent !== '你們…'`, 'the next one');
+    const known = (await stored(page, 'cards')).filter((card) => card.id.startsWith('你們好嗎？|sentence'));
+    assert.deepEqual(known.map((card) => card.id).sort(), ['你們好嗎？|sentence#meaning', '你們好嗎？|sentence#writing']);
+
+    await skip('學習');
+    await skip('這個…');
+    await skip('即使…');
+    // 支持 before the sentence with it in its gap, though added after it.
+    await skip('支持');
+    await waitUntil(page, `document.querySelector('#learn-strip .current .chip-word')?.textContent === '他們…'`, 'the sentence after its word');
+    await tap(page, 'lesson-next-button');
+    await waitUntil(page, stepOf('step 2 of 4'), 'reading it');
+    await tapFace();
+    await waitUntil(page, `!document.getElementById('lesson-next-button').hidden`, 'the answer');
+    await tap(page, 'lesson-next-button');
+    await waitUntil(page, stepOf('step 3 of 4'), 'over the outline');
+    await write('支');
+    await nextCharacter();
+    await write('持');
+    await waitUntil(page, `!document.getElementById('next-button').hidden`, 'Next step');
+    await tap(page, 'next-button');
+    await waitUntil(page, stepOf('step 4 of 4'), 'from memory');
+    assert.equal(await textOf(page, 'lesson-note'), 'Now from memory.');
+    await write('支');
+    await nextCharacter();
+    await write('持');
+    // The gap filled in, the whole sentence shows.
+    await waitUntil(page, `document.getElementById('prompt-meaning').textContent === 'They support me.他們支持我。'`, 'the whole sentence');
+    await tap(page, 'next-button');
+
+    // Learned: it is in the summary of today's words, on a line of its own.
+    await waitUntil(page, `document.querySelector('.learned-word.sentence') !== null`, 'the summary');
+    assert.match(await textOf(page, '.learned-word.sentence'), /^他們支持我。They support me\.$/);
+    const sentence = (await stored(page, 'words')).find((word) => word.id === '他們支持我。|sentence');
+    assert.ok(sentence.learnedAt > sentence.addedAt);
+    // Its cards are new in Review now; the sentence added from a word's
+    // page was never in Learn and is not among today's words.
+    assert.equal(await page.evaluate(`[...document.querySelectorAll('.learned-word')].some((row) => row.textContent.startsWith('我們是同學'))`), false);
   });
 });

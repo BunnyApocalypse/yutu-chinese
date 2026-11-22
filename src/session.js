@@ -107,6 +107,31 @@ function isLearned(word, studiedCards) {
   return word.learnedAt !== undefined || studiedCards.length > 0;
 }
 
+// The sentences waiting in the Learn tab that wait for the word in their
+// gap (the owner, 2026-11-22): a sentence whose `cloze` is written like one
+// of `words` (by its traditional characters, in any reading) that is still
+// waiting itself comes only once that word is learned. A gap word not among
+// `words` holds nothing back. Returns a Set of the sentences' IDs.
+//
+// cards: a Map from card ID to card, as for planSession
+export function heldForGapWord(words, cards) {
+  const studiedOf = (word) => allCardIds(word).map((id) => cards.get(id)).filter(Boolean);
+  const waitingWords = new Set(
+    words.filter((word) => word.kind !== 'sentence' && !isLearned(word, studiedOf(word))).map((word) => word.traditional),
+  );
+  return new Set(
+    words
+      .filter(
+        (word) =>
+          word.kind === 'sentence' &&
+          word.cloze &&
+          waitingWords.has(word.cloze.traditional) &&
+          !isLearned(word, studiedOf(word)),
+      )
+      .map((word) => word.id),
+  );
+}
+
 // The word the Learn tab teaches next: the first one waiting, in the order
 // of `order`. Returns null if none is waiting.
 //
@@ -510,6 +535,20 @@ export function lessonSteps({ newWord = false, toneCardsOn, canHaveToneCard, can
     ...(toneCardsOn && canHaveToneCard ? ['tone'] : []),
     ...(canBeWritten ? ['trace', 'outline', 'test'] : []),
   ];
+}
+
+// The steps of a sentence's lesson in the Learn tab (the owner, 2026-11-22),
+// all practice:
+//   'meet':    a look at the sentence, its reading and its meaning
+//   'read':    the sentence alone, to read; a tap shows the reading and
+//              meaning (its meaning card, not graded)
+//   'outline': its word to fill in written over the outline, in the gap
+//   'test':    the same from memory
+// The two writing steps only when it has a word to fill in and its writing
+// card asks for that word (`canWriteGap`); a writing card asking for the
+// whole sentence is first tried in Review.
+export function sentenceLessonSteps({ canWriteGap }) {
+  return ['meet', 'read', ...(canWriteGap ? ['outline', 'test'] : [])];
 }
 
 // A character counts as missed when its mistakes exceed this share of its

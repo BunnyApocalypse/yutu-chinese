@@ -569,6 +569,9 @@ export default {
   'review.editThisWord': 'Edit this word',
   'review.skipLessonButton': 'I know this word',
   'review.skipThisWordsLesson': "Skip this word's lesson: its cards are answered Easy",
+  // No longer than "I know this word", or the lesson's row takes two lines.
+  'review.skipSentenceButton': 'I know this one',
+  'review.skipThisSentencesLesson': "Skip this sentence's lesson: its cards are answered Easy",
   'review.characterOrWord': 'Character or word',
   'review.characterOrWordTo': 'Character or word to practice',
   'review.writing': 'Writing',
@@ -650,9 +653,13 @@ export default {
   'review.lessonOutline': 'Now over the outline.',
   'review.lessonTest': 'From memory. This counts.',
   'review.lessonLearnTest': 'Now from memory.',
+  // A sentence's lesson in Learn: its first look, and reading it.
+  'review.lessonMeetSentence': 'A new sentence.',
+  'review.lessonRead': 'Read it, then tap.',
   'review.repeatLesson': 'Repeat lesson',
   'review.newRadical': 'New radical',
   'review.newWord': 'New word',
+  'review.newSentence': 'New sentence',
   'review.lessonStep': '{kind} · step {step} of {steps}',
   'review.done': 'Done',
   'review.nextWord': 'Next word',
@@ -1122,15 +1129,15 @@ export default {
   'addList.sentenceCount': { one: '{count} sentence', other: '{count} sentences' },
   'addList.putItemsInDeckNamed': 'Put {count} already yours in {deck}',
   'addList.sentencesAddedTo': {
-    one: '{count} sentence added to {deck}. Its cards come up in Review.',
-    other: '{count} sentences added to {deck}. Their cards come up in Review.',
+    one: '{count} sentence added to {deck}. It waits in Learn.',
+    other: '{count} sentences added to {deck}. They wait in Learn.',
   },
   'addList.sentencesWentIntoDeck': {
     one: '{count} sentence you already had went into this deck.',
     other: '{count} sentences you already had went into this deck.',
   },
   'addList.hintSentences':
-    'A line with the punctuation of a sentence in it (。，？！) is a sentence: the sentence, in one script or both; its pinyin or zhuyin, written as you like (it may be left out); its meaning; and, if you like, a word of it to fill in on its writing card. A sentence\'s cards come up in Review at once.',
+    'A line with the punctuation of a sentence in it (。，？！) is a sentence: the sentence, in one script or both; its pinyin or zhuyin, written as you like (it may be left out); its meaning; and, if you like, a word of it to fill in on its writing card. Sentences wait in Learn, as words do.',
   'addList.hintBoth':
     'One word per line, as in a TSV or CSV file: simplified, traditional, pinyin with tone numbers, meaning, separated by tabs or commas. With one column of characters instead of two, the other script is looked up in the dictionary. Pinyin or a meaning left out is filled in from the dictionary, so a list of words alone works too.',
   'addList.hintBothTaiwan':
@@ -1143,7 +1150,7 @@ export default {
   // Adding a sentence (addSentenceForm.js), a word's pop-up panel (wordDialog.js)
   'sentence.needsCharactersAndMeaning': 'A sentence needs its characters and what it means.',
   'sentence.notInSentence': '"{cloze}" is not in the sentence.',
-  'sentence.added': 'Added: {sentence} Its cards come up in Review.',
+  'sentence.added': 'Added: {sentence} It waits in Learn.',
   'sentence.nowInDeckToo': 'You had this sentence already. It is in this deck now too.',
   'sentence.alreadyInDeck': 'This sentence is already in this deck.',
   'sentence.alreadyInWords': 'This sentence is already in your words.',

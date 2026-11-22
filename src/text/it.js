@@ -556,6 +556,8 @@ export default {
   'review.editThisWord': 'Modifica questa parola',
   'review.skipLessonButton': 'La conosco già',
   'review.skipThisWordsLesson': 'Salta la lezione di questa parola: le sue carte ricevono la risposta Facile',
+  'review.skipSentenceButton': 'La conosco già',
+  'review.skipThisSentencesLesson': 'Salta la lezione di questa frase: le sue carte ricevono la risposta Facile',
   'review.characterOrWord': 'Carattere o parola',
   'review.characterOrWordTo': 'Carattere o parola da esercitare',
   'review.writing': 'Scrittura',
@@ -636,9 +638,12 @@ export default {
   'review.lessonOutline': 'Ora sul solo contorno.',
   'review.lessonTest': 'A memoria: questa conta.',
   'review.lessonLearnTest': 'Ora a memoria.',
+  'review.lessonMeetSentence': 'Una frase nuova.',
+  'review.lessonRead': 'Leggila, poi tocca.',
   'review.repeatLesson': 'Ripeti la lezione',
   'review.newRadical': 'Nuovo radicale',
   'review.newWord': 'Nuova parola',
+  'review.newSentence': 'Nuova frase',
   'review.lessonStep': '{kind} · passo {step} di {steps}',
   'review.done': 'Fatto',
   'review.nextWord': 'Parola successiva',
@@ -1101,15 +1106,15 @@ export default {
   'addList.sentenceCount': { one: '{count} frase', other: '{count} frasi' },
   'addList.putItemsInDeckNamed': 'Metti in {deck} le {count} già tue',
   'addList.sentencesAddedTo': {
-    one: '{count} frase aggiunta a {deck}. Le sue carte compaiono nel Ripasso.',
-    other: '{count} frasi aggiunte a {deck}. Le loro carte compaiono nel Ripasso.',
+    one: '{count} frase aggiunta a {deck}. Aspetta in Impara.',
+    other: '{count} frasi aggiunte a {deck}. Aspettano in Impara.',
   },
   'addList.sentencesWentIntoDeck': {
     one: '{count} frase che avevi già è andata in questo mazzo.',
     other: '{count} frasi che avevi già sono andate in questo mazzo.',
   },
   'addList.hintSentences':
-    'Una riga con la punteggiatura di una frase (。，？！) è una frase: la frase, in una scrittura o in entrambe; il suo pinyin o zhuyin, scritto come vuoi (si può omettere); il suo significato; e, se vuoi, una sua parola da completare nella carta di scrittura. Le carte di una frase compaiono subito nel Ripasso.',
+    'Una riga con la punteggiatura di una frase (。，？！) è una frase: la frase, in una scrittura o in entrambe; il suo pinyin o zhuyin, scritto come vuoi (si può omettere); il suo significato; e, se vuoi, una sua parola da completare nella carta di scrittura. Le frasi aspettano in Impara, come le parole.',
   'addList.hintBoth':
     'Una parola per riga, come in un file TSV o CSV: semplificato, tradizionale, pinyin con i numeri dei toni, significato, separati da tabulazioni o virgole. Con una sola colonna di caratteri invece di due, l\'altra scrittura viene cercata nel dizionario. Il pinyin o il significato mancanti vengono compilati dal dizionario, quindi funziona anche una semplice lista di parole.',
   'addList.hintBothTaiwan':
@@ -1122,7 +1127,7 @@ export default {
   // Adding a sentence (addSentenceForm.js), a word's pop-up panel (wordDialog.js)
   'sentence.needsCharactersAndMeaning': 'Una frase ha bisogno dei suoi caratteri e del suo significato.',
   'sentence.notInSentence': '«{cloze}» non è nella frase.',
-  'sentence.added': 'Aggiunta: {sentence} Le sue carte compaiono nel Ripasso.',
+  'sentence.added': 'Aggiunta: {sentence} Aspetta in Impara.',
   'sentence.nowInDeckToo': 'Avevi già questa frase. Ora è anche in questo mazzo.',
   'sentence.alreadyInDeck': 'Questa frase è già in questo mazzo.',
   'sentence.alreadyInWords': 'Questa frase è già tra le tue parole.',

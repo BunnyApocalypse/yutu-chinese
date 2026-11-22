@@ -17,6 +17,7 @@
 // and the `learnedAt` it sets don't count.
 
 import { startOfStudyDay } from './session.js';
+import { learnedWhenAdded } from './sentences.js';
 import { t } from './text.js';
 
 export const DEFAULT_STREAK_CARDS = 10;
@@ -67,7 +68,9 @@ export function studyByDay(reviews, words) {
     cards.get(key).add(review.cardId);
   }
   for (const word of words) {
-    if (word.learnedAt === undefined || markedKnown.has(`${word.id}|${word.learnedAt}`)) {
+    // A sentence counts once learned in Learn, not one ready for Review as
+    // it was added (learnedWhenAdded; the owner, 2026-11-22).
+    if (word.learnedAt === undefined || markedKnown.has(`${word.id}|${word.learnedAt}`) || learnedWhenAdded(word)) {
       continue;
     }
     const key = studyDayKey(word.learnedAt);

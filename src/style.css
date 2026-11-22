@@ -1282,6 +1282,15 @@ button.learned-word {
   font-size: var(--size-title);
 }
 
+/* A sentence learned: the sentence on its line, its meaning under it. */
+button.learned-word.sentence {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+button.learned-word.sentence .learned-characters {
+  font-size: var(--size-body);
+}
+
 .learned-reading {
   font-size: var(--size-body);
   color: var(--accent);

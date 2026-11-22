@@ -556,6 +556,8 @@ export default {
   'review.editThisWord': 'Dieses Wort ändern',
   'review.skipLessonButton': 'Kenne ich schon',
   'review.skipThisWordsLesson': 'Lektion dieses Worts überspringen: Die Karten werden mit „Einfach“ beantwortet',
+  'review.skipSentenceButton': 'Kenne ich schon',
+  'review.skipThisSentencesLesson': 'Lektion dieses Satzes überspringen: Die Karten werden mit „Einfach“ beantwortet',
   'review.characterOrWord': 'Zeichen oder Wort',
   'review.characterOrWordTo': 'Zeichen oder Wort zum Üben',
   'review.writing': 'Schreiben',
@@ -636,9 +638,12 @@ export default {
   'review.lessonOutline': 'Jetzt über den Umriss.',
   'review.lessonTest': 'Auswendig. Das zählt.',
   'review.lessonLearnTest': 'Jetzt auswendig.',
+  'review.lessonMeetSentence': 'Ein neuer Satz.',
+  'review.lessonRead': 'Lies ihn, dann tippe.',
   'review.repeatLesson': 'Lektion wiederholen',
   'review.newRadical': 'Neues Radikal',
   'review.newWord': 'Neues Wort',
+  'review.newSentence': 'Neuer Satz',
   'review.lessonStep': '{kind} · Schritt {step} von {steps}',
   'review.done': 'Fertig',
   'review.nextWord': 'Nächstes Wort',
@@ -1102,15 +1107,15 @@ export default {
   'addList.sentenceCount': { one: '{count} Satz', other: '{count} Sätze' },
   'addList.putItemsInDeckNamed': '{count}, die du schon hast, in {deck} legen',
   'addList.sentencesAddedTo': {
-    one: '{count} Satz zu {deck} hinzugefügt. Seine Karten kommen in „Wiederholen“.',
-    other: '{count} Sätze zu {deck} hinzugefügt. Ihre Karten kommen in „Wiederholen“.',
+    one: '{count} Satz zu {deck} hinzugefügt. Er wartet in „Lernen“.',
+    other: '{count} Sätze zu {deck} hinzugefügt. Sie warten in „Lernen“.',
   },
   'addList.sentencesWentIntoDeck': {
     one: '{count} Satz, den du schon hattest, kam in diesen Stapel.',
     other: '{count} Sätze, die du schon hattest, kamen in diesen Stapel.',
   },
   'addList.hintSentences':
-    'Eine Zeile mit den Satzzeichen eines Satzes (。，？！) ist ein Satz: der Satz, in einer Schrift oder in beiden; sein Pinyin oder Zhuyin, geschrieben, wie du magst (darf fehlen); seine Bedeutung; und, wenn du willst, ein Wort daraus, das auf seiner Schreibkarte zu ergänzen ist. Die Karten eines Satzes kommen sofort in „Wiederholen“.',
+    'Eine Zeile mit den Satzzeichen eines Satzes (。，？！) ist ein Satz: der Satz, in einer Schrift oder in beiden; sein Pinyin oder Zhuyin, geschrieben, wie du magst (darf fehlen); seine Bedeutung; und, wenn du willst, ein Wort daraus, das auf seiner Schreibkarte zu ergänzen ist. Sätze warten in „Lernen“, wie Wörter.',
   'addList.hintBoth':
     'Ein Wort pro Zeile, wie in einer TSV- oder CSV-Datei: vereinfacht, traditionell, Pinyin mit Tonzahlen, Bedeutung, getrennt durch Tabulatoren oder Kommas. Bei einer Spalte mit Zeichen statt zwei wird die andere Schrift im Wörterbuch nachgeschlagen. Fehlendes Pinyin oder eine fehlende Bedeutung wird aus dem Wörterbuch ergänzt, eine reine Wortliste funktioniert also auch.',
   'addList.hintBothTaiwan':
@@ -1123,7 +1128,7 @@ export default {
   // Adding a sentence (addSentenceForm.js), a word's pop-up panel (wordDialog.js)
   'sentence.needsCharactersAndMeaning': 'Ein Satz braucht seine Zeichen und seine Bedeutung.',
   'sentence.notInSentence': '„{cloze}“ kommt im Satz nicht vor.',
-  'sentence.added': 'Hinzugefügt: {sentence} Seine Karten kommen in „Wiederholen“.',
+  'sentence.added': 'Hinzugefügt: {sentence} Er wartet in „Lernen“.',
   'sentence.nowInDeckToo': 'Diesen Satz hattest du schon. Jetzt ist er auch in diesem Stapel.',
   'sentence.alreadyInDeck': 'Dieser Satz ist schon in diesem Stapel.',
   'sentence.alreadyInWords': 'Dieser Satz ist schon in deinen Wörtern.',

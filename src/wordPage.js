@@ -125,8 +125,9 @@ export function createWordPage({
 
   // Beside Practice (tester 2's R6; the owner, 2026-10-18): a word or
   // radical learned can go through its lesson again, and one still waiting
-  // is offered its lesson in Learn. Not for a sentence, which has no lesson,
-  // nor in Review or Learn (canPractice). `learnNowAbove`: the page already
+  // is offered its lesson in Learn. Not for a sentence (its lesson is only
+  // met in Learn's queue, 2026-11-22; not built from its page), nor in
+  // Review or Learn (canPractice). `learnNowAbove`: the page already
   // has "Learn it now" at its top (a word just added).
   function showLessonButton(word, learnNowAbove = false) {
     const learned = word && isLearned(word);

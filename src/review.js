@@ -21,7 +21,9 @@ import {
   cardIdFor,
   otherScriptCardId,
   lessonSteps,
+  sentenceLessonSteps,
   nextToLearn,
+  heldForGapWord,
   CARD_TYPES,
   allCardIds,
   startOfStudyDay,
@@ -49,7 +51,7 @@ import { isLeech, lapsesOf, isSuspended, withSuspended, becameLeech } from './le
 import { speak } from './speech.js';
 import { markedKnown, withStartedOver } from './cardManager.js';
 import { ask } from './confirm.js';
-import { isSentence, sentenceCardTypes, sentenceWriting } from './sentences.js';
+import { isSentence, sentenceCardTypes, sentenceWriting, learnedWhenAdded, shortForm } from './sentences.js';
 import { isRadical, RADICAL_CARD_TYPES } from './radicals.js';
 import { cardTip } from './cardTip.js';
 import { studyByDay, streakAt, streakLine, studyDayKey } from './streak.js';
@@ -1637,6 +1639,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     test: 'review.lessonTest',
     // The same step in the Learn tab, where it is practice.
     learnTest: 'review.lessonLearnTest',
+    // A sentence's lesson (sentenceLessonSteps in session.js): its first
+    // look, and reading it. Its word to fill in has the notes above.
+    meetSentence: 'review.lessonMeetSentence',
+    read: 'review.lessonRead',
   };
 
   function endLesson() {
@@ -1647,8 +1653,19 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     lessonNextButton.hidden = true;
   }
 
-  // The steps for the word on screen.
+  // The steps for the word on screen. A sentence has steps of its own: its
+  // word to fill in is written only when its writing card asks for that
+  // word and the word can be written.
   function stepsFor(word, newWord) {
+    if (isSentence(word)) {
+      return sentenceLessonSteps({
+        canWriteGap:
+          hasCardType(word, 'writing') &&
+          settings.sentenceWriting === 'word' &&
+          Boolean(word.cloze) &&
+          !unwritable.has(word.id),
+      });
+    }
     return lessonSteps({
       newWord,
       toneCardsOn: settings.enabledTypes.includes('tone'),
@@ -1664,19 +1681,37 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     const step = lesson.steps[lesson.index];
     // A lesson repeated is of a word already learned, not a new one (the
     // owner, 2026-10-18).
-    const kind = t(current.repeating ? 'review.repeatLesson' : isRadical(word) ? 'review.newRadical' : 'review.newWord');
+    const sentence = isSentence(word);
+    const kind = t(
+      current.repeating
+        ? 'review.repeatLesson'
+        : sentence
+          ? 'review.newSentence'
+          : isRadical(word)
+            ? 'review.newRadical'
+            : 'review.newWord',
+    );
     typeElement.textContent = t('review.lessonStep', { kind, step: lesson.index + 1, steps: lesson.steps.length });
     // In Learn, today's words take its place (showStrip).
     showStrip();
     if (step !== 'meet') {
       hideLearnedPill();
     }
-    const note = step === 'test' && current.learning ? 'learnTest' : step === 'meet' && current.repeating ? 'meetAgain' : step;
+    const note =
+      step === 'test' && current.learning
+        ? 'learnTest'
+        : step === 'meet' && current.repeating
+          ? 'meetAgain'
+          : step === 'meet' && sentence
+            ? 'meetSentence'
+            : step;
     lessonNote.textContent = t(LESSON_NOTES[note]);
     lessonNote.hidden = false;
     // "I know this word" is offered at every step, but not in a lesson
-    // repeated, which saves nothing.
+    // repeated, which saves nothing. For a sentence, "I know this sentence".
     skipLessonButton.hidden = Boolean(current.repeating);
+    skipLessonButton.textContent = t(sentence ? 'review.skipSentenceButton' : 'review.skipLessonButton');
+    skipLessonButton.title = t(sentence ? 'review.skipThisSentencesLesson' : 'review.skipThisWordsLesson');
     // In Learn, "About" beside it, at every step (the owner, 2026-11-06).
     // Not in Review's lessons, whose last step is graded.
     // (Nor in a lesson repeated, opened from the page.)
@@ -1684,22 +1719,42 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     // A tip beside it, the first time (tips.js).
     document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'lesson' }));
     lessonNextButton.hidden = true;
+    // A sentence read at its lesson's last step goes on as a word written
+    // from memory does: "Next word", or "Done" at the end of today's words.
+    const lastRead = step === 'read' && lesson.index === lesson.steps.length - 1 && current.learning;
+    lessonNextButton.textContent = t(
+      !lastRead ? 'study.lessonNextButton' : isLastOfBatch() ? 'review.done' : 'review.nextWord',
+    );
     stopFlows();
     hideGrades();
     // A word being learned can be heard at every step.
     offerListen(true);
 
     const script = cardScript(word);
+    // What a writing step writes: the word; for a sentence, its word to fill
+    // in, with the sentence and its gap shown under its meaning, as on its
+    // writing card in Review (showWritingCard).
+    const asked = sentence ? sentenceWriting(word, script, 'word') : { text: word[script], prompt: null };
+    // Above the card: the word's meaning, or the sentence's with its gap.
+    const showLessonMeaning = () => {
+      if (sentence) {
+        showMeaning(word, asked.prompt, script);
+      } else {
+        meaningElement.classList.remove('with-sentence');
+        meaningElement.textContent = word.definition;
+      }
+    };
     if (step === 'test') {
       pinyinElement.hidden = true;
       showPartsFor('writing');
       if (!current.learning) {
         return showWritingCard();
       }
+      showLessonMeaning();
       // In the Learn tab: from memory, as practice. The character is still
       // judged, so that writing it well turns it green, and starting again
       // clears the slate. Nothing is saved.
-      return flows.writing.start(word[script], {
+      return flows.writing.start(asked.text, {
         script,
         rawInput: settings.rawInput,
         hideMistakes: !settings.mistakeCount,
@@ -1712,6 +1767,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         onCharStart: () => putToolsAway(false),
         onWordDone() {
           showPinyin();
+          // The gap is filled in: the whole sentence is shown.
+          if (asked.prompt) {
+            showMeaning(word, word[script], script);
+          }
           const chip = learnStrip.querySelector('.current');
           chip?.classList.remove('asking');
           chip?.removeAttribute('aria-label');
@@ -1730,7 +1789,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // the card jumped down at step 2, by 75px on a 390×844 phone).
       pinyinButton.hidden = true;
       showPartsFor('meaning');
-      meaningElement.textContent = word.definition;
+      showLessonMeaning();
       showPinyin();
       meaningElement.classList.add('ghost');
       pinyinElement.classList.add('ghost');
@@ -1740,7 +1799,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         element.textContent = text;
         return element;
       };
-      const characters = face('face-word', word[script]);
+      // A sentence is shown smaller than a word, so that it fits (as on its
+      // meaning card, recallCard.js).
+      const characters = face(Array.from(word[script]).length > 6 ? 'face-word long' : 'face-word', word[script]);
       // Tells the browser which regional font to use for the characters.
       characters.lang = script === 'traditional' ? 'zh-Hant-TW' : 'zh-Hans-CN';
       const described = describeReading(readingOf(word));
@@ -1769,11 +1830,33 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       return true;
     }
 
+    if (step === 'read') {
+      // A sentence alone on its card, to read, as its meaning card in
+      // Review; a tap shows its reading and meaning, the next goes on.
+      // Practice: nothing is saved. Nothing above the card gives it away.
+      pinyinButton.hidden = true;
+      showPartsFor('meaning');
+      meaningElement.textContent = '';
+      pinyinElement.hidden = true;
+      flows.recall.start({
+        word,
+        script,
+        reading: readingOf(word),
+        ask: 'meaning',
+        onReveal() {
+          lessonNextButton.hidden = false;
+          speakAfterStep();
+        },
+        onContinue: () => nextLessonStep(),
+      });
+      return true;
+    }
+
     // While it is being learned, the word's meaning and reading are in view.
-    meaningElement.textContent = word.definition;
     pinyinButton.hidden = true;
     showPinyin();
     if (step === 'tone') {
+      showLessonMeaning();
       showPartsFor('tone');
       flows.tone.start({
         word,
@@ -1794,7 +1877,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       return true;
     }
     showPartsFor('writing');
-    return flows.writing.start(word[script], {
+    showLessonMeaning();
+    return flows.writing.start(asked.text, {
       script,
       rawInput: settings.rawInput,
       hideMistakes: !settings.mistakeCount,
@@ -1952,7 +2036,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   function firstBatch(learnedToday, waiting, goal) {
     const dayStart = startOfStudyDay(Date.now());
     const today = studyWords()
-      .filter((word) => !isSentence(word) && word.learnedAt >= dayStart)
+      .filter((word) => !learnedWhenAdded(word) && word.learnedAt >= dayStart)
       .sort((a, b) => a.learnedAt - b.learnedAt);
     const left = Math.min(Math.max(0, goal - learnedToday), waiting);
     return { size: today.length + left, ids: today.map((word) => word.id), first: true };
@@ -2007,7 +2091,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         const text = document.createElement('span');
         text.className = 'chip-word';
         text.lang = langFor(script);
-        text.textContent = word[script];
+        // A sentence by its first characters (shortForm).
+        text.textContent = shortForm(word, script);
         element.append(text);
       }
       return element;
@@ -2071,7 +2156,11 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     const text = document.createElement('span');
     fillMixed(
       text,
-      t('review.learnedPill', { word: word[script], learned: batch.ids.length, size: Math.max(batch.size, batch.ids.length) }),
+      t('review.learnedPill', {
+        word: shortForm(word, script),
+        learned: batch.ids.length,
+        size: Math.max(batch.size, batch.ids.length),
+      }),
       script,
     );
     const tick = document.createElement('span');
@@ -2120,7 +2209,10 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       const script = scriptFor(word, settings);
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = 'learned-word';
+      // A sentence on a line of its own, its meaning under it, without its
+      // reading (too long for the row; style.css).
+      const sentence = isSentence(word);
+      button.className = sentence ? 'learned-word sentence' : 'learned-word';
       const characters = document.createElement('span');
       characters.className = 'learned-characters';
       characters.lang = langFor(script);
@@ -2131,7 +2223,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       const meaning = document.createElement('span');
       meaning.className = 'learned-meaning';
       fillWithoutChinese(meaning, word);
-      button.append(characters, reading, meaning);
+      button.append(characters, ...(sentence ? [] : [reading]), meaning);
       button.addEventListener('click', () => showWord(word));
       const item = document.createElement('li');
       item.append(button);
@@ -2183,10 +2275,13 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     showNext();
     noteStreak();
     // main.js may add the word's example sentence (the setting
-    // addExampleSentences), to the deck studied if the word is in it.
-    document.dispatchEvent(
-      new CustomEvent('word-learned', { detail: { word: learned, deckId: deckForSentence(learned) } }),
-    );
+    // addExampleSentences), to the deck studied if the word is in it. (Not
+    // for a sentence learned.)
+    if (!isSentence(learned)) {
+      document.dispatchEvent(
+        new CustomEvent('word-learned', { detail: { word: learned, deckId: deckForSentence(learned) } }),
+      );
+    }
   }
 
   // The deck a sentence for `word` goes into: the first of its decks within
@@ -2198,9 +2293,19 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     return own.find((deckId) => inside.has(deckId)) ?? own[0] ?? null;
   }
 
+  // The words Learn works with: those of the deck studied, a sentence among
+  // them as one word (the owner, 2026-11-22), except a sentence that was
+  // ready for Review as it was added (learnedWhenAdded), which was never
+  // here and is not one of the day's words, and a sentence waiting for the
+  // word in its gap to be learned first (heldForGapWord).
+  function learnWords() {
+    const all = studyWords();
+    const held = heldForGapWord(all, cards);
+    return all.filter((word) => !learnedWhenAdded(word) && !held.has(word.id));
+  }
+
   function learnCounts() {
-    // (Sentences are not learned here and do not count toward the day's words.)
-    const plan = planSession(studyWords().filter((word) => !isSentence(word)), cards, Date.now(), {
+    const plan = planSession(learnWords(), cards, Date.now(), {
       newWordsPerDay: goalForToday(),
       // Every kind: hasCardType says which are switched on, since
       // sentences have settings of their own.
@@ -2254,7 +2359,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   async function startNextWord() {
     const learned = justLearned;
     justLearned = null;
-    const word = nextToLearn(studyWords(), cards);
+    const word = nextToLearn(learnWords(), cards);
     if (!word) {
       showNextToLearn();
       return;

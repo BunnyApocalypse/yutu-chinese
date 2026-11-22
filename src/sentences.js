@@ -16,8 +16,13 @@
 //   - Changing its characters changes its ID, as correcting a word's
 //     characters does; its cards and reviews move with it (renameWord in
 //     db.js).
-//   - It is not taught in the Learn tab: it counts as learned when it is
-//     added (`learnedAt`), and its cards come up in Review.
+//   - It is learned in the Learn tab, as a word is (the owner, 2026-11-22),
+//     when it comes from a list or from "Add a sentence" on a deck's page:
+//     it is added without `learnedAt` and waits there. One added from a
+//     word's page, or by itself when its word is learned (and every
+//     sentence from before), counts as learned when it is added: its
+//     `learnedAt` is its `addedAt` (learnedWhenAdded), and its cards come
+//     up in Review at once.
 //
 // A sentence has up to two cards:
 //   meaning   "reading": the sentence is shown; recall what it means
@@ -48,7 +53,11 @@ export function sentenceCardTypes(settings) {
 // order:    its place in the queue (see newWordRecords in words.js)
 // deckId:   the deck it goes into
 // now:      the time, as from Date.now()
-export function sentenceRecord(sentence, order, deckId, now) {
+// options:
+//   waiting: true to have it wait in the Learn tab (from a list, or added
+//            by hand on a deck's page); otherwise it is ready for Review
+//            at once (from a word's page, or with its word)
+export function sentenceRecord(sentence, order, deckId, now, { waiting = false } = {}) {
   const record = {
     id: sentenceId(sentence.traditional),
     kind: 'sentence',
@@ -58,8 +67,8 @@ export function sentenceRecord(sentence, order, deckId, now) {
     definition: sentence.definition,
     order,
     addedAt: now,
-    // A sentence is not taught first: it is ready for Review at once.
-    learnedAt: now,
+    // Learned as it is added (learnedWhenAdded), unless it waits in Learn.
+    ...(waiting ? {} : { learnedAt: now }),
     decks: [deckId],
   };
   const { cloze } = sentence;
@@ -68,6 +77,23 @@ export function sentenceRecord(sentence, order, deckId, now) {
     record.cloze = { traditional: cloze.traditional, simplified: cloze.simplified };
   }
   return record;
+}
+
+// True for a sentence that counted as learned as it was added (from a word's
+// page, by itself with its word, or before sentences were learned in Learn):
+// it was never in the Learn tab, so it is not one of the day's words there,
+// nor a word learned for the streak. A sentence learned in Learn, or marked
+// as known there, has a `learnedAt` later than its `addedAt`.
+export function learnedWhenAdded(word) {
+  return isSentence(word) && word.learnedAt !== undefined && word.learnedAt === word.addedAt;
+}
+
+// How a sentence is shown where a word's characters would be in a small
+// box (Learn's strip of today's words, the pill): its first two characters
+// and "…". A word, and a sentence that short, as it is.
+export function shortForm(word, script) {
+  const characters = Array.from(word[script]);
+  return isSentence(word) && characters.length > 3 ? `${characters.slice(0, 2).join('')}…` : word[script];
 }
 
 // The word to fill in, in both scripts, from the word as typed in one.
@@ -117,7 +143,7 @@ export function sentenceWriting(word, script, mode) {
 
 // The records for the sentences of a list (as newWordRecords in words.js
 // does for words): those not yet in `existing` (word records), each once,
-// queued after every existing word.
+// queued after every existing word. They wait in the Learn tab.
 //
 // Returns { toAdd, alreadyHave }: the new records, and how many were left
 // out as already there (or earlier in the list).
@@ -134,7 +160,7 @@ export function newSentenceRecords(sentences, existing, deckId, now) {
     }
     known.add(id);
     order += 1;
-    toAdd.push(sentenceRecord(sentence, order, deckId, now));
+    toAdd.push(sentenceRecord(sentence, order, deckId, now, { waiting: true }));
   }
   return { toAdd, alreadyHave };
 }
