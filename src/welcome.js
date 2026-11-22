@@ -119,6 +119,12 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
   let mode = 'steps';
   // While finishing: the buttons are off, and nothing redraws the screen.
   let finishing = false;
+  // "Skip the introduction" where sync is offered goes to the last screen
+  // rather than closing (the owner, 2026-11-22: skipping had skipped
+  // setting up sync too). The screen it was tapped on, for Back; null when
+  // not skipped. Skipped screens' choices are not saved, and no level is
+  // added, as when the introduction is closed.
+  let skippedFrom = null;
 
   // ---- Syncing ----
 
@@ -349,7 +355,7 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
             ? 'welcome.installAndStart'
             : storagePlan.action === 'ask'
               ? 'welcome.keepAndStart'
-              : mode === 'joined'
+              : mode === 'joined' || skippedFrom !== null
                 ? 'welcome.startLearning'
                 : startChosen()?.from === 'anki'
                   ? 'welcome.importAnki'
@@ -424,6 +430,9 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
   backButton.addEventListener('click', () => {
     if (mode === 'join') {
       mode = 'steps';
+    } else if (skippedFrom !== null) {
+      step = skippedFrom;
+      skippedFrom = null;
     } else {
       step -= 1;
     }
@@ -463,6 +472,16 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
       dialog.close();
       return;
     }
+    // Skipped: the choices stay as they were and no level is added; only
+    // sync is turned on, if chosen.
+    if (skippedFrom !== null) {
+      const syncCode = syncChosen() ? newCode : null;
+      dialog.close();
+      if (syncCode) {
+        sync.turnOn(syncCode);
+      }
+      return;
+    }
     await applyChoices();
     await setSetting('welcomeDone', true);
     // Adding a level takes a few seconds (the dictionary is read for the
@@ -489,13 +508,19 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
     }
   }
 
-  // Skipping changes no settings. Esc closes a <dialog> too; "close" is
-  // announced either way, so the introduction is not shown again unasked.
-  // On the last screen the same button is "Not now": the choices are saved,
-  // and only long-term storage is not asked for.
+  // Skipping changes no settings. Where sync is offered (and not on yet),
+  // it goes to the last screen, with sync and keeping the words; otherwise
+  // it closes. Esc closes a <dialog> too; "close" is announced either way,
+  // so the introduction is not shown again unasked. On the last screen the
+  // same button is "Not now": the choices are saved (unless skipped), and
+  // only long-term storage is not asked for.
   skipButton.addEventListener('click', () => {
     if (step === steps.length - 1) {
       finish('none');
+    } else if (sync.available && !sync.control.status().on) {
+      skippedFrom = step;
+      step = steps.length - 1;
+      showStep();
     } else {
       dialog.close();
     }
@@ -534,6 +559,7 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
     codeNote.textContent = '';
     showSyncChoice();
     step = 0;
+    skippedFrom = null;
     showStep();
     // showModal() opens a <dialog> on top of the page and dims the rest.
     dialog.showModal();

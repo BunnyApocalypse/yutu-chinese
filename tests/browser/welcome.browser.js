@@ -190,9 +190,20 @@ describe('the introduction', { concurrency: false }, () => {
     assert.equal(await heading(), 'Welcome to 玉兔中文');
     await tap(page, 'welcome-next');
     assert.equal(await page.evaluate(`document.querySelector('input[name="welcome-script"]:checked').value`), 'traditional');
-    // Skipping changes nothing.
+    // Skipping goes to the last screen, so sync is still offered (the owner,
+    // 2026-11-22); Back returns to the screen skipped from.
     await click('input[name="welcome-script"][value="simplified"]');
     await tap(page, 'welcome-skip');
+    assert.equal(await page.evaluate(welcomeOpen), true);
+    assert.equal(await isShown(page, 'welcome-sync'), true);
+    assert.equal(await isShown(page, 'welcome-back'), true);
+    await tap(page, 'welcome-back');
+    assert.equal(await textOf(page, 'welcome-progress'), '2 of 4');
+    await tap(page, 'welcome-skip');
+    await justThisDevice();
+    // Finishing there changes nothing that was skipped, and adds no level.
+    await tap(page, 'welcome-next');
+    await waitUntil(page, `!${welcomeOpen}`, 'the introduction closed');
     await tap(page, 'settings-button');
     assert.equal(await page.evaluate(`document.getElementById('script-select').value`), 'traditional');
     await tap(page, 'settings-close');
