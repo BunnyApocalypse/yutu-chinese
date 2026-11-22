@@ -496,6 +496,8 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
   for (const tab of addTabs) {
     tab.addEventListener('click', () => showAddForm(tab.dataset.add));
   }
+  // Under "A sentence": many at once, in the list tab (the owner, 2026-11-22).
+  byId('sentence-list-button').addEventListener('click', () => showAddForm('add-list-fold'));
 
   function openAdding() {
     fillMixed(byId('add-to-deck-name'), openDeck().name, getSettings().script);
@@ -765,11 +767,24 @@ export function createWordsPanel(onChange, getSettings, studyDeck, practiceWord,
       // Listing the words read in the other script, each shows both forms,
       // also with one script set in Settings.
       const rowSettings = onlyOtherScript ? { ...getSettings(), bothScripts: true } : getSettings();
-      button.append(
-        charactersElement(word, rowSettings),
-        mixedSpan('entry-pinyin', showReading(word.pinyin, Array.from(word.traditional)), scriptFor(word, getSettings())),
-        mixedSpan('entry-definition', word.definition, scriptFor(word, getSettings())),
-      );
+      const script = scriptFor(word, getSettings());
+      if (isSentence(word)) {
+        // A sentence one line under another, in the script studied only
+        // (style.css, button.word-entry.sentence): in a word's row it was
+        // squeezed into a narrow column (the owner's screenshot, 2026-11-22).
+        button.classList.add('sentence');
+        button.append(
+          mixedSpan('entry-characters', word[script], script),
+          ...(word.pinyin ? [mixedSpan('entry-pinyin', word.pinyin, script)] : []),
+          mixedSpan('entry-definition', word.definition, script),
+        );
+      } else {
+        button.append(
+          charactersElement(word, rowSettings),
+          mixedSpan('entry-pinyin', showReading(word.pinyin, Array.from(word.traditional)), script),
+          mixedSpan('entry-definition', word.definition, script),
+        );
+      }
       // A word that is in a deck inside this one is marked with that deck.
       const where =
         deck && !word.decks.includes(deck.id)

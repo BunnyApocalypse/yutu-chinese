@@ -4290,6 +4290,16 @@ button.word-entry.selected {
   text-align: right;
 }
 
+/* A sentence in the list of words: one line under another, each as wide as
+   the row (wordsPanel.js). */
+button.word-entry.sentence {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+button.word-entry.sentence :is(.entry-pinyin, .entry-new) {
+  text-align: left;
+}
+
 /* ---- Decks ---- */
 
 /* The deck studied, at the top of Review and Learn. Kept small: the whole

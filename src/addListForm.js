@@ -62,6 +62,8 @@ export function createListForm(shared, dictionaryLoader) {
   // number of them that are new.
   let sentencesRead = [];
   let newSentences = 0;
+  // What was read, in the list's line order (readWordList's `rows`).
+  let rowsRead = [];
   // Counts the readings started, so that one overtaken by a newer one (the
   // learner kept typing) is dropped when it ends.
   let readings = 0;
@@ -87,6 +89,7 @@ export function createListForm(shared, dictionaryLoader) {
       listRead = [];
       sentencesRead = [];
       newSentences = 0;
+      rowsRead = [];
       delete foundPart.dataset.state;
     }
   }
@@ -187,6 +190,7 @@ export function createListForm(shared, dictionaryLoader) {
     const knownIds = new Set(shared.words().map((word) => word.id));
     sentencesRead = sentences;
     newSentences = sentenceRecords.filter((record) => !knownIds.has(record.id)).length;
+    rowsRead = rows;
     foundPart.dataset.state = 'read';
 
     const found = [];
@@ -336,14 +340,37 @@ export function createListForm(shared, dictionaryLoader) {
     addListButton.disabled = false;
   }
 
+  // Gives the new records (words and sentences, each with its `order` after
+  // every word already there) the places of the queue they took, again, in
+  // the order of the list's lines (`rowsRead`): a word, a sentence, a word…
+  function inListOrder(wordRecords, sentenceRecords) {
+    const recordsById = new Map([...wordRecords, ...sentenceRecords].map((record) => [record.id, record]));
+    const places = [...recordsById.values()].map((record) => record.order).sort((a, b) => a - b);
+    let next = 0;
+    for (const { kind, at } of rowsRead) {
+      // (A radical comes with its ID, as in newWordRecords.)
+      const id = kind === 'word' ? listRead[at].id || wordId(listRead[at]) : sentenceId(sentencesRead[at].traditional);
+      const record = recordsById.get(id);
+      if (record) {
+        record.order = places[next];
+        next += 1;
+        recordsById.delete(id);
+      }
+    }
+  }
+
   addListButton.addEventListener('click', async () => {
     addListButton.disabled = true;
     const deck = shared.openDeck();
     const now = Date.now();
     // Worked out again here, in case the list of words changed since it was
-    // read. The sentences are queued after the new words.
+    // read.
     const { toAdd } = newWordRecords(listToAdd, shared.words(), now);
     const { toAdd: sentencesToAdd } = newSentenceRecords(sentencesRead, [...shared.words(), ...toAdd], deck.id, now);
+    // Queued in the list's own order, words and sentences mixed as it has
+    // them (the owner, 2026-11-22: a mixed list): the queue's places after
+    // every word there, given out again line by line (inListOrder).
+    inListOrder(toAdd, sentencesToAdd);
     // Everything goes into the deck whose page is open, the words and
     // sentences of the list that were there already too.
     const alreadyThere = listedButNotInDeck();

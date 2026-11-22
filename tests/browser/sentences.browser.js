@@ -236,6 +236,10 @@ describe('sentences', { concurrency: false }, () => {
 
   it('adds sentences from a list, beside its words', async () => {
     await openDeckPage(page);
+    // Under "A sentence", a link to the list, which takes sentences too.
+    await useAddForm(page, 'add-sentence-fold');
+    await tap(page, 'sentence-list-button');
+    assert.equal(await page.evaluate(`document.getElementById('add-list-fold').hidden`), false);
     const list = [
       '学习\t學習\txue2xi2\tto study',
       // In both scripts, with a word to fill in.
@@ -321,6 +325,12 @@ describe('sentences', { concurrency: false }, () => {
     await pasteList(page, '他们支持我。\tTāmen zhīchí wǒ.\tThey support me.\t支持\n支持\t支持\tzhi1chi2\tto support');
     await tap(page, 'add-list-button');
     await waitUntil(page, `!document.getElementById('list-done').hidden`, 'the list added');
+    // Queued in the list's order, the sentence first.
+    const added = await stored(page, 'words');
+    const orderOf = (id) => added.find((word) => word.id === id).order;
+    assert.ok(orderOf('他們支持我。|sentence') < orderOf('支持|zhi1chi2'));
+    // In the deck's list, a sentence is a row of its own kind (one line under another).
+    await waitUntil(page, `document.querySelector('#word-list button.word-entry.sentence') !== null`, 'a sentence row');
 
     await openLearn(page);
     await skip('我們');
