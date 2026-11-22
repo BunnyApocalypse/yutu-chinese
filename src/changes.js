@@ -13,6 +13,24 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-22',
+    items: [
+      'A list can now hold sentences beside words: a line with a sentence\'s punctuation (。 or ？) is a sentence, with its pinyin or zhuyin, its meaning and a word to fill in if you like. "Add a list of sentences" under A sentence takes you there.',
+      'Sentences from a list, or added on a deck\'s page, now wait in Learn like words, in the list\'s order, after the word in their gap. Their lesson: a first look, reading it, then writing the missing word.',
+      'Sentences in a deck\'s list and in the list\'s preview now sit one line under another, easy to read.',
+    ],
+    it: [
+      'Una lista ora può contenere frasi accanto alle parole: una riga con la punteggiatura di una frase (。 o ？) è una frase, con il suo pinyin o zhuyin, il suo significato e, se vuoi, una parola da completare. «Aggiungi una lista di frasi» sotto Una frase ti porta lì.',
+      'Le frasi di una lista, o aggiunte nella pagina di un mazzo, ora aspettano in Impara come le parole, nell\'ordine della lista, dopo la parola del loro spazio vuoto. La loro lezione: un primo sguardo, leggerla, poi scrivere la parola che manca.',
+      'Le frasi nella lista di un mazzo e nell\'anteprima della lista ora stanno una riga sotto l\'altra, facili da leggere.',
+    ],
+    de: [
+      'Eine Liste kann jetzt Sätze neben Wörtern enthalten: Eine Zeile mit den Satzzeichen eines Satzes (。 oder ？) ist ein Satz, mit seinem Pinyin oder Zhuyin, seiner Bedeutung und, wenn du willst, einem Wort zum Ergänzen. „Eine Liste von Sätzen hinzufügen“ unter Ein Satz führt dorthin.',
+      'Sätze aus einer Liste oder auf der Seite eines Stapels hinzugefügt warten jetzt in „Lernen“ wie Wörter, in der Reihenfolge der Liste, nach dem Wort in ihrer Lücke. Ihre Lektion: ein erster Blick, ihn lesen, dann das fehlende Wort schreiben.',
+      'Sätze in der Wortliste eines Stapels und in der Vorschau der Liste stehen jetzt Zeile für Zeile untereinander, gut zu lesen.',
+    ],
+  },
+  {
     id: '2026-11-21',
     items: [
       'Setting up sync on a new device is quicker: catching up on your latest changes after the download takes a fraction of the time it did.',
