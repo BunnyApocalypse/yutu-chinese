@@ -172,7 +172,7 @@ export function createListForm(shared, dictionaryLoader) {
     // round (scriptOrder in readWordList), and the report says so.
     // A sentence in one script has the other looked up word by word
     // (sentenceForms in dictionaryLoader.js).
-    const { words: readable, sentences, problems, swapped } = readWordList(
+    const { words: readable, sentences, problems, swapped, rows } = readWordList(
       text,
       (characters, pinyin) => dictionaryLoader.completeForms(settings.script, characters, pinyin),
       fillIn,
@@ -198,7 +198,12 @@ export function createListForm(shared, dictionaryLoader) {
         t('addList.foundSentences', { count: sentences.length, new: newSentences, have: sentences.length - newSentences }),
       );
     }
-    report.textContent = found.length > 0 ? found.join(' ') : t('addList.nothingRead');
+    // Words and sentences each on a line of their own.
+    if (found.length > 0) {
+      report.replaceChildren(...found.flatMap((line, index) => (index > 0 ? [document.createElement('br'), line] : [line])));
+    } else {
+      report.textContent = t('addList.nothingRead');
+    }
 
     // New words written like a word already there, but read differently
     // (as wordsWithSameCharacters in words.js says it). Looked up in two sets
@@ -244,12 +249,10 @@ export function createListForm(shared, dictionaryLoader) {
     }
     byId('list-problems').replaceChildren(...shown);
 
-    // The first words as they will be added, to see the list was read right
-    // (readings and meanings filled in from the dictionary especially).
-    // With sentences too, a few of each: up to three words, then sentences.
-    // A sentence's reading is shown as it was typed.
-    const wordsShown = readable.slice(0, sentenceRecords.length > 0 ? 3 : PREVIEW_ROWS);
-    const sentencesShown = sentenceRecords.slice(0, PREVIEW_ROWS - wordsShown.length);
+    // The first lines as they will be added, to see the list was read right
+    // (readings and meanings filled in from the dictionary especially),
+    // words and sentences in the list's own order (`rows`), as a mixed list
+    // has them. A sentence's reading is shown as it was typed.
     const previewRow = (word, reading) => {
       const row = document.createElement('li');
       row.append(
@@ -259,15 +262,33 @@ export function createListForm(shared, dictionaryLoader) {
       );
       return row;
     };
+    // A sentence one line under another (style.css, .list-preview
+    // li.sentence): the sentence in the script studied only, its reading,
+    // its meaning. In a word's row they were squeezed into a narrow column.
+    const sentenceRow = (sentence) => {
+      const script = scriptFor(sentence, settings);
+      const row = document.createElement('li');
+      row.className = 'sentence';
+      row.append(
+        mixedSpan('entry-characters', sentence[script], script),
+        ...(sentence.pinyin ? [mixedSpan('entry-pinyin', sentence.pinyin, script)] : []),
+        mixedSpan('entry-definition', sentence.definition, script),
+      );
+      return row;
+    };
+    const shownRows = rows.slice(0, PREVIEW_ROWS);
     preview.replaceChildren(
-      ...wordsShown.map((word) => previewRow(word, showReading(word.pinyin, Array.from(word.traditional)))),
-      ...sentencesShown.map((sentence) => previewRow(sentence, sentence.pinyin)),
+      ...shownRows.map(({ kind, at }) => {
+        if (kind === 'sentence') {
+          return sentenceRow(sentences[at]);
+        }
+        const word = readable[at];
+        return previewRow(word, showReading(word.pinyin, Array.from(word.traditional)));
+      }),
     );
-    const total = readable.length + sentenceRecords.length;
-    const shownCount = wordsShown.length + sentencesShown.length;
-    preview.hidden = total === 0;
-    more.textContent = t('addList.andMoreWords', { count: total - shownCount });
-    more.hidden = total <= shownCount;
+    preview.hidden = rows.length === 0;
+    more.textContent = t('addList.andMoreWords', { count: rows.length - shownRows.length });
+    more.hidden = rows.length <= shownRows.length;
 
     showAddListButton();
   }

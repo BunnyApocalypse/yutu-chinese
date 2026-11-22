@@ -248,9 +248,16 @@ describe('sentences', { concurrency: false }, () => {
       '谢谢你！\tXièxie nǐ!',
     ].join('\n');
     await pasteList(page, list);
-    assert.equal(
-      await textOf(page, 'list-report'),
-      '1 word: 1 new, 0 already yours. 3 sentences: 2 new, 1 already yours.',
+    // Words and sentences on a line each.
+    // (The panel is closed in the tests, so the break is looked for, not the text's lines.)
+    assert.deepEqual(
+      await page.evaluate(`[...document.getElementById('list-report').childNodes].map((node) => node.textContent || node.nodeName)`),
+      ['1 word: 1 new, 0 already yours.', 'BR', '3 sentences: 2 new, 1 already yours.'],
+    );
+    // The first lines as the list has them, words and sentences mixed.
+    assert.deepEqual(
+      await page.evaluate(`[...document.querySelectorAll('#list-preview li')].map((row) => row.className)`),
+      ['', 'sentence', 'sentence', 'sentence'],
     );
     await waitUntil(page, `!document.getElementById('add-list-button').hidden`, 'the add button');
     assert.match(await textOf(page, 'add-list-button'), /^Add 1 word and 2 sentences to /);

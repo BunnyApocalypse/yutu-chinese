@@ -252,11 +252,15 @@ function columnsFromCsv(fields) {
 //              sentenceRecord in sentences.js
 //   problems:  [{ lineNumber, text, problem }] for the lines left out
 //   swapped:   true if the columns were read traditional first
+//   rows:      [{ kind, at }] for what was read, in the list's line order:
+//              kind 'word' or 'sentence', `at` its place in `words` or
+//              `sentences` (for showing a mixed list's first lines as they are)
 export function readWordList(text, completeForms, fillIn, scriptOrder, sentenceForms) {
   const words = [];
   const sentences = [];
   const sentenceLines = [];
   const problems = [];
+  const rows = [];
   const isPinyin = (field) => tidyPinyin(field.trim()) !== null;
   // Pinyin with tone marks ("nǐ hǎo"): not stored so, but told from a
   // meaning, for the dictionary to read (fillIn).
@@ -354,6 +358,7 @@ export function readWordList(text, completeForms, fillIn, scriptOrder, sentenceF
     }
     if (result.word) {
       words.push(result.word);
+      rows.push({ line: index, kind: 'word', at: words.length - 1 });
     } else {
       problems.push({ lineNumber: index + 1, text: line, problem: result.problem });
     }
@@ -362,12 +367,14 @@ export function readWordList(text, completeForms, fillIn, scriptOrder, sentenceF
     const read = readSentence(sentence, swapped, sentenceForms);
     if (read.sentence) {
       sentences.push(read.sentence);
+      rows.push({ line: index, kind: 'sentence', at: sentences.length - 1 });
     } else {
       problems.push({ lineNumber: index + 1, text: line, problem: read.problem });
     }
   }
   problems.sort((a, b) => a.lineNumber - b.lineNumber);
-  return { words, sentences, problems, swapped };
+  rows.sort((a, b) => a.line - b.line);
+  return { words, sentences, problems, swapped, rows: rows.map(({ kind, at }) => ({ kind, at })) };
 }
 
 // Whether one word of a sentence's reading is pinyin (isSentenceReading in

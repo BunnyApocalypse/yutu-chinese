@@ -3532,6 +3532,16 @@ button.primary:active {
   color: var(--muted);
   font-size: var(--size-small);
 }
+/* A sentence: one line under another, all as wide as the row. */
+.list-preview li.sentence {
+  grid-template-columns: minmax(0, 1fr);
+}
+.list-preview li.sentence .entry-characters {
+  font-size: var(--size-title);
+}
+.list-preview li.sentence .entry-pinyin {
+  text-align: left;
+}
 .list-format {
   margin-top: var(--space-large);
 }

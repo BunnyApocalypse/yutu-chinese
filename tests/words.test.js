@@ -365,8 +365,15 @@ test('a list may have sentences in it, read apart from its words', () => {
     '这个不在里面。\tThis is not in it.\t老师',
   ].join('\n');
   const sentenceForms = (characters) => ({ simplified: characters, traditional: characters.replace('吗', '嗎') });
-  const { words, sentences, problems } = readWordList(list, null, null, null, sentenceForms);
+  const { words, sentences, problems, rows } = readWordList(list, null, null, null, sentenceForms);
   assert.deepEqual(words.map((word) => word.traditional), ['學習']);
+  // What was read, in the list's line order.
+  assert.deepEqual(rows, [
+    { kind: 'word', at: 0 },
+    { kind: 'sentence', at: 0 },
+    { kind: 'sentence', at: 1 },
+    { kind: 'sentence', at: 2 },
+  ]);
   assert.deepEqual(sentences, [
     {
       simplified: '我们是同学。',
