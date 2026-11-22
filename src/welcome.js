@@ -370,9 +370,9 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
     skipButton.textContent = t(last ? 'welcome.notNow' : 'welcome.skip');
     skipButton.hidden = last && !willAsk;
     // With sync chosen, finishing waits until the code is ticked as saved.
+    // "Not now" never waits: it also says no to sync (below).
     const waiting = last && mode === 'steps' && syncChosen() && !savedBox.checked;
     nextButton.disabled = waiting;
-    skipButton.disabled = waiting;
     // Each screen starts at its top, whatever was scrolled before.
     dialog.scrollTop = 0;
     showCovering();
@@ -513,9 +513,12 @@ export function createWelcome({ settings, keepData, hasWords, onFinish, sync }) 
   // it closes. Esc closes a <dialog> too; "close" is announced either way,
   // so the introduction is not shown again unasked. On the last screen the
   // same button is "Not now": the choices are saved (unless skipped), and
-  // only long-term storage is not asked for.
+  // neither long-term storage nor sync is asked for: "Just this device for
+  // now" is chosen and the introduction closes (the owner, 2026-11-22:
+  // before, "Not now" stayed off until the sync code was ticked as saved).
   skipButton.addEventListener('click', () => {
     if (step === steps.length - 1) {
+      choose('welcome-sync', '');
       finish('none');
     } else if (sync.available && !sync.control.status().on) {
       skippedFrom = step;

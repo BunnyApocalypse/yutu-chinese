@@ -156,8 +156,14 @@ describe('the introduction', { concurrency: false }, () => {
   });
 
   it('ends in the Decks tab with the choices saved', async () => {
-    // "Not now" saves the choices; only long-term storage is not asked for.
+    // "Not now" saves the choices; long-term storage and sync are not asked
+    // for. It works with "Turn on sync" chosen and the code not ticked as
+    // saved, choosing "Just this device for now" (the owner, 2026-11-22).
+    await click('input[name="welcome-sync"][value="on"]');
+    await waitUntil(page, `document.getElementById('welcome-next').disabled`, 'the button waiting for the code');
+    assert.equal(await page.evaluate(`document.getElementById('welcome-skip').disabled`), false);
     await tap(page, 'welcome-skip');
+    assert.equal(await page.evaluate(`document.querySelector('input[name="welcome-sync"]:checked').value`), '');
     await waitUntil(page, `!${welcomeOpen} && document.getElementById('decks-tab').classList.contains('selected')`, 'the Decks tab');
     // One box for the word, in traditional, and one for the Taiwan reading.
     assert.equal(await isShown(page, 'add-simplified'), false);
