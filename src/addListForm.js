@@ -14,6 +14,7 @@ import { putAll } from './db.js';
 import { wordId } from './wordList.js';
 import { withDeck } from './decks.js';
 import { readWordList, newWordRecords, scriptFor } from './words.js';
+import { newSentenceRecords, sentenceId, isSentence } from './sentences.js';
 import { proposeMeaning } from './dictionary.js';
 import { showReading } from './readingStyle.js';
 import { charactersElement, mixedSpan } from './wordRows.js';
@@ -57,6 +58,10 @@ export function createListForm(shared, dictionaryLoader) {
   // every word that could be read from it, those already there included.
   let listToAdd = [];
   let listRead = [];
+  // The same for the list's sentences (sentences.js): those read, and the
+  // number of them that are new.
+  let sentencesRead = [];
+  let newSentences = 0;
   // Counts the readings started, so that one overtaken by a newer one (the
   // learner kept typing) is dropped when it ends.
   let readings = 0;
@@ -80,6 +85,8 @@ export function createListForm(shared, dictionaryLoader) {
     if (!shown) {
       listToAdd = [];
       listRead = [];
+      sentencesRead = [];
+      newSentences = 0;
       delete foundPart.dataset.state;
     }
   }
@@ -163,21 +170,35 @@ export function createListForm(shared, dictionaryLoader) {
     };
     // A list with traditional in the first column is read the other way
     // round (scriptOrder in readWordList), and the report says so.
-    const { words: readable, problems, swapped } = readWordList(
+    // A sentence in one script has the other looked up word by word
+    // (sentenceForms in dictionaryLoader.js).
+    const { words: readable, sentences, problems, swapped } = readWordList(
       text,
       (characters, pinyin) => dictionaryLoader.completeForms(settings.script, characters, pinyin),
       fillIn,
       (first, second) => dictionaryLoader.scriptOrder(first, second),
+      (characters) => dictionaryLoader.sentenceForms(settings.script, characters),
     );
     const { toAdd, alreadyHave } = newWordRecords(readable, shared.words(), Date.now());
     listToAdd = toAdd;
     listRead = readable;
+    // The sentences as they would be stored, for the preview and the count.
+    const sentenceRecords = newSentenceRecords(sentences, [], shared.openDeck().id, Date.now()).toAdd;
+    const knownIds = new Set(shared.words().map((word) => word.id));
+    sentencesRead = sentences;
+    newSentences = sentenceRecords.filter((record) => !knownIds.has(record.id)).length;
     foundPart.dataset.state = 'read';
 
-    report.textContent =
-      readable.length > 0
-        ? t('addList.found', { count: readable.length, new: toAdd.length, have: alreadyHave })
-        : t('addList.nothingRead');
+    const found = [];
+    if (readable.length > 0) {
+      found.push(t('addList.found', { count: readable.length, new: toAdd.length, have: alreadyHave }));
+    }
+    if (sentences.length > 0) {
+      found.push(
+        t('addList.foundSentences', { count: sentences.length, new: newSentences, have: sentences.length - newSentences }),
+      );
+    }
+    report.textContent = found.length > 0 ? found.join(' ') : t('addList.nothingRead');
 
     // New words written like a word already there, but read differently
     // (as wordsWithSameCharacters in words.js says it). Looked up in two sets
@@ -225,30 +246,63 @@ export function createListForm(shared, dictionaryLoader) {
 
     // The first words as they will be added, to see the list was read right
     // (readings and meanings filled in from the dictionary especially).
+    // With sentences too, a few of each: up to three words, then sentences.
+    // A sentence's reading is shown as it was typed.
+    const wordsShown = readable.slice(0, sentenceRecords.length > 0 ? 3 : PREVIEW_ROWS);
+    const sentencesShown = sentenceRecords.slice(0, PREVIEW_ROWS - wordsShown.length);
+    const previewRow = (word, reading) => {
+      const row = document.createElement('li');
+      row.append(
+        charactersElement(word, settings),
+        mixedSpan('entry-pinyin', reading, scriptFor(word, settings)),
+        mixedSpan('entry-definition', word.definition, scriptFor(word, settings)),
+      );
+      return row;
+    };
     preview.replaceChildren(
-      ...readable.slice(0, PREVIEW_ROWS).map((word) => {
-        const row = document.createElement('li');
-        row.append(
-          charactersElement(word, settings),
-          mixedSpan('entry-pinyin', showReading(word.pinyin, Array.from(word.traditional)), scriptFor(word, settings)),
-          mixedSpan('entry-definition', word.definition, scriptFor(word, settings)),
-        );
-        return row;
-      }),
+      ...wordsShown.map((word) => previewRow(word, showReading(word.pinyin, Array.from(word.traditional)))),
+      ...sentencesShown.map((sentence) => previewRow(sentence, sentence.pinyin)),
     );
-    preview.hidden = readable.length === 0;
-    more.textContent = t('addList.andMoreWords', { count: readable.length - PREVIEW_ROWS });
-    more.hidden = readable.length <= PREVIEW_ROWS;
+    const total = readable.length + sentenceRecords.length;
+    const shownCount = wordsShown.length + sentencesShown.length;
+    preview.hidden = total === 0;
+    more.textContent = t('addList.andMoreWords', { count: total - shownCount });
+    more.hidden = total <= shownCount;
 
     showAddListButton();
   }
 
-  // The words of the list that are in your words already, but not in the
-  // deck whose page is open. Adding the list puts them in it too.
+  // The words and sentences of the list that are in your words already,
+  // but not in the deck whose page is open. Adding the list puts them in it
+  // too.
   function listedButNotInDeck() {
     const deckId = shared.openDeck().id;
-    const listed = new Set(listRead.map((word) => wordId(word)));
+    const listed = new Set([
+      ...listRead.map((word) => wordId(word)),
+      ...sentencesRead.map((sentence) => sentenceId(sentence.traditional)),
+    ]);
     return shared.words().filter((word) => listed.has(word.id) && !word.decks.includes(deckId));
+  }
+
+  // The button's words: what is new, by kind; or, if nothing is, how many
+  // already there go into this deck.
+  function addButtonText(deck, toFile) {
+    if (listToAdd.length === 0 && newSentences === 0 && toFile > 0) {
+      return sentencesRead.length > 0
+        ? t('addList.putItemsInDeckNamed', { count: toFile, deck })
+        : t('addList.putInDeckNamed', { count: toFile, deck });
+    }
+    if (newSentences === 0) {
+      return t('addList.addWordsTo', { count: listToAdd.length, deck });
+    }
+    if (listToAdd.length === 0) {
+      return t('addList.addSentencesTo', { count: newSentences, deck });
+    }
+    return t('addList.addWordsAndSentencesTo', {
+      words: t('addList.wordCount', { count: listToAdd.length }),
+      sentences: t('addList.sentenceCount', { count: newSentences }),
+      deck,
+    });
   }
 
   // A list is worth adding even if every word in it is there already: they
@@ -256,36 +310,37 @@ export function createListForm(shared, dictionaryLoader) {
   function showAddListButton() {
     const deck = shared.openDeck().name;
     const toFile = listedButNotInDeck().length;
-    fillMixed(
-      addListButton,
-      listToAdd.length > 0 || toFile === 0
-        ? t('addList.addWordsTo', { count: listToAdd.length, deck })
-        : t('addList.putInDeckNamed', { count: toFile, deck }),
-      shared.getSettings().script,
-    );
-    addListButton.hidden = listToAdd.length === 0 && toFile === 0;
+    fillMixed(addListButton, addButtonText(deck, toFile), shared.getSettings().script);
+    addListButton.hidden = listToAdd.length === 0 && newSentences === 0 && toFile === 0;
     addListButton.disabled = false;
   }
 
   addListButton.addEventListener('click', async () => {
     addListButton.disabled = true;
-    // Worked out again here, in case the list of words changed since it was read.
-    const { toAdd } = newWordRecords(listToAdd, shared.words(), Date.now());
-    // Everything goes into the deck whose page is open, the words of the
-    // list that were there already too.
     const deck = shared.openDeck();
+    const now = Date.now();
+    // Worked out again here, in case the list of words changed since it was
+    // read. The sentences are queued after the new words.
+    const { toAdd } = newWordRecords(listToAdd, shared.words(), now);
+    const { toAdd: sentencesToAdd } = newSentenceRecords(sentencesRead, [...shared.words(), ...toAdd], deck.id, now);
+    // Everything goes into the deck whose page is open, the words and
+    // sentences of the list that were there already too.
     const alreadyThere = listedButNotInDeck();
-    await putAll('words', [...toAdd, ...alreadyThere].map((word) => withDeck(word, deck.id)));
+    await putAll('words', [...toAdd, ...sentencesToAdd, ...alreadyThere].map((word) => withDeck(word, deck.id)));
     const script = shared.getSettings().script;
-    fillMixed(
-      byId('list-done-text'),
-      toAdd.length > 0
-        ? `${t('addList.addedTo', { count: toAdd.length, deck: deck.name })} ${t('addList.waitInLearn')}`
-        : t('addList.wentIntoDeck', { count: alreadyThere.length }),
-      script,
-    );
+    const sentencesThere = alreadyThere.filter(isSentence).length;
+    const wordsThere = alreadyThere.length - sentencesThere;
+    const added = [
+      ...(toAdd.length > 0 ? [`${t('addList.addedTo', { count: toAdd.length, deck: deck.name })} ${t('addList.waitInLearn')}`] : []),
+      ...(sentencesToAdd.length > 0 ? [t('addList.sentencesAddedTo', { count: sentencesToAdd.length, deck: deck.name })] : []),
+    ];
+    const filed = [
+      ...(wordsThere > 0 ? [t('addList.wentIntoDeck', { count: wordsThere })] : []),
+      ...(sentencesThere > 0 ? [t('addList.sentencesWentIntoDeck', { count: sentencesThere })] : []),
+    ];
+    fillMixed(byId('list-done-text'), (added.length > 0 ? added : filed).join(' '), script);
     const detail = byId('list-done-detail');
-    detail.textContent = toAdd.length > 0 && alreadyThere.length > 0 ? t('addList.wentIntoDeck', { count: alreadyThere.length }) : '';
+    detail.textContent = added.length > 0 ? filed.join(' ') : '';
     detail.hidden = detail.textContent === '';
     listText.value = '';
     showStep('done');

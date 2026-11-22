@@ -1061,7 +1061,7 @@ export default {
   'add.readingLabel': '{label}, con i numeri dei toni',
 
   // Adding a list of words (addListForm.js)
-  'addList.lead': 'Una parola per riga: i caratteri, e il pinyin e un significato se li hai. Quello che manca viene preso dal dizionario.',
+  'addList.lead': 'Una parola o una frase per riga: i caratteri, e il pinyin e un significato se li hai. Quello che manca a una parola viene preso dal dizionario.',
   'addList.orPaste': 'Oppure incolla una lista',
   'addList.pasteHere': 'Incolla qui la tua lista',
   'addList.readWhenStopped': 'Viene letta appena smetti di scrivere.',
@@ -1072,7 +1072,11 @@ export default {
     one: '{count} parola. Nuove: {new}; già tue: {have}.',
     other: '{count} parole. Nuove: {new}; già tue: {have}.',
   },
-  'addList.nothingRead': 'Da questa lista non si è potuta leggere nessuna parola.',
+  'addList.foundSentences': {
+    one: '{count} frase. Nuove: {new}; già tue: {have}.',
+    other: '{count} frasi. Nuove: {new}; già tue: {have}.',
+  },
+  'addList.nothingRead': 'Da questa lista non si è potuta leggere nessuna parola né frase.',
   'addList.unreadable': { one: '{count} riga non si è potuta leggere', other: '{count} righe non si sono potute leggere' },
   'addList.andMoreWords': { one: 'e un\'altra', other: 'e altre {count}' },
   'addList.addWordsTo': { one: 'Aggiungi {count} parola a {deck}', other: 'Aggiungi {count} parole a {deck}' },
@@ -1081,7 +1085,7 @@ export default {
   'addList.another': 'Aggiungi un\'altra lista',
   'addList.formatTitle': 'Com\'è fatto il file?',
   'addList.formatFiles': 'Un file TSV o CSV (un foglio di calcolo salvato come testo), o una semplice lista. Va bene ognuna di queste righe:',
-  'addList.examples': '朋友\n朋友\tpéngyou\n朋友\tpeng2you5\tamico\n学习,學習,xue2xi2,studiare',
+  'addList.examples': '朋友\n朋友\tpéngyou\n朋友\tpeng2you5\tamico\n学习,學習,xue2xi2,studiare\n我们是同学。\tWǒmen shì tóngxué.\tSiamo compagni di classe.\t同学',
   'addList.sameCharacters': {
     one: 'Tra le parole nuove, {count} ha gli stessi caratteri di una parola che hai già, con un\'altra lettura: {words}.',
     other: 'Tra le parole nuove, {count} hanno gli stessi caratteri di una parola che hai già, con un\'altra lettura: {words}.',
@@ -1091,6 +1095,21 @@ export default {
   'addList.andMore': '… e altre {count}.',
   'addList.waitInLearn': 'Aspettano in Impara.',
   'addList.wentIntoDeck': { one: '{count} parola che avevi già è andata in questo mazzo.', other: '{count} parole che avevi già sono andate in questo mazzo.' },
+  'addList.addSentencesTo': { one: 'Aggiungi {count} frase a {deck}', other: 'Aggiungi {count} frasi a {deck}' },
+  'addList.addWordsAndSentencesTo': 'Aggiungi {words} e {sentences} a {deck}',
+  'addList.wordCount': { one: '{count} parola', other: '{count} parole' },
+  'addList.sentenceCount': { one: '{count} frase', other: '{count} frasi' },
+  'addList.putItemsInDeckNamed': 'Metti in {deck} le {count} già tue',
+  'addList.sentencesAddedTo': {
+    one: '{count} frase aggiunta a {deck}. Le sue carte compaiono nel Ripasso.',
+    other: '{count} frasi aggiunte a {deck}. Le loro carte compaiono nel Ripasso.',
+  },
+  'addList.sentencesWentIntoDeck': {
+    one: '{count} frase che avevi già è andata in questo mazzo.',
+    other: '{count} frasi che avevi già sono andate in questo mazzo.',
+  },
+  'addList.hintSentences':
+    'Una riga con la punteggiatura di una frase (。，？！) è una frase: la frase, in una scrittura o in entrambe; il suo pinyin o zhuyin, scritto come vuoi (si può omettere); il suo significato; e, se vuoi, una sua parola da completare nella carta di scrittura. Le carte di una frase compaiono subito nel Ripasso.',
   'addList.hintBoth':
     'Una parola per riga, come in un file TSV o CSV: semplificato, tradizionale, pinyin con i numeri dei toni, significato, separati da tabulazioni o virgole. Con una sola colonna di caratteri invece di due, l\'altra scrittura viene cercata nel dizionario. Il pinyin o il significato mancanti vengono compilati dal dizionario, quindi funziona anche una semplice lista di parole.',
   'addList.hintBothTaiwan':
@@ -1188,6 +1207,11 @@ export default {
   'check.alsoNotPinyin': 'Le letture accettate in più non sono pinyin che l\'app sappia leggere. {help}',
   'check.notInDictionaryList': 'Questa parola non è nel dizionario, quindi servono il suo pinyin e il suo significato.',
   'check.columns': 'Servono quattro colonne: semplificato, tradizionale, pinyin, significato. Oppure tre: caratteri, pinyin, significato.',
+  'check.notInDictionaryMaybeSentence':
+    'Non è nel dizionario, quindi servono il suo pinyin e il suo significato. Se è una frase, terminala con 。 o ？ e verrà aggiunta come frase.',
+  'check.sentenceMeaning': 'Una frase ha bisogno del suo significato.',
+  'check.sentenceColumns':
+    'Una frase ha queste colonne: semplificato, tradizionale, pinyin, significato, una sua parola da completare. Una delle scritture, il pinyin e la parola si possono omettere.',
   'check.flagSimplified': 'sempl. 简体',
   'check.flagTraditional': 'trad. 繁體',
 

@@ -351,3 +351,52 @@ test('what a list leaves out is filled in from the dictionary', () => {
   // A word the dictionary doesn't have is still reported.
   assert.deepEqual(problems.map((problem) => problem.lineNumber), [5]);
 });
+
+test('a list may have sentences in it, read apart from its words', () => {
+  const list = [
+    '学习\t學習\txue2xi2\tto study',
+    '我们是同学。\t我們是同學。\tWǒmen shì tóngxué.\tWe are classmates.\t同学',
+    // One script: the other is asked for (here, a stand-in).
+    '你好吗？,Nǐ hǎo ma?,How are you?',
+    // A word to fill in given in traditional.
+    '我们是同学。\t我們是同學。\t\tWe are classmates.\t同學',
+    // No meaning.
+    '谢谢你！\tXièxie nǐ!',
+    '这个不在里面。\tThis is not in it.\t老师',
+  ].join('\n');
+  const sentenceForms = (characters) => ({ simplified: characters, traditional: characters.replace('吗', '嗎') });
+  const { words, sentences, problems } = readWordList(list, null, null, null, sentenceForms);
+  assert.deepEqual(words.map((word) => word.traditional), ['學習']);
+  assert.deepEqual(sentences, [
+    {
+      simplified: '我们是同学。',
+      traditional: '我們是同學。',
+      pinyin: 'Wǒmen shì tóngxué.',
+      definition: 'We are classmates.',
+      cloze: { simplified: '同学', traditional: '同學' },
+    },
+    { simplified: '你好吗？', traditional: '你好嗎？', pinyin: 'Nǐ hǎo ma?', definition: 'How are you?' },
+    {
+      simplified: '我们是同学。',
+      traditional: '我們是同學。',
+      pinyin: '',
+      definition: 'We are classmates.',
+      cloze: { traditional: '同學', simplified: '同学' },
+    },
+  ]);
+  assert.deepEqual(problems.map((problem) => problem.lineNumber), [5, 6]);
+});
+
+test('a list\'s sentences count toward which script comes first', () => {
+  const scriptOrder = (first, second) =>
+    first === '們' && second === '们' ? 'traditionalFirst' : first === '们' && second === '們' ? 'simplifiedFirst' : null;
+  const read = readWordList('我們是同學。\t我们是同学。\tWe are classmates.\n', null, null, scriptOrder);
+  assert.equal(read.swapped, true);
+  assert.equal(read.sentences[0].traditional, '我們是同學。');
+  assert.equal(read.sentences[0].simplified, '我们是同学。');
+});
+
+test('characters not in the dictionary that may be a sentence are reported with a hint', () => {
+  const { problems } = readWordList('我们是同学\n', null, () => null);
+  assert.match(problems[0].problem, /。/);
+});

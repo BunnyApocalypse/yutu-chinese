@@ -7,6 +7,9 @@
 import { wordId, formatPinyin } from './wordList.js';
 import { radicalId } from './radicals.js';
 import { t } from './text.js';
+import { looksLikeSentence, readSentenceFields, clozeInBoth } from './sentences.js';
+import { readTypedPinyin } from './dictionary.js';
+import { isSyllables } from './pinyinSyllables.js';
 
 // One reading in numbered pinyin: syllables of letters each followed by a
 // tone number, with an optional apostrophe between them (nv3'er2).
@@ -235,12 +238,24 @@ function columnsFromCsv(fields) {
 // line are swapped. The whole list is decided at once, since a few
 // characters are another word's simplified form (乾, 干).
 //
+// A line may also be a sentence (looksLikeSentence and readSentenceFields
+// in sentences.js; the owner, 2026-11-22). Its first differing character
+// counts toward the order of the scripts as a word does (scriptOrder is
+// asked about the two characters). sentenceForms(characters), if given, is
+// asked how a sentence given in one script is written in both, and returns
+// { traditional, simplified }; without it both are taken to be the same.
+//
 // Returns:
-//   words:    the tidied words
-//   problems: [{ lineNumber, text, problem }] for the lines left out
-//   swapped:  true if the columns were read traditional first
-export function readWordList(text, completeForms, fillIn, scriptOrder) {
+//   words:     the tidied words
+//   sentences: [{ traditional, simplified, pinyin, definition, cloze }]
+//              (cloze { traditional, simplified } or missing), for
+//              sentenceRecord in sentences.js
+//   problems:  [{ lineNumber, text, problem }] for the lines left out
+//   swapped:   true if the columns were read traditional first
+export function readWordList(text, completeForms, fillIn, scriptOrder, sentenceForms) {
   const words = [];
+  const sentences = [];
+  const sentenceLines = [];
   const problems = [];
   const isPinyin = (field) => tidyPinyin(field.trim()) !== null;
   // Pinyin with tone marks ("nǐ hǎo"): not stored so, but told from a
@@ -259,6 +274,12 @@ export function readWordList(text, completeForms, fillIn, scriptOrder) {
     }
     const isTsv = line.includes('\t');
     let fields = isTsv ? line.split('\t') : splitCsvLine(line);
+    // A sentence is read apart, after the order of the scripts is known.
+    if (looksLikeSentence(fields[0].trim())) {
+      const sentence = readSentenceFields(fields, isTsv, isPinyinWord);
+      sentenceLines.push({ index, line, sentence });
+      return;
+    }
     // One column of characters: read it as if it were written out twice,
     // with an empty pinyin column where the second is a meaning.
     const oneScript = fields.length === 1 || isPinyin(fields[1]) || !hasHan(fields[1]);
@@ -277,6 +298,15 @@ export function readWordList(text, completeForms, fillIn, scriptOrder) {
     for (const { fields, oneScript } of lines) {
       const [first, second] = [fields[0].trim(), fields[1].trim()];
       const order = !oneScript && first !== second ? scriptOrder(first, second) : null;
+      if (order) {
+        votes[order] += 1;
+      }
+    }
+    // A sentence in both scripts: its first character that differs (这, 這).
+    for (const { sentence } of sentenceLines) {
+      const [first, second] = [Array.from(sentence.first || ''), Array.from(sentence.second || '')];
+      const at = sentence.second && first.length === second.length ? first.findIndex((char, i) => char !== second[i]) : -1;
+      const order = at >= 0 ? scriptOrder(first[at], second[at]) : null;
       if (order) {
         votes[order] += 1;
       }
@@ -311,8 +341,11 @@ export function readWordList(text, completeForms, fillIn, scriptOrder) {
         }
       }
     }
+    // Four characters or more not in the dictionary may be a sentence
+    // written without its punctuation: the problem says how to mark one.
+    const maybeSentence = Array.from((columns.traditional || '').trim()).length >= 4;
     const result = notFound
-      ? { problem: t('check.notInDictionaryList'), reason: 'notInDictionaryList' }
+      ? { problem: t(maybeSentence ? 'check.notInDictionaryMaybeSentence' : 'check.notInDictionaryList'), reason: 'notInDictionaryList' }
       : columns.definition === undefined
       ? { problem: t('check.columns'), reason: 'columns' }
       : checkWord(columns);
@@ -325,7 +358,51 @@ export function readWordList(text, completeForms, fillIn, scriptOrder) {
       problems.push({ lineNumber: index + 1, text: line, problem: result.problem });
     }
   });
-  return { words, problems, swapped };
+  for (const { index, line, sentence } of sentenceLines) {
+    const read = readSentence(sentence, swapped, sentenceForms);
+    if (read.sentence) {
+      sentences.push(read.sentence);
+    } else {
+      problems.push({ lineNumber: index + 1, text: line, problem: read.problem });
+    }
+  }
+  problems.sort((a, b) => a.lineNumber - b.lineNumber);
+  return { words, sentences, problems, swapped };
+}
+
+// Whether one word of a sentence's reading is pinyin (isSentenceReading in
+// sentences.js): letters, tone marks or numbers that split into syllables.
+export function isPinyinWord(word) {
+  const typed = readTypedPinyin(word);
+  return typed !== null && isSyllables(typed.letters);
+}
+
+// A sentence of a list, its fields sorted (readSentenceFields), made into
+// what sentenceRecord takes, or { problem } (see readWordList).
+function readSentence(fields, swapped, sentenceForms) {
+  if (fields.reason) {
+    return { problem: t(fields.reason === 'sentenceColumns' ? 'check.sentenceColumns' : 'check.sentenceMeaning') };
+  }
+  const { first, second, pinyin, definition, cloze } = fields;
+  let forms;
+  if (second) {
+    forms = swapped ? { traditional: first, simplified: second } : { simplified: first, traditional: second };
+  } else {
+    forms = sentenceForms ? sentenceForms(first) : { traditional: first, simplified: first };
+  }
+  const sentence = { ...forms, pinyin, definition };
+  if (cloze) {
+    // The word may be given in either script; it is found in the other at
+    // the same place (clozeInBoth).
+    const own = ['simplified', 'traditional'].find((script) => forms[script].includes(cloze));
+    if (!own) {
+      return { problem: t('sentence.notInSentence', { cloze }) };
+    }
+    const other = own === 'simplified' ? 'traditional' : 'simplified';
+    const both = clozeInBoth(forms[own], forms[other], cloze);
+    sentence.cloze = { [own]: both.own, [other]: both.other };
+  }
+  return { sentence };
 }
 
 // ---- Ready-made lists ----

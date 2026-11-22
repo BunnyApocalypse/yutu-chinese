@@ -6,7 +6,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { startApp, startBrowsers, tap, type, choose, textOf, waitUntil, openDeckPage, isShown, useAddForm } from './harness.js';
+import { startApp, startBrowsers, tap, type, choose, textOf, waitUntil, openDeckPage, isShown, useAddForm, pasteList } from './harness.js';
 
 // Everything in one store of the app's database, read through a connection
 // of the test's own.
@@ -214,5 +214,48 @@ describe('sentences', { concurrency: false }, () => {
     await page.evaluate(`document.querySelector('#word-list li button').click(); document.getElementById('word-page-edit').click()`);
     assert.equal(await boxHidden('edit-pinyin-also'), false);
     assert.equal(await boxHidden('edit-cloze'), true);
+    await tap(page, 'word-dialog-close');
+    await type(page, 'word-search', '');
+  });
+
+  it('adds sentences from a list, beside its words', async () => {
+    await openDeckPage(page);
+    const list = [
+      '学习\t學習\txue2xi2\tto study',
+      // In both scripts, with a word to fill in.
+      '这个老城区保留了很多传统建筑。\t這個老城區保留了很多傳統建築。\tZhège lǎo chéngqū bǎoliú le hěnduō chuántǒng jiànzhù.\tThis old town has kept many traditional buildings.\t保留',
+      // In one script, as CSV with commas in quotes; the other script is looked up.
+      '即使下雨，我也会去。,"Jíshǐ xiàyǔ, wǒ yě huì qù.","Even if it rains, I will still go.",即使',
+      // Already there.
+      '我们是同学。\tWe are classmates.',
+      // No meaning.
+      '谢谢你！\tXièxie nǐ!',
+    ].join('\n');
+    await pasteList(page, list);
+    assert.equal(
+      await textOf(page, 'list-report'),
+      '1 word: 1 new, 0 already yours. 3 sentences: 2 new, 1 already yours.',
+    );
+    await waitUntil(page, `!document.getElementById('add-list-button').hidden`, 'the add button');
+    assert.match(await textOf(page, 'add-list-button'), /^Add 1 word and 2 sentences to /);
+    assert.match(await textOf(page, 'list-problems'), /Line 5 .*A sentence needs its meaning\./);
+    await tap(page, 'add-list-button');
+    await waitUntil(page, `!document.getElementById('list-done').hidden`, 'the list added');
+    assert.match(await textOf(page, 'list-done-text'), /2 sentences added to .*Their cards come up in Review\./);
+
+    const all = await stored(page, 'words');
+    const town = all.find((word) => word.id === '這個老城區保留了很多傳統建築。|sentence');
+    assert.equal(town.kind, 'sentence');
+    assert.equal(town.simplified, '这个老城区保留了很多传统建筑。');
+    assert.deepEqual(town.cloze, { simplified: '保留', traditional: '保留' });
+    assert.equal(typeof town.learnedAt, 'number');
+    const rain = all.find((word) => word.id === '即使下雨，我也會去。|sentence');
+    assert.equal(rain.simplified, '即使下雨，我也会去。');
+    assert.equal(rain.pinyin, 'Jíshǐ xiàyǔ, wǒ yě huì qù.');
+    assert.equal(rain.definition, 'Even if it rains, I will still go.');
+    assert.deepEqual(rain.decks, ['chinese']);
+    // The sentences come after the new word in the queue.
+    const study = all.find((word) => word.id === '學習|xue2xi2');
+    assert.ok(study.order < town.order && town.order < rain.order);
   });
 });

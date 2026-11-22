@@ -5,11 +5,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { isSentence, sentenceId, sentenceRecord, sentenceWriting, sentenceCardTypes, clozeInBoth } from '../src/sentences.js';
+import {
+  isSentence,
+  sentenceId,
+  sentenceRecord,
+  sentenceWriting,
+  sentenceCardTypes,
+  clozeInBoth,
+  looksLikeSentence,
+  isSentenceReading,
+  readSentenceFields,
+  newSentenceRecords,
+} from '../src/sentences.js';
 import { cardIdFor } from '../src/session.js';
 import { planSpeech } from '../src/speechPlan.js';
 import { splitSyllables } from '../src/tones.js';
 import { formatPinyin } from '../src/wordList.js';
+import { isPinyinWord } from '../src/words.js';
 
 const example = {
   traditional: '我們是同學。',
@@ -80,4 +92,66 @@ test('the settings say which cards sentences have', () => {
   assert.deepEqual(sentenceCardTypes({ sentenceReading: true, sentenceWriting: 'word' }), ['meaning', 'writing']);
   assert.deepEqual(sentenceCardTypes({ sentenceReading: false, sentenceWriting: 'sentence' }), ['writing']);
   assert.deepEqual(sentenceCardTypes({ sentenceReading: true, sentenceWriting: 'off' }), ['meaning']);
+});
+
+// ---- Sentences in a list ----
+
+const read = (line) => readSentenceFields(line.includes('\t') ? line.split('\t') : line.split(','), line.includes('\t'), isPinyinWord);
+
+test('a line is a sentence when it has a sentence\'s punctuation', () => {
+  assert.equal(looksLikeSentence('我们是同学。'), true);
+  assert.equal(looksLikeSentence('你好吗?'), true);
+  // A grammar pattern with gaps is not a sentence (Skritter's lists have them).
+  assert.equal(looksLikeSentence('……，这样……'), false);
+  assert.equal(looksLikeSentence('越...越...'), false);
+  assert.equal(looksLikeSentence('同学'), false);
+  assert.equal(looksLikeSentence('。'), false);
+});
+
+test('a sentence\'s reading is told from its meaning', () => {
+  assert.equal(isSentenceReading('Wǒmen shì tóngxué.', isPinyinWord), true);
+  assert.equal(isSentenceReading('wo3men5 shi4', isPinyinWord), true);
+  assert.equal(isSentenceReading('ㄨㄛˇ ㄇㄣ˙ ㄕˋ ㄊㄨㄥˊ ㄒㄩㄝˊ。', isPinyinWord), true);
+  assert.equal(isSentenceReading('We are classmates.', isPinyinWord), false);
+  assert.equal(isSentenceReading('同学', isPinyinWord), false);
+  assert.equal(isSentenceReading('', isPinyinWord), false);
+});
+
+test('a sentence\'s columns: both scripts, one, or one left empty', () => {
+  const full = { first: '我们是同学。', second: '我們是同學。', pinyin: 'Wǒmen shì tóngxué.', definition: 'We are classmates.', cloze: '同学' };
+  assert.deepEqual(read('我们是同学。\t我們是同學。\tWǒmen shì tóngxué.\tWe are classmates.\t同学'), full);
+  // The second script left empty, or left out.
+  const oneScript = { ...full, second: null };
+  assert.deepEqual(read('我们是同学。\t\tWǒmen shì tóngxué.\tWe are classmates.\t同学'), oneScript);
+  assert.deepEqual(read('我们是同学。\tWǒmen shì tóngxué.\tWe are classmates.\t同学'), oneScript);
+  // Without a reading or a word to fill in.
+  assert.deepEqual(read('我们是同学。\tWe are classmates.'), { ...oneScript, pinyin: '', cloze: null });
+  assert.deepEqual(read('我们是同学。\t\t\tWe are classmates.'), { ...oneScript, pinyin: '', cloze: null });
+  // Zhuyin is kept as it is.
+  assert.equal(read('我们是同学。\tㄨㄛˇ ㄇㄣ˙ ㄕˋ ㄊㄨㄥˊ ㄒㄩㄝˊ。\tWe are classmates.').pinyin, 'ㄨㄛˇ ㄇㄣ˙ ㄕˋ ㄊㄨㄥˊ ㄒㄩㄝˊ。');
+});
+
+test('a CSV sentence split at its commas is put back together', () => {
+  const line = '即使下雨，我也会去。,Jíshǐ xiàyǔ, wǒ yě huì qù.,Even if it rains, I will still go.,即使';
+  assert.deepEqual(read(line), {
+    first: '即使下雨，我也会去。',
+    second: null,
+    pinyin: 'Jíshǐ xiàyǔ, wǒ yě huì qù.',
+    definition: 'Even if it rains, I will still go.',
+    cloze: '即使',
+  });
+});
+
+test('a sentence without a meaning, or with too many columns, is reported', () => {
+  assert.deepEqual(read('我们是同学。'), { reason: 'sentenceMeaning' });
+  assert.deepEqual(read('我们是同学。\tWǒmen shì tóngxué.'), { reason: 'sentenceMeaning' });
+  assert.deepEqual(read('我们是同学。\tWe are classmates.\tA note\tAnother'), { reason: 'sentenceColumns' });
+});
+
+test('a list\'s new sentences are queued after every word, each once', () => {
+  const existing = [{ id: '同學|tong2xue2', order: 4 }, { id: '我們是同學。|sentence', order: 2 }];
+  const sentences = [example, { ...example, traditional: '你好嗎？', simplified: '你好吗？', cloze: undefined }, { ...example, traditional: '你好嗎？' }];
+  const { toAdd, alreadyHave } = newSentenceRecords(sentences, existing, 'deck', 9);
+  assert.deepEqual(toAdd.map((record) => [record.id, record.order, record.decks]), [['你好嗎？|sentence', 5, ['deck']]]);
+  assert.equal(alreadyHave, 2);
 });

@@ -1081,7 +1081,7 @@ export default {
   'add.readingLabel': '{label}, with tone numbers',
 
   // Adding a list of words (addListForm.js)
-  'addList.lead': 'One word per line: the characters, and pinyin and a meaning if you have them. What\'s missing is filled in from the dictionary.',
+  'addList.lead': 'One word or sentence per line: the characters, and pinyin and a meaning if you have them. What\'s missing from a word is filled in from the dictionary.',
   'addList.orPaste': 'Or paste a list',
   'addList.pasteHere': 'Paste your list here',
   'addList.readWhenStopped': 'Read as soon as you stop typing.',
@@ -1092,7 +1092,11 @@ export default {
     one: '{count} word: {new} new, {have} already yours.',
     other: '{count} words: {new} new, {have} already yours.',
   },
-  'addList.nothingRead': 'No words could be read from this list.',
+  'addList.foundSentences': {
+    one: '{count} sentence: {new} new, {have} already yours.',
+    other: '{count} sentences: {new} new, {have} already yours.',
+  },
+  'addList.nothingRead': 'No words or sentences could be read from this list.',
   'addList.unreadable': { one: '{count} line couldn\'t be read', other: '{count} lines couldn\'t be read' },
   'addList.andMoreWords': { one: 'and {count} more', other: 'and {count} more' },
   'addList.addWordsTo': { one: 'Add {count} word to {deck}', other: 'Add {count} words to {deck}' },
@@ -1101,7 +1105,7 @@ export default {
   'addList.another': 'Add another list',
   'addList.formatTitle': 'What can the file look like?',
   'addList.formatFiles': 'A TSV or CSV file (a spreadsheet saved as text), or a plain list. Any of these lines work:',
-  'addList.examples': '朋友\n朋友\tpéngyou\n朋友\tpeng2you5\tfriend\n学习,學習,xue2xi2,to study',
+  'addList.examples': '朋友\n朋友\tpéngyou\n朋友\tpeng2you5\tfriend\n学习,學習,xue2xi2,to study\n我们是同学。\tWǒmen shì tóngxué.\tWe are classmates.\t同学',
   'addList.sameCharacters': {
     one: 'Of the new words, {count} has the same characters as a word you already have, with another reading: {words}.',
     other: 'Of the new words, {count} have the same characters as a word you already have, with another reading: {words}.',
@@ -1111,6 +1115,22 @@ export default {
   'addList.andMore': '… and {count} more.',
   'addList.waitInLearn': 'They wait in Learn.',
   'addList.wentIntoDeck': { one: '{count} word you already had went into this deck.', other: '{count} words you already had went into this deck.' },
+  'addList.addSentencesTo': { one: 'Add {count} sentence to {deck}', other: 'Add {count} sentences to {deck}' },
+  // {words} and {sentences} are addList.wordCount and addList.sentenceCount.
+  'addList.addWordsAndSentencesTo': 'Add {words} and {sentences} to {deck}',
+  'addList.wordCount': { one: '{count} word', other: '{count} words' },
+  'addList.sentenceCount': { one: '{count} sentence', other: '{count} sentences' },
+  'addList.putItemsInDeckNamed': 'Put {count} already yours in {deck}',
+  'addList.sentencesAddedTo': {
+    one: '{count} sentence added to {deck}. Its cards come up in Review.',
+    other: '{count} sentences added to {deck}. Their cards come up in Review.',
+  },
+  'addList.sentencesWentIntoDeck': {
+    one: '{count} sentence you already had went into this deck.',
+    other: '{count} sentences you already had went into this deck.',
+  },
+  'addList.hintSentences':
+    'A line with the punctuation of a sentence in it (。，？！) is a sentence: the sentence, in one script or both; its pinyin or zhuyin, written as you like (it may be left out); its meaning; and, if you like, a word of it to fill in on its writing card. A sentence\'s cards come up in Review at once.',
   'addList.hintBoth':
     'One word per line, as in a TSV or CSV file: simplified, traditional, pinyin with tone numbers, meaning, separated by tabs or commas. With one column of characters instead of two, the other script is looked up in the dictionary. Pinyin or a meaning left out is filled in from the dictionary, so a list of words alone works too.',
   'addList.hintBothTaiwan':
@@ -1208,6 +1228,11 @@ export default {
   'check.alsoNotPinyin': 'The readings also accepted are not pinyin the app can read. {help}',
   'check.notInDictionaryList': 'This word is not in the dictionary, so its pinyin and meaning are needed.',
   'check.columns': 'It needs four columns: simplified, traditional, pinyin, meaning. Or three: characters, pinyin, meaning.',
+  'check.notInDictionaryMaybeSentence':
+    'This is not in the dictionary, so its pinyin and meaning are needed. If it is a sentence, end it with 。 or ？ and it is added as one.',
+  'check.sentenceMeaning': 'A sentence needs its meaning.',
+  'check.sentenceColumns':
+    'A sentence takes these columns: simplified, traditional, pinyin, meaning, a word of it to fill in. One of the scripts, the pinyin and the word may be left out.',
   'check.flagSimplified': 'simp. 简体',
   'check.flagTraditional': 'trad. 繁體',
 

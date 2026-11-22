@@ -12,6 +12,7 @@ import {
   meaningWithoutChinese,
   otherScriptForm,
   splitIntoWords,
+  sentenceInBothScripts,
 } from '../src/dictionary.js';
 import { checkWord, tidyPinyin } from '../src/words.js';
 
@@ -445,4 +446,27 @@ test('the HSK and TOCFL lists agree with the lookup wherever they have a word in
   // Four remain where a list and the lookup differ (found 2026-11-20); they are not to grow
   // unnoticed.
   assert.ok(disagreements.length <= 4, `${disagreements.length} words differ:\n${disagreements.slice(0, 20).join('\n')}`);
+});
+
+// ---------------------------------------------------------------------------
+// A sentence of a list given in one script (sentenceInBothScripts)
+
+test('a sentence in one script is written in the other word by word', () => {
+  const dictionary = readDictionary(realText, preferredText);
+  // The script is worked out from the words written only in one.
+  assert.deepEqual(sentenceInBothScripts(dictionary, '这个老城区保留了很多传统建筑。', 'traditional'), {
+    simplified: '这个老城区保留了很多传统建筑。',
+    traditional: '這個老城區保留了很多傳統建築。',
+  });
+  assert.deepEqual(sentenceInBothScripts(dictionary, '這個老城區保留了很多傳統建築。', 'simplified'), {
+    simplified: '这个老城区保留了很多传统建筑。',
+    traditional: '這個老城區保留了很多傳統建築。',
+  });
+  // Where the script can't be told, the learner's.
+  assert.deepEqual(sentenceInBothScripts(dictionary, '我是人。', 'traditional'), { traditional: '我是人。', simplified: '我是人。' });
+  // A word written two ways is given the form `choose` picks.
+  const hair = sentenceInBothScripts(dictionary, '她头发很长。', 'simplified', (entries) =>
+    entries.find((entry) => entry.pinyin === 'tou2fa5') || entries[0],
+  );
+  assert.equal(hair.traditional, '她頭髮很長。');
 });

@@ -4,7 +4,7 @@
 // all use them. No page code here: who wants to know when the dictionary or
 // the usual readings have arrived passes onReady.
 
-import { readDictionary, lookUp, otherScriptForm, readTypedPinyin, readsAs } from './dictionary.js';
+import { readDictionary, lookUp, otherScriptForm, readTypedPinyin, readsAs, sentenceInBothScripts } from './dictionary.js';
 import { parseReadyList, tidyPinyin } from './words.js';
 // "?url" makes Vite hand us the file's address instead of its contents, so
 // the dictionary stays a separate file that is only fetched when needed.
@@ -136,6 +136,20 @@ export function createDictionaryLoader(onReady) {
         return 'traditionalFirst';
       }
       return null;
+    },
+
+    // How a sentence of a list given in one script is written in both
+    // (sentenceInBothScripts in dictionary.js): the script it is in is worked
+    // out, `script` (the learner's) where the dictionary can't tell, and a
+    // word written several ways gets the form of its usual reading. Without
+    // the dictionary, both are the same.
+    //
+    // Returns { traditional, simplified }.
+    sentenceForms(script, text) {
+      if (!dictionary) {
+        return { traditional: text, simplified: text };
+      }
+      return sentenceInBothScripts(dictionary, text, script, (entries, word) => this.likeliestEntry(entries, word));
     },
 
     // How a word typed in one script is written in both, for someone who is

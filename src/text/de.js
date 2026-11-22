@@ -1062,7 +1062,7 @@ export default {
   'add.readingLabel': '{label}, mit Tonzahlen',
 
   // Adding a list of words (addListForm.js)
-  'addList.lead': 'Ein Wort pro Zeile: die Schriftzeichen, dazu Pinyin und eine Bedeutung, wenn du sie hast. Was fehlt, kommt aus dem Wörterbuch.',
+  'addList.lead': 'Ein Wort oder Satz pro Zeile: die Schriftzeichen, dazu Pinyin und eine Bedeutung, wenn du sie hast. Was einem Wort fehlt, kommt aus dem Wörterbuch.',
   'addList.orPaste': 'Oder eine Liste einfügen',
   'addList.pasteHere': 'Füge deine Liste hier ein',
   'addList.readWhenStopped': 'Wird gelesen, sobald du aufhörst zu tippen.',
@@ -1073,7 +1073,11 @@ export default {
     one: '{count} Wort: {new} neu, {have} hast du schon.',
     other: '{count} Wörter: {new} neu, {have} hast du schon.',
   },
-  'addList.nothingRead': 'Aus dieser Liste ließ sich kein Wort lesen.',
+  'addList.foundSentences': {
+    one: '{count} Satz: {new} neu, {have} hast du schon.',
+    other: '{count} Sätze: {new} neu, {have} hast du schon.',
+  },
+  'addList.nothingRead': 'Aus dieser Liste ließ sich kein Wort und kein Satz lesen.',
   'addList.unreadable': { one: '{count} Zeile ließ sich nicht lesen', other: '{count} Zeilen ließen sich nicht lesen' },
   'addList.andMoreWords': { one: 'und {count} weiteres', other: 'und {count} weitere' },
   'addList.addWordsTo': { one: '{count} Wort zu {deck} hinzufügen', other: '{count} Wörter zu {deck} hinzufügen' },
@@ -1082,7 +1086,7 @@ export default {
   'addList.another': 'Noch eine Liste hinzufügen',
   'addList.formatTitle': 'Wie kann die Datei aussehen?',
   'addList.formatFiles': 'Eine TSV- oder CSV-Datei (eine als Text gespeicherte Tabelle) oder eine einfache Liste. Jede dieser Zeilen geht:',
-  'addList.examples': '朋友\n朋友\tpéngyou\n朋友\tpeng2you5\tFreund\n学习,學習,xue2xi2,lernen',
+  'addList.examples': '朋友\n朋友\tpéngyou\n朋友\tpeng2you5\tFreund\n学习,學習,xue2xi2,lernen\n我们是同学。\tWǒmen shì tóngxué.\tWir sind Klassenkameraden.\t同学',
   'addList.sameCharacters': {
     one: 'Von den neuen Wörtern hat {count} dieselben Zeichen wie ein Wort, das du schon hast, aber eine andere Lesung: {words}.',
     other: 'Von den neuen Wörtern haben {count} dieselben Zeichen wie ein Wort, das du schon hast, aber eine andere Lesung: {words}.',
@@ -1092,6 +1096,21 @@ export default {
   'addList.andMore': '… und {count} weitere.',
   'addList.waitInLearn': 'Sie warten in „Lernen“.',
   'addList.wentIntoDeck': { one: '{count} Wort, das du schon hattest, kam in diesen Stapel.', other: '{count} Wörter, die du schon hattest, kamen in diesen Stapel.' },
+  'addList.addSentencesTo': { one: '{count} Satz zu {deck} hinzufügen', other: '{count} Sätze zu {deck} hinzufügen' },
+  'addList.addWordsAndSentencesTo': '{words} und {sentences} zu {deck} hinzufügen',
+  'addList.wordCount': { one: '{count} Wort', other: '{count} Wörter' },
+  'addList.sentenceCount': { one: '{count} Satz', other: '{count} Sätze' },
+  'addList.putItemsInDeckNamed': '{count}, die du schon hast, in {deck} legen',
+  'addList.sentencesAddedTo': {
+    one: '{count} Satz zu {deck} hinzugefügt. Seine Karten kommen in „Wiederholen“.',
+    other: '{count} Sätze zu {deck} hinzugefügt. Ihre Karten kommen in „Wiederholen“.',
+  },
+  'addList.sentencesWentIntoDeck': {
+    one: '{count} Satz, den du schon hattest, kam in diesen Stapel.',
+    other: '{count} Sätze, die du schon hattest, kamen in diesen Stapel.',
+  },
+  'addList.hintSentences':
+    'Eine Zeile mit den Satzzeichen eines Satzes (。，？！) ist ein Satz: der Satz, in einer Schrift oder in beiden; sein Pinyin oder Zhuyin, geschrieben, wie du magst (darf fehlen); seine Bedeutung; und, wenn du willst, ein Wort daraus, das auf seiner Schreibkarte zu ergänzen ist. Die Karten eines Satzes kommen sofort in „Wiederholen“.',
   'addList.hintBoth':
     'Ein Wort pro Zeile, wie in einer TSV- oder CSV-Datei: vereinfacht, traditionell, Pinyin mit Tonzahlen, Bedeutung, getrennt durch Tabulatoren oder Kommas. Bei einer Spalte mit Zeichen statt zwei wird die andere Schrift im Wörterbuch nachgeschlagen. Fehlendes Pinyin oder eine fehlende Bedeutung wird aus dem Wörterbuch ergänzt, eine reine Wortliste funktioniert also auch.',
   'addList.hintBothTaiwan':
@@ -1189,6 +1208,11 @@ export default {
   'check.alsoNotPinyin': 'Die zusätzlich akzeptierten Lesungen sind kein Pinyin, das die App lesen kann. {help}',
   'check.notInDictionaryList': 'Dieses Wort ist nicht im Wörterbuch, deshalb werden sein Pinyin und seine Bedeutung gebraucht.',
   'check.columns': 'Es braucht vier Spalten: vereinfacht, traditionell, Pinyin, Bedeutung. Oder drei: Zeichen, Pinyin, Bedeutung.',
+  'check.notInDictionaryMaybeSentence':
+    'Das ist nicht im Wörterbuch, deshalb werden Pinyin und Bedeutung gebraucht. Ist es ein Satz, beende ihn mit 。 oder ？, dann wird er als Satz hinzugefügt.',
+  'check.sentenceMeaning': 'Ein Satz braucht seine Bedeutung.',
+  'check.sentenceColumns':
+    'Ein Satz hat diese Spalten: vereinfacht, traditionell, Pinyin, Bedeutung, ein Wort daraus zum Ergänzen. Eine der Schriften, das Pinyin und das Wort dürfen fehlen.',
   'check.flagSimplified': 'vereinf. 简体',
   'check.flagTraditional': 'trad. 繁體',
 

@@ -260,6 +260,43 @@ export function splitIntoWords(dictionary, text) {
   return pieces;
 }
 
+// How a sentence written in one script is written in both (a sentence of a
+// list with one column of characters, readWordList in words.js). It is split
+// into words (splitIntoWords), and each word is written as the dictionary
+// writes it in the other script. Where it is written several ways (发 is
+// 發 fā and 髮 fà; 里 is 裡, 裏 and 里), choose(entries, word) picks the
+// entry: in the app the one with the usual reading (likeliestEntry in
+// dictionaryLoader.js), whose form the dictionary already puts Taiwan's
+// first. A word the dictionary doesn't have, and anything not Chinese, stays
+// as it is.
+//
+// The script the sentence is in is worked out: the one more of its words are
+// written in only in that script (这 only in simplified, 這 only in
+// traditional). `fallback` says which where none or as many are (我是).
+//
+// Returns { traditional, simplified }.
+export function sentenceInBothScripts(dictionary, text, fallback, choose = (entries) => entries[0]) {
+  const pieces = splitIntoWords(dictionary, text).map((piece) => ({
+    ...piece,
+    entries: piece.word ? lookUp(dictionary, piece.text) : [],
+  }));
+  let votes = 0; // above 0: simplified; below: traditional
+  for (const { text: word, entries } of pieces) {
+    const asSimplified = entries.some((entry) => entry.simplified === word);
+    const asTraditional = entries.some((entry) => entry.traditional === word);
+    votes += Number(asSimplified && !asTraditional) - Number(asTraditional && !asSimplified);
+  }
+  const script = votes > 0 ? 'simplified' : votes < 0 ? 'traditional' : fallback;
+  const other = script === 'traditional' ? 'simplified' : 'traditional';
+  const otherForm = pieces
+    .map(({ text: word, entries }) => {
+      const written = entries.filter((entry) => entry[script] === word);
+      return written.length > 0 ? choose(written, word)[other] : word;
+    })
+    .join('');
+  return { [script]: text, [other]: otherForm };
+}
+
 // Takes one line of the file apart into an entry (see lookUp).
 function entryFromLine(line) {
   const [traditional, simplified, pinyin, meanings, pinyinTaiwan] = line.split('\t');
