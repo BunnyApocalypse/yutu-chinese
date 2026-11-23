@@ -38,17 +38,19 @@
 //               form writes in another shape in the same place, as
 //               { strokeNum: median } (the dot under 人 in 食, where Taiwan's
 //               stroke is nearly flat). Either shape is accepted.
-//   altForm:    Taiwan set only, for 充, 流 and 育: the big set's form, a
-//               stroke more, as { strokes, medians, from }.
+//   altForm:    Taiwan set only, for 充, 流, 育, 及 and 級: the big set's
+//               form, a stroke more (less for 及, whose ㇌ is one stroke),
+//               as { strokes, medians, from }.
 //   altForms:   added when loaded, traditional only: every second form,
-//               altForm's and those of the box at the top of 骨
+//               altForm's (and for 及, that form with its ㇌ first) and
+//               those of the box at the top of 骨
 //               (innerBox.js), each with `from`, the first stroke where it
 //               differs, and maybe `altShapes` of its own.
 // Strokes are numbered from 0, in writing order. Coordinates run from 0 to
 // 1024 across, and from about -124 (bottom) to 900 (top) upwards.
 
 import { innerBoxForms } from './innerBox.js';
-import { inTaiwanOrder, withFangInEitherOrder, withChuiUprightLast, withBiDotsFirst, withLaiUprightFirst, withRanUprightFirst, withReversedBranches } from './shortcuts.js';
+import { inTaiwanOrder, withFangInEitherOrder, withChuiUprightLast, withBiDotsFirst, withLaiUprightFirst, withRanUprightFirst, withReversedBranches, jisOf, withJiTurnsFirst } from './shortcuts.js';
 import { withListedOrder } from './standardOrders.js';
 
 // BASE_URL is the folder the app is served from ("/" during development).
@@ -139,18 +141,37 @@ export async function charsWithoutData(text, script) {
 // at the top of 骨 (innerBox.js). A copy, as the big set's data is shared
 // with simplified, which has none of these.
 function withSecondForms(char, data) {
-  const altForms = [...(data.altForm ? [data.altForm] : []), ...innerBoxForms(char, data)];
+  const stored = data.altForm ? [data.altForm, ...withJiTurnsFirstForms(data.altForm)] : [];
+  const altForms = [...stored, ...innerBoxForms(char, data)];
   return altForms.length > 0 ? { ...data, altForms } : data;
+}
+
+// The stored second form of 及 and 級 is the big set's, with the ㇌ in one
+// stroke. The owner (2026-11-23) writes that ㇌ before the ノ too, so the same
+// form with the two swapped is a second form of its own (a form can't carry a
+// second order). It parts from the Taiwan form at the ノ. [] for other forms.
+function withJiTurnsFirstForms(form) {
+  if (jisOf(form).length === 0) {
+    return [];
+  }
+  const order = withJiTurnsFirst(form).altOrder;
+  return [
+    {
+      strokes: order.map((index) => form.strokes[index]),
+      medians: order.map((index) => form.medians[index]),
+      from: Math.min(form.from, ...jisOf(form)),
+    },
+  ];
 }
 
 // `data` with the orders and shapes found by shape: the 方 with its ノ first,
 // the 垂 with its 丨 late, the 必 with its dots first, the 來 with its 丨 early,
-// the 冉 with its 丨 before its short 一, the 匕 with its first stroke written
+// the 冉 with its 丨 before its short 一, the 及 with its ㇌ first, the 匕 with its first stroke written
 // right to left; and the few characters whose second order is listed by hand
 // (standardOrders.js), last, since a listed order is only used where none is yet.
 function withMoreWays(data, char) {
   const found = withReversedBranches(
-    withRanUprightFirst(withLaiUprightFirst(withBiDotsFirst(withChuiUprightLast(withFangInEitherOrder(data))))),
+    withJiTurnsFirst(withRanUprightFirst(withLaiUprightFirst(withBiDotsFirst(withChuiUprightLast(withFangInEitherOrder(data)))))),
   );
   return withListedOrder(char, found);
 }

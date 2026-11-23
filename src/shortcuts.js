@@ -816,6 +816,88 @@ export function withRanUprightFirst(charData) {
   return { ...charData, altOrder, ...(!charData.altOrder && { altOrderIsFang: true }) };
 }
 
+// ---- 及 with its ㇌ before its ノ ----
+//
+// The big set writes 及 (吸, 级, 极, 汲, 笈…) ノ, ㇌, ㇏: the ㇌ is one stroke
+// going right, down to the left, right again and down to the left. The owner
+// (2026-11-23, in 高級) writes the ㇌ first, then the ノ; charData.js adds that
+// as a second order (withJiTurnsFirst). The Taiwan set writes the ㇌ in two
+// strokes; its 及 and 級 get the big set's form as a second form, in either
+// order (withJiFormsInEitherOrder in charData.js). Not checked against a
+// source: the mainland standard and KanjiVG both have the ノ first.
+//
+// Found by shape, as three strokes in a row: a long ノ; a stroke beginning
+// near the ノ's top whose path goes right, left, right, left; and a stroke
+// going right and down from the ノ. Every distance is measured against the
+// ノ's length.
+
+// The ノ is at least this long (the data's units; the box is 1024).
+const JI_MIN_SWEEP = 250;
+
+// The directions a path goes in sideways, in turn ('right', 'left'), leaving
+// out moves of less than `ignore` across.
+function sidewaysTurnsOf(median, ignore) {
+  const turns = [];
+  let from = median[0][0];
+  for (const [x] of median.slice(1)) {
+    if (Math.abs(x - from) < ignore) {
+      continue;
+    }
+    const way = x > from ? 'right' : 'left';
+    if (turns[turns.length - 1] !== way) {
+      turns.push(way);
+    }
+    from = x;
+  }
+  return turns;
+}
+
+// The stroke numbers at which such a 及 begins (its ノ): [] for most.
+export function jisOf(charData) {
+  const { medians } = charData;
+  const found = [];
+  for (let at = 0; at + 2 < medians.length; at++) {
+    const [sweep, turns, press] = medians.slice(at, at + 3);
+    const unit = distance(startOf(sweep), endOf(sweep));
+    if (
+      isFallingLeft(sweep) &&
+      unit > JI_MIN_SWEEP &&
+      // The ㇌: from near the ノ's top, right, left, right, left, ending low.
+      distance(startOf(turns), startOf(sweep)) < 0.4 * unit &&
+      sidewaysTurnsOf(turns, 0.05 * unit).join(' ') === 'right left right left' &&
+      endOf(turns).y < startOf(turns).y - 0.6 * unit &&
+      // The ㇏: from the ノ, right and down.
+      endOf(press).x > startOf(press).x + 0.4 * unit &&
+      endOf(press).y < startOf(press).y - 0.3 * unit &&
+      startOf(press).x > endOf(sweep).x &&
+      startOf(press).x < startOf(sweep).x + 0.15 * unit
+    ) {
+      found.push(at);
+    }
+  }
+  return found;
+}
+
+// A copy of `charData` whose second accepted order (`altOrder`) has the ㇌ of
+// each 及 before its ノ; `charData` itself if it has none. Joins a second
+// order already there as the 方 does, and is marked `altOrderIsFang` (a
+// review says 'other') when there was none.
+export function withJiTurnsFirst(charData) {
+  const jis = jisOf(charData);
+  if (jis.length === 0) {
+    return charData;
+  }
+  const altOrder = charData.altOrder ? [...charData.altOrder] : charData.strokes.map((stroke, index) => index);
+  for (const at of jis) {
+    const sweepAt = altOrder.indexOf(at);
+    // Only where the order has the ノ and the ㇌ next to each other, in that order.
+    if (sweepAt !== -1 && altOrder[sweepAt + 1] === at + 1) {
+      [altOrder[sweepAt], altOrder[sweepAt + 1]] = [at + 1, at];
+    }
+  }
+  return { ...charData, altOrder, ...(!charData.altOrder && { altOrderIsFang: true }) };
+}
+
 // ---- The branch of 匕 written right to left ----
 //
 // The Taiwan set writes the first stroke of 匕 (北, 比, 化, 死…) as a short

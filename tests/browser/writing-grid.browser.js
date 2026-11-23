@@ -19,7 +19,7 @@ import {
   drawStroke,
   loadStrokeData,
 } from './harness.js';
-import { grassTopsOf, chuiOf } from '../../src/shortcuts.js';
+import { grassTopsOf, chuiOf, jisOf } from '../../src/shortcuts.js';
 import { steepDotsOf } from '../../src/strokeMatch.js';
 import { innerBoxForms } from '../../src/innerBox.js';
 
@@ -30,12 +30,13 @@ import { innerBoxForms } from '../../src/innerBox.js';
 // 十 十 of 垂 in 郵華, and 薦 from the big set, also written with it in three
 // strokes, 薦 also in the big set's 丨 一 丨 一), and some with a
 // second form (充流育, also written in the big set's, its dot also straight
-// down), and some with the box
+// down; 及級, also with the big set's ㇌ in one stroke, before or after the ノ),
+// and some with the box
 // of 骨 (骨體滑, also written in its other orders and shapes; not 髒, whose
 // 9th stroke in its mainland shape was refused at half size, bottom right,
 // with or without this). Half the size is no longer followed (MIN_SCALE in
 // src/frame.js, 2026-11-08): the owner writes at 0.6 of the box and up.
-const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢愉母出長麼這謝子好食房藍雨草花觀聽聰總充流育骨體滑郵華飽薦遍方旁睡北');
+const CHARS = Array.from(process.env.CHARS || '學覺我馬國忙錢愉母出長麼這謝子好食房藍雨草花觀聽聰總充流育骨體滑郵華飽薦遍方旁睡北及級');
 
 // Where and how big the character is written, compared with the centered
 // reference: `scale` times the size, moved `dx` to the right and `dy` up, in
@@ -194,6 +195,12 @@ describe('writing grid', { concurrency: BROWSER_COUNT }, () => {
           shapes: { ...medians, [data.altForm.from]: straightDown },
         });
       }
+      // 及's ㇌ in one stroke, before its ノ (withJiTurnsFirstForms in src/charData.js).
+      for (const at of jisOf(data.altForm)) {
+        const turnsFirst = [...medians];
+        [turnsFirst[at], turnsFirst[at + 1]] = [medians[at + 1], medians[at]];
+        ways.push({ label: 'second form, ㇌ before ノ', strokeOrder: medians.map((median, index) => index), shapes: { ...turnsFirst } });
+      }
     }
     // The box of 骨 written in another way (src/innerBox.js), and with the
     // form's own other shapes.
@@ -285,12 +292,15 @@ describe('writing grid', { concurrency: BROWSER_COUNT }, () => {
     芈: swapped(7, 0),
     陧: swapped(9, 6),
     尨: [0, 1, 2, 4, 5, 6, 3], // the dot after the 彡
+    // Not the standard's: 及's ㇌ before its ノ (the owner, 2026-11-23).
+    吸: swapped(6, 3),
   };
   for (const [char, strokeOrder] of Object.entries(STANDARD_ORDERS)) {
     const { medians } = loadStrokeData(char);
     for (const positionName of FEWER_POSITIONS) {
       const position = POSITIONS[positionName];
-      const name = `${char} in the mainland standard's order, ${positionName}`;
+      const orderName = char === '吸' ? '㇌ before ノ' : "the mainland standard's order";
+      const name = `${char} in ${orderName}, ${positionName}`;
       if (!canBeWritten(medians, position)) {
         tally[positionName].skipped += 1;
         it.skip(name);

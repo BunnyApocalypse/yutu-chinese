@@ -23,6 +23,8 @@ import {
   bisOf,
   laisOf,
   withLaiUprightFirst,
+  jisOf,
+  withJiTurnsFirst,
   withBiDotsFirst,
   ransOf,
   withRanUprightFirst,
@@ -467,4 +469,23 @@ test('冉 gets its 丨 before its short 一, and nothing else is taken for one',
   // 土 and 木 are written 一 丨 ... too, but have no ㇆ around them.
   assert.equal(withRanUprightFirst(bigSetData('土')).altOrder, undefined);
   assert.equal(withRanUprightFirst(bigSetData('木')).altOrder, undefined);
+});
+
+test('及 gets its ㇌ before its ノ, and nothing else is taken for one', () => {
+  // Every character of the big set with a 及 written ノ ㇌ ㇏, and where its ノ is.
+  const expectedBig = { 及: 0, 吸: 3, 圾: 3, 岌: 3, 极: 4, 汲: 3, 笈: 6, 級: 6, 级: 3, 芨: 3, 趿: 7 };
+  const foundBig = {};
+  for (const file of fs.readdirSync('node_modules/hanzi-writer-data')) {
+    if (!file.endsWith('.json') || file === 'package.json') continue;
+    const found = jisOf(JSON.parse(fs.readFileSync(`node_modules/hanzi-writer-data/${file}`, 'utf8')));
+    if (found.length > 0) foundBig[file.slice(0, -5)] = found.length === 1 ? found[0] : found;
+  }
+  assert.deepEqual(foundBig, expectedBig);
+  // The Taiwan set writes the ㇌ in two strokes: none there (its 及 and 級 get
+  // the big set's form as a second form instead, src/charData.js).
+  assert.deepEqual([...taiwanData.values()].filter((data) => jisOf(data).length > 0).map((data) => data.character), []);
+  // The ノ and the ㇌ change places; nothing else does.
+  assert.deepEqual(withJiTurnsFirst(bigSetData('吸')).altOrder, [0, 1, 2, 4, 3, 5]);
+  assert.equal(withJiTurnsFirst(bigSetData('吸')).altOrderIsFang, true);
+  assert.equal(withJiTurnsFirst(bigSetData('乃')).altOrder, undefined);
 });

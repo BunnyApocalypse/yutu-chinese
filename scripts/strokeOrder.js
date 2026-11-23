@@ -179,9 +179,11 @@ function windowShapes(taiwanEntry, bigSetEntry, fits) {
 // 充, 流 and 育 write the dot on top joined to the turn under it, where the
 // big set writes the dot on its own (the owner, 2026-10-31, writes it so:
 // "both forms should be okay"). For these, the big set's strokes are kept as
-// a second form the app accepts too (otherFormFor in src/quiz.js). Only
-// these: elsewhere a different count is a real difference of form (為, 辶).
-export const SECOND_FORM_CHARS = '充流育';
+// a second form the app accepts too (otherFormFor in src/quiz.js). 及 and
+// 級 the other way round: the big set writes 及's ㇌ in one stroke, the
+// Taiwan set in two (the owner, 2026-11-23, writes it in one). Only these:
+// elsewhere a different count is a real difference of form (為, 辶).
+export const SECOND_FORM_CHARS = '充流育及級';
 
 // The big set's form of a character in SECOND_FORM_CHARS, for the Taiwan
 // file: { strokes, medians, from }, `from` being the first stroke where the
