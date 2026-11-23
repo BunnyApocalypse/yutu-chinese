@@ -13,6 +13,24 @@ import { formatDate } from './text.js';
 
 export const CHANGES = [
   {
+    id: '2026-11-23',
+    items: [
+      'In Learn, "I know this word" can be undone: tap Undo on the line that shows for a few seconds, and the word comes back where it was.',
+      'In Learn, "About this word" now sits at the card\'s bottom left at every step, away from "I know this word".',
+      '及 and the characters with it (級, 吸 and others) accept its right side written in one stroke, before or after the ノ.',
+    ],
+    it: [
+      'In Impara, «La conosco già» si può annullare: tocca Annulla sulla riga che appare per qualche secondo, e la parola torna dov\'era.',
+      'In Impara, «Info su questa parola» ora sta in basso a sinistra della scheda a ogni passaggio, lontano da «La conosco già».',
+      '及 e i caratteri che lo contengono (級, 吸 e altri) accettano la sua parte destra scritta in un solo tratto, prima o dopo la ノ.',
+    ],
+    de: [
+      'In „Lernen“ lässt sich „Kenne ich schon“ rückgängig machen: Tippe auf „Rückgängig“ in der Zeile, die ein paar Sekunden erscheint, und das Wort kommt zurück, wo es war.',
+      'In „Lernen“ steht „Über dieses Wort“ jetzt bei jedem Schritt unten links auf der Karte, weg von „Kenne ich schon“.',
+      '及 und die Zeichen mit ihm (級, 吸 und andere) nehmen seine rechte Seite in einem Strich an, vor oder nach dem ノ.',
+    ],
+  },
+  {
     id: '2026-11-22',
     items: [
       'A list can now hold sentences beside words: a line with a sentence\'s punctuation (。 or ？) is a sentence, with its pinyin or zhuyin, its meaning and a word to fill in if you like. "Add a list of sentences" under A sentence takes you there.',
