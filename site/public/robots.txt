@@ -1,5 +1,7 @@
-# The app's test copy is for the developer; everything else is open.
+# Everything is open to search engines. The app's test copy (/app/test/)
+# is kept out of results by a "noindex" line in its own page
+# (vite.config.js), which they can only see if they may read it.
 User-agent: *
-Disallow: /app/test/
+Disallow:
 
 Sitemap: https://yutuchinese.com/sitemap.xml

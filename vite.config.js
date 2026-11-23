@@ -15,7 +15,29 @@ function appVersion() {
   }
 }
 
+// A Vite plugin is a few functions Vite calls while it works; this one adds a
+// line to the head of index.html, different for each copy, in a build only:
+// - the test copy: "noindex", so search engines leave it out of their
+//   results (robots.txt can't do that: it only stops them reading the page,
+//   and a page they can't read can still be listed by its address);
+// - the stable copy: its one true address ("canonical"), so search engines
+//   count yutuchinese.com/app/ and yutuchinese.com/app/index.html as one page.
+// (docs/offline.md, "The page about the app": search and sharing.)
+function searchTags(command) {
+  return {
+    name: 'search-tags',
+    transformIndexHtml() {
+      if (command !== 'build') return [];
+      if (process.env.VITE_CHANNEL) {
+        return [{ tag: 'meta', attrs: { name: 'robots', content: 'noindex' }, injectTo: 'head' }];
+      }
+      return [{ tag: 'link', attrs: { rel: 'canonical', href: 'https://yutuchinese.com/app/' }, injectTo: 'head' }];
+    },
+  };
+}
+
 export default defineConfig(({ command }) => ({
+  plugins: [searchTags(command)],
   // The folder the built app is served from. './' makes every address in the
   // build relative to the page, so the same build works at
   // https://<name>.github.io/yutu-chinese/ and at http://localhost:4173/.
