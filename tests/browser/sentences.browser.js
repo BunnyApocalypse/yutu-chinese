@@ -356,10 +356,18 @@ describe('sentences', { concurrency: false }, () => {
     // Known: its cards are answered Easy.
     await tap(page, 'skip-lesson-button');
     await waitUntil(page, `document.querySelector('#learn-strip .current .chip-word')?.textContent !== '你們…'`, 'the next one');
-    const known = (await stored(page, 'cards')).filter((card) => card.id.startsWith('你們好嗎？|sentence'));
-    assert.deepEqual(known.map((card) => card.id).sort(), ['你們好嗎？|sentence#meaning', '你們好嗎？|sentence#writing']);
-
+    // Saved once Undo is no longer offered: here at the next "I know this word".
     await skip('學習');
+    const knownIds = async () =>
+      (await stored(page, 'cards'))
+        .filter((card) => card.id.startsWith('你們好嗎？|sentence'))
+        .map((card) => card.id)
+        .sort();
+    for (let tries = 0; (await knownIds()).length === 0 && tries < 50; tries += 1) {
+      await page.evaluate('new Promise((resolve) => setTimeout(resolve, 100))');
+    }
+    assert.deepEqual(await knownIds(), ['你們好嗎？|sentence#meaning', '你們好嗎？|sentence#writing']);
+
     await skip('這個…');
     await skip('即使…');
     // 支持 before the sentence with it in its gap, though added after it.

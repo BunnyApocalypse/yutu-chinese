@@ -317,10 +317,39 @@ describe('learning new words', { concurrency: false }, () => {
     await openLearn(page);
     await waitUntil(page, `${stepIs('step 1 of 5')} && document.getElementById('card-face').textContent.startsWith('小')`, 'the next word');
     assert.equal(await textOf(page, 'skip-lesson-button'), 'I know this word');
+    const learnedOf = () =>
+      inDatabase(`stores.words.get('小|xiao3').onsuccess = (event) => { result.learned = typeof event.target.result.learnedAt; };`).then(
+        (result) => result.learned,
+      );
+    // On to step 2, so Undo can be seen to come back to it.
+    await tap(page, 'lesson-next-button');
+    await waitUntil(page, stepIs('step 2 of 5'), 'step 2');
     await tap(page, 'skip-lesson-button');
-    // Nothing is written: the next word comes at once.
-    await waitUntil(page, `${stepIs('step 1 of 5')} && document.getElementById('card-face').textContent.startsWith('上')`, 'the word after it');
+    // Nothing is written: the next word comes at once, with Undo on the pill
+    // (the owner, 2026-11-23: it was tapped by mistake for "About").
+    const nextWord = `${stepIs('step 1 of 5')} && document.getElementById('card-face').textContent.startsWith('上')`;
+    await waitUntil(page, nextWord, 'the word after it');
+    assert.equal(await textOf(page, 'learned-pill'), '✓ 小 marked as knownUndo');
     assert.equal(await textOf(page, 'review-counts'), '2 of 5 learned today · 1 waiting');
+    // Held back while Undo is offered: nothing saved yet.
+    assert.equal(await learnedOf(), 'undefined');
+    // Undo: back to 小, at the step it was at, as it was.
+    await page.evaluate(`document.querySelector('#learned-pill .pill-undo').click()`);
+    await waitUntil(page, stepIs('step 2 of 5'), "小's step 2 again");
+    assert.equal(await isShown(page, 'learned-pill'), false);
+    assert.equal(await textOf(page, 'review-counts'), '1 of 5 learned today · 2 waiting');
+    assert.equal(await learnedOf(), 'undefined');
+    // Again, and this time the next word goes on to its next step: the pill
+    // goes, and the word is saved.
+    await tap(page, 'skip-lesson-button');
+    await waitUntil(page, nextWord, 'the word after it');
+    await tap(page, 'lesson-next-button');
+    await waitUntil(page, stepIs('step 2 of 5'), "上's step 2");
+    assert.equal(await isShown(page, 'learned-pill'), false);
+    // Saving takes a moment.
+    for (let tries = 0; (await learnedOf()) !== 'number' && tries < 50; tries += 1) {
+      await page.evaluate('new Promise((resolve) => setTimeout(resolve, 100))');
+    }
     // The word is learned, and each of its cards was answered "Easy".
     const stored = await inDatabase(`
       stores.words.get('小|xiao3').onsuccess = (event) => {

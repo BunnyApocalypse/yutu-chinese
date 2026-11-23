@@ -664,6 +664,10 @@ export default {
   'review.done': 'Done',
   'review.nextWord': 'Next word',
   'review.learnedPill': '{word} learned · {learned} of {size}',
+  // After "I know this word" in Learn, for a few seconds, with Undo beside it
+  // (review.js, showUndoPill). On one line on a 360px phone: keep it short.
+  'review.knownPill': '{word} marked as known',
+  'review.undoKnown': 'Undo',
   'review.todaysWords': "Today's words: {learned} of {size} learned",
   'review.summaryGoal': "Today's goal reached",
   'review.summaryAllLearned': 'Every word learned',

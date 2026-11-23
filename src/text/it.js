@@ -648,6 +648,8 @@ export default {
   'review.done': 'Fatto',
   'review.nextWord': 'Parola successiva',
   'review.learnedPill': '{word} imparata · {learned} di {size}',
+  'review.knownPill': '{word} segnata come nota',
+  'review.undoKnown': 'Annulla',
   'review.todaysWords': 'Parole di oggi: {learned} di {size} imparate',
   'review.summaryGoal': 'Obiettivo di oggi raggiunto',
   'review.summaryAllLearned': 'Tutte le parole imparate',

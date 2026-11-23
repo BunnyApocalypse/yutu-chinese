@@ -1975,6 +1975,7 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       return;
     }
     const { word, learning } = current;
+    const { steps, index } = lesson;
     // Skipping isn't studying: the time so far is not kept.
     stopwatch.stop();
     const known = markedKnown(
@@ -1985,17 +1986,28 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       Date.now(),
       randomId,
     );
-    await saveKnown([known]);
+    if (learning) {
+      // In Learn it can be taken back for a moment ("Undo" on the pill,
+      // below): it is saved only once the pill goes away (commitKnown).
+      // One skipped before is final now.
+      commitKnown();
+    } else {
+      await saveKnown([known]);
+      noteReviews(known.reviews);
+    }
     for (const card of known.cards) {
       cards.set(card.id, card);
     }
-    noteReviews(known.reviews);
     words = words.map((entry) => (entry.id === word.id ? known.word : entry));
     stopFlows();
     endLesson();
     if (learning) {
       justLearned = null;
       showNextToLearn();
+      // Only now: bringing the next word up hides the pill there was, and
+      // the pill going away is what saves (hideLearnedPill).
+      pendingKnown = { known, word, steps, index };
+      showUndoPill(word);
     } else {
       showNext();
     }
@@ -2030,6 +2042,17 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   const LEARN_MORE_WITHOUT_GOAL = 5;
   // How long the pill stays, in milliseconds.
   const LEARNED_PILL_MS = 3000;
+  // How long "marked as known · Undo" stays: long enough to see a tap went
+  // to the wrong button and take it back.
+  const UNDO_PILL_MS = 6000;
+
+  // "I know this word" tapped in Learn and not saved yet, while the pill
+  // offers Undo (the owner, 2026-11-23: it was tapped by mistake for
+  // "About"): { known, word, steps, index }, what markedKnown gave, the word
+  // as it was, and the lesson's steps and the step it was at; null
+  // otherwise. Held back rather than saved and then deleted, as reviews
+  // are never deleted.
+  let pendingKnown = null;
 
   // The sitting on opening Learn: the words already learned today, then as
   // many as the goal still asks for (or as are left to learn).
@@ -2172,9 +2195,95 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     pillTimer = setTimeout(hideLearnedPill, LEARNED_PILL_MS);
   }
 
+  // The pill after "I know this word" in Learn: "✓ 我們 marked as known ·
+  // Undo", in the same place, over the next word's first look. Gone after
+  // UNDO_PILL_MS or at the next step, as the other.
+  function showUndoPill(word) {
+    clearTimeout(pillTimer);
+    const script = scriptFor(word, settings);
+    const text = document.createElement('span');
+    fillMixed(text, t('review.knownPill', { word: shortForm(word, script) }), script);
+    const tick = document.createElement('span');
+    tick.className = 'pill-tick';
+    tick.setAttribute('aria-hidden', 'true');
+    tick.textContent = '✓ ';
+    const undo = document.createElement('button');
+    undo.type = 'button';
+    undo.className = 'pill-undo';
+    undo.textContent = t('review.undoKnown');
+    undo.addEventListener('click', undoKnown);
+    learnedPill.replaceChildren(tick, text, undo);
+    learnedPill.hidden = false;
+    pillTimer = setTimeout(hideLearnedPill, UNDO_PILL_MS);
+  }
+
+  // The pill going away, however it goes, makes "I know this word" final.
   function hideLearnedPill() {
     clearTimeout(pillTimer);
     learnedPill.hidden = true;
+    commitKnown();
+  }
+
+  // Saves "I know this word" held back for Undo, if there is one.
+  function commitKnown() {
+    const pending = pendingKnown;
+    if (!pending) {
+      return Promise.resolve();
+    }
+    pendingKnown = null;
+    // Saved some other way than by the pill going (leaving the app, the
+    // words read in again): Undo is gone too.
+    if (!learnedPill.hidden && learnedPill.querySelector('.pill-undo')) {
+      clearTimeout(pillTimer);
+      learnedPill.hidden = true;
+    }
+    return saveKnown([pending.known]).then(() => noteReviews(pending.known.reviews));
+  }
+
+  // Leaving the app may be the end of it: the choice is saved at once.
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      commitKnown();
+    }
+  });
+
+  // Undo: the word is as it was, and its lesson comes back at the step it
+  // was at; the word that had come up next waits for its turn again.
+  // Nothing was saved, so nothing is taken out of the database.
+  async function undoKnown() {
+    const pending = pendingKnown;
+    if (!pending || !active || mode !== 'learn') {
+      return;
+    }
+    pendingKnown = null;
+    clearTimeout(pillTimer);
+    learnedPill.hidden = true;
+    const { known, word } = pending;
+    words = words.map((entry) => (entry.id === word.id ? word : entry));
+    for (const card of known.cards) {
+      cards.delete(card.id);
+    }
+    // The next word is put away unlearned; its time is not kept.
+    stopwatch.stop();
+    stopFlows();
+    endLesson();
+    const { learnedToday, waiting } = learnCounts();
+    countsElement.textContent = t('review.learnCounts', { learned: learnedToday, goal: goalForToday(), waiting });
+    atEnd = false;
+    // As startNextWord, at the step it was at.
+    current = { word, type: 'writing', card: null, learning: true };
+    stopwatch.start();
+    setFocus(true);
+    page.classList.remove('learn-summary');
+    lesson = { steps: pending.steps, index: pending.index };
+    donePanel.hidden = true;
+    studyArea.hidden = false;
+    showScriptFlag(word);
+    const shown = current;
+    if ((await showLessonStep()) === false && current === shown) {
+      unwritable.add(word.id);
+      startNextWord();
+    }
   }
 
   // The end of today's words: the goal reached, or no word left to learn.
@@ -3744,6 +3853,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
       // Opening Review or Learn meanwhile shows a card of its own.
       const activated = activations;
       loading = (async () => {
+        // "I know this word" waiting for Undo is saved first, or what is
+        // read would bring the word back unlearned.
+        await commitKnown();
         // Everything is read first and put in place together, so that nothing
         // sees new words beside old cards.
         // import() fetches the tone table as its own file, so it doesn't

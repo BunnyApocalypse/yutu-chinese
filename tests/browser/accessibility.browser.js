@@ -288,6 +288,17 @@ describe('accessibility', { concurrency: false }, () => {
     const word = await page.evaluate(`document.getElementById('card-face').textContent`);
     await tap(page, 'skip-lesson-button');
     await waitUntil(page, `document.getElementById('card-face').textContent !== ${JSON.stringify(word)}`, 'the next word');
+    // Saved once the pill offering Undo goes: at the next word's next step.
+    await tap(page, 'lesson-next-button');
+    await waitUntil(page, `document.getElementById('learned-pill').hidden`, 'the pill gone');
+    const cardCount = () =>
+      page.evaluate(`new Promise((resolve) => { indexedDB.open('hanzi-trainer').onsuccess = (event) => {
+        event.target.result.transaction('cards').objectStore('cards').count().onsuccess = (counted) => resolve(counted.target.result);
+      }; })`);
+    for (let tries = 0; (await cardCount()) === 0; tries += 1) {
+      assert.ok(tries < 50, 'the known word saved');
+      await page.evaluate('new Promise((resolve) => setTimeout(resolve, 100))');
+    }
     await page.evaluate(`new Promise((resolve, reject) => {
       const opening = indexedDB.open('hanzi-trainer');
       opening.onsuccess = () => {
