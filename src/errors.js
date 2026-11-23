@@ -82,7 +82,9 @@ export function watchForErrors({ banner, detailsButton, dialog, textElement, cop
 // Fills in the line in Settings that says which version this is.
 export function showVersion() {
   byId('app-version').textContent = t('error.version', { version: APP_VERSION });
+  // The copy's name goes first in the tab's text, since a narrow tab cuts the
+  // end of the (long) title.
   if (__CHANNEL__) {
-    document.title = `${document.title} (${__CHANNEL__})`;
+    document.title = `(${__CHANNEL__}) ${document.title}`;
   }
 }
