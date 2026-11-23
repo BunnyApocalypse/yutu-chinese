@@ -3992,7 +3992,6 @@ button.note-word {
 button.sentence-word,
 button.note-word,
 #skip-lesson-button,
-#lesson-about-button,
 .review-header .link-button {
   position: relative;
 }
@@ -4000,7 +3999,6 @@ button.note-word,
 button.sentence-word::after,
 button.note-word::after,
 #skip-lesson-button::after,
-#lesson-about-button::after,
 .review-header .link-button::after {
   content: '';
   position: absolute;

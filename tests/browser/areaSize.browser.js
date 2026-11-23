@@ -119,15 +119,14 @@ describe('the writing area on a short phone', { concurrency: false }, () => {
     assert.deepEqual(await measure(), { size: 328, scroll: 0 });
   });
 
-  // Each step's note shares a line with "I know this word" and "About" (the
-  // owner, 2026-11-06); a second line would move the area down.
-  it("keeps a lesson's note, I know this word and About on one line, in every language", { timeout: 60000 }, async () => {
+  // Each step's note shares a line with "I know this word" (the owner,
+  // 2026-11-06; "About" moved to the card's bottom left on 2026-11-23); a
+  // second line would move the area down.
+  it("keeps a lesson's note and I know this word on one line, in every language", { timeout: 60000 }, async () => {
     await openLearn(page);
-    // At step 2: at the first look a word's learning note hides "About"
-    // (its own link takes the place), but a word with no note keeps it.
     await waitUntil(page, `!document.getElementById('lesson-next-button').hidden`, 'Next step');
     await tap(page, 'lesson-next-button');
-    await waitUntil(page, `!document.getElementById('lesson-about-button').hidden`, 'About in the lesson');
+    await waitUntil(page, `!document.getElementById('card-about-button').hidden`, 'About on the card');
     // Each note with the skip button's label at its step: a sentence's
     // lesson says "I know this sentence".
     const notes = [
@@ -146,7 +145,6 @@ describe('the writing area on a short phone', { concurrency: false }, () => {
         const lines = await page.evaluate(`(() => {
           document.getElementById('lesson-note').textContent = ${JSON.stringify(text[`review.${note}`])};
           document.getElementById('skip-lesson-button').textContent = ${JSON.stringify(text[`review.${skip}`])};
-          document.getElementById('lesson-about-button').textContent = ${JSON.stringify(text['review.aboutWordButton'])};
           const tops = new Set([...document.querySelector('.lesson-row').children]
             .filter((element) => !element.hidden)
             .map((element) => Math.round(element.getBoundingClientRect().top)));

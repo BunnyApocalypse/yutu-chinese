@@ -97,7 +97,7 @@ const RECHECK_MS = 15 * 1000;
 // elements: the page elements review controls:
 //   countsElement, typeElement, meaningElement, pinyinElement, pinyinButton,
 //   gradeRow, verdictRow, practiceAgainButton, editWordButton, leechTag, donePanel, doneMessage, studyArea, scriptFlag,
-//   lessonNote, skipLessonButton, lessonAboutButton, lessonNextButton, learnNextButton, addWordsButton,
+//   lessonNote, skipLessonButton, lessonNextButton, learnNextButton, addWordsButton,
 //   startLevelButton, otherLevelButton, lessonBackButton, countsRow,
 //   reviewNowButton, learnStrip, learnedPill,
 //   and the parts of the study area that differ per kind of card:
@@ -143,7 +143,6 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     scriptFlag,
     lessonNote,
     skipLessonButton,
-    lessonAboutButton,
     lessonNextButton,
     learnNextButton,
     addWordsButton,
@@ -543,7 +542,52 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     cardFace.append(cardAboutButton);
     cardAboutButton.hidden = Boolean(cardFace.querySelector('.face-tip-more'));
   }
-  // A tap on it must not also count as a tap on the card's face.
+  // In Learn's lessons the same link, at every step (the owner, 2026-11-23,
+  // from mockups: "About" beside "I know this word" was tapped by mistake
+  // for it, the two moving between steps). True while a lesson in Learn
+  // wants it; showLessonStep sets it, endLesson clears it.
+  let lessonAboutWanted = false;
+  // Puts it in place for the step on screen: over the writing area's bottom
+  // edge, or in the card's face. A face is built again within a step (a tone
+  // card's next character, a sentence read and turned), which takes the link
+  // out with the rest; the watcher below brings it back. Appended only when
+  // not there already, as appending is itself a change the watcher sees.
+  function placeLessonAbout() {
+    if (!lessonAboutWanted || !current) {
+      return;
+    }
+    cardAboutButton.textContent = t(isSentence(current.word) ? 'review.aboutSentence' : 'study.cardAboutButton');
+    if (!writingRow.hidden) {
+      if (cardAboutButton.parentNode !== writingRow) {
+        writingRow.append(cardAboutButton);
+      }
+      cardAboutButton.hidden = false;
+      return;
+    }
+    // A learning note on the face brings its own (the first look): the
+    // card's is put away outside the face, so that its words are not part
+    // of the face's text either.
+    if (cardFace.querySelector('.face-tip-more')) {
+      cardAboutButton.hidden = true;
+      if (cardAboutButton.parentNode !== writingRow) {
+        writingRow.append(cardAboutButton);
+      }
+      return;
+    }
+    if (cardAboutButton.parentNode !== cardFace) {
+      cardFace.append(cardAboutButton);
+    }
+    cardAboutButton.hidden = false;
+  }
+  // MutationObserver: the browser calls it after the face's contents change,
+  // or the face or writing row is shown or hidden.
+  const lessonAboutWatcher = new MutationObserver(placeLessonAbout);
+  lessonAboutWatcher.observe(cardFace, { childList: true, attributes: true, attributeFilter: ['hidden'] });
+  lessonAboutWatcher.observe(writingRow, { attributes: true, attributeFilter: ['hidden'] });
+
+  // A tap on it must not also count as a tap on the card's face (on a tone
+  // card a finger coming down starts a tone mark).
+  cardAboutButton.addEventListener('pointerdown', (event) => event.stopPropagation());
   cardAboutButton.addEventListener('pointerup', (event) => event.stopPropagation());
   cardAboutButton.addEventListener('click', (event) => {
     event.stopPropagation();
@@ -551,7 +595,6 @@ export function createReview(elements, flows, settings, editWord, showWord, note
   });
 
   aboutWordButton.addEventListener('click', () => openAbout());
-  lessonAboutButton.addEventListener('click', () => openAbout());
   function openAbout() {
     if (!current) {
       return;
@@ -1553,11 +1596,9 @@ export function createReview(elements, flows, settings, editWord, showWord, note
         if (note && still()) {
           cardFace.classList.add('with-tip');
           cardFace.append(cardTip(note, script, openAbout, tappableText));
-          // The note's own "About this word" takes the place of the card's,
-          // and at a lesson's first look of the "About" beside "I know this
-          // word" (the owner, 2026-11-06); the next step shows that again.
+          // The note's own "About this word" takes the place of the card's
+          // (in Learn too, at a lesson's first look).
           cardAboutButton.hidden = true;
-          lessonAboutButton.hidden = true;
         }
       })
       .catch(() => {});
@@ -1649,7 +1690,8 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     lesson = null;
     lessonNote.hidden = true;
     skipLessonButton.hidden = true;
-    lessonAboutButton.hidden = true;
+    lessonAboutWanted = false;
+    cardAboutButton.hidden = true;
     lessonNextButton.hidden = true;
   }
 
@@ -1712,10 +1754,13 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     skipLessonButton.hidden = Boolean(current.repeating);
     skipLessonButton.textContent = t(sentence ? 'review.skipSentenceButton' : 'review.skipLessonButton');
     skipLessonButton.title = t(sentence ? 'review.skipThisSentencesLesson' : 'review.skipThisWordsLesson');
-    // In Learn, "About" beside it, at every step (the owner, 2026-11-06).
-    // Not in Review's lessons, whose last step is graded.
+    // In Learn, "About this word" at the card's bottom left, at every step,
+    // well away from "I know this word" (placeLessonAbout; the owner,
+    // 2026-11-23). Not in Review's lessons, whose last step is graded.
     // (Nor in a lesson repeated, opened from the page.)
-    lessonAboutButton.hidden = !current.learning || Boolean(current.repeating);
+    lessonAboutWanted = current.learning && !current.repeating;
+    // After this step's parts are shown or hidden, further down.
+    queueMicrotask(placeLessonAbout);
     // A tip beside it, the first time (tips.js).
     document.dispatchEvent(new CustomEvent('screen-shown', { detail: 'lesson' }));
     lessonNextButton.hidden = true;
@@ -2965,7 +3010,6 @@ export function createReview(elements, flows, settings, editWord, showWord, note
     lessonNote.hidden = false;
     skipLessonButton.textContent = t('learnForms.canRead');
     skipLessonButton.hidden = false;
-    lessonAboutButton.hidden = true;
     stopFlows();
     hideGrades();
     offerListen(true);
