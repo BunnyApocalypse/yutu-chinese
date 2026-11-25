@@ -1,6 +1,7 @@
 # How the server is doing, changing nothing: the program, Caddy and their
 # versions (what the server is made of: docs/supply-chain.md), the disk,
-# how many accounts there are and what they hold, updates waiting, the
+# how many accounts there are, what they hold and how many are active
+# (used and saved to in the last 7 and 30 days), updates waiting, the
 # limits hit today, and the program's last log lines (which name no
 # account, file or address: the addresses in LIMIT lines are left out).
 #   ansible-playbook status.yml
@@ -17,6 +18,26 @@
         echo "Versions: Node $(node --version), Caddy $(caddy version | cut -d' ' -f1), $(rpm -q --qf '%{NAME} %{VERSION}' almalinux-release)"
         echo "Disk: $(df -h --output=used,size,pcent {{ sync_data_dir }} | tail -1)"
         echo "Accounts: $(find {{ sync_data_dir }} -mindepth 1 -maxdepth 1 -type d | wc -l), holding $(du -sh {{ sync_data_dir }} | cut -f1)"
+        # How many accounts are active: each sorted by when it was last
+        # used (any request with its secret: the time on its .access file, which
+        # the server renews at most once a day) and last saved to (its
+        # newest file; .access and half-saved .saving- files left out).
+        # Counts only, never which account.
+        now=$(date +%s)
+        used=(0 0 0); saved=(0 0 0)
+        bucket() {  # 0: the last 7 days, 1: the last 30, 2: longer ago or never
+          local days=$(( (now - ${1:-0}) / 86400 ))
+          if (( days < 7 )); then echo 0; elif (( days < 30 )); then echo 1; else echo 2; fi
+        }
+        for folder in {{ sync_data_dir }}/*/; do
+          [ -d "$folder" ] || continue
+          u=$(stat -c %Y "$folder.access" 2>/dev/null || stat -c %Y "$folder")
+          s=$(find "$folder" -maxdepth 1 -type f ! -name '.*' -printf '%T@\n' | sort -n | tail -1 | cut -d. -f1)
+          (( used[$(bucket "$u")] += 1 ))
+          (( saved[$(bucket "$s")] += 1 ))
+        done
+        echo "  last used: ${used[0]} in the last 7 days, ${used[1]} in the last 30, ${used[2]} longer ago"
+        echo "  last saved to: ${saved[0]} in the last 7 days, ${saved[1]} in the last 30, ${saved[2]} longer ago or never"
         echo "Updates waiting: $(dnf -q check-update | grep -c '^[a-zA-Z0-9]' || true)"
         needs-restarting -r >/dev/null && echo "Restart needed: no" || echo "Restart needed: yes (update.yml)"
         echo "Limits hit today (deploy/README.md has how to see their addresses):"

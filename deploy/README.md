@@ -21,7 +21,7 @@ Run everything from this folder: `cd deploy`.
 | `ansible-playbook setup.yml` | Everything, from nothing: an admin account and key-only logins, updates (security ones daily by themselves, Caddy's weekly, a weekly restart if one is needed), the firewall, the log kept at most 14 days, Node, Caddy (HTTPS), the program as a service. Safe to run again: it puts back whatever drifted. | Once, then after changing `setup.yml` or its templates |
 | `ansible-playbook deploy.yml` | The program from `server/` and its settings, restarting it if anything changed. | After changing `server/server.js` or a setting |
 | `ansible-playbook update.yml` | Every update, and a restart now if one is needed. | Monthly |
-| `ansible-playbook status.yml` | How it is doing: the program, Caddy, the disk, how many accounts, updates waiting, the limits hit today (without addresses), the last log lines. Changes nothing. | Whenever |
+| `ansible-playbook status.yml` | How it is doing: the program, Caddy, the disk, how many accounts and how many were used and saved to in the last 7 and 30 days, updates waiting, the limits hit today (without addresses), the last log lines. Changes nothing. | Whenever |
 | `ansible-playbook deploy.yml -e sync_paused=true` | Switches syncing off for everyone (`false` switches it on again). Learners' apps keep everything and try later. | If something is wrong |
 
 Each ends by checking that `https://<your domain>/v1/health` answers.
